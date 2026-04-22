@@ -584,6 +584,15 @@ function addPickup(shedId){
   shed.pickups.push(pickupObj);
   shed.pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
 
+  function computeVarianceForPickup(shed, pickupDate, pickupBirds, allPickups) {
+  // Calculate total birds picked up before this pickup
+  const prevTotal = allPickups
+    .filter(p => dateOnly(p.date) < dateOnly(pickupDate))
+    .reduce((sum, p) => sum + p.birds, 0);
+  const expectedLive = shed.initialPopulation - prevTotal - shed.mortality;
+  return pickupBirds - expectedLive;
+}
+
   document.getElementById(`pd_${shedId}`).value = "";
   document.getElementById(`pb_${shedId}`).value = "";
   const f = document.getElementById(`pf_${shedId}`); if (f) f.checked = false;
@@ -862,7 +871,7 @@ function tabsView(){
     { id: "g2", label: "Group 2" },
     { id: "g3", label: "Group 3" },
     { id: "g4", label: "Group 4" },
-    { id: "weight", label: "Weight Analyzer", external: true, url: "/KPFarmManager/Weight_Calculator.html" }  // ← change URL
+    { id: "weight", label: "Weight Analyzer", external: true, url: "file:///C:/Users/kirripark1/Desktop/KIRIPARK1/program/Weight_Calculator.html" }  // ← change URL
   ];
 
   const iconBtn = (onClick, label, svg, extra="") => `
@@ -2270,39 +2279,63 @@ function triggerExcelImport(){
 
         // pickups 1..5
         const pickups = [];
-        for (let p=1;p<=5;p++){
-          const dRaw = getVal(r, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
-          const bRaw = getVal(r, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
-          const fRaw = getVal(r, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
-          const vRaw = getVal(r, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
+for (let p=1;p<=5;p++){
+  const dRaw = getVal(r, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
+  const bRaw = getVal(r, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
+  const fRaw = getVal(r, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
+  const vRaw = getVal(r, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
 
-          const d = parseExcelDateDMY(dRaw) || (typeof dRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dRaw) ? parseISO(dRaw) : null);
-          const b = Number(bRaw);
-          const isFinal = parseBool(fRaw);
-          const variance = Number(vRaw);
+  const d = parseExcelDateDMY(dRaw) || (typeof dRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dRaw) ? parseISO(dRaw) : null);
+  const b = Number(bRaw);
+  const isFinal = parseBool(fRaw);
+  const variance = Number(vRaw);
 
-          if (d && Number.isFinite(b) && b > 0) {
-            pickups.push({
-              date: d,
-              birds: Math.floor(b),
-              isFinal: !!isFinal,
-              variance: Number.isFinite(variance) ? variance : null
-            });
-          }
-        }
-        pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  if (d && Number.isFinite(b) && b > 0) {
+    pickups.push({
+      date: d,
+      birds: Math.floor(b),
+      isFinal: !!isFinal,
+      variance: Number.isFinite(variance) ? variance : null
+    });
+  }
+}
 
-        // ensure only one final pickup
-        let finalSeen = false;
-        for (const p of pickups){
-          if (p.isFinal && !finalSeen) finalSeen = true;
-          else if (p.isFinal && finalSeen) p.isFinal = false;
-        }
-        sheds[idx].pickups = pickups.slice(0,5);
+// Helper function to compute variance
+function computeVarianceForPickup(shed, pickupDate, pickupBirds, allPickups) {
+  const prevTotal = allPickups
+    .filter(p => dateOnly(p.date) < dateOnly(pickupDate))
+    .reduce((sum, p) => sum + p.birds, 0);
+  const expectedLive = shed.initialPopulation - prevTotal - shed.mortality;
+  return pickupBirds - expectedLive;
+}
 
-        // if final exists and cleanout not provided, set cleanout = final date
-        const fp = sheds[idx].pickups.find(x => x.isFinal);
-        if (fp && !sheds[idx].cleanoutDate) sheds[idx].cleanoutDate = dateOnly(fp.date);
+// Auto‑final + auto‑variance for 5th pickup
+if (pickups.length === 5 && !pickups.some(p => p.isFinal)) {
+  pickups[4].isFinal = true;
+  if (pickups[4].variance == null || pickups[4].variance === 0) {
+    pickups[4].variance = computeVarianceForPickup(sheds[idx], pickups[4].date, pickups[4].birds, pickups);
+  }
+}
+
+pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+
+// Ensure only one final pickup
+let finalSeen = false;
+for (const p of pickups){
+  if (p.isFinal && !finalSeen) finalSeen = true;
+  else if (p.isFinal && finalSeen) p.isFinal = false;
+}
+sheds[idx].pickups = pickups.slice(0,5);
+
+// Final pickup handling: set cleanout and recalc mortality
+const fp = sheds[idx].pickups.find(x => x.isFinal);
+if (fp) {
+  sheds[idx].cleanoutDate = dateOnly(fp.date);
+  const totalPicked = sheds[idx].pickups.reduce((sum, p) => sum + p.birds, 0);
+  sheds[idx].mortality = Math.max(0, sheds[idx].initialPopulation - totalPicked);
+  sheds[idx].prevMortalityBeforeFinal = null;
+  sheds[idx].prevCleanoutBeforeFinal = null;
+}
 
         updated++;
       }
