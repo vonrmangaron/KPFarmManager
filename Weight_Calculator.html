@@ -3,655 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Ross 308 | Growth Analyzer | Scroll-Free 4-Column View</title>
-    <!-- Chart.js CDN for clean graph -->
+    <title>Ross 308 · Adjustable DOC Weight | Performance Analyzer</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #eef2f5;
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 1.8rem 1.5rem;
-            line-height: 1.4;
-        }
-
-        /* main dashboard card */
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.02);
-            overflow: hidden;
-        }
-
-        /* header */
-        .brand-header {
-            background: #1a3f2e;
-            padding: 1.2rem 2rem;
-            border-bottom: 1px solid #2c5a42;
-        }
-
-        .brand-header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .brand-header h1 span {
-            background: #e9b741;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 2px 12px;
-            border-radius: 40px;
-            color: #1a3f2e;
-        }
-
-        .subhead {
-            color: #cfe3d9;
-            font-size: 0.8rem;
-            margin-top: 6px;
-        }
-
-        /* control panel */
-        .control-panel {
-            padding: 1.2rem 2rem;
-            background: #fefefc;
-            border-bottom: 1px solid #e6edf2;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-end;
-            gap: 1.5rem;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #4b6a5c;
-        }
-
-        .input-group input {
-            background: #ffffff;
-            border: 1px solid #cfdfd7;
-            border-radius: 14px;
-            padding: 0.55rem 1rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            width: 160px;
-            transition: 0.2s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #2f6f4e;
-            box-shadow: 0 0 0 3px rgba(47, 111, 78, 0.2);
-        }
-
-        .btn-generate {
-            background: #2f6f4e;
-            border: none;
-            padding: 0.55rem 1.5rem;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-generate:hover {
-            background: #1f5a3e;
-            transform: translateY(-1px);
-        }
-
-        /* stats ribbon */
-        .stats-ribbon {
-            padding: 0.6rem 2rem;
-            background: #f8fafc;
-            display: flex;
-            gap: 2rem;
-            flex-wrap: wrap;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.75rem;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
-        .stat-label {
-            font-weight: 500;
-            color: #3b5e4b;
-        }
-
-        .stat-value {
-            font-weight: 700;
-            color: #1a3f2e;
-            background: #eef3ef;
-            padding: 2px 10px;
-            border-radius: 40px;
-        }
-
-        /* chart section */
-        .chart-container {
-            padding: 1.5rem 2rem 0.8rem 2rem;
-            background: #ffffff;
-            border-bottom: 1px solid #ecf3f0;
-        }
-
-        .chart-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #4b6a5c;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        canvas {
-            max-height: 280px;
-            width: 100%;
-        }
-
-        /* ===== 4-COLUMN TABLE LAYOUT - NO SCROLLBARS ANYWHERE ===== */
-        .multi-col-section {
-            padding: 1rem 2rem 1.8rem 2rem;
-            background: #ffffff;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-            margin-top: 0.25rem;
-        }
-
-        .section-header h3 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #2c5a42;
-        }
-
-        .legend-note {
-            font-size: 0.7rem;
-            color: #7a9287;
-        }
-
-        /* 4-column grid - all content fully visible, NO scrollbars */
-        .four-col-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.2rem;
-            background: #ffffff;
-            border-radius: 20px;
-        }
-
-        /* each column card - no overflow scrolling, content expands naturally */
-        .data-column {
-            background: #fefefc;
-            border-radius: 18px;
-            border: 1px solid #e2ede7;
-            overflow: visible;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .column-header {
-            background: #f1f6f3;
-            padding: 10px 12px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #2c5a42;
-            border-bottom: 1px solid #ddebe4;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        /* rows container - NO SCROLLBAR, auto height, shows all rows */
-        .column-rows {
-            display: flex;
-            flex-direction: column;
-            overflow: visible;
-            max-height: none;
-            height: auto;
-        }
-
-        /* row item inside each column */
-        .row-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid #f0f5f2;
-            font-size: 0.8rem;
-            transition: background 0.1s;
-        }
-
-        .row-item:hover {
-            background: #fafdfb;
-        }
-
-        .day-badge {
-            font-weight: 700;
-            color: #2f5e49;
-            background: #eef3ef;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            min-width: 42px;
-            text-align: center;
-        }
-
-        .weight-value {
-            font-weight: 600;
-            color: #1f2e27;
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
-
-        /* weekly highlight styling inside columns */
-        .row-item.weekly-highlight {
-            background: #eef7f0;
-            border-left: 3px solid #2f6f4e;
-        }
-
-        .row-item.weekly-highlight .day-badge {
-            background: #dcefe2;
-            font-weight: 800;
-        }
-
-        /* footer & legend */
-        .info-legend {
-            padding: 0.8rem 2rem;
-            background: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-            border-top: 1px solid #e2edf0;
-            border-bottom: 1px solid #e2edf0;
-        }
-
-        .legend-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.7rem;
-            color: #4a6b5d;
-        }
-
-        .legend-color {
-            width: 18px;
-            height: 18px;
-            background: #eef7f0;
-            border-radius: 4px;
-            border-left: 3px solid #2f6f4e;
-        }
-
-        .footer-note {
-            padding: 0.8rem 2rem;
-            background: #fefefc;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #7c9489;
-        }
-
-        /* responsive: on smaller screens, scrollbars are NOT added, just columns wrap */
-        @media (max-width: 950px) {
-            .four-col-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-            body {
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 550px) {
-            .four-col-grid {
-                grid-template-columns: 1fr;
-            }
-            .control-panel, .chart-container, .multi-col-section {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-        }
-
-        /* ensure no horizontal overflow or hidden scrollbars on body */
-        body {
-            overflow-x: auto;
-        }
-        .dashboard {
-            overflow-x: visible;
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f4f7fc; }
+        .transition-smooth { transition: all 0.2s ease; }
+        .card-column {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-<div class="dashboard">
-    <div class="brand-header">
-        <h1>
-            Ross 308 Performance Standards
-            <span>Intensive</span>
-        </h1>
-        <div class="subhead">Daily weight (D0–59) · Chart + 4‑column table </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-5 py-6 md:py-8">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200/80 overflow-hidden">
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-800 to-stone-800 px-6 md:px-8 py-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                        🧬 Ross 308 · As-Hatched Performance
+                        <span class="bg-amber-400 text-stone-950 text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-full">Live DOC scaling</span>
+                    </h1>
+                    <p class="text-emerald-100 text-sm mt-1 font-medium">Adjustable day-old weight · proportional growth trajectory (0–55d)</p>
+                </div>
+                <div class="text-stone-300 text-xs flex items-center gap-2 bg-stone-800/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Data from original photo | responsive 4‑column view
+                </div>
+            </div>
+            
+            <!-- DOC control panel & scaling factor -->
+            <div class="bg-white border-b border-gray-200 px-6 md:px-8 py-5 flex flex-wrap items-end gap-6 justify-between">
+                <div class="flex flex-wrap items-end gap-6">
+                    <div class="relative">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1.5 flex items-center gap-1.5">
+                            🐣 Adjust Day‑Old Weight (g)
+                            <span class="text-stone-500 text-[11px] font-normal">baseline: 44g</span>
+                        </label>
+                        <div class="flex gap-3 items-center">
+                            <input type="number" id="docWeightInput" value="44" step="1" min="30" max="75" 
+                                   class="w-32 bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-3 py-2.5 font-semibold focus:ring-2 focus:ring-emerald-500">
+                            <input type="range" id="docSlider" min="30" max="75" value="44" step="0.5" class="w-40 md:w-56 accent-emerald-700">
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                        <span class="font-medium text-emerald-700">⚖️ scaling factor</span>
+                        <span id="scaleFactorBadge" class="font-mono font-bold">1.000x</span>
+                    </div>
+                </div>
+                <div class="text-[11px] text-stone-400 bg-stone-50 px-3 py-1 rounded-full">📐 all weights scale proportionally · intake/FCR remain original reference</div>
+            </div>
+            
+            <!-- KPI Stats Ribbon (dynamic based on scaled data) -->
+            <div class="bg-emerald-50/40 border-b border-emerald-100 px-6 md:px-8 py-3.5 flex flex-wrap gap-5 items-center text-sm" id="statsPanel">
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">DOC weight</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="docWeightStat">44 g</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Final weight (D55)</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="finalWeightStat">— g</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Total gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="totalGainStat">— g</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Avg daily gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="avgDailyGainStat">— g/d</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Peak daily gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="peakGainStat">— g</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">FCR (table)</span><span class="bg-white text-stone-700 font-semibold px-3 py-0.5 rounded-full text-xs shadow-sm" id="fcrRefStat">1.793</span></div>
+            </div>
+            
+            <!-- Double chart: Weight + Daily gain (updated dynamically) -->
+            <div class="border-b border-gray-100 px-5 md:px-8 pt-6 pb-2 bg-white">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-emerald-800 uppercase tracking-wide">📈 Body weight trajectory</span>
+                            <span class="text-[10px] text-gray-400">● scaled to DOC</span>
+                        </div>
+                        <canvas id="weightChart" width="500" height="240" style="max-height: 260px; width: 100%;"></canvas>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wide">⚡ Daily weight gain (g)</span>
+                            <span id="peakGainTooltip" class="text-[10px] text-amber-600 font-semibold">peak updates with DOC</span>
+                        </div>
+                        <canvas id="dailyGainChart" width="500" height="240" style="max-height: 260px; width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4-COLUMN CARD LAYOUT (no scrollbars, daily gain removed from table) -->
+            <div class="px-5 md:px-8 pt-6 pb-10 bg-white">
+                <div class="flex flex-wrap justify-between items-center mb-5 gap-2">
+                    <h3 class="text-sm font-extrabold text-gray-800 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        Daily performance · 4‑column view (scaled weight)
+                    </h3>
+                    <div class="text-[11px] font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">📌 each card = sequential days | highlights weekly endpoints | daily gain removed</div>
+                </div>
+                <div id="fourColumnGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr">
+                    <!-- JS fills columns dynamically, no scrollbars, weight only -->
+                </div>
+                <div class="text-[11px] text-stone-400 mt-5 pt-2 border-t border-gray-100 flex justify-between flex-wrap gap-2">
+                    <span>🐣 Weight recalculated based on user-defined DOC (proportional scaling). Original baseline DOC = 44g.</span>
+                    <span class="font-mono text-emerald-700">⚡ Daily gain chart & statistics remain interactive — table shows weight only</span>
+                </div>
+            </div>
+            
+            <!-- footer -->
+            <div class="bg-gray-50 border-t border-gray-100 px-6 md:px-8 py-4 flex flex-wrap justify-between items-center gap-3 text-xs text-gray-500">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-emerald-100 border-l-2 border-emerald-600"></div><span>Ross 308 · Actual trial (D0–55) </span></div>
+                    <div class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg><span>Scaling preserves relative growth pattern</span></div>
+                </div>
+                <div class="text-gray-400">Aviagen® lineage | interactive DOC simulator · clean table without daily gain</div>
+            </div>
+        </div>
     </div>
 
-    <div class="control-panel">
-        <div class="input-group">
-            <label>🐣 Day‑Old Weight (g)</label>
-            <input type="number" id="docWeight" value="42.0" step="0.5">
-        </div>
-        <div class="input-group">
-            <button class="btn-generate" id="generateBtn">
-                <span>⟳</span> Refresh
-            </button>
-        </div>
-    </div>
-
-    <div class="stats-ribbon" id="statsPanel">
-        <div class="stat-item"><span class="stat-label">Final weight (D59)</span><span class="stat-value" id="finalWeightStat">— g</span></div>
-        <div class="stat-item"><span class="stat-label">Avg daily gain</span><span class="stat-value" id="avgDailyGain">— g/d</span></div>
-        <div class="stat-item"><span class="stat-label">Peak daily gain</span><span class="stat-value" id="peakGainStat">— g at day —</span></div>
-    </div>
-
-    <!-- Chart area -->
-    <div class="chart-container">
-        <div class="chart-title">
-            <span>📈</span> Growth trajectory: body weight (g) vs. age (days)
-        </div>
-        <canvas id="growthChart" width="800" height="280" style="max-width:100%; height:auto; max-height:280px"></canvas>
-    </div>
-
-    <!-- 4-COLUMN TABLE layout - NO SCROLLBARS, fully expanded -->
-    <div class="multi-col-section">
-        <div class="section-header">
-            <h3>📊 Daily weight standards (0–59 days) · 4‑column view</h3>
-            <div class="legend-note">✔ Weekly checkpoints (every 7 days) highlighted green</div>
-        </div>
-        <div id="fourColumnContainer" class="four-col-grid">
-            <!-- dynamic columns injected here -->
-        </div>
-    </div>
-
-    <div class="info-legend">
-        <div class="legend-badge">
-            <div class="legend-color"></div>
-            <span>Weekly checkpoint (day 7,14,21,28,35,42,49,56)</span>
-        </div>
-        <div class="legend-badge">
-            📐 Model: Ross 308 intensive | Asymptote scaled by DOC weight
-        </div>
-    </div>
-    <div class="footer-note">
-        Made by: Von Mangaron | For personal & professional reference only | Not for commercial distribution
-    </div>
-</div>
-
-<script>
-    (function() {
-        // Ross 308 Gompertz parameters
-        const REF_DOC = 42.0;
-        const REF_FINAL = 4700.0;
-        const GROWTH_K = 0.055;
-        const INFLECTION_TI = 28.0;
-        const TOTAL_DAYS = 59;
-        
-        let chartInstance = null;
-        
-        // compute growth curve (day 0..59)
-        function computeWeightCurve(docActual) {
-            if (docActual <= 0) docActual = 42.0;
-            const Wmax = REF_FINAL * (docActual / REF_DOC);
-            const results = [];
-            for (let day = 0; day <= TOTAL_DAYS; day++) {
-                let weight;
-                if (day === 0) {
-                    weight = docActual;
-                } else {
-                    const exponent = -GROWTH_K * (day - INFLECTION_TI);
-                    const innerExp = Math.exp(exponent);
-                    weight = Wmax * Math.exp(-innerExp);
+    <script>
+        (function(){
+            // --------------------------------------------------------------
+            // BASELINE DATA (exactly from the attached photo, 0–55 days)
+            // --------------------------------------------------------------
+            const BASELINE_WEIGHTS = [
+                44, 62, 81, 102, 125, 151, 181, 213, 249, 288, 330, 376, 425, 477, 533, 592,
+                655, 720, 789, 860, 935, 1012, 1092, 1174, 1258, 1345, 1434, 1524, 1616, 1710,
+                1805, 1901, 1999, 2097, 2196, 2296, 2396, 2496, 2597, 2697, 2798, 2898, 2998,
+                3097, 3197, 3295, 3393, 3490, 3586, 3681, 3776, 3869, 3961, 4052, 4142, 4230
+            ];  // length = 56 (days 0 to 55)
+            const ORIGINAL_DOC = 44.0;
+            const TOTAL_DAYS = BASELINE_WEIGHTS.length - 1; // 55
+            
+            // Static reference values for other metrics (intake, FCR) — for display only in stats
+            const ORIGINAL_FCR_TABLE_END = 1.793;  // final FCR from photo
+            
+            // DOM elements
+            const docNumberInput = document.getElementById('docWeightInput');
+            const docSlider = document.getElementById('docSlider');
+            const scaleSpan = document.getElementById('scaleFactorBadge');
+            
+            // Chart instances
+            let weightChart, dailyGainChart;
+            
+            // Current scaled data
+            let currentScaledWeights = [...BASELINE_WEIGHTS];
+            let currentDailyGains = [];
+            
+            // Helper: compute scaled weights and daily gains based on new DOC
+            function computeScaledData(newDoc) {
+                let safeDoc = parseFloat(newDoc);
+                if (isNaN(safeDoc)) safeDoc = ORIGINAL_DOC;
+                safeDoc = Math.min(75, Math.max(30, safeDoc));
+                const scale = safeDoc / ORIGINAL_DOC;
+                // scale all baseline weights
+                const scaled = BASELINE_WEIGHTS.map(w => w * scale);
+                // compute daily gain (day0 gain = 0)
+                const gains = [0];
+                for (let i = 1; i < scaled.length; i++) {
+                    gains.push(scaled[i] - scaled[i-1]);
                 }
-                if (weight < 0.01) weight = docActual;
-                results.push({ day, weight });
-            }
-            return results;
-        }
-        
-        // compute detailed stats: final weight, avg daily gain, peak gain
-        function computeStats(results, docActual) {
-            const finalWeight = results[results.length - 1].weight;
-            const avgDailyGain = (finalWeight - docActual) / TOTAL_DAYS;
-            let maxGain = 0;
-            let peakDay = 0;
-            for (let i = 1; i < results.length; i++) {
-                const gain = results[i].weight - results[i-1].weight;
-                if (gain > maxGain) {
-                    maxGain = gain;
-                    peakDay = results[i].day;
-                }
-            }
-            return { finalWeight, avgDailyGain, maxGain, peakDay };
-        }
-        
-        // Render 4-column layout: split days into 4 balanced groups (no scrollbars)
-        // Groups: 0-14, 15-29, 30-44, 45-59 -> exactly 15 items each (60 total)
-        function renderFourColumnTable(results) {
-            const container = document.getElementById('fourColumnContainer');
-            if (!container) return;
-            
-            // Perfect split: 60 entries -> 4 columns of 15 rows each (day 0-14, 15-29, 30-44, 45-59)
-            const colSize = 15; // exactly 15 items per column (0-14 = 15 items, 15-29 = 15 items, etc.)
-            const columnsData = [[], [], [], []];
-            
-            for (let i = 0; i < results.length; i++) {
-                const colIndex = Math.floor(i / colSize);
-                if (colIndex < 4) {
-                    columnsData[colIndex].push(results[i]);
-                } else {
-                    // safety: push any extra to last column (should not happen)
-                    columnsData[3].push(results[i]);
-                }
+                return { scaledWeights: scaled, dailyGains: gains, scaleFactor: scale };
             }
             
-            // Define precise day ranges for headers
-            const colRanges = [
-                "Days 0 – 14",
-                "Days 15 – 29",
-                "Days 30 – 44",
-                "Days 45 – 59"
-            ];
+            // Update all UI: stats, charts, 4-column grid
+            function updateAll() {
+                let docValue = parseFloat(docNumberInput.value);
+                if (isNaN(docValue)) docValue = ORIGINAL_DOC;
+                docValue = Math.min(75, Math.max(30, docValue));
+                docNumberInput.value = docValue.toFixed(1);
+                docSlider.value = docValue;
+                
+                const { scaledWeights, dailyGains, scaleFactor } = computeScaledData(docValue);
+                currentScaledWeights = scaledWeights;
+                currentDailyGains = dailyGains;
+                
+                // update scale badge
+                scaleSpan.innerText = scaleFactor.toFixed(4) + 'x';
+                
+                // KPI update
+                const finalWeight = scaledWeights[scaledWeights.length-1];
+                const totalGain = finalWeight - docValue;
+                const avgDailyGain = totalGain / TOTAL_DAYS;
+                const maxGain = Math.max(...dailyGains.slice(1));
+                const peakDayIndex = dailyGains.indexOf(maxGain);
+                document.getElementById('docWeightStat').innerHTML = `${docValue.toFixed(1)} g`;
+                document.getElementById('finalWeightStat').innerHTML = `${finalWeight.toFixed(1)} g`;
+                document.getElementById('totalGainStat').innerHTML = `${totalGain.toFixed(1)} g`;
+                document.getElementById('avgDailyGainStat').innerHTML = `${avgDailyGain.toFixed(1)} g/d`;
+                document.getElementById('peakGainStat').innerHTML = `${maxGain.toFixed(1)} g (day ${peakDayIndex})`;
+                document.getElementById('fcrRefStat').innerHTML = `${ORIGINAL_FCR_TABLE_END.toFixed(3)} (ref)`;
+                
+                // update charts
+                updateCharts(scaledWeights, dailyGains);
+                // render 4-column grid (NO daily gain inside cards, NO scrollbars)
+                renderFourColumnGrid(scaledWeights, dailyGains);
+            }
             
-            container.innerHTML = '';
-            for (let col = 0; col < 4; col++) {
-                const columnItems = columnsData[col];
-                if (columnItems.length === 0) continue;
-                
-                const columnDiv = document.createElement('div');
-                columnDiv.className = 'data-column';
-                
-                // header
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'column-header';
-                headerDiv.textContent = colRanges[col];
-                columnDiv.appendChild(headerDiv);
-                
-                // rows wrapper - NO SCROLLBAR, auto height, shows all rows
-                const rowsWrapper = document.createElement('div');
-                rowsWrapper.className = 'column-rows';
-                
-                columnItems.forEach(item => {
-                    const { day, weight } = item;
-                    const isWeekly = (day !== 0 && day % 7 === 0);
-                    const rowDiv = document.createElement('div');
-                    rowDiv.className = 'row-item';
-                    if (isWeekly) rowDiv.classList.add('weekly-highlight');
-                    
-                    const daySpan = document.createElement('span');
-                    daySpan.className = 'day-badge';
-                    daySpan.textContent = `Day ${day}`;
-                    
-                    const weightSpan = document.createElement('span');
-                    weightSpan.className = 'weight-value';
-                    weightSpan.textContent = `${weight.toFixed(1)} g`;
-                    
-                    rowDiv.appendChild(daySpan);
-                    rowDiv.appendChild(weightSpan);
-                    rowsWrapper.appendChild(rowDiv);
+            // CHARTS: weight line + daily gain bar
+            function updateCharts(weights, gains) {
+                const daysLabels = Array.from({length: weights.length}, (_, i) => i); // 0..55
+                // Weight chart
+                if (weightChart) weightChart.destroy();
+                const ctxWeight = document.getElementById('weightChart').getContext('2d');
+                weightChart = new Chart(ctxWeight, {
+                    type: 'line',
+                    data: {
+                        labels: daysLabels,
+                        datasets: [{
+                            label: `Body weight (g) · DOC = ${weights[0].toFixed(1)}g`,
+                            data: weights,
+                            borderColor: '#0F5C3F',
+                            backgroundColor: 'rgba(21, 94, 67, 0.03)',
+                            borderWidth: 2.8,
+                            pointRadius: 1.2,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#2C7A5E',
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            tooltip: { callbacks: { label: (ctx) => `Weight: ${ctx.raw.toFixed(1)} g` }, backgroundColor: '#1E2A26' },
+                            legend: { position: 'top', labels: { font: { size: 10 } } }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Day', font: { size: 10 } }, ticks: { stepSize: 7, autoSkip: true } },
+                            y: { title: { display: true, text: 'Weight (g)', font: { size: 10 } }, ticks: { callback: v => v + ' g' } }
+                        }
+                    }
                 });
                 
-                columnDiv.appendChild(rowsWrapper);
-                container.appendChild(columnDiv);
-            }
-        }
-        
-        // Render Chart.js line chart
-        function renderChart(results, docActual) {
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            const days = results.map(r => r.day);
-            const weights = results.map(r => r.weight);
-            
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-            
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: days,
-                    datasets: [{
-                        label: `Expected weight (g) · DOC = ${docActual.toFixed(1)}g`,
-                        data: weights,
-                        borderColor: '#2f6f4e',
-                        backgroundColor: 'rgba(47, 111, 78, 0.04)',
-                        borderWidth: 2.5,
-                        pointRadius: 1.2,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: '#1f5a3e',
-                        pointBorderColor: '#e9b741',
-                        tension: 0.2,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `Weight: ${ctx.raw.toFixed(1)} g`
-                            }
-                        },
-                        legend: { position: 'top', labels: { font: { size: 10 } } }
+                // Daily gain chart (bar) skip day0 (gain 0)
+                const gainLabels = daysLabels.slice(1);
+                const gainValues = gains.slice(1);
+                if (dailyGainChart) dailyGainChart.destroy();
+                const ctxGain = document.getElementById('dailyGainChart').getContext('2d');
+                dailyGainChart = new Chart(ctxGain, {
+                    type: 'bar',
+                    data: {
+                        labels: gainLabels,
+                        datasets: [{
+                            label: 'Daily weight gain (g)',
+                            data: gainValues,
+                            backgroundColor: '#EAB308',
+                            borderRadius: 5,
+                            barPercentage: 0.7
+                        }]
                     },
-                    scales: {
-                        x: { 
-                            title: { display: true, text: 'Age (days)', font: { size: 10 } }, 
-                            ticks: { stepSize: 7, autoSkip: true, maxRotation: 0 } 
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            tooltip: { callbacks: { label: (ctx) => `Gain: ${ctx.raw.toFixed(1)} g` } },
+                            legend: { position: 'top', labels: { font: { size: 10 } } }
                         },
-                        y: { 
-                            title: { display: true, text: 'Body weight (g)', font: { size: 10 } }, 
-                            ticks: { callback: (v) => v + ' g' } 
+                        scales: {
+                            x: { title: { display: true, text: 'Day', font: { size: 10 } }, ticks: { stepSize: 7, autoSkip: true } },
+                            y: { title: { display: true, text: 'Gain (g/day)', font: { size: 10 } }, beginAtZero: true }
                         }
-                    },
-                    interaction: { mode: 'index', intersect: false }
-                }
-            });
-        }
-        
-        // update stats panel
-        function updateStatsPanel(results, docActual) {
-            const { finalWeight, avgDailyGain, maxGain, peakDay } = computeStats(results, docActual);
-            document.getElementById('finalWeightStat').innerText = `${finalWeight.toFixed(1)} g`;
-            document.getElementById('avgDailyGain').innerText = `${avgDailyGain.toFixed(1)} g/d`;
-            document.getElementById('peakGainStat').innerText = `${maxGain.toFixed(1)} g at day ${peakDay}`;
-        }
-        
-        // Master update: compute, chart, 4-col table, stats (NO SCROLLBARS anywhere)
-        function updateDashboard() {
-            let docValue = parseFloat(document.getElementById('docWeight').value);
-            if (isNaN(docValue) || docValue <= 0) {
-                docValue = 42.0;
-                document.getElementById('docWeight').value = 42.0;
-                // subtle feedback without alert
-                const toast = document.createElement('div');
-                toast.textContent = '✓ Using default day‑old weight (42 g)';
-                toast.style.position = 'fixed';
-                toast.style.bottom = '20px';
-                toast.style.left = '50%';
-                toast.style.transform = 'translateX(-50%)';
-                toast.style.background = '#1f2e26';
-                toast.style.color = '#eef3ef';
-                toast.style.padding = '5px 16px';
-                toast.style.borderRadius = '40px';
-                toast.style.fontSize = '0.7rem';
-                toast.style.zIndex = '1000';
-                toast.style.fontWeight = '500';
-                toast.style.pointerEvents = 'none';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 1500);
+                    }
+                });
             }
-            const docActual = parseFloat(document.getElementById('docWeight').value);
-            const results = computeWeightCurve(docActual);
             
-            renderFourColumnTable(results);
-            renderChart(results, docActual);
-            updateStatsPanel(results, docActual);
-        }
-        
-        // attach event listeners
-        const generateBtn = document.getElementById('generateBtn');
-        const docInput = document.getElementById('docWeight');
-        
-        generateBtn.addEventListener('click', () => updateDashboard());
-        docInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                updateDashboard();
+            // 4-COLUMN RESPONSIVE GRID: split days into 4 blocks, NO scrollbars, NO daily gain values.
+            // Removed max-h / overflow-y-auto classes, removed gainSpan entirely.
+            function renderFourColumnGrid(weights, gains) {
+                const container = document.getElementById('fourColumnGrid');
+                if (!container) return;
+                
+                const totalDays = weights.length; // 56 entries (0..55)
+                // define ranges
+                const ranges = [
+                    { name: "Days 0 – 13", start: 0, end: 13 },
+                    { name: "Days 14 – 27", start: 14, end: 27 },
+                    { name: "Days 28 – 41", start: 28, end: 41 },
+                    { name: "Days 42 – 55", start: 42, end: 55 }
+                ];
+                
+                container.innerHTML = '';
+                
+                for (let r of ranges) {
+                    const columnDiv = document.createElement('div');
+                    columnDiv.className = 'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'bg-gradient-to-r from-emerald-50 to-stone-50 px-3 py-2.5 text-center font-extrabold text-xs uppercase tracking-wider text-emerald-800 border-b border-gray-200';
+                    header.textContent = r.name;
+                    columnDiv.appendChild(header);
+                    
+                    // listContainer: NO scrollbars, NO max-height, NO overflow-y-auto
+                    const listContainer = document.createElement('div');
+                    listContainer.className = 'divide-y divide-gray-100';   // scrollbar removed: no overflow wrapper
+                    
+                    for (let day = r.start; day <= r.end && day < totalDays; day++) {
+                        const weightVal = weights[day];
+                        // highlighting weekly endpoints (day 7,14,21,28,35,42,49,55) and day 0 is excluded from highlight pattern.
+                        const isWeekly = (day !== 0 && (day % 7 === 0 || day === 55));
+                        
+                        const row = document.createElement('div');
+                        row.className = `flex justify-between items-center px-3 py-2.5 transition ${isWeekly ? 'bg-emerald-50/60 border-l-4 border-emerald-500' : 'hover:bg-gray-50'}`;
+                        
+                        const daySpan = document.createElement('span');
+                        daySpan.className = `text-xs font-mono font-bold px-2 py-0.5 rounded-full ${isWeekly ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-100 text-gray-700'}`;
+                        daySpan.textContent = `Day ${day}`;
+                        
+                        // weight only — daily gain intentionally omitted per requirement
+                        const weightSpan = document.createElement('span');
+                        weightSpan.className = `text-sm font-bold ${isWeekly ? 'text-emerald-800' : 'text-gray-800'} tracking-tight`;
+                        weightSpan.textContent = `${weightVal.toFixed(1)} g`;
+                        
+                        row.appendChild(daySpan);
+                        row.appendChild(weightSpan);
+                        listContainer.appendChild(row);
+                    }
+                    
+                    columnDiv.appendChild(listContainer);
+                    container.appendChild(columnDiv);
+                }
             }
-        });
-        
-        // initial load with default 42g
-        updateDashboard();
-        
-        // ensure chart resizes smoothly on window resize
-        window.addEventListener('resize', () => {
-            if (chartInstance) chartInstance.resize();
-        });
-    })();
-</script>
+            
+            // Sync between number and slider
+            function syncInputs(value) {
+                let v = parseFloat(value);
+                if (isNaN(v)) v = ORIGINAL_DOC;
+                v = Math.min(75, Math.max(30, v));
+                docNumberInput.value = v.toFixed(1);
+                docSlider.value = v;
+                updateAll();
+            }
+            
+            // Event listeners
+            docNumberInput.addEventListener('input', (e) => syncInputs(e.target.value));
+            docSlider.addEventListener('input', (e) => syncInputs(e.target.value));
+            
+            // Initialize with baseline doc = 44g
+            syncInputs(44);
+            
+            // optional: resize charts if needed
+            window.addEventListener('resize', () => {
+                if (weightChart) weightChart.resize();
+                if (dailyGainChart) dailyGainChart.resize();
+            });
+        })();
+    </script>
 </body>
 </html>
