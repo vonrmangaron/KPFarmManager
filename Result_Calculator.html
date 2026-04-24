@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>KP Farm Manager — Performance Lens • FCR · cFCR · PIF</title>
+  <!-- Google Fonts + Tailwind v3 + custom smooth overrides -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body {
+      background: url(/images/Broiler-free-range.png);
+      background-attachment: fixed;
+    }
+    /* KP Farm Manager inspired glassmorphism + sharp farm-data aesthetic */
+    .kp-glass-panel {
+      background: rgba(8, 14, 26, 0.7);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .metric-card {
+      background: rgba(12, 20, 32, 0.85);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 20px -10px rgba(0,0,0,0.5);
+    }
+    .metric-card:hover {
+      border-color: #22d3ee;
+      box-shadow: 0 12px 24px -12px #22d3ee30;
+      transform: translateY(-2px);
+    }
+    input, select {
+      background-color: #0f1729;
+      border: 1px solid #2d3e64;
+      transition: 0.2s;
+      color: #f1f5f9;
+      border-radius: 0.75rem;
+    }
+    input:focus {
+      border-color: #38bdf8;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+      background-color: #0a1122;
+    }
+    .range-slider {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    .range-slider:focus {
+      outline: none;
+    }
+    .range-slider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: #1e2a44;
+      border-radius: 8px;
+    }
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #38bdf8;
+      margin-top: -6px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #7dd3fc;
+      border: none;
+    }
+    .range-slider::-webkit-slider-thumb:hover { transform: scale(1.2); background: #7dd3fc; }
+    .badge-farm {
+      background: #0f172f;
+      border-radius: 40px;
+      padding: 2px 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #7e9ed1;
+      border: 0.5px solid #2a4365;
+    }
+    .kp-header-glow {
+      background: linear-gradient(105deg, rgba(8, 18, 28, 0.9) 0%, rgba(2, 8, 18, 0.9) 100%);
+      border-bottom: 1px solid #1e3a5f;
+    }
+    .stat-value {
+      font-feature-settings: "tnum";
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .input-label-icon {
+      font-weight: 500;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .insight-badge {
+      background: #0a111f;
+      border-radius: 2rem;
+      padding: 0.2rem 0.9rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border: 0.5px solid #2c4c7c;
+      color: #a9c9ff;
+    }
+  </style>
+</head>
+<body class="text-slate-200 antialiased">
+
+  <div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+    
+    <!-- header matching KP Farm Manager style - live data header simulation -->
+    <div class="kp-glass-panel rounded-2xl px-6 py-4 mb-8 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="text-3xl">🐔</div>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">KP Performance Lens</h1>
+          <div class="flex flex-wrap gap-3 text-xs text-slate-400 mt-1">
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> FCR · cFCR · PIF</span>
+            <span class="insight-badge">⚙️ factor adjustable (β)</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <div class="badge-farm text-xs">📊 precision analytics</div>
+        <div class="badge-farm text-xs">🐣 live performance</div>
+      </div>
+    </div>
+
+    <!-- main grid : inputs + results, extra mortality livability panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      
+      <!-- INPUT SECTION (3 cols) - now includes Total Mortality and Total Birds -->
+      <div class="lg:col-span-3 kp-glass-panel rounded-2xl p-5 md:p-6 shadow-2xl">
+        <div class="flex items-center gap-2 border-b border-slate-700/60 pb-2 mb-5">
+          <div class="w-1.5 h-6 bg-cyan-500 rounded-full"></div>
+          <h2 class="text-xl font-semibold tracking-tight text-cyan-100">📋 Production inputs</h2>
+        </div>
+        
+        <div class="space-y-5">
+          <!-- Total Feed Consumed (kg) -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>🌾 Total Feed Consumed</span>
+              <span class="text-xs text-cyan-400">(kg)</span>
+            </label>
+            <input type="number" id="feedInput" value="3850" step="10" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+          </div>
+
+          <!-- Total Live Weight Produced (kg) -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>⚖️ Live Weight Produced</span>
+              <span class="text-xs text-cyan-400">(kg)</span>
+            </label>
+            <input type="number" id="weightInput" value="1750" step="10" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+          </div>
+
+          <!-- Total Birds placed (Initial stock) - used to compute livability from mortality -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>🐥 Total Birds placed</span>
+              <span class="text-xs text-cyan-400">(initial head)</span>
+            </label>
+            <input type="number" id="totalBirdsInput" value="1000" step="50" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+          </div>
+
+          <!-- Total Mortality (number of birds) - dynamic: livability will be derived -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>⚠️ Total Mortality</span>
+              <span class="text-xs text-cyan-400">(birds lost)</span>
+            </label>
+            <input type="number" id="totalMortalityInput" value="35" step="5" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+            <div class="flex justify-between mt-1 text-xs text-slate-400">
+              <span>↳ Auto-calculates Livability %</span>
+              <span id="livabilityPreview" class="text-cyan-300 font-mono font-bold">--</span>
+            </div>
+          </div>
+
+          <!-- Average Live Weight (ALW) kg -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>🐓 Avg. Live Weight – ALW</span>
+              <span class="text-xs text-cyan-400">(kg/bird)</span>
+            </label>
+            <input type="number" id="alwInput" value="2.65" step="0.01" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+          </div>
+
+          <!-- Age (days) -->
+          <div>
+            <label class="input-label-icon text-slate-300 text-sm mb-1 block">
+              <span>📆 Age at harvest</span>
+              <span class="text-xs text-cyan-400">(days)</span>
+            </label>
+            <input type="number" id="ageInput" value="38" step="1" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/70 border border-slate-700 focus:border-cyan-500">
+          </div>
+
+          <!-- Adjustable factor for cFCR (0.27 base) with slider + number -->
+          <div class="pt-3 mt-1 border-t border-slate-800/70">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-sm font-semibold text-cyan-300 flex items-center gap-1">
+                <span>⚙️ cFCR correction factor (β)</span>
+                <span class="text-xs font-normal text-slate-400">adjustable</span>
+              </label>
+              <span id="factorValueDisplay" class="bg-slate-800/80 px-3 py-0.5 rounded-full text-cyan-300 text-sm font-mono">0.27</span>
+            </div>
+            <input type="range" id="factorSlider" min="0.00" max="0.60" step="0.002" value="0.27" class="range-slider w-full">
+            <div class="flex justify-between text-[11px] text-slate-500 mt-1 px-1">
+              <span>0.00</span><span>0.15</span><span class="text-cyan-400">0.27 (std)</span><span>0.45</span><span>0.60</span>
+            </div>
+            <input type="number" id="factorNumber" value="0.27" step="0.002" class="mt-3 w-full px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-cyan-200 text-center">
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button id="recalcBtn" class="bg-cyan-600/70 hover:bg-cyan-500 text-white font-medium py-2.5 px-7 rounded-xl transition-all shadow-lg shadow-cyan-900/40 flex items-center gap-2 backdrop-blur-sm border border-cyan-400/30">
+            <span>⟳</span> Refresh metrics
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 flex gap-2 flex-wrap">
+          <span>📐 FCR = Feed / Weight</span>
+          <span>🔁 cFCR = FCR − (ALW − 2.45) × β</span>
+          <span>🏆 PIF = (Livability × ALW) ÷ (Age × FCR) × 100</span>
+        </p>
+      </div>
+
+      <!-- RIGHT RESULTS SECTION (2 cols) - KPI cards with livability highlight -->
+      <div class="lg:col-span-2 space-y-5">
+        <!-- Livability dynamic card - new prominent style -->
+        <div class="metric-card rounded-2xl p-5 transition-all">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-slate-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
+                <span>❤️ Livability</span><span class="text-[10px] bg-slate-800/60 px-1.5 rounded-full">calculated</span>
+              </div>
+              <div class="text-3xl md:text-4xl font-bold mt-1 text-emerald-300 stat-value" id="livabilityValue">--%</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">survival rate from mortality data</div>
+            </div>
+            <div class="bg-emerald-950/30 p-2 rounded-full"><span class="text-emerald-300 text-xl">🐣</span></div>
+          </div>
+          <div class="text-xs text-slate-400 mt-2 flex gap-2">
+            <span>✔️ Live birds: <span id="liveBirdsPreview" class="text-cyan-300">--</span></span>
+            <span>• Mortality: <span id="mortCountPreview" class="text-rose-300">--</span></span>
+          </div>
+        </div>
+
+        <!-- FCR Card -->
+        <div class="metric-card rounded-2xl p-5">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Feed Conversion Ratio</div>
+              <div class="text-3xl md:text-4xl font-bold mt-1 text-slate-100 stat-value" id="fcrValue">--</div>
+            </div>
+            <div class="bg-cyan-950/40 p-2 rounded-full"><span class="text-cyan-400 text-xl">📊</span></div>
+          </div>
+          <div class="text-xs text-emerald-300/70 mt-2 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> kg feed / kg live weight
+          </div>
+        </div>
+
+        <!-- cFCR Card (Corrected) -->
+        <div class="metric-card rounded-2xl p-5">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Corrected FCR (cFCR)</div>
+              <div class="text-3xl md:text-4xl font-bold mt-1 text-cyan-300 stat-value" id="cfcrValue">--</div>
+            </div>
+            <div class="bg-slate-800/60 p-2 rounded-full"><span class="text-cyan-300 text-xl">⚡</span></div>
+          </div>
+          <div class="text-xs text-slate-400 mt-1.5 flex gap-2">
+            <span>β factor: <span id="factorDisplayLabel" class="text-cyan-300">0.27</span></span>
+            <span>• ALW adjustment: ±</span>
+          </div>
+        </div>
+
+        <!-- PIF Index (Productivity) -->
+        <div class="metric-card rounded-2xl p-5">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="text-slate-400 text-xs uppercase tracking-wider font-semibold">PIF index</div>
+              <div class="text-3xl md:text-4xl font-bold mt-1 text-amber-200 stat-value" id="pifValue">--</div>
+              <div class="text-[11px] text-slate-500">(Livability × ALW) ÷ (Age × FCR) × 100</div>
+            </div>
+            <div class="bg-amber-900/30 p-2 rounded-full"><span class="text-amber-300 text-xl">🏅</span></div>
+          </div>
+          <div class="text-xs text-slate-400 mt-1">🐤 higher = superior production efficiency</div>
+        </div>
+        
+        <!-- farm insight footer (like KP silo widget) -->
+        <div class="kp-glass-panel rounded-xl p-3 text-center text-slate-400 text-xs border border-slate-700/40">
+          <span class="text-cyan-300 font-medium">📈 KP correction model</span> — dynamic cFCR uses adjustable β (baseline 0.27)
+        </div>
+      </div>
+    </div>
+
+    <!-- additional mortality/livability explanation row aligned with KP style tables -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-xs text-slate-400 border-t border-slate-800/60 pt-6">
+      <div class="flex justify-center gap-2"><span class="text-emerald-400">✦</span> Livability <span class="text-slate-500">= ((Total Birds − Mortality) / Total Birds) × 100</span></div>
+      <div class="flex justify-center gap-2"><span class="text-cyan-400">✦</span> cFCR = FCR − (ALW − 2.45) × β</div>
+      <div class="flex justify-center gap-2"><span class="text-amber-400">✦</span> PIF integrates mortality, weight &amp; feed efficiency</div>
+    </div>
+  </div>
+
+  <script>
+    // DOM elements
+    const feedInput = document.getElementById('feedInput');
+    const weightInput = document.getElementById('weightInput');
+    const totalBirdsInput = document.getElementById('totalBirdsInput');
+    const totalMortalityInput = document.getElementById('totalMortalityInput');
+    const alwInput = document.getElementById('alwInput');
+    const ageInput = document.getElementById('ageInput');
+    const factorSlider = document.getElementById('factorSlider');
+    const factorNumber = document.getElementById('factorNumber');
+    const factorValueDisplay = document.getElementById('factorValueDisplay');
+    const factorDisplayLabel = document.getElementById('factorDisplayLabel');
+    const recalcBtn = document.getElementById('recalcBtn');
+    
+    // result fields
+    const livabilityValueSpan = document.getElementById('livabilityValue');
+    const liveBirdsPreviewSpan = document.getElementById('liveBirdsPreview');
+    const mortCountPreviewSpan = document.getElementById('mortCountPreview');
+    const fcrElem = document.getElementById('fcrValue');
+    const cfcrElem = document.getElementById('cfcrValue');
+    const pifElem = document.getElementById('pifValue');
+    const livabilityPreviewInline = document.getElementById('livabilityPreview');
+
+    function safeNumber(val, fallback = 0) {
+      let num = parseFloat(val);
+      return isNaN(num) ? fallback : num;
+    }
+
+    function computeAll() {
+      // raw values
+      let feed = safeNumber(feedInput.value, 0);
+      let weight = safeNumber(weightInput.value, 0);
+      let totalBirds = safeNumber(totalBirdsInput.value, 1);
+      let mortality = safeNumber(totalMortalityInput.value, 0);
+      let alw = safeNumber(alwInput.value, 0);
+      let age = safeNumber(ageInput.value, 0.1);
+      let factor = safeNumber(factorSlider.value, 0.27);
+
+      // sync factor UI
+      factorNumber.value = factor.toFixed(4);
+      factorValueDisplay.innerText = factor.toFixed(3);
+      factorDisplayLabel.innerText = factor.toFixed(3);
+      
+      // calculate livability and ensure mortality does not exceed total birds
+      if (mortality > totalBirds) mortality = totalBirds;
+      if (totalMortalityInput.value != mortality) totalMortalityInput.value = mortality;
+      
+      let liveBirds = Math.max(0, totalBirds - mortality);
+      let livability = totalBirds > 0 ? (liveBirds / totalBirds) * 100 : 0;
+      livability = Math.min(100, Math.max(0, livability)); // clamp between 0–100
+      
+      // show live birds & mortality preview inside livability card
+      liveBirdsPreviewSpan.innerText = Math.floor(liveBirds);
+      mortCountPreviewSpan.innerText = mortality;
+      livabilityValueSpan.innerText = livability.toFixed(2) + '%';
+      livabilityPreviewInline.innerText = livability.toFixed(2) + '%';
+      
+      // FCR compute: Feed / Live Weight Produced
+      let fcr = 0;
+      if (weight > 0 && feed >= 0) {
+        fcr = feed / weight;
+      } else {
+        fcr = 0;
+      }
+      
+      // cFCR = FCR - (ALW - 2.45) * factor
+      let alwAdjust = (alw - 2.45);
+      let correction = alwAdjust * factor;
+      let cfcr = fcr - correction;
+      
+      // PIF = (Livability × ALW) ÷ (Age × FCR) × 100
+      let pif = 0;
+      if (age > 0 && fcr > 0) {
+        pif = (livability * alw) / (age * fcr) * 100;
+      } else {
+        pif = 0;
+      }
+      
+      // Update DOM with 3 decimals for FCR/cFCR, 2 for PIF
+      fcrElem.innerText = fcr.toFixed(3);
+      cfcrElem.innerText = cfcr.toFixed(3);
+      pifElem.innerText = pif.toFixed(2);
+      
+      // small pop effect on PIF if high performance
+      if(pif > 18) {
+        pifElem.style.textShadow = "0 0 4px #fbbf24";
+      } else {
+        pifElem.style.textShadow = "none";
+      }
+    }
+    
+    // sync factor slider <-> number
+    function updateFactorFromSlider() {
+      let val = safeNumber(factorSlider.value, 0.27);
+      if (val < 0) val = 0;
+      if (val > 0.6) val = 0.6;
+      factorNumber.value = val.toFixed(4);
+      computeAll();
+    }
+    
+    function updateFactorFromNumber() {
+      let val = safeNumber(factorNumber.value, 0.27);
+      if (val < 0) val = 0;
+      if (val > 0.6) val = 0.6;
+      factorSlider.value = val;
+      computeAll();
+    }
+    
+    // attach realtime event listeners
+    const allInputs = [feedInput, weightInput, totalBirdsInput, totalMortalityInput, alwInput, ageInput];
+    allInputs.forEach(inp => inp.addEventListener('input', computeAll));
+    factorSlider.addEventListener('input', updateFactorFromSlider);
+    factorNumber.addEventListener('input', updateFactorFromNumber);
+    recalcBtn.addEventListener('click', computeAll);
+    
+    // additional safety constraints for mortality vs total birds
+    function clampMortality() {
+      let total = safeNumber(totalBirdsInput.value, 1);
+      let mort = safeNumber(totalMortalityInput.value, 0);
+      if (mort > total) {
+        totalMortalityInput.value = total;
+      }
+      computeAll();
+    }
+    totalBirdsInput.addEventListener('change', clampMortality);
+    totalMortalityInput.addEventListener('change', () => {
+      let total = safeNumber(totalBirdsInput.value, 1);
+      let mort = safeNumber(totalMortalityInput.value, 0);
+      if (mort > total) totalMortalityInput.value = total;
+      computeAll();
+    });
+    
+    // initial compute
+    computeAll();
+  </script>
+</body>
+</html>
