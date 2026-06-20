@@ -203,12 +203,12 @@
       max-height: 260px;
       overflow-y: auto;
     }
-    #dailyTableWrap table {
+    #dailyTableWrap table, #projectionTableWrap table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.8rem;
     }
-    #dailyTableWrap th {
+    #dailyTableWrap th, #projectionTableWrap th {
       position: sticky;
       top: 0;
       background: #f1f5f9;
@@ -219,10 +219,18 @@
       color: #334155;
       border-bottom: 2px solid #e2e8f0;
     }
-    #dailyTableWrap td {
+    #dailyTableWrap td, #projectionTableWrap td {
       padding: 0.35rem 0.4rem;
       border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
+    }
+    #projectionTableWrap {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .projection-highlight {
+      background: #fef3c7;
+      font-weight: 600;
     }
 
     .btn-sm {
@@ -254,7 +262,7 @@
 
     @media (max-width: 640px) {
       .glass { padding: 0.75rem; }
-      #dailyTableWrap { max-height: 180px; }
+      #dailyTableWrap, #projectionTableWrap { max-height: 180px; }
     }
   </style>
 </head>
@@ -385,6 +393,32 @@
             </div>
           </div>
 
+          <!-- Projection Table -->
+          <div class="mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <i class="fas fa-chart-simple text-amber-600"></i> Weight projection to clean‑out
+                <span id="projectionInfo" class="text-xs text-slate-400 font-normal ml-1"></span>
+              </h3>
+            </div>
+            <div id="projectionTableWrap" class="rounded-xl border border-slate-200 bg-white/80 overflow-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Age (days)</th>
+                    <th>Projected weight (kg)</th>
+                    <th>Ross standard (kg)</th>
+                    <th>Performance factor</th>
+                  </tr>
+                </thead>
+                <tbody id="projectionTableBody">
+                  <tr><td colspan="4" class="text-center text-slate-400 py-4 text-sm">No data yet. Add a pickup to generate projection.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Based on latest official weight and performance factor. Updates automatically with each pickup.</p>
+          </div>
+
           <!-- Shed Summary -->
           <div id="shedResultCard" class="mt-5 p-4 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/90 to-teal-50/90 hidden">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
@@ -492,7 +526,7 @@
     // ========================================================
     //  LOCAL STORAGE
     // ========================================================
-    const STORAGE_KEY = "ProdResultEstimate_v11";
+    const STORAGE_KEY = "ProdResultEstimate_v12";
 
     function setSaveIndicator(text, colorClass = "text-emerald-500") {
       const el = document.getElementById("saveIndicator");
@@ -565,20 +599,16 @@
     }
 
     // ========================================================
-    //  DAYS BEHIND CALCULATION – find age where Ross weight matches actual
+    //  DAYS BEHIND – find age where Ross weight matches actual
     // ========================================================
     function getDaysBehind(actualWeight, currentAge) {
-      // If actual weight is >= expected at current age, not behind
       const expected = getAdjustedRossWeight(currentAge);
       if (expected === null) return 0;
       if (actualWeight >= expected) return 0;
 
-      // Find the age where Ross weight is closest to actual weight
       let bestAge = 0;
       let bestDiff = Infinity;
-      const allAges = knownDays.slice(); // known ages from 0-58
-
-      for (const age of allAges) {
+      for (const age of knownDays) {
         const w = getAdjustedRossWeight(age);
         if (w === null) continue;
         const diff = Math.abs(w - actualWeight);
@@ -587,10 +617,7 @@
           bestAge = age;
         }
       }
-
-      // Days behind = current age - best age
-      const daysBehind = Math.max(0, currentAge - bestAge);
-      return Math.round(daysBehind);
+      return Math.max(0, currentAge - bestAge);
     }
 
     // ========================================================
@@ -661,12 +688,14 @@
     // DOM refs
     const tbody = document.getElementById('pickupTableBody');
     const dailyBody = document.getElementById('dailyTableBody');
+    const projBody = document.getElementById('projectionTableBody');
     const startBirdsInput = document.getElementById('startingBirds');
     const mortalBirdsInput = document.getElementById('mortalityBirds');
     const placeDateInput = document.getElementById('placementDate');
     const cleanDateInput = document.getElementById('cleanoutDate');
     const dailyCount = document.getElementById('dailyCount');
     const daysBehindDisplay = document.getElementById('daysBehindDisplay');
+    const projectionInfo = document.getElementById('projectionInfo');
 
     // ========================================================
     //  PERSISTENCE
@@ -675,7 +704,7 @@
       try {
         saveCurrentShed();
         const payload = {
-          version: 11,
+          version: 12,
           savedAt: new Date().toISOString(),
           activeShed,
           sheds,
@@ -876,7 +905,6 @@
       }
 
       const sorted = [...pickups].sort((a,b) => a.age - b.age);
-      const maxDaysBehind = shed.adjustments?.maxDaysBehind || 0;
 
       for (let i=0; i<sorted.length; i++) {
         const p = sorted[i];
@@ -920,6 +948,55 @@
       const shed = sheds[shedIdx] || sheds[activeShed];
       const count = (shed.pickups || []).length;
       dailyCount.textContent = count > 0 ? `(${count})` : '';
+    }
+
+    // ========================================================
+    //  PROJECTION TABLE
+    // ========================================================
+    function renderProjectionTable(shedIdx, anchorFactor, targetAge) {
+      const shed = sheds[shedIdx] || sheds[activeShed];
+      const pickups = shed.pickups || [];
+      projBody.innerHTML = '';
+
+      if (pickups.length === 0 || anchorFactor === null) {
+        projBody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-4 text-sm">No anchor yet. Add a pickup to generate projection.</td></tr>`;
+        projectionInfo.textContent = '';
+        return;
+      }
+
+      // Get current age (latest pickup age)
+      const sorted = [...pickups].sort((a,b) => a.age - b.age);
+      const currentAge = sorted[sorted.length-1].age;
+
+      // Determine start and end ages
+      const startAge = Math.max(1, currentAge + 1);
+      const endAge = Math.min(58, targetAge); // cap at 58 for Ross curve
+
+      if (startAge > endAge) {
+        projBody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-4 text-sm">No future days to project (cleanout at day ${targetAge}, current age ${currentAge}).</td></tr>`;
+        projectionInfo.textContent = `(current day ${currentAge}, cleanout ${targetAge})`;
+        return;
+      }
+
+      let rows = '';
+      let highlightRow = endAge;
+      for (let age = startAge; age <= endAge; age++) {
+        const rossW = getAdjustedRossWeight(age);
+        if (rossW === null) continue;
+        const projW = rossW * anchorFactor;
+        const isCleanout = (age === endAge);
+        rows += `
+          <tr class="${isCleanout ? 'projection-highlight' : ''}">
+            <td>${age}</td>
+            <td>${projW.toFixed(3)}</td>
+            <td>${rossW.toFixed(3)}</td>
+            <td>${(anchorFactor * 100).toFixed(1)}%</td>
+          </tr>
+        `;
+      }
+
+      projBody.innerHTML = rows;
+      projectionInfo.textContent = `(from day ${startAge} to ${endAge}, factor ${(anchorFactor * 100).toFixed(1)}%)`;
     }
 
     // ========================================================
@@ -986,7 +1063,6 @@
 
       if (pickupsArray.length > 0) {
         const sorted = [...pickupsArray].sort((a,b) => a.age - b.age);
-        // Count total behind and max days behind
         for (const p of sorted) {
           const rossRef = getAdjustedRossWeight(p.age);
           if (rossRef !== null && rossRef > 0 && p.actualAvg < rossRef) {
@@ -995,7 +1071,6 @@
             if (daysBehind > maxDaysBehind) maxDaysBehind = daysBehind;
           }
         }
-        // Count consecutive behind from latest
         let streak = 0;
         for (let i=sorted.length-1; i>=0; i--) {
           const p = sorted[i];
@@ -1016,7 +1091,6 @@
         shedData.adjustments.maxDaysBehind = maxDaysBehind;
         shedData.adjustments.behindDetected = behindDetected;
 
-        // Apply catch-up only if behindStreak >= 3 and not already applied for this streak
         const streakFlag = 'catchupAppliedThisStreak';
         if (behindDetected && anchorFactor !== null && !shedData.adjustments[streakFlag]) {
           const adj = anchorFactor * (1 + catchupFactor);
@@ -1180,7 +1254,10 @@
           banner.classList.remove('active');
         }
 
-        // --- Farm totals ---
+        // ---- Render projection table ----
+        renderProjectionTable(activeShed, adj.anchorFactor, targetAge);
+
+        // ---- Farm totals ----
         let farmLive = 0, farmAutoFeed = 0, farmStart = 0, farmMort = 0;
         let totalWeightedAge = 0, totalHarvestWeight = 0, totalBirdsHarvested = 0;
         let shedAges = [];
@@ -1291,7 +1368,7 @@
     }
 
     // ========================================================
-    //  IMPORT / EXPORT
+    //  IMPORT / EXPORT  – FIXED: replace data instead of append
     // ========================================================
     function importExcel(file) {
       const reader = new FileReader();
@@ -1312,6 +1389,23 @@
             const idx = (parseInt(shedId) || 0) - 1;
             if (idx < 0 || idx >= 8) continue;
 
+            // --- CLEAR existing data for this shed (replace) ---
+            sheds[idx].pickups = [];
+            sheds[idx].adjustments = {
+              applied: false,
+              triggeredAt: null,
+              catchupFactor: 0.05,
+              anchorFactor: null,
+              anchorAge: null,
+              anchorWeight: null,
+              behindCount: 0,
+              behindStreak: 0,
+              maxDaysBehind: 0,
+              behindDetected: false,
+              catchupAppliedThisStreak: false
+            };
+
+            // Now set new values
             const placeRaw = row.PlacementDate ?? row["Placement Date"];
             const cleanRaw = row.CleanoutDate ?? row["Cleanout Date"];
             if (placeRaw) sheds[idx].placeDate = parseExcelDate(placeRaw);
@@ -1434,7 +1528,7 @@
     refreshAll();
     if (!restored) setSaveIndicator("Ready", "text-emerald-500");
 
-    console.log('🏁 ProdResult.VM — Behind shows days behind the Ross 308 curve');
+    console.log('🏁 ProdResult.VM — Fixed import: replaces data instead of appending');
   </script>
 </body>
 </html>
