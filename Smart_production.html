@@ -3,2174 +3,1382 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Kiripark Smart Silo Planner — Dashboard</title>
+  <title>ProdResult.VM</title>
 
-  <!-- Optional nicer font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+  </script>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
-  <!-- SheetJS -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
   <style>
-    :root{
-      --font: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background-image: url('images/Broiler-free-range.png');
+      background-size: cover;
+      background-position: center center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      position: relative;
     }
-    html, body { font-family: var(--font); }
-    input, button, select, textarea { transition: all 0.08s ease; }
-    /* weekend row left border on first cell */
-.weekend-row td:first-child {
-  border-left: 4px solid #f97316;  /* indigo-400 */
-}
-.weekend-row td {
-  background-color: rgba(249, 115, 22, 0.40); /* light indigo overlay */
-}
-    canvas { display:block; }
-    .card-hover { transition: box-shadow 0.2s, transform 0.15s; }
-    .card-hover:hover { box-shadow: 0 14px 30px rgba(2,6,23,0.10); transform: translateY(-1px); }
-    .sticky-tabs { position: sticky; top: 0; z-index: 80; backdrop-filter: blur(10px); }
-    /* Stronger sticky state */
-    .sticky-tabs.is-stuck > div {
-      background: rgba(255,255,255,0.95) !important;
-      border-color: rgba(148,163,184,0.9) !important; /* slate-400 */
-      box-shadow: 0 18px 44px rgba(2,6,23,0.18) !important;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(16, 185, 129, 0.25), transparent 55%),
+        radial-gradient(900px 600px at 90% 20%, rgba(99, 102, 241, 0.22), transparent 60%),
+        linear-gradient(180deg, rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.35));
+      z-index: -1;
+      pointer-events: none;
     }
 
-    /* subtle top accent line while stuck */
-    .sticky-tabs.is-stuck::before{
-      content:"";
-      position:absolute;
-      left:0; right:0; top:0;
-      height: 3px;
-      background: linear-gradient(90deg,
-        rgba(56,189,248,0.85),
-        rgba(16,185,129,0.65),
-        rgba(168,85,247,0.65));
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
-      pointer-events:none;
+    .glass {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.7);
     }
-    .shadow-soft { box-shadow: 0 10px 28px rgba(2,6,23,0.08); }
-    .focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(56,189,248,0.25); border-color: rgba(56,189,248,0.8); }
 
-    /* chart container fallback sizing (group page only) */
-    .chart-lg { height: 224px; } /* ~h-56 */
-    canvas.w-full.h-full { width: 100% !important; height: 100% !important; }
+    .shed-tab {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .shed-tab.active {
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      color: white;
+      border-color: rgba(16, 185, 129, 0.55);
+      box-shadow: 0 10px 30px -18px rgba(16, 185, 129, 0.65);
+      transform: translateY(-1px);
+    }
+
+    .stat-card {
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 26px -18px rgba(2, 6, 23, 0.35);
+    }
+
+    input, select {
+      transition: all 0.12s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    .factor-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #0f172a;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      z-index: 1000;
+      box-shadow: 0 14px 40px -22px rgba(2, 6, 23, 0.6);
+      animation: fadeOut 3s forwards;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; }
+    }
+
+    footer {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(203, 213, 225, 0.55);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .55rem 1rem;
+      border-radius: 14px;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: transform .12s ease, box-shadow .2s ease, background-color .12s ease;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.9);
+      color: inherit;
+    }
+    .btn:hover {
+      background: rgba(248, 250, 252, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px -18px rgba(2, 6, 23, 0.35);
+      color: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      color: white;
+      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 16px 30px -22px rgba(16, 185, 129, 0.65);
+    }
+    .btn-primary:hover {
+      filter: brightness(1.02);
+      color: white;
+    }
+    .pill {
+      padding: .25rem .6rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.7);
+      font-size: .75rem;
+    }
+
+    .daily-row {
+      transition: background 0.15s ease;
+    }
+    .daily-row:hover {
+      background: rgba(16, 185, 129, 0.06);
+    }
+    .daily-row.official {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid #10b981;
+    }
+    .daily-row.behind {
+      background: rgba(251, 146, 60, 0.10);
+      border-left: 3px solid #fb923c;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .status-badge.on-track {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-badge.behind {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status-badge.adjusted {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .status-badge.official {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .adjustment-banner {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .adjustment-banner.active {
+      display: block;
+    }
+
+    #dailyTableWrap {
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    #dailyTableWrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    #dailyTableWrap th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      z-index: 2;
+      padding: 0.5rem 0.4rem;
+      text-align: left;
+      font-weight: 600;
+      color: #334155;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    #dailyTableWrap td {
+      padding: 0.35rem 0.4rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    .btn-sm {
+      padding: 0.2rem 0.6rem;
+      font-size: 0.7rem;
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      transition: all 0.12s ease;
+    }
+    .btn-sm:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+
+    #shedTabsContainer {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+    #shedTabsContainer::-webkit-scrollbar {
+      height: 4px;
+    }
+    #shedTabsContainer::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+
+    @media (max-width: 640px) {
+      .glass { padding: 0.75rem; }
+      #dailyTableWrap { max-height: 180px; }
+    }
   </style>
 </head>
 
-<body class="bg-gradient-to-b from-slate-50 to-slate-100 text-slate-900 text-[15px]">
-  <div class="max-w-[1400px] mx-auto px-4 py-6 min-h-[calc(100vh-40px)]">
-
-    <!-- HEADER (non-sticky) -->
-    <header class="mb-4">
-      <div class="rounded-3xl border border-slate-200 bg-white/80 shadow-soft overflow-hidden">
-        <div class="px-5 py-4 bg-gradient-to-r from-slate-950 to-slate-800 text-white">
-          <div class="flex items-start justify-between gap-4 flex-wrap">
-            <div class="min-w-[280px]">
-              <h1 class="text-2xl font-bold tracking-tight">Kiripark Farm Manager</h1>
-
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <div class="flex items-center gap-2 bg-white/10 border border-white/15 rounded-xl px-3 py-2">
-                  <span class="text-xs text-white/80 font-semibold">Batch #</span>
-                  <input id="batchNumber" type="text"
-                    class="text-sm bg-transparent text-white placeholder:text-white/40 w-48 focus:outline-none"
-                    placeholder="e.g. BATCH-2026-04"
-                    oninput="setBatchNumber(this.value)" />
-                </div>
-
-                <div id="farmSummary" class="flex flex-wrap gap-2"></div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 flex-wrap">
-              <input id="excelFile" type="file" accept=".xlsx,.xls" class="hidden" />
-              <div class="hidden sm:flex items-center gap-2 text-xs text-white/70">
-                <!-- <span class="px-2 py-1 rounded-lg bg-white/10 border border-white/10">Actions in sticky bar →</span> -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- ✅ STICKY TAB BAR -->
-    <div id="tabsBar" class="sticky-tabs mb-4">
-      <div class="rounded-2xl border border-slate-200 bg-white/80 shadow-soft px-4 py-3">
-        <div id="tabs"></div>
-      </div>
-    </div>
-
-    <main id="app" class="space-y-4"></main>
-  </div>
-
-  <footer class="border-t border-slate-200 bg-white">
-    <div class="max-w-[1400px] mx-auto px-4 py-3 text-center text-xs text-slate-500">
-      Made by Von Mangaron • Personal use only • not for commercial use
-    </div>
-  </footer>
-
-<script>
-/* =========================================================
-   Smooth re-render (preserve scroll + focus)
-========================================================= */
-let _renderTimer = null;
-function scheduleRender(delay = 120) {
-  const scrollY = window.scrollY;
-  const active = document.activeElement;
-  const activeId = active ? active.id : null;
-
-  let cursorPos = null;
-  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") &&
-      typeof active.selectionStart === "number") {
-    cursorPos = active.selectionStart;
-  }
-
-  clearTimeout(_renderTimer);
-  _renderTimer = setTimeout(() => {
-    render();
-    window.scrollTo(0, scrollY);
-
-    if (activeId) {
-      const el = document.getElementById(activeId);
-      if (el) {
-        el.focus();
-        if (cursorPos !== null && typeof el.selectionStart === "number" && el.type !== "date") {
-          el.setSelectionRange(cursorPos, cursorPos);
-        }
-      }
-    }
-  }, delay);
-}
-
-/* =========================================================
-   Ross 308 table (g/bird/day)
-========================================================= */
-const ROSS_308_FEED_INTAKE = {
-  1:19,2:15,3:19,4:24,5:28,6:33,7:37,8:42,9:47,10:51,
-  11:56,12:60,13:65,14:69,15:74,16:78,17:83,18:88,19:92,20:97,
-  21:101,22:106,23:110,24:115,25:119,26:124,27:129,28:133,29:138,30:142,
-  31:147,32:151,33:156,34:160,35:165,36:170,37:174,38:179,39:183,40:188,
-  41:192,42:197,43:201,44:206,45:211,46:215,47:220,48:223,49:225,50:227,
-  51:229,52:230,53:231,54:233,55:233,56:234,57:234,58:234,59:234,60:234
-};
-
-/* =========================================================
-   Date helpers (timezone-safe)
-========================================================= */
-function dateOnly(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
-function iso(d){
-  if (!d) return "";
-  const x = dateOnly(d);
-  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
-}
-function parseISO(s){
-  if (!s) return null;
-  const [y,m,d] = String(s).split("-").map(Number);
-  if (!y||!m||!d) return null;
-  return dateOnly(new Date(y, m-1, d));
-}
-function addDays(d,n){ const x = new Date(dateOnly(d)); x.setDate(x.getDate()+n); return dateOnly(x); }
-
-const _WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const _MO = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-function fmtDateLong(d){
-  if (!d) return "—";
-  const x = dateOnly(d);
-  return `${_WD[x.getDay()]}, ${String(x.getDate()).padStart(2,"0")} ${_MO[x.getMonth()]} ${x.getFullYear()}`;
-}
-function fmtDateDMY(d){
-  if (!d) return "";
-  const x = dateOnly(d);
-  return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`;
-}
-function parseExcelDateDMY(v){
-  if (v == null || v === "") return null;
-  if (v instanceof Date) return dateOnly(v);
-
-  if (typeof v === "number" && Number.isFinite(v)) {
-    const utc = new Date(Math.round((v - 25569) * 86400 * 1000));
-    return dateOnly(new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate()));
-  }
-
-  let s = String(v).trim();
-  if (!s) return null;
-  s = s.split(" ")[0].trim().replaceAll("-", "/").replaceAll(".", "/");
-
-  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return dateOnly(new Date(Number(m[3]), Number(m[2])-1, Number(m[1])));
-
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
-  if (m) {
-    const yy2 = Number(m[3]);
-    const yy = (yy2 <= 79) ? (2000 + yy2) : (1900 + yy2);
-    return dateOnly(new Date(yy, Number(m[2])-1, Number(m[1])));
-  }
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return parseISO(s);
-  return null;
-}
-
-/* =========================================================
-   Default cleanout
-========================================================= */
-function effectiveCleanoutDate(shed){
-  return shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : addDays(shed.placementDate, 54);
-}
-
-/* =========================================================
-   Core business logic
-========================================================= */
-function ageInDays(placementDate, onDate){
-  return Math.max(0, Math.floor((dateOnly(onDate) - dateOnly(placementDate)) / 86400000));
-}
-function rossFeedPerBirdKg(ageDays){
-  if (ageDays <= 0) return 0;
-  const age = Math.min(60, Math.max(1, Math.floor(ageDays)));
-  return (ROSS_308_FEED_INTAKE[age] || 234) / 1000;
-}
-function feedPerBirdKg(shed, ageDays){
-  if (shed.customFeedKg != null && shed.customFeedKg > 0) return shed.customFeedKg;
-  return rossFeedPerBirdKg(ageDays);
-}
-function mortalityAppliedOnDate(shed, onDate){
-  const today = dateOnly(new Date());
-  const d = dateOnly(onDate);
-  if (d < today) return 0;
-  return Number(shed.mortality || 0);
-}
-function totalPickupsUpToDate(shed, onDate){
-  const d = dateOnly(onDate);
-  return (shed.pickups||[]).reduce((t,p)=> t + (dateOnly(p.date) <= d ? (Number(p.birds)||0) : 0), 0);
-}
-function populationOnDate(shed, onDate){
-  const d = dateOnly(onDate);
-  const cleanout = effectiveCleanoutDate(shed);
-  if (cleanout && d > dateOnly(cleanout)) return 0;
-
-  let pop = shed.initialPopulation;
-  pop -= totalPickupsUpToDate(shed, d);
-  pop -= mortalityAppliedOnDate(shed, d);
-  return pop;
-}
-function dailyFeedKg(shed, onDate){
-  const d = dateOnly(onDate);
-  const cleanout = effectiveCleanoutDate(shed);
-  if (cleanout && d > dateOnly(cleanout)) return 0;
-
-  const age = ageInDays(shed.placementDate, d);
-  const pop = Math.max(0, populationOnDate(shed, d));
-  return pop * feedPerBirdKg(shed, age);
-}
-function feedNeededUntilCleanout(shed, referenceDate = new Date()){
-  const end = effectiveCleanoutDate(shed);
-  if (!end) return null;
-
-  const start = dateOnly(referenceDate);
-  const e = dateOnly(end);
-  if (e < start) return 0;
-
-  let total = 0;
-  for (let d = new Date(start); d <= e; d.setDate(d.getDate() + 1)){
-    total += dailyFeedKg(shed, d);
-  }
-  return total;
-}
-function groupDailyFeedKg(groupIndex, onDate){
-  const i = (groupIndex - 1) * 2;
-  return dailyFeedKg(sheds[i], onDate) + dailyFeedKg(sheds[i+1], onDate);
-}
-
-/* =========================================================
-   State + Local persistence
-========================================================= */
-const STORAGE_KEY = "kiripark_farm_manager_v14_dash_silo_deliveries_latest";
-let batchNumber = "";
-let activeTab = "all";
-
-const groupSilos = { 1:["","",""], 2:["","",""], 3:["","",""], 4:["","",""] };
-const groupSilosInUseCount = { 1:3, 2:3, 3:3, 4:3 };
-// Future deliveries per group
-const groupDeliveries = { 1:[], 2:[], 3:[], 4:[] };
-
-function saveState(){
-  try{
-    const payload = {
-      batchNumber, activeTab, groupSilos, groupSilosInUseCount,
-      groupDeliveries: {
-        1: groupDeliveries[1].map(d => ({ date: iso(d.date), amountT: d.amountT, targetSilo: d.targetSilo, overflowSilo: d.overflowSilo })),
-        2: groupDeliveries[2].map(d => ({ date: iso(d.date), amountT: d.amountT, targetSilo: d.targetSilo, overflowSilo: d.overflowSilo })),
-        3: groupDeliveries[3].map(d => ({ date: iso(d.date), amountT: d.amountT, targetSilo: d.targetSilo, overflowSilo: d.overflowSilo })),
-        4: groupDeliveries[4].map(d => ({ date: iso(d.date), amountT: d.amountT, targetSilo: d.targetSilo, overflowSilo: d.overflowSilo }))
-      },
-      sheds: sheds.map(s => ({
-        id: s.id,
-        placementDate: iso(s.placementDate),
-        initialPopulation: s.initialPopulation,
-        cleanoutDate: s.cleanoutDate ? iso(s.cleanoutDate) : null,
-        customFeedKg: s.customFeedKg ?? null,
-        mortality: Number(s.mortality || 0),
-        prevMortalityBeforeFinal: (s.prevMortalityBeforeFinal != null && Number.isFinite(Number(s.prevMortalityBeforeFinal)))
-          ? Number(s.prevMortalityBeforeFinal) : null,
-        prevCleanoutBeforeFinal: s.prevCleanoutBeforeFinal ? iso(s.prevCleanoutBeforeFinal) : null,
-        pickups: (s.pickups||[]).slice(0,5).map(p => ({
-          date: iso(p.date), birds: p.birds, isFinal: !!p.isFinal,
-          variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
-        }))
-      }))
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }catch{}
-}
-
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-
-    if (typeof data.batchNumber === "string") batchNumber = data.batchNumber;
-    if (typeof data.activeTab === "string") activeTab = data.activeTab;
-
-    if (data.groupSilos) for (const g of [1,2,3,4]) if (Array.isArray(data.groupSilos[g])) groupSilos[g] = data.groupSilos[g].slice(0,3);
-    if (data.groupSilosInUseCount) for (const g of [1,2,3,4]) {
-      const n = Number(data.groupSilosInUseCount[g]);
-      if (n>=1 && n<=3) groupSilosInUseCount[g] = n;
-    }
-
-    // Load deliveries
-    if (data.groupDeliveries) {
-      for (const g of [1,2,3,4]) {
-        const arr = data.groupDeliveries[g];
-        if (Array.isArray(arr)) {
-          groupDeliveries[g] = arr.map(d => ({
-            date: parseISO(d.date),
-            amountT: Number(d.amountT) || 0,
-            targetSilo: Number(d.targetSilo) || 1,
-            overflowSilo: d.overflowSilo != null ? Number(d.overflowSilo) : null
-          })).filter(d => d.date && d.amountT > 0);
-        }
-      }
-    }
-
-    if (Array.isArray(data.sheds) && data.sheds.length === 8){
-      for (let i=0;i<8;i++){
-        const s = data.sheds[i];
-        sheds[i].placementDate = parseISO(s.placementDate) || sheds[i].placementDate;
-        sheds[i].initialPopulation = Number(s.initialPopulation) || sheds[i].initialPopulation;
-        sheds[i].cleanoutDate = s.cleanoutDate ? parseISO(s.cleanoutDate) : null;
-        sheds[i].customFeedKg = (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null;
-        sheds[i].mortality = Number(s.mortality || 0);
-
-        sheds[i].prevMortalityBeforeFinal =
-          (s.prevMortalityBeforeFinal != null && Number.isFinite(Number(s.prevMortalityBeforeFinal)))
-            ? Number(s.prevMortalityBeforeFinal) : null;
-        sheds[i].prevCleanoutBeforeFinal = s.prevCleanoutBeforeFinal ? parseISO(s.prevCleanoutBeforeFinal) : null;
-
-        sheds[i].pickups = Array.isArray(s.pickups)
-          ? s.pickups.map(p => ({
-              date: parseISO(p.date),
-              birds: Number(p.birds) || 0,
-              isFinal: !!p.isFinal,
-              variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
-            })).filter(p => p.date && p.birds > 0).slice(0,5)
-          : [];
-
-        // ensure only one final pickup
-        let finalFound = false;
-        sheds[i].pickups.forEach(p => {
-          if (p.isFinal && !finalFound) finalFound = true;
-          else if (p.isFinal && finalFound) p.isFinal = false;
-        });
-
-        sheds[i].pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
-      }
-    }
-    return true;
-  }catch{ return false; }
-}
-
-function resetLocalData(){
-  if (!confirm("Clear locally saved state? (Excel files are not affected)")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-}
-function setBatchNumber(v){
-  batchNumber = String(v ?? "").trim();
-  saveState();
-  scheduleRender(50);
-}
-function setTab(tab){
-  activeTab = tab;
-  saveState();
-  render();
-}
-
-/* =========================================================
-   Initial farm data
-========================================================= */
-const sheds = [];
-(function init(){
-  const today = dateOnly(new Date());
-  for (let i = 1; i <= 8; i++){
-    sheds.push({
-      id: i,
-      placementDate: addDays(today, -10),
-      initialPopulation: 20000 + i * 500,
-      cleanoutDate: null,
-      customFeedKg: null,
-      mortality: 0,
-      prevMortalityBeforeFinal: null,
-      prevCleanoutBeforeFinal: null,
-      pickups: []
-    });
-  }
-  loadState();
-})();
-
-/* =========================================================
-   FINAL PICKUP LOGIC (reversible)
-========================================================= */
-function pickupsTotalBeforeDate(shed, d){
-  const target = dateOnly(d);
-  return (shed.pickups || [])
-    .filter(p => dateOnly(p.date) < target)
-    .reduce((s,p)=>s + (Number(p.birds)||0), 0);
-}
-function getFinalPickup(shed){ return (shed.pickups || []).find(p => p.isFinal); }
-
-function addPickup(shedId){
-  const idx = shedId - 1;
-  const shed = sheds[idx];
-
-  if ((shed.pickups || []).length >= 5) return alert(`Shed ${shedId} already has 5 pickups (maximum).`);
-
-  const dStr = document.getElementById(`pd_${shedId}`).value;
-  const bStr = document.getElementById(`pb_${shedId}`).value;
-  const finalChecked = !!document.getElementById(`pf_${shedId}`)?.checked;
-
-  if (!dStr) return alert("Please choose a pickup date.");
-  const birds = Number(bStr);
-  if (!Number.isFinite(birds) || birds <= 0) return alert("Enter birds removed (> 0).");
-
-  const d = parseISO(dStr);
-  if (!d) return alert("Invalid date.");
-
-  const existingFinal = getFinalPickup(shed);
-  if (existingFinal && dateOnly(d) > dateOnly(existingFinal.date)){
-    return alert(`This shed already has a FINAL pickup on ${fmtDateLong(existingFinal.date)}.\nRemove/unmark it before adding a later pickup.`);
-  }
-
-  const exists = shed.pickups.some(p => iso(p.date) === iso(d));
-  if (exists) return alert("Pickup already exists on that date for this shed.");
-
-  const I = Number(shed.initialPopulation || 0);
-  const M = Number(shed.mortality || 0);
-  const Pprev = pickupsTotalBeforeDate(shed, d);
-  const LiveExpected = I - Pprev - M;
-  const Variance = birds - LiveExpected;
-
-  const pickupObj = { date:d, birds:Math.floor(birds), isFinal:!!finalChecked, variance:Number.isFinite(Variance)?Variance:null };
-
-  if (pickupObj.isFinal){
-    (shed.pickups || []).forEach(p => p.isFinal = false);
-
-    shed.prevMortalityBeforeFinal = Number.isFinite(Number(shed.mortality)) ? Number(shed.mortality) : 0;
-    shed.prevCleanoutBeforeFinal = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : null;
-
-    const NewMortality = I - (Pprev + pickupObj.birds);
-    shed.mortality = Math.floor(NewMortality);
-    shed.cleanoutDate = dateOnly(d);
-  }
-
-  shed.pickups.push(pickupObj);
-  shed.pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
-
-  document.getElementById(`pd_${shedId}`).value = "";
-  document.getElementById(`pb_${shedId}`).value = "";
-  const f = document.getElementById(`pf_${shedId}`); if (f) f.checked = false;
-
-  saveState();
-  render();
-}
-
-function removePickup(shedId, dateIso){
-  const idx = shedId - 1;
-  const shed = sheds[idx];
-  const before = shed.pickups || [];
-  const removed = before.find(p => iso(p.date) === dateIso);
-
-  shed.pickups = before.filter(p => iso(p.date) !== dateIso);
-
-  if (removed?.isFinal){
-    if (shed.prevMortalityBeforeFinal != null && Number.isFinite(Number(shed.prevMortalityBeforeFinal))){
-      shed.mortality = Math.floor(Number(shed.prevMortalityBeforeFinal));
-    }
-    shed.cleanoutDate = shed.prevCleanoutBeforeFinal ? dateOnly(shed.prevCleanoutBeforeFinal) : null;
-    shed.prevMortalityBeforeFinal = null;
-    shed.prevCleanoutBeforeFinal = null;
-  }
-
-  saveState();
-  render();
-}
-
-/* =========================================================
-   Silos logic
-========================================================= */
-function siloTonsFromInput(input){
-  const v = String(input ?? "").trim();
-  if (v === "") return 0;
-  const rings = Number(v);
-  if (!Number.isFinite(rings)) return 0;
-  const r = Math.max(0, Math.min(5, Math.floor(rings)));
-  return 10 + (8 * r);
-}
-const SILO_MAX_T = 50; // 5 rings = 50t
-
-/* Table end date: LATEST cleanout date (not earliest) */
-function groupSiloTableEndDate(groupIndex){
-  const today = dateOnly(new Date());
-  const defaultEnd = addDays(today, 19);
-
-  const i = (groupIndex - 1) * 2;
-  const cA = effectiveCleanoutDate(sheds[i]);
-  const cB = effectiveCleanoutDate(sheds[i+1]);
-
-  const candidates = [cA, cB].filter(Boolean).map(dateOnly);
-  if (!candidates.length) return defaultEnd;
-
-  // Use the LATEST cleanout date (maximum)
-  const latest = candidates.sort((a,b)=>b-a)[0];
-  return latest;
-}
-
-function groupFeedNeededUntilCleanout(groupIndex){
-  const i = (groupIndex - 1) * 2;
-  const today = dateOnly(new Date());
-  const a = feedNeededUntilCleanout(sheds[i], today);
-  const b = feedNeededUntilCleanout(sheds[i+1], today);
-  if (a == null || b == null) return null;
-  return a + b;
-}
-
-/* =========================================================
-   Forecast / depletion table (with deliveries)
-   ✅ returns: orderDate, runoutDate, per-silo empty dates, days to empty
-   ✅ stable consumption order: Silo 1 -> 2 -> 3 (re-evaluated each day)
-========================================================= */
-function fadeRowClassByRemaining(remT, startT){
-  if (startT <= 0) return "bg-white";
-  const p = remT / startT;
-  if (remT <= 0) return "bg-rose-50";
-  if (p <= 0.25) return "bg-orange-50";
-  if (p <= 0.5) return "bg-yellow-50";
-  return "bg-emerald-50";
-}
-function cellClassForSiloRemaining(t){
-  if (t <= 0) return "bg-rose-100 text-rose-800";
-  if (t <= 12.5) return "bg-orange-100 text-orange-800";
-  if (t <= 25) return "bg-yellow-100 text-yellow-800";
-  return "bg-emerald-100 text-emerald-800";
-}
-
-function forecastGroupSiloDepletionTable(groupIndex, siloTonsAll, activeCount, orderThresholdT, endDate, deliveries = []){
-  const today = dateOnly(new Date());
-  const end = dateOnly(endDate);
-  const MAX_DAYS = 600;
-
-  const active = siloTonsAll.slice(0, activeCount).map(x => Math.max(0, Number(x||0)));
-  const siloKg = active.map(t => Math.round(t * 1000)); // mutable
-  const totalStartKg = siloKg.reduce((a,b)=>a+b,0);
-  const totalStartT = totalStartKg / 1000;
-
-  let orderDate = null;
-  let runoutDate = null;
-  let totalKg = totalStartKg;
-
-  const emptyDateBySilo = { 1:null, 2:null, 3:null };
-
-  let rows = "";
-
-  for (let dayOffset = 0; dayOffset < MAX_DAYS; dayOffset++){
-    const day = addDays(today, dayOffset);
-    const dayOfWeek = day.getDay();      // 0 = Sunday, 6 = Saturday
-    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-    let weekendClass = isWeekend ? ' weekend-row' : '';
-    if (day > end) break;
-
-    // ---- APPLY DELIVERIES ON THIS DAY ----
-    const dayDeliveries = deliveries.filter(d => iso(d.date) === iso(day));
-    for (const del of dayDeliveries) {
-      let amountKg = Math.round(del.amountT * 1000);
-      const targetIdx = del.targetSilo - 1;
-      const overflowIdx = (del.overflowSilo != null && del.overflowSilo >= 1 && del.overflowSilo <= activeCount) ? del.overflowSilo - 1 : null;
-
-      // Add to primary silo up to max
-      if (targetIdx < activeCount) {
-        const space = Math.max(0, SILO_MAX_T * 1000 - siloKg[targetIdx]);
-        const addPrimary = Math.min(amountKg, space);
-        siloKg[targetIdx] += addPrimary;
-        amountKg -= addPrimary;
-        totalKg += addPrimary;
-      }
-
-      // Overflow to secondary if any left
-      if (amountKg > 0 && overflowIdx !== null && overflowIdx < activeCount) {
-        const space = Math.max(0, SILO_MAX_T * 1000 - siloKg[overflowIdx]);
-        const addOverflow = Math.min(amountKg, space);
-        siloKg[overflowIdx] += addOverflow;
-        amountKg -= addOverflow;
-        totalKg += addOverflow;
-      }
-
-      // Any remaining amount is lost (exceeds capacity)
-    }
-
-    const useKg = Math.max(0, groupDailyFeedKg(groupIndex, day));
-    const beforeKg = totalKg;
-
-    let needKg = useKg;
-    const usedSilosToday = new Set();
-    const emptiedToday = [];
-
-    // Consume in order Silo 1 → 2 → 3
-    for (let idx = 0; idx < activeCount && needKg > 0; idx++) {
-      if (siloKg[idx] <= 0) continue;
-      usedSilosToday.add(idx + 1);
-      const take = Math.min(siloKg[idx], needKg);
-      siloKg[idx] -= take;
-      totalKg -= take;
-      needKg -= take;
-
-      if (siloKg[idx] <= 0 && beforeKg > 0) {
-        const sid = idx + 1;
-        emptiedToday.push(sid);
-        if (!emptyDateBySilo[sid]) emptyDateBySilo[sid] = dateOnly(day);
-      }
-    }
-
-    const remainingT = Math.max(0, totalKg / 1000);
-    const beforeT = Math.max(0, beforeKg / 1000);
-
-    if (!orderDate && totalStartKg > 0 && remainingT <= orderThresholdT && remainingT > 0) orderDate = day;
-    if (!runoutDate && totalStartKg > 0 && totalKg <= 0) runoutDate = day;
-
-    let badges = "";
-    if (orderDate && iso(day) === iso(orderDate)) badges += `<span class="ml-2 text-[11px] font-semibold text-amber-800">🟡 ORDER (≤ ${orderThresholdT}T)</span>`;
-    if (emptiedToday.length) badges += `<span class="ml-2 text-[11px] font-semibold text-rose-700">🔴 Empty: ${emptiedToday.join(", ")}</span>`;
-    if (runoutDate && iso(day) === iso(runoutDate)) badges += `<span class="ml-2 text-[11px] font-semibold text-rose-800">⛔ TOTAL EMPTY</span>`;
-
-    const rowFade = fadeRowClassByRemaining(remainingT, totalStartT);
-    const usedLabel = usedSilosToday.size ? `Silo ${Array.from(usedSilosToday).join(", ")}` : "-";
-
-    const s1 = (siloKg[0] ?? 0) / 1000;
-    const s2 = (siloKg[1] ?? 0) / 1000;
-    const s3 = (siloKg[2] ?? 0) / 1000;
-
-    rows += `
-      <tr class="border-t ${rowFade}${weekendClass}">
-        <td class="py-2 px-3 whitespace-nowrap">${fmtDateLong(day)}${badges}</td>
-        <td class="py-2 px-3 font-medium">${useKg.toFixed(0)}</td>
-        <td class="py-2 px-3">${beforeT.toFixed(2)}</td>
-        <td class="py-2 px-3 font-semibold">${remainingT.toFixed(2)}</td>
-        <td class="py-2 px-3">${usedLabel}</td>
-        <td class="py-2 px-3"><span class="px-2 py-1 rounded-lg text-[11px] font-semibold ${cellClassForSiloRemaining(s1)}">${s1.toFixed(2)}T</span></td>
-        <td class="py-2 px-3"><span class="px-2 py-1 rounded-lg text-[11px] font-semibold ${cellClassForSiloRemaining(s2)}">${s2.toFixed(2)}T</span></td>
-        <td class="py-2 px-3"><span class="px-2 py-1 rounded-lg text-[11px] font-semibold ${cellClassForSiloRemaining(s3)}">${s3.toFixed(2)}T</span></td>
-      </tr>
-    `;
-
-    if (totalKg <= 0) break;
-    if (useKg <= 0 && dayOffset > 35) break;
-  }
-
-  const daysToEmptyBySilo = {
-    1: emptyDateBySilo[1] ? Math.max(0, Math.ceil((emptyDateBySilo[1] - today)/86400000)) : null,
-    2: emptyDateBySilo[2] ? Math.max(0, Math.ceil((emptyDateBySilo[2] - today)/86400000)) : null,
-    3: emptyDateBySilo[3] ? Math.max(0, Math.ceil((emptyDateBySilo[3] - today)/86400000)) : null,
-  };
-
-  const daysRemainingTotal = runoutDate ? Math.max(0, Math.ceil((runoutDate - today)/86400000)) : null;
-
-  return {
-    totalStartT,
-    orderDate,
-    runoutDate,
-    daysRemainingTotal,
-    emptyDateBySilo,
-    daysToEmptyBySilo,
-    rows,
-    tableEnd: end
-  };
-}
-</script>
-<script>
-/* =========================================================
-   UI helpers
-========================================================= */
-function pill(text, tone="slate"){
-  const map = {
-    slate:  "bg-slate-100 text-slate-700",
-    green:  "bg-emerald-100 text-emerald-800",
-    amber:  "bg-amber-100 text-amber-800",
-    orange: "bg-orange-100 text-orange-800",
-    red:    "bg-rose-100 text-rose-800",
-    blue:   "bg-sky-100 text-sky-800",
-    violet: "bg-violet-100 text-violet-800"
-  };
-  return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold ${map[tone] || map.slate}">${text}</span>`;
-}
-function statLine(label, value){
-  return `
-    <div class="flex items-center justify-between gap-3 text-[13px] leading-5">
-      <span class="text-slate-500">${label}</span>
-      <span class="font-semibold text-slate-900">${value}</span>
-    </div>
-  `;
-}
-function pct(n){
-  if (!Number.isFinite(n)) return "0.00%";
-  return `${n.toFixed(2)}%`;
-}
-function signed(n){
-  const x = Number(n||0);
-  const s = x > 0 ? "+" : "";
-  return `${s}${x.toLocaleString()}`;
-}
-
-/* =========================================================
-   Tabs (sticky)
-========================================================= */
-function tabsView(){
-  const tabs = [
-    { id: "all", label: "Dashboard" },
-    { id: "g1", label: "Group 1" },
-    { id: "g2", label: "Group 2" },
-    { id: "g3", label: "Group 3" },
-    { id: "g4", label: "Group 4" },
-  ];
-
-  const iconBtn = (onClick, label, svg, extra="") => `
-    <button
-      onclick="${onClick}"
-      class="group relative inline-flex items-center justify-center
-             w-10 h-10 rounded-xl border border-slate-200 bg-white
-             text-slate-700 hover:bg-slate-50 hover:text-slate-900
-             shadow-sm ${extra}"
-      aria-label="${label}"
-      title="${label}"
-    >
-      ${svg}
-      <span class="pointer-events-none absolute -bottom-11 right-0 z-50 whitespace-nowrap
-                   rounded-lg bg-slate-900 text-white text-xs font-semibold px-2.5 py-1
-                   opacity-0 translate-y-1
-                   group-hover:opacity-100 group-hover:translate-y-0
-                   group-focus-visible:opacity-100 group-focus-visible:translate-y-0
-                   transition"
-      >
-        ${label}
-      </span>
-    </button>
-  `;
-
-  const icoImport = `
-    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 3v10"></path>
-      <path d="M8 9l4 4 4-4"></path>
-      <path d="M4 17h16v4H4z"></path>
-    </svg>
-  `;
-  const icoExport = `
-    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 21V11"></path>
-      <path d="M16 15l-4-4-4 4"></path>
-      <path d="M4 3h16v4H4z"></path>
-    </svg>
-  `;
-  const icoRecalc = `
-    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 12a9 9 0 1 1-3-6.7"></path>
-      <path d="M21 3v6h-6"></path>
-    </svg>
-  `;
-  const icoReset = `
-    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 6h18"></path>
-      <path d="M8 6V4h8v2"></path>
-      <path d="M7 6l1 16h8l1-16"></path>
-      <path d="M10 11v6"></path>
-      <path d="M14 11v6"></path>
-    </svg>
-  `;
-
-  return `
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex flex-wrap gap-2">
-        ${tabs.map(t => {
-          const active = t.id === activeTab;
-          return `
-            <button onclick="setTab('${t.id}')"
-              class="px-3.5 py-2 rounded-xl text-sm border font-semibold
-                ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}">
-              ${t.label}
-            </button>
-          `;
-        }).join("")}
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div class="hidden sm:block h-7 w-px bg-slate-200 mx-1"></div>
-        ${iconBtn("triggerExcelImport()", "Import Excel", icoImport)}
-        ${iconBtn("exportExcel()", "Export Excel", icoExport)}
-        ${iconBtn("render()", "Recalculate", icoRecalc)}
-        ${iconBtn("resetLocalData()", "Reset local", icoReset, "border-rose-200 text-rose-700 hover:text-rose-800 hover:bg-rose-50")}
-      </div>
-    </div>
-  `;
-}
-
-/* =========================================================
-   Summary helpers
-========================================================= */
-function shedTotalPickedUp(shed){
-  return (shed.pickups || []).reduce((s,p)=>s + (Number(p.birds)||0), 0);
-}
-function shedMortalityRate(shed){
-  const init = Number(shed.initialPopulation||0);
-  const mort = Number(shed.mortality || 0);
-  if (init <= 0) return 0;
-  return (mort / init) * 100;
-}
-function groupSummary(groupIndex){
-  const today = dateOnly(new Date());
-  const i = (groupIndex - 1) * 2;
-  const a = sheds[i], b = sheds[i+1];
-
-  const init = (a.initialPopulation||0) + (b.initialPopulation||0);
-  const mort = Number(a.mortality||0) + Number(b.mortality||0);
-  const picked = shedTotalPickedUp(a) + shedTotalPickedUp(b);
-  const live = populationOnDate(a, today) + populationOnDate(b, today);
-  const mortRate = (init > 0) ? (mort / init) * 100 : 0;
-
-  return { init, mort, picked, live, mortRate };
-}
-function farmSummary(){
-  const today = dateOnly(new Date());
-  const init = sheds.reduce((s,x)=>s + (Number(x.initialPopulation)||0), 0);
-  const mort = sheds.reduce((s,x)=>s + Number(x.mortality||0), 0);
-  const picked = sheds.reduce((s,x)=>s + shedTotalPickedUp(x), 0);
-  const live = sheds.reduce((s,x)=>s + populationOnDate(x, today), 0);
-
-  const mortRate = (init > 0) ? (mort / init) * 100 : 0;
-  const pickedRate = (init > 0) ? (picked / init) * 100 : 0;
-
-  return { init, mort, picked, live, mortRate, pickedRate };
-}
-
-/* =========================================================
-   ✅ Silo Insights computation for Dashboard + Group Panel
-   (Net balance now includes future deliveries)
-========================================================= */
-function computeGroupSiloInsights(groupIndex){
-  const inputs = groupSilos[groupIndex];
-  const activeCount = groupSilosInUseCount[groupIndex] ?? 3;
-
-  const t1 = siloTonsFromInput(inputs[0]);
-  const t2 = siloTonsFromInput(inputs[1]);
-  const t3 = siloTonsFromInput(inputs[2]);
-
-  const activeTotalT = [t1,t2,t3].slice(0, activeCount).reduce((a,b)=>a+b,0);
-
-  const end = groupSiloTableEndDate(groupIndex);
-  const deliveries = groupDeliveries[groupIndex] || [];
-  const sim = forecastGroupSiloDepletionTable(groupIndex, [t1,t2,t3], activeCount, 70, end, deliveries);
-
-  const cleanoutKg = groupFeedNeededUntilCleanout(groupIndex);
-  const neededT = (cleanoutKg == null) ? null : (cleanoutKg / 1000);
-  
-  // Sum all future deliveries for this group
-  const totalDeliveryT = deliveries.reduce((sum, d) => sum + d.amountT, 0);
-  
-  const netT = (neededT == null) ? null : (activeTotalT + totalDeliveryT - neededT);
-
-  const daysToEmpty = sim.daysToEmptyBySilo || {1:null,2:null,3:null};
-
-  return {
-    activeCount,
-    t1,t2,t3,
-    activeTotalT,
-    totalDeliveryT,
-    orderDate: sim.orderDate || null,
-    runoutDate: sim.runoutDate || null,
-    daysRemainingTotal: sim.daysRemainingTotal ?? null,
-    neededT,
-    cleanoutKg,
-    netT,
-    daysToEmpty,
-    tableEnd: sim.tableEnd,
-    tableRowsHtml: sim.rows || ""
-  };
-}
-
-function fmtDays(n){
-  if (n == null) return "—";
-  if (!Number.isFinite(n)) return "—";
-  return `${n} day${n===1?"":"s"}`;
-}
-
-/* =========================================================
-   ✅ Dashboard Silo Insights Card (NO chart)
-========================================================= */
-function dashboardSiloInsightsCard(groupIndex){
-  const s = computeGroupSiloInsights(groupIndex);
-
-  const netTone = (s.netT == null) ? "slate" : (s.netT >= 0 ? "green" : "red");
-
-  const silo1Txt = s.daysToEmpty[1] == null ? "—" : `${fmtDays(s.daysToEmpty[1])}`;
-  const silo2Txt = s.daysToEmpty[2] == null ? "—" : `${fmtDays(s.daysToEmpty[2])}`;
-  const silo3Txt = s.daysToEmpty[3] == null ? "—" : `${fmtDays(s.daysToEmpty[3])}`;
-
-  const activeBadge = pill(`Silos in use: ${s.activeCount}`, "violet");
-
-  return `
-    <div class="rounded-2xl border border-slate-200 bg-white p-3">
-      <div class="flex items-start justify-between gap-2">
-        <div>
-          <div class="text-sm font-bold leading-4">🛢️ Silo Insights</div>
-          <div class="text-[12px] text-slate-500 mt-0.5">Dashboard</div>
-        </div>
-        ${activeBadge}
-      </div>
-
-      <div class="mt-2 space-y-1.5">
-        ${statLine("Suggested order date", s.orderDate ? `<span class="text-amber-700 font-bold">${fmtDateLong(s.orderDate)}</span>` : `<span class="text-slate-600">—</span>`)}
-        ${statLine("Feed needed before cleanout", (s.neededT==null) ? "—" : `<span class="font-bold">${s.neededT.toFixed(2)} t</span> <span class="text-slate-500">(${s.cleanoutKg.toFixed(0)} kg)</span>`)}
-        ${statLine("Net balance", (s.netT==null) ? "—" : `
-          <span>
-            <span class="${s.netT>=0?'text-emerald-700':'text-rose-700'} font-bold">${s.netT.toFixed(2)} t</span>
-            <span class="text-[10px] text-slate-400 ml-1">(incl. deliveries)</span>
-          </span>
-        `)}
-      </div>
-
-      <div class="mt-3 pt-3 border-t border-slate-100">
-        <div class="text-xs font-semibold text-slate-700 mb-2">Days until empty (per silo)</div>
-        <div class="grid grid-cols-3 gap-2">
-          <div class="rounded-xl border border-slate-200 p-2">
-            <div class="text-xs text-slate-500">Silo 1</div>
-            <div class="text-sm font-bold">${silo1Txt}</div>
-          </div>
-          <div class="rounded-xl border border-slate-200 p-2">
-            <div class="text-xs text-slate-500">Silo 2</div>
-            <div class="text-sm font-bold">${silo2Txt}</div>
-          </div>
-          <div class="rounded-xl border border-slate-200 p-2">
-            <div class="text-xs text-slate-500">Silo 3</div>
-            <div class="text-sm font-bold">${silo3Txt}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
-        ${statLine("Current tonnes (S1/S2/S3)", `${s.t1.toFixed(2)} / ${s.t2.toFixed(2)} / ${s.t3.toFixed(2)} t`)}
-        ${statLine("Active total", `${s.activeTotalT.toFixed(2)} t`)}
-      </div>
-    </div>
-  `;
-}
-
-/* =========================================================
-   ✅ Flicker Fix: Partial silo refresh only (NO full render on typing)
-========================================================= */
-let _siloUiTimers = {};
-function refreshSiloUI(groupId){
-  clearTimeout(_siloUiTimers[groupId]);
-  _siloUiTimers[groupId] = setTimeout(() => {
-    // 1) Dashboard: update silo insights block if present
-    const dashEl = document.getElementById(`dash_silo_insights_g${groupId}`);
-    if (dashEl) dashEl.innerHTML = dashboardSiloInsightsCard(groupId);
-
-    // 2) Group tab: update metrics + table + chart + delivery list if visible
-    const metricsEl = document.getElementById(`group_silo_metrics_g${groupId}`);
-    const tableEl = document.getElementById(`group_silo_table_g${groupId}`);
-    const deliveriesListEl = document.getElementById(`deliveries_list_g${groupId}`);
-
-    if (metricsEl || tableEl || deliveriesListEl) {
-      const s = computeGroupSiloInsights(groupId);
-
-      if (metricsEl){
-        const netTxt = (s.netT==null) ? "—" : `${s.netT.toFixed(2)} t`;
-        const netCls = (s.netT==null) ? "text-slate-700" : (s.netT>=0 ? "text-emerald-700" : "text-rose-700");
-        metricsEl.innerHTML = `
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-2">Suggested Order Date (≤ 70T)</div>
-              ${s.orderDate
-                ? `<div class="text-2xl font-bold text-amber-700">${fmtDateLong(s.orderDate)}</div>`
-                : `<div class="text-sm text-slate-600">No order trigger found.</div>`}
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-2">Feed Needed Until Cleanout</div>
-              ${s.neededT == null
-                ? `<div class="text-sm text-slate-600">—</div>`
-                : `<div class="text-2xl font-bold">${s.neededT.toFixed(2)} <span class="text-base font-semibold text-slate-600">t</span></div>
-                   <div class="text-sm text-slate-600 mt-1">${s.cleanoutKg.toFixed(0)} kg</div>`}
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-2">Net Feed Balance</div>
-              ${s.netT == null
-                ? `<div class="text-sm text-slate-600">—</div>`
-                : `<div class="text-2xl font-bold ${netCls}">${netTxt}</div>
-                   <div class="text-sm text-slate-600 mt-1">${s.netT >= 0 ? "Surplus" : "Deficit"}</div>
-                   <div class="text-[11px] text-slate-400 mt-1">(includes scheduled deliveries)</div>`}
-            </div>
-          </div>
-
-          <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-1">Days until Silo 1 empty</div>
-              <div class="text-xl font-bold">${fmtDays(s.daysToEmpty[1])}</div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-1">Days until Silo 2 empty</div>
-              <div class="text-xl font-bold">${fmtDays(s.daysToEmpty[2])}</div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-1">Days until Silo 3 empty</div>
-              <div class="text-xl font-bold">${fmtDays(s.daysToEmpty[3])}</div>
-            </div>
-          </div>
-        `;
-      }
-
-      if (tableEl){
-        tableEl.innerHTML = s.tableRowsHtml || `<tr class="border-t"><td class="py-2 px-3" colspan="8"><em>— enter silo rings —</em></td></tr>`;
-      }
-
-      if (deliveriesListEl) {
-        deliveriesListEl.innerHTML = renderDeliveriesList(groupId);
-      }
-
-      updateSiloChartsForGroup(groupId);
-    }
-
-  }, 120);
-}
-
-function setSiloInput(groupId, siloIndex, value){
-  groupSilos[groupId][siloIndex] = value;
-  saveState();
-  refreshSiloUI(groupId);
-}
-
-function setSilosInUse(groupId, count){
-  const n = Math.max(1, Math.min(3, Number(count)));
-  groupSilosInUseCount[groupId] = n;
-  saveState();
-  render();
-}
-
-/* =========================================================
-   Deliveries management
-========================================================= */
-function addDelivery(groupId) {
-  const dateStr = document.getElementById(`del_date_${groupId}`)?.value;
-  const amountStr = document.getElementById(`del_amount_${groupId}`)?.value;
-  const targetStr = document.getElementById(`del_target_${groupId}`)?.value;
-  const overflowStr = document.getElementById(`del_overflow_${groupId}`)?.value;
-
-  if (!dateStr) return alert("Select a delivery date.");
-  const date = parseISO(dateStr);
-  if (!date) return alert("Invalid date.");
-
-  const amount = Number(amountStr);
-  if (!Number.isFinite(amount) || amount <= 0) return alert("Enter a positive amount (tonnes).");
-
-  const targetSilo = Number(targetStr);
-  if (![1,2,3].includes(targetSilo)) return alert("Select a primary silo (1-3).");
-
-  let overflowSilo = overflowStr === "" ? null : Number(overflowStr);
-  if (overflowSilo !== null && ![1,2,3].includes(overflowSilo)) overflowSilo = null;
-
-  // Add to state
-  if (!groupDeliveries[groupId]) groupDeliveries[groupId] = [];
-  groupDeliveries[groupId].push({
-    date: dateOnly(date),
-    amountT: amount,
-    targetSilo,
-    overflowSilo
-  });
-
-  // Sort by date
-  groupDeliveries[groupId].sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-
-  saveState();
-  refreshSiloUI(groupId);
-
-  // Clear form
-  document.getElementById(`del_date_${groupId}`).value = "";
-  document.getElementById(`del_amount_${groupId}`).value = "";
-  document.getElementById(`del_target_${groupId}`).value = "1";
-  document.getElementById(`del_overflow_${groupId}`).value = "";
-}
-
-function removeDelivery(groupId, index) {
-  if (!groupDeliveries[groupId]) return;
-  groupDeliveries[groupId].splice(index, 1);
-  saveState();
-  refreshSiloUI(groupId);
-}
-
-function renderDeliveriesList(groupId) {
-  const deliveries = groupDeliveries[groupId] || [];
-  if (deliveries.length === 0) {
-    return `<div class="text-sm text-slate-500 italic">No future deliveries scheduled.</div>`;
-  }
-
-  return `
-    <div class="space-y-1">
-      ${deliveries.map((d, idx) => {
-        const overflowText = d.overflowSilo ? ` → Silo ${d.overflowSilo}` : "";
-        return `
-          <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-slate-50 text-sm">
-            <span>
-              <span class="font-semibold">${fmtDateLong(d.date)}</span> — 
-              ${d.amountT.toFixed(2)} t to Silo ${d.targetSilo}${overflowText}
-            </span>
-            <button onclick="removeDelivery(${groupId}, ${idx})"
-              class="text-rose-600 hover:text-rose-800 text-xs font-semibold px-2 py-1">✕</button>
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
-}
-
-/* =========================================================
-   Charts (Group page only) — stable no-flicker
-========================================================= */
-const _charts = new Map();
-
-function destroyChart(id){
-  const ch = _charts.get(id);
-  if (ch) { ch.destroy(); _charts.delete(id); }
-}
-
-function isMeasurable(el){
-  if (!el) return false;
-  const r = el.getBoundingClientRect();
-  return r.width > 10 && r.height > 10;
-}
-
-function upsertChart(id, config, retries = 10){
-  const canvas = document.getElementById(id);
-  if (!canvas) { destroyChart(id); return; }
-
-  const parent = canvas.parentElement || canvas;
-  if (!isMeasurable(parent)) {
-    if (retries > 0) return setTimeout(()=>upsertChart(id, config, retries-1), 80);
-    return;
-  }
-
-  let existing = _charts.get(id);
-  if (existing && existing.canvas !== canvas) {
-    existing.destroy();
-    _charts.delete(id);
-    existing = null;
-  }
-
-  if (existing) {
-    existing.data = config.data;
-    existing.options = config.options;
-    existing.update();
-    existing.resize();
-    return;
-  }
-
-  const chart = new Chart(canvas.getContext("2d"), config);
-  _charts.set(id, chart);
-  setTimeout(()=>{ try{ chart.resize(); }catch{} }, 120);
-}
-
-function updateSiloChartsForGroup(groupId){
-  if (typeof Chart === "undefined") return;
-
-  const canvasId = `chart_g${groupId}_silo_levels`;
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-
-  const inputs = groupSilos[groupId];
-  const activeCount = groupSilosInUseCount[groupId] ?? 3;
-
-  const t1 = siloTonsFromInput(inputs[0]);
-  const t2 = siloTonsFromInput(inputs[1]);
-  const t3 = siloTonsFromInput(inputs[2]);
-
-  const colors = [
-    activeCount >= 1 ? "#34d399" : "#cbd5e1",
-    activeCount >= 2 ? "#60a5fa" : "#cbd5e1",
-    activeCount >= 3 ? "#a78bfa" : "#cbd5e1",
-  ];
-
-  upsertChart(canvasId, {
-    type: "bar",
-    data: {
-      labels: ["Silo 1","Silo 2","Silo 3"],
-      datasets: [{
-        label: "Tonnes (t)",
-        data: [t1,t2,t3],
-        backgroundColor: colors,
-        borderRadius: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, suggestedMax: Math.max(80, Math.max(t1,t2,t3) * 1.2) } },
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-function initCharts(){
-  if (typeof Chart === "undefined") return;
-  const groupTabMap = { g1:1, g2:2, g3:3, g4:4 };
-  const g = groupTabMap[activeTab];
-
-  for (let gi=1; gi<=4; gi++){
-    if (g !== gi) destroyChart(`chart_g${gi}_silo_levels`);
-  }
-  if (g) updateSiloChartsForGroup(g);
-}
-
-function postRender(){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    setTimeout(initCharts, 30);
-    setTimeout(initCharts, 180);
-  }));
-}
-window.addEventListener("resize", ()=>setTimeout(initCharts, 160));
-
-/* =========================================================
-   Pickups table (Variance & Type removed)
-========================================================= */
-function pickupsTableAll(shed){
-  const today = dateOnly(new Date());
-  const all = (shed.pickups || []).slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
-  if (!all.length) return `<p class="text-sm text-slate-500"><em>No pickups yet</em></p>`;
-
-  const rows = all.map(p => {
-    const pd = dateOnly(p.date);
-    const isPast = pd < today;
-
-    const finalBadge = p.isFinal ? `<span class="ml-2">${pill("FINAL", "amber")}</span>` : "";
-    const whenBadge = isPast ? pill("Past", "slate") : pill("Upcoming", "green");
-
-    return `
-      <tr class="border-t ${isPast ? "bg-slate-50" : ""}">
-        <td class="py-2 px-3 whitespace-nowrap">
-          ${fmtDateLong(pd)}
-          <span class="ml-2">${whenBadge}</span>
-          ${finalBadge}
-        </td>
-        <td class="py-2 px-3">${p.birds.toLocaleString()}</td>
-        <td class="py-2 px-3">
-          <button class="px-2 py-1 text-xs rounded-md bg-rose-600 text-white hover:bg-rose-500"
-            onclick="removePickup(${shed.id}, '${iso(pd)}')">Remove</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
-
-  return `
-    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-slate-700">
-          <tr>
-            <th class="py-2 px-3 text-left font-semibold">Date</th>
-            <th class="py-2 px-3 text-left font-semibold">Birds Removed</th>
-            <th class="py-2 px-3 text-left font-semibold">Action</th>
-          </tr>
-        </thead>
-        <tbody class="text-slate-800">${rows}</tbody>
-      </table>
-    </div>
-  `;
-}
-
-/* =========================================================
-   Variance moved to Snapshot card
-========================================================= */
-function varianceSnapshotBlock(shed){
-  const list = (shed.pickups || []).slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
-  const hasAny = list.some(p => p.variance != null && Number.isFinite(Number(p.variance)));
-  if (!hasAny) return `<div class="text-xs text-slate-500"><em>No variance recorded yet</em></div>`;
-
-  const chips = list.map(p => {
-    const v = Number(p.variance);
-    if (!Number.isFinite(v)) return "";
-    const tone = v > 0 ? "green" : (v < 0 ? "red" : "slate");
-    return `<span class="mr-1.5 mb-1.5 inline-flex">${pill(`${fmtDateDMY(p.date)}: ${signed(v)}`, tone)}</span>`;
-  }).filter(Boolean).join("");
-
-  return `<div class="flex flex-wrap mt-1">${chips}</div>`;
-}
-</script>
-<script>
-/* =========================================================
-   Group theme
-========================================================= */
-function groupTheme(groupIndex){
-  const themes = {
-    1: { grad:"from-indigo-900 to-indigo-700", accent:"border-indigo-500" },
-    2: { grad:"from-emerald-900 to-emerald-700", accent:"border-emerald-500" },
-    3: { grad:"from-sky-900 to-sky-700", accent:"border-sky-500" },
-    4: { grad:"from-violet-900 to-violet-700", accent:"border-violet-500" },
-  };
-  return themes[groupIndex] || themes[1];
-}
-
-/* =========================================================
-   Input actions (non-silo)
-========================================================= */
-function updateNumber(shedIndex, key, val){
-  const n = Number(val);
-  if (!Number.isFinite(n) || n < 0) return;
-  sheds[shedIndex][key] = Math.floor(n);
-  saveState();
-  scheduleRender();
-}
-function updateDate(shedIndex, key, val){
-  sheds[shedIndex][key] = (val === "") ? null : parseISO(val);
-  saveState();
-  scheduleRender();
-}
-function updateCustomFeed(shedIndex, val){
-  const v = String(val ?? "").trim();
-  if (v === "") sheds[shedIndex].customFeedKg = null;
-  else {
-    const n = Number(v);
-    sheds[shedIndex].customFeedKg = (Number.isFinite(n) && n > 0) ? n : null;
-  }
-  saveState();
-  scheduleRender();
-}
-function updateMortality(shedIndex, val){
-  const n = Number(val);
-  if (!Number.isFinite(n)) return;
-  sheds[shedIndex].mortality = Math.floor(n);
-  saveState();
-  scheduleRender();
-}
-
-/* =========================================================
-   Dashboard + Group cards (Cleanout lines removed under titles)
-========================================================= */
-function shedTileMini(shed){
-  const today = dateOnly(new Date());
-  const age = ageInDays(shed.placementDate, today);
-  const pop = populationOnDate(shed, today);
-  const daily = dailyFeedKg(shed, today);
-  const mort = Number(shed.mortality||0);
-  const mRate = shedMortalityRate(shed);
-  const cleanout = effectiveCleanoutDate(shed);
-  const final = getFinalPickup(shed);
-
-  return `
-    <div class="rounded-2xl border border-slate-200 bg-white p-3">
-      <div class="flex items-start justify-between gap-2">
-        <div>
-          <div class="text-sm font-bold leading-4">Shed ${shed.id}</div>
-          <div class="text-[12px] text-slate-500 mt-0.5">Today</div>
-        </div>
-        ${final ? pill("FINAL set", "amber") : pill(`${(shed.pickups||[]).length} / 5 pickups`, "violet")}
-      </div>
-
-      <div class="mt-2 space-y-1.5">
-        ${statLine("Age", `${age} d`)}
-        ${statLine("Live birds", pop.toLocaleString())}
-        ${statLine("Mortality", `${mort.toLocaleString()} (${pct(mRate)})`)}
-        ${statLine("Daily feed", `${daily.toFixed(0)} kg`)}
-        ${statLine("Cleanout", fmtDateLong(cleanout))}
-      </div>
-    </div>
-  `;
-}
-
-function groupCardDashboardFullWidth(groupIndex){
-  const theme = groupTheme(groupIndex);
-  const i = (groupIndex - 1) * 2;
-  const shedA = sheds[i], shedB = sheds[i+1];
-  const sum = groupSummary(groupIndex);
-
-  return `
-    <section class="bg-white border border-slate-200 rounded-3xl overflow-hidden card-hover">
-      <div class="border-l-4 ${theme.accent}">
-        <div class="px-5 py-4 border-b border-slate-200 bg-gradient-to-r ${theme.grad} text-white">
-          <div class="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h2 class="text-[18px] font-bold leading-tight">Group ${groupIndex}</h2>
-              <p class="text-[13px] text-white/80 mt-0.5">Sheds ${shedA.id} &amp; ${shedB.id}</p>
-            </div>
-
-            <div class="flex flex-wrap gap-2 justify-end items-center">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-[12px] bg-white/10">
-                Picked: <strong class="ml-1">${sum.picked.toLocaleString()}</strong>
-              </span>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-[12px] bg-white/10">
-                Live: <strong class="ml-1">${sum.live.toLocaleString()}</strong>
-              </span>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-[12px] bg-white/10">
-                Mort: <strong class="ml-1">${sum.mort.toLocaleString()} (${pct(sum.mortRate)})</strong>
-              </span>
-
-              <button onclick="setTab('g${groupIndex}')"
-                class="px-3 py-2 rounded-xl text-sm bg-white text-slate-900 hover:bg-slate-100 font-semibold">
-                Open →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-4">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
-            <div class="lg:col-span-4">${shedTileMini(shedA)}</div>
-            <div class="lg:col-span-4">${shedTileMini(shedB)}</div>
-
-            <div class="lg:col-span-4" id="dash_silo_insights_g${groupIndex}">
-              ${dashboardSiloInsightsCard(groupIndex)}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-/* =========================================================
-   Shed Forecast section (unchanged)
-========================================================= */
-function shedForecastOpenSection(shed){
-  const today = dateOnly(new Date());
-  const cleanout = effectiveCleanoutDate(shed);
-
-  let end = addDays(today, 19);
-  let title = `20‑Day Forecast`;
-  if (cleanout && cleanout >= today){
-    end = new Date(cleanout);
-    title = `Forecast Until Cleanout`;
-  }
-
-  const hasPickupInRange = (shed.pickups || []).some(p => {
-    const pd = dateOnly(p.date);
-    return pd >= today && pd <= end;
-  });
-
-  let total = 0, rows = "";
-  for (let d = new Date(today); d <= end; d.setDate(d.getDate() + 1)){
-    const day = dateOnly(d);
-    const age = ageInDays(shed.placementDate, day);
-    const pop = populationOnDate(shed, day);
-    const perBird = feedPerBirdKg(shed, age);
-    const daily = dailyFeedKg(shed, day);
-    total += daily;
-
-    let pickupCell = "", rowClass = "";
-    if (hasPickupInRange){
-      const pickupToday = (shed.pickups || []).find(p => iso(p.date) === iso(day));
-      pickupCell = pickupToday ? `-${pickupToday.birds.toLocaleString()}${pickupToday.isFinal ? " (FINAL)" : ""}` : "";
-      if (pickupToday) rowClass = pickupToday.isFinal ? "bg-amber-50" : "bg-rose-50";
-    }
-
-    rows += `
-      <tr class="border-t ${rowClass}">
-        <td class="py-2 px-3 whitespace-nowrap">${fmtDateLong(day)}</td>
-        <td class="py-2 px-3">${age}</td>
-        <td class="py-2 px-3">${pop.toLocaleString()}</td>
-        <td class="py-2 px-3">${perBird.toFixed(3)}</td>
-        <td class="py-2 px-3 font-semibold">${daily.toFixed(1)}</td>
-        ${hasPickupInRange ? `<td class="py-2 px-3">${pickupCell}</td>` : ""}
-      </tr>
-    `;
-  }
-
-  return `
-    <details open class="rounded-2xl border border-slate-200 bg-white">
-      <summary class="cursor-pointer select-none px-4 py-3 flex items-center justify-between gap-3">
-        <div class="text-sm font-semibold">📈 ${title}</div>
-        <div class="text-xs">${pill(`Total: ${total.toFixed(0)} kg`, "blue")}</div>
-      </summary>
-      <div class="px-4 pb-4">
-        <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table class="min-w-full text-sm">
-            <thead class="bg-slate-50 text-slate-700">
-              <tr>
-                <th class="py-2 px-3 text-left font-semibold">Date</th>
-                <th class="py-2 px-3 text-left font-semibold">Age</th>
-                <th class="py-2 px-3 text-left font-semibold">Live Birds</th>
-                <th class="py-2 px-3 text-left font-semibold">Feed/Bird (kg)</th>
-                <th class="py-2 px-3 text-left font-semibold">Daily Feed (kg)</th>
-                ${hasPickupInRange ? `<th class="py-2 px-3 text-left font-semibold">Pickup</th>` : ""}
-              </tr>
-            </thead>
-            <tbody class="text-slate-800">${rows}</tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-  `;
-}
-
-/* =========================================================
-   Shed card (variance shown in snapshot)
-========================================================= */
-function shedCardFull(shed){
-  const today = dateOnly(new Date());
-  const idx = shed.id - 1;
-
-  const age = ageInDays(shed.placementDate, today);
-  const pop = populationOnDate(shed, today);
-  const perBird = feedPerBirdKg(shed, age);
-  const daily = dailyFeedKg(shed, today);
-  const effCleanout = effectiveCleanoutDate(shed);
-  const mort = Number(shed.mortality||0);
-  const mRate = shedMortalityRate(shed);
-  const picked = shedTotalPickedUp(shed);
-  const final = getFinalPickup(shed);
-
-  return `
-    <div class="border border-slate-200 rounded-3xl bg-white shadow-soft overflow-hidden card-hover">
-      <div class="px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
-        <div class="text-lg font-bold">Shed ${shed.id}</div>
-        <div class="mt-2 flex flex-wrap gap-2">
-          ${pill(`Age ${age}d`, "slate")}
-          ${pill(`Live ${pop.toLocaleString()}`, "green")}
-          ${pill(`Picked ${picked.toLocaleString()}`, "violet")}
-          ${pill(`Mort ${mort.toLocaleString()} (${pct(mRate)})`, mort!==0 ? "red" : "slate")}
-          ${pill(`Daily ${daily.toFixed(1)} kg`, "blue")}
-          ${shed.customFeedKg ? pill("Custom intake", "green") : pill("Ross 308", "slate")}
-          ${pill(`Cleanout ${fmtDateLong(effCleanout)}`, "amber")}
-          ${final ? pill(`FINAL: ${fmtDateLong(final.date)}`, "amber") : ""}
-        </div>
-      </div>
-
-      <div class="px-5 py-4 space-y-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div class="rounded-2xl border border-slate-200 p-4">
-            <div class="text-xs font-semibold text-slate-700 mb-3">Inputs</div>
-            <div class="space-y-2 text-sm">
-              <label class="flex items-center justify-between gap-3">
-                <span>Placement Date</span>
-                <input id="placement_${shed.id}" type="date"
-                  class="border border-slate-300 rounded-xl px-2 py-1 text-sm focus-ring"
-                  value="${iso(shed.placementDate)}"
-                  onchange="updateDate(${idx}, 'placementDate', this.value)">
-              </label>
-
-              <label class="flex items-center justify-between gap-3">
-                <span>Initial Population</span>
-                <input id="initpop_${shed.id}" type="number"
-                  class="border border-slate-300 rounded-xl px-2 py-1 text-sm w-44 focus-ring"
-                  value="${shed.initialPopulation}"
-                  onchange="updateNumber(${idx}, 'initialPopulation', this.value)">
-              </label>
-
-              <label class="flex items-center justify-between gap-3">
-                <span>Total Mortality (current)</span>
-                <input id="mort_${shed.id}" type="number"
-                  class="border border-slate-300 rounded-xl px-2 py-1 text-sm w-44 focus-ring"
-                  value="${mort}"
-                  onchange="updateMortality(${idx}, this.value)">
-              </label>
-
-              <label class="flex items-center justify-between gap-3">
-                <span>Custom Feed (kg/bird/day)</span>
-                <input id="customfeed_${shed.id}" type="number" step="0.001"
-                  class="border border-slate-300 rounded-xl px-2 py-1 text-sm w-44 focus-ring"
-                  value="${shed.customFeedKg ?? ''}"
-                  placeholder="blank = Ross 308"
-                  onchange="updateCustomFeed(${idx}, this.value)">
-              </label>
-
-              <label class="flex items-center justify-between gap-3">
-                <span>Cleanout Date</span>
-                <input id="cleanout_${shed.id}" type="date"
-                  class="border border-slate-300 rounded-xl px-2 py-1 text-sm focus-ring"
-                  value="${iso(shed.cleanoutDate ?? effCleanout)}"
-                  onchange="updateDate(${idx}, 'cleanoutDate', this.value)">
-              </label>
-            </div>
-          </div>
-
-          <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-            <div class="text-xs font-semibold text-slate-700 mb-3">Today Snapshot</div>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between"><span>Age</span><strong>${age}</strong></div>
-              <div class="flex justify-between"><span>Live Birds</span><strong>${pop.toLocaleString()}</strong></div>
-              <div class="flex justify-between"><span>Mortality</span><strong>${mort.toLocaleString()} (${pct(mRate)})</strong></div>
-              <div class="flex justify-between"><span>Feed/Bird</span><strong>${perBird.toFixed(3)} kg</strong></div>
-              <div class="flex justify-between"><span>Total Daily Feed</span><strong>${daily.toFixed(1)} kg</strong></div>
-
-              <div class="pt-2 mt-2 border-t border-slate-200">
-                <div class="text-xs font-semibold text-slate-700 mb-1">Variance</div>
-                ${varianceSnapshotBlock(shed)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-          <div class="flex items-start justify-between gap-2 flex-wrap">
-            <div><div class="text-xs font-semibold text-slate-700">🚚 Add Pickup</div></div>
-            ${pill(`${(shed.pickups||[]).length} / 5`, "violet")}
-          </div>
-
-          <div class="mt-3 flex flex-wrap gap-3 items-end">
-            <div>
-              <div class="text-xs text-slate-600 mb-1">Pickup Date</div>
-              <input type="date" id="pd_${shed.id}"
-                class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring">
-            </div>
-            <div>
-              <div class="text-xs text-slate-600 mb-1">Birds Removed</div>
-              <input type="number" id="pb_${shed.id}"
-                class="border border-slate-300 rounded-xl px-3 py-2 text-sm w-48 focus-ring"
-                placeholder="e.g. 5000">
-            </div>
-
-            <label class="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm">
-              <input id="pf_${shed.id}" type="checkbox" class="accent-amber-600">
-              <span class="font-semibold text-slate-700">Final pickup</span>
-              <span class="text-xs text-slate-500">(cleanout)</span>
-            </label>
-
-            <button onclick="addPickup(${shed.id})"
-              class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 font-semibold">
-              Add
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <h4 class="text-sm font-semibold mb-2">📅 Pickups (Past + Upcoming)</h4>
-          ${pickupsTableAll(shed)}
-        </div>
-
-        ${shedForecastOpenSection(shed)}
-      </div>
-    </div>
-  `;
-}
-
-/* =========================================================
-   Group header (cleanout lines removed)
-========================================================= */
-function groupCardFocusedMode(groupIndex, shedA, shedB){
-  const theme = groupTheme(groupIndex);
-  const today = dateOnly(new Date());
-  const aFeed = dailyFeedKg(shedA, today);
-  const bFeed = dailyFeedKg(shedB, today);
-  const total = aFeed + bFeed;
-
-  const sum = groupSummary(groupIndex);
-
-  return `
-    <section class="bg-white border border-slate-200 rounded-[28px] shadow-soft overflow-hidden">
-      <div class="px-6 py-5 border-b border-slate-200 bg-gradient-to-r ${theme.grad} text-white">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-bold leading-tight">Group ${groupIndex}</h2>
-            <p class="text-sm text-white/80">Sheds ${shedA.id} &amp; ${shedB.id}</p>
-
-            <div class="mt-3 flex flex-wrap gap-2">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/10">
-                Picked: <strong class="ml-1">${sum.picked.toLocaleString()}</strong>
-              </span>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/10">
-                Live: <strong class="ml-1">${sum.live.toLocaleString()}</strong>
-              </span>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/10">
-                Mort: <strong class="ml-1">${sum.mort.toLocaleString()} (${pct(sum.mortRate)})</strong>
-              </span>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/10">
-              Shed ${shedA.id}: <strong class="ml-1">${aFeed.toFixed(1)} kg/day</strong>
-            </span>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/10">
-              Shed ${shedB.id}: <strong class="ml-1">${bFeed.toFixed(1)} kg/day</strong>
-            </span>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/15">
-              Total: <strong class="ml-1">${total.toFixed(1)} kg/day</strong>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-6">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          ${shedCardFull(shedA)}
-          ${shedCardFull(shedB)}
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-/* =========================================================
-   Group Silo Panel UI (wired for partial refresh)
-========================================================= */
-function silosInUseSelector(groupId){
-  const current = groupSilosInUseCount[groupId] ?? 3;
-  const btn = (n) => `
-    <button onclick="setSilosInUse(${groupId}, ${n})"
-      class="px-3 py-2 rounded-xl text-sm border font-semibold
-      ${current === n ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}">
-      ${n}
-    </button>
-  `;
-  return `
-    <div class="flex items-center gap-2 flex-wrap">
-      <div class="text-sm font-semibold text-slate-700">Silos in use:</div>
-      ${btn(1)}${btn(2)}${btn(3)}
-    </div>
-  `;
-}
-
-function siloInputCard(groupId, siloIndex, currentValue, computedTons, active){
-  return `
-    <div class="rounded-2xl border border-slate-200 p-4 bg-white ${active ? "" : "opacity-70"}">
-      <div class="flex items-center justify-between">
-        <div class="text-sm font-semibold">Silo ${siloIndex + 1}</div>
-        <div class="text-xs text-slate-600"><span class="font-semibold">${computedTons.toFixed(2)}</span> t</div>
-      </div>
-      <div class="mt-2">
-        <label class="text-xs text-slate-600">Enter rings (0–5). Blank = empty</label>
-        <input
-          id="silo_${groupId}_${siloIndex}"
-          class="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring"
-          value="${currentValue ?? ""}"
-          placeholder="e.g. 3"
-          oninput="setSiloInput(${groupId}, ${siloIndex}, this.value)"
-        />
-      </div>
-      <div class="mt-2 text-xs">
-        ${active ? pill("In use", "green") : pill("Not in use", "slate")}
-      </div>
-    </div>
-  `;
-}
-
-function groupSiloPanel(groupIndex){
-  const s = computeGroupSiloInsights(groupIndex);
-  const theme = groupTheme(groupIndex);
-
-  // Delivery form
-  const deliveryForm = `
-    <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
-      <div class="text-sm font-bold mb-3">🚛 Schedule Future Delivery</div>
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-        <div>
-          <div class="text-xs text-slate-600 mb-1">Delivery Date</div>
-          <input type="date" id="del_date_${groupIndex}"
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+  <div class="max-w-7xl mx-auto px-4 py-6 flex-1">
+
+    <!-- Header -->
+    <div class="glass flex flex-wrap items-center justify-between gap-4 mb-6 p-5 rounded-2xl shadow-lg">
+      <div class="flex items-center gap-3">
+        <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-2.5 rounded-2xl shadow-md">
+          <i class="fas fa-chart-line text-white text-xl"></i>
         </div>
         <div>
-          <div class="text-xs text-slate-600 mb-1">Tonnes (t)</div>
-          <input type="number" step="0.01" id="del_amount_${groupIndex}"
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring" placeholder="e.g. 15">
-        </div>
-        <div>
-          <div class="text-xs text-slate-600 mb-1">Primary Silo</div>
-          <select id="del_target_${groupIndex}" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring">
-            <option value="1">Silo 1</option>
-            <option value="2">Silo 2</option>
-            <option value="3">Silo 3</option>
-          </select>
-        </div>
-        <div>
-          <div class="text-xs text-slate-600 mb-1">Overflow Silo (optional)</div>
-          <select id="del_overflow_${groupIndex}" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus-ring">
-            <option value="">None</option>
-            <option value="1">Silo 1</option>
-            <option value="2">Silo 2</option>
-            <option value="3">Silo 3</option>
-          </select>
-        </div>
-        <div>
-          <button onclick="addDelivery(${groupIndex})"
-            class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 font-semibold">
-            Add Delivery
-          </button>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">ProdResult</h1>
+          <p class="text-sm text-slate-600">Farm performance &amp; weight forecast</p>
         </div>
       </div>
-      <div class="mt-3">
-        <div class="text-xs font-semibold text-slate-700 mb-1">Scheduled Deliveries</div>
-        <div id="deliveries_list_g${groupIndex}">
-          ${renderDeliveriesList(groupIndex)}
-        </div>
+
+      <div class="flex flex-wrap gap-2 items-center">
+        <span id="saveIndicator" class="pill text-slate-600">
+          <i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Auto‑saved
+        </span>
+
+        <button id="importExcelBtn" class="btn">
+          <i class="fas fa-file-import text-blue-600"></i> Import
+        </button>
+        <button id="exportExcelBtn" class="btn">
+          <i class="fas fa-file-export text-emerald-600"></i> Export
+        </button>
+
+        <button id="saveLocalBtn" class="btn">
+          <i class="fa-solid fa-floppy-disk text-slate-700"></i> Save
+        </button>
+        <button id="clearLocalBtn" class="btn">
+          <i class="fa-solid fa-trash text-rose-600"></i> Clear
+        </button>
       </div>
     </div>
-  `;
 
-  return `
-    <section class="border border-slate-200 rounded-[28px] shadow-soft overflow-hidden bg-white mt-6">
-      <div class="px-6 py-5 border-b border-slate-200 bg-gradient-to-r ${theme.grad} text-white">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 class="text-lg font-bold">🛢️ Group ${groupIndex} – Silo Depletion</h3>
-            <p class="text-sm text-white/80">Order when active ≤ 70T</p>
-          </div>
-          <div class="text-xs">
-            ${s.runoutDate ? pill(`Runout: ${fmtDateLong(s.runoutDate)} (~${s.daysRemainingTotal ?? "—"} days)`, "red") : pill("OK", "green")}
-          </div>
-        </div>
-      </div>
+    <!-- Main Dashboard Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <div class="p-6 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          ${silosInUseSelector(groupIndex)}
-          <div class="text-sm text-slate-600">
-            Active total: <strong>${s.activeTotalT.toFixed(2)}T</strong>
-          </div>
-        </div>
+      <!-- Left Column: Shed Management -->
+      <div class="lg:col-span-2 glass rounded-2xl shadow-xl overflow-hidden">
+        <div class="flex flex-wrap border-b border-slate-200/70 bg-slate-50/70 px-2 pt-2 gap-1" id="shedTabsContainer"></div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-sm font-bold">📊 Silo Levels (t)</div>
-              <div class="text-xs text-slate-500 mt-0.5">Inactive silos are grey</div>
+        <div class="p-5">
+          <!-- Shed Inputs -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-white/70 p-3 rounded-2xl border border-slate-200/80">
+              <label class="block text-xs font-semibold text-slate-500 uppercase">🐣 Birds placed</label>
+              <input type="number" id="startingBirds" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-xl bg-white" />
+            </div>
+            <div class="bg-white/70 p-3 rounded-2xl border border-slate-200/80">
+              <label class="block text-xs font-semibold text-slate-500 uppercase">💀 Mortality</label>
+              <input type="number" id="mortalityBirds" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-xl bg-white" />
+            </div>
+            <div class="bg-white/70 p-3 rounded-2xl border border-slate-200/80">
+              <label class="block text-xs font-semibold text-slate-500 uppercase">📅 Placement date</label>
+              <input type="date" id="placementDate" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-xl bg-white" />
+            </div>
+            <div class="bg-white/70 p-3 rounded-2xl border border-slate-200/80">
+              <label class="block text-xs font-semibold text-slate-500 uppercase">🧹 Clean‑out date</label>
+              <input type="date" id="cleanoutDate" class="w-full mt-1 px-3 py-2 border border-slate-300 rounded-xl bg-white" />
+              <p class="text-xs text-slate-500 mt-1">If blank, we assume 56 days.</p>
             </div>
           </div>
 
-          <div class="mt-3 overflow-hidden rounded-2xl chart-lg">
-            <canvas id="chart_g${groupIndex}_silo_levels" class="w-full h-full"></canvas>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          ${siloInputCard(groupIndex, 0, groupSilos[groupIndex][0], s.t1, s.activeCount >= 1)}
-          ${siloInputCard(groupIndex, 1, groupSilos[groupIndex][1], s.t2, s.activeCount >= 2)}
-          ${siloInputCard(groupIndex, 2, groupSilos[groupIndex][2], s.t3, s.activeCount >= 3)}
-        </div>
-
-        ${deliveryForm}
-
-        <!-- ✅ Metrics block for partial refresh -->
-        <div id="group_silo_metrics_g${groupIndex}">
-          <!-- Will be replaced by refreshSiloUI() on input changes -->
-        </div>
-
-        <details open class="rounded-2xl border border-slate-200 bg-white">
-          <summary class="cursor-pointer select-none px-4 py-3 flex items-center justify-between">
-            <div class="text-sm font-semibold">📅 Silo Depletion Table</div>
-            <div class="text-xs">${pill(`Table end: ${fmtDateLong(s.tableEnd)}`, "violet")}</div>
-          </summary>
-
-          <div class="px-4 pb-4">
-            <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-              <table class="min-w-full text-sm">
-                <thead class="bg-slate-50 text-slate-700">
-                  <tr>
-                    <th class="py-2 px-3 text-left font-semibold">Date</th>
-                    <th class="py-2 px-3 text-left font-semibold">Use (kg)</th>
-                    <th class="py-2 px-3 text-left font-semibold">Before (t)</th>
-                    <th class="py-2 px-3 text-left font-semibold">After (t)</th>
-                    <th class="py-2 px-3 text-left font-semibold">Used Silos</th>
-                    <th class="py-2 px-3 text-left font-semibold">Silo 1</th>
-                    <th class="py-2 px-3 text-left font-semibold">Silo 2</th>
-                    <th class="py-2 px-3 text-left font-semibold">Silo 3</th>
+          <!-- Pickups -->
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+              <i class="fas fa-truck-fast text-emerald-600"></i> Partial pickups (up to 5)
+            </h3>
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white/80">
+              <table class="w-full text-sm border-collapse">
+                <thead>
+                  <tr class="bg-slate-100/90 text-slate-700">
+                    <th class="p-3 text-left">#</th>
+                    <th class="p-3 text-left">Age (days)</th>
+                    <th class="p-3 text-left">Birds</th>
+                    <th class="p-3 text-left">Weight (kg)</th>
+                    <th class="p-3 text-left">Expected</th>
+                    <th class="p-3 text-left">Actual avg</th>
+                    <th class="p-3 text-left">vs Expected</th>
                   </tr>
                 </thead>
-                <tbody id="group_silo_table_g${groupIndex}" class="text-slate-800">
-                  ${s.tableRowsHtml || `<tr class="border-t"><td class="py-2 px-3" colspan="8"><em>— enter silo rings —</em></td></tr>`}
-                </tbody>
+                <tbody id="pickupTableBody"></tbody>
               </table>
             </div>
           </div>
+
+          <!-- Daily Performance -->
+          <div class="mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <i class="fas fa-calendar-day text-indigo-600"></i> Daily performance
+                <span id="dailyCount" class="text-xs text-slate-400 font-normal ml-1"></span>
+              </h3>
+            </div>
+
+            <div id="dailyTableWrap" class="rounded-xl border border-slate-200 bg-white/80 overflow-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Age</th>
+                    <th>Birds picked</th>
+                    <th>Avg weight</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="dailyTableBody">
+                  <tr><td colspan="5" class="text-center text-slate-400 py-4 text-sm">No pickups yet. Enter data above.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Adjustment banner -->
+            <div id="adjustmentBanner" class="adjustment-banner">
+              <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-amber-600 mt-0.5"></i>
+                <div>
+                  <strong id="adjTitle">⚠️ Adjustment applied</strong>
+                  <span id="adjDesc" class="block text-sm text-slate-700"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shed Summary -->
+          <div id="shedResultCard" class="mt-5 p-4 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/90 to-teal-50/90 hidden">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+              <div>Harvested: <strong id="harvestedSum">— kg</strong></div>
+              <div>Live birds: <strong id="effectiveStart">—</strong></div>
+              <div>Picked so far: <strong id="totalPicked">—</strong></div>
+              <div>Still on farm: <strong id="remainingBirds">—</strong></div>
+              <div>Final avg forecast: <strong id="projectedAvg">— kg</strong></div>
+              <div class="col-span-2 font-extrabold text-emerald-900">
+                Total batch weight: <span id="batchTotal">— kg</span>
+              </div>
+            </div>
+            <div id="factorMsg" class="text-xs text-slate-600 mt-2"></div>
+            <div id="anchorInfo" class="text-xs text-indigo-600 mt-1"></div>
+            <div id="daysBehindDisplay" class="text-xs font-semibold mt-1 text-amber-700"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Farm Summary -->
+      <div class="glass rounded-2xl shadow-xl p-5">
+        <div class="border-b border-slate-200/70 pb-2 mb-4">
+          <h2 class="text-lg font-extrabold text-slate-800">📊 Farm summary</h2>
+        </div>
+
+        <div class="space-y-4">
+          <div class="stat-card bg-gradient-to-br from-sky-50 to-indigo-50 p-4 rounded-2xl border border-sky-100/70">
+            <div class="text-xs text-sky-700 font-semibold uppercase">Total live weight</div>
+            <div class="text-3xl font-extrabold text-sky-950 mt-1" id="totalLiveWeightFarm">— kg</div>
+          </div>
+
+          <div class="stat-card bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-100/70">
+            <div class="text-xs text-amber-700 font-semibold uppercase">Total feed used</div>
+            <input type="number" id="editableFeedTotal" step="10"
+              class="text-2xl font-extrabold w-full border-none bg-transparent p-0 focus:ring-0"
+              placeholder="Auto" />
+            <div class="text-xs text-amber-700/80 mt-1">Leave blank to auto‑calculate</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="stat-card bg-gradient-to-br from-emerald-50 to-teal-50 p-3 rounded-2xl border border-emerald-100/70">
+              <div class="text-xs text-emerald-700 font-semibold">FCR</div>
+              <div class="text-2xl font-extrabold text-emerald-950" id="fcrValue">—</div>
+            </div>
+            <div class="stat-card bg-gradient-to-br from-indigo-50 to-violet-50 p-3 rounded-2xl border border-indigo-100/70">
+              <div class="text-xs text-indigo-700 font-semibold">cFCR</div>
+              <div class="text-2xl font-extrabold text-indigo-950" id="cfcrValue">—</div>
+              <div class="text-xs text-indigo-600">ALW = <span id="alwUsed">—</span> kg</div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-gradient-to-br from-rose-50 to-pink-50 p-4 rounded-2xl border border-rose-100/70">
+            <div class="text-xs text-rose-700 font-semibold uppercase">PIF index</div>
+            <div class="text-3xl font-extrabold text-rose-950 mt-1" id="pifValue">—</div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-slate-200/70 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-600">📊 Avg age (weighted):</span>
+            <span class="font-extrabold" id="avgAgeWeighted">— days</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">⚖️ Avg harvest weight:</span>
+            <span class="font-extrabold" id="avgHarvestWeight">— kg</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">🐔 Avg live weight per bird:</span>
+            <span class="font-extrabold" id="avgLiveWeightFarm">— kg</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">❤️ Livability:</span>
+            <span class="font-semibold" id="livabilityPercent">—%</span>
+          </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-500">⚡ β factor:</span>
+            <input type="number" id="cfcrFactor" value="0.27" step="0.01" class="w-20 border border-slate-300 rounded-xl p-1.5 bg-white" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-500">📐 ALW baseline:</span>
+            <input type="number" id="alwBaseline" value="2.45" step="0.01" class="w-20 border border-slate-300 rounded-xl p-1.5 bg-white" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-500">📈 Catch‑up factor:</span>
+            <input type="number" id="catchupFactor" value="0.05" step="0.01" min="0" max="1" class="w-16 border border-slate-300 rounded-xl p-1.5 bg-white" />
+          </div>
+        </div>
+
+        <details class="mt-3 text-xs">
+          <summary class="font-semibold cursor-pointer text-slate-700">🔍 Show clean‑out age per shed</summary>
+          <div id="shedAgeList" class="mt-2 space-y-1 max-h-40 overflow-auto text-slate-600"></div>
         </details>
       </div>
-    </section>
-  `;
-}
+    </div>
+  </div>
 
-/* =========================================================
-   Render
-========================================================= */
-function render(){
-  document.getElementById("tabs").innerHTML = tabsView();
+  <footer class="mt-8 py-4 text-center text-xs text-slate-700">
+    Made by Von Mangaron • Personal use only • not for commercial use
+  </footer>
 
-  // batch input
-  const bn = document.getElementById("batchNumber");
-  if (bn && bn.value !== batchNumber) bn.value = batchNumber;
+  <script>
+    // ========================================================
+    //  LOCAL STORAGE
+    // ========================================================
+    const STORAGE_KEY = "ProdResultEstimate_v9";
 
-  // farm summary
-  const farm = farmSummary();
-  let totalNet = 0;
-let hasAnyValid = false;
-for (let g = 1; g <= 4; g++) {
-  const insights = computeGroupSiloInsights(g);
-  if (insights.netT !== null && Number.isFinite(insights.netT)) {
-    totalNet += insights.netT;
-    hasAnyValid = true;
-  }
-}
-const netBalanceHtml = hasAnyValid
-  ? pill(`Net balance: ${totalNet.toFixed(2)} t`, totalNet >= 0 ? "green" : "red")
-  : pill(`Net balance: —`, "slate");
+    function setSaveIndicator(text, colorClass = "text-emerald-500") {
+      const el = document.getElementById("saveIndicator");
+      if (!el) return;
+      el.innerHTML = `<i class="fa-solid fa-circle ${colorClass} mr-1"></i> ${text}`;
+    }
 
-document.getElementById("farmSummary").innerHTML = `
-  ${pill(`Farm live: ${farm.live.toLocaleString()}`, "green")}
-  ${pill(`Farm mortality: ${farm.mort.toLocaleString()}`, farm.mort!==0 ? "red" : "slate")}
-  ${pill(`Farm mort rate: ${pct(farm.mortRate)}`, Math.abs(farm.mortRate) >= 5 ? "orange" : "amber")}
-  ${pill(`Farm picked: ${farm.picked.toLocaleString()} (${pct(farm.pickedRate)})`, "violet")}
-  ${netBalanceHtml}
-`;
+    function showToast(message, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.style.background = isError ? '#be123c' : '#0f172a';
+      toast.innerHTML = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
 
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+    // ========================================================
+    //  ROSS 308 CURVE & FEED – fixed day‑old = 0.044 kg
+    // ========================================================
+    const baseRossKg = {
+      0: 0.044, 1: 0.062, 2: 0.081, 3: 0.102, 4: 0.125, 5: 0.151, 6: 0.181, 7: 0.213, 8: 0.249, 9: 0.288,
+      10: 0.330, 11: 0.376, 12: 0.425, 13: 0.477, 14: 0.533, 15: 0.592, 16: 0.655, 17: 0.720, 18: 0.789,
+      19: 0.860, 20: 0.935, 21: 1.012, 22: 1.092, 23: 1.174, 24: 1.258, 25: 1.345, 26: 1.434, 27: 1.524,
+      28: 1.616, 29: 1.710, 30: 1.757, 31: 1.851, 32: 1.946, 33: 2.041, 34: 2.138, 35: 2.235, 36: 2.332,
+      37: 2.430, 38: 2.527, 39: 2.625, 40: 2.723, 41: 2.821, 42: 2.918, 43: 3.015, 44: 3.112, 45: 3.207,
+      46: 3.303, 47: 3.397, 48: 3.491, 49: 3.583, 50: 3.675, 51: 3.766, 52: 3.856, 53: 3.944, 54: 4.032,
+      55: 4.118, 56: 4.203, 57: 4.286, 58: 4.369
+    };
 
-  const groups = [
-    { id:"g1", idx:1, a:sheds[0], b:sheds[1] },
-    { id:"g2", idx:2, a:sheds[2], b:sheds[3] },
-    { id:"g3", idx:3, a:sheds[4], b:sheds[5] },
-    { id:"g4", idx:4, a:sheds[6], b:sheds[7] },
-  ];
+    const feedIntakeGrams = {
+      1: 19, 2: 15, 3: 19, 4: 24, 5: 28, 6: 33, 7: 37, 8: 42, 9: 47, 10: 51,
+      11: 56, 12: 60, 13: 65, 14: 69, 15: 74, 16: 78, 17: 83, 18: 88, 19: 92,
+      20: 97, 21: 101, 22: 106, 23: 110, 24: 115, 25: 119, 26: 124, 27: 129,
+      28: 133, 29: 138, 30: 142, 31: 147, 32: 151, 33: 156, 34: 160, 35: 165,
+      36: 170, 37: 174, 38: 179, 39: 183, 40: 188, 41: 192, 42: 197, 43: 201,
+      44: 206, 45: 211, 46: 215, 47: 220, 48: 223, 49: 225, 50: 227, 51: 229,
+      52: 230, 53: 231, 54: 233, 55: 233, 56: 234, 57: 234, 58: 234, 59: 234, 60: 234
+    };
 
-  if (activeTab === "all"){
-    app.innerHTML = `
-      <div class="space-y-4">
-        ${groupCardDashboardFullWidth(1)}
-        ${groupCardDashboardFullWidth(2)}
-        ${groupCardDashboardFullWidth(3)}
-        ${groupCardDashboardFullWidth(4)}
-      </div>
-    `;
-    return;
-  }
+    const knownDays = Object.keys(baseRossKg).map(Number).sort((a, b) => a - b);
+    const REF_DAY_OLD = 0.044; // fixed
 
-  const g = groups.find(x => x.id === activeTab);
-  if (!g) return;
-
-  app.innerHTML = groupCardFocusedMode(g.idx, g.a, g.b);
-  app.innerHTML += groupSiloPanel(g.idx);
-
-  // ensure metrics block is filled at first paint
-  refreshSiloUI(g.idx);
-
-  postRender();
-}
-
-/* first paint */
-try { render(); } catch {}
-
-// Sticky bar visibility enhancer (toggle .is-stuck)
-(function(){
-  const bar = document.getElementById("tabsBar");
-  if (!bar) return;
-
-  let ticking = false;
-  function onScroll(){
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      const stuck = window.scrollY > 20;
-      bar.classList.toggle("is-stuck", stuck);
-      ticking = false;
-    });
-  }
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll(); // initial
-})();
-
-/* =========================================================
-   Excel Import/Export
-========================================================= */
-function triggerExcelImport(){
-  const input = document.getElementById("excelFile");
-  if (!input) return alert("Import error: #excelFile not found in DOM.");
-  input.value = "";
-  input.click();
-}
-
-(function setupExcelImport(){
-  const input = document.getElementById("excelFile");
-  if (!input) return;
-
-  input.onchange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (typeof XLSX === "undefined") return alert("Import failed: XLSX library not loaded.");
-
-    try {
-      const data = await file.arrayBuffer();
-      const wb = XLSX.read(data, { type: "array" });
-
-      const sheetName =
-        wb.SheetNames.find(n => String(n).toLowerCase() === "sheds") || wb.SheetNames[0];
-
-      const ws = wb.Sheets[sheetName];
-      if (!ws) throw new Error("No worksheet found.");
-
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false, dateNF: "dd/mm/yyyy" });
-      if (!rows.length) throw new Error("No data rows found.");
-
-      const getVal = (row, keys) => {
-        for (const k of keys) {
-          if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== "") return row[k];
+    function getBaseRossWeight(age) {
+      if (age == null || isNaN(age) || age < 0) return null;
+      if (baseRossKg[age] !== undefined) return baseRossKg[age];
+      if (age <= 58) {
+        let lo = knownDays[0], hi = knownDays[knownDays.length - 1];
+        for (let i = 0; i < knownDays.length - 1; i++) {
+          if (age >= knownDays[i] && age <= knownDays[i + 1]) { lo = knownDays[i]; hi = knownDays[i + 1]; break; }
         }
-        return "";
+        const wLo = baseRossKg[lo], wHi = baseRossKg[hi];
+        const ratio = (age - lo) / (hi - lo);
+        return wLo + ratio * (wHi - wLo);
+      } else {
+        const last7 = [52,53,54,55,56,57,58];
+        let totalGain = 0;
+        for (let i=1; i<last7.length; i++) totalGain += baseRossKg[last7[i]] - baseRossKg[last7[i-1]];
+        const dailyGain = totalGain / (last7.length - 1);
+        return baseRossKg[58] + dailyGain * (age - 58);
+      }
+    }
+
+    function getAdjustedRossWeight(age) {
+      return getBaseRossWeight(age);
+    }
+
+    function getFeedPerBirdKg(age) {
+      const ageFloor = Math.min(60, Math.max(1, Math.floor(age)));
+      return (feedIntakeGrams[ageFloor] || 234) / 1000;
+    }
+
+    // ========================================================
+    //  DATE HELPERS
+    // ========================================================
+    function parseExcelDate(value) {
+      if (!value) return "";
+      if (value instanceof Date) return value.toISOString().split('T')[0];
+      if (typeof value === "number") {
+        const date = new Date(Math.round((value - 25569) * 86400 * 1000));
+        return date.toISOString().split('T')[0];
+      }
+      const str = String(value).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      const parts = str.split(/[-/]/);
+      if (parts.length === 3) {
+        let d = parseInt(parts[0], 10), m = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
+        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+          if (y < 100) y += 2000;
+          if (d > 31 || m > 12) { let td = d; d = y; y = td; }
+          if (d > 31 || m > 12) return "";
+          return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
+      }
+      return "";
+    }
+
+    function dateToAge(placeDate, targetDate) {
+      if (!placeDate || !targetDate) return null;
+      const diff = (new Date(targetDate) - new Date(placeDate)) / 86400000;
+      if (diff < 0) return null;
+      return Math.floor(diff);
+    }
+
+    function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+    // ========================================================
+    //  STATE
+    // ========================================================
+    const SHED_COUNT = 8;
+    let sheds = [];
+    for (let i=0; i<SHED_COUNT; i++) {
+      sheds.push({
+        startBirds: 1000,
+        mortalBirds: 40,
+        placeDate: "",
+        cleanDate: "",
+        pickups: [],
+        adjustments: {
+          applied: false,
+          triggeredAt: null,
+          catchupFactor: 0.05,
+          anchorFactor: null,
+          anchorAge: null,
+          anchorWeight: null,
+          behindCount: 0,
+          behindDetected: false,
+          catchupAppliedThisStreak: false
+        }
+      });
+    }
+    let activeShed = 0;
+    let pickupRows = [];
+    let autoUpdateTimer = null;
+
+    // DOM refs
+    const tbody = document.getElementById('pickupTableBody');
+    const dailyBody = document.getElementById('dailyTableBody');
+    const startBirdsInput = document.getElementById('startingBirds');
+    const mortalBirdsInput = document.getElementById('mortalityBirds');
+    const placeDateInput = document.getElementById('placementDate');
+    const cleanDateInput = document.getElementById('cleanoutDate');
+    const dailyCount = document.getElementById('dailyCount');
+    const daysBehindDisplay = document.getElementById('daysBehindDisplay');
+
+    // ========================================================
+    //  PERSISTENCE
+    // ========================================================
+    function persistState() {
+      try {
+        saveCurrentShed();
+        const payload = {
+          version: 9,
+          savedAt: new Date().toISOString(),
+          activeShed,
+          sheds,
+          settings: {
+            editableFeedTotal: document.getElementById("editableFeedTotal").value || "",
+            cfcrFactor: document.getElementById("cfcrFactor").value || "0.27",
+            alwBaseline: document.getElementById("alwBaseline").value || "2.45",
+            catchupFactor: document.getElementById("catchupFactor").value || "0.05"
+          }
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        const t = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        setSaveIndicator(`Saved • ${t}`, "text-emerald-500");
+      } catch(e) {
+        console.error(e);
+        setSaveIndicator("Save failed", "text-rose-500");
+      }
+    }
+
+    function restoreState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const payload = JSON.parse(raw);
+        if (!payload || !Array.isArray(payload.sheds) || payload.sheds.length !== 8) return false;
+
+        sheds = payload.sheds.map(s => ({
+          startBirds: Number.isFinite(+s.startBirds) ? +s.startBirds : 1000,
+          mortalBirds: Number.isFinite(+s.mortalBirds) ? +s.mortalBirds : 40,
+          placeDate: s.placeDate || "",
+          cleanDate: s.cleanDate || "",
+          pickups: Array.isArray(s.pickups) ? s.pickups.slice(0,5).map(p => ({
+            age: +p.age || 0,
+            birds: +p.birds || 0,
+            weight: +p.weight || 0
+          })) : [],
+          adjustments: s.adjustments || {
+            applied: false,
+            triggeredAt: null,
+            catchupFactor: 0.05,
+            anchorFactor: null,
+            anchorAge: null,
+            anchorWeight: null,
+            behindCount: 0,
+            behindDetected: false,
+            catchupAppliedThisStreak: false
+          }
+        }));
+
+        activeShed = Number.isFinite(+payload.activeShed) ? Math.min(7, Math.max(0, +payload.activeShed)) : 0;
+
+        const settings = payload.settings || {};
+        document.getElementById("editableFeedTotal").value = settings.editableFeedTotal || "";
+        document.getElementById("cfcrFactor").value = settings.cfcrFactor || "0.27";
+        document.getElementById("alwBaseline").value = settings.alwBaseline || "2.45";
+        document.getElementById("catchupFactor").value = settings.catchupFactor || "0.05";
+
+        const t = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : "previous session";
+        setSaveIndicator(`Restored • ${t}`, "text-indigo-500");
+        return true;
+      } catch(e) {
+        console.error(e);
+        setSaveIndicator("Restore failed", "text-rose-500");
+        return false;
+      }
+    }
+
+    function clearSavedState() {
+      localStorage.removeItem(STORAGE_KEY);
+      setSaveIndicator("Cleared", "text-rose-500");
+      showToast("🧹 Local data cleared");
+    }
+
+    // ========================================================
+    //  SHED OPERATIONS
+    // ========================================================
+    function getCleanoutAge(shed) {
+      if (shed.placeDate && shed.cleanDate) {
+        const diff = (new Date(shed.cleanDate) - new Date(shed.placeDate)) / 86400000;
+        if (diff > 0) return Math.floor(diff);
+      }
+      return 56;
+    }
+
+    function saveCurrentShed() {
+      const shed = sheds[activeShed];
+      if (!shed) return;
+      shed.startBirds = parseInt(startBirdsInput.value) || 0;
+      shed.mortalBirds = parseInt(mortalBirdsInput.value) || 0;
+      shed.placeDate = placeDateInput.value;
+      shed.cleanDate = cleanDateInput.value;
+      shed.pickups = [];
+
+      if (Array.isArray(pickupRows)) {
+        for (let row of pickupRows) {
+          const age = parseInt(row.age.value);
+          const birds = parseInt(row.birds.value);
+          const weight = parseFloat(row.weight.value);
+          if (!isNaN(age) && age > 0 && !isNaN(birds) && birds > 0 && !isNaN(weight) && weight > 0)
+            shed.pickups.push({ age, birds, weight });
+        }
+      }
+    }
+
+    function loadShedToUI(index) {
+      const shed = sheds[index];
+      startBirdsInput.value = shed.startBirds;
+      mortalBirdsInput.value = shed.mortalBirds;
+      placeDateInput.value = shed.placeDate || "";
+      cleanDateInput.value = shed.cleanDate || "";
+
+      // Pickups
+      tbody.innerHTML = '';
+      pickupRows = [];
+      for (let i=0; i<5; i++) {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-200/70';
+        tr.innerHTML = `
+          <td class="p-3 text-slate-500">${i+1}</td>
+          <td class="p-3"><input type="number" step="1" min="1" class="age w-20 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="p-3"><input type="number" step="1" min="1" class="birds w-24 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="p-3"><input type="number" step="any" min="0.1" class="weight w-28 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="rossRef text-slate-500 p-3">—</td>
+          <td class="actualAvg p-3 text-slate-700">—</td>
+          <td class="p-3"><span class="factorBadge factor-badge bg-slate-100 text-slate-500">—</span></td>
+        `;
+        tbody.appendChild(tr);
+
+        const ageInp = tr.querySelector('.age');
+        const birdsInp = tr.querySelector('.birds');
+        const wtInp = tr.querySelector('.weight');
+        const rossSpan = tr.querySelector('.rossRef');
+        const avgSpan = tr.querySelector('.actualAvg');
+        const factorSpan = tr.querySelector('.factorBadge');
+
+        pickupRows.push({ age: ageInp, birds: birdsInp, weight: wtInp, rossSpan, avgSpan, factorSpan });
+
+        const updateRow = () => {
+          const age = parseInt(ageInp.value);
+          const birds = parseInt(birdsInp.value);
+          const weight = parseFloat(wtInp.value);
+
+          if (!isNaN(age) && age > 0) {
+            const exp = getAdjustedRossWeight(age);
+            rossSpan.innerText = exp ? exp.toFixed(3) + ' kg' : '—';
+          } else rossSpan.innerText = '—';
+
+          if (!isNaN(birds) && birds > 0 && !isNaN(weight) && weight > 0) {
+            const act = weight / birds;
+            avgSpan.innerText = act.toFixed(3) + ' kg';
+            if (!isNaN(age) && age > 0) {
+              const expW = getAdjustedRossWeight(age);
+              if (expW) {
+                const pct = (act / expW) * 100;
+                factorSpan.innerText = pct.toFixed(1) + '%';
+                factorSpan.className =
+                  pct >= 105 ? 'factorBadge factor-badge bg-emerald-100 text-emerald-800' :
+                  (pct <= 95 ? 'factorBadge factor-badge bg-orange-100 text-orange-800' :
+                             'factorBadge factor-badge bg-sky-100 text-sky-800');
+              } else { factorSpan.innerText = '—'; factorSpan.className = 'factorBadge factor-badge bg-slate-100 text-slate-500'; }
+            } else { factorSpan.innerText = '—'; factorSpan.className = 'factorBadge factor-badge bg-slate-100 text-slate-500'; }
+          } else { avgSpan.innerText = '—'; factorSpan.innerText = '—'; factorSpan.className = 'factorBadge factor-badge bg-slate-100 text-slate-500'; }
+          autoUpdate();
+        };
+
+        [ageInp, birdsInp, wtInp].forEach(el => {
+          el.addEventListener('input', updateRow);
+          el.addEventListener('change', updateRow);
+        });
+      }
+
+      // Restore pickup values
+      for (let idx=0; idx<shed.pickups.length && idx<5; idx++) {
+        const p = shed.pickups[idx];
+        pickupRows[idx].age.value = p.age;
+        pickupRows[idx].birds.value = p.birds;
+        pickupRows[idx].weight.value = p.weight;
+        pickupRows[idx].age.dispatchEvent(new Event('input'));
+      }
+
+      renderDailyTable(index);
+      updateDailyCount(index);
+    }
+
+    // ========================================================
+    //  DAILY TABLE (derived from pickups)
+    // ========================================================
+    function renderDailyTable(shedIdx) {
+      const shed = sheds[shedIdx] || sheds[activeShed];
+      const pickups = shed.pickups || [];
+      dailyBody.innerHTML = '';
+
+      if (pickups.length === 0) {
+        dailyBody.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-4 text-sm">No pickups yet. Enter data above.</td></tr>`;
+        return;
+      }
+
+      const sorted = [...pickups].sort((a,b) => a.age - b.age);
+      const behindCount = shed.adjustments?.behindCount || 0;
+
+      for (let i=0; i<sorted.length; i++) {
+        const p = sorted[i];
+        const tr = document.createElement('tr');
+        tr.className = 'daily-row official';
+
+        const rossRef = getAdjustedRossWeight(p.age);
+        const actualAvg = p.weight / p.birds;
+        let isBehind = false;
+        if (rossRef !== null && rossRef > 0) {
+          isBehind = actualAvg < rossRef;
+        }
+        if (isBehind) tr.classList.add('behind');
+
+        let dateStr = '—';
+        if (shed.placeDate) {
+          const base = new Date(shed.placeDate);
+          base.setDate(base.getDate() + p.age);
+          dateStr = base.toISOString().split('T')[0];
+        }
+
+        const statusText = isBehind ? `Behind (${behindCount}d)` : 'On track';
+        const statusClass = isBehind ? 'behind' : 'on-track';
+
+        tr.innerHTML = `
+          <td class="whitespace-nowrap">${dateStr}</td>
+          <td>${p.age}</td>
+          <td>${p.birds}</td>
+          <td>${actualAvg.toFixed(3)}</td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        `;
+        dailyBody.appendChild(tr);
+      }
+    }
+
+    function updateDailyCount(shedIdx) {
+      const shed = sheds[shedIdx] || sheds[activeShed];
+      const count = (shed.pickups || []).length;
+      dailyCount.textContent = count > 0 ? `(${count})` : '';
+    }
+
+    // ========================================================
+    //  PREDICTION ENGINE
+    // ========================================================
+    function computeShedResult(shedData, pickupsArray, targetAge) {
+      const effectiveStart = Math.max(0, shedData.startBirds - shedData.mortalBirds);
+      const totalPicked = pickupsArray.reduce((s,p) => s + p.birdsPicked, 0);
+      const totalHarvested = pickupsArray.reduce((s,p) => s + p.totalWeight, 0);
+      let remaining = effectiveStart - totalPicked;
+      if (remaining < 0) remaining = 0;
+      if (pickupsArray.length === 5 && remaining > 0) remaining = 0;
+
+      // Anchor
+      let anchorFactor = null;
+      let anchorAge = null;
+      let anchorWeight = null;
+
+      if (shedData.adjustments && shedData.adjustments.anchorFactor !== null) {
+        anchorFactor = shedData.adjustments.anchorFactor;
+        anchorAge = shedData.adjustments.anchorAge;
+        anchorWeight = shedData.adjustments.anchorWeight;
+      }
+
+      if (anchorFactor === null && pickupsArray.length > 0) {
+        const first = pickupsArray[0];
+        const exp = getAdjustedRossWeight(first.age);
+        if (exp && exp > 0 && first.actualAvg > 0) {
+          anchorFactor = first.actualAvg / exp;
+          anchorAge = first.age;
+          anchorWeight = first.actualAvg;
+          if (!shedData.adjustments) shedData.adjustments = {};
+          shedData.adjustments.anchorFactor = anchorFactor;
+          shedData.adjustments.anchorAge = anchorAge;
+          shedData.adjustments.anchorWeight = anchorWeight;
+        }
+      }
+
+      // Recalibrate anchor if latest pickup is on track
+      if (pickupsArray.length > 0 && anchorFactor !== null) {
+        const sorted = [...pickupsArray].sort((a,b) => a.age - b.age);
+        const latest = sorted[sorted.length-1];
+        const latestExp = getAdjustedRossWeight(latest.age);
+        if (latestExp && latestExp > 0 && latest.actualAvg > 0) {
+          const latestFactor = latest.actualAvg / latestExp;
+          if (latest.actualAvg >= latestExp && latest.age > (anchorAge || 0)) {
+            anchorFactor = latestFactor;
+            anchorAge = latest.age;
+            anchorWeight = latest.actualAvg;
+            shedData.adjustments.anchorFactor = anchorFactor;
+            shedData.adjustments.anchorAge = anchorAge;
+            shedData.adjustments.anchorWeight = anchorWeight;
+          }
+        }
+      }
+
+      // Behind streak based on Ross standard
+      let behindCount = 0;
+      let behindDetected = false;
+      let catchupApplied = false;
+      const catchupFactor = parseFloat(document.getElementById('catchupFactor').value) || 0.05;
+
+      if (pickupsArray.length > 0) {
+        const sorted = [...pickupsArray].sort((a,b) => a.age - b.age);
+        let streak = 0;
+        for (let i=sorted.length-1; i>=0; i--) {
+          const p = sorted[i];
+          const rossRef = getAdjustedRossWeight(p.age);
+          let isBehind = false;
+          if (rossRef !== null && rossRef > 0) {
+            isBehind = p.actualAvg < rossRef;
+          }
+          if (isBehind) streak++;
+          else break;
+        }
+        behindCount = streak;
+        behindDetected = streak >= 3;
+
+        if (!shedData.adjustments) shedData.adjustments = {};
+        shedData.adjustments.behindCount = behindCount;
+        shedData.adjustments.behindDetected = behindDetected;
+
+        const streakFlag = 'catchupAppliedThisStreak';
+        if (behindDetected && anchorFactor !== null && !shedData.adjustments[streakFlag]) {
+          const adj = anchorFactor * (1 + catchupFactor);
+          if (adj > anchorFactor) {
+            const oldFactor = anchorFactor;
+            anchorFactor = adj;
+            catchupApplied = true;
+            shedData.adjustments.applied = true;
+            shedData.adjustments.triggeredAt = new Date().toISOString();
+            shedData.adjustments.catchupFactor = catchupFactor;
+            shedData.adjustments.anchorFactor = anchorFactor;
+            shedData.adjustments.oldAnchorFactor = oldFactor;
+            shedData.adjustments[streakFlag] = true;
+          }
+        } else if (!behindDetected) {
+          shedData.adjustments[streakFlag] = false;
+          if (shedData.adjustments.applied) shedData.adjustments.applied = false;
+        }
+      }
+
+      const rossEnd = getAdjustedRossWeight(targetAge);
+      let projAvg;
+      if (anchorFactor !== null && rossEnd) {
+        projAvg = rossEnd * anchorFactor;
+      } else if (pickupsArray.length > 0) {
+        projAvg = pickupsArray[pickupsArray.length-1].actualAvg;
+      } else {
+        projAvg = rossEnd || 0;
+      }
+      if (projAvg < 0) projAvg = 0;
+      const projRemovalWeight = projAvg * remaining;
+      const batchTotal = totalHarvested + projRemovalWeight;
+
+      const adjState = {
+        behindCount,
+        behindDetected,
+        catchupApplied,
+        anchorFactor,
+        anchorAge,
+        anchorWeight,
+        applied: shedData.adjustments?.applied || false
       };
-      const parseBool = (v) => {
-        const s = String(v ?? "").trim().toLowerCase();
-        return s === "true" || s === "yes" || s === "1" || s === "y";
+
+      return {
+        batchTotal, effectiveStart, totalPicked, remaining,
+        projAvg, avgFactor: anchorFactor,
+        totalHarvested, targetAge, projRemovalWeight,
+        adjState,
+        anchorExpected: anchorWeight && anchorFactor ? anchorWeight / anchorFactor : null
       };
+    }
 
-      let importedBatch = "";
-      let updated = 0;
-      let skipped = 0;
+    function computeShedFeedAuto(shed, targetAge) {
+      if (!shed.placeDate || !targetAge) return 0;
+      let total = 0;
+      for (let d=1; d<=targetAge; d++) {
+        const pop = Math.max(0,
+          shed.startBirds - shed.mortalBirds -
+          (shed.pickups.filter(p => p.age <= d).reduce((s,p) => s + p.birds, 0))
+        );
+        total += pop * getFeedPerBirdKg(d);
+      }
+      return total;
+    }
 
-      for (const r of rows) {
-        const shedIdRaw = getVal(r, ["Shed", "shed", "ShedId", "Shed ID", "ShedID", "Shed#", "Shed No", "ShedNo"]);
-        const shedId = Number(shedIdRaw);
-        if (!Number.isFinite(shedId) || shedId < 1 || shedId > 8) { skipped++; continue; }
-        const idx = shedId - 1;
+    // ========================================================
+    //  REFRESH ALL
+    // ========================================================
+    function refreshAll() {
+      try {
+        saveCurrentShed();
+        const shed = sheds[activeShed];
+        if (!shed) return;
 
-        const bn = String(getVal(r, ["BatchNumber", "Batch Number", "Batch", "Batch#"]) || "").trim();
-        if (!importedBatch && bn) importedBatch = bn;
-
-        const placementRaw = getVal(r, ["PlacementDate", "Placement Date", "Placement", "Placement_Dt"]);
-        const cleanoutRaw  = getVal(r, ["CleanoutDate", "Cleanout Date", "Cleanout", "Cleanout_Dt"]);
-        const popRaw       = getVal(r, ["InitialPopulation", "Initial Population", "Population", "InitPop", "InitialPop"]);
-        const mortRaw      = getVal(r, ["Mortality", "MortalityCount", "Mortality Count", "TotalMortality"]);
-
-        const placement = parseExcelDateDMY(placementRaw);
-        const cleanout  = parseExcelDateDMY(cleanoutRaw);
-        const pop       = Number(popRaw);
-        const mort      = Number(mortRaw);
-
-        if (placement) sheds[idx].placementDate = placement;
-        if (Number.isFinite(pop) && pop > 0) sheds[idx].initialPopulation = Math.floor(pop);
-        sheds[idx].cleanoutDate = cleanout ?? null;
-        if (Number.isFinite(mort)) sheds[idx].mortality = Math.floor(mort);
-
-        // reset reverse snapshot
-        sheds[idx].prevMortalityBeforeFinal = null;
-        sheds[idx].prevCleanoutBeforeFinal = null;
-
-        // pickups 1..5
         const pickups = [];
-        for (let p=1;p<=5;p++){
-          const dRaw = getVal(r, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
-          const bRaw = getVal(r, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
-          const fRaw = getVal(r, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
-          const vRaw = getVal(r, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
-
-          const d = parseExcelDateDMY(dRaw) || (typeof dRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dRaw) ? parseISO(dRaw) : null);
-          const b = Number(bRaw);
-          const isFinal = parseBool(fRaw);
-          const variance = Number(vRaw);
-
-          if (d && Number.isFinite(b) && b > 0) {
-            pickups.push({
-              date: d,
-              birds: Math.floor(b),
-              isFinal: !!isFinal,
-              variance: Number.isFinite(variance) ? variance : null
+        for (let row of pickupRows) {
+          const age = parseInt(row.age.value);
+          const birds = parseInt(row.birds.value);
+          const weight = parseFloat(row.weight.value);
+          if (!isNaN(age) && age > 0 && !isNaN(birds) && birds > 0 && !isNaN(weight) && weight > 0) {
+            const exp = getAdjustedRossWeight(age);
+            if (exp) pickups.push({
+              birdsPicked: birds, totalWeight: weight,
+              expectedKg: exp, actualAvg: weight / birds, age
             });
           }
         }
-        pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+        pickups.sort((a,b) => a.age - b.age);
 
-        // ensure only one final pickup
-        let finalSeen = false;
-        for (const p of pickups){
-          if (p.isFinal && !finalSeen) finalSeen = true;
-          else if (p.isFinal && finalSeen) p.isFinal = false;
+        const targetAge = getCleanoutAge(shed);
+        const res = computeShedResult(shed, pickups, targetAge);
+
+        document.getElementById('harvestedSum').innerHTML = res.totalHarvested.toFixed(1) + ' kg';
+        document.getElementById('effectiveStart').innerHTML = res.effectiveStart.toLocaleString();
+        document.getElementById('totalPicked').innerHTML = res.totalPicked.toLocaleString();
+        document.getElementById('remainingBirds').innerHTML = res.remaining.toLocaleString();
+        document.getElementById('projectedAvg').innerHTML = res.projAvg.toFixed(2) + ' kg';
+        document.getElementById('batchTotal').innerHTML = res.batchTotal.toFixed(1) + ' kg';
+        document.getElementById('shedResultCard').classList.remove('hidden');
+
+        if (res.adjState.behindDetected) {
+          daysBehindDisplay.textContent = `📉 Days behind: ${res.adjState.behindCount} (streak)`;
+          daysBehindDisplay.className = 'text-xs font-semibold mt-1 text-amber-700';
+        } else if (res.adjState.behindCount > 0) {
+          daysBehindDisplay.textContent = `📈 Behind streak broken (last pickup on track)`;
+          daysBehindDisplay.className = 'text-xs font-semibold mt-1 text-emerald-700';
+        } else {
+          daysBehindDisplay.textContent = '';
         }
-        sheds[idx].pickups = pickups.slice(0,5);
 
-        // if final exists and cleanout not provided, set cleanout = final date
-        const fp = sheds[idx].pickups.find(x => x.isFinal);
-        if (fp && !sheds[idx].cleanoutDate) sheds[idx].cleanoutDate = dateOnly(fp.date);
+        const factorMsgEl = document.getElementById('factorMsg');
+        const adj = res.adjState;
+        let msg = '';
+        if (adj.anchorFactor !== null) {
+          msg = `📊 Performance factor: ${(adj.anchorFactor * 100).toFixed(1)}% `;
+          if (adj.anchorAge) msg += `(from day ${adj.anchorAge}, ${adj.anchorWeight ? adj.anchorWeight.toFixed(3) : '—'} kg) `;
+          if (adj.catchupApplied) msg += `⚡ Catch‑up applied (+${(adj.catchupFactor * 100).toFixed(0)}%) `;
+          msg += `→ forecast final avg ${res.projAvg.toFixed(2)} kg at ${targetAge} days`;
+        } else {
+          msg = `🌿 Using standard Ross curve → ${res.projAvg.toFixed(2)} kg (no pickups yet)`;
+        }
+        if (adj.behindDetected) msg += ` ⚠️ Behind for ${adj.behindCount} days`;
+        factorMsgEl.innerHTML = msg;
 
-        updated++;
+        const anchorInfo = document.getElementById('anchorInfo');
+        if (adj.anchorFactor !== null && adj.anchorAge) {
+          anchorInfo.textContent =
+            `🎯 Baseline: day ${adj.anchorAge}d, factor ${(adj.anchorFactor * 100).toFixed(1)}%` +
+            (adj.catchupApplied ? ' (adjusted)' : '') +
+            (adj.applied ? ' | adjustment active' : '');
+        } else {
+          anchorInfo.textContent = '⏳ Waiting for first pickup...';
+        }
+
+        const banner = document.getElementById('adjustmentBanner');
+        const adjTitle = document.getElementById('adjTitle');
+        const adjDesc = document.getElementById('adjDesc');
+        if (adj.behindDetected && adj.catchupApplied) {
+          banner.classList.add('active');
+          adjTitle.textContent = `⚠️ Adjustment applied — ${adj.behindCount} days behind`;
+          adjDesc.textContent =
+            `Performance factor increased by ${(adj.catchupFactor * 100).toFixed(0)}% to ${(adj.anchorFactor * 100).toFixed(1)}%. ` +
+            `Streak: ${adj.behindCount} days behind.`;
+        } else if (adj.behindDetected) {
+          banner.classList.add('active');
+          adjTitle.textContent = `⚠️ Behind schedule — ${adj.behindCount} days`;
+          adjDesc.textContent =
+            `Behind streak: ${adj.behindCount} days. Adjustment will trigger at 3 days. ` +
+            `Current factor: ${(adj.anchorFactor * 100).toFixed(1)}%`;
+        } else if (adj.applied) {
+          banner.classList.add('active');
+          adjTitle.textContent = '✅ Adjustment active — catching up';
+          adjDesc.textContent =
+            `Catch‑up factor ${(adj.catchupFactor * 100).toFixed(0)}% applied. ` +
+            `Current factor: ${(adj.anchorFactor * 100).toFixed(1)}%`;
+        } else {
+          banner.classList.remove('active');
+        }
+
+        // --- Farm totals ---
+        let farmLive = 0, farmAutoFeed = 0, farmStart = 0, farmMort = 0;
+        let totalWeightedAge = 0, totalHarvestWeight = 0, totalBirdsHarvested = 0;
+        let shedAges = [];
+
+        for (let i=0; i<SHED_COUNT; i++) {
+          const s = sheds[i];
+          const sPickups = (s.pickups || []).map(p => ({
+            birdsPicked: p.birds,
+            totalWeight: p.weight,
+            expectedKg: getAdjustedRossWeight(p.age),
+            actualAvg: p.weight / p.birds,
+            age: p.age
+          }));
+          sPickups.sort((a,b) => a.age - b.age);
+          const sTarget = getCleanoutAge(s);
+          const sRes = computeShedResult(s, sPickups, sTarget);
+
+          farmLive += sRes.batchTotal;
+          farmAutoFeed += computeShedFeedAuto(s, sTarget);
+          farmStart += s.startBirds;
+          farmMort += s.mortalBirds;
+          shedAges.push({ shed: i+1, age: sTarget, hasDates: !!(s.placeDate && s.cleanDate) });
+
+          for (let p of s.pickups) {
+            totalWeightedAge += p.age * p.birds;
+            totalHarvestWeight += p.weight;
+            totalBirdsHarvested += p.birds;
+          }
+          if (sRes.remaining > 0) {
+            totalWeightedAge += sTarget * sRes.remaining;
+            const finalWeight = sRes.projAvg * sRes.remaining;
+            totalHarvestWeight += finalWeight;
+            totalBirdsHarvested += sRes.remaining;
+          }
+        }
+
+        const avgAgeWeighted = totalBirdsHarvested > 0 ? totalWeightedAge / totalBirdsHarvested : 0;
+        const avgHarvestWeight = totalBirdsHarvested > 0 ? totalHarvestWeight / totalBirdsHarvested : 0;
+        const avgLivePerPlaced = farmStart > 0 ? farmLive / farmStart : 0;
+        const livability = farmStart > 0 ? ((farmStart - farmMort) / farmStart) * 100 : 0;
+
+        const userFeed = parseFloat(document.getElementById('editableFeedTotal').value);
+        const totalFeed = (!isNaN(userFeed) && userFeed > 0) ? userFeed : farmAutoFeed;
+
+        const fcr = totalFeed > 0 && farmLive > 0 ? totalFeed / farmLive : 0;
+        const alwBase = parseFloat(document.getElementById('alwBaseline').value) || 2.45;
+        const cfcrFactor = parseFloat(document.getElementById('cfcrFactor').value) || 0.27;
+        const cfcr = fcr - (avgHarvestWeight - alwBase) * cfcrFactor;
+
+        const pif = (avgAgeWeighted * fcr) > 0 ? (livability * avgHarvestWeight) / (avgAgeWeighted * fcr) * 100 : 0;
+
+        document.getElementById('totalLiveWeightFarm').innerText = farmLive.toFixed(1) + ' kg';
+        document.getElementById('fcrValue').innerText = fcr.toFixed(3);
+        document.getElementById('cfcrValue').innerText = cfcr.toFixed(3);
+        document.getElementById('pifValue').innerText = pif.toFixed(1);
+        document.getElementById('livabilityPercent').innerText = livability.toFixed(2) + '%';
+        document.getElementById('avgLiveWeightFarm').innerText = avgLivePerPlaced.toFixed(2) + ' kg';
+        document.getElementById('avgAgeWeighted').innerText = avgAgeWeighted.toFixed(1) + ' days';
+        document.getElementById('avgHarvestWeight').innerText = avgHarvestWeight.toFixed(2) + ' kg';
+        document.getElementById('alwUsed').innerText = avgHarvestWeight.toFixed(2);
+
+        if (!document.getElementById('editableFeedTotal').value) {
+          document.getElementById('editableFeedTotal').placeholder = farmAutoFeed.toFixed(0);
+        }
+
+        document.getElementById('shedAgeList').innerHTML = shedAges
+          .map(a => `<div>Shed ${a.shed}: <strong>${a.age}</strong> days ${a.hasDates ? '<span class="text-emerald-700">(custom)</span>' : '<span class="text-orange-600">(default 56)</span>'}</div>`)
+          .join('');
+
+        renderDailyTable(activeShed);
+        updateDailyCount(activeShed);
+        persistState();
+
+      } catch(err) {
+        console.error('Error in refreshAll:', err);
+        showToast(`❌ Update failed: ${err.message}`, true);
       }
-
-      if (importedBatch) batchNumber = importedBatch;
-
-      saveState();
-      render();
-
-      alert(`Import complete.\nSheet used: ${sheetName}\nRows updated: ${updated}\nSkipped: ${skipped}`);
-    } catch (err) {
-      console.error(err);
-      alert("Import failed:\n" + (err?.message || err));
     }
-  };
-})();
 
-async function exportExcel(){
-  if (typeof XLSX === "undefined") return alert("Export failed: XLSX library not loaded.");
-
-  const fileName = `KiriparkFarmManager_${iso(new Date())}.xlsx`;
-  const wb = XLSX.utils.book_new();
-
-  const shedRows = sheds.map(s => {
-    const row = {
-      Shed: s.id,
-      BatchNumber: batchNumber || "",
-      PlacementDate: fmtDateDMY(s.placementDate),
-      InitialPopulation: Math.floor(Number(s.initialPopulation || 0)),
-      Mortality: Math.floor(Number(s.mortality || 0)),
-      CleanoutDate: s.cleanoutDate ? fmtDateDMY(s.cleanoutDate) : ""
-    };
-
-    for (let i=1;i<=5;i++){
-      const p = s.pickups?.[i-1];
-      row[`Pickup${i}Date`] = p?.date ? fmtDateDMY(p.date) : "";
-      row[`Pickup${i}Birds`] = p?.birds ? Math.floor(p.birds) : "";
-      row[`Pickup${i}Final`] = p?.isFinal ? "TRUE" : "";
-      row[`Pickup${i}Variance`] = (p?.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : "";
+    function autoUpdate() {
+      if (autoUpdateTimer) clearTimeout(autoUpdateTimer);
+      autoUpdateTimer = setTimeout(() => {
+        try { refreshAll(); } catch(e) { console.error(e); showToast('Auto-refresh error', true); }
+      }, 120);
     }
-    return row;
-  });
 
-  const wsSheds = XLSX.utils.json_to_sheet(shedRows);
-  XLSX.utils.book_append_sheet(wb, wsSheds, "Sheds");
+    // ========================================================
+    //  SHED TABS
+    // ========================================================
+    function buildShedTabs() {
+      const container = document.getElementById('shedTabsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      for (let i=0; i<SHED_COUNT; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = `Shed ${i+1}`;
+        btn.className = `shed-tab px-4 py-2 rounded-t-xl text-sm font-semibold bg-white/80 text-slate-700 border border-b-0 border-slate-200/80 hover:bg-emerald-50 ${activeShed===i ? 'active' : ''}`;
+        btn.addEventListener('click', (function(idx){ return function(){
+          saveCurrentShed();
+          activeShed = idx;
+          loadShedToUI(activeShed);
+          document.querySelectorAll('.shed-tab').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+          refreshAll();
+        }; })(i));
+        container.appendChild(btn);
+      }
+    }
 
-  try {
-    XLSX.writeFile(wb, fileName);
-  } catch (err) {
-    console.warn("XLSX.writeFile failed; using Blob fallback:", err);
-    const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([arrayBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    // ========================================================
+    //  IMPORT / EXPORT
+    // ========================================================
+    function importExcel(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          let sheetName = workbook.SheetNames.find(n => n.toLowerCase() === "sheds");
+          if (!sheetName && workbook.SheetNames.length > 0) sheetName = workbook.SheetNames[0];
+          if (!sheetName) throw new Error("No sheets found.");
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet);
+          if (json.length === 0) throw new Error("No data rows.");
+
+          let updatedCount = 0;
+          for (const row of json) {
+            let shedId = row.Shed ?? row.shed ?? row["Shed ID"] ?? row["Shed"];
+            const idx = (parseInt(shedId) || 0) - 1;
+            if (idx < 0 || idx >= 8) continue;
+
+            const placeRaw = row.PlacementDate ?? row["Placement Date"];
+            const cleanRaw = row.CleanoutDate ?? row["Cleanout Date"];
+            if (placeRaw) sheds[idx].placeDate = parseExcelDate(placeRaw);
+            if (cleanRaw) sheds[idx].cleanDate = parseExcelDate(cleanRaw);
+
+            const start = row.InitialPopulation ?? row["Initial Population"];
+            if (start !== undefined && start !== "") sheds[idx].startBirds = parseInt(start) || 0;
+
+            const mort = row.Mortality ?? row["Mortality (birds)"];
+            if (mort !== undefined && mort !== "") sheds[idx].mortalBirds = parseInt(mort) || 0;
+
+            const pickups = [];
+            for (let p=1; p<=5; p++) {
+              const ageKey = `Pickup${p}Age`;
+              const birdsKey = `Pickup${p}Birds`;
+              const wtKey = `Pickup${p}Weight`;
+              let age = row[ageKey] ?? row[`Pickup ${p} Age`];
+              let birds = row[birdsKey] ?? row[`Pickup ${p} Birds`];
+              let weight = row[wtKey] ?? row[`Pickup ${p} Weight`];
+              if (age && birds && weight && !isNaN(parseInt(age)) && !isNaN(parseInt(birds)) && !isNaN(parseFloat(weight))) {
+                pickups.push({ age: parseInt(age), birds: parseInt(birds), weight: parseFloat(weight) });
+              }
+            }
+            sheds[idx].pickups = pickups.slice(0,5);
+            updatedCount++;
+          }
+
+          if (updatedCount === 0) throw new Error("No valid shed rows.");
+          loadShedToUI(activeShed);
+          refreshAll();
+          persistState();
+          showToast(`✅ Imported ${updatedCount} sheds.`);
+        } catch(err) {
+          console.error(err);
+          showToast(`❌ Import failed: ${err.message}`, true);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function exportExcel() {
+      saveCurrentShed();
+      const rows = [];
+      for (let i=0; i<SHED_COUNT; i++) {
+        const s = sheds[i];
+        const row = {
+          Shed: i+1,
+          PlacementDate: s.placeDate,
+          InitialPopulation: s.startBirds,
+          Mortality: s.mortalBirds,
+          CleanoutDate: s.cleanDate
+        };
+        for (let p=1; p<=5; p++) {
+          const pu = s.pickups[p-1];
+          row[`Pickup${p}Age`] = pu?.age || "";
+          row[`Pickup${p}Birds`] = pu?.birds || "";
+          row[`Pickup${p}Weight`] = pu?.weight || "";
+        }
+        const pickupCount = (s.pickups || []).length;
+        row.PickupCount = pickupCount;
+        row.AdjApplied = s.adjustments?.applied ? 'Yes' : 'No';
+        row.AdjFactor = s.adjustments?.anchorFactor ? (s.adjustments.anchorFactor * 100).toFixed(1) + '%' : '';
+        row.DaysBehind = s.adjustments?.behindCount || 0;
+        rows.push(row);
+      }
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "sheds");
+      XLSX.writeFile(wb, `ProdResult_${new Date().toISOString().slice(0,19)}.xlsx`);
+      showToast("📁 Export complete");
+    }
+
+    // ========================================================
+    //  EVENT BINDING
+    // ========================================================
+    function bindAuto(el) {
+      ['input','change'].forEach(ev => el.addEventListener(ev, autoUpdate));
+    }
+    [startBirdsInput, mortalBirdsInput, placeDateInput, cleanDateInput].forEach(bindAuto);
+
+    document.getElementById('editableFeedTotal').addEventListener('input', autoUpdate);
+    document.getElementById('editableFeedTotal').addEventListener('change', autoUpdate);
+    document.getElementById('alwBaseline').addEventListener('input', autoUpdate);
+    document.getElementById('alwBaseline').addEventListener('change', autoUpdate);
+    document.getElementById('cfcrFactor').addEventListener('input', autoUpdate);
+    document.getElementById('cfcrFactor').addEventListener('change', autoUpdate);
+    document.getElementById('catchupFactor').addEventListener('input', autoUpdate);
+    document.getElementById('catchupFactor').addEventListener('change', autoUpdate);
+
+    document.getElementById('importExcelBtn').addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.xlsx,.xls';
+      inp.onchange = e => { if (e.target.files[0]) importExcel(e.target.files[0]); };
+      inp.click();
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-}
-</script>
 
+    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+
+    document.getElementById("saveLocalBtn").addEventListener("click", () => {
+      persistState();
+      showToast("💾 Saved locally");
+    });
+
+    document.getElementById("clearLocalBtn").addEventListener("click", () => {
+      if (confirm("Clear all locally saved data?")) {
+        clearSavedState();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      try { persistState(); } catch(e) {}
+    });
+
+    // ========================================================
+    //  BOOT
+    // ========================================================
+    const restored = restoreState();
+    buildShedTabs();
+    loadShedToUI(activeShed || 0);
+    refreshAll();
+    if (!restored) setSaveIndicator("Ready", "text-emerald-500");
+
+    console.log('🏁 ProdResult.VM — UI text simplified');
+  </script>
 </body>
 </html>
