@@ -492,7 +492,7 @@
     // ========================================================
     //  LOCAL STORAGE
     // ========================================================
-    const STORAGE_KEY = "ProdResultEstimate_v9";
+    const STORAGE_KEY = "ProdResultEstimate_v11";
 
     function setSaveIndicator(text, colorClass = "text-emerald-500") {
       const el = document.getElementById("saveIndicator");
@@ -510,7 +510,7 @@
     }
 
     // ========================================================
-    //  ROSS 308 CURVE & FEED – fixed day‑old = 0.044 kg
+    //  ROSS 308 CURVE – fixed day‑old = 0.044 kg
     // ========================================================
     const baseRossKg = {
       0: 0.044, 1: 0.062, 2: 0.081, 3: 0.102, 4: 0.125, 5: 0.151, 6: 0.181, 7: 0.213, 8: 0.249, 9: 0.288,
@@ -562,6 +562,35 @@
     function getFeedPerBirdKg(age) {
       const ageFloor = Math.min(60, Math.max(1, Math.floor(age)));
       return (feedIntakeGrams[ageFloor] || 234) / 1000;
+    }
+
+    // ========================================================
+    //  DAYS BEHIND CALCULATION – find age where Ross weight matches actual
+    // ========================================================
+    function getDaysBehind(actualWeight, currentAge) {
+      // If actual weight is >= expected at current age, not behind
+      const expected = getAdjustedRossWeight(currentAge);
+      if (expected === null) return 0;
+      if (actualWeight >= expected) return 0;
+
+      // Find the age where Ross weight is closest to actual weight
+      let bestAge = 0;
+      let bestDiff = Infinity;
+      const allAges = knownDays.slice(); // known ages from 0-58
+
+      for (const age of allAges) {
+        const w = getAdjustedRossWeight(age);
+        if (w === null) continue;
+        const diff = Math.abs(w - actualWeight);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestAge = age;
+        }
+      }
+
+      // Days behind = current age - best age
+      const daysBehind = Math.max(0, currentAge - bestAge);
+      return Math.round(daysBehind);
     }
 
     // ========================================================
@@ -618,6 +647,8 @@
           anchorAge: null,
           anchorWeight: null,
           behindCount: 0,
+          behindStreak: 0,
+          maxDaysBehind: 0,
           behindDetected: false,
           catchupAppliedThisStreak: false
         }
@@ -644,7 +675,7 @@
       try {
         saveCurrentShed();
         const payload = {
-          version: 9,
+          version: 11,
           savedAt: new Date().toISOString(),
           activeShed,
           sheds,
@@ -689,6 +720,8 @@
             anchorAge: null,
             anchorWeight: null,
             behindCount: 0,
+            behindStreak: 0,
+            maxDaysBehind: 0,
             behindDetected: false,
             catchupAppliedThisStreak: false
           }
@@ -843,7 +876,7 @@
       }
 
       const sorted = [...pickups].sort((a,b) => a.age - b.age);
-      const behindCount = shed.adjustments?.behindCount || 0;
+      const maxDaysBehind = shed.adjustments?.maxDaysBehind || 0;
 
       for (let i=0; i<sorted.length; i++) {
         const p = sorted[i];
@@ -853,8 +886,12 @@
         const rossRef = getAdjustedRossWeight(p.age);
         const actualAvg = p.weight / p.birds;
         let isBehind = false;
+        let daysBehind = 0;
         if (rossRef !== null && rossRef > 0) {
           isBehind = actualAvg < rossRef;
+          if (isBehind) {
+            daysBehind = getDaysBehind(actualAvg, p.age);
+          }
         }
         if (isBehind) tr.classList.add('behind');
 
@@ -865,7 +902,7 @@
           dateStr = base.toISOString().split('T')[0];
         }
 
-        const statusText = isBehind ? `Behind (${behindCount}d)` : 'On track';
+        const statusText = isBehind ? `Behind (${daysBehind}d)` : 'On track';
         const statusClass = isBehind ? 'behind' : 'on-track';
 
         tr.innerHTML = `
@@ -896,7 +933,7 @@
       if (remaining < 0) remaining = 0;
       if (pickupsArray.length === 5 && remaining > 0) remaining = 0;
 
-      // Anchor
+      // Anchor (first pickup)
       let anchorFactor = null;
       let anchorAge = null;
       let anchorWeight = null;
@@ -939,14 +976,26 @@
         }
       }
 
-      // Behind streak based on Ross standard
+      // ---- Behind detection ----
       let behindCount = 0;
+      let behindStreak = 0;
+      let maxDaysBehind = 0;
       let behindDetected = false;
       let catchupApplied = false;
       const catchupFactor = parseFloat(document.getElementById('catchupFactor').value) || 0.05;
 
       if (pickupsArray.length > 0) {
         const sorted = [...pickupsArray].sort((a,b) => a.age - b.age);
+        // Count total behind and max days behind
+        for (const p of sorted) {
+          const rossRef = getAdjustedRossWeight(p.age);
+          if (rossRef !== null && rossRef > 0 && p.actualAvg < rossRef) {
+            behindCount++;
+            const daysBehind = getDaysBehind(p.actualAvg, p.age);
+            if (daysBehind > maxDaysBehind) maxDaysBehind = daysBehind;
+          }
+        }
+        // Count consecutive behind from latest
         let streak = 0;
         for (let i=sorted.length-1; i>=0; i--) {
           const p = sorted[i];
@@ -958,13 +1007,16 @@
           if (isBehind) streak++;
           else break;
         }
-        behindCount = streak;
-        behindDetected = streak >= 3;
+        behindStreak = streak;
+        behindDetected = behindStreak >= 3;
 
         if (!shedData.adjustments) shedData.adjustments = {};
         shedData.adjustments.behindCount = behindCount;
+        shedData.adjustments.behindStreak = behindStreak;
+        shedData.adjustments.maxDaysBehind = maxDaysBehind;
         shedData.adjustments.behindDetected = behindDetected;
 
+        // Apply catch-up only if behindStreak >= 3 and not already applied for this streak
         const streakFlag = 'catchupAppliedThisStreak';
         if (behindDetected && anchorFactor !== null && !shedData.adjustments[streakFlag]) {
           const adj = anchorFactor * (1 + catchupFactor);
@@ -985,6 +1037,7 @@
         }
       }
 
+      // ---- Projection ----
       const rossEnd = getAdjustedRossWeight(targetAge);
       let projAvg;
       if (anchorFactor !== null && rossEnd) {
@@ -1000,6 +1053,8 @@
 
       const adjState = {
         behindCount,
+        behindStreak,
+        maxDaysBehind,
         behindDetected,
         catchupApplied,
         anchorFactor,
@@ -1065,18 +1120,19 @@
         document.getElementById('batchTotal').innerHTML = res.batchTotal.toFixed(1) + ' kg';
         document.getElementById('shedResultCard').classList.remove('hidden');
 
-        if (res.adjState.behindDetected) {
-          daysBehindDisplay.textContent = `📉 Days behind: ${res.adjState.behindCount} (streak)`;
+        // Days behind display
+        const adj = res.adjState;
+        if (adj.maxDaysBehind > 0) {
+          daysBehindDisplay.textContent = `📉 Max days behind: ${adj.maxDaysBehind} (streak: ${adj.behindStreak})`;
           daysBehindDisplay.className = 'text-xs font-semibold mt-1 text-amber-700';
-        } else if (res.adjState.behindCount > 0) {
-          daysBehindDisplay.textContent = `📈 Behind streak broken (last pickup on track)`;
-          daysBehindDisplay.className = 'text-xs font-semibold mt-1 text-emerald-700';
+        } else if (adj.behindCount > 0) {
+          daysBehindDisplay.textContent = `📉 Behind days: ${adj.behindCount} pickups below standard`;
+          daysBehindDisplay.className = 'text-xs font-semibold mt-1 text-amber-700';
         } else {
           daysBehindDisplay.textContent = '';
         }
 
         const factorMsgEl = document.getElementById('factorMsg');
-        const adj = res.adjState;
         let msg = '';
         if (adj.anchorFactor !== null) {
           msg = `📊 Performance factor: ${(adj.anchorFactor * 100).toFixed(1)}% `;
@@ -1086,7 +1142,7 @@
         } else {
           msg = `🌿 Using standard Ross curve → ${res.projAvg.toFixed(2)} kg (no pickups yet)`;
         }
-        if (adj.behindDetected) msg += ` ⚠️ Behind for ${adj.behindCount} days`;
+        if (adj.behindStreak >= 3) msg += ` ⚠️ ${adj.behindStreak} consecutive days behind`;
         factorMsgEl.innerHTML = msg;
 
         const anchorInfo = document.getElementById('anchorInfo');
@@ -1104,16 +1160,16 @@
         const adjDesc = document.getElementById('adjDesc');
         if (adj.behindDetected && adj.catchupApplied) {
           banner.classList.add('active');
-          adjTitle.textContent = `⚠️ Adjustment applied — ${adj.behindCount} days behind`;
+          adjTitle.textContent = `⚠️ Adjustment applied — ${adj.behindStreak} days behind (streak)`;
           adjDesc.textContent =
             `Performance factor increased by ${(adj.catchupFactor * 100).toFixed(0)}% to ${(adj.anchorFactor * 100).toFixed(1)}%. ` +
-            `Streak: ${adj.behindCount} days behind.`;
-        } else if (adj.behindDetected) {
+            `Max days behind: ${adj.maxDaysBehind}. Streak: ${adj.behindStreak} days.`;
+        } else if (adj.behindStreak >= 3) {
           banner.classList.add('active');
-          adjTitle.textContent = `⚠️ Behind schedule — ${adj.behindCount} days`;
+          adjTitle.textContent = `⚠️ Behind schedule — ${adj.behindStreak} consecutive days`;
           adjDesc.textContent =
-            `Behind streak: ${adj.behindCount} days. Adjustment will trigger at 3 days. ` +
-            `Current factor: ${(adj.anchorFactor * 100).toFixed(1)}%`;
+            `Consecutive behind streak: ${adj.behindStreak} days. Adjustment will trigger at 3 days. ` +
+            `Current factor: ${(adj.anchorFactor * 100).toFixed(1)}%. Max days behind: ${adj.maxDaysBehind}`;
         } else if (adj.applied) {
           banner.classList.add('active');
           adjTitle.textContent = '✅ Adjustment active — catching up';
@@ -1318,7 +1374,7 @@
         row.PickupCount = pickupCount;
         row.AdjApplied = s.adjustments?.applied ? 'Yes' : 'No';
         row.AdjFactor = s.adjustments?.anchorFactor ? (s.adjustments.anchorFactor * 100).toFixed(1) + '%' : '';
-        row.DaysBehind = s.adjustments?.behindCount || 0;
+        row.DaysBehind = s.adjustments?.maxDaysBehind || 0;
         rows.push(row);
       }
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -1378,7 +1434,7 @@
     refreshAll();
     if (!restored) setSaveIndicator("Ready", "text-emerald-500");
 
-    console.log('🏁 ProdResult.VM — UI text simplified');
+    console.log('🏁 ProdResult.VM — Behind shows days behind the Ross 308 curve');
   </script>
 </body>
 </html>
