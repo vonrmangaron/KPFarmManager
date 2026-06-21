@@ -179,48 +179,6 @@
       -moz-appearance: textfield;
     }
 
-    /* Quick-shift buttons */
-    .quick-shift-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.75);
-      border-radius: 6px;
-      padding: 2px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.1s;
-    }
-    .quick-shift-btn:hover {
-      background: rgba(255, 255, 255, 0.18);
-      color: white;
-    }
-    .quick-shift-btn.negative:hover {
-      background: rgba(248, 113, 113, 0.25);
-      border-color: rgba(248, 113, 113, 0.3);
-    }
-    .quick-shift-btn.positive:hover {
-      background: rgba(52, 211, 153, 0.25);
-      border-color: rgba(52, 211, 153, 0.3);
-    }
-
-    /* Cleanout date badges */
-    .cleanout-badge {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 1px 10px;
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.7);
-      font-weight: 500;
-      white-space: nowrap;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    .cleanout-badge strong {
-      color: white;
-      font-weight: 600;
-    }
-
     /* Shift applied flash */
     @keyframes shiftFlash {
       0% {
@@ -235,6 +193,22 @@
     }
     .shift-flash {
       animation: shiftFlash 0.8s ease 1;
+    }
+
+    .cleanout-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1px 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .cleanout-badge strong {
+      color: white;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -269,7 +243,7 @@
               </div>
             </div>
 
-            <!-- Right: Live badge + Date + Weather (compact highlighted area) -->
+            <!-- Right: Live badge + Date + Weather -->
             <div class="flex flex-col items-end gap-1">
               <div class="flex flex-wrap items-center justify-end gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-sm border border-white/15">
                 <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-0.5 text-[11px]">
@@ -305,7 +279,7 @@
             <div id="farmSummary" class="flex flex-wrap gap-2 justify-end"></div>
           </div>
 
-          <!-- NEW: Cleanout Shift Control Row -->
+          <!-- NEW: Cleanout Shift Control Row (simplified) -->
           <div id="cleanoutShiftRow" class="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-2 text-sm">
               <span class="font-semibold text-white/80 flex items-center gap-1.5">
@@ -318,41 +292,30 @@
               class="cleanout-shift-input"
               title="Positive = later, Negative = earlier" />
               <span class="text-xs text-white/50">days</span>
-
-              <!-- Quick-shift buttons -->
-              <button class="quick-shift-btn negative" onclick="quickShiftCleanout(-1)" title="1 day earlier">−1</button>
-              <button class="quick-shift-btn negative" onclick="quickShiftCleanout(-2)" title="2 days earlier">−2</button>
-              <button class="quick-shift-btn positive" onclick="quickShiftCleanout(1)" title="1 day later">+1</button>
-              <button class="quick-shift-btn positive" onclick="quickShiftCleanout(2)" title="2 days later">+2</button>
-
               <button onclick="applyCleanoutShift()"
               class="px-3 py-1.5 rounded-lg bg-emerald-500/80 text-white text-sm hover:bg-emerald-400 font-semibold transition shadow-sm">
-              Apply Shift
+              Apply
             </button>
-            <button onclick="resetCleanoutDates()"
-            class="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 font-semibold transition">
-            Reset All
-          </button>
-        </div>
+          </div>
 
-        <!-- Cleanout dates display -->
-        <div id="cleanoutDatesDisplay" class="flex flex-wrap gap-1.5 items-center">
-          <!-- Populated by JS -->
+          <!-- Cleanout dates display -->
+          <div id="cleanoutDatesDisplay" class="flex flex-wrap gap-1.5 items-center">
+            <!-- Populated by JS -->
+          </div>
         </div>
       </div>
+      <input id="excelFile" type="file" accept=".xlsx,.xls" class="hidden" />
     </div>
-    <input id="excelFile" type="file" accept=".xlsx,.xls" class="hidden" />
-  </div>
-</header>
+  </header>
 
-<!-- ✅ STICKY TAB BAR -->
-<div id="tabsBar" class="sticky-tabs mb-4">
-  <div class="rounded-2xl border border-slate-200 bg-white/80 shadow-soft px-4 py-3">
-    <div id="tabs"></div>
+  <!-- ✅ STICKY TAB BAR -->
+  <div id="tabsBar" class="sticky-tabs mb-4">
+    <div class="rounded-2xl border border-slate-200 bg-white/80 shadow-soft px-4 py-3">
+      <div id="tabs"></div>
+    </div>
   </div>
-</div>
 
-<main id="app" class="space-y-4"></main>
+  <main id="app" class="space-y-4"></main>
 </div>
 
 <footer class="border-t border-slate-200 bg-white">
@@ -648,6 +611,9 @@
   // Future deliveries per group
   const groupDeliveries = { 1: [], 2: [], 3: [], 4: [] };
 
+  // Global cleanout shift days (applied to base)
+  let cleanoutShiftDays = 0;
+
   function saveState() {
     try {
       const payload = {
@@ -665,11 +631,13 @@
           4: groupDeliveries[4].map(d => ({ date: iso(d.date), amountT: d.amountT, targetSilo: d.targetSilo,
             overflowSilo: d.overflowSilo }))
         },
+        cleanoutShiftDays: cleanoutShiftDays,
         sheds: sheds.map(s => ({
           id: s.id,
           placementDate: iso(s.placementDate),
           initialPopulation: s.initialPopulation,
           cleanoutDate: s.cleanoutDate ? iso(s.cleanoutDate) : null,
+          baseCleanoutDate: s.baseCleanoutDate ? iso(s.baseCleanoutDate) : null,
           customFeedKg: s.customFeedKg ?? null,
           mortality: Number(s.mortality || 0),
           prevMortalityBeforeFinal: (s.prevMortalityBeforeFinal != null && Number.isFinite(Number(s
@@ -696,6 +664,7 @@
 
       if (typeof data.batchNumber === "string") batchNumber = data.batchNumber;
       if (typeof data.activeTab === "string") activeTab = data.activeTab;
+      if (typeof data.cleanoutShiftDays === "number") cleanoutShiftDays = data.cleanoutShiftDays;
 
       if (data.groupSilos)
         for (const g of [1, 2, 3, 4])
@@ -727,6 +696,8 @@
           sheds[i].placementDate = parseISO(s.placementDate) || sheds[i].placementDate;
           sheds[i].initialPopulation = Number(s.initialPopulation) || sheds[i].initialPopulation;
           sheds[i].cleanoutDate = s.cleanoutDate ? parseISO(s.cleanoutDate) : null;
+          // Load baseCleanoutDate
+          sheds[i].baseCleanoutDate = s.baseCleanoutDate ? parseISO(s.baseCleanoutDate) : null;
           sheds[i].customFeedKg = (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null;
           sheds[i].mortality = Number(s.mortality || 0);
 
@@ -788,6 +759,7 @@
         placementDate: addDays(today, -10),
         initialPopulation: 20000 + i * 500,
         cleanoutDate: null,
+        baseCleanoutDate: null, // will be set on first load
         customFeedKg: null,
         mortality: 0,
         prevMortalityBeforeFinal: null,
@@ -796,6 +768,31 @@
       });
     }
     loadState();
+    // Ensure baseCleanoutDate is set for all sheds
+    for (let i = 0; i < sheds.length; i++) {
+      const s = sheds[i];
+      if (!s.baseCleanoutDate) {
+        // If no base, set to current cleanout (or default)
+        if (s.cleanoutDate) {
+          s.baseCleanoutDate = dateOnly(s.cleanoutDate);
+        } else {
+          s.baseCleanoutDate = addDays(s.placementDate, 54);
+        }
+      }
+      // Also ensure cleanoutDate is consistent with base + shift
+      if (s.cleanoutDate && s.baseCleanoutDate) {
+        // We'll trust the stored cleanoutDate; but if shiftDays is non-zero, we might want to recalc?
+        // For safety, we'll apply current shiftDays on load.
+        // But we'll just set cleanoutDate = base + shiftDays
+        if (cleanoutShiftDays !== 0) {
+          s.cleanoutDate = addDays(s.baseCleanoutDate, cleanoutShiftDays);
+        } else {
+          // if shiftDays is 0, cleanoutDate should equal base
+          s.cleanoutDate = dateOnly(s.baseCleanoutDate);
+        }
+      }
+    }
+    saveState();
   })();
 
   /* =========================================================
@@ -855,6 +852,8 @@
       const NewMortality = I - (Pprev + pickupObj.birds);
       shed.mortality = Math.floor(NewMortality);
       shed.cleanoutDate = dateOnly(d);
+      // Also update baseCleanoutDate to match the final pickup date
+      shed.baseCleanoutDate = dateOnly(d);
     }
 
     shed.pickups.push(pickupObj);
@@ -1881,6 +1880,16 @@
 
   function updateDate(shedIndex, key, val) {
     sheds[shedIndex][key] = (val === "") ? null : parseISO(val);
+    // If changing cleanoutDate, also update baseCleanoutDate to match (so future shifts are relative to this new date)
+    if (key === 'cleanoutDate') {
+      const newDate = sheds[shedIndex][key];
+      if (newDate) {
+        sheds[shedIndex].baseCleanoutDate = dateOnly(newDate);
+        // Reset shiftDays to 0 because user manually set a cleanout
+        cleanoutShiftDays = 0;
+        document.getElementById('cleanoutShiftDays').value = 0;
+      }
+    }
     saveState();
     scheduleRender();
   }
@@ -2440,7 +2449,7 @@
   }
 
   /* =========================================================
-     CLEANOUT SHIFT FUNCTIONS
+     CLEANOUT SHIFT FUNCTIONS (simplified, non‑accumulating)
   ========================================================= */
 
   // Apply the shift value from the input field to all sheds
@@ -2448,48 +2457,24 @@
     const input = document.getElementById('cleanoutShiftDays');
     const days = Number(input?.value || 0);
 
-    if (!Number.isFinite(days) || days === 0) {
-      alert('Please enter a non-zero number of days.\nPositive = later, Negative = earlier.');
+    if (!Number.isFinite(days)) {
+      alert('Please enter a valid number of days.\nPositive = later, Negative = earlier.');
       return;
     }
 
-    shiftAllCleanoutDates(days);
-  }
+    // Store the shift days globally
+    cleanoutShiftDays = days;
 
-  // Quick shift: apply a predefined shift value
-  function quickShiftCleanout(days) {
-    const input = document.getElementById('cleanoutShiftDays');
-    if (input) input.value = days;
-    shiftAllCleanoutDates(days);
-  }
-
-  // Core shift function: shifts all cleanout dates by 'days' days
-  function shiftAllCleanoutDates(days) {
-    const shift = Number(days);
-    if (!Number.isFinite(shift)) {
-      alert('Invalid number of days.');
-      return;
-    }
-
-    if (shift === 0) {
-      alert('No shift applied (0 days).');
-      return;
-    }
-
-    let shiftedCount = 0;
+    // For each shed, set cleanoutDate = baseCleanoutDate + shiftDays
     for (let i = 0; i < sheds.length; i++) {
       const shed = sheds[i];
-      // Always shift the current cleanout date if it exists
-      if (shed.cleanoutDate) {
-        shed.cleanoutDate = addDays(shed.cleanoutDate, shift);
-        shiftedCount++;
-      } else {
-        // If no cleanout date set, use placement + 54 days as base, then shift
-        const base = addDays(shed.placementDate, 54);
-        shed.cleanoutDate = addDays(base, shift);
-        shiftedCount++;
+      // Ensure baseCleanoutDate exists
+      if (!shed.baseCleanoutDate) {
+        // If not set, set it to current cleanout or default
+        shed.baseCleanoutDate = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : addDays(shed.placementDate, 54);
       }
-      // Important: Do NOT shift prevCleanoutBeforeFinal — it's used for reverting final pickups
+      // Apply shift
+      shed.cleanoutDate = addDays(shed.baseCleanoutDate, days);
     }
 
     saveState();
@@ -2508,39 +2493,6 @@
 
     // Re-render the entire UI to reflect changes
     render();
-  }
-
-  // Reset all cleanout dates to their default values
-  function resetCleanoutDates() {
-    if (!confirm('Reset all cleanout dates to default?\n\n' +
-        '• If a FINAL pickup exists → cleanout = final pickup date\n' +
-        '• Otherwise → cleanout = placement + 54 days')) {
-      return;
-    }
-
-    let resetCount = 0;
-    for (let i = 0; i < sheds.length; i++) {
-      const shed = sheds[i];
-      const finalPickup = getFinalPickup(shed);
-      if (finalPickup) {
-        shed.cleanoutDate = dateOnly(finalPickup.date);
-      } else {
-        shed.cleanoutDate = addDays(shed.placementDate, 54);
-      }
-      resetCount++;
-    }
-
-    saveState();
-    updateCleanoutDatesDisplay();
-    render();
-
-    // Flash feedback
-    const row = document.getElementById('cleanoutShiftRow');
-    if (row) {
-      row.classList.remove('shift-flash');
-      void row.offsetWidth;
-      row.classList.add('shift-flash');
-    }
   }
 
   // Update the cleanout dates display in the header
@@ -2596,6 +2548,10 @@
       ${pill(`Farm picked: ${farm.picked.toLocaleString()} (${pct(farm.pickedRate)})`, "violet")}
       ${netBalanceHtml}
     `;
+
+    // Update the shift input to reflect current shiftDays
+    const shiftInput = document.getElementById('cleanoutShiftDays');
+    if (shiftInput) shiftInput.value = cleanoutShiftDays;
 
     // Update cleanout dates display
     updateCleanoutDatesDisplay();
@@ -2753,6 +2709,8 @@
             cleanoutDate = parseExcelDateDMY(cleanoutRaw);
           }
           sheds[idx].cleanoutDate = cleanoutDate;
+          // Also set baseCleanoutDate to the same
+          sheds[idx].baseCleanoutDate = cleanoutDate ? dateOnly(cleanoutDate) : null;
 
           if (Number.isFinite(mort)) sheds[idx].mortality = Math.floor(mort);
 
@@ -2815,6 +2773,7 @@
           const fp = sheds[idx].pickups.find(x => x.isFinal);
           if (fp) {
             sheds[idx].cleanoutDate = dateOnly(fp.date);
+            sheds[idx].baseCleanoutDate = dateOnly(fp.date);
             const totalPicked = sheds[idx].pickups.reduce((sum, p) => sum + p.birds, 0);
             sheds[idx].mortality = Math.max(0, sheds[idx].initialPopulation - totalPicked);
             sheds[idx].prevMortalityBeforeFinal = null;
@@ -2825,6 +2784,11 @@
         }
 
         if (importedBatch) batchNumber = importedBatch;
+
+        // After import, reset shiftDays to 0 because we've set baseCleanoutDate to match
+        cleanoutShiftDays = 0;
+        const shiftInput = document.getElementById('cleanoutShiftDays');
+        if (shiftInput) shiftInput.value = 0;
 
         saveState();
         render();
