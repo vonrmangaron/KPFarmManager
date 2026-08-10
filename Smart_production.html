@@ -476,6 +476,15 @@
           </div>
         </div>
 
+        <!-- Active shed density only -->
+        <div class="mt-4 p-3 rounded-2xl border border-slate-200 bg-white/80">
+          <div class="text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
+            <i class="fas fa-balance-scale text-indigo-500"></i> Shed <span id="densityShedNumber">1</span> Density (kg/m²)
+          </div>
+          <div id="densityScore" class="text-2xl font-extrabold text-indigo-900">—</div>
+          <div id="densityDetail" class="text-xs text-slate-500 mt-1">—</div>
+        </div>
+
         <div class="mt-5 pt-4 border-t border-slate-200/70 space-y-2 text-sm">
           <div class="flex justify-between">
             <span class="text-slate-600">📊 Avg age (weighted):</span>
@@ -494,7 +503,6 @@
             <span class="font-semibold" id="livabilityPercent">—%</span>
           </div>
         </div>
-
         <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
           <div class="flex items-center gap-2">
             <span class="text-slate-500">⚡ β factor:</span>
@@ -817,6 +825,9 @@
       mortalBirdsInput.value = shed.mortalBirds;
       placeDateInput.value = shed.placeDate || "";
       cleanDateInput.value = shed.cleanDate || "";
+
+      // Update density shed number
+      document.getElementById('densityShedNumber').textContent = index + 1;
 
       // Pickups
       tbody.innerHTML = '';
@@ -1257,6 +1268,9 @@
         // ---- Render projection table ----
         renderProjectionTable(activeShed, adj.anchorFactor, targetAge);
 
+        // ---- Active shed density only (with full calculation) ----
+        updateActiveShedDensity(shed);
+
         // ---- Farm totals ----
         let farmLive = 0, farmAutoFeed = 0, farmStart = 0, farmMort = 0;
         let totalWeightedAge = 0, totalHarvestWeight = 0, totalBirdsHarvested = 0;
@@ -1335,6 +1349,31 @@
         console.error('Error in refreshAll:', err);
         showToast(`❌ Update failed: ${err.message}`, true);
       }
+    }
+
+    function updateActiveShedDensity(shed) {
+      const densityEl = document.getElementById('densityScore');
+      const detailEl = document.getElementById('densityDetail');
+      if (!shed.placeDate) {
+        densityEl.textContent = '—';
+        detailEl.textContent = '—';
+        return;
+      }
+      const currentAge = dateToAge(shed.placeDate, todayStr());
+      if (currentAge === null || currentAge < 0) {
+        densityEl.textContent = '—';
+        detailEl.textContent = '—';
+        return;
+      }
+      const rossW = getAdjustedRossWeight(currentAge);
+      const factor = (shed.adjustments && shed.adjustments.anchorFactor) ? shed.adjustments.anchorFactor : 1;
+      const avgW = rossW ? rossW * factor : 0;
+      const remaining = Math.max(0, (shed.startBirds - shed.mortalBirds) - (shed.pickups || []).reduce((sum, p) => sum + p.birds, 0));
+      const totalKg = remaining * avgW;
+      const density = totalKg / 3162;
+
+      densityEl.textContent = density.toFixed(1) + ' kg/m²';
+      detailEl.textContent = `${remaining.toLocaleString()} × ${avgW.toFixed(2)} kg = ${totalKg.toLocaleString(undefined, {maximumFractionDigits:1})} kg ÷ 3,162 m² = ${density.toFixed(1)} kg/m²`;
     }
 
     function autoUpdate() {
@@ -1528,7 +1567,7 @@
     refreshAll();
     if (!restored) setSaveIndicator("Ready", "text-emerald-500");
 
-    console.log('🏁 ProdResult.VM — Fixed import: replaces data instead of appending');
+    console.log('🏁 ProdResult.VM — Active shed density with full calculation including SQM');
   </script>
 </body>
 </html>
