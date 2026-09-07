@@ -168,21 +168,20 @@
       font-size: 14px;
       text-align: center;
       font-weight: 500;
+      background: white;
     }
     .ring-input:focus {
       border-color: #1a7a4a;
       box-shadow: 0 0 0 3px rgba(26,122,74,0.15);
       outline: none;
     }
+    .ring-input::placeholder {
+      color: #a0b8aa;
+      font-weight: 400;
+    }
     .scaling-slider {
       width: 200px;
       accent-color: #1a7a4a;
-    }
-
-    /* Modal overlay */
-    .modal-backdrop {
-      background-color: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(6px);
     }
 
     /* Forecast weekend highlighting */
@@ -191,6 +190,221 @@
     }
     .forecast-weekend td:first-child {
       border-left: 4px solid #f97316;
+    }
+
+    /* =========================================================
+       FLOATING RING CALCULATOR PANEL
+    ========================================================= */
+    .ring-float-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a7a4a, #0f5c36);
+      color: white;
+      border: none;
+      box-shadow: 0 8px 28px rgba(26, 122, 74, 0.45), 0 2px 8px rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ring-float-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 36px rgba(26, 122, 74, 0.55), 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .ring-float-btn:active {
+      transform: scale(0.92);
+    }
+    .ring-float-btn svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .ring-float-panel {
+      position: fixed;
+      bottom: 100px;
+      right: 28px;
+      z-index: 9998;
+      width: 340px;
+      max-height: 80vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 4px 20px rgba(0,0,0,0.08);
+      padding: 20px 24px 24px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: bottom right;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(2px);
+    }
+    .ring-float-panel.hidden {
+      opacity: 0;
+      transform: scale(0.85) translateY(20px);
+      pointer-events: none;
+    }
+    .ring-float-panel .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #eef3f0;
+    }
+    .ring-float-panel .panel-header h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a2e26;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ring-float-panel .panel-header h4 span {
+      font-size: 18px;
+    }
+    .ring-float-panel .panel-close {
+      background: none;
+      border: none;
+      color: #9aaea0;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    .ring-float-panel .panel-close:hover {
+      color: #c0392b;
+    }
+
+    .ring-float-panel .ring-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .ring-float-panel .ring-row label {
+      font-weight: 500;
+      color: #2d4a3e;
+      font-size: 14px;
+      min-width: 70px;
+    }
+    .ring-float-panel .ring-row input {
+      width: 80px;
+      padding: 6px 10px;
+      border: 1.5px solid #d1d9e6;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+      font-weight: 500;
+      background: white;
+      transition: border 0.15s, box-shadow 0.15s;
+    }
+    .ring-float-panel .ring-row input:focus {
+      border-color: #1a7a4a;
+      box-shadow: 0 0 0 3px rgba(26,122,74,0.15);
+      outline: none;
+    }
+    .ring-float-panel .ring-row input::placeholder {
+      color: #b0c4b8;
+      font-weight: 400;
+      font-size: 12px;
+    }
+
+    .ring-float-panel .result-box {
+      background: #f5faf7;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      border: 1px solid #e0ece4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .ring-float-panel .result-box .result-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3d5a4a;
+    }
+    .ring-float-panel .result-box .result-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a7a4a;
+    }
+    .ring-float-panel .result-box .result-kg {
+      font-size: 15px;
+      font-weight: 600;
+      color: #4d6a5a;
+    }
+
+    .ring-float-panel .copy-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      background: #1a7a4a;
+      color: white;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.08s;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .ring-float-panel .copy-btn:hover {
+      background: #146a3e;
+    }
+    .ring-float-panel .copy-btn:active {
+      transform: scale(0.97);
+    }
+    .ring-float-panel .copy-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .ring-float-panel .legend {
+      font-size: 11px;
+      color: #7a9a88;
+      margin-top: 10px;
+      line-height: 1.5;
+      background: #f8fbf9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #e8efe9;
+    }
+    .ring-float-panel .legend code {
+      background: #e8efe9;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a4a34;
+    }
+
+    @media (max-width: 480px) {
+      .ring-float-panel {
+        right: 12px;
+        bottom: 90px;
+        width: calc(100% - 24px);
+        max-width: 340px;
+        padding: 16px 18px 20px;
+      }
+      .ring-float-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+      }
     }
   </style>
 </head>
@@ -278,45 +492,55 @@
     <main id="app" class="space-y-4"></main>
   </div>
 
-  <!-- Ring Calculator Modal -->
-  <div id="ringModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 hidden" onclick="if(event.target===this) closeRingCalculator()">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold">🧮 Ring to Tonnes Calculator</h3>
-        <button onclick="closeRingCalculator()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+  <!-- =========================================================
+     FLOATING RING CALCULATOR (always accessible)
+  ========================================================= -->
+  <!-- Floating Toggle Button -->
+  <button id="ringFloatBtn" class="ring-float-btn" onclick="toggleRingCalculator()" title="Ring Calculator">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  </button>
+
+  <!-- Floating Panel -->
+  <div id="ringFloatPanel" class="ring-float-panel hidden">
+    <div class="panel-header">
+      <h4><span>🧮</span> Ring Calculator</h4>
+      <button class="panel-close" onclick="toggleRingCalculator()">✕</button>
+    </div>
+
+    <div class="ring-row">
+      <label>Silo 1</label>
+      <input id="ringFloatInput1" type="text" placeholder="0, C, 1-5" value="0" oninput="calculateRingsFloat()" />
+    </div>
+    <div class="ring-row">
+      <label>Silo 2</label>
+      <input id="ringFloatInput2" type="text" placeholder="0, C, 1-5" value="0" oninput="calculateRingsFloat()" />
+    </div>
+    <div class="ring-row">
+      <label>Silo 3</label>
+      <input id="ringFloatInput3" type="text" placeholder="0, C, 1-5" value="0" oninput="calculateRingsFloat()" />
+    </div>
+
+    <div class="result-box">
+      <span class="result-label">Total</span>
+      <div>
+        <span class="result-value" id="ringFloatResultT">0.00</span>
+        <span class="result-kg" id="ringFloatResultKg">(0 kg)</span>
       </div>
-      <p class="text-sm text-slate-500 mb-4">0 = Empty · C = 10T · 1 = 8T+C (18T) · 2 = 16T+C (26T) · … · 5 = 40T+C (50T max)</p>
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <label class="font-medium text-slate-700">Silo 1</label>
-          <input id="ringInput1" type="number" min="0" max="5" value="0" class="ring-input" />
-        </div>
-        <div class="flex items-center justify-between">
-          <label class="font-medium text-slate-700">Silo 2</label>
-          <input id="ringInput2" type="number" min="0" max="5" value="0" class="ring-input" />
-        </div>
-        <div class="flex items-center justify-between">
-          <label class="font-medium text-slate-700">Silo 3</label>
-          <input id="ringInput3" type="number" min="0" max="5" value="0" class="ring-input" />
-        </div>
-      </div>
-      <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-        <div class="flex items-center justify-between">
-          <span class="font-semibold text-slate-700">Total Tonnes</span>
-          <span id="ringResult" class="text-2xl font-bold text-emerald-700">0.00</span>
-        </div>
-        <div class="flex items-center justify-between mt-1">
-          <span class="font-semibold text-slate-700">Total kg</span>
-          <span id="ringResultKg" class="text-lg font-semibold text-slate-600">0</span>
-        </div>
-      </div>
-      <div class="mt-4 flex gap-3 justify-end">
-        <button onclick="copyRingResult()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 font-semibold flex items-center gap-2 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-          Copy (kg)
-        </button>
-        <button onclick="closeRingCalculator()" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 hover:bg-slate-300 font-semibold transition">Close</button>
-      </div>
+    </div>
+
+    <button class="copy-btn" onclick="copyRingFloatResult()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+      Copy (kg)
+    </button>
+
+    <div class="legend">
+      <code>0</code> = Empty &nbsp;·&nbsp; <code>C</code> = 10T (cone) &nbsp;·&nbsp; <code>1</code> = 18T &nbsp;·&nbsp; <code>2</code> = 26T &nbsp;·&nbsp; <code>3</code> = 34T &nbsp;·&nbsp; <code>4</code> = 42T &nbsp;·&nbsp; <code>5</code> = 50T
     </div>
   </div>
 
@@ -819,46 +1043,63 @@
   }
 
   /* =========================================================
-     RING CALCULATOR MODAL (Pure UI helper, no state change)
-     FIXED FORMULA: 0→0, >=1 → 10 + 8*rings
+     FLOATING RING CALCULATOR (always accessible, fixed "C" = 10T)
   ========================================================= */
-  function openRingCalculator() {
-    document.getElementById('ringModal').classList.remove('hidden');
-    calculateRings();
+  function toggleRingCalculator() {
+    const panel = document.getElementById('ringFloatPanel');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+      calculateRingsFloat();
+    }
   }
-  function closeRingCalculator() {
-    document.getElementById('ringModal').classList.add('hidden');
+
+  function parseRingValueFloat(val) {
+    const trimmed = String(val).trim();
+    if (trimmed === '') return { type: 'numeric', value: 0 };
+    // Check for 'c' or 'C' -> cone only = 10T (special marker)
+    if (trimmed.toLowerCase() === 'c') return { type: 'cone', value: 0 };
+    // Try to parse as number
+    const num = parseInt(trimmed, 10);
+    if (!isNaN(num)) {
+      return { type: 'numeric', value: Math.min(5, Math.max(0, num)) };
+    }
+    return { type: 'numeric', value: 0 };
   }
-  function calculateRings() {
-    const rings = [
-      parseInt(document.getElementById('ringInput1').value) || 0,
-      parseInt(document.getElementById('ringInput2').value) || 0,
-      parseInt(document.getElementById('ringInput3').value) || 0
+
+  function calculateRingsFloat() {
+    const input1 = document.getElementById('ringFloatInput1').value;
+    const input2 = document.getElementById('ringFloatInput2').value;
+    const input3 = document.getElementById('ringFloatInput3').value;
+
+    const parsed = [
+      parseRingValueFloat(input1),
+      parseRingValueFloat(input2),
+      parseRingValueFloat(input3)
     ];
-    // Clamp rings to 0-5
-    const clamped = rings.map(r => Math.min(5, Math.max(0, r)));
-    // Formula: 0→0, >=1 → 10 + 8*rings
-    const tonnes = clamped.reduce((sum, r) => {
-      if (r === 0) return sum + 0;
-      return sum + 10 + 8 * r;
-    }, 0);
-    document.getElementById('ringResult').textContent = tonnes.toFixed(2);
-    document.getElementById('ringResultKg').textContent = Math.round(tonnes * 1000).toLocaleString();
-    // Store the kg value for copy
-    document.getElementById('ringResult').dataset.kg = Math.round(tonnes * 1000);
+
+    let totalTonnes = 0;
+    for (const p of parsed) {
+      if (p.type === 'cone') {
+        totalTonnes += 10; // cone only
+      } else if (p.type === 'numeric') {
+        const r = p.value;
+        if (r === 0) {
+          totalTonnes += 0;
+        } else {
+          // For numeric rings: 1 -> 18, 2 -> 26, ..., 5 -> 50
+          totalTonnes += 10 + 8 * r;
+        }
+      }
+    }
+
+    const kg = Math.round(totalTonnes * 1000);
+    document.getElementById('ringFloatResultT').textContent = totalTonnes.toFixed(2);
+    document.getElementById('ringFloatResultKg').textContent = `(${kg.toLocaleString()} kg)`;
+    document.getElementById('ringFloatResultT').dataset.kg = kg;
   }
-  // Attach event listeners to modal inputs
-  document.querySelectorAll('#ringModal .ring-input').forEach(inp => {
-    inp.addEventListener('input', function() {
-      let val = parseInt(this.value) || 0;
-      if (val < 0) val = 0;
-      if (val > 5) val = 5;
-      this.value = val;
-      calculateRings();
-    });
-  });
-  async function copyRingResult() {
-    const kg = document.getElementById('ringResult').dataset.kg || '0';
+
+  async function copyRingFloatResult() {
+    const kg = document.getElementById('ringFloatResultT').dataset.kg || '0';
     try {
       await navigator.clipboard.writeText(kg);
       alert(`✅ Copied ${Number(kg).toLocaleString()} kg to clipboard! Paste it into the adjustment field.`);
@@ -872,6 +1113,11 @@
       alert(`✅ Copied ${Number(kg).toLocaleString()} kg to clipboard! Paste it into the adjustment field.`);
     }
   }
+
+  // Auto-calculate on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    calculateRingsFloat();
+  });
 
   /* =========================================================
      SCALING & SET INITIAL STOCK (manual input)
@@ -1074,7 +1320,7 @@
   }
 
   /* =========================================================
-     GROUP FEED MANAGER PANEL (ring calculator modal button)
+     GROUP FEED MANAGER PANEL (ring calculator removed from panel)
   ========================================================= */
   function groupFeedManagerPanel(groupIndex) {
     const ai = computeGroupFeedAI(groupIndex);
@@ -1152,28 +1398,15 @@
 
         <div class="p-6 space-y-4">
 
-          <!-- Manual Initial Stock + Ring Calculator Button -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-              <div class="text-sm font-semibold mb-2">📦 Manual Initial Stock</div>
-              <div class="flex items-center gap-3">
-                <input id="manual_initial_${groupIndex}" type="number" step="100" value="${groupInitialStockT[groupIndex] * 1000}" class="border border-slate-300 rounded-xl px-3 py-2 text-sm w-32 focus-ring" placeholder="kg" onchange="setManualInitialStock(${groupIndex}, this.value)" />
-                <span class="text-sm text-slate-500">kg</span>
-                <span class="text-sm font-semibold text-slate-700">= ${(groupInitialStockT[groupIndex]).toFixed(2)} t</span>
-              </div>
-              <div class="text-xs text-slate-500 mt-1">Set the total feed currently in all silos (kg).</div>
+          <!-- Manual Initial Stock (ring calculator removed from panel) -->
+          <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+            <div class="text-sm font-semibold mb-2">📦 Manual Initial Stock</div>
+            <div class="flex items-center gap-3">
+              <input id="manual_initial_${groupIndex}" type="number" step="100" value="${groupInitialStockT[groupIndex] * 1000}" class="border border-slate-300 rounded-xl px-3 py-2 text-sm w-32 focus-ring" placeholder="kg" onchange="setManualInitialStock(${groupIndex}, this.value)" />
+              <span class="text-sm text-slate-500">kg</span>
+              <span class="text-sm font-semibold text-slate-700">= ${(groupInitialStockT[groupIndex]).toFixed(2)} t</span>
             </div>
-
-            <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50 flex items-center justify-between flex-wrap">
-              <div>
-                <div class="text-sm font-semibold">🧮 Ring Calculator</div>
-                <div class="text-xs text-slate-500">0=Empty · 1=Cone (10T) · 2=Cone+1 ring (18T) · …</div>
-              </div>
-              <button onclick="openRingCalculator()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-semibold text-sm transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                Open Calculator
-              </button>
-            </div>
+            <div class="text-xs text-slate-500 mt-1">Set the total feed currently in all silos (kg).</div>
           </div>
 
           <!-- Scaling Factor -->
