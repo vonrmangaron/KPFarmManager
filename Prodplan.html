@@ -185,8 +185,9 @@
 
   .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:8px;}
   .weekday-row span{
-    font-family:'Sora',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink);
-    text-align:center;padding:7px 0;background:var(--surface-soft);border:1px solid var(--line);border-radius:8px;
+    font-family:'Sora',sans-serif;font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:0.3px;
+    text-align:center;padding:9px 0;background:var(--primary-soft);border:1px solid var(--primary);border-radius:9px;
+    box-shadow:var(--shadow-sm);
   }
   .weekday-row span:nth-child(6), .weekday-row span:nth-child(7){color:#fff;background:var(--secondary);border-color:var(--secondary);}
 
@@ -198,8 +199,16 @@
   button:focus-visible, .icon-btn:focus-visible, .task-card:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   .day-cell.weekend{background:var(--weekend-bg); border-top:3px solid var(--secondary);}
   .day-cell.muted{background:var(--surface-soft); opacity:0.5;}
+  .day-cell.past{ opacity:0.55; filter:grayscale(45%); }
   .day-cell.today{border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
-  .day-num{ font-family:'Sora',sans-serif;font-weight:600;font-size:13px; color:var(--ink); align-self:flex-start;padding:2px 6px; position:relative; z-index:1; }
+  .day-num{
+    font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink);
+    align-self:flex-start; width:28px; height:28px; border-radius:50%;
+    background:var(--surface-soft); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; z-index:1;
+  }
+  .day-cell.today .day-num{ background:var(--primary); color:#fff; border-color:var(--primary); }
   .day-cell .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;min-height:0;}
   .day-count{text-align:center;color:var(--muted);font-size:11px;line-height:1.3;}
   .day-count strong{display:block;font-size:17px;color:var(--ink);font-family:'Sora',sans-serif;line-height:1.25;}
@@ -215,7 +224,7 @@
   .batch-badge{ font-size:9.5px; font-weight:700; color:#fff; padding:1px 6px; border-radius:6px; white-space:nowrap; }
   .batch-watermark{
     position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center;
-    font-family:'Sora',sans-serif; font-weight:800; font-size:20px; color:var(--ink); opacity:0.14;
+    font-family:'Sora',sans-serif; font-weight:800; font-size:24px; color:var(--ink); opacity:0.14;
     pointer-events:none; overflow:hidden; white-space:nowrap;
   }
 
@@ -420,18 +429,17 @@
       <option value="bottom-right">Bottom right</option>
       <option value="top-right">Top right</option>
       <option value="background">Background watermark</option>
+      <option value="watermark-bottom-left">Watermark + bottom left</option>
+      <option value="watermark-bottom-right">Watermark + bottom right</option>
     </select>
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
 
     <label style="margin-top:16px;">Cloud sync (GitHub)</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
-    <label for="githubTokenInput">Personal access token</label>
-    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
-    <label for="githubRepoInput">Repository (owner/repo)</label>
-    <input type="text" id="githubRepoInput" placeholder="e.g. vonmangaron/prodplan-data">
-    <label for="githubPathInput">File path in repo</label>
-    <input type="text" id="githubPathInput" placeholder="prodplan-data.json">
+    <label for="githubPathInput">Farm name</label>
+    <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Just type your farm's name — the file it creates is handled automatically.</p>
     <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
     <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
 
@@ -550,12 +558,17 @@
 (function(){
   const STORAGE_KEY = 'schedule-data';
   // ---- Cloud sync via the GitHub Contents API (optional) ----
-  // Uses a repo you own as free, effectively-unlimited storage (5000 authenticated API
-  // requests/hour, no total-request cap). Create a small private repo, generate a
-  // fine-grained Personal Access Token scoped to just that repo with "Contents: Read and
-  // write" permission, then paste the token + "owner/repo" into Settings.
+  // This deployment shares ONE repo + token across every farm using this file — each farm
+  // only sets its own "File path" in Settings, so every farm's data lands in its own file
+  // within the same repo. IMPORTANT: because the token below ships inside this client-side
+  // file, anyone using the app can read it via browser DevTools / "View Source" and could
+  // then read or overwrite ANY file in this repo (GitHub tokens are repo-wide, not scoped
+  // to a single file) — only share this build with farms/people you trust with that level
+  // of access to each other's data.
+  const GITHUB_TOKEN_FIXED = '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'; // regenerate after revoking any token ever shared elsewhere
+  const GITHUB_REPO_FIXED = 'vonrmangaron/farmdata';
   const GITHUB_API = 'https://api.github.com';
-  let ghToken = null, ghRepo = null, ghPath = null, ghSha = null;
+  let ghToken = null, ghRepo = null, ghPath = null, ghSha = null, ghFarmName = null;
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
@@ -735,35 +748,47 @@
   }
 
   // ---------- Cloud sync via the GitHub Contents API (optional) ----------
+  function sanitizeFarmFileName(name){
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return (slug || 'farm') + '.json';
+  }
   function updateGithubStatusUI(){
     const el = $('#githubStatus');
     if(!el) return;
-    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghRepo}/${ghPath}`;
-    else el.textContent = 'Not connected.';
-    const tokenInput = $('#githubTokenInput'), repoInput = $('#githubRepoInput'), pathInput = $('#githubPathInput');
-    if(tokenInput && ghToken) tokenInput.value = ghToken;
-    if(repoInput && ghRepo) repoInput.value = ghRepo;
-    if(pathInput && ghPath) pathInput.value = ghPath;
+    if(GITHUB_TOKEN_FIXED.startsWith('PASTE_')){
+      el.textContent = 'Not set up — this deployment needs a token configured in the source.';
+      return;
+    }
+    if(ghPath) el.textContent = `Connected — ${ghFarmName || ghPath}`;
+    else el.textContent = 'Enter your farm name and click Connect.';
+    const pathInput = $('#githubPathInput');
+    if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
   function initGithubSync(){
+    ghToken = GITHUB_TOKEN_FIXED;
+    ghRepo = GITHUB_REPO_FIXED;
     try{
-      ghToken = localStorage.getItem('prodplan-gh-token') || null;
-      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
       ghPath = localStorage.getItem('prodplan-gh-path') || null;
+      ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
     }catch(e){}
     updateGithubStatusUI();
-    if(ghToken && ghRepo && ghPath) pullFromGithub(true);
+    if(!GITHUB_TOKEN_FIXED.startsWith('PASTE_') && ghPath) pullFromGithub(true);
   }
   async function connectGithub(){
-    const token = $('#githubTokenInput').value.trim();
-    const repo = $('#githubRepoInput').value.trim();
-    const path = $('#githubPathInput').value.trim() || 'prodplan-data.json';
-    if(!token || !repo){ showToast('Enter your GitHub token and repo (owner/repo).', true); return; }
-    ghToken = token; ghRepo = repo; ghPath = path; ghSha = null;
+    if(GITHUB_TOKEN_FIXED.startsWith('PASTE_')){
+      showToast('This deployment needs a GitHub token configured in the source first.', true);
+      return;
+    }
+    const name = $('#githubPathInput').value.trim();
+    if(!name){ showToast('Enter a name for this farm.', true); return; }
+    ghToken = GITHUB_TOKEN_FIXED;
+    ghRepo = GITHUB_REPO_FIXED;
+    ghFarmName = name;
+    ghPath = sanitizeFarmFileName(name);
+    ghSha = null;
     try{
-      localStorage.setItem('prodplan-gh-token', ghToken);
-      localStorage.setItem('prodplan-gh-repo', ghRepo);
       localStorage.setItem('prodplan-gh-path', ghPath);
+      localStorage.setItem('prodplan-gh-farmname', ghFarmName);
     }catch(e){}
     await pullFromGithub();
     updateGithubStatusUI();
@@ -1497,14 +1522,20 @@
     const active = batchesForDate(key);
     if(!active.length) return;
     const style = settings.batchBadgeStyle || 'bottom-left';
-    if(style === 'background'){
+    const showWatermark = style === 'background' || style === 'watermark-bottom-left' || style === 'watermark-bottom-right';
+    const cornerStyle = style === 'watermark-bottom-left' ? 'bottom-left'
+                       : style === 'watermark-bottom-right' ? 'bottom-right'
+                       : style;
+
+    if(showWatermark){
       const wm = document.createElement('div');
       wm.className = 'batch-watermark';
       wm.textContent = '#' + active[0].number;
       cell.insertBefore(wm, cell.firstChild);
-    } else {
+    }
+    if(style !== 'background'){
       const wrap = document.createElement('div');
-      wrap.className = 'batch-badges pos-' + style;
+      wrap.className = 'batch-badges pos-' + cornerStyle;
       active.slice(0,3).forEach(b=>{
         const badge = document.createElement('span');
         badge.className = 'batch-badge';
@@ -1566,6 +1597,7 @@
     grid.className = 'month-grid';
     const days = monthMatrix(currentDate);
     const today = new Date();
+    const todayKey = dateKey(today);
 
     days.forEach(d=>{
       const key = dateKey(d);
@@ -1573,6 +1605,7 @@
       cell.className = 'day-cell';
       if(d.getMonth()!==currentDate.getMonth()) cell.classList.add('muted');
       if(sameDay(d, today)) cell.classList.add('today');
+      if(key < todayKey) cell.classList.add('past');
       const dow = d.getDay();
       if(dow===0 || dow===6) cell.classList.add('weekend');
 
