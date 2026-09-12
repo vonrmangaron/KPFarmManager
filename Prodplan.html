@@ -64,6 +64,15 @@
 
   .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); flex-wrap:wrap; }
   .barn-stripe{ height:4px; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
+  .fab-delete{
+    position:fixed; bottom:24px; right:24px; z-index:45;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--danger); color:#fff; border:none;
+    font-size:22px; cursor:pointer; box-shadow:var(--shadow-lg);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .fab-delete:hover{ filter:brightness(1.12); transform:scale(1.06); }
   .brand{ font-weight:700; font-size:19px; letter-spacing:0.1px; color:var(--ink); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; max-width:100%; }
   .brand .chick{font-size:20px;}
   .brand .accent{ background:linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
@@ -230,6 +239,9 @@
   .history-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 12px;border-bottom:1px solid var(--line);}
   .history-head h2{font-size:15px;margin:0;font-weight:700;overflow-wrap:break-word;min-width:0;}
   .history-head button{border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;}
+  #clearHistoryBtn{font-size:15px;}
+  #clearHistoryBtn:hover{color:var(--danger);}
+  #clearHistoryBtn.confirm{color:var(--danger);}
   .history-list{overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:12px;}
   .history-item{border-left:2px solid var(--primary-soft);padding-left:10px;}
   .history-item .h-action{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--primary-dark);}
@@ -344,6 +356,11 @@
           <button class="btn-ghost-ai" id="aiIconBtn" title="Suggest icon with AI">✨</button>
         </div>
         <label class="checkbox-row"><input type="checkbox" id="taskFrequentBox"> Save as a frequent task (reusable template)</label>
+        <label class="checkbox-row"><input type="checkbox" id="taskAutopopBox"> Autopopulate task everyday (every day of a batch's run)</label>
+        <div id="taskAutopopBatchRow" style="display:none;">
+          <label for="taskAutopopBatchSelect">Which batch?</label>
+          <select id="taskAutopopBatchSelect"></select>
+        </div>
         <button class="btn-app" id="addTaskBtn">Add task</button>
       </div>
 
@@ -366,10 +383,18 @@
   <footer class="app-footer">Made by Von Mangaron • Personal use only • not for commercial use</footer>
 </div>
 
+<button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
+
 <div class="scrim" id="scrim"></div>
 
 <div class="history-drawer" id="historyDrawer">
-  <div class="history-head"><h2>History</h2><button id="closeHistory" aria-label="Close">✕</button></div>
+  <div class="history-head">
+    <h2>History</h2>
+    <div style="display:flex; gap:2px;">
+      <button id="clearHistoryBtn" title="Clear history">🗑️</button>
+      <button id="closeHistory" aria-label="Close">✕</button>
+    </div>
+  </div>
   <div class="history-list" id="historyList"></div>
 </div>
 
@@ -398,6 +423,17 @@
     </select>
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
+
+    <label style="margin-top:16px;">Cloud sync (GitHub)</label>
+    <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
+    <label for="githubTokenInput">Personal access token</label>
+    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
+    <label for="githubRepoInput">Repository (owner/repo)</label>
+    <input type="text" id="githubRepoInput" placeholder="e.g. vonmangaron/prodplan-data">
+    <label for="githubPathInput">File path in repo</label>
+    <input type="text" id="githubPathInput" placeholder="prodplan-data.json">
+    <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
+    <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
 
     <label style="margin-top:16px;">Backup &amp; transfer to another device</label>
     <button class="btn-app" id="exportDataBtn">Export data (.json)</button>
@@ -443,6 +479,11 @@
     <label for="batchColorInput">Highlight color</label>
     <input type="color" id="batchColorInput">
     <label class="checkbox-row"><input type="checkbox" id="batchChecklistBox"> Add 7-day prep checklist to Backlog</label>
+
+    <label for="shedCountInput" style="margin-top:10px;">Number of sheds (optional — auto-schedules weekly weight checks)</label>
+    <input type="number" id="shedCountInput" min="0" max="30" placeholder="e.g. 4">
+    <div id="shedInputsContainer" style="display:flex;flex-direction:column;gap:6px;"></div>
+
     <button class="btn-app" id="addBatchBtn" style="margin-top:6px;">Add batch</button>
   </div>
 </div>
@@ -458,6 +499,18 @@
     <label for="eventColorInput">Audit card background color</label>
     <input type="color" id="eventColorInput">
     <button class="btn-app" id="addEventBtn" style="margin-top:6px;">Add event</button>
+  </div>
+</div>
+
+<div class="form-modal" id="bulkDeleteModal">
+  <div class="form-modal-head"><h2>🗑️ Bulk delete tasks</h2><button id="closeBulkDeleteModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <label for="bulkDeleteStart">From date</label>
+    <input type="date" id="bulkDeleteStart">
+    <label for="bulkDeleteEnd">To date</label>
+    <input type="date" id="bulkDeleteEnd">
+    <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">This deletes every task scheduled on any day within this range, across the whole calendar. This can't be undone.</p>
+    <button class="btn-danger-outline" id="confirmBulkDeleteBtn" style="margin-top:12px;">Delete tasks in range</button>
   </div>
 </div>
 
@@ -496,6 +549,13 @@
 <script>
 (function(){
   const STORAGE_KEY = 'schedule-data';
+  // ---- Cloud sync via the GitHub Contents API (optional) ----
+  // Uses a repo you own as free, effectively-unlimited storage (5000 authenticated API
+  // requests/hour, no total-request cap). Create a small private repo, generate a
+  // fine-grained Personal Access Token scoped to just that repo with "Contents: Read and
+  // write" permission, then paste the token + "owner/repo" into Settings.
+  const GITHUB_API = 'https://api.github.com';
+  let ghToken = null, ghRepo = null, ghPath = null, ghSha = null;
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
@@ -636,6 +696,7 @@
       catch(e){ console.error('Local browser save failed', e); return; }
     }
     flashSaved();
+    pushToGithub();
   }
   async function load(){
     let raw = null;
@@ -664,12 +725,99 @@
     updateEventColorDefault();
     renderAll();
     checkOverdueTasksOnLoad();
+    initGithubSync();
   }
   function flashSaved(){
     const el = $('#saveIndicator');
     el.classList.add('show');
     clearTimeout(flashSaved._t);
     flashSaved._t = setTimeout(()=>el.classList.remove('show'), 1200);
+  }
+
+  // ---------- Cloud sync via the GitHub Contents API (optional) ----------
+  function updateGithubStatusUI(){
+    const el = $('#githubStatus');
+    if(!el) return;
+    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghRepo}/${ghPath}`;
+    else el.textContent = 'Not connected.';
+    const tokenInput = $('#githubTokenInput'), repoInput = $('#githubRepoInput'), pathInput = $('#githubPathInput');
+    if(tokenInput && ghToken) tokenInput.value = ghToken;
+    if(repoInput && ghRepo) repoInput.value = ghRepo;
+    if(pathInput && ghPath) pathInput.value = ghPath;
+  }
+  function initGithubSync(){
+    try{
+      ghToken = localStorage.getItem('prodplan-gh-token') || null;
+      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
+      ghPath = localStorage.getItem('prodplan-gh-path') || null;
+    }catch(e){}
+    updateGithubStatusUI();
+    if(ghToken && ghRepo && ghPath) pullFromGithub(true);
+  }
+  async function connectGithub(){
+    const token = $('#githubTokenInput').value.trim();
+    const repo = $('#githubRepoInput').value.trim();
+    const path = $('#githubPathInput').value.trim() || 'prodplan-data.json';
+    if(!token || !repo){ showToast('Enter your GitHub token and repo (owner/repo).', true); return; }
+    ghToken = token; ghRepo = repo; ghPath = path; ghSha = null;
+    try{
+      localStorage.setItem('prodplan-gh-token', ghToken);
+      localStorage.setItem('prodplan-gh-repo', ghRepo);
+      localStorage.setItem('prodplan-gh-path', ghPath);
+    }catch(e){}
+    await pullFromGithub();
+    updateGithubStatusUI();
+  }
+  function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
+  async function pullFromGithub(silent){
+    if(!ghToken || !ghRepo || !ghPath) return;
+    try{
+      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
+        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
+      });
+      if(res.status===404){
+        await pushToGithub();
+        if(!silent) showToast('Connected — created a new file in your GitHub repo.');
+        return;
+      }
+      if(!res.ok) throw new Error('GitHub responded ' + res.status);
+      const data = await res.json();
+      ghSha = data.sha;
+      const content = b64DecodeUtf8(data.content);
+      applyImportedData(content);
+      if(!silent) showToast('Synced from GitHub.');
+    }catch(e){
+      console.error('GitHub pull failed', e);
+      if(!silent) showToast('Could not sync from GitHub — check your token, repo, and path.', true);
+    }
+  }
+  async function pushToGithub(){
+    if(!ghToken || !ghRepo || !ghPath) return;
+    try{
+      const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates}, null, 2);
+      const body = { message:`ProdPlan.VM update ${new Date().toISOString()}`, content: b64EncodeUtf8(payload) };
+      if(ghSha) body.sha = ghSha;
+      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
+        method:'PUT',
+        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if(data && data.content && data.content.sha) ghSha = data.content.sha;
+    }catch(e){ console.error('GitHub push failed', e); }
+  }
+  function applyImportedData(rawText){
+    try{
+      const parsed = JSON.parse(rawText);
+      tasks = parsed.tasks || [];
+      history = parsed.history || [];
+      batches = parsed.batches || [];
+      events = parsed.events || [];
+      settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
+      frequentTemplates = parsed.frequentTemplates || [];
+      applySettings(); updateBatchColorDefault(); updateEventColorDefault(); renderAll();
+    }catch(e){ showToast('Could not read that synced data.', true); }
   }
 
   function addHistory(action, detail){
@@ -712,9 +860,49 @@
     return b;
   }
 
+  function generateShedWeightTasks(shedNum, placementDate, batchNumber, batchEndDate){
+    let week = 1;
+    let taskDate = addDaysStr(placementDate, week*7);
+    let count = 0;
+    while(taskDate <= batchEndDate){
+      const dayAge = week*7;
+      const name = `Weight Shed ${shedNum} - (Day ${dayAge})`;
+      addTask(name, '⚖️', taskDate, { batchNumber, shedNum: String(shedNum) });
+      count++;
+      week++;
+      taskDate = addDaysStr(placementDate, week*7);
+    }
+    addHistory('Weight schedule added', `${count} weekly weight checks added for Shed ${shedNum} (Batch #${batchNumber}, placed ${formatFull(placementDate)}, through batch end ${formatFull(batchEndDate)})`);
+    return count;
+  }
+  function renderShedInputs(n){
+    const box = $('#shedInputsContainer');
+    box.innerHTML = '';
+    for(let i=1;i<=n;i++){
+      const row = document.createElement('div');
+      row.innerHTML = `<label>Shed ${i} placement date</label><input type="date" class="shed-date-input" data-shed="${i}">`;
+      box.appendChild(row);
+    }
+  }
+
+  function autopopulateTaskAcrossBatch(name, icon, batchNumber){
+    const b = batches.find(x=>x.number===batchNumber);
+    if(!b) return 0;
+    let count = 0;
+    let cur = b.start;
+    while(cur <= b.end){
+      addTask(name, icon, cur);
+      cur = addDaysStr(cur, 1);
+      count++;
+    }
+    addHistory('Recurring task added', `"${name}" auto-populated daily across Batch #${batchNumber} (${count} days)`);
+    return count;
+  }
+
   // ---------- tasks ----------
-  function addTask(name, icon, dateVal){
+  function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now() };
+    if(meta) Object.assign(t, meta);
     tasks.push(t);
     addHistory('Added', `"${name}" added to ${dateVal ? formatFull(dateVal) : 'backlog'}`);
     return t;
@@ -1169,24 +1357,70 @@
           <input type="date" class="edit-start" value="${b.start}">
           <input type="date" class="edit-end" value="${b.end}">
           <input type="color" class="edit-color" value="${c}">
+          <label style="font-size:10.5px;color:var(--muted);">Number of sheds</label>
+          <input type="number" class="edit-shed-count" min="0" max="30" value="${(b.sheds||[]).length}">
+          <div class="edit-shed-inputs" style="display:flex;flex-direction:column;gap:6px;"></div>
           <button class="save-batch">Save changes</button>
         </div>`;
       const editPanel = row.querySelector('.batch-edit');
+      const shedInputsBox = row.querySelector('.edit-shed-inputs');
+      renderEditShedInputs(shedInputsBox, (b.sheds||[]).length, b.sheds||[]);
+      row.querySelector('.edit-shed-count').addEventListener('input', (e)=>{
+        const n = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0));
+        renderEditShedInputs(shedInputsBox, n, b.sheds||[]);
+      });
       row.querySelector('.edit-batch').addEventListener('click', ()=> editPanel.classList.toggle('open'));
-      row.querySelector('.remove-batch').addEventListener('click', ()=>{
+      row.querySelector('.remove-batch').addEventListener('click', function(){
+        if(this.dataset.pending!=='true'){
+          this.dataset.pending = 'true';
+          this.textContent = '⚠';
+          this.title = 'Click again to confirm — this also deletes tasks scheduled in this batch\'s range';
+          clearTimeout(this._t);
+          this._t = setTimeout(()=>{
+            this.dataset.pending = '';
+            this.textContent = '✕';
+            this.title = 'Remove batch';
+          }, 3000);
+          return;
+        }
+        clearTimeout(this._t);
+        const removedCount = tasks.filter(t=> t.date && t.date>=b.start && t.date<=b.end).length;
+        tasks = tasks.filter(t=> !(t.date && t.date>=b.start && t.date<=b.end));
         batches = batches.filter(x=>x.number!==b.number);
-        addHistory('Batch removed', `Batch #${b.number} definition removed`);
+        addHistory('Batch removed', `Batch #${b.number} removed along with ${removedCount} task(s) scheduled ${formatFull(b.start)} – ${formatFull(b.end)}`);
         persist(); renderAll();
+        showToast(`Batch #${b.number} removed — ${removedCount} task(s) deleted.`);
       });
       row.querySelector('.save-batch').addEventListener('click', ()=>{
         const ns = row.querySelector('.edit-start').value;
         const ne = row.querySelector('.edit-end').value;
         const nc = row.querySelector('.edit-color').value;
-        upsertBatch(b.number, ns, ne, nc);
+        const updatedBatch = upsertBatch(b.number, ns, ne, nc);
+        // Clear previously generated weight-check tasks for this batch, then regenerate from the edited shed list
+        tasks = tasks.filter(t=> t.batchNumber !== b.number);
+        const newSheds = [];
+        shedInputsBox.querySelectorAll('.edit-shed-date').forEach(inp=>{
+          if(inp.value){
+            generateShedWeightTasks(inp.dataset.shed, inp.value, b.number, updatedBatch.end);
+            newSheds.push({ shed: inp.dataset.shed, placement: inp.value });
+          }
+        });
+        updatedBatch.sheds = newSheds;
         persist(); renderAll();
+        showToast('Batch updated.');
       });
       box.appendChild(row);
     });
+  }
+
+  function renderEditShedInputs(container, n, existingSheds){
+    container.innerHTML = '';
+    for(let i=1;i<=n;i++){
+      const existing = (existingSheds||[]).find(s=> String(s.shed)===String(i));
+      const row = document.createElement('div');
+      row.innerHTML = `<label style="font-size:10.5px;color:var(--muted);">Shed ${i} placement date</label><input type="date" class="edit-shed-date" data-shed="${i}" value="${existing ? existing.placement : ''}">`;
+      container.appendChild(row);
+    }
   }
 
   function renderEvents(){
@@ -1526,7 +1760,7 @@
     $('#scrim').classList.add('show');
   }
   function renderDayModalTasks(key){
-    $('#dayModalTitle').textContent = formatFull(key);
+    $('#dayModalTitle').textContent = toDateObj(key).toLocaleDateString(undefined,{day:'numeric', month:'long', year:'numeric', weekday:'long'});
     const list = $('#dayModalTaskList');
     list.dataset.date = key;
     list.innerHTML = '';
@@ -1561,12 +1795,39 @@
   taskInput.addEventListener('input', ()=>{ pendingIcon = null; pendingIconFor = null; iconPreview.textContent = guessIcon(taskInput.value.trim()); });
   $('#aiIconBtn').addEventListener('click', suggestIconForInput);
 
+  $('#taskAutopopBox').addEventListener('change', (e)=>{
+    const row = $('#taskAutopopBatchRow');
+    if(e.target.checked){
+      const sel = $('#taskAutopopBatchSelect');
+      sel.innerHTML = '';
+      if(batches.length===0){
+        sel.innerHTML = '<option value="">No batches yet</option>';
+      } else {
+        batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
+          const opt = document.createElement('option');
+          opt.value = b.number;
+          opt.textContent = `Batch #${b.number} (${formatShort(b.start)} – ${formatShort(b.end)})`;
+          sel.appendChild(opt);
+        });
+      }
+      row.style.display = 'block';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+
   $('#addTaskBtn').addEventListener('click', ()=>{
     const name = taskInput.value.trim();
     if(!name){ showToast('Enter a task name first.', true); return; }
     const icon = (pendingIcon && pendingIconFor===name) ? pendingIcon : guessIcon(name);
     const saveAsFrequent = $('#taskFrequentBox').checked;
-    if(saveAsFrequent){
+    const autopop = $('#taskAutopopBox').checked;
+    if(autopop){
+      const batchNumber = $('#taskAutopopBatchSelect').value;
+      if(!batchNumber){ showToast('Choose a batch to autopopulate across.', true); return; }
+      const n = autopopulateTaskAcrossBatch(name, icon, batchNumber);
+      showToast(`"${name}" added to ${n} day(s) across Batch #${batchNumber}.`);
+    } else if(saveAsFrequent){
       addFrequentTemplate(name, icon);
     } else {
       addTask(name, icon);
@@ -1576,6 +1837,8 @@
     iconPreview.textContent = '📋';
     pendingIcon=null; pendingIconFor=null;
     $('#taskFrequentBox').checked = false;
+    $('#taskAutopopBox').checked = false;
+    $('#taskAutopopBatchRow').style.display = 'none';
     taskInput.focus();
   });
   taskInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#addTaskBtn').click(); });
@@ -1611,6 +1874,11 @@
   });
 
 
+  $('#shedCountInput').addEventListener('input', (e)=>{
+    const n = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0));
+    renderShedInputs(n);
+  });
+
   $('#addBatchBtn').addEventListener('click', ()=>{
     const number = $('#batchNumberInput').value.trim();
     if(!number){ showToast('Enter a batch number.', true); return; }
@@ -1618,13 +1886,24 @@
     const end = $('#batchEndInput').value;
     const color = $('#batchColorInput').value;
     const withChecklist = $('#batchChecklistBox').checked;
-    upsertBatch(number, start, end, color);
+    const savedBatch = upsertBatch(number, start, end, color);
     if(withChecklist) addPrepChecklistToBacklog(`Batch #${number}`);
+    let shedsScheduled = 0;
+    const sheds = [];
+    document.querySelectorAll('.shed-date-input').forEach(inp=>{
+      if(inp.value){
+        generateShedWeightTasks(inp.dataset.shed, inp.value, number, savedBatch.end);
+        sheds.push({ shed: inp.dataset.shed, placement: inp.value });
+        shedsScheduled++;
+      }
+    });
+    savedBatch.sheds = sheds;
     persist(); renderAll();
     $('#batchNumberInput').value=''; $('#batchStartInput').value=''; $('#batchEndInput').value=''; $('#batchChecklistBox').checked=false;
+    $('#shedCountInput').value=''; $('#shedInputsContainer').innerHTML='';
     updateBatchColorDefault();
     closeOverlays();
-    showToast('Batch added.');
+    showToast(shedsScheduled ? `Batch added — weight checks scheduled for ${shedsScheduled} shed(s).` : 'Batch added.');
   });
 
   $('#addEventBtn').addEventListener('click', ()=>{
@@ -1717,6 +1996,7 @@
     $('#eventModal').classList.remove('open');
     $('#reportModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
+    $('#bulkDeleteModal').classList.remove('open');
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
     deleteAllPending = false;
@@ -1724,7 +2004,33 @@
   }
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
+  $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
+  $('#clearHistoryBtn').addEventListener('click', function(){
+    if(history.length===0){ showToast('History is already empty.', true); return; }
+    if(this.dataset.pending!=='true'){
+      this.dataset.pending = 'true';
+      this.textContent = '⚠';
+      this.title = 'Click again to confirm';
+      this.classList.add('confirm');
+      clearTimeout(this._t);
+      this._t = setTimeout(()=>{
+        this.dataset.pending = '';
+        this.textContent = '🗑️';
+        this.title = 'Clear history';
+        this.classList.remove('confirm');
+      }, 3000);
+      return;
+    }
+    clearTimeout(this._t);
+    history = [];
+    persist(); renderAll();
+    this.dataset.pending = '';
+    this.textContent = '🗑️';
+    this.title = 'Clear history';
+    this.classList.remove('confirm');
+    showToast('History cleared.');
+  });
   $('#closeSettings').addEventListener('click', closeOverlays);
   $('#closeDayModal').addEventListener('click', closeOverlays);
   $('#closeBatchModal').addEventListener('click', closeOverlays);
@@ -1739,6 +2045,53 @@
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
   $('#resetSettingsBtn').addEventListener('click', ()=>{ settings = Object.assign({}, DEFAULT_SETTINGS); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
+
+  $('#bulkDeleteModalBtn').addEventListener('click', ()=>{
+    $('#bulkDeleteStart').value = '';
+    $('#bulkDeleteEnd').value = '';
+    const btn = $('#confirmBulkDeleteBtn');
+    btn.dataset.pending = '';
+    btn.classList.remove('confirm');
+    btn.textContent = 'Delete tasks in range';
+    openDrawer('#bulkDeleteModal');
+  });
+  $('#confirmBulkDeleteBtn').addEventListener('click', function(){
+    const start = $('#bulkDeleteStart').value;
+    const end = $('#bulkDeleteEnd').value;
+    if(!start || !end){ showToast('Choose both a start and end date.', true); return; }
+    if(end < start){ showToast('End date must be after the start date.', true); return; }
+    const count = tasks.filter(t=> t.date && t.date>=start && t.date<=end).length;
+    if(count===0){ showToast('No tasks found in that date range.', true); return; }
+    if(!this.dataset.pending){
+      this.dataset.pending = 'true';
+      this.classList.add('confirm');
+      this.textContent = `Click again to delete ${count} task(s)`;
+      clearTimeout(this._t);
+      this._t = setTimeout(()=>{
+        this.dataset.pending = '';
+        this.classList.remove('confirm');
+        this.textContent = 'Delete tasks in range';
+      }, 3000);
+      return;
+    }
+    clearTimeout(this._t);
+    tasks = tasks.filter(t=> !(t.date && t.date>=start && t.date<=end));
+    addHistory('Bulk delete', `${count} task(s) deleted from ${formatFull(start)} to ${formatFull(end)}`);
+    persist(); renderAll();
+    this.dataset.pending = '';
+    this.classList.remove('confirm');
+    this.textContent = 'Delete tasks in range';
+    closeOverlays();
+    showToast(`${count} task(s) deleted.`);
+  });
+
+
+
+  $('#connectGithubBtn').addEventListener('click', connectGithub);
+  $('#syncGithubBtn').addEventListener('click', ()=>{
+    if(!ghToken || !ghRepo || !ghPath){ showToast('Connect to GitHub first.', true); return; }
+    pullFromGithub();
+  });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
     const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates}, null, 2);
@@ -1780,6 +2133,7 @@
     reader.readAsText(file);
     e.target.value = '';
   });
+
 
   document.addEventListener('keydown', (e)=>{
     if(e.key==='Escape') closeOverlays();
