@@ -437,6 +437,10 @@
 
     <label style="margin-top:16px;">Cloud sync (GitHub)</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
+    <label for="githubTokenInput">Personal access token</label>
+    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
+    <label for="githubRepoInput">Repository (owner/repo)</label>
+    <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Just type your farm's name — the file it creates is handled automatically.</p>
@@ -558,15 +562,9 @@
 (function(){
   const STORAGE_KEY = 'schedule-data';
   // ---- Cloud sync via the GitHub Contents API (optional) ----
-  // This deployment shares ONE repo + token across every farm using this file — each farm
-  // only sets its own "File path" in Settings, so every farm's data lands in its own file
-  // within the same repo. IMPORTANT: because the token below ships inside this client-side
-  // file, anyone using the app can read it via browser DevTools / "View Source" and could
-  // then read or overwrite ANY file in this repo (GitHub tokens are repo-wide, not scoped
-  // to a single file) — only share this build with farms/people you trust with that level
-  // of access to each other's data.
-  const GITHUB_TOKEN_FIXED = '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'; // regenerate after revoking any token ever shared elsewhere
-  const GITHUB_REPO_FIXED = 'vonrmangaron/farmdata';
+  // Each person using this app enters their OWN token, repo, and farm name in Settings —
+  // nothing is hardcoded in this file, so there's nothing here for a public repo or "View
+  // Source" to ever leak. Everything is stored only in that person's own browser.
   const GITHUB_API = 'https://api.github.com';
   let ghToken = null, ghRepo = null, ghPath = null, ghSha = null, ghFarmName = null;
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
@@ -755,38 +753,37 @@
   function updateGithubStatusUI(){
     const el = $('#githubStatus');
     if(!el) return;
-    if(GITHUB_TOKEN_FIXED.startsWith('PASTE_')){
-      el.textContent = 'Not set up — this deployment needs a token configured in the source.';
-      return;
-    }
-    if(ghPath) el.textContent = `Connected — ${ghFarmName || ghPath}`;
-    else el.textContent = 'Enter your farm name and click Connect.';
-    const pathInput = $('#githubPathInput');
+    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghFarmName || ghPath} (${ghRepo})`;
+    else el.textContent = 'Enter your token, repo, and farm name, then click Connect.';
+    const tokenInput = $('#githubTokenInput'), repoInput = $('#githubRepoInput'), pathInput = $('#githubPathInput');
+    if(tokenInput && ghToken) tokenInput.value = ghToken;
+    if(repoInput && ghRepo) repoInput.value = ghRepo;
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
   function initGithubSync(){
-    ghToken = GITHUB_TOKEN_FIXED;
-    ghRepo = GITHUB_REPO_FIXED;
     try{
+      ghToken = localStorage.getItem('prodplan-gh-token') || null;
+      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
       ghPath = localStorage.getItem('prodplan-gh-path') || null;
       ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
     }catch(e){}
     updateGithubStatusUI();
-    if(!GITHUB_TOKEN_FIXED.startsWith('PASTE_') && ghPath) pullFromGithub(true);
+    if(ghToken && ghRepo && ghPath) pullFromGithub(true);
   }
   async function connectGithub(){
-    if(GITHUB_TOKEN_FIXED.startsWith('PASTE_')){
-      showToast('This deployment needs a GitHub token configured in the source first.', true);
-      return;
-    }
+    const token = $('#githubTokenInput').value.trim();
+    const repo = $('#githubRepoInput').value.trim();
     const name = $('#githubPathInput').value.trim();
+    if(!token || !repo){ showToast('Enter your GitHub token and repo (owner/repo).', true); return; }
     if(!name){ showToast('Enter a name for this farm.', true); return; }
-    ghToken = GITHUB_TOKEN_FIXED;
-    ghRepo = GITHUB_REPO_FIXED;
+    ghToken = token;
+    ghRepo = repo;
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
     ghSha = null;
     try{
+      localStorage.setItem('prodplan-gh-token', ghToken);
+      localStorage.setItem('prodplan-gh-repo', ghRepo);
       localStorage.setItem('prodplan-gh-path', ghPath);
       localStorage.setItem('prodplan-gh-farmname', ghFarmName);
     }catch(e){}
