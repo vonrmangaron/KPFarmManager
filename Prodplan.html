@@ -100,6 +100,20 @@
     --weekend-bg:#FBEADC;
   }
 
+  /* Field Bright — built for outdoor/sunlight readability. Agriculture-UI research
+     consistently flags glare and low contrast as the top reason field workers abandon
+     farm apps; this theme uses pure white + near-black text, a high-luminance yellow
+     (echoing wheat/sunlight and the color most associated with visibility/caution),
+     and forest green (the single most common color in agriculture branding). */
+  body.theme-field-bright{
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface-soft:#F7F7F2; --line:#2B2B2B;
+    --ink:#000000; --muted:#4A4A4A;
+    --primary:#FFC800; --primary-dark:#8A6800; --primary-soft:#FFF3C4;
+    --secondary:#1B5E20; --secondary-soft:#D7E8D9;
+    --danger:#C62828; --danger-soft:#F6D6D4;
+    --weekend-bg:#E8E8E8;
+  }
+
   /* Agriculture dark — fields at night */
   body.theme-dark-forest{
     --bg:#0F1710; --surface:#182219; --surface-soft:#141C15; --line:#2A3A2C;
@@ -250,7 +264,7 @@
   .event-checklist-tag{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:600;color:var(--primary-dark);background:var(--primary-soft);border-radius:999px;padding:1px 7px;}
   .event-edit{display:none;flex-direction:column;gap:6px;margin-top:8px;}
   .event-edit.open{display:flex;}
-  .event-edit input{border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12px;width:100%;min-width:0;}
+  .event-edit input, .event-edit select{border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12px;width:100%;min-width:0;background:var(--surface);color:var(--ink);}
   .event-edit .edit-color{height:30px;padding:2px;}
   .event-edit .save-event{border:none;background:var(--secondary);color:#fff;border-radius:7px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;}
 
@@ -314,6 +328,7 @@
   .day-count-icons span{ display:inline-block; margin-right:2px; }
   .event-ribbon{ color:#fff; font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:6px; align-self:flex-start; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; position:relative; z-index:1; }
   .batch-badges{ position:absolute; display:flex; flex-direction:column; gap:2px; z-index:2; }
+  .batch-badges-centered{ display:flex; gap:3px; justify-content:center; margin-top:2px; position:relative; z-index:2; }
   .batch-badges.pos-bottom-left{ left:6px; bottom:6px; }
   .batch-badges.pos-bottom-right{ right:6px; bottom:6px; }
   .batch-badges.pos-top-right{ right:6px; top:6px; }
@@ -502,6 +517,8 @@
     .weekday-row{gap:4px;}
     .weekday-row span{font-size:10px; padding:5px 0;}
     .calendar-wrap{padding:12px;}
+    .day-cell{ align-items:center; }
+    .day-num{ align-self:center; }
   }
 </style>
 </head>
@@ -646,6 +663,7 @@
       <option value="barn">Barn Red (Farm)</option>
       <option value="slate">Slate (Professional)</option>
       <option value="sunrise">Sunrise (Warm)</option>
+      <option value="field-bright">Field Bright (Outdoor/High Contrast)</option>
     </select>
 
     <label for="setBatchStyle">Batch label style on calendar</label>
@@ -657,6 +675,7 @@
       <option value="watermark-bottom-left">Watermark + Left</option>
       <option value="watermark-bottom-right">Watermark + Right</option>
     </select>
+    <p id="batchStyleNote" style="font-size:10.5px;color:var(--muted);margin:2px 0 0;display:none;">On small screens, batch labels are automatically centered for readability — this choice only applies on larger screens.</p>
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
 
@@ -741,6 +760,8 @@
     <input type="text" id="eventNameInput" placeholder="e.g. Welfare Audit" maxlength="60">
     <label for="eventDateInput">Event date</label>
     <input type="date" id="eventDateInput">
+    <label for="eventBatchSelect">Batch (optional)</label>
+    <select id="eventBatchSelect"><option value="">— None —</option></select>
     <label class="checkbox-row"><input type="checkbox" id="eventChecklistBox"> Add Frequent Task Checklist to Backlog</label>
     <label for="eventColorInput">Audit card background color</label>
     <input type="color" id="eventColorInput">
@@ -914,7 +935,7 @@
   }
 
   // ---------- settings ----------
-  const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise'];
+  const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise','theme-field-bright'];
   function applySettings(){
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
     document.body.classList.remove(...THEME_CLASSES);
@@ -925,6 +946,15 @@
     if(th) th.value = settings.theme;
     if(si) si.checked = settings.showIcons;
     if(bs) bs.value = settings.batchBadgeStyle;
+    updateBatchStyleAvailability();
+  }
+  function updateBatchStyleAvailability(){
+    const bs = $('#setBatchStyle'), note = $('#batchStyleNote');
+    if(!bs) return;
+    const disabled = isSmallCardScreen();
+    bs.disabled = disabled;
+    bs.style.opacity = disabled ? '0.5' : '1';
+    if(note) note.style.display = disabled ? 'block' : 'none';
   }
 
   // ---------- persistence ----------
@@ -1206,11 +1236,11 @@
   }
 
   // ---------- events ----------
-  function addEvent(name, dateVal, withChecklist, color){
-    const ev = {id:uid(), name, date:dateVal, checklist: !!withChecklist, color: color || DEFAULT_EVENT_COLOR};
+  function addEvent(name, dateVal, withChecklist, color, batchNumber){
+    const ev = {id:uid(), name, date:dateVal, checklist: !!withChecklist, color: color || DEFAULT_EVENT_COLOR, batchNumber: batchNumber || null};
     events.push(ev);
     const cs = addDaysStr(dateVal,-7), ce = addDaysStr(dateVal,-1);
-    addHistory('Event added', `"${name}" scheduled for ${formatFull(dateVal)} — critical prep week ${formatFull(cs)} – ${formatFull(ce)}`);
+    addHistory('Event added', `"${name}" scheduled for ${formatFull(dateVal)}${batchNumber ? ` (Batch #${batchNumber})` : ''} — critical prep week ${formatFull(cs)} – ${formatFull(ce)}`);
     if(withChecklist){
       addPrepChecklistToBacklog(`"${name}" audit`);
     }
@@ -1223,13 +1253,14 @@
     addHistory('Event removed', `"${ev.name}" (was ${formatFull(ev.date)}) removed`);
     persist(); renderAll();
   }
-  function updateEvent(id, name, dateVal, color){
+  function updateEvent(id, name, dateVal, color, batchNumber){
     const ev = events.find(e=>e.id===id);
     if(!ev) return;
     const oldLabel = `"${ev.name}" (${formatFull(ev.date)})`;
     ev.name = name || ev.name;
     ev.date = dateVal || ev.date;
     ev.color = color || ev.color;
+    ev.batchNumber = batchNumber || null;
     addHistory('Event updated', `${oldLabel} updated to "${ev.name}" (${formatFull(ev.date)})`);
     persist(); renderAll();
   }
@@ -1353,7 +1384,9 @@
         if(!t.date) return false;
         return t.date>=rangeStart && t.date<=rangeEnd;
       };
-      const eventsInScope = rangeStart ? events.filter(e=> e.date>=rangeStart && e.date<=rangeEnd) : events;
+      const eventsInScope = scopedBatch
+        ? events.filter(e=> e.batchNumber===scopedBatch.number || (!e.batchNumber && e.date>=rangeStart && e.date<=rangeEnd))
+        : (rangeStart ? events.filter(e=> e.date>=rangeStart && e.date<=rangeEnd) : events);
       const scopedTasks = tasks.filter(inScope);
 
       if(opts.checklistOnly){
@@ -1698,11 +1731,19 @@
   function renderEvents(){
     const box = $('#eventsList');
     box.innerHTML = '';
+    const todayKey = dateKey(new Date());
+    const upcomingEvents = events.filter(e=> e.date >= todayKey);
     if(events.length===0){ box.innerHTML = '<div class="empty-note">No events yet. Use + Audit above to add one.</div>'; return; }
-    events.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
+    if(upcomingEvents.length===0){ box.innerHTML = '<div class="empty-note">No upcoming events. Past audits are archived — view them in a batch report.</div>'; return; }
+    upcomingEvents.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
       const cs = addDaysStr(ev.date,-7), ce = addDaysStr(ev.date,-1);
       const row = document.createElement('div');
       row.className = 'event-row';
+      const batchOptions = ['<option value="">— None —</option>'].concat(
+        batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).map(b=>
+          `<option value="${b.number}" ${ev.batchNumber===b.number?'selected':''}>Batch #${b.number} (${formatShort(b.start)} – ${formatShort(b.end)})</option>`
+        )
+      ).join('');
       row.innerHTML = `
         <div class="e-top">
           <span class="batch-swatch" style="background:${ev.color || DEFAULT_EVENT_COLOR}"></span>
@@ -1710,11 +1751,13 @@
           <span class="e-actions"><button class="edit-event" title="Edit">✎</button><button class="remove-event" title="Remove event">✕</button></span>
         </div>
         <div class="e-sub"></div>
+        ${ev.batchNumber ? `<span class="event-checklist-tag" style="background:var(--secondary-soft);color:var(--secondary);">Batch #${ev.batchNumber}</span>` : ''}
         ${ev.checklist ? '<span class="event-checklist-tag">Frequent Task Checklist added</span>' : ''}
         <div class="event-edit">
           <input type="text" class="edit-name" value="${ev.name}">
           <input type="date" class="edit-date" value="${ev.date}">
           <input type="color" class="edit-color" value="${ev.color || DEFAULT_EVENT_COLOR}">
+          <select class="edit-batch">${batchOptions}</select>
           <button class="save-event">Save changes</button>
         </div>`;
       row.querySelector('.e-name').textContent = ev.name;
@@ -1726,7 +1769,8 @@
         const nn = row.querySelector('.edit-name').value.trim();
         const nd = row.querySelector('.edit-date').value;
         const nc = row.querySelector('.edit-color').value;
-        updateEvent(ev.id, nn, nd, nc);
+        const nb = row.querySelector('.edit-batch').value;
+        updateEvent(ev.id, nn, nd, nc, nb);
       });
       box.appendChild(row);
     });
@@ -1765,11 +1809,13 @@
     }
   }
 
+  function isSmallCardScreen(){ return window.innerWidth <= 480; }
   function addBatchBadges(cell, key){
     const active = batchesForDate(key);
     if(!active.length) return;
-    const style = settings.batchBadgeStyle || 'bottom-left';
-    const showWatermark = style === 'background' || style === 'watermark-bottom-left' || style === 'watermark-bottom-right';
+    const forceCentered = isSmallCardScreen();
+    const style = forceCentered ? 'centered' : (settings.batchBadgeStyle || 'bottom-left');
+    const showWatermark = !forceCentered && (style === 'background' || style === 'watermark-bottom-left' || style === 'watermark-bottom-right');
     const cornerStyle = style === 'watermark-bottom-left' ? 'bottom-left'
                        : style === 'watermark-bottom-right' ? 'bottom-right'
                        : style;
@@ -1780,7 +1826,19 @@
       wm.textContent = '#' + active[0].number;
       cell.insertBefore(wm, cell.firstChild);
     }
-    if(style !== 'background'){
+    if(style === 'centered'){
+      const wrap = document.createElement('div');
+      wrap.className = 'batch-badges-centered';
+      active.slice(0,3).forEach(b=>{
+        const badge = document.createElement('span');
+        badge.className = 'batch-badge';
+        badge.style.background = colorForBatchNumber(b.number);
+        badge.textContent = '#' + b.number;
+        badge.title = `Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`;
+        wrap.appendChild(badge);
+      });
+      cell.appendChild(wrap);
+    } else if(style !== 'background'){
       const wrap = document.createElement('div');
       wrap.className = 'batch-badges pos-' + cornerStyle;
       active.slice(0,3).forEach(b=>{
@@ -2291,9 +2349,10 @@
     const dateVal = $('#eventDateInput').value;
     const withChecklist = $('#eventChecklistBox').checked;
     const color = $('#eventColorInput').value;
+    const batchNumber = $('#eventBatchSelect').value;
     if(!name || !dateVal){ showToast('Enter an event name and date.', true); return; }
-    addEvent(name, dateVal, withChecklist, color);
-    $('#eventNameInput').value=''; $('#eventDateInput').value=''; $('#eventChecklistBox').checked=false;
+    addEvent(name, dateVal, withChecklist, color, batchNumber);
+    $('#eventNameInput').value=''; $('#eventDateInput').value=''; $('#eventChecklistBox').checked=false; $('#eventBatchSelect').value='';
     updateEventColorDefault();
     closeOverlays();
     showToast('Event added.');
@@ -2349,7 +2408,17 @@
   });
 
   $('#openBatchModalBtn').addEventListener('click', ()=> openDrawer('#batchModal'));
-  $('#openEventModalBtn').addEventListener('click', ()=> openDrawer('#eventModal'));
+  function populateEventBatchSelect(){
+    const sel = $('#eventBatchSelect');
+    sel.innerHTML = '<option value="">— None —</option>';
+    batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
+      const opt = document.createElement('option');
+      opt.value = b.number;
+      opt.textContent = `Batch #${b.number} (${formatShort(b.start)} – ${formatShort(b.end)})`;
+      sel.appendChild(opt);
+    });
+  }
+  $('#openEventModalBtn').addEventListener('click', ()=>{ populateEventBatchSelect(); openDrawer('#eventModal'); });
 
   $('#viewMonthBtn').addEventListener('click', ()=>{ viewMode='month'; syncViewButtons(); renderAll(); });
   $('#viewYearBtn').addEventListener('click', ()=>{ viewMode='year'; syncViewButtons(); renderAll(); });
@@ -2413,7 +2482,7 @@
     setTimeout(()=> taskInput.focus(), 260);
   });
   $('#quickAddBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#batchModal'); });
-  $('#quickAddEventBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#eventModal'); });
+  $('#quickAddEventBtn').addEventListener('click', ()=>{ closeOverlays(); populateEventBatchSelect(); openDrawer('#eventModal'); });
 
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
@@ -2570,6 +2639,10 @@
 
   document.addEventListener('keydown', (e)=>{
     if(e.key==='Escape') closeOverlays();
+  });
+  window.addEventListener('resize', ()=>{
+    updateBatchStyleAvailability();
+    if(viewMode==='month') renderMonth();
   });
 
   load();
