@@ -156,6 +156,7 @@
   .shell{ display:flex; flex-direction:column; height:100vh; }
 
   .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:0 1px 4px rgba(0,0,0,0.04); flex-wrap:wrap; position:relative; z-index:5; }
+  .topbar-left{ display:flex; align-items:center; gap:12px; min-width:0; }
   .barn-stripe{ height:4px; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
   .fab-delete{
     position:fixed; bottom:24px; right:24px; z-index:45;
@@ -417,7 +418,7 @@
   .list-date-sub{font-size:11.5px;color:var(--muted);}
   .list-tasks{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; }
 
-  .history-drawer{ position:fixed;top:0;right:0;height:100%;width:330px; background:var(--surface); border-left:1px solid var(--line);box-shadow:var(--shadow-lg); transform:translateX(100%);transition:transform .25s ease;z-index:40; display:flex;flex-direction:column; }
+  .history-drawer{ position:fixed;top:0;right:0;height:100%;width:330px; background:var(--surface); border-left:1px solid var(--line);box-shadow:var(--shadow-lg); transform:translateX(100%);transition:transform .25s ease;z-index:48; display:flex;flex-direction:column; }
   .history-drawer.open{transform:translateX(0);}
   .history-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 12px;border-bottom:1px solid var(--line);}
   .history-head h2{font-size:15px;margin:0;font-weight:700;overflow-wrap:break-word;min-width:0;}
@@ -430,7 +431,7 @@
   .history-item .h-action{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--primary-dark);}
   .history-item .h-detail{font-size:13px;color:var(--ink);margin:2px 0;overflow-wrap:break-word;}
   .history-item .h-time{font-size:11.5px;color:var(--muted);}
-  .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:30;display:none;}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:46;display:none;}
   .scrim.show{display:block;}
 
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
@@ -487,7 +488,7 @@
     }
     .sidebar{
       position:fixed; top:0; left:0; height:100%; width:300px; max-width:82vw;
-      z-index:38; transform:translateX(-100%); transition:transform .25s ease;
+      z-index:48; transform:translateX(-100%); transition:transform .25s ease;
       box-shadow:var(--shadow-lg);
     }
     .sidebar.open{ transform:translateX(0); }
@@ -546,7 +547,7 @@
     .fab-notif .notif-badge{ top:-2px; right:-2px; }
 
     .sheet-overlay{
-      display:flex; position:fixed; inset:0; z-index:46; align-items:flex-end;
+      display:flex; position:fixed; inset:0; z-index:47; align-items:flex-end;
       background:rgba(0,0,0,0.3);
     }
     .sheet-overlay.hidden{ display:none; }
@@ -604,8 +605,10 @@
 
 <div class="shell">
   <div class="topbar">
-    <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
-    <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small></div>
+    <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
+      <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small></div>
+    </div>
 
     <div class="toolbar">
       <div class="segmented" role="group" aria-label="Calendar view">
@@ -1192,6 +1195,7 @@
     updateEventColorDefault();
     renderAll();
     checkOverdueTasksOnLoad();
+    setTimeout(updateOverdueBadge, 300);
     initGithubSync();
   }
   function flashSaved(){
@@ -2402,6 +2406,10 @@
   }
 
   function initSortables(){
+    if(typeof Sortable === 'undefined'){
+      console.warn('SortableJS did not load — drag-and-drop is unavailable, but the rest of the app continues normally.');
+      return;
+    }
     sortables.forEach(s=>s.destroy());
     sortables = [];
     const freqList = $('#frequentList');
@@ -2465,6 +2473,7 @@
     else renderList();
     renderHistory();
     updatePeriodLabel();
+    syncViewButtons();
     initSortables();
     refreshAssigneeDatalist();
     if(dayModalOpenKey) renderDayModalTasks(dayModalOpenKey);
