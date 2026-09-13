@@ -123,9 +123,21 @@
   .task-body{flex:1; min-width:0;}
   .task-name{font-size:var(--task-font-size);font-weight:500;line-height:1.15;word-break:break-word;}
   .task-card.done .task-name{text-decoration:line-through;color:var(--muted);}
-  .task-status{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0;}
-  .task-status.open{background:var(--primary-soft); color:var(--primary-dark);}
-  .task-status.done{background:var(--secondary-soft); color:var(--secondary);}
+  .task-avatar{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#fff;font-family:'Sora',sans-serif;
+    cursor:default; border:1.5px solid var(--surface); box-shadow:0 0 0 1px var(--line);
+  }
+  .task-avatars{ display:flex; flex-shrink:0; }
+  .task-avatars .task-avatar{ margin-left:-7px; }
+  .task-avatars .task-avatar:first-child{ margin-left:0; }
+  .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
+  .task-actions{display:flex;gap:4px;flex-shrink:0;}
+  .task-actions .btn-done{ width:26px;height:26px;border:none;font-weight:700;font-size:13px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; background:var(--primary-soft); color:var(--primary-dark); transition:background .15s ease, color .15s ease, transform .1s ease; }
+  .task-actions .btn-done:hover{ background:var(--primary); color:#fff; transform:scale(1.08); }
+  .task-card.done .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
+  .task-card.done .btn-done:hover{ background:var(--secondary); color:#fff; }
 
   .form-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:440px; max-width:92vw; max-height:82vh; background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
   .form-modal.open{display:flex;}
@@ -254,6 +266,15 @@
   <div class="form-modal-body" id="dayModalTaskList"></div>
 </div>
 
+<div class="form-modal" id="overdueTransferModal">
+  <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueTransferModal">✕</button></div>
+  <div class="form-modal-body">
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open.</p>
+    <button class="btn-app" id="moveOverdueToTodayBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22);">Move all to today</button>
+    <button class="btn-app" id="dismissOverdueTransfer" style="margin-top:8px; background:var(--surface-soft); color:var(--muted); border:1px solid var(--line);">Not now</button>
+  </div>
+</div>
+
 <div class="history-drawer" id="infoDrawer">
   <div class="history-head"><h2>Batches &amp; Events</h2><button id="closeInfo">✕</button></div>
   <div class="info-list">
@@ -299,8 +320,9 @@
 
     <label style="margin-top:16px;">Data source (GitHub, read-only)</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
-    <label for="githubTokenInput">Access token (read-only recommended)</label>
-    <input type="password" id="githubTokenInput" placeholder="Read-only fine-grained token">
+    <label for="githubTokenInput">Access token</label>
+    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Marking tasks done here syncs back to your farm's data, so this token needs write access — ask your farm manager for one.</p>
     <label for="githubRepoInput">Storage</label>
     <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
     <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
@@ -326,7 +348,7 @@
   let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
   let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
   let dayModalOpenKey = null;
-  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null;
+  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null, ghSha=null;
 
   const $ = (sel)=> document.querySelector(sel);
 
@@ -364,6 +386,60 @@
     t.textContent=msg; t.classList.toggle('error',!!isError); t.classList.add('show');
     clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2600);
   }
+
+  // ---------- task completion — the viewer's one narrow write capability ----------
+  function taskLabel(t){ return `"${t.name}"`; }
+  function addHistory(action, detail){
+    history.unshift({ id:'h'+Date.now()+Math.random().toString(36).slice(2), ts:Date.now(), action, detail });
+  }
+  async function toggleTaskDone(id){
+    const t = tasks.find(x=>x.id===id);
+    if(!t) return;
+    t.status = t.status==='done' ? 'open' : 'done';
+    addHistory(t.status==='done' ? 'Completed' : 'Reopened', `${taskLabel(t)} (via Viewer)`);
+    renderAll();
+    try{ localStorage.setItem('prodplan-viewer-cache', JSON.stringify({tasks, history, batches, events})); }catch(e){}
+    if(ghToken && ghRepo && ghPath){
+      const ok = await pushToGithub();
+      if(ok) showToast(t.status==='done' ? 'Marked done.' : 'Reopened.');
+    } else {
+      showToast('Marked locally — connect in Settings to sync this to other devices.', true);
+    }
+  }
+  let overdueModalShownThisSession = false;
+  function checkOverdueOnLoad(){
+    if(overdueModalShownThisSession) return;
+    const todayKey = dateKey(new Date());
+    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
+    if(overdue.length===0) return;
+    overdueModalShownThisSession = true;
+    $('#overdueTransferCount').textContent = overdue.length;
+    $('#overdueTransferModal').classList.add('open');
+    $('#scrim').classList.add('show');
+  }
+  async function transferOverdueToToday(){
+    const todayKey = dateKey(new Date());
+    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
+    if(overdue.length===0) return 0;
+    overdue.forEach(t=>{ t.date = todayKey; });
+    addHistory('Overdue tasks transferred', `${overdue.length} overdue task(s) moved to today (via Viewer)`);
+    renderAll();
+    try{ localStorage.setItem('prodplan-viewer-cache', JSON.stringify({tasks, history, batches, events})); }catch(e){}
+    if(ghToken && ghRepo && ghPath){
+      const ok = await pushToGithub();
+      if(ok) showToast(`Moved ${overdue.length} task(s) to today.`);
+    } else {
+      showToast('Moved locally — connect in Settings to sync this to other devices.', true);
+    }
+    return overdue.length;
+  }
+  document.addEventListener('click', (e)=>{
+    const doneBtn = e.target.closest('.btn-done');
+    if(doneBtn){
+      const card = doneBtn.closest('.task-card');
+      if(card && card.dataset.id) toggleTaskDone(card.dataset.id);
+    }
+  });
 
   // ---------- settings (local viewing preferences only — never synced) ----------
   const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise','theme-field-bright'];
@@ -437,13 +513,18 @@
     updateGithubStatusUI();
   }
   function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
+  function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
   function applyData(rawText, silent){
     try{
       const parsed = JSON.parse(rawText);
       tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || [];
+      tasks.forEach(t=>{
+        if(!Array.isArray(t.assignees)) t.assignees = t.assignee ? [t.assignee] : [];
+      });
       try{ localStorage.setItem('prodplan-viewer-cache', rawText); }catch(e){}
       renderAll();
       if(!silent) flashSynced();
+      checkOverdueOnLoad();
     }catch(e){ if(!silent) showToast('Could not read that data.', true); }
   }
   function flashSynced(){
@@ -459,6 +540,7 @@
       if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return; }
       if(!res.ok) throw new Error('GitHub responded '+res.status);
       const data = await res.json();
+      ghSha = data.sha;
       const content = b64DecodeUtf8(data.content);
       applyData(content, silent);
       if(!silent) showToast('Refreshed from the latest data.');
@@ -471,11 +553,60 @@
     }
   }
 
+  async function pushToGithub(){
+    if(!ghToken || !ghRepo || !ghPath) return false;
+    try{
+      const payload = JSON.stringify({tasks, history, batches, events}, null, 2);
+      const body = { message:`ProdPlan.VM Viewer update ${new Date().toISOString()}`, content: b64EncodeUtf8(payload) };
+      if(ghSha) body.sha = ghSha;
+      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
+        method:'PUT',
+        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
+        body: JSON.stringify(body)
+      });
+      if(!res.ok){
+        if(res.status===403 || res.status===401) showToast('Could not save — your access token may not have write permission. Ask your farm manager for an updated token.', true);
+        else showToast('Could not save your change — check your connection.', true);
+        return false;
+      }
+      const data = await res.json();
+      if(data && data.content && data.content.sha) ghSha = data.content.sha;
+      try{ localStorage.setItem('prodplan-viewer-cache', payload); }catch(e){}
+      return true;
+    }catch(e){
+      console.error('GitHub push failed', e);
+      showToast('Could not save your change — check your connection.', true);
+      return false;
+    }
+  }
+
   // ---------- read-only rendering ----------
+  const ASSIGNEE_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
+  function colorForAssignee(name){
+    if(!name) return '#999';
+    let hash = 0;
+    for(let i=0;i<name.length;i++){ hash = name.charCodeAt(i) + ((hash<<5)-hash); }
+    return ASSIGNEE_PALETTE[Math.abs(hash) % ASSIGNEE_PALETTE.length];
+  }
+  function initialsForAssignee(name){ return name.trim().charAt(0).toUpperCase(); }
+  function buildAssigneeAvatarsHtml(assignees){
+    if(!assignees || assignees.length===0) return '';
+    const shown = assignees.slice(0,3);
+    let html = '<span class="task-avatars">';
+    shown.forEach(name=>{
+      html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${name}">${initialsForAssignee(name)}</span>`;
+    });
+    if(assignees.length>3){
+      html += `<span class="task-avatar more-avatar" title="${assignees.slice(3).join(', ')}">+${assignees.length-3}</span>`;
+    }
+    html += '</span>';
+    return html;
+  }
   function buildReadOnlyTaskCard(t){
     const card=document.createElement('div');
     card.className='task-card'+(t.status==='done'?' done':'');
-    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span><span class="task-status ${t.status==='done'?'done':'open'}">${t.status==='done'?'Done':'Open'}</span>`;
+    card.dataset.id = t.id;
+    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<span class="task-actions"><button class="btn-done" title="${t.status==='done'?'Reopen':'Mark done'}">${t.status==='done'?'↺':'✓'}</button></span>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
     return card;
@@ -701,7 +832,7 @@
   // ---------- overlays ----------
   function openDrawer(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
   function closeOverlays(){
-    ['#settingsDrawer','#dayModal','#infoDrawer'].forEach(sel=> $(sel).classList.remove('open'));
+    ['#settingsDrawer','#dayModal','#infoDrawer','#overdueTransferModal'].forEach(sel=> $(sel).classList.remove('open'));
     $('#scrim').classList.remove('show');
     dayModalOpenKey=null;
   }
@@ -710,6 +841,12 @@
     overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
   });
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeOverlays(); });
+  $('#closeOverdueTransferModal').addEventListener('click', closeOverlays);
+  $('#dismissOverdueTransfer').addEventListener('click', closeOverlays);
+  $('#moveOverdueToTodayBtn').addEventListener('click', async ()=>{
+    const count = await transferOverdueToToday();
+    if(count>0) closeOverlays();
+  });
 
   $('#viewMonthBtn').addEventListener('click', ()=>{ viewMode='month'; renderAll(); });
   $('#viewYearBtn').addEventListener('click', ()=>{ viewMode='year'; renderAll(); });
