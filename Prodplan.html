@@ -665,7 +665,7 @@
     <label for="githubTokenInput">Personal access token</label>
     <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
     <label for="githubRepoInput">Storage</label>
-    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonmangaron/farmdata)</label>
+    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
     <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
@@ -996,7 +996,7 @@
     if(tokenInput && ghToken) tokenInput.value = ghToken;
     if(repoInput && ghRepo) repoInput.value = ghRepo;
     const sharedBox = $('#useSharedStorageBox');
-    if(sharedBox){ const isShared = ghRepo==='vonmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
+    if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
   function initGithubSync(){
@@ -1944,12 +1944,39 @@
     });
     return bar;
   }
+  function buildUpcomingEventsSection(){
+    const todayKey = dateKey(new Date());
+    const upcoming = events.filter(e=> e.date>=todayKey).sort((a,b)=> a.date.localeCompare(b.date));
+    if(upcoming.length===0) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'list-group';
+    const title = document.createElement('div');
+    title.className = 'list-date';
+    title.innerHTML = '<span class="list-date-main">📝 Upcoming Events / Audits</span>';
+    wrap.appendChild(title);
+    const box = document.createElement('div');
+    box.className = 'list-tasks';
+    upcoming.forEach(ev=>{
+      const cs = addDaysStr(ev.date,-7), ce = addDaysStr(ev.date,-1);
+      const row = document.createElement('div');
+      row.className = 'task-card';
+      row.innerHTML = `<span class="task-icon">📝</span><span class="task-body"><span class="task-name"></span></span>`;
+      row.querySelector('.task-name').textContent = `${ev.name} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
+      box.appendChild(row);
+    });
+    wrap.appendChild(box);
+    return wrap;
+  }
   function renderList(){
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
     const box = document.createElement('div');
     box.className = 'list-view';
     box.appendChild(buildAgendaFilterBar());
+    if(agendaFilter==='upcoming'){
+      const evSection = buildUpcomingEventsSection();
+      if(evSection) box.appendChild(evSection);
+    }
     const dated = getAgendaTasks();
     if(dated.length===0){
       const emptyMsg = agendaFilter==='today' ? 'No tasks scheduled for today.' : agendaFilter==='week' ? 'No tasks scheduled this week.' : 'No upcoming tasks scheduled.';
@@ -2487,7 +2514,7 @@
   $('#connectGithubBtn').addEventListener('click', connectGithub);
   $('#useSharedStorageBox').addEventListener('change', (e)=>{
     const repoInput = $('#githubRepoInput');
-    if(e.target.checked){ repoInput.value = 'vonmangaron/farmdata'; repoInput.readOnly = true; }
+    if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
     else{ repoInput.readOnly = false; }
   });
   $('#syncGithubBtn').addEventListener('click', ()=>{
