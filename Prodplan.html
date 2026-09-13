@@ -674,6 +674,10 @@
     <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
     <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
 
+    <label style="margin-top:16px;">Farm hand access</label>
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 6px;">Opens the read-only viewer app in a new tab — safe to share with farm hands, nothing here can be edited from there.</p>
+    <button class="btn-app" id="openViewerBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22);">👁️ Open Viewer Mode</button>
+
     <label style="margin-top:16px;">Backup &amp; transfer to another device</label>
     <button class="btn-app" id="exportDataBtn">Export data (.json)</button>
     <label for="importDataInput" class="btn-ai-wide" style="text-align:center;margin-top:8px;">Import data (.json)</label>
@@ -2489,6 +2493,10 @@
   $('#syncGithubBtn').addEventListener('click', ()=>{
     if(!ghToken || !ghRepo || !ghPath){ showToast('Connect to GitHub first.', true); return; }
     pullFromGithub();
+  });
+
+  $('#openViewerBtn').addEventListener('click', ()=>{
+    window.open('prodplan-viewer.html', '_blank');
   });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
