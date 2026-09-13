@@ -57,6 +57,14 @@
   .nav-group{display:flex;align-items:center;gap:6px;}
   .nav-group.hidden{visibility:hidden; pointer-events:none;}
   .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;cursor:pointer; display:flex;align-items:center;justify-content:center; }
+  .notif-btn{ position:relative; border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
+  .notif-btn:hover{ background:var(--danger); color:#fff; }
+  .notif-badge{
+    position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px;
+    border-radius:999px; background:var(--danger); color:#fff; font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .notif-badge.hidden{ display:none; }
   .icon-btn:hover{background:var(--primary-soft); color:var(--primary-dark);}
   #settingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
   #settingsBtn:hover{ background:var(--secondary); color:#fff; }
@@ -225,6 +233,7 @@
     .brand small{display:none;}
     .icon-btn{ width:38px; height:38px; font-size:17px; }
     #settingsBtn{ width:38px; height:38px; font-size:19px; }
+    #overdueBtn{ width:38px; height:38px; }
   }
 
   @media (max-width: 480px){
@@ -261,6 +270,7 @@
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button id="infoBtn">Batches &amp; Events</button>
+      <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
       <span class="sync-indicator" id="syncIndicator">Synced</span>
     </div>
@@ -289,9 +299,10 @@
 </div>
 
 <div class="form-modal" id="overdueTransferModal">
-  <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueTransferModal">✕</button></div>
+  <div class="form-modal-head"><h2>⚠️ Past due tasks</h2><button id="closeOverdueTransferModal">✕</button></div>
   <div class="form-modal-body">
     <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open. Let your manager know so they can reschedule them from the main app.</p>
+    <div id="overdueTransferList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
     <button class="btn-app" id="dismissOverdueTransfer">Got it</button>
   </div>
 </div>
@@ -382,17 +393,43 @@
     clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2600);
   }
 
-  // ---------- overdue notice (informational only) ----------
-  let overdueModalShownThisSession = false;
-  function checkOverdueOnLoad(){
-    if(overdueModalShownThisSession) return;
+  // ---------- overdue notice (view only) ----------
+  function getOverdueTasks(){
     const todayKey = dateKey(new Date());
-    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
-    if(overdue.length===0) return;
-    overdueModalShownThisSession = true;
+    return tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  function renderOverdueList(){
+    const overdue = getOverdueTasks();
     $('#overdueTransferCount').textContent = overdue.length;
+    const list = $('#overdueTransferList');
+    list.innerHTML = '';
+    overdue.forEach(t=>{
+      const wrap = document.createElement('div');
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:11px;color:var(--danger);font-weight:700;margin-bottom:3px;';
+      label.textContent = formatFull(t.date);
+      wrap.appendChild(label);
+      wrap.appendChild(buildReadOnlyTaskCard(t));
+      list.appendChild(wrap);
+    });
+  }
+  function openOverdueModal(){
+    renderOverdueList();
     $('#overdueTransferModal').classList.add('open');
     $('#scrim').classList.add('show');
+  }
+  function updateOverdueBadge(){
+    const count = getOverdueTasks().length;
+    const badge = $('#overdueBadge');
+    if(badge){ badge.textContent = count > 99 ? '99+' : count; badge.classList.toggle('hidden', count===0); }
+  }
+  let overdueModalShownThisSession = false;
+  function checkOverdueOnLoad(){
+    updateOverdueBadge();
+    if(overdueModalShownThisSession) return;
+    if(getOverdueTasks().length===0) return;
+    overdueModalShownThisSession = true;
+    openOverdueModal();
   }
 
   // ---------- settings ----------
@@ -743,7 +780,9 @@
   function renderAll(){
     if(viewMode==='month') renderMonth(); else if(viewMode==='year') renderYear(); else renderList();
     renderInfo(); updatePeriodLabel(); syncViewButtons();
+    updateOverdueBadge();
     if(dayModalOpenKey) renderDayModal(dayModalOpenKey);
+    if($('#overdueTransferModal').classList.contains('open')) renderOverdueList();
   }
 
   // ---------- day modal (read-only) ----------
@@ -783,6 +822,7 @@
   $('#infoBtn').addEventListener('click', ()=> openDrawer('#infoDrawer'));
   $('#closeInfo').addEventListener('click', closeOverlays);
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
+  $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#closeSettings').addEventListener('click', closeOverlays);
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
