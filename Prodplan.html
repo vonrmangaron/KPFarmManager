@@ -2390,6 +2390,9 @@
   $('#closeOverdueModal').addEventListener('click', closeOverlays);
   $('#closeOverdueBtn').addEventListener('click', closeOverlays);
   $('#scrim').addEventListener('click', closeOverlays);
+  document.querySelectorAll('.sheet-overlay').forEach(overlay=>{
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
+  });
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
   $('#setTheme').addEventListener('change', (e)=>{ settings.theme = e.target.value; applySettings(); persist(); });
