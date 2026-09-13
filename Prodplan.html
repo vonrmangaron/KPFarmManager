@@ -1107,7 +1107,44 @@
       catch(e){ console.error('Local browser save failed', e); return; }
     }
     flashSaved();
-    pushToGithub();
+    schedulePush();
+  }
+
+  // ---------- debounced GitHub sync ----------
+  // Waits 5s after the last change before pushing (resets on every new change),
+  // but never waits longer than 30s straight, so a burst of rapid edits still
+  // lands soon. Also flushes immediately if the app is closed/backgrounded
+  // mid-countdown, so nothing gets silently lost.
+  let pushDebounceTimer = null;
+  let pushMaxWaitTimer = null;
+  let pushInFlight = false;
+  let pushPending = false;
+  function schedulePush(){
+    pushPending = true;
+    clearTimeout(pushDebounceTimer);
+    pushDebounceTimer = setTimeout(runScheduledPush, 5000);
+    if(!pushMaxWaitTimer){
+      pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
+    }
+  }
+  async function runScheduledPush(){
+    clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
+    clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
+    if(!pushPending) return;
+    if(pushInFlight){
+      pushDebounceTimer = setTimeout(runScheduledPush, 2000);
+      return;
+    }
+    pushPending = false;
+    pushInFlight = true;
+    try{ await pushToGithub(); } finally { pushInFlight = false; }
+  }
+  function flushPendingPush(){
+    if(!pushPending) return;
+    clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
+    clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
+    pushPending = false;
+    pushToGithub(); // best-effort — the page may close before this completes
   }
   async function load(){
     let raw = null;
@@ -2938,8 +2975,9 @@
     if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
     else{ repoInput.readOnly = false; }
   });
-  $('#syncGithubBtn').addEventListener('click', ()=>{
+  $('#syncGithubBtn').addEventListener('click', async ()=>{
     if(!ghToken || !ghRepo || !ghPath){ showToast('Connect to GitHub first.', true); return; }
+    if(pushPending){ await runScheduledPush(); }
     pullFromGithub();
   });
 
@@ -2996,6 +3034,10 @@
     updateBatchStyleAvailability();
     if(viewMode==='month') renderMonth();
   });
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden') flushPendingPush();
+  });
+  window.addEventListener('pagehide', flushPendingPush);
 
   // ---------- pull-to-refresh ----------
   function initPullToRefresh(containerEl, indicatorEl, onRefresh){
@@ -3043,6 +3085,7 @@
   }
   initPullToRefresh($('#calendarWrap'), $('#pullRefreshIndicator'), async ()=>{
     if(ghToken && ghRepo && ghPath){
+      if(pushPending){ await runScheduledPush(); }
       await pullFromGithub();
     } else {
       showToast('Connect to GitHub in Settings to enable syncing.', true);
