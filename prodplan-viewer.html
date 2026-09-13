@@ -166,7 +166,7 @@
 
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
   .settings-body label{font-size:12px;font-weight:600;color:var(--muted);margin-top:8px;}
-  .settings-body select, .settings-body input{ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink); width:100%; }
+  .settings-body select, .settings-body input:not([type="checkbox"]){ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink); width:100%; }
 
   .app-footer{ text-align:center; font-size:11px; color:var(--muted); padding:8px; border-top:1px solid var(--line); background:var(--surface); }
   .toast{ position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px); background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px; box-shadow:var(--shadow-lg);opacity:0;pointer-events:none; transition:opacity .25s ease, transform .25s ease;z-index:60; }
@@ -177,7 +177,8 @@
   .sheet-overlay{ display:none; }
   @media (max-width: 760px){
     .month-grid{grid-auto-rows:118px;}
-    .toolbar #historyBtn, .toolbar #reportBtn, .toolbar #infoBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn, .toolbar #reportBtn,
+    .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #infoBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
@@ -198,6 +199,19 @@
     .icon-btn{ width:38px; height:38px; font-size:17px; }
     #settingsBtn{ width:38px; height:38px; font-size:19px; }
     #overdueBtn{ width:38px; height:38px; }
+  }
+
+  @media (max-width: 480px){
+    body{font-size:14px;}
+    .topbar{padding:12px 14px;}
+    .brand{font-size:16px;}
+    .toolbar-label{min-width:84px; font-size:12.5px;}
+    .month-grid{grid-auto-rows:98px; gap:6px;}
+    .day-count-icons{display:none;}
+    .day-count strong{font-size:15px;}
+    .weekday-row{gap:4px;}
+    .weekday-row span{font-size:10px; padding:5px 0;}
+    .calendar-wrap{padding:12px;}
   }
 </style>
 </head>
@@ -308,7 +322,7 @@
     <label for="githubTokenInput">Access token (read-only recommended)</label>
     <input type="password" id="githubTokenInput" placeholder="Read-only fine-grained token">
     <label for="githubRepoInput">Storage</label>
-    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonmangaron/farmdata)</label>
+    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
     <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
@@ -430,7 +444,7 @@
     const t=$('#githubTokenInput'), r=$('#githubRepoInput'), p=$('#githubPathInput');
     if(t && ghToken) t.value=ghToken; if(r && ghRepo) r.value=ghRepo; if(p && ghFarmName) p.value=ghFarmName;
     const sharedBox = $('#useSharedStorageBox');
-    if(sharedBox){ const isShared = ghRepo==='vonmangaron/farmdata'; sharedBox.checked = isShared; if(r) r.readOnly = isShared; }
+    if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(r) r.readOnly = isShared; }
   }
   function initGithub(){
     try{
@@ -616,10 +630,33 @@
     });
     return bar;
   }
+  function buildUpcomingEventsSection(){
+    const todayKey=dateKey(new Date());
+    const upcoming = events.filter(e=> e.date>=todayKey).sort((a,b)=> a.date.localeCompare(b.date));
+    if(upcoming.length===0) return null;
+    const wrap=document.createElement('div'); wrap.className='list-group';
+    const title=document.createElement('div'); title.className='list-date';
+    title.innerHTML='<span class="list-date-main">📝 Upcoming Events / Audits</span>';
+    wrap.appendChild(title);
+    const box=document.createElement('div'); box.className='list-tasks';
+    upcoming.forEach(ev=>{
+      const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1);
+      const row=document.createElement('div'); row.className='task-card';
+      row.innerHTML=`<span class="task-icon">📝</span><span class="task-body"><span class="task-name"></span></span>`;
+      row.querySelector('.task-name').textContent = `${ev.name} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
+      box.appendChild(row);
+    });
+    wrap.appendChild(box);
+    return wrap;
+  }
   function renderList(){
     const wrap=$('#calendarWrap'); wrap.innerHTML='';
     const box=document.createElement('div'); box.className='list-view';
     box.appendChild(buildAgendaFilterBar());
+    if(agendaFilter==='upcoming'){
+      const evSection = buildUpcomingEventsSection();
+      if(evSection) box.appendChild(evSection);
+    }
     const dated=getAgendaTasks();
     if(dated.length===0){
       const emptyMsg = agendaFilter==='today' ? 'No tasks scheduled for today.' : agendaFilter==='week' ? 'No tasks scheduled this week.' : 'No upcoming tasks scheduled.';
@@ -831,7 +868,7 @@
   $('#connectGithubBtn').addEventListener('click', connectGithub);
   $('#useSharedStorageBox').addEventListener('change', (e)=>{
     const repoInput = $('#githubRepoInput');
-    if(e.target.checked){ repoInput.value = 'vonmangaron/farmdata'; repoInput.readOnly = true; }
+    if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
     else{ repoInput.readOnly = false; }
   });
   $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghToken||!ghRepo||!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
