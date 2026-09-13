@@ -247,7 +247,7 @@
   .frequent-list{display:flex;flex-direction:column;gap:8px;min-height:20px;}
   .frequent-chip{border-style:dashed !important;}
 
-  .batches-list, .events-list{display:flex;flex-direction:column;gap:8px;}
+  .batches-list, .events-list{display:flex;flex-direction:column;gap:14px;}
   .batch-row, .event-row{ background:var(--surface-soft);border:1px solid var(--line);border-radius:10px; padding:8px 10px;font-size:12.5px; min-width:0; }
   .batch-row .b-top, .event-row .e-top{display:flex;align-items:center;gap:8px;min-width:0;}
   .batch-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
@@ -257,13 +257,13 @@
   .batch-row .b-actions button, .event-row .e-actions button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;width:20px;height:20px;border-radius:6px;flex-shrink:0;}
   .batch-row .b-actions button:hover, .event-row .e-actions button:hover{background:var(--primary-soft);color:var(--primary-dark);}
   .batch-edit{display:none;flex-direction:column;gap:6px;margin-top:8px;}
-  .batch-edit.open{display:flex;}
+  .batch-edit.open{display:flex;margin-bottom:2px;}
   .batch-edit input{border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12px;width:100%;min-width:0;}
   .batch-edit .edit-color{height:30px;padding:2px;}
   .batch-edit .save-batch{border:none;background:var(--secondary);color:#fff;border-radius:7px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;}
   .event-checklist-tag{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:600;color:var(--primary-dark);background:var(--primary-soft);border-radius:999px;padding:1px 7px;}
   .event-edit{display:none;flex-direction:column;gap:6px;margin-top:8px;}
-  .event-edit.open{display:flex;}
+  .event-edit.open{display:flex;margin-bottom:2px;}
   .event-edit input, .event-edit select{border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12px;width:100%;min-width:0;background:var(--surface);color:var(--ink);}
   .event-edit .edit-color{height:30px;padding:2px;}
   .event-edit .save-event{border:none;background:var(--secondary);color:#fff;border-radius:7px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;}
@@ -319,7 +319,7 @@
     position:relative; z-index:1;
   }
   .day-cell.today .day-num{ background:var(--primary); color:#fff; border-color:var(--primary); }
-  .day-cell .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;min-height:0;}
+  .day-cell .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;min-height:0;overflow:hidden;}
   .day-count{text-align:center;color:var(--muted);font-size:11px;line-height:1.3;}
   .day-count strong{display:block;font-size:17px;color:var(--ink);font-family:'Sora',sans-serif;line-height:1.25;}
   .day-count-icons{font-size:14px;line-height:1.2;margin-bottom:4px;letter-spacing:1px;}
@@ -379,7 +379,7 @@
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
   .settings-body label{font-size:12px;font-weight:600;color:var(--muted);margin-top:8px;}
   .settings-body select{
-    border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink);width:100%;box-sizing:border-box;
+    border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:9px 10px;font-size:15px;line-height:1.4;color:var(--ink);width:100%;box-sizing:border-box;-webkit-appearance:menulist;
   }
 
   .form-modal{
@@ -511,13 +511,14 @@
     .brand{font-size:16px;}
     .toolbar-label{min-width:84px; font-size:12.5px;}
     .quick-actions{flex-direction:column;}
-    .month-grid{grid-auto-rows:98px; gap:6px;}
+    .month-grid{grid-auto-rows:106px; gap:6px;}
     .day-count-icons{display:none;}
-    .day-count strong{font-size:15px;}
+    .day-count-label{display:none;}
+    .day-count strong{font-size:16px;}
     .weekday-row{gap:4px;}
     .weekday-row span{font-size:10px; padding:5px 0;}
     .calendar-wrap{padding:12px;}
-    .day-cell{ align-items:center; }
+    .day-cell{ align-items:center; padding-bottom:7px; }
     .day-num{ align-self:center; }
   }
 </style>
@@ -852,6 +853,24 @@
   ];
 
   let tasks = [];
+  let orderCounter = Date.now();
+  function nextOrder(){ return orderCounter++; }
+  function migrateTaskOrder(){
+    let needsOrder = false;
+    tasks.forEach(t=>{ if(typeof t.order !== 'number') needsOrder = true; });
+    if(needsOrder){
+      tasks.forEach((t,i)=>{ if(typeof t.order !== 'number') t.order = i; });
+    }
+    const maxOrder = tasks.reduce((m,t)=> Math.max(m, t.order||0), 0);
+    orderCounter = Math.max(orderCounter, maxOrder+1);
+  }
+  function reorderTasksToMatchDom(listEl){
+    const ids = Array.from(listEl.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
+    ids.forEach((id, i)=>{
+      const t = tasks.find(x=>x.id===id);
+      if(t) t.order = i;
+    });
+  }
   let history = [];
   let batches = [];
   let events = [];
@@ -998,6 +1017,7 @@
         frequentTemplates = parsed.frequentTemplates || [];
       }catch(e){ tasks=[]; history=[]; batches=[]; events=[]; settings=Object.assign({},DEFAULT_SETTINGS); frequentTemplates=[]; }
     }
+    migrateTaskOrder();
     applySettings();
     updateBatchColorDefault();
     updateEventColorDefault();
@@ -1192,7 +1212,7 @@
 
   // ---------- tasks ----------
   function addTask(name, icon, dateVal, meta){
-    const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now() };
+    const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder() };
     if(meta) Object.assign(t, meta);
     tasks.push(t);
     addHistory('Added', `"${name}" added to ${dateVal ? formatFull(dateVal) : 'backlog'}`);
@@ -1529,7 +1549,7 @@
       if(eventsInScope.length===0) body('No events recorded.');
       else eventsInScope.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
         const cs = addDaysStr(ev.date,-7), ce = addDaysStr(ev.date,-1);
-        body(`${ev.name} — ${formatFull(ev.date)}  (prep week: ${formatFull(cs)} – ${formatFull(ce)})`, 10.5);
+        body(`${ev.name}${ev.batchNumber ? ` (Batch #${ev.batchNumber})` : ''} — ${formatFull(ev.date)}  (prep week: ${formatFull(cs)} – ${formatFull(ce)})`, 10.5);
       });
 
       const pageCount = doc.internal.getNumberOfPages();
@@ -1613,6 +1633,7 @@
     const card = document.createElement('div');
     card.className = 'task-card frequent-chip';
     card.dataset.template = 'true';
+    card.dataset.id = item.id;
     card.dataset.name = item.name;
     card.dataset.icon = item.icon;
     card.innerHTML = `
@@ -1628,7 +1649,7 @@
   function renderBacklog(){
     const list = $('#backlogList');
     list.innerHTML = '';
-    const open = tasks.filter(t=>t.date===null);
+    const open = tasks.filter(t=>t.date===null).sort((a,b)=>(a.order||0)-(b.order||0));
     if(open.length===0){ list.innerHTML = '<div class="empty-note">No tasks waiting. Add one above.</div>'; }
     else open.forEach(t=> list.appendChild(buildTaskCard(t)));
   }
@@ -1794,7 +1815,7 @@
       rb.className = 'event-ribbon';
       rb.style.background = c;
       rb.textContent = '🔺 ' + exact.name;
-      rb.title = `Audit day: ${exact.name}`;
+      rb.title = `Audit day: ${exact.name}${exact.batchNumber ? ` (Batch #${exact.batchNumber})` : ''}`;
       cell.appendChild(rb);
       cell.style.background = hexToRgba(c, 0.18);
       cell.style.border = `2px solid ${c}`;
@@ -1861,7 +1882,7 @@
   function buildDayCount(key){
     const wrap = document.createElement('div');
     wrap.className = 'day-count';
-    const dayTasks = tasks.filter(t=>t.date===key);
+    const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
     if(dayTasks.length===0) return wrap;
 
     const done = dayTasks.filter(t=>t.status==='done').length;
@@ -1884,8 +1905,10 @@
     strong.textContent = dayTasks.length;
     wrap.appendChild(strong);
 
-    const labelText = document.createTextNode(`${dayTasks.length===1?'task':'tasks'}${done?' • '+done+' done':''}`);
-    wrap.appendChild(labelText);
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'day-count-label';
+    labelSpan.textContent = `${dayTasks.length===1?'task':'tasks'}${done?' • '+done+' done':''}`;
+    wrap.appendChild(labelSpan);
 
     return wrap;
   }
@@ -2019,7 +2042,7 @@
       const row = document.createElement('div');
       row.className = 'task-card';
       row.innerHTML = `<span class="task-icon">📝</span><span class="task-body"><span class="task-name"></span></span>`;
-      row.querySelector('.task-name').textContent = `${ev.name} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
+      row.querySelector('.task-name').textContent = `${ev.name}${ev.batchNumber ? ` (Batch #${ev.batchNumber})` : ''} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
       box.appendChild(row);
     });
     wrap.appendChild(box);
@@ -2046,6 +2069,7 @@
     }
     const groups = {};
     dated.forEach(t=>{ (groups[t.date] = groups[t.date] || []).push(t); });
+    Object.keys(groups).forEach(key=> groups[key].sort((a,b)=>(a.order||0)-(b.order||0)));
     Object.keys(groups).sort().forEach(key=>{
       const groupEl = document.createElement('div');
       groupEl.className = 'list-group';
@@ -2105,9 +2129,15 @@
     const freqList = $('#frequentList');
     if(freqList){
       sortables.push(Sortable.create(freqList, {
-        group:{name:'tasks', pull:'clone', put:true}, sort:false, animation:150,
+        group:{name:'tasks', pull:'clone', put:true}, sort:true, animation:150,
         ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        onUpdate:(evt)=>{
+          const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
+          ids.forEach((id,i)=>{ const f = frequentTemplates.find(x=>x.id===id); if(f) f._order = i; });
+          frequentTemplates.sort((a,b)=>(a._order||0)-(b._order||0));
+          persist(); renderAll();
+        },
         onAdd:(evt)=>{
           const item = evt.item;
           if(item.dataset.template==='true') return; // a frequent chip dropped on itself — nothing to do
@@ -2126,6 +2156,10 @@
         filter:'.day-count, .empty-note',
         preventOnFilter:false,
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        onUpdate:(evt)=>{
+          reorderTasksToMatchDom(evt.to);
+          persist(); renderAll();
+        },
         onAdd:(evt)=>{
           suppressNextClick = true;
           setTimeout(()=>{ suppressNextClick = false; }, 80);
@@ -2172,13 +2206,13 @@
     const list = $('#dayModalTaskList');
     list.dataset.date = key;
     list.innerHTML = '';
-    const dayTasks = tasks.filter(t=>t.date===key);
+    const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
     if(dayTasks.length===0) list.innerHTML = '<div class="empty-note">Nothing scheduled yet — add one above or drag a task here.</div>';
     else dayTasks.forEach(t=> list.appendChild(buildTaskCard(t)));
 
     const backlogBox = $('#dayModalBacklogList');
     backlogBox.innerHTML = '';
-    const open = tasks.filter(t=>t.date===null);
+    const open = tasks.filter(t=>t.date===null).sort((a,b)=>(a.order||0)-(b.order||0));
     if(open.length===0){ backlogBox.innerHTML = '<div class="empty-note">Backlog is empty.</div>'; }
     else{
       open.forEach(t=>{
