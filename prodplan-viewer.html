@@ -162,7 +162,7 @@
 
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
   .settings-body label{font-size:12px;font-weight:600;color:var(--muted);margin-top:8px;}
-  .settings-body select, .settings-body input:not([type="checkbox"]){ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink); width:100%; }
+  .settings-body select, .settings-body input:not([type="checkbox"]){ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:9px 10px;font-size:15px;line-height:1.4;color:var(--ink); width:100%; box-sizing:border-box; }
 
   .app-footer{ text-align:center; font-size:11px; color:var(--muted); padding:8px; border-top:1px solid var(--line); background:var(--surface); }
   .toast{ position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px); background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px; box-shadow:var(--shadow-lg);opacity:0;pointer-events:none; transition:opacity .25s ease, transform .25s ease;z-index:60; }
@@ -491,7 +491,7 @@
     if(exact){
       const c=exact.color||DEFAULT_EVENT_COLOR;
       const rb=document.createElement('div'); rb.className='event-ribbon'; rb.style.background=c;
-      rb.textContent='🔺 '+exact.name; rb.title=`Audit day: ${exact.name}`; cell.appendChild(rb);
+      rb.textContent='🔺 '+exact.name; rb.title=`Audit day: ${exact.name}${exact.batchNumber ? ` (Batch #${exact.batchNumber})` : ''}`; cell.appendChild(rb);
       cell.style.background=hexToRgba(c,0.18); cell.style.border=`2px solid ${c}`; return;
     }
     const crit=criticalEventForDate(key);
@@ -609,7 +609,7 @@
       const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1);
       const row=document.createElement('div'); row.className='task-card';
       row.innerHTML=`<span class="task-icon">📝</span><span class="task-body"><span class="task-name"></span></span>`;
-      row.querySelector('.task-name').textContent = `${ev.name} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
+      row.querySelector('.task-name').textContent = `${ev.name}${ev.batchNumber ? ` (Batch #${ev.batchNumber})` : ''} — ${formatFull(ev.date)} (prep ${formatFull(cs)}–${formatFull(ce)})`;
       box.appendChild(row);
     });
     wrap.appendChild(box);
