@@ -166,6 +166,15 @@
     transition:transform .12s ease, filter .12s ease;
   }
   .fab-delete:hover{ filter:brightness(1.12); transform:scale(1.06); }
+  .fab-viewer{
+    position:fixed; bottom:24px; right:92px; z-index:45;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--secondary); color:#fff; border:none;
+    font-size:22px; cursor:pointer; box-shadow:var(--shadow-lg);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .fab-viewer:hover{ filter:brightness(1.12); transform:scale(1.06); }
   .brand{ font-weight:700; font-size:19px; letter-spacing:0.1px; color:var(--ink); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; max-width:100%; }
   .brand .chick{font-size:20px;}
   .brand .accent{ background:linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
@@ -231,6 +240,11 @@
   .ai-icon-row input{flex:1;min-width:0;}
   .icon-preview{ width:34px;height:34px;flex-shrink:0;border-radius:9px;background:var(--surface); border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px; }
   .btn-ghost-ai{ width:34px;height:34px;flex-shrink:0;border-radius:9px;border:1px solid var(--primary-soft); background:var(--primary-soft);color:var(--primary-dark);cursor:pointer;font-size:14px; }
+  .btn-refine{ margin-top:6px; width:100%; border:1px dashed var(--secondary); background:var(--secondary-soft); color:var(--secondary); font-weight:600; font-size:12px; padding:7px 8px; border-radius:9px; cursor:pointer; }
+  .btn-refine:hover{ background:var(--secondary); color:#fff; }
+  .btn-refine:disabled{ opacity:0.6; cursor:default; }
+  .task-actions .btn-edit{ background:var(--primary-soft); color:var(--primary-dark); }
+  .task-actions .btn-edit:hover{ background:var(--primary); color:#fff; transform:scale(1.08); }
   .btn-ghost-ai:hover{background:var(--primary);color:var(--ink);}
   .btn-ghost-ai:disabled{opacity:0.6;cursor:default;}
 
@@ -283,6 +297,30 @@
   .task-name{font-size:var(--task-font-size);font-weight:500;line-height:1.15;word-break:break-word;overflow-wrap:break-word;color:var(--ink);}
   .task-card.done .task-name{text-decoration:line-through;color:var(--muted);}
 
+  .task-avatar{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#fff;font-family:'Sora',sans-serif;
+    cursor:default; border:1.5px solid var(--surface); box-shadow:0 0 0 1px var(--line);
+  }
+  .task-avatars{ display:flex; flex-shrink:0; }
+  .task-avatars .task-avatar{ margin-left:-7px; }
+  .task-avatars .task-avatar:first-child{ margin-left:0; }
+  .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
+  .assignee-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .assignee-chip{
+    display:flex; align-items:center; gap:5px; padding:3px 4px 3px 3px; border-radius:999px;
+    color:#fff; font-size:11.5px; font-weight:600; font-family:'Inter',sans-serif;
+  }
+  .assignee-chip .chip-initial{
+    width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.3);
+    display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700;
+  }
+  .assignee-chip .chip-remove{
+    border:none; background:rgba(0,0,0,0.15); color:#fff; width:16px; height:16px; border-radius:50%;
+    font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .assignee-chip .chip-remove:hover{ background:rgba(0,0,0,0.35); }
   .task-actions{display:flex;gap:4px;flex-shrink:0;}
   .task-actions button{ width:24px;height:24px;border:none;font-weight:700;font-size:12.5px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; transition:background .15s ease, color .15s ease, transform .1s ease; }
   .task-actions .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
@@ -461,6 +499,7 @@
     .bottom-nav button.active{ color:var(--primary-dark); }
 
     .fab-delete{ display:none; } /* moved into the More sheet on phone */
+    .fab-viewer{ display:none; } /* moved into the More sheet on phone */
     .fab-add{
       display:flex; position:fixed; right:16px; bottom:74px; z-index:37;
       width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff;
@@ -513,8 +552,8 @@
     .quick-actions{flex-direction:column;}
     .month-grid{grid-auto-rows:106px; gap:6px;}
     .day-count-icons{display:none;}
-    .day-count-label{display:none;}
     .day-count strong{font-size:16px;}
+    .day-count-label{font-size:9.5px;}
     .weekday-row{gap:4px;}
     .weekday-row span{font-size:10px; padding:5px 0;}
     .calendar-wrap{padding:12px;}
@@ -566,6 +605,14 @@
           <span class="icon-preview" id="iconPreview">📋</span>
           <button class="btn-ghost-ai" id="aiIconBtn" title="Suggest icon with AI">✨</button>
         </div>
+        <button class="btn-refine" id="refineTaskNameBtn" title="Refine wording with AI">🪄 Refine wording with AI</button>
+        <label for="taskAssigneeInput">Assignees (optional)</label>
+        <div class="ai-icon-row">
+          <input type="text" id="taskAssigneeInput" placeholder="Type a name, press Enter" maxlength="40" list="assigneeList">
+          <button class="btn-ghost-ai" id="taskAssigneeAddBtn" title="Add assignee" type="button">+</button>
+        </div>
+        <datalist id="assigneeList"></datalist>
+        <div class="assignee-chips" id="taskAssigneeChips"></div>
         <label class="checkbox-row"><input type="checkbox" id="taskFrequentBox"> Save as a frequent task (reusable template)</label>
         <label class="checkbox-row"><input type="checkbox" id="taskAutopopBox"> Autopopulate task everyday (every day of a batch's run)</label>
         <div id="taskAutopopBatchRow" style="display:none;">
@@ -604,6 +651,7 @@
   <button id="navMoreBtn"><span class="bn-icon">⋯</span>More</button>
 </nav>
 
+<button class="fab-viewer" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
 <button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
 <button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
 
@@ -625,6 +673,7 @@
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
     <button class="sheet-option" id="moreReportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Report</button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
+    <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
     <button class="sheet-option" id="moreOverdueBtn"><span class="s-ic" style="background:var(--danger);">🔔</span><span id="moreOverdueLabel">Past due tasks</span></button>
     <button class="sheet-option" id="moreSettingsBtn"><span class="s-ic" style="background:#6E6E6E;">⚙</span>Settings</button>
   </div>
@@ -694,10 +743,6 @@
     <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
     <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
 
-    <label style="margin-top:16px;">Farm hand access</label>
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 6px;">Opens the read-only viewer app in a new tab — safe to share with farm hands, nothing here can be edited from there.</p>
-    <button class="btn-app" id="openViewerBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22);">👁️ Open Viewer Mode</button>
-
     <label style="margin-top:16px;">Backup &amp; transfer to another device</label>
     <button class="btn-app" id="exportDataBtn">Export data (.json)</button>
     <label for="importDataInput" class="btn-ai-wide" style="text-align:center;margin-top:8px;">Import data (.json)</label>
@@ -711,6 +756,7 @@
   <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
     <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;">You have <strong id="overdueCount">0</strong> task(s) from past days still marked open.</p>
+    <button class="btn-app" id="moveOverdueToTodayBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22); margin:6px 0 4px;">Move all to today</button>
     <div id="overdueList" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
     <button class="btn-app" id="closeOverdueBtn" style="margin-top:12px;">Got it</button>
   </div>
@@ -730,6 +776,42 @@
 
     <label style="margin-top:14px;">Backlog — tap or drag to add to this day</label>
     <div class="day-tasks" id="dayModalBacklogList" data-date="backlog"></div>
+  </div>
+</div>
+
+<div class="form-modal" id="editTaskModal">
+  <div class="form-modal-head"><h2>Edit task</h2><button id="closeEditTaskModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <label for="editTaskNameInput">Task name</label>
+    <input type="text" id="editTaskNameInput" maxlength="80">
+    <button class="btn-refine" id="refineEditTaskNameBtn" title="Refine wording with AI">🪄 Refine wording with AI</button>
+
+    <label for="editTaskAssigneeInput">Assignees (optional)</label>
+    <div class="ai-icon-row">
+      <input type="text" id="editTaskAssigneeInput" placeholder="Type a name, press Enter" maxlength="40" list="assigneeList">
+      <button class="btn-ghost-ai" id="editTaskAssigneeAddBtn" title="Add assignee" type="button">+</button>
+    </div>
+    <div class="assignee-chips" id="editTaskAssigneeChips"></div>
+
+    <label for="editTaskDateInput">Date (leave blank for Backlog)</label>
+    <input type="date" id="editTaskDateInput">
+
+    <label for="editTaskRepeatSelect">Repeat</label>
+    <select id="editTaskRepeatSelect">
+      <option value="none">Does not repeat</option>
+      <option value="daily">Every day</option>
+      <option value="weekdays">Every weekday (Mon–Fri)</option>
+      <option value="every2days">Every 2 days</option>
+      <option value="weekly">Every week</option>
+      <option value="biweekly">Every 2 weeks</option>
+      <option value="monthly">Every month</option>
+    </select>
+    <div id="editTaskUntilRow" style="display:none;">
+      <label for="editTaskUntilInput">Repeat until</label>
+      <input type="date" id="editTaskUntilInput">
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Repeating creates individual occurrences up to the date above — you can still edit or delete any single one later.</p>
+    <button class="btn-app" id="saveEditTaskBtn" style="margin-top:10px;">Save changes</button>
   </div>
 </div>
 
@@ -863,6 +945,12 @@
     }
     const maxOrder = tasks.reduce((m,t)=> Math.max(m, t.order||0), 0);
     orderCounter = Math.max(orderCounter, maxOrder+1);
+    tasks.forEach(t=>{
+      if(!Array.isArray(t.assignees)){
+        t.assignees = t.assignee ? [t.assignee] : [];
+      }
+      delete t.assignee;
+    });
   }
   function reorderTasksToMatchDom(listEl){
     const ids = Array.from(listEl.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
@@ -883,6 +971,7 @@
   const pendingDeletes = new Map();
   let pendingIcon = null, pendingIconFor = null;
   let dayModalOpenKey = null;
+  let editingTaskId = null;
   let suppressNextClick = false;
   let deleteAllPending = false;
   let overdueModalOpen = false;
@@ -895,6 +984,8 @@
   function formatShort(key){ if(!key) return 'Backlog'; return toDateObj(key).toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
   function formatFull(key){ return toDateObj(key).toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'}); }
   function addDaysStr(key, days){ const dt = toDateObj(key); dt.setDate(dt.getDate()+days); return dateKey(dt); }
+  function addMonthsStr(key, months){ const dt = toDateObj(key); dt.setMonth(dt.getMonth()+months); return dateKey(dt); }
+  function isWeekendKey(key){ const d = toDateObj(key).getDay(); return d===0 || d===6; }
   function taskLabel(t){ return `"${t.name}"`; }
   function monthMatrix(date){
     const year=date.getFullYear(), month=date.getMonth();
@@ -1127,6 +1218,7 @@
       events = parsed.events || [];
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
+      migrateTaskOrder();
       applySettings(); updateBatchColorDefault(); updateEventColorDefault(); renderAll();
     }catch(e){ showToast('Could not read that synced data.', true); }
   }
@@ -1196,13 +1288,13 @@
     }
   }
 
-  function autopopulateTaskAcrossBatch(name, icon, batchNumber){
+  function autopopulateTaskAcrossBatch(name, icon, batchNumber, assignees){
     const b = batches.find(x=>x.number===batchNumber);
     if(!b) return 0;
     let count = 0;
     let cur = b.start;
     while(cur <= b.end){
-      addTask(name, icon, cur);
+      addTask(name, icon, cur, (assignees && assignees.length) ? {assignees: assignees.slice()} : null);
       cur = addDaysStr(cur, 1);
       count++;
     }
@@ -1212,7 +1304,7 @@
 
   // ---------- tasks ----------
   function addTask(name, icon, dateVal, meta){
-    const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder() };
+    const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };
     if(meta) Object.assign(t, meta);
     tasks.push(t);
     addHistory('Added', `"${name}" added to ${dateVal ? formatFull(dateVal) : 'backlog'}`);
@@ -1253,6 +1345,48 @@
     const dateVal = toDateKey==='backlog' ? null : toDateKey;
     addTask(name, icon, dateVal);
     persist(); renderAll();
+  }
+
+  // ---------- edit task + recurrence ----------
+  const REPEAT_LABELS = {
+    daily:'Every day', weekdays:'Every weekday', every2days:'Every 2 days',
+    weekly:'Every week', biweekly:'Every 2 weeks', monthly:'Every month'
+  };
+  function generateRecurrence(baseTask, rule, untilDate){
+    if(rule==='none' || !baseTask.date) return 0;
+    const seriesId = baseTask.seriesId || uid();
+    baseTask.seriesId = seriesId;
+    let cur = baseTask.date;
+    let count = 0;
+    const SAFETY_CAP = 366;
+    while(count < SAFETY_CAP){
+      if(rule==='monthly'){ cur = addMonthsStr(cur, 1); }
+      else if(rule==='daily' || rule==='weekdays'){ cur = addDaysStr(cur, 1); if(rule==='weekdays'){ while(isWeekendKey(cur)) cur = addDaysStr(cur,1); } }
+      else if(rule==='every2days'){ cur = addDaysStr(cur, 2); }
+      else if(rule==='weekly'){ cur = addDaysStr(cur, 7); }
+      else if(rule==='biweekly'){ cur = addDaysStr(cur, 14); }
+      else break;
+      if(cur > untilDate) break;
+      addTask(baseTask.name, baseTask.icon, cur, { seriesId, assignees: (baseTask.assignees || []).slice() });
+      count++;
+    }
+    if(count>0) addHistory('Recurring task created', `"${baseTask.name}" repeats ${(REPEAT_LABELS[rule]||rule).toLowerCase()} — ${count} occurrence(s) added through ${formatFull(untilDate)}`);
+    return count;
+  }
+  function editTask(id, name, dateVal, repeatRule, untilDate, assignees){
+    const t = tasks.find(x=>x.id===id);
+    if(!t) return;
+    const oldLabel = taskLabel(t);
+    t.name = name;
+    t.date = dateVal;
+    t.assignees = assignees ? assignees.slice() : [];
+    addHistory('Edited', `${oldLabel} updated to "${name}"${dateVal ? ' on '+formatFull(dateVal) : ' (Backlog)'}${t.assignees.length ? ' — assigned to '+t.assignees.join(', ') : ''}`);
+    let count = 0;
+    if(repeatRule && repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
+      count = generateRecurrence(t, repeatRule, untilDate);
+    }
+    persist(); renderAll();
+    return count;
   }
 
   // ---------- events ----------
@@ -1312,6 +1446,29 @@
   }
   function parseJsonLoose(text){
     try{ const clean = text.replace(/```json|```/g,'').trim(); return JSON.parse(clean); }catch(e){ return null; }
+  }
+
+  async function refineTaskNameInField(inputEl, btnEl){
+    const raw = inputEl.value.trim();
+    if(!raw){ showToast('Type a task name first.', true); return; }
+    const originalLabel = btnEl.textContent;
+    btnEl.disabled = true; btnEl.textContent = '🪄 Refining…';
+    try{
+      const prompt = `You help a poultry farm manager write clear, concise task names for a farm scheduling app. Rewrite the following task name to be clear and professional, ideally under 8 words. Respond with ONLY the improved task name — no quotes, no explanation, no punctuation at the end.\n\nOriginal: "${raw}"`;
+      const text = await callClaude(prompt);
+      const cleaned = (text || '').trim().replace(/^["'`]+|["'`]+$/g, '').split('\n')[0].trim();
+      if(cleaned){
+        inputEl.value = cleaned;
+        inputEl.dispatchEvent(new Event('input'));
+        showToast('Wording refined.');
+      } else {
+        showToast('Could not refine — try again.', true);
+      }
+    }catch(e){
+      showToast('AI refinement only works inside Claude.ai.', true);
+    }finally{
+      btnEl.disabled = false; btnEl.textContent = originalLabel;
+    }
   }
 
   async function suggestIconForInput(){
@@ -1576,6 +1733,8 @@
     const list = $('#overdueList');
     list.innerHTML = '';
     $('#overdueCount').textContent = overdue.length;
+    const moveBtn = $('#moveOverdueToTodayBtn');
+    if(moveBtn) moveBtn.style.display = overdue.length===0 ? 'none' : 'block';
     if(overdue.length===0){
       list.innerHTML = '<div class="empty-note">No more overdue tasks — nice work.</div>';
       return;
@@ -1589,6 +1748,15 @@
       wrap.appendChild(buildTaskCard(t));
       list.appendChild(wrap);
     });
+  }
+  function transferOverdueToToday(){
+    const todayKey = dateKey(new Date());
+    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
+    if(overdue.length===0) return 0;
+    overdue.forEach(t=>{ t.date = todayKey; });
+    addHistory('Overdue tasks transferred', `${overdue.length} overdue task(s) moved to today (${formatFull(todayKey)})`);
+    persist(); renderAll();
+    return overdue.length;
   }
   function updateOverdueBadge(){
     const todayKey = dateKey(new Date());
@@ -1612,6 +1780,34 @@
   }
 
   // ---------- rendering ----------
+  const ASSIGNEE_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
+  function colorForAssignee(name){
+    if(!name) return '#999';
+    let hash = 0;
+    for(let i=0;i<name.length;i++){ hash = name.charCodeAt(i) + ((hash<<5)-hash); }
+    return ASSIGNEE_PALETTE[Math.abs(hash) % ASSIGNEE_PALETTE.length];
+  }
+  function initialsForAssignee(name){ return name.trim().charAt(0).toUpperCase(); }
+  function refreshAssigneeDatalist(){
+    const dl = $('#assigneeList');
+    if(!dl) return;
+    const names = Array.from(new Set(tasks.flatMap(t=>t.assignees||[]))).sort();
+    dl.innerHTML = '';
+    names.forEach(name=>{ const opt = document.createElement('option'); opt.value = name; dl.appendChild(opt); });
+  }
+  function buildAssigneeAvatarsHtml(assignees){
+    if(!assignees || assignees.length===0) return '';
+    const shown = assignees.slice(0,3);
+    let html = '<span class="task-avatars">';
+    shown.forEach(name=>{
+      html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${name}">${initialsForAssignee(name)}</span>`;
+    });
+    if(assignees.length>3){
+      html += `<span class="task-avatar more-avatar" title="${assignees.slice(3).join(', ')}">+${assignees.length-3}</span>`;
+    }
+    html += '</span>';
+    return html;
+  }
   function buildTaskCard(task){
     const card = document.createElement('div');
     card.className = 'task-card' + (task.status==='done' ? ' done' : '');
@@ -1619,7 +1815,9 @@
     card.innerHTML = `
       <span class="task-icon"></span>
       <span class="task-body"><span class="task-name"></span></span>
+      ${buildAssigneeAvatarsHtml(task.assignees)}
       <span class="task-actions">
+        <button class="btn-edit" title="Edit">✎</button>
         <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?'↺':'✓'}</button>
         <button class="btn-delete" title="Delete">🗑️</button>
       </span>`;
@@ -2188,12 +2386,30 @@
     renderHistory();
     updatePeriodLabel();
     initSortables();
+    refreshAssigneeDatalist();
     if(dayModalOpenKey) renderDayModalTasks(dayModalOpenKey);
     if(overdueModalOpen) refreshOverdueList();
     updateOverdueBadge();
   }
 
   // ---------- day modal ----------
+  let editingAssignees = [];
+  function openEditTaskModal(id){
+    const t = tasks.find(x=>x.id===id);
+    if(!t) return;
+    editingTaskId = id;
+    $('#editTaskNameInput').value = t.name;
+    editingAssignees = (t.assignees || []).slice();
+    $('#editTaskAssigneeInput').value = '';
+    renderAssigneeChips('#editTaskAssigneeChips', editingAssignees);
+    $('#editTaskDateInput').value = t.date || '';
+    $('#editTaskRepeatSelect').value = 'none';
+    $('#editTaskUntilRow').style.display = 'none';
+    const base = t.date || dateKey(new Date());
+    $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    refreshAssigneeDatalist();
+    openDrawer('#editTaskModal');
+  }
   function openDayModal(key){
     dayModalOpenKey = key;
     deleteAllPending = false;
@@ -2219,7 +2435,7 @@
         const card = buildTaskCard(t);
         card.title = 'Tap to add to this day, or drag';
         card.addEventListener('click', (e)=>{
-          if(e.target.closest('.btn-done') || e.target.closest('.btn-delete')) return;
+          if(e.target.closest('.btn-done') || e.target.closest('.btn-delete') || e.target.closest('.btn-edit')) return;
           moveTask(t.id, key);
         });
         backlogBox.appendChild(card);
@@ -2230,8 +2446,14 @@
 
   // ---------- event delegation ----------
   document.addEventListener('click', (e)=>{
+    const editBtn = e.target.closest('.btn-edit');
     const doneBtn = e.target.closest('.btn-done');
     const delBtn = e.target.closest('.btn-delete');
+    if(editBtn){
+      const card = editBtn.closest('.task-card');
+      if(card && card.dataset.id) openEditTaskModal(card.dataset.id);
+      return;
+    }
     if(doneBtn){ toggleDone(doneBtn.closest('.task-card').dataset.id); return; }
     if(delBtn){
       const id = delBtn.closest('.task-card').dataset.id;
@@ -2252,6 +2474,9 @@
 
   taskInput.addEventListener('input', ()=>{ pendingIcon = null; pendingIconFor = null; iconPreview.textContent = guessIcon(taskInput.value.trim()); });
   $('#aiIconBtn').addEventListener('click', suggestIconForInput);
+  $('#refineTaskNameBtn').addEventListener('click', function(){
+    refineTaskNameInField(taskInput, this);
+  });
 
   $('#taskAutopopBox').addEventListener('change', (e)=>{
     const row = $('#taskAutopopBatchRow');
@@ -2274,24 +2499,58 @@
     }
   });
 
+  let pendingAssignees = [];
+  function renderAssigneeChips(boxId, arr){
+    const box = $(boxId);
+    box.innerHTML = '';
+    arr.forEach((name, i)=>{
+      const chip = document.createElement('span');
+      chip.className = 'assignee-chip';
+      chip.style.background = colorForAssignee(name);
+      chip.innerHTML = `<span class="chip-initial">${initialsForAssignee(name)}</span><span class="chip-name"></span><button class="chip-remove" type="button" data-idx="${i}">✕</button>`;
+      chip.querySelector('.chip-name').textContent = name;
+      box.appendChild(chip);
+    });
+  }
+  function addAssigneeToPending(inputId, arr, boxId){
+    const input = $(inputId);
+    const name = input.value.trim();
+    if(!name) return;
+    if(!arr.includes(name)) arr.push(name);
+    input.value = '';
+    renderAssigneeChips(boxId, arr);
+  }
+  $('#taskAssigneeAddBtn').addEventListener('click', ()=> addAssigneeToPending('#taskAssigneeInput', pendingAssignees, '#taskAssigneeChips'));
+  $('#taskAssigneeInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); addAssigneeToPending('#taskAssigneeInput', pendingAssignees, '#taskAssigneeChips'); }
+  });
+  $('#taskAssigneeChips').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.chip-remove');
+    if(btn){ pendingAssignees.splice(Number(btn.dataset.idx),1); renderAssigneeChips('#taskAssigneeChips', pendingAssignees); }
+  });
+
   $('#addTaskBtn').addEventListener('click', ()=>{
     const name = taskInput.value.trim();
     if(!name){ showToast('Enter a task name first.', true); return; }
     const icon = (pendingIcon && pendingIconFor===name) ? pendingIcon : guessIcon(name);
+    if($('#taskAssigneeInput').value.trim()) addAssigneeToPending('#taskAssigneeInput', pendingAssignees, '#taskAssigneeChips');
+    const assignees = pendingAssignees.slice();
     const saveAsFrequent = $('#taskFrequentBox').checked;
     const autopop = $('#taskAutopopBox').checked;
     if(autopop){
       const batchNumber = $('#taskAutopopBatchSelect').value;
       if(!batchNumber){ showToast('Choose a batch to autopopulate across.', true); return; }
-      const n = autopopulateTaskAcrossBatch(name, icon, batchNumber);
+      const n = autopopulateTaskAcrossBatch(name, icon, batchNumber, assignees);
       showToast(`"${name}" added to ${n} day(s) across Batch #${batchNumber}.`);
     } else if(saveAsFrequent){
       addFrequentTemplate(name, icon);
     } else {
-      addTask(name, icon);
+      addTask(name, icon, null, assignees.length ? {assignees} : null);
     }
     persist(); renderAll();
     taskInput.value='';
+    pendingAssignees = [];
+    renderAssigneeChips('#taskAssigneeChips', pendingAssignees);
     iconPreview.textContent = '📋';
     pendingIcon=null; pendingIconFor=null;
     $('#taskFrequentBox').checked = false;
@@ -2475,6 +2734,7 @@
     $('#historyDrawer').classList.remove('open');
     $('#settingsDrawer').classList.remove('open');
     $('#dayModal').classList.remove('open');
+    $('#editTaskModal').classList.remove('open');
     $('#batchModal').classList.remove('open');
     $('#eventModal').classList.remove('open');
     $('#reportModal').classList.remove('open');
@@ -2485,6 +2745,7 @@
     $('#moreSheet').classList.add('hidden');
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
+    editingTaskId = null;
     deleteAllPending = false;
     overdueModalOpen = false;
   }
@@ -2557,10 +2818,44 @@
   });
   $('#closeSettings').addEventListener('click', closeOverlays);
   $('#closeDayModal').addEventListener('click', closeOverlays);
+  $('#closeEditTaskModal').addEventListener('click', closeOverlays);
+  $('#editTaskRepeatSelect').addEventListener('change', (e)=>{
+    $('#editTaskUntilRow').style.display = e.target.value==='none' ? 'none' : 'block';
+  });
+  $('#refineEditTaskNameBtn').addEventListener('click', function(){
+    refineTaskNameInField($('#editTaskNameInput'), this);
+  });
+  $('#editTaskAssigneeAddBtn').addEventListener('click', ()=> addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips'));
+  $('#editTaskAssigneeInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips'); }
+  });
+  $('#editTaskAssigneeChips').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.chip-remove');
+    if(btn){ editingAssignees.splice(Number(btn.dataset.idx),1); renderAssigneeChips('#editTaskAssigneeChips', editingAssignees); }
+  });
+  $('#saveEditTaskBtn').addEventListener('click', ()=>{
+    if(!editingTaskId) return;
+    const name = $('#editTaskNameInput').value.trim();
+    if(!name){ showToast('Enter a task name.', true); return; }
+    if($('#editTaskAssigneeInput').value.trim()) addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips');
+    const assignees = editingAssignees.slice();
+    const dateVal = $('#editTaskDateInput').value || null;
+    const repeatRule = $('#editTaskRepeatSelect').value;
+    const untilDate = $('#editTaskUntilInput').value || null;
+    if(repeatRule!=='none' && !dateVal){ showToast('Pick a date before setting a repeat rule.', true); return; }
+    if(repeatRule!=='none' && (!untilDate || untilDate<=dateVal)){ showToast('Pick a valid "Repeat until" date after the task date.', true); return; }
+    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees);
+    closeOverlays();
+    showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : 'Task updated.');
+  });
   $('#closeBatchModal').addEventListener('click', closeOverlays);
   $('#closeEventModal').addEventListener('click', closeOverlays);
   $('#closeReportModal').addEventListener('click', closeOverlays);
   $('#closeOverdueModal').addEventListener('click', closeOverlays);
+  $('#moveOverdueToTodayBtn').addEventListener('click', ()=>{
+    const count = transferOverdueToToday();
+    if(count>0){ closeOverlays(); showToast(`Moved ${count} overdue task(s) to today.`); }
+  });
   $('#closeOverdueBtn').addEventListener('click', closeOverlays);
   $('#scrim').addEventListener('click', closeOverlays);
   document.querySelectorAll('.sheet-overlay').forEach(overlay=>{
@@ -2625,9 +2920,9 @@
     pullFromGithub();
   });
 
-  $('#openViewerBtn').addEventListener('click', ()=>{
-    window.open('prodplan-viewer.html', '_blank');
-  });
+  function openViewerMode(){ window.open('prodplan-viewer.html', '_blank'); }
+  $('#fabViewerBtn').addEventListener('click', openViewerMode);
+  $('#moreViewerBtn').addEventListener('click', ()=>{ closeOverlays(); openViewerMode(); });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
     const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates}, null, 2);
