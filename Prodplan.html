@@ -333,6 +333,12 @@
   .year-mini-day.muted{opacity:0.3;}
 
   .list-view{max-width:660px;margin:0 auto;}
+  .agenda-filter{ display:flex; gap:8px; margin-bottom:18px; }
+  .agenda-filter button{
+    flex:1; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted);
+    font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:9px 6px; border-radius:999px; cursor:pointer;
+  }
+  .agenda-filter button.active{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; border-color:transparent; }
   .list-group{margin-bottom:20px;}
   .list-date{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
   .list-date-main{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink);overflow-wrap:break-word;}
@@ -358,7 +364,7 @@
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
   .settings-body label{font-size:12px;font-weight:600;color:var(--muted);margin-top:8px;}
   .settings-body select{
-    border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink);
+    border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink);width:100%;box-sizing:border-box;
   }
 
   .form-modal{
@@ -413,6 +419,7 @@
   }
 
   @media (max-width: 760px){
+    .sidebar-toggle{ display:none; }
     .main{flex-direction:column;}
     .month-grid{grid-auto-rows:118px;}
     .toolbar{justify-content:flex-end; flex-wrap:nowrap;}
@@ -468,8 +475,10 @@
       font-size:15px; color:#fff; flex-shrink:0;
     }
 
-    /* Bigger touch targets */
+    /* Bigger, consistent touch targets */
     .icon-btn{ width:38px; height:38px; font-size:17px; }
+    #settingsBtn{ width:38px; height:38px; font-size:19px; }
+    #overdueBtn{ width:38px; height:38px; }
     .task-actions button{ width:30px; height:30px; font-size:14px; }
     .day-cell{ cursor:pointer; }
 
@@ -644,9 +653,9 @@
       <option value="bottom-left">Bottom left</option>
       <option value="bottom-right">Bottom right</option>
       <option value="top-right">Top right</option>
-      <option value="background">Background watermark</option>
-      <option value="watermark-bottom-left">Watermark + bottom left</option>
-      <option value="watermark-bottom-right">Watermark + bottom right</option>
+      <option value="background">Watermark only</option>
+      <option value="watermark-bottom-left">Watermark + Left</option>
+      <option value="watermark-bottom-right">Watermark + Right</option>
     </select>
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
@@ -655,10 +664,12 @@
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
     <label for="githubTokenInput">Personal access token</label>
     <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
-    <label for="githubRepoInput">Repository (owner/repo)</label>
+    <label for="githubRepoInput">Storage</label>
+    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonmangaron/farmdata)</label>
     <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
+    <p style="font-size:11px;color:var(--danger);margin:2px 0 0;font-weight:600;">⚠️ Remember this exact name — you'll need to type it the same way on every other device to sync the same data.</p>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Just type your farm's name — the file it creates is handled automatically.</p>
     <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
     <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
@@ -822,7 +833,8 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
-  let viewMode = window.innerWidth <= 760 ? 'list' : 'month'; // 'month' | 'year' | 'list'
+  let viewMode = window.innerWidth <= 1024 ? 'list' : 'month'; // 'month' | 'year' | 'list'
+  let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
   let sortables = [];
   const pendingDeletes = new Map();
   let pendingIcon = null, pendingIconFor = null;
@@ -979,6 +991,8 @@
     const tokenInput = $('#githubTokenInput'), repoInput = $('#githubRepoInput'), pathInput = $('#githubPathInput');
     if(tokenInput && ghToken) tokenInput.value = ghToken;
     if(repoInput && ghRepo) repoInput.value = ghRepo;
+    const sharedBox = $('#useSharedStorageBox');
+    if(sharedBox){ const isShared = ghRepo==='vonmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
   function initGithubSync(){
@@ -1906,14 +1920,39 @@
     wrap.appendChild(grid);
   }
 
+  function getAgendaTasks(){
+    const todayKey = dateKey(new Date());
+    let filtered;
+    if(agendaFilter==='today') filtered = tasks.filter(t=> t.date===todayKey);
+    else if(agendaFilter==='week'){ const weekEnd = addDaysStr(todayKey,6); filtered = tasks.filter(t=> t.date && t.date>=todayKey && t.date<=weekEnd); }
+    else filtered = tasks.filter(t=> t.date && t.date>=todayKey); // upcoming — never shows past/old tasks
+    return filtered.sort((a,b)=> a.date.localeCompare(b.date));
+  }
+  function buildAgendaFilterBar(){
+    const bar = document.createElement('div');
+    bar.className = 'agenda-filter';
+    [['today','Today'],['week','This Week'],['upcoming','Upcoming']].forEach(([key,label])=>{
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.className = agendaFilter===key ? 'active' : '';
+      btn.addEventListener('click', ()=>{ agendaFilter = key; renderList(); });
+      bar.appendChild(btn);
+    });
+    return bar;
+  }
   function renderList(){
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
     const box = document.createElement('div');
     box.className = 'list-view';
-    const dated = tasks.filter(t=>t.date).sort((a,b)=> a.date.localeCompare(b.date));
+    box.appendChild(buildAgendaFilterBar());
+    const dated = getAgendaTasks();
     if(dated.length===0){
-      box.innerHTML = '<div class="empty-note">No tasks scheduled yet — drag a task onto the calendar to see it here.</div>';
+      const emptyMsg = agendaFilter==='today' ? 'No tasks scheduled for today.' : agendaFilter==='week' ? 'No tasks scheduled this week.' : 'No upcoming tasks scheduled.';
+      const note = document.createElement('div');
+      note.className = 'empty-note';
+      note.textContent = emptyMsg;
+      box.appendChild(note);
       wrap.appendChild(box); return;
     }
     const groups = {};
@@ -2442,6 +2481,11 @@
 
 
   $('#connectGithubBtn').addEventListener('click', connectGithub);
+  $('#useSharedStorageBox').addEventListener('change', (e)=>{
+    const repoInput = $('#githubRepoInput');
+    if(e.target.checked){ repoInput.value = 'vonmangaron/farmdata'; repoInput.readOnly = true; }
+    else{ repoInput.readOnly = false; }
+  });
   $('#syncGithubBtn').addEventListener('click', ()=>{
     if(!ghToken || !ghRepo || !ghPath){ showToast('Connect to GitHub first.', true); return; }
     pullFromGithub();
