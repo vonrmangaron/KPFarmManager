@@ -474,6 +474,7 @@
   /* ---- Bottom nav + quick-add FAB — mobile only ---- */
   .bottom-nav{ display:none; }
   .fab-add{ display:none; }
+  .fab-notif{ display:none; }
   .sheet-overlay{ display:none; }
 
   @media (max-width: 1024px){
@@ -526,6 +527,21 @@
       border:none; font-size:26px; align-items:center; justify-content:center;
       box-shadow:var(--shadow-lg); cursor:pointer;
     }
+    .fab-notif{
+      display:flex; position:fixed; right:84px; bottom:74px; z-index:37;
+      width:56px; height:56px; border-radius:50%; background:var(--danger); color:#fff;
+      border:none; font-size:24px; align-items:center; justify-content:center;
+      box-shadow:var(--shadow-lg); cursor:pointer;
+    }
+    .fab-notif.has-alert{ animation:fab-jump 1.4s ease-in-out infinite; }
+    @keyframes fab-jump{
+      0%, 100%{ transform:translateY(0); }
+      20%{ transform:translateY(-10px); }
+      35%{ transform:translateY(0); }
+      45%{ transform:translateY(-5px); }
+      55%{ transform:translateY(0); }
+    }
+    .fab-notif .notif-badge{ top:-2px; right:-2px; }
 
     .sheet-overlay{
       display:flex; position:fixed; inset:0; z-index:46; align-items:flex-end;
@@ -676,6 +692,7 @@
 
 <button class="fab-viewer" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
 <button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
+<button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
 <button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
 
 <div class="sheet-overlay hidden" id="quickAddSheet">
@@ -697,7 +714,6 @@
     <button class="sheet-option" id="moreReportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Report</button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
     <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
-    <button class="sheet-option" id="moreOverdueBtn"><span class="s-ic" style="background:var(--danger);">🔔</span><span id="moreOverdueLabel">Past due tasks</span></button>
     <button class="sheet-option" id="moreSettingsBtn"><span class="s-ic" style="background:#6E6E6E;">⚙</span>Settings</button>
   </div>
 </div>
@@ -1823,8 +1839,10 @@
     const count = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).length;
     const badge = $('#overdueBadge');
     if(badge){ badge.textContent = count > 99 ? '99+' : count; badge.classList.toggle('hidden', count===0); }
-    const moreLabel = $('#moreOverdueLabel');
-    if(moreLabel) moreLabel.textContent = count>0 ? `Past due tasks (${count})` : 'Past due tasks';
+    const fabBadge = $('#fabNotifBadge');
+    if(fabBadge){ fabBadge.textContent = count > 99 ? '99+' : count; fabBadge.classList.toggle('hidden', count===0); }
+    const fabNotif = $('#fabNotifBtn');
+    if(fabNotif) fabNotif.classList.toggle('has-alert', count>0);
   }
   function openOverdueModal(){
     overdueModalOpen = true;
@@ -2845,7 +2863,7 @@
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
   $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
   $('#overdueBtn').addEventListener('click', openOverdueModal);
-  $('#moreOverdueBtn').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
+  $('#fabNotifBtn').addEventListener('click', openOverdueModal);
 
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
