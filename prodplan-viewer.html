@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProdPlan.VM — Viewer</title>
+<link rel="manifest" href="manifest-viewer.json">
+<meta name="theme-color" content="#854836">
+<link rel="apple-touch-icon" href="icons/icon-viewer-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProdPlan Viewer">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#F7F7F7; --surface:#FFFFFF; --surface-soft:#FAFAFA; --line:#E4E4E4;
+    --ink:#000000; --muted:#6E6E6E;
+    --primary:#FFB22C; --primary-dark:#B97A1D; --primary-soft:#FFEBC7;
+    --secondary:#854836; --secondary-soft:#EBD9D1;
+    --danger:#7A2E20; --danger-soft:#F0DAD4;
+    --weekend-bg:#E9E4DD;
+    --task-font-size:13.5px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.06); --shadow-md:0 8px 22px rgba(0,0,0,0.09); --shadow-lg:0 16px 40px rgba(0,0,0,0.16);
+  }
+  body.theme-dark{ --bg:#121212; --surface:#1E1E1E; --surface-soft:#181818; --line:#2E2E2E; --ink:#F2F2F2; --muted:#9A9A9A; --primary:#FFB22C; --primary-dark:#FFC85C; --primary-soft:#3A2C12; --secondary:#D89C86; --secondary-soft:#332420; --danger:#FF7A66; --danger-soft:#3A1D18; --weekend-bg:#1C1610; --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65); }
+  body.theme-pasture{ --bg:#F3F7EF; --surface:#FFFFFF; --surface-soft:#FAFCF8; --line:#DCE8D3; --ink:#1D2A17; --muted:#6B7A61; --primary:#5B8C3A; --primary-dark:#3F6428; --primary-soft:#DCEBCD; --secondary:#8B5E3C; --secondary-soft:#EADBCB; --danger:#A3402E; --danger-soft:#F3DAD3; --weekend-bg:#E7EEDD; }
+  body.theme-barn{ --bg:#FBF5EC; --surface:#FFFFFF; --surface-soft:#FDF9F2; --line:#EAD9C0; --ink:#2B1B14; --muted:#7A6A5C; --primary:#B23A2E; --primary-dark:#8A2B21; --primary-soft:#F2D3CD; --secondary:#3F5E3F; --secondary-soft:#DCE6DC; --danger:#7A2E20; --danger-soft:#EFD8D2; --weekend-bg:#F0E4D2; }
+  body.theme-slate{ --bg:#F4F6F8; --surface:#FFFFFF; --surface-soft:#FAFBFC; --line:#E1E5EA; --ink:#1A1D23; --muted:#6B7280; --primary:#3E6FBF; --primary-dark:#2C5296; --primary-soft:#D8E4F5; --secondary:#5C6470; --secondary-soft:#E4E6E9; --danger:#C1432E; --danger-soft:#F5DAD3; --weekend-bg:#EBEEF2; }
+  body.theme-sunrise{ --bg:#FFF7F1; --surface:#FFFFFF; --surface-soft:#FFFBF7; --line:#F3DFCF; --ink:#2B211C; --muted:#7A6658; --primary:#FF7A50; --primary-dark:#DB5B34; --primary-soft:#FFE0D1; --secondary:#2F9E93; --secondary-soft:#D6EFEC; --danger:#C13B2C; --danger-soft:#F5D9D2; --weekend-bg:#FBEADC; }
+  body.theme-dark-forest{ --bg:#0F1710; --surface:#182219; --surface-soft:#141C15; --line:#2A3A2C; --ink:#EDF3EA; --muted:#9DB098; --primary:#6FBF4A; --primary-dark:#8ED66C; --primary-soft:#1F3319; --secondary:#C9A26B; --secondary-soft:#3A2F1E; --danger:#FF7A66; --danger-soft:#3A1D18; --weekend-bg:#16241A; --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65); }
+  body.theme-dark-ember{ --bg:#160F0C; --surface:#221714; --surface-soft:#1B1210; --line:#3A2A22; --ink:#F5EAE2; --muted:#BBA091; --primary:#E8763F; --primary-dark:#FF9A63; --primary-soft:#3A2416; --secondary:#7FA66B; --secondary-soft:#26301F; --danger:#FF6F5C; --danger-soft:#3A1912; --weekend-bg:#241712; --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65); }
+  body.theme-dark-ocean{ --bg:#0D1420; --surface:#16202F; --surface-soft:#111A27; --line:#25334A; --ink:#E9EEF5; --muted:#96A7BE; --primary:#5B9CE8; --primary-dark:#84B7F2; --primary-soft:#1B2E48; --secondary:#8F8FE0; --secondary-soft:#282A4A; --danger:#FF7A66; --danger-soft:#3A1D18; --weekend-bg:#131F30; --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65); }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; font-size:15px; }
+  h1,h2,h3, .brand, .toolbar-label, .segmented button, #settingsBtn{ font-family:'Sora', sans-serif; }
+
+  .shell{ display:flex; flex-direction:column; height:100vh; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:0 1px 4px rgba(0,0,0,0.04); flex-wrap:wrap; }
+  .barn-stripe{ height:4px; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
+  .brand{ font-weight:700; font-size:19px; color:var(--ink); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
+  .brand .chick{font-size:20px;}
+  .brand .accent{ background:linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .brand small{ font-family:'Inter', sans-serif; font-weight:400; font-size:12.5px; color:var(--muted); }
+  .badge-viewonly{ font-size:10.5px; font-weight:700; color:var(--secondary); background:var(--secondary-soft); padding:2px 8px; border-radius:999px; }
+
+  .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .segmented{ display:flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:999px; padding:3px; gap:2px; }
+  .segmented button{ border:none;background:transparent;color:var(--muted); font-weight:600;font-size:13px;padding:6px 14px;border-radius:999px;cursor:pointer; }
+  .segmented button.active{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; }
+  .nav-group{display:flex;align-items:center;gap:6px;}
+  .nav-group.hidden{visibility:hidden; pointer-events:none;}
+  .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;cursor:pointer; display:flex;align-items:center;justify-content:center; }
+  .icon-btn:hover{background:var(--primary-soft); color:var(--primary-dark);}
+  .notif-btn{ position:relative; border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
+  .notif-btn:hover{ background:var(--danger); color:#fff; }
+  .notif-badge{ position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .notif-badge.hidden{ display:none; }
+  #settingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
+  #settingsBtn:hover{ background:var(--secondary); color:#fff; }
+  .btn-today{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; }
+  .btn-today:hover{ background:var(--primary); color:#fff; }
+  #historyBtn{ border:1px solid var(--secondary); background:var(--secondary-soft); color:var(--secondary); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; font-family:'Sora',sans-serif; }
+  #historyBtn:hover{ background:var(--secondary); color:#fff; }
+  #reportBtn, #infoBtn{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; font-family:'Sora',sans-serif; }
+  #reportBtn:hover, #infoBtn:hover{ background:var(--primary); color:#fff; }
+  .toolbar-label{font-weight:600;font-size:14px;min-width:120px;text-align:center;color:var(--ink);}
+  .sync-indicator{font-size:12px;color:var(--secondary);opacity:0;transition:opacity .4s ease;font-weight:500;}
+  .sync-indicator.show{opacity:1;}
+
+  .calendar-wrap{flex:1;overflow:auto;padding:20px;min-width:0;}
+  .empty-note{font-size:13px;color:var(--muted);padding:10px 4px;}
+
+  .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:8px;}
+  .weekday-row span{ font-family:'Sora',sans-serif;font-size:13.5px;font-weight:800;color:var(--ink); text-align:center;padding:9px 0;background:var(--primary-soft);border:1px solid var(--primary);border-radius:9px; }
+  .weekday-row span:nth-child(6), .weekday-row span:nth-child(7){color:#fff;background:var(--secondary);border-color:var(--secondary);}
+
+  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:136px;gap:10px;}
+  .day-cell{ position:relative; background:var(--surface);border:1px solid var(--line);border-radius:14px; padding:7px;padding-bottom:22px;display:flex;flex-direction:column;gap:4px;min-width:0; cursor:pointer; overflow:hidden; transition:box-shadow .15s ease, transform .12s ease; }
+  .day-cell:hover{box-shadow:var(--shadow-md); transform:translateY(-2px);}
+  .day-cell.weekend{background:var(--weekend-bg); border-top:3px solid var(--secondary);}
+  .day-cell.muted{background:var(--surface-soft); opacity:0.5;}
+  .day-cell.past{ opacity:0.55; filter:grayscale(45%); }
+  .day-cell.today{border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
+  .day-num{ font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink); align-self:flex-start; width:28px; height:28px; border-radius:50%; background:var(--surface-soft); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; position:relative; z-index:1; }
+  .day-cell.today .day-num{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
+  .day-count{text-align:center;color:var(--muted);font-size:11px;line-height:1.3;}
+  .day-count strong{display:block;font-size:17px;color:var(--ink);font-family:'Sora',sans-serif;}
+  .day-count-icons{font-size:14px;line-height:1.2;margin-bottom:4px;letter-spacing:1px;}
+  .day-count-icons img, .task-icon img{ width:16px;height:16px;vertical-align:middle; }
+  .event-ribbon{ color:#fff; font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:6px; align-self:flex-start; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; position:relative; z-index:1; }
+  .batch-badges{ position:absolute; display:flex; flex-direction:column; gap:2px; z-index:2; }
+  .batch-badges.pos-bottom-left{ left:6px; bottom:6px; }
+  .batch-badges.pos-bottom-right{ right:6px; bottom:6px; }
+  .batch-badges.pos-top-right{ right:6px; top:6px; }
+  .batch-badge{ font-size:9.5px; font-weight:700; color:#fff; padding:1px 6px; border-radius:6px; white-space:nowrap; }
+  .batch-watermark{ position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:24px; color:var(--ink); opacity:0.14; pointer-events:none; overflow:hidden; white-space:nowrap; }
+
+  .year-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .year-month-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;}
+  .year-month-title{font-family:'Sora',sans-serif;font-weight:700;font-size:13px;margin-bottom:8px;}
+  .year-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .year-mini-day{font-size:10px;text-align:center;padding:3px 0;border-radius:4px;color:var(--muted);cursor:pointer;}
+  .year-mini-day:hover{background:var(--primary-soft) !important; color:var(--primary-dark);}
+  .year-mini-day.muted{opacity:0.3;}
+
+  .list-view{max-width:660px;margin:0 auto;}
+  .list-group{margin-bottom:20px;}
+  .list-date{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+  .list-date-main{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;}
+  .list-date-sub{font-size:11.5px;color:var(--muted);}
+  .list-tasks{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+
+  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:8px 10px;display:flex;align-items:center;gap:8px; box-shadow:var(--shadow-sm); }
+  .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
+  .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
+  body.hide-icons .task-icon, body.hide-icons .day-count-icons{display:none;}
+  .task-body{flex:1; min-width:0;}
+  .task-name{font-size:var(--task-font-size);font-weight:500;line-height:1.15;word-break:break-word;}
+  .task-card.done .task-name{text-decoration:line-through;color:var(--muted);}
+  .task-status{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0;}
+  .task-status.open{background:var(--primary-soft); color:var(--primary-dark);}
+  .task-status.done{background:var(--secondary-soft); color:var(--secondary);}
+
+  .form-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:440px; max-width:92vw; max-height:82vh; background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
+  .form-modal.open{display:flex;}
+  .form-modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);}
+  .form-modal-head h2{font-size:16px;margin:0;font-weight:700;overflow-wrap:break-word;min-width:0;}
+  .form-modal-head button{border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;}
+  .form-modal-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  .form-modal-body label{font-size:11px;color:var(--muted);font-weight:500;}
+  .form-modal-body input, .form-modal-body select{ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;width:100%;color:var(--ink); }
+  .checkbox-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);line-height:1.4;}
+  .checkbox-row input{width:15px;height:15px;margin:2px 0 0;accent-color:var(--primary);}
+  .btn-app{ border:none;background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:9px;cursor:pointer; }
+  .btn-app:hover{filter:brightness(1.05);}
+
+  .history-drawer{ position:fixed;top:0;right:0;height:100%;width:330px; background:var(--surface); border-left:1px solid var(--line);box-shadow:var(--shadow-lg); transform:translateX(100%);transition:transform .25s ease;z-index:40; display:flex;flex-direction:column; }
+  .history-drawer.open{transform:translateX(0);}
+  .history-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 12px;border-bottom:1px solid var(--line);}
+  .history-head h2{font-size:15px;margin:0;font-weight:700;}
+  .history-head button{border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--muted);}
+  .history-list, .info-list{overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:12px;}
+  .history-item{border-left:2px solid var(--primary-soft);padding-left:10px;}
+  .history-item .h-action{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--primary-dark);}
+  .history-item .h-detail{font-size:13px;margin:2px 0;overflow-wrap:break-word;}
+  .history-item .h-time{font-size:11.5px;color:var(--muted);}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:30;display:none;}
+  .scrim.show{display:block;}
+
+  .info-section-title{font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;margin:14px 18px 6px;border-bottom:2px solid var(--primary);display:inline-block;padding-bottom:4px;}
+  .info-row{ background:var(--surface-soft);border:1px solid var(--line);border-radius:10px; padding:8px 10px;font-size:12.5px; margin:0 18px; }
+  .info-row .r-top{display:flex;align-items:center;gap:8px;}
+  .info-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .info-row .r-name{font-weight:600;flex:1;}
+  .info-row .r-sub{color:var(--muted);margin-top:2px;}
+
+  .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
+  .settings-body label{font-size:12px;font-weight:600;color:var(--muted);margin-top:8px;}
+  .settings-body select, .settings-body input{ border:1px solid var(--line);background:var(--surface-soft);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink); width:100%; }
+
+  .app-footer{ text-align:center; font-size:11px; color:var(--muted); padding:8px; border-top:1px solid var(--line); background:var(--surface); }
+  .toast{ position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px); background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px; box-shadow:var(--shadow-lg);opacity:0;pointer-events:none; transition:opacity .25s ease, transform .25s ease;z-index:60; }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+  .toast.error{background:var(--danger);}
+
+  .bottom-nav{ display:none; }
+  .sheet-overlay{ display:none; }
+  @media (max-width: 760px){
+    .month-grid{grid-auto-rows:118px;}
+    .toolbar #historyBtn, .toolbar #reportBtn, .toolbar #infoBtn{ display:none; }
+    .shell{ padding-bottom:64px; }
+    .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
+    .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
+    .bottom-nav button .bn-icon{ font-size:18px; line-height:1; }
+    .bottom-nav button.active{ color:var(--primary-dark); }
+    .sheet-overlay{ display:flex; position:fixed; inset:0; z-index:46; align-items:flex-end; background:rgba(0,0,0,0.3); }
+    .sheet-overlay.hidden{ display:none; }
+    .sheet-panel{ background:var(--surface); width:100%; border-radius:18px 18px 0 0; padding:10px 16px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:6px; }
+    .sheet-handle{ width:36px; height:4px; background:var(--line); border-radius:99px; margin:2px auto 8px; }
+    .sheet-title{ font-family:'Sora',sans-serif; font-weight:700; font-size:14px; margin-bottom:4px; }
+    .sheet-option{ display:flex; align-items:center; gap:12px; padding:13px 10px; border-radius:12px; background:var(--surface-soft); font-size:14px; font-weight:600; border:none; text-align:left; width:100%; cursor:pointer; color:var(--ink); font-family:'Inter',sans-serif; }
+    .sheet-option .s-ic{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; color:#fff; flex-shrink:0; }
+    .form-modal{ top:0; left:0; right:0; bottom:0; width:100%; height:100%; max-width:100%; max-height:100%; transform:none; border-radius:0; }
+    .history-drawer{ width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small> <span class="badge-viewonly">VIEW ONLY</span></div>
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="Calendar view">
+        <button id="viewMonthBtn" class="active">Month</button>
+        <button id="viewYearBtn">Year</button>
+        <button id="viewListBtn">List</button>
+      </div>
+      <div class="nav-group" id="navGroup">
+        <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
+        <span class="toolbar-label" id="periodLabel"></span>
+        <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
+      </div>
+      <button class="btn-today" id="todayBtn">Today</button>
+      <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
+      <button id="infoBtn">Batches &amp; Events</button>
+      <button id="historyBtn">History</button>
+      <button id="reportBtn">Report</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+      <span class="sync-indicator" id="syncIndicator">Synced</span>
+    </div>
+  </div>
+  <div class="barn-stripe"></div>
+  <section class="calendar-wrap" id="calendarWrap"></section>
+  <footer class="app-footer">ProdPlan.VM Viewer — read only • Made by Von Mangaron</footer>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button id="navAgendaBtn"><span class="bn-icon">📋</span>Agenda</button>
+  <button id="navMonthBtn"><span class="bn-icon">📅</span>Month</button>
+  <button id="navInfoBtn"><span class="bn-icon">🗂️</span>Info</button>
+  <button id="navMoreBtn"><span class="bn-icon">⋯</span>More</button>
+</nav>
+
+<div class="sheet-overlay hidden" id="moreSheet">
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">More</div>
+    <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
+    <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
+    <button class="sheet-option" id="moreReportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Report</button>
+    <button class="sheet-option" id="moreOverdueBtn"><span class="s-ic" style="background:var(--danger);">🔔</span><span id="moreOverdueLabel">Past due tasks</span></button>
+    <button class="sheet-option" id="moreSettingsBtn"><span class="s-ic" style="background:#6E6E6E;">⚙</span>Settings</button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="form-modal" id="dayModal">
+  <div class="form-modal-head"><h2 id="dayModalTitle"></h2><button id="closeDayModal">✕</button></div>
+  <div class="form-modal-body" id="dayModalTaskList"></div>
+</div>
+
+<div class="history-drawer" id="infoDrawer">
+  <div class="history-head"><h2>Batches &amp; Events</h2><button id="closeInfo">✕</button></div>
+  <div class="info-list">
+    <div class="info-section-title">Batches</div>
+    <div id="infoBatchesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="info-section-title">Events / Audits</div>
+    <div id="infoEventsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<div class="history-drawer" id="historyDrawer">
+  <div class="history-head"><h2>History</h2><button id="closeHistory">✕</button></div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<div class="history-drawer" id="settingsDrawer">
+  <div class="history-head"><h2>Settings</h2><button id="closeSettings">✕</button></div>
+  <div class="settings-body">
+    <label for="setFontSize">Task font size</label>
+    <select id="setFontSize"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
+
+    <label for="setTheme">Theme</label>
+    <select id="setTheme">
+      <option value="light">Light (Classic)</option>
+      <option value="dark">Dark</option>
+      <option value="dark-forest">Dark Forest (Farm)</option>
+      <option value="dark-ember">Dark Ember (Farm)</option>
+      <option value="dark-ocean">Dark Ocean</option>
+      <option value="pasture">Pasture Green (Farm)</option>
+      <option value="barn">Barn Red (Farm)</option>
+      <option value="slate">Slate (Professional)</option>
+      <option value="sunrise">Sunrise (Warm)</option>
+    </select>
+
+    <label for="setBatchStyle">Batch label style on calendar</label>
+    <select id="setBatchStyle">
+      <option value="bottom-left">Bottom left</option>
+      <option value="bottom-right">Bottom right</option>
+      <option value="top-right">Top right</option>
+      <option value="background">Background watermark</option>
+      <option value="watermark-bottom-left">Watermark + bottom left</option>
+      <option value="watermark-bottom-right">Watermark + bottom right</option>
+    </select>
+
+    <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
+
+    <label style="margin-top:16px;">Data source (GitHub, read-only)</label>
+    <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
+    <label for="githubTokenInput">Access token (read-only recommended)</label>
+    <input type="password" id="githubTokenInput" placeholder="Read-only fine-grained token">
+    <label for="githubRepoInput">Repository (owner/repo)</label>
+    <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
+    <label for="githubPathInput">Farm name</label>
+    <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
+    <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
+    <button class="btn-app" id="syncGithubBtn" style="margin-top:6px; background:linear-gradient(135deg, var(--secondary), #5E2E22);">Refresh now</button>
+  </div>
+</div>
+
+<div class="form-modal" id="reportModal">
+  <div class="form-modal-head"><h2>Generate report</h2><button id="closeReportModal">✕</button></div>
+  <div class="form-modal-body">
+    <label for="reportScopeSelect">Report scope</label>
+    <select id="reportScopeSelect">
+      <option value="all">All data</option>
+      <option value="batch">Specific batch</option>
+      <option value="range">Date range</option>
+    </select>
+    <div id="reportBatchRow" style="display:none;">
+      <label for="reportBatchSelect">Batch</label>
+      <select id="reportBatchSelect"><option value="all">All data</option></select>
+    </div>
+    <div id="reportRangeRow" style="display:none;">
+      <label for="reportRangeStart">From</label>
+      <input type="date" id="reportRangeStart">
+      <label for="reportRangeEnd">To</label>
+      <input type="date" id="reportRangeEnd">
+    </div>
+    <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="reportChecklistOnly"> Print as a physical checklist (task names with checkboxes only)</label>
+    <button class="btn-app" id="confirmReportBtn" style="margin-top:10px;">Download PDF</button>
+  </div>
+</div>
+
+<div class="form-modal" id="overdueModal">
+  <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueModal">✕</button></div>
+  <div class="form-modal-body">
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;">Task(s) from past days still marked open.</p>
+    <div id="overdueList" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'bottom-left' };
+  const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
+  const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
+  const DEFAULT_EVENT_COLOR = '#000000';
+  const GITHUB_API = 'https://api.github.com';
+
+  let tasks = [], history = [], batches = [], events = [];
+  let settings = Object.assign({}, DEFAULT_SETTINGS);
+  let currentDate = new Date();
+  let viewMode = window.innerWidth <= 760 ? 'list' : 'month';
+  let dayModalOpenKey = null, overdueModalOpen = false;
+  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null;
+
+  const $ = (sel)=> document.querySelector(sel);
+
+  function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function toDateObj(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d); }
+  function sameDay(a,b){ return dateKey(a)===dateKey(b); }
+  function formatShort(key){ if(!key) return 'Backlog'; return toDateObj(key).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  function formatFull(key){ return toDateObj(key).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+  function addDaysStr(key,days){ const dt=toDateObj(key); dt.setDate(dt.getDate()+days); return dateKey(dt); }
+  function monthMatrix(date){
+    const year=date.getFullYear(), month=date.getMonth();
+    const firstOfMonth=new Date(year,month,1);
+    const firstWeekday=(firstOfMonth.getDay()+6)%7;
+    const start=new Date(firstOfMonth); start.setDate(firstOfMonth.getDate()-firstWeekday);
+    const days=[]; for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); days.push(d); } return days;
+  }
+  function colorForBatchNumber(number){
+    const b=batches.find(x=>x.number===number);
+    if(!b) return '#8A7A5C';
+    if(b.color) return b.color;
+    const idx=typeof b.colorIndex==='number'?b.colorIndex:batches.indexOf(b);
+    return BATCH_PALETTE[idx % BATCH_PALETTE.length];
+  }
+  function hexToRgba(hex,alpha){ const v=hex.replace('#',''); const r=parseInt(v.substring(0,2),16),g=parseInt(v.substring(2,4),16),b=parseInt(v.substring(4,6),16); return `rgba(${r},${g},${b},${alpha})`; }
+  function hexToRgbArr(hex){ const v=hex.replace('#',''); return [parseInt(v.substring(0,2),16),parseInt(v.substring(2,4),16),parseInt(v.substring(4,6),16)]; }
+  function batchesForDate(key){ return batches.filter(b=> key>=b.start && key<=b.end); }
+  function eventOnDate(key){ return events.find(e=>e.date===key); }
+  function criticalEventForDate(key){ return events.find(e=>{ const cs=addDaysStr(e.date,-7), ce=addDaysStr(e.date,-1); return key>=cs && key<=ce; }); }
+  function renderIconInto(el, icon){
+    if(icon && /^https?:\/\//.test(icon)){ el.innerHTML=''; const img=document.createElement('img'); img.src=icon; img.alt=''; el.appendChild(img); }
+    else el.textContent = icon || '📋';
+  }
+  function showToast(msg,isError){
+    let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.classList.toggle('error',!!isError); t.classList.add('show');
+    clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2600);
+  }
+
+  // ---------- settings (local viewing preferences only — never synced) ----------
+  const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise'];
+  function applySettings(){
+    document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize]||FONT_SIZE_MAP.medium);
+    document.body.classList.remove(...THEME_CLASSES);
+    if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
+    document.body.classList.toggle('hide-icons', !settings.showIcons);
+    const fs=$('#setFontSize'), th=$('#setTheme'), si=$('#setShowIcons'), bs=$('#setBatchStyle');
+    if(fs) fs.value=settings.fontSize; if(th) th.value=settings.theme; if(si) si.checked=settings.showIcons; if(bs) bs.value=settings.batchBadgeStyle;
+  }
+  function loadLocalPrefs(){
+    try{ settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('prodplan-viewer-prefs')||'{}')); }catch(e){}
+  }
+  function saveLocalPrefs(){ try{ localStorage.setItem('prodplan-viewer-prefs', JSON.stringify(settings)); }catch(e){} }
+
+  // ---------- GitHub read-only sync ----------
+  function sanitizeFarmFileName(name){
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    return (slug||'farm') + '.json';
+  }
+  function updateGithubStatusUI(){
+    const el=$('#githubStatus'); if(!el) return;
+    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghFarmName||ghPath} (${ghRepo})`;
+    else el.textContent = 'Enter the token, repo, and farm name your farm owner gave you.';
+    const t=$('#githubTokenInput'), r=$('#githubRepoInput'), p=$('#githubPathInput');
+    if(t && ghToken) t.value=ghToken; if(r && ghRepo) r.value=ghRepo; if(p && ghFarmName) p.value=ghFarmName;
+  }
+  function initGithub(){
+    try{
+      ghToken = localStorage.getItem('prodplan-viewer-gh-token') || null;
+      ghRepo = localStorage.getItem('prodplan-viewer-gh-repo') || null;
+      ghPath = localStorage.getItem('prodplan-viewer-gh-path') || null;
+      ghFarmName = localStorage.getItem('prodplan-viewer-gh-farmname') || null;
+    }catch(e){}
+    updateGithubStatusUI();
+    if(ghToken && ghRepo && ghPath) pullFromGithub(true);
+    else{
+      try{
+        const cached = localStorage.getItem('prodplan-viewer-cache');
+        if(cached) applyData(cached, true);
+      }catch(e){}
+    }
+  }
+  async function connectGithub(){
+    const token=$('#githubTokenInput').value.trim();
+    const repo=$('#githubRepoInput').value.trim();
+    const name=$('#githubPathInput').value.trim();
+    if(!token || !repo){ showToast('Enter the token and repo.', true); return; }
+    if(!name){ showToast('Enter the farm name.', true); return; }
+    ghToken=token; ghRepo=repo; ghFarmName=name; ghPath=sanitizeFarmFileName(name);
+    try{
+      localStorage.setItem('prodplan-viewer-gh-token', ghToken);
+      localStorage.setItem('prodplan-viewer-gh-repo', ghRepo);
+      localStorage.setItem('prodplan-viewer-gh-path', ghPath);
+      localStorage.setItem('prodplan-viewer-gh-farmname', ghFarmName);
+    }catch(e){}
+    await pullFromGithub();
+    updateGithubStatusUI();
+  }
+  function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
+  function applyData(rawText, silent){
+    try{
+      const parsed = JSON.parse(rawText);
+      tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || [];
+      try{ localStorage.setItem('prodplan-viewer-cache', rawText); }catch(e){}
+      renderAll();
+      if(!silent) flashSynced();
+    }catch(e){ if(!silent) showToast('Could not read that data.', true); }
+  }
+  function flashSynced(){
+    const el=$('#syncIndicator'); el.classList.add('show');
+    clearTimeout(flashSynced._t); flashSynced._t=setTimeout(()=>el.classList.remove('show'),1500);
+  }
+  async function pullFromGithub(silent){
+    if(!ghToken || !ghRepo || !ghPath) return;
+    try{
+      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
+        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
+      });
+      if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return; }
+      if(!res.ok) throw new Error('GitHub responded '+res.status);
+      const data = await res.json();
+      const content = b64DecodeUtf8(data.content);
+      applyData(content, silent);
+      if(!silent) showToast('Refreshed from the latest data.');
+    }catch(e){
+      console.error(e);
+      if(!silent) showToast('Could not refresh — check your connection.', true);
+      else{
+        try{ const cached=localStorage.getItem('prodplan-viewer-cache'); if(cached) applyData(cached, true); }catch(err){}
+      }
+    }
+  }
+
+  // ---------- read-only rendering ----------
+  function buildReadOnlyTaskCard(t){
+    const card=document.createElement('div');
+    card.className='task-card'+(t.status==='done'?' done':'');
+    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span><span class="task-status ${t.status==='done'?'done':'open'}">${t.status==='done'?'Done':'Open'}</span>`;
+    renderIconInto(card.querySelector('.task-icon'), t.icon);
+    card.querySelector('.task-name').textContent = t.name;
+    return card;
+  }
+  function dayHighlightColor(key){
+    const exact=eventOnDate(key); if(exact) return {color:exact.color||DEFAULT_EVENT_COLOR, alpha:0.18};
+    const crit=criticalEventForDate(key); if(crit) return {color:crit.color||DEFAULT_EVENT_COLOR, alpha:0.08};
+    const active=batchesForDate(key); if(active.length) return {color:colorForBatchNumber(active[0].number), alpha:0.14};
+    return null;
+  }
+  function addEventFlags(cell,key){
+    const exact=eventOnDate(key);
+    if(exact){
+      const c=exact.color||DEFAULT_EVENT_COLOR;
+      const rb=document.createElement('div'); rb.className='event-ribbon'; rb.style.background=c;
+      rb.textContent='🔺 '+exact.name; rb.title=`Audit day: ${exact.name}`; cell.appendChild(rb);
+      cell.style.background=hexToRgba(c,0.18); cell.style.border=`2px solid ${c}`; return;
+    }
+    const crit=criticalEventForDate(key);
+    if(crit){ const c=crit.color||DEFAULT_EVENT_COLOR; cell.style.background=hexToRgba(c,0.08); cell.style.border=`1.5px dashed ${hexToRgba(c,0.7)}`; cell.title=`Prep week for ${crit.name} (audit ${formatFull(crit.date)})`; }
+  }
+  function addBatchBadges(cell,key){
+    const active=batchesForDate(key); if(!active.length) return;
+    const style=settings.batchBadgeStyle||'bottom-left';
+    const showWatermark = style==='background'||style==='watermark-bottom-left'||style==='watermark-bottom-right';
+    const cornerStyle = style==='watermark-bottom-left'?'bottom-left':style==='watermark-bottom-right'?'bottom-right':style;
+    if(showWatermark){ const wm=document.createElement('div'); wm.className='batch-watermark'; wm.textContent='#'+active[0].number; cell.insertBefore(wm, cell.firstChild); }
+    if(style!=='background'){
+      const wrap=document.createElement('div'); wrap.className='batch-badges pos-'+cornerStyle;
+      active.slice(0,3).forEach(b=>{
+        const badge=document.createElement('span'); badge.className='batch-badge'; badge.style.background=colorForBatchNumber(b.number);
+        badge.textContent='#'+b.number; badge.title=`Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`; wrap.appendChild(badge);
+      });
+      cell.appendChild(wrap);
+    }
+    if(!cell.style.background){ const c=colorForBatchNumber(active[0].number); cell.style.background=hexToRgba(c,0.14); cell.style.border=`1.5px solid ${c}`; }
+  }
+  function buildDayCount(key){
+    const wrap=document.createElement('div'); wrap.className='day-count';
+    const dayTasks=tasks.filter(t=>t.date===key); if(dayTasks.length===0) return wrap;
+    const done=dayTasks.filter(t=>t.status==='done').length;
+    const iconsWrap=document.createElement('div'); iconsWrap.className='day-count-icons';
+    dayTasks.slice(0,4).forEach(t=>{ const span=document.createElement('span'); renderIconInto(span,t.icon); iconsWrap.appendChild(span); });
+    if(dayTasks.length>4){ const extra=document.createElement('span'); extra.textContent='+'+(dayTasks.length-4); iconsWrap.appendChild(extra); }
+    wrap.appendChild(iconsWrap);
+    const strong=document.createElement('strong'); strong.textContent=dayTasks.length; wrap.appendChild(strong);
+    wrap.appendChild(document.createTextNode(`${dayTasks.length===1?'task':'tasks'}${done?' • '+done+' done':''}`));
+    return wrap;
+  }
+  function renderMonth(){
+    const wrap=$('#calendarWrap'); wrap.innerHTML='';
+    const weekdayRow=document.createElement('div'); weekdayRow.className='weekday-row';
+    ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d=>{ const s=document.createElement('span'); s.textContent=d; weekdayRow.appendChild(s); });
+    wrap.appendChild(weekdayRow);
+    const grid=document.createElement('div'); grid.className='month-grid';
+    const days=monthMatrix(currentDate); const today=new Date(); const todayKey=dateKey(today);
+    days.forEach(d=>{
+      const key=dateKey(d); const cell=document.createElement('div'); cell.className='day-cell';
+      if(d.getMonth()!==currentDate.getMonth()) cell.classList.add('muted');
+      if(sameDay(d,today)) cell.classList.add('today');
+      if(key<todayKey) cell.classList.add('past');
+      const dow=d.getDay(); if(dow===0||dow===6) cell.classList.add('weekend');
+      addEventFlags(cell,key);
+      const num=document.createElement('span'); num.className='day-num'; num.textContent=d.getDate(); cell.appendChild(num);
+      const list=document.createElement('div'); list.className='day-tasks'; list.appendChild(buildDayCount(key)); cell.appendChild(list);
+      addBatchBadges(cell,key);
+      cell.tabIndex=0; cell.setAttribute('role','button');
+      cell.addEventListener('click', ()=> openDayModal(key));
+      cell.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openDayModal(key); } });
+      grid.appendChild(cell);
+    });
+    wrap.appendChild(grid);
+  }
+  function renderYear(){
+    const wrap=$('#calendarWrap'); wrap.innerHTML='';
+    const grid=document.createElement('div'); grid.className='year-grid';
+    const startYear=currentDate.getFullYear(), startMonth=currentDate.getMonth();
+    for(let i=0;i<12;i++){
+      const monthDate=new Date(startYear, startMonth+i, 1);
+      const card=document.createElement('div'); card.className='year-month-card';
+      const title=document.createElement('div'); title.className='year-month-title'; title.textContent=monthDate.toLocaleDateString(undefined,{month:'long',year:'numeric'}); card.appendChild(title);
+      const mgrid=document.createElement('div'); mgrid.className='year-mini-grid';
+      monthMatrix(monthDate).forEach(d=>{
+        const key=dateKey(d); const cell=document.createElement('div'); cell.className='year-mini-day';
+        if(d.getMonth()!==monthDate.getMonth()) cell.classList.add('muted');
+        cell.textContent=d.getDate();
+        const h=dayHighlightColor(key); if(h) cell.style.background=hexToRgba(h.color, Math.max(h.alpha,0.28));
+        cell.addEventListener('click', ()=>{ currentDate=new Date(d); viewMode='month'; syncViewButtons(); renderAll(); openDayModal(key); });
+        mgrid.appendChild(cell);
+      });
+      card.appendChild(mgrid); grid.appendChild(card);
+    }
+    wrap.appendChild(grid);
+  }
+  function renderList(){
+    const wrap=$('#calendarWrap'); wrap.innerHTML='';
+    const box=document.createElement('div'); box.className='list-view';
+    const dated=tasks.filter(t=>t.date).sort((a,b)=>a.date.localeCompare(b.date));
+    if(dated.length===0){ box.innerHTML='<div class="empty-note">No tasks scheduled yet.</div>'; wrap.appendChild(box); return; }
+    const groups={}; dated.forEach(t=>{ (groups[t.date]=groups[t.date]||[]).push(t); });
+    Object.keys(groups).sort().forEach(key=>{
+      const groupEl=document.createElement('div'); groupEl.className='list-group';
+      const doneCount=groups[key].filter(t=>t.status==='done').length;
+      groupEl.innerHTML=`<div class="list-date"><span class="list-date-main"></span><span class="list-date-sub"></span></div>`;
+      groupEl.querySelector('.list-date-main').textContent=formatFull(key);
+      groupEl.querySelector('.list-date-sub').textContent=`${doneCount}/${groups[key].length} done`;
+      const listEl=document.createElement('div'); listEl.className='list-tasks';
+      groups[key].forEach(t=> listEl.appendChild(buildReadOnlyTaskCard(t)));
+      groupEl.appendChild(listEl); box.appendChild(groupEl);
+    });
+    wrap.appendChild(box);
+  }
+  function renderHistory(){
+    const list=$('#historyList'); list.innerHTML='';
+    if(history.length===0){ list.innerHTML='<div class="empty-note">No history yet.</div>'; return; }
+    history.forEach(h=>{
+      const item=document.createElement('div'); item.className='history-item';
+      const time=new Date(h.ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+      item.innerHTML=`<div class="h-action"></div><div class="h-detail"></div><div class="h-time"></div>`;
+      item.querySelector('.h-action').textContent=h.action; item.querySelector('.h-detail').textContent=h.detail; item.querySelector('.h-time').textContent=time;
+      list.appendChild(item);
+    });
+  }
+  function renderInfo(){
+    const bList=$('#infoBatchesList'); bList.innerHTML='';
+    if(batches.length===0) bList.innerHTML='<div class="empty-note">No batches recorded.</div>';
+    else batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
+      const row=document.createElement('div'); row.className='info-row';
+      const c=colorForBatchNumber(b.number);
+      row.innerHTML=`<div class="r-top"><span class="info-swatch" style="background:${c}"></span><span class="r-name">#${b.number}</span></div><div class="r-sub">${formatFull(b.start)} – ${formatFull(b.end)}</div>`;
+      bList.appendChild(row);
+    });
+    const eList=$('#infoEventsList'); eList.innerHTML='';
+    if(events.length===0) eList.innerHTML='<div class="empty-note">No events recorded.</div>';
+    else events.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
+      const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1);
+      const row=document.createElement('div'); row.className='info-row';
+      row.innerHTML=`<div class="r-top"><span class="info-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><span class="r-name"></span></div><div class="r-sub"></div>`;
+      row.querySelector('.r-name').textContent=ev.name;
+      row.querySelector('.r-sub').textContent=`${formatFull(ev.date)} • prep week ${formatFull(cs)}–${formatFull(ce)}`;
+      eList.appendChild(row);
+    });
+  }
+  function updatePeriodLabel(){
+    const label=$('#periodLabel');
+    if(viewMode==='list'){ label.textContent='All scheduled tasks'; return; }
+    if(viewMode==='year'){ const start=currentDate; const end=new Date(start.getFullYear(), start.getMonth()+11, 1); label.textContent=`${start.toLocaleDateString(undefined,{month:'short',year:'numeric'})} – ${end.toLocaleDateString(undefined,{month:'short',year:'numeric'})}`; return; }
+    label.textContent = currentDate.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  }
+  function syncViewButtons(){
+    $('#viewMonthBtn').classList.toggle('active', viewMode==='month');
+    $('#viewYearBtn').classList.toggle('active', viewMode==='year');
+    $('#viewListBtn').classList.toggle('active', viewMode==='list');
+    $('#navGroup').classList.toggle('hidden', viewMode==='list');
+    $('#navAgendaBtn') && $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
+    $('#navMonthBtn') && $('#navMonthBtn').classList.toggle('active', viewMode==='month'||viewMode==='year');
+  }
+  function updateOverdueBadge(){
+    const todayKey=dateKey(new Date());
+    const count=tasks.filter(t=>t.status!=='done' && t.date && t.date<todayKey).length;
+    const badge=$('#overdueBadge'); if(badge){ badge.textContent=count>99?'99+':count; badge.classList.toggle('hidden', count===0); }
+    const moreLabel=$('#moreOverdueLabel'); if(moreLabel) moreLabel.textContent = count>0? `Past due tasks (${count})` : 'Past due tasks';
+  }
+  function renderAll(){
+    if(viewMode==='month') renderMonth(); else if(viewMode==='year') renderYear(); else renderList();
+    renderHistory(); renderInfo(); updatePeriodLabel(); syncViewButtons(); updateOverdueBadge();
+    if(dayModalOpenKey) renderDayModal(dayModalOpenKey);
+    if(overdueModalOpen) refreshOverdueList();
+  }
+
+  // ---------- day modal (read-only) ----------
+  function openDayModal(key){
+    dayModalOpenKey=key; renderDayModal(key); $('#dayModal').classList.add('open'); $('#scrim').classList.add('show');
+  }
+  function renderDayModal(key){
+    $('#dayModalTitle').textContent = toDateObj(key).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric',weekday:'long'});
+    const box=$('#dayModalTaskList'); box.innerHTML='';
+    const dayTasks=tasks.filter(t=>t.date===key);
+    if(dayTasks.length===0) box.innerHTML='<div class="empty-note">Nothing scheduled for this day.</div>';
+    else dayTasks.forEach(t=> box.appendChild(buildReadOnlyTaskCard(t)));
+  }
+
+  // ---------- overdue ----------
+  function refreshOverdueList(){
+    const todayKey=dateKey(new Date());
+    const overdue=tasks.filter(t=>t.status!=='done' && t.date && t.date<todayKey);
+    const list=$('#overdueList'); list.innerHTML='';
+    if(overdue.length===0){ list.innerHTML='<div class="empty-note">No overdue tasks — nice work.</div>'; return; }
+    overdue.sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+      const wrap=document.createElement('div');
+      const label=document.createElement('div'); label.style.cssText='font-size:11px;color:var(--danger);font-weight:700;margin-bottom:3px;'; label.textContent=formatFull(t.date);
+      wrap.appendChild(label); wrap.appendChild(buildReadOnlyTaskCard(t)); list.appendChild(wrap);
+    });
+  }
+  function openOverdueModal(){ overdueModalOpen=true; refreshOverdueList(); $('#overdueModal').classList.add('open'); $('#scrim').classList.add('show'); }
+
+  // ---------- report ----------
+  function generateReport(opts){
+    opts = opts || {type:'all'};
+    try{
+      if(!window.jspdf){ showToast('PDF library failed to load.', true); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({unit:'pt', format:'a4'});
+      const pageWidth=doc.internal.pageSize.getWidth(), pageHeight=doc.internal.pageSize.getHeight();
+      const marginX=40; let y=54;
+      function ensureSpace(h){ if(y+h>pageHeight-50){ doc.addPage(); y=50; } }
+      function heading(text,size){ ensureSpace(size*1.6); doc.setFont('helvetica','bold'); doc.setFontSize(size); doc.setTextColor(...hexToRgbArr('#000000')); doc.text(text,marginX,y); y+=size*1.5; }
+      function body(text,size,hex){ const lines=doc.splitTextToSize(text,pageWidth-marginX*2); doc.setFont('helvetica','normal'); doc.setFontSize(size||10.5); doc.setTextColor(...hexToRgbArr(hex||'#000000')); lines.forEach(l=>{ ensureSpace(14); doc.text(l,marginX,y); y+=14; }); }
+      function rule(){ ensureSpace(10); doc.setDrawColor(...hexToRgbArr('#E4E4E4')); doc.line(marginX,y,pageWidth-marginX,y); y+=16; }
+      function dateSubheading(text){ ensureSpace(18); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...hexToRgbArr('#B97A1D')); doc.text(text,marginX,y); y+=15; }
+
+      let scopedBatch=null, rangeStart=null, rangeEnd=null, titleText='ProdPlan.VM — Production Report', subtitleText=null;
+      if(opts.type==='batch' && opts.batchNumber){
+        scopedBatch=batches.find(b=>b.number===opts.batchNumber)||null;
+        if(scopedBatch){ rangeStart=scopedBatch.start; rangeEnd=scopedBatch.end; titleText=`ProdPlan.VM — Batch #${scopedBatch.number} Report`; subtitleText=`Batch window: ${formatFull(scopedBatch.start)} – ${formatFull(scopedBatch.end)}`; }
+      } else if(opts.type==='range' && opts.start && opts.end){
+        rangeStart=opts.start; rangeEnd=opts.end; titleText='ProdPlan.VM — Task Report'; subtitleText=`Date range: ${formatFull(rangeStart)} – ${formatFull(rangeEnd)}`;
+      }
+      const inScope=(t)=>{ if(!rangeStart) return true; if(!t.date) return false; return t.date>=rangeStart && t.date<=rangeEnd; };
+      const eventsInScope = rangeStart? events.filter(e=> e.date>=rangeStart && e.date<=rangeEnd) : events;
+      const scopedTasks = tasks.filter(inScope);
+
+      if(opts.checklistOnly){
+        doc.setFillColor(...hexToRgbArr('#FFB22C')); doc.rect(0,0,pageWidth,10,'F'); y=60;
+        doc.setFont('helvetica','bold'); doc.setFontSize(24); doc.setTextColor(...hexToRgbArr('#000000')); doc.text('Task Checklist', pageWidth/2, y, {align:'center'}); y+=22;
+        if(subtitleText){ doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(...hexToRgbArr('#854836')); doc.text(subtitleText, pageWidth/2, y, {align:'center'}); y+=16; }
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...hexToRgbArr('#9A9A9A')); doc.text(`Printed ${new Date().toLocaleDateString()}`, pageWidth/2, y, {align:'center'}); y+=16;
+        doc.setDrawColor(...hexToRgbArr('#000000')); doc.setLineWidth(1.3); doc.line(marginX,y,pageWidth-marginX,y); y+=26;
+        const checklistTasks = scopedTasks.slice().sort((a,b)=> (a.date||'9999-99-99').localeCompare(b.date||'9999-99-99'));
+        if(checklistTasks.length===0){ doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...hexToRgbArr('#6E6E6E')); doc.text('No tasks in this scope.', pageWidth/2, y, {align:'center'}); }
+        else{
+          let last=null, rowIndex=0;
+          checklistTasks.forEach(t=>{
+            const label = t.date? formatFull(t.date) : 'Unscheduled';
+            if(label!==last){ ensureSpace(30); y+=6; doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(...hexToRgbArr('#B97A1D')); doc.text(label.toUpperCase(), marginX, y); y+=8; doc.setDrawColor(...hexToRgbArr('#E4E4E4')); doc.setLineWidth(0.7); doc.line(marginX,y,pageWidth-marginX,y); y+=18; last=label; rowIndex=0; }
+            ensureSpace(26);
+            if(rowIndex%2===1){ doc.setFillColor(...hexToRgbArr('#F7F7F7')); doc.rect(marginX-6,y-15,(pageWidth-marginX*2)+12,24,'F'); }
+            doc.setDrawColor(...hexToRgbArr('#000000')); doc.setLineWidth(1); doc.rect(marginX,y-10,14,14);
+            if(t.status==='done'){ doc.line(marginX,y-10,marginX+14,y+4); doc.line(marginX,y+4,marginX+14,y-10); }
+            doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(...hexToRgbArr('#000000')); doc.text(t.name, marginX+24, y); y+=26; rowIndex++;
+          });
+        }
+        const pc=doc.internal.getNumberOfPages();
+        for(let i=1;i<=pc;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...hexToRgbArr('#6E6E6E')); doc.text('ProdPlan.VM Viewer — read only', marginX, pageHeight-24); doc.text(`Page ${i} of ${pc}`, pageWidth-marginX-60, pageHeight-24); }
+        doc.save(`ProdPlan-Checklist-${dateKey(new Date())}.pdf`); showToast('Checklist downloaded.'); return;
+      }
+
+      doc.setFillColor(...hexToRgbArr('#FFB22C')); doc.rect(0,0,pageWidth,8,'F');
+      heading(titleText, 18); if(subtitleText) body(subtitleText, 10.5, '#B97A1D'); body(`Generated ${new Date().toLocaleString()}`, 10, '#6E6E6E'); y+=4; rule();
+      const completed=scopedTasks.filter(t=>t.status==='done').length, open=scopedTasks.length-completed;
+      heading('Summary', 13); body(`Total tasks: ${scopedTasks.length}   •   Completed: ${completed}   •   Open/Scheduled: ${open}`); y+=4; rule();
+      heading('Completed Tasks', 13);
+      const doneTasks=scopedTasks.filter(t=>t.status==='done' && t.date).sort((a,b)=>a.date.localeCompare(b.date));
+      if(doneTasks.length===0) body('No completed tasks recorded yet.'); else{ let last=null; doneTasks.forEach(t=>{ if(t.date!==last){ dateSubheading(formatFull(t.date)); last=t.date; } body(`• ${t.name}`,10.5); }); }
+      y+=4; rule();
+      heading('Open & Scheduled Tasks', 13);
+      const openTasks=scopedTasks.filter(t=>t.status!=='done').sort((a,b)=>(a.date||'9999-99-99').localeCompare(b.date||'9999-99-99'));
+      if(openTasks.length===0) body('No open tasks.'); else{ let last=null; openTasks.forEach(t=>{ const label=t.date?formatFull(t.date):'Backlog (unscheduled)'; if(label!==last){ dateSubheading(label); last=label; } body(`• ${t.name}`,10.5); }); }
+      y+=4; rule();
+      heading('Events & Audits', 13);
+      if(eventsInScope.length===0) body('No events recorded.'); else eventsInScope.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{ const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1); body(`${ev.name} — ${formatFull(ev.date)}  (prep week: ${formatFull(cs)} – ${formatFull(ce)})`,10.5); });
+      const pc=doc.internal.getNumberOfPages();
+      for(let i=1;i<=pc;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...hexToRgbArr('#6E6E6E')); doc.text('ProdPlan.VM Viewer — read only', marginX, pageHeight-24); doc.text(`Page ${i} of ${pc}`, pageWidth-marginX-60, pageHeight-24); }
+      doc.save(`ProdPlan-Report-${dateKey(new Date())}.pdf`); showToast('Report downloaded.');
+    }catch(e){ console.error(e); showToast('Could not generate the report.', true); }
+  }
+
+  // ---------- overlays ----------
+  function openDrawer(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
+  function closeOverlays(){
+    ['#historyDrawer','#settingsDrawer','#dayModal','#reportModal','#overdueModal','#infoDrawer'].forEach(sel=> $(sel).classList.remove('open'));
+    $('#moreSheet').classList.add('hidden');
+    $('#scrim').classList.remove('show');
+    dayModalOpenKey=null; overdueModalOpen=false;
+  }
+  $('#scrim').addEventListener('click', closeOverlays);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeOverlays(); });
+
+  $('#viewMonthBtn').addEventListener('click', ()=>{ viewMode='month'; renderAll(); });
+  $('#viewYearBtn').addEventListener('click', ()=>{ viewMode='year'; renderAll(); });
+  $('#viewListBtn').addEventListener('click', ()=>{ viewMode='list'; renderAll(); });
+  $('#prevBtn').addEventListener('click', ()=>{ if(viewMode==='year') currentDate.setFullYear(currentDate.getFullYear()-1); else currentDate.setMonth(currentDate.getMonth()-1); renderAll(); });
+  $('#nextBtn').addEventListener('click', ()=>{ if(viewMode==='year') currentDate.setFullYear(currentDate.getFullYear()+1); else currentDate.setMonth(currentDate.getMonth()+1); renderAll(); });
+  $('#todayBtn').addEventListener('click', ()=>{ currentDate=new Date(); renderAll(); });
+  $('#closeDayModal').addEventListener('click', closeOverlays);
+  $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
+  $('#closeHistory').addEventListener('click', closeOverlays);
+  $('#infoBtn').addEventListener('click', ()=> openDrawer('#infoDrawer'));
+  $('#closeInfo').addEventListener('click', closeOverlays);
+  $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
+  $('#closeSettings').addEventListener('click', closeOverlays);
+  $('#overdueBtn').addEventListener('click', openOverdueModal);
+  $('#closeOverdueModal').addEventListener('click', closeOverlays);
+
+  $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
+  $('#setTheme').addEventListener('change', (e)=>{ settings.theme=e.target.value; applySettings(); saveLocalPrefs(); });
+  $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons=e.target.checked; applySettings(); saveLocalPrefs(); });
+  $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle=e.target.value; applySettings(); saveLocalPrefs(); renderAll(); });
+  $('#connectGithubBtn').addEventListener('click', connectGithub);
+  $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghToken||!ghRepo||!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
+
+  $('#reportBtn').addEventListener('click', ()=>{
+    const sel=$('#reportBatchSelect'); sel.innerHTML='<option value="all">All data</option>';
+    batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{ const opt=document.createElement('option'); opt.value=b.number; opt.textContent=`Batch #${b.number} (${formatShort(b.start)} – ${formatShort(b.end)})`; sel.appendChild(opt); });
+    $('#reportScopeSelect').value='all'; $('#reportBatchRow').style.display='none'; $('#reportRangeRow').style.display='none'; $('#reportChecklistOnly').checked=false;
+    openDrawer('#reportModal');
+  });
+  $('#reportScopeSelect').addEventListener('change', (e)=>{ $('#reportBatchRow').style.display=e.target.value==='batch'?'block':'none'; $('#reportRangeRow').style.display=e.target.value==='range'?'block':'none'; });
+  $('#closeReportModal').addEventListener('click', closeOverlays);
+  $('#confirmReportBtn').addEventListener('click', ()=>{
+    const scope=$('#reportScopeSelect').value; let opts={type:'all'};
+    if(scope==='batch'){ const val=$('#reportBatchSelect').value; opts = val==='all'? {type:'all'} : {type:'batch', batchNumber:val}; }
+    else if(scope==='range'){ const start=$('#reportRangeStart').value, end=$('#reportRangeEnd').value; if(!start||!end){ showToast('Choose both dates.', true); return; } if(end<start){ showToast('End date must be after start.', true); return; } opts={type:'range', start, end}; }
+    opts.checklistOnly = $('#reportChecklistOnly').checked;
+    closeOverlays(); generateReport(opts);
+  });
+
+  // bottom nav / more sheet (mobile)
+  function bindIfExists(id, fn){ const el=$(id); if(el) el.addEventListener('click', fn); }
+  bindIfExists('#navAgendaBtn', ()=>{ viewMode='list'; renderAll(); });
+  bindIfExists('#navMonthBtn', ()=>{ viewMode='month'; renderAll(); });
+  bindIfExists('#navInfoBtn', ()=>{ closeOverlays(); openDrawer('#infoDrawer'); });
+  bindIfExists('#navMoreBtn', ()=>{ closeOverlays(); $('#moreSheet').classList.remove('hidden'); $('#scrim').classList.add('show'); });
+  bindIfExists('#moreYearBtn', ()=>{ closeOverlays(); viewMode='year'; renderAll(); });
+  bindIfExists('#moreHistoryBtn', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
+  bindIfExists('#moreReportBtn', ()=>{ closeOverlays(); $('#reportBtn').click(); });
+  bindIfExists('#moreOverdueBtn', ()=>{ closeOverlays(); openOverdueModal(); });
+  bindIfExists('#moreSettingsBtn', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
+
+  loadLocalPrefs();
+  applySettings();
+  initGithub();
+  renderAll();
+})();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
