@@ -68,7 +68,7 @@
   .sync-indicator{font-size:12px;color:var(--secondary);opacity:0;transition:opacity .4s ease;font-weight:500;}
   .sync-indicator.show{opacity:1;}
 
-  .calendar-wrap-outer{ flex:1; min-width:0; position:relative; display:flex; flex-direction:column; min-height:0; }
+  .calendar-wrap-outer{ flex:1; min-width:0; position:relative; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
   .calendar-wrap{flex:1;overflow:auto;padding:20px;min-width:0;}
   .pull-refresh-indicator{
     position:absolute; top:0; left:0; right:0; height:60px; z-index:6;
@@ -150,10 +150,9 @@
   .task-avatars .task-avatar:first-child{ margin-left:0; }
   .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
   .task-actions{display:flex;gap:4px;flex-shrink:0;}
-  .task-actions .btn-done{ width:26px;height:26px;border:none;font-weight:700;font-size:13px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; background:var(--primary-soft); color:var(--primary-dark); transition:background .15s ease, color .15s ease, transform .1s ease; }
-  .task-actions .btn-done:hover{ background:var(--primary); color:#fff; transform:scale(1.08); }
-  .task-card.done .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
-  .task-card.done .btn-done:hover{ background:var(--secondary); color:#fff; }
+  .task-status{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0;}
+  .task-status.open{background:var(--primary-soft); color:var(--primary-dark);}
+  .task-status.done{background:var(--secondary-soft); color:var(--secondary);}
 
   .form-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:440px; max-width:92vw; max-height:82vh; background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
   .form-modal.open{display:flex;}
@@ -292,9 +291,8 @@
 <div class="form-modal" id="overdueTransferModal">
   <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueTransferModal">✕</button></div>
   <div class="form-modal-body">
-    <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open.</p>
-    <button class="btn-app" id="moveOverdueToTodayBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22);">Move all to today</button>
-    <button class="btn-app" id="dismissOverdueTransfer" style="margin-top:8px; background:var(--surface-soft); color:var(--muted); border:1px solid var(--line);">Not now</button>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open. Let your manager know so they can reschedule them from the main app.</p>
+    <button class="btn-app" id="dismissOverdueTransfer">Got it</button>
   </div>
 </div>
 
@@ -313,39 +311,13 @@
   <div class="settings-body">
     <label for="setFontSize">Task font size</label>
     <select id="setFontSize"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
-
-    <label for="setTheme">Theme</label>
-    <select id="setTheme">
-      <option value="light">Light (Classic)</option>
-      <option value="dark">Dark</option>
-      <option value="dark-forest">Dark Forest (Farm)</option>
-      <option value="dark-ember">Dark Ember (Farm)</option>
-      <option value="dark-ocean">Dark Ocean</option>
-      <option value="pasture">Pasture Green (Farm)</option>
-      <option value="barn">Barn Red (Farm)</option>
-      <option value="slate">Slate (Professional)</option>
-      <option value="sunrise">Sunrise (Warm)</option>
-      <option value="field-bright">Field Bright (Outdoor/High Contrast)</option>
-    </select>
-
-    <label for="setBatchStyle">Batch label style on calendar</label>
-    <select id="setBatchStyle">
-      <option value="bottom-left">Bottom left</option>
-      <option value="bottom-right">Bottom right</option>
-      <option value="top-right">Top right</option>
-      <option value="background">Watermark only</option>
-      <option value="watermark-bottom-left">Watermark + Left</option>
-      <option value="watermark-bottom-right">Watermark + Right</option>
-    </select>
-    <p id="batchStyleNote" style="font-size:10.5px;color:var(--muted);margin:2px 0 0;display:none;">On small screens, batch labels are automatically centered for readability — this choice only applies on larger screens.</p>
-
-    <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
+    <p style="font-size:10.5px;color:var(--muted);margin:2px 0 0;">This only changes how it looks on this device. Theme and batch colors follow whatever the manager has set in the main app.</p>
 
     <label style="margin-top:16px;">Data source (GitHub, read-only)</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
     <label for="githubTokenInput">Access token</label>
-    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Marking tasks done here syncs back to your farm's data, so this token needs write access — ask your farm manager for one.</p>
+    <input type="password" id="githubTokenInput" placeholder="Read-only fine-grained token">
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">This app only reads data — a read-only token is all you need. Ask your farm manager for one.</p>
     <label for="githubRepoInput">Storage</label>
     <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
     <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
@@ -359,7 +331,7 @@
 
 <script>
 (function(){
-  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'bottom-left' };
+  const DEFAULT_SETTINGS = { fontSize:'medium' };
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const DEFAULT_EVENT_COLOR = '#000000';
@@ -371,7 +343,7 @@
   let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
   let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
   let dayModalOpenKey = null;
-  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null, ghSha=null;
+  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null;
 
   const $ = (sel)=> document.querySelector(sel);
 
@@ -410,25 +382,7 @@
     clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2600);
   }
 
-  // ---------- task completion — the viewer's one narrow write capability ----------
-  function taskLabel(t){ return `"${t.name}"`; }
-  function addHistory(action, detail){
-    history.unshift({ id:'h'+Date.now()+Math.random().toString(36).slice(2), ts:Date.now(), action, detail });
-  }
-  async function toggleTaskDone(id){
-    const t = tasks.find(x=>x.id===id);
-    if(!t) return;
-    t.status = t.status==='done' ? 'open' : 'done';
-    addHistory(t.status==='done' ? 'Completed' : 'Reopened', `${taskLabel(t)} (via Viewer)`);
-    renderAll();
-    try{ localStorage.setItem('prodplan-viewer-cache', JSON.stringify({tasks, history, batches, events})); }catch(e){}
-    if(ghToken && ghRepo && ghPath){
-      const ok = await pushToGithub();
-      if(ok) showToast(t.status==='done' ? 'Marked done.' : 'Reopened.');
-    } else {
-      showToast('Marked locally — connect in Settings to sync this to other devices.', true);
-    }
-  }
+  // ---------- overdue notice (informational only) ----------
   let overdueModalShownThisSession = false;
   function checkOverdueOnLoad(){
     if(overdueModalShownThisSession) return;
@@ -440,50 +394,22 @@
     $('#overdueTransferModal').classList.add('open');
     $('#scrim').classList.add('show');
   }
-  async function transferOverdueToToday(){
-    const todayKey = dateKey(new Date());
-    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
-    if(overdue.length===0) return 0;
-    overdue.forEach(t=>{ t.date = todayKey; });
-    addHistory('Overdue tasks transferred', `${overdue.length} overdue task(s) moved to today (via Viewer)`);
-    renderAll();
-    try{ localStorage.setItem('prodplan-viewer-cache', JSON.stringify({tasks, history, batches, events})); }catch(e){}
-    if(ghToken && ghRepo && ghPath){
-      const ok = await pushToGithub();
-      if(ok) showToast(`Moved ${overdue.length} task(s) to today.`);
-    } else {
-      showToast('Moved locally — connect in Settings to sync this to other devices.', true);
-    }
-    return overdue.length;
-  }
-  document.addEventListener('click', (e)=>{
-    const doneBtn = e.target.closest('.btn-done');
-    if(doneBtn){
-      const card = doneBtn.closest('.task-card');
-      if(card && card.dataset.id) toggleTaskDone(card.dataset.id);
-    }
-  });
 
-  // ---------- settings (local viewing preferences only — never synced) ----------
+  // ---------- settings ----------
+  // Font size is the ONLY thing the viewer controls locally — it never syncs anywhere.
+  // Theme, batch label style, and show-icons all follow whatever the main app has synced,
+  // so the viewer always looks consistent with the manager's app rather than drifting apart.
   const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise','theme-field-bright'];
+  let syncedDisplay = { theme:'light', batchBadgeStyle:'bottom-left', showIcons:true };
   function applySettings(){
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize]||FONT_SIZE_MAP.medium);
     document.body.classList.remove(...THEME_CLASSES);
-    if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
-    document.body.classList.toggle('hide-icons', !settings.showIcons);
-    const fs=$('#setFontSize'), th=$('#setTheme'), si=$('#setShowIcons'), bs=$('#setBatchStyle');
-    if(fs) fs.value=settings.fontSize; if(th) th.value=settings.theme; if(si) si.checked=settings.showIcons; if(bs) bs.value=settings.batchBadgeStyle;
-    updateBatchStyleAvailability();
+    if(syncedDisplay.theme && syncedDisplay.theme!=='light') document.body.classList.add('theme-'+syncedDisplay.theme);
+    document.body.classList.toggle('hide-icons', !syncedDisplay.showIcons);
+    const fs=$('#setFontSize');
+    if(fs) fs.value=settings.fontSize;
   }
   function isSmallCardScreen(){ return window.innerWidth <= 480; }
-  function updateBatchStyleAvailability(){
-    const bs=$('#setBatchStyle'), note=$('#batchStyleNote');
-    if(!bs) return;
-    const disabled = isSmallCardScreen();
-    bs.disabled = disabled;
-    bs.style.opacity = disabled ? '0.5' : '1';
-    if(note) note.style.display = disabled ? 'block' : 'none';
-  }
   function loadLocalPrefs(){
     try{ settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('prodplan-viewer-prefs')||'{}')); }catch(e){}
   }
@@ -536,7 +462,6 @@
     updateGithubStatusUI();
   }
   function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
-  function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
   function applyData(rawText, silent){
     try{
       const parsed = JSON.parse(rawText);
@@ -544,6 +469,14 @@
       tasks.forEach(t=>{
         if(!Array.isArray(t.assignees)) t.assignees = t.assignee ? [t.assignee] : [];
       });
+      if(parsed.settings){
+        syncedDisplay = {
+          theme: parsed.settings.theme || 'light',
+          batchBadgeStyle: parsed.settings.batchBadgeStyle || 'bottom-left',
+          showIcons: parsed.settings.showIcons !== false
+        };
+      }
+      applySettings();
       try{ localStorage.setItem('prodplan-viewer-cache', rawText); }catch(e){}
       renderAll();
       if(!silent) flashSynced();
@@ -563,7 +496,6 @@
       if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return; }
       if(!res.ok) throw new Error('GitHub responded '+res.status);
       const data = await res.json();
-      ghSha = data.sha;
       const content = b64DecodeUtf8(data.content);
       applyData(content, silent);
       if(!silent) showToast('Refreshed from the latest data.');
@@ -576,32 +508,6 @@
     }
   }
 
-  async function pushToGithub(){
-    if(!ghToken || !ghRepo || !ghPath) return false;
-    try{
-      const payload = JSON.stringify({tasks, history, batches, events}, null, 2);
-      const body = { message:`ProdPlan.VM Viewer update ${new Date().toISOString()}`, content: b64EncodeUtf8(payload) };
-      if(ghSha) body.sha = ghSha;
-      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
-        method:'PUT',
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
-        body: JSON.stringify(body)
-      });
-      if(!res.ok){
-        if(res.status===403 || res.status===401) showToast('Could not save — your access token may not have write permission. Ask your farm manager for an updated token.', true);
-        else showToast('Could not save your change — check your connection.', true);
-        return false;
-      }
-      const data = await res.json();
-      if(data && data.content && data.content.sha) ghSha = data.content.sha;
-      try{ localStorage.setItem('prodplan-viewer-cache', payload); }catch(e){}
-      return true;
-    }catch(e){
-      console.error('GitHub push failed', e);
-      showToast('Could not save your change — check your connection.', true);
-      return false;
-    }
-  }
 
   // ---------- read-only rendering ----------
   const ASSIGNEE_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
@@ -629,7 +535,7 @@
     const card=document.createElement('div');
     card.className='task-card'+(t.status==='done'?' done':'');
     card.dataset.id = t.id;
-    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<span class="task-actions"><button class="btn-done" title="${t.status==='done'?'Reopen':'Mark done'}">${t.status==='done'?'↺':'✓'}</button></span>`;
+    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<span class="task-status ${t.status==='done'?'done':'open'}">${t.status==='done'?'Done':'Open'}</span>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
     return card;
@@ -654,7 +560,7 @@
   function addBatchBadges(cell,key){
     const active=batchesForDate(key); if(!active.length) return;
     const forceCentered = isSmallCardScreen();
-    const style = forceCentered ? 'centered' : (settings.batchBadgeStyle||'bottom-left');
+    const style = forceCentered ? 'centered' : (syncedDisplay.batchBadgeStyle||'bottom-left');
     const showWatermark = !forceCentered && (style==='background'||style==='watermark-bottom-left'||style==='watermark-bottom-right');
     const cornerStyle = style==='watermark-bottom-left'?'bottom-left':style==='watermark-bottom-right'?'bottom-right':style;
     if(showWatermark){ const wm=document.createElement('div'); wm.className='batch-watermark'; wm.textContent='#'+active[0].number; cell.insertBefore(wm, cell.firstChild); }
@@ -866,10 +772,6 @@
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeOverlays(); });
   $('#closeOverdueTransferModal').addEventListener('click', closeOverlays);
   $('#dismissOverdueTransfer').addEventListener('click', closeOverlays);
-  $('#moveOverdueToTodayBtn').addEventListener('click', async ()=>{
-    const count = await transferOverdueToToday();
-    if(count>0) closeOverlays();
-  });
 
   $('#viewMonthBtn').addEventListener('click', ()=>{ viewMode='month'; renderAll(); });
   $('#viewYearBtn').addEventListener('click', ()=>{ viewMode='year'; renderAll(); });
@@ -884,9 +786,6 @@
   $('#closeSettings').addEventListener('click', closeOverlays);
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
-  $('#setTheme').addEventListener('change', (e)=>{ settings.theme=e.target.value; applySettings(); saveLocalPrefs(); });
-  $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons=e.target.checked; applySettings(); saveLocalPrefs(); });
-  $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle=e.target.value; applySettings(); saveLocalPrefs(); renderAll(); });
   $('#connectGithubBtn').addEventListener('click', connectGithub);
   $('#useSharedStorageBox').addEventListener('change', (e)=>{
     const repoInput = $('#githubRepoInput');
