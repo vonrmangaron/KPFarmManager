@@ -766,6 +766,9 @@
     dayModalOpenKey=null; overdueModalOpen=false;
   }
   $('#scrim').addEventListener('click', closeOverlays);
+  document.querySelectorAll('.sheet-overlay').forEach(overlay=>{
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
+  });
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeOverlays(); });
 
   $('#viewMonthBtn').addEventListener('click', ()=>{ viewMode='month'; renderAll(); });
