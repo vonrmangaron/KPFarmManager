@@ -54,15 +54,88 @@
     --shadow-lg:0 16px 40px rgba(0,0,0,0.65);
   }
 
+  /* Agriculture — fresh green fields */
+  body.theme-pasture{
+    --bg:#F3F7EF; --surface:#FFFFFF; --surface-soft:#FAFCF8; --line:#DCE8D3;
+    --ink:#1D2A17; --muted:#6B7A61;
+    --primary:#5B8C3A; --primary-dark:#3F6428; --primary-soft:#DCEBCD;
+    --secondary:#8B5E3C; --secondary-soft:#EADBCB;
+    --danger:#A3402E; --danger-soft:#F3DAD3;
+    --weekend-bg:#E7EEDD;
+  }
+
+  /* Agriculture — classic barn red */
+  body.theme-barn{
+    --bg:#FBF5EC; --surface:#FFFFFF; --surface-soft:#FDF9F2; --line:#EAD9C0;
+    --ink:#2B1B14; --muted:#7A6A5C;
+    --primary:#B23A2E; --primary-dark:#8A2B21; --primary-soft:#F2D3CD;
+    --secondary:#3F5E3F; --secondary-soft:#DCE6DC;
+    --danger:#7A2E20; --danger-soft:#EFD8D2;
+    --weekend-bg:#F0E4D2;
+  }
+
+  /* General use — clean professional blue/slate */
+  body.theme-slate{
+    --bg:#F4F6F8; --surface:#FFFFFF; --surface-soft:#FAFBFC; --line:#E1E5EA;
+    --ink:#1A1D23; --muted:#6B7280;
+    --primary:#3E6FBF; --primary-dark:#2C5296; --primary-soft:#D8E4F5;
+    --secondary:#5C6470; --secondary-soft:#E4E6E9;
+    --danger:#C1432E; --danger-soft:#F5DAD3;
+    --weekend-bg:#EBEEF2;
+  }
+
+  /* General use — warm modern coral/teal */
+  body.theme-sunrise{
+    --bg:#FFF7F1; --surface:#FFFFFF; --surface-soft:#FFFBF7; --line:#F3DFCF;
+    --ink:#2B211C; --muted:#7A6658;
+    --primary:#FF7A50; --primary-dark:#DB5B34; --primary-soft:#FFE0D1;
+    --secondary:#2F9E93; --secondary-soft:#D6EFEC;
+    --danger:#C13B2C; --danger-soft:#F5D9D2;
+    --weekend-bg:#FBEADC;
+  }
+
+  /* Agriculture dark — fields at night */
+  body.theme-dark-forest{
+    --bg:#0F1710; --surface:#182219; --surface-soft:#141C15; --line:#2A3A2C;
+    --ink:#EDF3EA; --muted:#9DB098;
+    --primary:#6FBF4A; --primary-dark:#8ED66C; --primary-soft:#1F3319;
+    --secondary:#C9A26B; --secondary-soft:#3A2F1E;
+    --danger:#FF7A66; --danger-soft:#3A1D18;
+    --weekend-bg:#16241A;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65);
+  }
+
+  /* Agriculture dark — barn at night, warm embers */
+  body.theme-dark-ember{
+    --bg:#160F0C; --surface:#221714; --surface-soft:#1B1210; --line:#3A2A22;
+    --ink:#F5EAE2; --muted:#BBA091;
+    --primary:#E8763F; --primary-dark:#FF9A63; --primary-soft:#3A2416;
+    --secondary:#7FA66B; --secondary-soft:#26301F;
+    --danger:#FF6F5C; --danger-soft:#3A1912;
+    --weekend-bg:#241712;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65);
+  }
+
+  /* General use dark — deep ocean blue */
+  body.theme-dark-ocean{
+    --bg:#0D1420; --surface:#16202F; --surface-soft:#111A27; --line:#25334A;
+    --ink:#E9EEF5; --muted:#96A7BE;
+    --primary:#5B9CE8; --primary-dark:#84B7F2; --primary-soft:#1B2E48;
+    --secondary:#8F8FE0; --secondary-soft:#282A4A;
+    --danger:#FF7A66; --danger-soft:#3A1D18;
+    --weekend-bg:#131F30;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 8px 22px rgba(0,0,0,0.55); --shadow-lg:0 16px 40px rgba(0,0,0,0.65);
+  }
+
   *{box-sizing:border-box;}
   html,body{height:100%;}
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; font-size:15px; }
 
-  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, .btn-history{ font-family:'Sora', sans-serif; }
+  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, #historyBtn, #reportBtn{ font-family:'Sora', sans-serif; }
 
   .shell{ display:flex; flex-direction:column; height:100vh; }
 
-  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:0 1px 4px rgba(0,0,0,0.04); flex-wrap:wrap; position:relative; z-index:5; }
   .barn-stripe{ height:4px; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
   .fab-delete{
     position:fixed; bottom:24px; right:24px; z-index:45;
@@ -87,12 +160,27 @@
   .nav-group{display:flex;align-items:center;gap:6px;}
   .nav-group.hidden{visibility:hidden; pointer-events:none;}
   .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;line-height:1;cursor:pointer; display:flex;align-items:center;justify-content:center;transition:background .15s ease; }
+  .notif-btn{ position:relative; }
+  .notif-badge{
+    position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px;
+    border-radius:999px; background:var(--danger); color:#fff; font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; line-height:1; font-family:'Inter',sans-serif;
+  }
+  .notif-badge.hidden{ display:none; }
   .icon-btn:hover{background:var(--primary-soft); color:var(--primary-dark);}
 
   .toolbar-label{font-weight:600;font-size:14px;min-width:120px;text-align:center;color:var(--ink);}
 
-  .btn-today, .btn-history{ border:1px solid var(--line);background:var(--surface);color:var(--ink); font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease; white-space:nowrap; }
-  .btn-today:hover, .btn-history:hover{background:var(--primary-soft); color:var(--primary-dark);}
+  .btn-today{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; }
+  .btn-today:hover{ background:var(--primary); color:#fff; }
+  #historyBtn{ border:1px solid var(--secondary); background:var(--secondary-soft); color:var(--secondary); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #historyBtn:hover{ background:var(--secondary); color:#fff; }
+  #reportBtn{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #reportBtn:hover{ background:var(--primary); color:#fff; }
+  #overdueBtn{ border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
+  #overdueBtn:hover{ background:var(--danger); color:#fff; }
+  #settingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
+  #settingsBtn:hover{ background:var(--secondary); color:#fff; }
   .btn-create-wide{ flex:1; border:none; color:#fff; font-weight:700; font-size:12.5px; padding:11px 6px; border-radius:12px; cursor:pointer; font-family:'Sora',sans-serif; box-shadow:var(--shadow-sm); transition:transform .12s ease, filter .12s ease; }
   .btn-create-wide:hover{ filter:brightness(1.08); transform:translateY(-1px); }
   .btn-create-wide.batch{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); }
@@ -104,7 +192,7 @@
 
   .main{flex:1;display:flex;min-height:0;}
 
-  .sidebar{ width:300px;flex-shrink:0; background:var(--surface); border-right:1px solid var(--line); padding:20px 18px; overflow-y:auto; overflow-x:hidden; }
+  .sidebar{ width:300px;flex-shrink:0; background:var(--surface); border-right:1px solid var(--line); box-shadow:2px 0 8px rgba(0,0,0,0.03); padding:20px 18px; overflow-y:auto; overflow-x:hidden; position:relative; z-index:2; }
   .sidebar h2{
     font-size:13.5px;font-weight:700;margin:22px 0 12px;color:var(--ink);
     padding-bottom:6px;border-bottom:2px solid var(--primary);display:inline-block;
@@ -175,10 +263,12 @@
   .task-name{font-size:var(--task-font-size);font-weight:500;line-height:1.15;word-break:break-word;overflow-wrap:break-word;color:var(--ink);}
   .task-card.done .task-name{text-decoration:line-through;color:var(--muted);}
 
-  .task-actions{display:flex;gap:2px;flex-shrink:0;}
-  .task-actions button{ width:22px;height:22px;border:none;background:transparent;color:var(--muted);font-size:12px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; transition:background .15s ease, color .15s ease; }
-  .task-actions .btn-done:hover{background:var(--secondary-soft); color:var(--secondary);}
-  .task-actions .btn-delete:hover, .task-actions .btn-freq-delete:hover{background:var(--danger-soft); color:var(--danger);}
+  .task-actions{display:flex;gap:4px;flex-shrink:0;}
+  .task-actions button{ width:24px;height:24px;border:none;font-weight:700;font-size:12.5px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; transition:background .15s ease, color .15s ease, transform .1s ease; }
+  .task-actions .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
+  .task-actions .btn-done:hover{background:var(--secondary); color:#fff; transform:scale(1.08);}
+  .task-actions .btn-delete, .task-actions .btn-freq-delete{ background:var(--danger-soft); color:var(--danger); font-size:11px; }
+  .task-actions .btn-delete:hover, .task-actions .btn-freq-delete:hover{background:var(--danger); color:#fff; transform:scale(1.08);}
   .task-actions .btn-delete.confirm{background:var(--danger); color:#fff;}
 
   .calendar-wrap{flex:1;overflow:auto;padding:20px;min-width:0;}
@@ -293,21 +383,102 @@
     .sidebar{width:260px;}
   }
 
+  /* ---- Sidebar toggle (hamburger) — shown on tablet & mobile ---- */
+  .sidebar-toggle{ display:none; }
+
+  /* ---- Bottom nav + quick-add FAB — mobile only ---- */
+  .bottom-nav{ display:none; }
+  .fab-add{ display:none; }
+  .sheet-overlay{ display:none; }
+
+  @media (max-width: 1024px){
+    .sidebar-toggle{
+      display:flex; width:34px; height:34px; border-radius:9px; border:1px solid var(--line);
+      background:var(--surface); color:var(--ink); font-size:16px; cursor:pointer;
+      align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .sidebar{
+      position:fixed; top:0; left:0; height:100%; width:300px; max-width:82vw;
+      z-index:38; transform:translateX(-100%); transition:transform .25s ease;
+      box-shadow:var(--shadow-lg);
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .main{ position:relative; }
+  }
+
   @media (max-width: 760px){
     .main{flex-direction:column;}
-    .sidebar{width:100%; max-height:44vh; border-right:none; border-bottom:1px solid var(--line);}
     .month-grid{grid-auto-rows:118px;}
-    .history-drawer{width:88%;}
-    .form-modal{width:92vw;}
-    .toolbar{justify-content:center;}
-    .topbar{justify-content:center; text-align:center;}
+    .toolbar{justify-content:flex-end; flex-wrap:nowrap;}
+    .topbar{justify-content:space-between;}
+    .brand small{display:none;}
+
+    /* Hide the desktop toolbar controls that move into the bottom nav / More sheet */
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn,
+    .toolbar #reportBtn, .toolbar #settingsBtn, .toolbar #overdueBtn{ display:none; }
+    .shell{ padding-bottom:64px; } /* room for the bottom nav */
+
+    .bottom-nav{
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36;
+      background:var(--surface); border-top:1px solid var(--line);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 16px rgba(0,0,0,0.06);
+    }
+    .bottom-nav button{
+      flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+      background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif;
+      font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer;
+    }
+    .bottom-nav button .bn-icon{ font-size:18px; line-height:1; }
+    .bottom-nav button.active{ color:var(--primary-dark); }
+
+    .fab-delete{ display:none; } /* moved into the More sheet on phone */
+    .fab-add{
+      display:flex; position:fixed; right:16px; bottom:74px; z-index:37;
+      width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff;
+      border:none; font-size:26px; align-items:center; justify-content:center;
+      box-shadow:var(--shadow-lg); cursor:pointer;
+    }
+
+    .sheet-overlay{
+      display:flex; position:fixed; inset:0; z-index:46; align-items:flex-end;
+      background:rgba(0,0,0,0.3);
+    }
+    .sheet-overlay.hidden{ display:none; }
+    .sheet-panel{
+      background:var(--surface); width:100%; border-radius:18px 18px 0 0;
+      padding:10px 16px calc(16px + env(safe-area-inset-bottom));
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .sheet-handle{ width:36px; height:4px; background:var(--line); border-radius:99px; margin:2px auto 8px; }
+    .sheet-title{ font-family:'Sora',sans-serif; font-weight:700; font-size:14px; margin-bottom:4px; }
+    .sheet-option{
+      display:flex; align-items:center; gap:12px; padding:13px 10px; border-radius:12px;
+      background:var(--surface-soft); font-size:14px; font-weight:600; border:none;
+      text-align:left; width:100%; cursor:pointer; color:var(--ink); font-family:'Inter',sans-serif;
+    }
+    .sheet-option .s-ic{
+      width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:15px; color:#fff; flex-shrink:0;
+    }
+
+    /* Bigger touch targets */
+    .icon-btn{ width:38px; height:38px; font-size:17px; }
+    .task-actions button{ width:30px; height:30px; font-size:14px; }
+    .day-cell{ cursor:pointer; }
+
+    /* Full-screen sheets instead of small centered popups */
+    .form-modal{
+      top:0; left:0; right:0; bottom:0; width:100%; height:100%;
+      max-width:100%; max-height:100%; transform:none; border-radius:0;
+    }
+    .history-drawer{ width:100%; }
   }
 
   @media (max-width: 480px){
     body{font-size:14px;}
     .topbar{padding:12px 14px;}
-    .brand{font-size:17px;}
-    .brand small{display:none;}
+    .brand{font-size:16px;}
     .toolbar-label{min-width:84px; font-size:12.5px;}
     .quick-actions{flex-direction:column;}
     .month-grid{grid-auto-rows:98px; gap:6px;}
@@ -316,10 +487,6 @@
     .weekday-row{gap:4px;}
     .weekday-row span{font-size:10px; padding:5px 0;}
     .calendar-wrap{padding:12px;}
-    .form-modal, .day-modal{width:94vw;}
-    .history-drawer{width:94vw;}
-    .segmented button{padding:6px 10px; font-size:12px;}
-    .btn-today, .btn-history{padding:6px 10px; font-size:12px;}
   }
 </style>
 </head>
@@ -327,6 +494,7 @@
 
 <div class="shell">
   <div class="topbar">
+    <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
     <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small></div>
 
     <div class="toolbar">
@@ -343,6 +511,7 @@
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="btn-history" id="historyBtn">History</button>
       <button class="btn-history" id="reportBtn">Report</button>
+      <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
       <span class="save-indicator" id="saveIndicator">Saved</span>
     </div>
@@ -373,7 +542,10 @@
         <button class="btn-app" id="addTaskBtn">Add task</button>
       </div>
 
-      <h2>Frequent tasks — drag to use</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
+        <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;">Frequent tasks</h2>
+        <button class="icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" style="width:26px;height:26px;font-size:14px;flex-shrink:0;">+</button>
+      </div>
       <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
 
       <h2>Backlog</h2>
@@ -392,7 +564,38 @@
   <footer class="app-footer">Made by Von Mangaron • Personal use only • not for commercial use</footer>
 </div>
 
+<nav class="bottom-nav" id="bottomNav">
+  <button id="navAgendaBtn"><span class="bn-icon">📋</span>Agenda</button>
+  <button id="navMonthBtn"><span class="bn-icon">📅</span>Month</button>
+  <button id="navManageBtn"><span class="bn-icon">🗂️</span>Manage</button>
+  <button id="navMoreBtn"><span class="bn-icon">⋯</span>More</button>
+</nav>
+
 <button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
+<button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
+
+<div class="sheet-overlay hidden" id="quickAddSheet">
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Add to ProdPlan.VM</div>
+    <button class="sheet-option" id="quickAddTaskBtn"><span class="s-ic" style="background:var(--primary);">✓</span>New task</button>
+    <button class="sheet-option" id="quickAddBatchBtn"><span class="s-ic" style="background:var(--secondary);">🐣</span>New batch</button>
+    <button class="sheet-option" id="quickAddEventBtn"><span class="s-ic" style="background:var(--danger);">📝</span>New audit</button>
+  </div>
+</div>
+
+<div class="sheet-overlay hidden" id="moreSheet">
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">More</div>
+    <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
+    <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
+    <button class="sheet-option" id="moreReportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Report</button>
+    <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
+    <button class="sheet-option" id="moreOverdueBtn"><span class="s-ic" style="background:var(--danger);">🔔</span><span id="moreOverdueLabel">Past due tasks</span></button>
+    <button class="sheet-option" id="moreSettingsBtn"><span class="s-ic" style="background:#6E6E6E;">⚙</span>Settings</button>
+  </div>
+</div>
 
 <div class="scrim" id="scrim"></div>
 
@@ -419,8 +622,15 @@
 
     <label for="setTheme">Theme</label>
     <select id="setTheme">
-      <option value="light">Light</option>
+      <option value="light">Light (Classic)</option>
       <option value="dark">Dark</option>
+      <option value="dark-forest">Dark Forest (Farm)</option>
+      <option value="dark-ember">Dark Ember (Farm)</option>
+      <option value="dark-ocean">Dark Ocean</option>
+      <option value="pasture">Pasture Green (Farm)</option>
+      <option value="barn">Barn Red (Farm)</option>
+      <option value="slate">Slate (Professional)</option>
+      <option value="sunrise">Sunrise (Warm)</option>
     </select>
 
     <label for="setBatchStyle">Batch label style on calendar</label>
@@ -476,6 +686,9 @@
     <button class="btn-app" id="dayModalAddBtn">Add task</button>
     <div class="day-tasks" id="dayModalTaskList" data-date="" style="margin-top:10px;"></div>
     <button class="btn-danger-outline" id="deleteAllDayTasksBtn" style="margin-top:6px;">Delete all tasks for this day</button>
+
+    <label style="margin-top:14px;">Backlog — tap or drag to add to this day</label>
+    <div class="day-tasks" id="dayModalBacklogList" data-date="backlog"></div>
   </div>
 </div>
 
@@ -490,7 +703,7 @@
     <input type="date" id="batchEndInput">
     <label for="batchColorInput">Highlight color</label>
     <input type="color" id="batchColorInput">
-    <label class="checkbox-row"><input type="checkbox" id="batchChecklistBox"> Add 7-day prep checklist to Backlog</label>
+    <label class="checkbox-row"><input type="checkbox" id="batchChecklistBox"> Add Frequent Task Checklist to Backlog</label>
 
     <label for="shedCountInput" style="margin-top:10px;">Number of sheds (optional — auto-schedules weekly weight checks)</label>
     <input type="number" id="shedCountInput" min="0" max="30" placeholder="e.g. 4">
@@ -507,7 +720,7 @@
     <input type="text" id="eventNameInput" placeholder="e.g. Welfare Audit" maxlength="60">
     <label for="eventDateInput">Event date</label>
     <input type="date" id="eventDateInput">
-    <label class="checkbox-row"><input type="checkbox" id="eventChecklistBox"> Add 7-day prep checklist to Backlog</label>
+    <label class="checkbox-row"><input type="checkbox" id="eventChecklistBox"> Add Frequent Task Checklist to Backlog</label>
     <label for="eventColorInput">Audit card background color</label>
     <input type="color" id="eventColorInput">
     <button class="btn-app" id="addEventBtn" style="margin-top:6px;">Add event</button>
@@ -603,7 +816,7 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
-  let viewMode = 'month'; // 'month' | 'year' | 'list'
+  let viewMode = window.innerWidth <= 760 ? 'list' : 'month'; // 'month' | 'year' | 'list'
   let sortables = [];
   const pendingDeletes = new Map();
   let pendingIcon = null, pendingIconFor = null;
@@ -679,9 +892,11 @@
   }
 
   // ---------- settings ----------
+  const THEME_CLASSES = ['theme-dark','theme-dark-forest','theme-dark-ember','theme-dark-ocean','theme-pasture','theme-barn','theme-slate','theme-sunrise'];
   function applySettings(){
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
-    document.body.classList.toggle('theme-dark', settings.theme==='dark');
+    document.body.classList.remove(...THEME_CLASSES);
+    if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
     document.body.classList.toggle('hide-icons', !settings.showIcons);
     const fs=$('#setFontSize'), th=$('#setTheme'), si=$('#setShowIcons'), bs=$('#setBatchStyle');
     if(fs) fs.value = settings.fontSize;
@@ -858,7 +1073,7 @@
 
   function addPrepChecklistToBacklog(contextLabel){
     PREP_CHECKLIST.forEach(n=> addTask(n, guessIcon(n), null));
-    addHistory('Prep checklist added', `${PREP_CHECKLIST.length} prep tasks added to Backlog for ${contextLabel}`);
+    addHistory('Frequent Task Checklist added', `${PREP_CHECKLIST.length} tasks added to Backlog for ${contextLabel}`);
   }
 
   // ---------- batches ----------
@@ -1298,14 +1513,25 @@
       list.appendChild(wrap);
     });
   }
-  function checkOverdueTasksOnLoad(){
+  function updateOverdueBadge(){
     const todayKey = dateKey(new Date());
-    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
-    if(overdue.length===0) return;
+    const count = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).length;
+    const badge = $('#overdueBadge');
+    if(badge){ badge.textContent = count > 99 ? '99+' : count; badge.classList.toggle('hidden', count===0); }
+    const moreLabel = $('#moreOverdueLabel');
+    if(moreLabel) moreLabel.textContent = count>0 ? `Past due tasks (${count})` : 'Past due tasks';
+  }
+  function openOverdueModal(){
     overdueModalOpen = true;
     refreshOverdueList();
     $('#overdueModal').classList.add('open');
     $('#scrim').classList.add('show');
+  }
+  function checkOverdueTasksOnLoad(){
+    const todayKey = dateKey(new Date());
+    const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
+    if(overdue.length===0) return;
+    openOverdueModal();
   }
 
   // ---------- rendering ----------
@@ -1318,7 +1544,7 @@
       <span class="task-body"><span class="task-name"></span></span>
       <span class="task-actions">
         <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?'↺':'✓'}</button>
-        <button class="btn-delete" title="Delete">✕</button>
+        <button class="btn-delete" title="Delete">🗑️</button>
       </span>`;
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
@@ -1335,7 +1561,7 @@
     card.innerHTML = `
       <span class="task-icon"></span>
       <span class="task-body"><span class="task-name"></span></span>
-      <span class="task-actions"><button class="btn-freq-delete" title="Remove from frequent list">✕</button></span>`;
+      <span class="task-actions"><button class="btn-freq-delete" title="Remove from frequent list">🗑️</button></span>`;
     renderIconInto(card.querySelector('.task-icon'), item.icon);
     card.querySelector('.task-name').textContent = item.name;
     card.querySelector('.btn-freq-delete').addEventListener('click', (e)=>{ e.stopPropagation(); removeFrequentTemplate(item.id); });
@@ -1460,7 +1686,7 @@
           <span class="e-actions"><button class="edit-event" title="Edit">✎</button><button class="remove-event" title="Remove event">✕</button></span>
         </div>
         <div class="e-sub"></div>
-        ${ev.checklist ? '<span class="event-checklist-tag">Prep checklist added to Backlog</span>' : ''}
+        ${ev.checklist ? '<span class="event-checklist-tag">Frequent Task Checklist added</span>' : ''}
         <div class="event-edit">
           <input type="text" class="edit-name" value="${ev.name}">
           <input type="date" class="edit-date" value="${ev.date}">
@@ -1735,6 +1961,8 @@
     $('#viewYearBtn').classList.toggle('active', viewMode==='year');
     $('#viewListBtn').classList.toggle('active', viewMode==='list');
     $('#navGroup').classList.toggle('hidden', viewMode==='list');
+    $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
+    $('#navMonthBtn').classList.toggle('active', viewMode==='month' || viewMode==='year');
   }
 
   function initSortables(){
@@ -1742,13 +1970,28 @@
     sortables = [];
     const freqList = $('#frequentList');
     if(freqList){
-      sortables.push(Sortable.create(freqList, { group:{name:'tasks', pull:'clone', put:false}, sort:false, animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag' }));
+      sortables.push(Sortable.create(freqList, {
+        group:{name:'tasks', pull:'clone', put:true}, sort:false, animation:150,
+        ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+        delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        onAdd:(evt)=>{
+          const item = evt.item;
+          if(item.dataset.template==='true') return; // a frequent chip dropped on itself — nothing to do
+          const id = item.dataset.id;
+          const t = tasks.find(x=>x.id===id);
+          if(!t) return;
+          addFrequentTemplate(t.name, t.icon);
+          tasks = tasks.filter(x=>x.id!==id);
+          persist(); renderAll();
+        }
+      }));
     }
     document.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
       const s = Sortable.create(list, {
         group:'tasks', animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         filter:'.day-count, .empty-note',
         preventOnFilter:false,
+        delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
         onAdd:(evt)=>{
           suppressNextClick = true;
           setTimeout(()=>{ suppressNextClick = false; }, 80);
@@ -1779,6 +2022,7 @@
     initSortables();
     if(dayModalOpenKey) renderDayModalTasks(dayModalOpenKey);
     if(overdueModalOpen) refreshOverdueList();
+    updateOverdueBadge();
   }
 
   // ---------- day modal ----------
@@ -1797,6 +2041,22 @@
     const dayTasks = tasks.filter(t=>t.date===key);
     if(dayTasks.length===0) list.innerHTML = '<div class="empty-note">Nothing scheduled yet — add one above or drag a task here.</div>';
     else dayTasks.forEach(t=> list.appendChild(buildTaskCard(t)));
+
+    const backlogBox = $('#dayModalBacklogList');
+    backlogBox.innerHTML = '';
+    const open = tasks.filter(t=>t.date===null);
+    if(open.length===0){ backlogBox.innerHTML = '<div class="empty-note">Backlog is empty.</div>'; }
+    else{
+      open.forEach(t=>{
+        const card = buildTaskCard(t);
+        card.title = 'Tap to add to this day, or drag';
+        card.addEventListener('click', (e)=>{
+          if(e.target.closest('.btn-done') || e.target.closest('.btn-delete')) return;
+          moveTask(t.id, key);
+        });
+        backlogBox.appendChild(card);
+      });
+    }
     initSortables();
   }
 
@@ -1811,7 +2071,7 @@
         clearTimeout(pendingDeletes.get(id)); pendingDeletes.delete(id); deleteTask(id);
       } else {
         delBtn.classList.add('confirm'); delBtn.textContent='⚠'; delBtn.title='Click again to confirm delete';
-        const t = setTimeout(()=>{ pendingDeletes.delete(id); delBtn.classList.remove('confirm'); delBtn.textContent='✕'; delBtn.title='Delete'; }, 2500);
+        const t = setTimeout(()=>{ pendingDeletes.delete(id); delBtn.classList.remove('confirm'); delBtn.textContent='🗑️'; delBtn.title='Delete'; }, 2500);
         pendingDeletes.set(id, t);
       }
       return;
@@ -1872,6 +2132,20 @@
     taskInput.focus();
   });
   taskInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#addTaskBtn').click(); });
+  $('#quickFrequentAddBtn').addEventListener('click', ()=>{
+    let added = 0;
+    PREP_CHECKLIST.forEach(name=>{
+      const exists = frequentTemplates.find(f=> f.name.trim().toLowerCase()===name.trim().toLowerCase());
+      if(!exists){ frequentTemplates.push({ id: uid(), name, icon: guessIcon(name) }); added++; }
+    });
+    if(added>0){
+      addHistory('Frequent Task Checklist added', `${added} checklist task(s) added to Frequent tasks`);
+      persist(); renderAll();
+      showToast(`${added} checklist task(s) added to Frequent tasks.`);
+    } else {
+      showToast('The checklist tasks are already in your Frequent tasks.', true);
+    }
+  });
 
   $('#dayModalTaskInput').addEventListener('input', (e)=>{ $('#dayModalIconPreview').textContent = guessIcon(e.target.value.trim()); });
   $('#dayModalAddBtn').addEventListener('click', ()=>{
@@ -2027,11 +2301,52 @@
     $('#reportModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
+    document.querySelector('.sidebar').classList.remove('open');
+    $('#quickAddSheet').classList.add('hidden');
+    $('#moreSheet').classList.add('hidden');
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
     deleteAllPending = false;
     overdueModalOpen = false;
   }
+  function toggleSidebar(){
+    const sb = document.querySelector('.sidebar');
+    const willOpen = !sb.classList.contains('open');
+    closeOverlays();
+    if(willOpen){ sb.classList.add('open'); $('#scrim').classList.add('show'); }
+  }
+  $('#sidebarToggleBtn').addEventListener('click', toggleSidebar);
+  $('#navManageBtn').addEventListener('click', toggleSidebar);
+
+  $('#navAgendaBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
+  $('#navMonthBtn').addEventListener('click', ()=>{ viewMode='month'; syncViewButtons(); renderAll(); });
+  $('#navMoreBtn').addEventListener('click', ()=>{
+    closeOverlays();
+    $('#moreSheet').classList.remove('hidden');
+    $('#scrim').classList.add('show');
+  });
+
+  $('#quickAddFabBtn').addEventListener('click', ()=>{
+    closeOverlays();
+    $('#quickAddSheet').classList.remove('hidden');
+    $('#scrim').classList.add('show');
+  });
+  $('#quickAddTaskBtn').addEventListener('click', ()=>{
+    closeOverlays();
+    toggleSidebar();
+    setTimeout(()=> taskInput.focus(), 260);
+  });
+  $('#quickAddBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#batchModal'); });
+  $('#quickAddEventBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#eventModal'); });
+
+  $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
+  $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
+  $('#moreReportBtn').addEventListener('click', ()=>{ closeOverlays(); $('#reportBtn').click(); });
+  $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
+  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
+  $('#overdueBtn').addEventListener('click', openOverdueModal);
+  $('#moreOverdueBtn').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
+
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
