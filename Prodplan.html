@@ -3393,8 +3393,15 @@
     updateBatchStyleAvailability();
     if(viewMode==='month') renderMonth();
   });
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'hidden') flushPendingPush();
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.visibilityState === 'hidden'){
+      flushPendingPush();
+    } else if(document.visibilityState === 'visible'){
+      if(ghToken && ghRepo && ghPath){
+        if(pushPending){ await runScheduledPush(); }
+        pullFromGithub(true);
+      }
+    }
   });
   window.addEventListener('pagehide', flushPendingPush);
 
