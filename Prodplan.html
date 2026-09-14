@@ -504,6 +504,18 @@
   .history-item .h-detail{font-size:13px;color:var(--ink);margin:2px 0;overflow-wrap:break-word;}
   .history-item .h-time{font-size:11.5px;color:var(--muted);}
   .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:46;display:none;}
+  .loading-overlay{
+    position:fixed; inset:0; z-index:100; background:var(--bg);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  }
+  .loading-overlay.show{ display:flex; }
+  .loading-spinner{
+    width:36px; height:36px; border-radius:50%;
+    border:4px solid var(--line); border-top-color:var(--primary);
+    animation:loading-spin 0.8s linear infinite;
+  }
+  @keyframes loading-spin{ to{ transform:rotate(360deg); } }
+  .loading-text{ font-family:'Sora',sans-serif; font-weight:600; font-size:13.5px; color:var(--muted); }
   .scrim.show{display:block;}
 
   .settings-body{ padding:16px 18px; display:flex; flex-direction:column; gap:6px; overflow-y:auto; }
@@ -686,6 +698,11 @@
 </style>
 </head>
 <body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading latest data…</div>
+</div>
 
 <div class="shell">
   <div class="topbar">
@@ -1259,7 +1276,7 @@
   }
 
   // ---------- debounced GitHub sync ----------
-  // Waits 5s after the last change before pushing (resets on every new change),
+  // Waits 2s after the last change before pushing (resets on every new change),
   // but never waits longer than 30s straight, so a burst of rapid edits still
   // lands soon. Also flushes immediately if the app is closed/backgrounded
   // mid-countdown, so nothing gets silently lost.
@@ -1270,7 +1287,7 @@
   function schedulePush(){
     pushPending = true;
     clearTimeout(pushDebounceTimer);
-    pushDebounceTimer = setTimeout(runScheduledPush, 5000);
+    pushDebounceTimer = setTimeout(runScheduledPush, 2000);
     if(!pushMaxWaitTimer){
       pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
     }
@@ -1320,10 +1337,10 @@
     applySettings();
     updateBatchColorDefault();
     updateEventColorDefault();
+    await initGithubSync();
     renderAll();
     checkOverdueTasksOnLoad();
     setTimeout(updateOverdueBadge, 300);
-    initGithubSync();
   }
   function flashSaved(){
     const el = $('#saveIndicator');
@@ -1349,7 +1366,7 @@
     if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
-  function initGithubSync(){
+  async function initGithubSync(){
     try{
       ghToken = localStorage.getItem('prodplan-gh-token') || null;
       ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
@@ -1357,7 +1374,22 @@
       ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
     }catch(e){}
     updateGithubStatusUI();
-    if(ghToken && ghRepo && ghPath) pullFromGithub(true);
+    if(ghToken && ghRepo && ghPath){
+      showLoadingOverlay();
+      await Promise.race([
+        pullFromGithub(true),
+        new Promise(resolve=> setTimeout(resolve, 6000))
+      ]);
+      hideLoadingOverlay();
+    }
+  }
+  function showLoadingOverlay(){
+    const el = $('#loadingOverlay');
+    if(el) el.classList.add('show');
+  }
+  function hideLoadingOverlay(){
+    const el = $('#loadingOverlay');
+    if(el) el.classList.remove('show');
   }
   async function connectGithub(){
     const token = $('#githubTokenInput').value.trim();
