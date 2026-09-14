@@ -272,6 +272,16 @@
   <div class="loading-text">Loading latest data…</div>
 </div>
 
+<div class="loading-overlay" id="loadErrorOverlay" style="gap:16px;">
+  <div style="font-size:32px;">⚠️</div>
+  <div class="loading-text" style="font-size:15px;color:var(--ink);">Couldn't load your data</div>
+  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your access token, repo, and farm name are still correct.</div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn-app" id="retryLoadBtn" style="width:auto;padding:10px 20px;">Retry</button>
+    <button class="btn-app" id="openSettingsFromErrorBtn" style="width:auto;padding:10px 20px;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);">Open Settings</button>
+  </div>
+</div>
+
 <div class="shell">
   <div class="topbar">
     <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small> <span class="badge-viewonly">VIEW ONLY</span></div>
@@ -494,16 +504,19 @@
     updateGithubStatusUI();
     if(ghToken && ghRepo && ghPath){
       showLoadingOverlay();
-      await Promise.race([
-        pullFromGithub(true),
-        new Promise(resolve=> setTimeout(resolve, 6000))
-      ]);
-      hideLoadingOverlay();
-    } else {
+      let ok = false;
       try{
-        const cached = localStorage.getItem('prodplan-viewer-cache');
-        if(cached) applyData(cached, true);
-      }catch(e){}
+        ok = await Promise.race([
+          pullFromGithub(true),
+          new Promise(resolve=> setTimeout(()=>resolve(false), 6000))
+        ]);
+      }catch(e){ ok = false; }
+      hideLoadingOverlay();
+      if(!ok){ showLoadErrorOverlay(); return false; }
+      return true;
+    } else {
+      showLoadErrorOverlay();
+      return false;
     }
   }
   function showLoadingOverlay(){
@@ -512,6 +525,14 @@
   }
   function hideLoadingOverlay(){
     const el = $('#loadingOverlay');
+    if(el) el.classList.remove('show');
+  }
+  function showLoadErrorOverlay(){
+    const el = $('#loadErrorOverlay');
+    if(el) el.classList.add('show');
+  }
+  function hideLoadErrorOverlay(){
+    const el = $('#loadErrorOverlay');
     if(el) el.classList.remove('show');
   }
   async function connectGithub(){
@@ -546,7 +567,6 @@
         };
       }
       applySettings();
-      try{ localStorage.setItem('prodplan-viewer-cache', rawText); }catch(e){}
       renderAll();
       if(!silent) flashSynced();
       checkOverdueOnLoad();
@@ -557,23 +577,22 @@
     clearTimeout(flashSynced._t); flashSynced._t=setTimeout(()=>el.classList.remove('show'),1500);
   }
   async function pullFromGithub(silent){
-    if(!ghToken || !ghRepo || !ghPath) return;
+    if(!ghToken || !ghRepo || !ghPath) return false;
     try{
       const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
         headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
       });
-      if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return; }
+      if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
       if(!res.ok) throw new Error('GitHub responded '+res.status);
       const data = await res.json();
       const content = b64DecodeUtf8(data.content);
       applyData(content, silent);
       if(!silent) showToast('Refreshed from the latest data.');
+      return true;
     }catch(e){
       console.error(e);
       if(!silent) showToast('Could not refresh — check your connection.', true);
-      else{
-        try{ const cached=localStorage.getItem('prodplan-viewer-cache'); if(cached) applyData(cached, true); }catch(err){}
-      }
+      return false;
     }
   }
 
@@ -652,7 +671,7 @@
   }
   function buildDayCount(key){
     const wrap=document.createElement('div'); wrap.className='day-count';
-    const dayTasks=tasks.filter(t=>t.date===key); if(dayTasks.length===0) return wrap;
+    const dayTasks=tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0)); if(dayTasks.length===0) return wrap;
     const done=dayTasks.filter(t=>t.status==='done').length;
     const iconsWrap=document.createElement('div'); iconsWrap.className='day-count-icons';
     dayTasks.slice(0,4).forEach(t=>{ const span=document.createElement('span'); renderIconInto(span,t.icon); iconsWrap.appendChild(span); });
@@ -713,7 +732,7 @@
     if(agendaFilter==='today') filtered = tasks.filter(t=> t.date===todayKey);
     else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(t=> t.date && t.date>=todayKey && t.date<=weekEnd); }
     else filtered = tasks.filter(t=> t.date && t.date>=todayKey);
-    return filtered.sort((a,b)=>a.date.localeCompare(b.date));
+    return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.order||0)-(b.order||0)));
   }
   function buildAgendaFilterBar(){
     const bar=document.createElement('div'); bar.className='agenda-filter';
@@ -824,7 +843,7 @@
   function renderDayModal(key){
     $('#dayModalTitle').textContent = toDateObj(key).toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric',weekday:'long'});
     const box=$('#dayModalTaskList'); box.innerHTML='';
-    const dayTasks=tasks.filter(t=>t.date===key);
+    const dayTasks=tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
     if(dayTasks.length===0) box.innerHTML='<div class="empty-note">Nothing scheduled for this day.</div>';
     else dayTasks.forEach(t=> box.appendChild(buildReadOnlyTaskCard(t)));
   }
@@ -932,11 +951,21 @@
     }
   });
 
+  $('#retryLoadBtn').addEventListener('click', async ()=>{
+    hideLoadErrorOverlay();
+    const ok = await initGithub();
+    if(ok) renderAll();
+  });
+  $('#openSettingsFromErrorBtn').addEventListener('click', ()=>{
+    hideLoadErrorOverlay();
+    openDrawer('#settingsDrawer');
+  });
+
   loadLocalPrefs();
   applySettings();
   (async ()=>{
-    await initGithub();
-    renderAll();
+    const ok = await initGithub();
+    if(ok) renderAll();
   })();
 })();
 </script>
