@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32'%3E%3Cstop offset='0' stop-color='%23E0A339'/%3E%3Cstop offset='1' stop-color='%23B08463'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='21' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='12' fill='white' text-anchor='middle'%3EVM%3C/text%3E%3C/svg%3E">
-<title>ProdPlan.VM — Poultry Farm</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M38 30 C36 18, 44 10, 44 22 C46 10, 54 10, 54 22 C56 10, 64 18, 62 30 Z' fill='%23FFC812'/%3E%3Cpath d='M79 52 L90 55 L79 60 Z' fill='%23FFC812'/%3E%3Ccircle cx='48' cy='56' r='32' fill='%2315171B'/%3E%3Cpath d='M48 56 L48 37' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M48 56 L61 47' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='48' cy='56' r='4.2' fill='white'/%3E%3C/svg%3E">
+<title>CluckWise.vm</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFB22C">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ProdPlan.VM">
+<meta name="apple-mobile-web-app-title" content="CluckWise.vm">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -27,9 +27,9 @@
     --line:#E8DFD1;
     --ink:#2B2116;
     --muted:#8C7B68;
-    --primary:#E0A339;
-    --primary-dark:#A8721F;
-    --primary-soft:#F6E4C1;
+    --primary:#FFC812;
+    --primary-dark:#C99A0E;
+    --primary-soft:#FFF4CC;
     --secondary:#B08463;
     --secondary-soft:#F0E4D6;
     --danger:#C1502E;
@@ -691,7 +691,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
-      <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small></div>
+      <div class="brand"><span class="chick">🐔</span>CluckWise<span class="accent">.vm</span></div>
       <div class="nav-group" id="navGroup">
         <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
         <span class="toolbar-label" id="periodLabel"></span>
@@ -790,7 +790,7 @@
 <div class="sheet-overlay hidden" id="quickAddSheet">
   <div class="sheet-panel">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Add to ProdPlan.VM</div>
+    <div class="sheet-title">Add to CluckWise.vm</div>
     <button class="sheet-option" id="quickAddTaskBtn"><span class="s-ic" style="background:var(--primary);">✓</span>New task</button>
     <button class="sheet-option" id="quickAddBatchBtn"><span class="s-ic" style="background:var(--secondary);">🐣</span>New batch</button>
     <button class="sheet-option" id="quickAddEventBtn"><span class="s-ic" style="background:var(--danger);">📝</span>New audit</button>
@@ -1731,17 +1731,17 @@
         doc.text(text, marginX, y); y += 15;
       }
 
-      let scopedBatch = null, rangeStart = null, rangeEnd = null, titleText = 'ProdPlan.VM — Production Report', subtitleText = null;
+      let scopedBatch = null, rangeStart = null, rangeEnd = null, titleText = 'CluckWise.vm — Production Report', subtitleText = null;
       if(opts.type==='batch' && opts.batchNumber){
         scopedBatch = batches.find(b=>b.number===opts.batchNumber) || null;
         if(scopedBatch){
           rangeStart = scopedBatch.start; rangeEnd = scopedBatch.end;
-          titleText = `ProdPlan.VM — Batch #${scopedBatch.number} Report`;
+          titleText = `CluckWise.vm — Batch #${scopedBatch.number} Report`;
           subtitleText = `Batch window: ${formatFull(scopedBatch.start)} – ${formatFull(scopedBatch.end)}`;
         }
       } else if(opts.type==='range' && opts.start && opts.end){
         rangeStart = opts.start; rangeEnd = opts.end;
-        titleText = 'ProdPlan.VM — Task Report';
+        titleText = 'CluckWise.vm — Task Report';
         subtitleText = `Date range: ${formatFull(rangeStart)} – ${formatFull(rangeEnd)}`;
       }
 
@@ -1827,7 +1827,7 @@
           doc.text(`Page ${i} of ${pageCountCk}`, pageWidth-marginX-60, pageHeight-24);
         }
         const suffixCk = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
-        doc.save(`ProdPlan-Checklist${suffixCk}-${dateKey(new Date())}.pdf`);
+        doc.save(`CluckWise-Checklist${suffixCk}-${dateKey(new Date())}.pdf`);
         showToast('Checklist downloaded.');
         return;
       }
@@ -1907,7 +1907,7 @@
       }
 
       const suffix = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
-      doc.save(`ProdPlan-Report${suffix}-${dateKey(new Date())}.pdf`);
+      doc.save(`CluckWise-Report${suffix}-${dateKey(new Date())}.pdf`);
       showToast('Report downloaded.');
     }catch(e){
       console.error(e);
@@ -3379,7 +3379,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ProdPlan-backup-${dateKey(new Date())}.json`;
+    a.download = `CluckWise-backup-${dateKey(new Date())}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -3407,7 +3407,7 @@
         renderAll();
         showToast('Data imported successfully.');
       }catch(err){
-        showToast('Could not read that file — make sure it is a ProdPlan export.', true);
+        showToast('Could not read that file — make sure it is a CluckWise export.', true);
       }
     };
     reader.readAsText(file);
