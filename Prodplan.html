@@ -676,7 +676,7 @@
 <div class="loading-overlay" id="loadErrorOverlay" style="gap:16px;">
   <div style="font-size:32px;">⚠️</div>
   <div class="loading-text" style="font-size:15px;color:var(--ink);">Couldn't load your data</div>
-  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your GitHub token, repo, and farm name are still correct.</div>
+  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your farm name is still correct.</div>
   <div style="display:flex;gap:10px;">
     <button class="btn-app" id="retryLoadBtn" style="width:auto;padding:10px 20px;">Retry</button>
     <button class="btn-app" id="openSettingsFromErrorBtn" style="width:auto;padding:10px 20px;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);">Open Settings</button>
@@ -852,13 +852,8 @@
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
 
-    <label style="margin-top:16px;">Cloud sync (GitHub)</label>
+    <label style="margin-top:16px;">Cloud sync</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
-    <label for="githubTokenInput">Personal access token</label>
-    <input type="password" id="githubTokenInput" placeholder="Fine-grained token, Contents: Read & write">
-    <label for="githubRepoInput">Storage</label>
-    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
-    <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
     <p style="font-size:11px;color:var(--danger);margin:2px 0 0;font-weight:600;">⚠️ Remember this exact name — you'll need to type it the same way on every other device to sync the same data.</p>
@@ -1049,12 +1044,13 @@
 
 <script>
 (function(){
-  // ---- Cloud sync via the GitHub Contents API (optional) ----
-  // Each person using this app enters their OWN token, repo, and farm name in Settings —
-  // nothing is hardcoded in this file, so there's nothing here for a public repo or "View
-  // Source" to ever leak. Everything is stored only in that person's own browser.
-  const GITHUB_API = 'https://api.github.com';
-  let ghToken = null, ghRepo = null, ghPath = null, ghSha = null, ghFarmName = null;
+  // ---- Cloud sync via a Cloudflare Worker proxy (optional) ----
+  // The GitHub token lives only on the Worker (server-side secret) — it never
+  // touches this file or any browser. The repo is hardcoded below since it's
+  // not sensitive; each person only needs to enter their own farm name.
+  const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
+  const HARDCODED_REPO = 'vonrmangaron/farmdata';
+  let ghPath = null, ghSha = null, ghFarmName = null;
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
@@ -1277,14 +1273,12 @@
     settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
     applySettings();
     try{
-      ghToken = localStorage.getItem('prodplan-gh-token') || null;
-      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
-      ghPath = localStorage.getItem('prodplan-gh-path') || null;
       ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
+      ghPath = ghFarmName ? sanitizeFarmFileName(ghFarmName) : null;
     }catch(e){}
     updateGithubStatusUI();
 
-    if(ghToken && ghRepo && ghPath){
+    if(ghPath){
       showLoadingOverlay();
       let ok = false;
       try{
@@ -1330,13 +1324,9 @@
   function updateGithubStatusUI(){
     const el = $('#githubStatus');
     if(!el) return;
-    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghFarmName || ghPath} (${ghRepo})`;
-    else el.textContent = 'Enter your token, repo, and farm name, then click Connect.';
-    const tokenInput = $('#githubTokenInput'), repoInput = $('#githubRepoInput'), pathInput = $('#githubPathInput');
-    if(tokenInput && ghToken) tokenInput.value = ghToken;
-    if(repoInput && ghRepo) repoInput.value = ghRepo;
-    const sharedBox = $('#useSharedStorageBox');
-    if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
+    if(ghPath) el.textContent = `Connected — farm "${ghFarmName}"`;
+    else el.textContent = 'Enter your farm name, then click Connect.';
+    const pathInput = $('#githubPathInput');
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
   }
   function showLoadingOverlay(){
@@ -1348,65 +1338,56 @@
     if(el) el.classList.remove('show');
   }
   async function connectGithub(){
-    const token = $('#githubTokenInput').value.trim();
-    const repo = $('#githubRepoInput').value.trim();
     const name = $('#githubPathInput').value.trim();
-    if(!token || !repo){ showToast('Enter your GitHub token and repo (owner/repo).', true); return; }
     if(!name){ showToast('Enter a name for this farm.', true); return; }
-    ghToken = token;
-    ghRepo = repo;
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
     ghSha = null;
     try{
-      localStorage.setItem('prodplan-gh-token', ghToken);
-      localStorage.setItem('prodplan-gh-repo', ghRepo);
-      localStorage.setItem('prodplan-gh-path', ghPath);
       localStorage.setItem('prodplan-gh-farmname', ghFarmName);
     }catch(e){}
     await pullFromGithub();
     updateGithubStatusUI();
   }
-  function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
-  function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
   async function pullFromGithub(silent){
-    if(!ghToken || !ghRepo || !ghPath) return false;
+    if(!ghPath) return false;
     try{
-      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
-      });
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
       if(res.status===404){
         await pushToGithub();
-        if(!silent) showToast('Connected — created a new file in your GitHub repo.');
+        if(!silent) showToast('Connected — created a new file for this farm.');
         return true;
       }
-      if(!res.ok) throw new Error('GitHub responded ' + res.status);
-      const data = await res.json();
-      ghSha = data.sha;
-      const content = b64DecodeUtf8(data.content);
-      applyImportedData(content);
-      if(!silent) showToast('Synced from GitHub.');
+      if(!res.ok) throw new Error('Sync server responded ' + res.status);
+      const result = await res.json();
+      if(result.notFound){
+        await pushToGithub();
+        if(!silent) showToast('Connected — created a new file for this farm.');
+        return true;
+      }
+      ghSha = result.sha;
+      applyImportedData(JSON.stringify(result.data));
+      if(!silent) showToast('Synced.');
       return true;
     }catch(e){
-      console.error('GitHub pull failed', e);
-      if(!silent) showToast('Could not sync from GitHub — check your token, repo, and path.', true);
+      console.error('Pull failed', e);
+      if(!silent) showToast('Could not sync — check your connection.', true);
       return false;
     }
   }
   async function pushToGithub(){
-    if(!ghToken || !ghRepo || !ghPath) return;
+    if(!ghPath) return;
     try{
-      const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates}, null, 2);
-      const body = { message:`ProdPlan.VM update ${new Date().toISOString()}`, content: b64EncodeUtf8(payload) };
-      if(ghSha) body.sha = ghSha;
-      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
+      const data = {tasks, history, batches, events, settings, frequentTemplates};
+      const body = { sha: ghSha, data };
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
         method:'PUT',
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
+        headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify(body)
       });
-      const data = await res.json();
-      if(data && data.content && data.content.sha) ghSha = data.content.sha;
-    }catch(e){ console.error('GitHub push failed', e); }
+      const result = await res.json();
+      if(result && result.sha) ghSha = result.sha;
+    }catch(e){ console.error('Push failed', e); }
   }
   function applyImportedData(rawText){
     try{
@@ -3376,13 +3357,8 @@
     hideLoadErrorOverlay();
     openDrawer('#settingsDrawer');
   });
-  $('#useSharedStorageBox').addEventListener('change', (e)=>{
-    const repoInput = $('#githubRepoInput');
-    if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
-    else{ repoInput.readOnly = false; }
-  });
   $('#syncGithubBtn').addEventListener('click', async ()=>{
-    if(!ghToken || !ghRepo || !ghPath){ showToast('Connect to GitHub first.', true); return; }
+    if(!ghPath){ showToast('Connect first.', true); return; }
     if(pushPending){ await runScheduledPush(); }
     pullFromGithub();
   });
@@ -3445,7 +3421,7 @@
     if(document.visibilityState === 'hidden'){
       flushPendingPush();
     } else if(document.visibilityState === 'visible'){
-      if(ghToken && ghRepo && ghPath){
+      if(ghPath){
         if(pushPending){ await runScheduledPush(); }
         pullFromGithub(true);
       }
@@ -3498,7 +3474,7 @@
     });
   }
   async function performManualRefresh(){
-    if(ghToken && ghRepo && ghPath){
+    if(ghPath){
       if(pushPending){ await runScheduledPush(); }
       await pullFromGithub();
     } else {
