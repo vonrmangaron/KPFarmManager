@@ -182,11 +182,15 @@
   .task-status{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;flex-shrink:0;}
   .task-status.open{background:var(--primary-soft); color:var(--primary-dark);}
   .task-status.done{background:var(--secondary-soft); color:var(--secondary);}
-  .task-status-btn{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:999px;flex-shrink:0;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:filter .12s ease, opacity .12s ease;}
+  .task-status-btn{
+    width:38px; height:38px; border-radius:50%; flex-shrink:0; border:none; cursor:pointer;
+    font-size:19px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    transition:filter .12s ease, transform .1s ease;
+  }
   .task-status-btn.open{background:var(--primary-soft); color:var(--primary-dark);}
   .task-status-btn.done{background:var(--secondary-soft); color:var(--secondary);}
-  .task-status-btn:hover{filter:brightness(0.95);}
-  .task-status-btn:disabled{opacity:0.55; cursor:wait;}
+  .task-status-btn:hover{filter:brightness(0.94);}
+  .task-status-btn:active{transform:scale(0.92);}
 
   .form-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:440px; max-width:92vw; max-height:82vh; background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
   .form-modal.open{display:flex;}
@@ -649,7 +653,6 @@
     if(!localTask) return;
     const newStatus = localTask.status==='done' ? 'open' : 'done';
     localTask.status = newStatus;
-    pendingToggleIds.add(id);
     pendingStatusChanges.set(id, newStatus);
     renderAll();
     clearTimeout(statusPushTimer);
@@ -669,7 +672,6 @@
 
     const ok = await pushStatusChangesWithRetry(batch, 1);
     statusPushInFlight = false;
-    batch.forEach((_, id)=> pendingToggleIds.delete(id));
 
     if(!ok){
       batch.forEach((newStatus, id)=>{
@@ -745,20 +747,17 @@
     html += '</span>';
     return html;
   }
-  let pendingToggleIds = new Set();
   function buildReadOnlyTaskCard(t){
     const card=document.createElement('div');
     card.className='task-card'+(t.status==='done'?' done':'');
     card.dataset.id = t.id;
-    const isPending = pendingToggleIds.has(t.id);
-    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" ${isPending?'disabled':''}>${t.status==='done'?'↺ Reopen':'✓ Check'}</button>`;
+    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?'↺':'✓'}</button>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(!ghPath){ showToast('Connect in Settings to save changes.', true); return; }
-      if(pendingToggleIds.has(t.id)) return;
       toggleTaskDoneInViewer(t.id);
     });
     return card;
