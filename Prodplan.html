@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32'%3E%3Cstop offset='0' stop-color='%23E0A339'/%3E%3Cstop offset='1' stop-color='%23B08463'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='21' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='12' fill='white' text-anchor='middle'%3EVM%3C/text%3E%3C/svg%3E">
 <title>ProdPlan.VM — Poultry Farm</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFB22C">
@@ -255,6 +256,7 @@
   .assignee-chip .chip-remove:hover{ background:rgba(0,0,0,0.35); }
   .task-actions{display:flex;gap:4px;flex-shrink:0;}
   .task-actions button{ width:24px;height:24px;border:none;font-weight:700;font-size:12.5px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; transition:background .15s ease, color .15s ease, transform .1s ease; }
+  .task-actions button svg{ width:13px; height:13px; }
   .task-actions .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
   .task-actions .btn-done:hover{background:var(--secondary); color:#fff; transform:scale(1.08);}
   .task-actions .btn-delete, .task-actions .btn-freq-delete{ background:var(--danger-soft); color:var(--danger); font-size:11px; }
@@ -431,6 +433,7 @@
   .series-note{ background:var(--surface-soft); border:1px dashed var(--line); border-radius:8px; padding:8px 10px; font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; }
   .detail-actions{ display:flex; gap:8px; padding:14px 18px; border-top:1px solid var(--line); }
   .dbtn{ flex:1; border:none; border-radius:9px; padding:10px; font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .dbtn svg{ width:14px; height:14px; flex-shrink:0; }
   .dbtn.edit{ background:var(--primary-soft); color:var(--primary-dark); }
   .dbtn.done{ background:var(--secondary); color:#fff; }
   .dbtn.delete{ background:var(--danger-soft); color:var(--danger); flex:0 0 44px; }
@@ -638,6 +641,7 @@
     #settingsBtn{ width:38px; height:38px; font-size:19px; }
     #overdueBtn{ width:38px; height:38px; }
     .task-actions button{ width:30px; height:30px; font-size:14px; }
+    .task-actions button svg{ width:15px; height:15px; }
     .day-cell{ cursor:pointer; }
 
     /* Full-screen sheets instead of small centered popups */
@@ -1995,6 +1999,8 @@
     html += '</span>';
     return html;
   }
+  const CHECK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function buildTaskCard(task){
     const card = document.createElement('div');
     card.className = 'task-card' + (task.status==='done' ? ' done' : '');
@@ -2005,7 +2011,7 @@
       ${buildAssigneeAvatarsHtml(task.assignees)}
       <span class="task-actions">
         <button class="btn-edit" title="Edit">✎</button>
-        <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?'↺':'✓'}</button>
+        <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
         <button class="btn-delete" title="Delete">🗑️</button>
       </span>`;
     card.querySelector('.task-icon').innerHTML = '';
@@ -2745,7 +2751,7 @@
       seriesNote.style.display = 'none';
     }
 
-    $('#detailDoneBtn').innerHTML = t.status==='done' ? '↺ Reopen' : '✓ Mark Done';
+    $('#detailDoneBtn').innerHTML = t.status==='done' ? UNDO_ICON_SVG+' Reopen' : CHECK_ICON_SVG+' Mark Done';
     openDrawer('#taskDetailModal');
   }
   let taskModalMode = 'edit';
