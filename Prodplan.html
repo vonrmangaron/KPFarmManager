@@ -409,7 +409,7 @@
 
   /* ---------- Kanban ---------- */
   .kanban-board{ display:flex; gap:10px; height:100%; }
-  .kanban-column{ width:170px; flex-shrink:0; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
+  .kanban-column{ flex:1 1 0; min-width:170px; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
   .col-head{
     padding:9px 10px; margin-bottom:8px; border-radius:8px; font-family:'Sora',sans-serif;
     border-top:3px solid var(--line); position:relative;
@@ -449,6 +449,8 @@
   .kcard .task-avatars{ flex-shrink:0; }
   .kcard .task-avatars .task-avatar{ width:15px;height:15px;font-size:7px; }
 
+  .kanban-column.all-done{ opacity:0.55; filter:grayscale(0.7); transition:opacity .2s ease, filter .2s ease; }
+  .kanban-column.all-done:hover{ opacity:0.85; filter:grayscale(0.3); }
   .col-empty{ text-align:center; font-size:10px; color:var(--muted); padding:14px 4px; border:1.5px dashed var(--line); border-radius:8px; }
   .kanban-dots{ display:none; }
 
@@ -600,7 +602,7 @@
       overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       padding-bottom:4px;
     }
-    .kanban-column{ width:calc(100vw - 76px); scroll-snap-align:start; }
+    .kanban-column{ flex:0 0 auto; width:calc(100vw - 76px); min-width:0; scroll-snap-align:start; }
     .kanban-column .col-head .dtitle{ font-size:14px; }
     .kanban-column .kcard .kbody{ padding:9px 10px; }
     .kanban-column .kcard .kname{ font-size:13px; }
@@ -932,12 +934,7 @@
 <div class="form-modal" id="dayModal">
   <div class="form-modal-head"><h2 id="dayModalTitle"></h2><button id="closeDayModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <label for="dayModalTaskInput">Add a task to this day</label>
-    <div class="ai-icon-row">
-      <input type="text" id="dayModalTaskInput" placeholder="Task name">
-      <span class="icon-preview" id="dayModalIconPreview">📋</span>
-    </div>
-    <button class="btn-app" id="dayModalAddBtn">Add task</button>
+    <button class="btn-app" id="dayModalAddBtn">+ Add task</button>
     <div class="day-tasks" id="dayModalTaskList" data-date="" style="margin-top:10px; margin-bottom:18px;"></div>
     <button class="btn-danger-outline" id="deleteAllDayTasksBtn" style="margin-top:6px;">Delete all tasks for this day</button>
 
@@ -979,7 +976,7 @@
 </div>
 
 <div class="form-modal" id="editTaskModal">
-  <div class="form-modal-head"><h2>Edit task</h2><button id="closeEditTaskModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-head"><h2 id="editTaskModalTitle">Edit task</h2><button id="closeEditTaskModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
     <label for="editTaskNameInput">Task name</label>
     <input type="text" id="editTaskNameInput" maxlength="50">
@@ -2572,11 +2569,12 @@
       const isPast = key<todayKey;
       const isWeekend = i>=5;
       const col = document.createElement('div');
-      col.className = 'kanban-column ' + dayClasses[i] + (isToday?' today':'') + (isWeekend?' weekend':'');
-
       const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
       const doneCount = dayTasks.filter(t=>t.status==='done').length;
       const openCount = dayTasks.length - doneCount;
+      const allDone = dayTasks.length>0 && openCount===0;
+      col.className = 'kanban-column ' + dayClasses[i] + (isToday?' today':'') + (isWeekend?' weekend':'') + (allDone?' all-done':'');
+
       const pct = dayTasks.length ? Math.round((doneCount/dayTasks.length)*100) : 0;
       const showOverdueFlag = isPast && openCount>0;
 
@@ -2803,10 +2801,14 @@
     $('#detailDoneBtn').innerHTML = t.status==='done' ? '↺ Reopen' : '✓ Mark Done';
     openDrawer('#taskDetailModal');
   }
+  let taskModalMode = 'edit';
   function openEditTaskModal(id){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
+    taskModalMode = 'edit';
     editingTaskId = id;
+    $('#editTaskModalTitle').textContent = 'Edit task';
+    $('#saveEditTaskBtn').textContent = 'Save changes';
     $('#editTaskNameInput').value = t.name;
     updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
     editingAssignees = (t.assignees || []).slice();
@@ -2819,6 +2821,25 @@
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
     refreshAssigneeDatalist();
     openDrawer('#editTaskModal');
+  }
+  function openCreateTaskModal(prefillDate){
+    taskModalMode = 'create';
+    editingTaskId = null;
+    $('#editTaskModalTitle').textContent = 'New task';
+    $('#saveEditTaskBtn').textContent = 'Add task';
+    $('#editTaskNameInput').value = '';
+    updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
+    editingAssignees = [];
+    $('#editTaskAssigneeInput').value = '';
+    renderAssigneeChips('#editTaskAssigneeChips', editingAssignees);
+    $('#editTaskDateInput').value = prefillDate || '';
+    $('#editTaskRepeatSelect').value = 'none';
+    $('#editTaskUntilRow').style.display = 'none';
+    const base = prefillDate || dateKey(new Date());
+    $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    refreshAssigneeDatalist();
+    openDrawer('#editTaskModal');
+    setTimeout(()=> $('#editTaskNameInput').focus(), 200);
   }
   function openDayModal(key){
     dayModalOpenKey = key;
@@ -2993,18 +3014,10 @@
     }
   });
 
-  $('#dayModalTaskInput').addEventListener('input', (e)=>{ $('#dayModalIconPreview').textContent = guessIcon(e.target.value.trim()); });
   $('#dayModalAddBtn').addEventListener('click', ()=>{
-    const input = $('#dayModalTaskInput');
-    const name = input.value.trim();
-    if(!name || !dayModalOpenKey){ showToast('Enter a task name first.', true); return; }
-    const icon = guessIcon(name);
-    addTask(name, icon, dayModalOpenKey);
-    persist(); renderAll();
-    input.value = '';
-    $('#dayModalIconPreview').textContent = '📋';
+    if(!dayModalOpenKey) return;
+    openCreateTaskModal(dayModalOpenKey);
   });
-  $('#dayModalTaskInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#dayModalAddBtn').click(); });
 
   $('#deleteAllDayTasksBtn').addEventListener('click', function(){
     if(!dayModalOpenKey) return;
@@ -3191,8 +3204,12 @@
 
   $('#quickAddFabBtn').addEventListener('click', ()=>{
     closeOverlays();
-    $('#quickAddSheet').classList.remove('hidden');
-    $('#scrim').classList.add('show');
+    if(viewMode==='list' || viewMode==='kanban'){
+      openCreateTaskModal(dateKey(new Date()));
+    } else {
+      $('#quickAddSheet').classList.remove('hidden');
+      $('#scrim').classList.add('show');
+    }
   });
   $('#quickAddTaskBtn').addEventListener('click', ()=>{
     closeOverlays();
@@ -3289,7 +3306,6 @@
     if(btn){ editingAssignees.splice(Number(btn.dataset.idx),1); renderAssigneeChips('#editTaskAssigneeChips', editingAssignees); }
   });
   $('#saveEditTaskBtn').addEventListener('click', ()=>{
-    if(!editingTaskId) return;
     const name = $('#editTaskNameInput').value.trim();
     if(!name){ showToast('Enter a task name.', true); return; }
     if($('#editTaskAssigneeInput').value.trim()) addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips');
@@ -3299,6 +3315,20 @@
     const untilDate = $('#editTaskUntilInput').value || null;
     if(repeatRule!=='none' && !dateVal){ showToast('Pick a date before setting a repeat rule.', true); return; }
     if(repeatRule!=='none' && (!untilDate || untilDate<=dateVal)){ showToast('Pick a valid "Repeat until" date after the task date.', true); return; }
+
+    if(taskModalMode==='create'){
+      const newTask = addTask(name, guessIcon(name), dateVal, assignees.length ? {assignees} : null);
+      let count = 0;
+      if(repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
+        count = generateRecurrence(newTask, repeatRule, untilDate);
+      }
+      persist(); renderAll();
+      closeOverlays();
+      showToast(count>0 ? `Task added — ${count} more occurrence(s) added.` : 'Task added.');
+      return;
+    }
+
+    if(!editingTaskId) return;
     const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees);
     closeOverlays();
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : 'Task updated.');
