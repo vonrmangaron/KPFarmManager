@@ -130,6 +130,7 @@
   .day-cell.today .day-num{ background:var(--primary); color:#fff; border-color:var(--primary); }
   .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
   .day-count{text-align:center;color:var(--muted);font-size:11px;line-height:1.3;}
+  .day-count-label{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   .day-count strong{display:block;font-size:17px;color:var(--ink);font-family:'Sora',sans-serif;}
   .day-count-icons{font-size:14px;line-height:1.2;margin-bottom:4px;letter-spacing:1px;}
   .day-count-icons img, .task-icon img{ width:16px;height:16px;vertical-align:middle; }
@@ -816,7 +817,9 @@
     if(dayTasks.length>4){ const extra=document.createElement('span'); extra.textContent='+'+(dayTasks.length-4); iconsWrap.appendChild(extra); }
     wrap.appendChild(iconsWrap);
     const strong=document.createElement('strong'); strong.textContent=dayTasks.length; wrap.appendChild(strong);
-    wrap.appendChild(document.createTextNode(`${dayTasks.length===1?'task':'tasks'}${done?' • '+done+' done':''}`));
+    const labelSpan=document.createElement('span'); labelSpan.className='day-count-label';
+    labelSpan.textContent=`${dayTasks.length===1?'task':'tasks'}${done?' • '+done+' done':''}`;
+    wrap.appendChild(labelSpan);
     return wrap;
   }
   function renderMonth(){
