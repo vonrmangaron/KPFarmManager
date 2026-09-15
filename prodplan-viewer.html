@@ -329,7 +329,7 @@
 <div class="loading-overlay" id="loadErrorOverlay" style="gap:16px;">
   <div style="font-size:32px;">⚠️</div>
   <div class="loading-text" style="font-size:15px;color:var(--ink);">Couldn't load your data</div>
-  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your access token, repo, and farm name are still correct.</div>
+  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your farm name is still correct.</div>
   <div style="display:flex;gap:10px;">
     <button class="btn-app" id="retryLoadBtn" style="width:auto;padding:10px 20px;">Retry</button>
     <button class="btn-app" id="openSettingsFromErrorBtn" style="width:auto;padding:10px 20px;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);">Open Settings</button>
@@ -410,14 +410,8 @@
     <select id="setFontSize"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
     <p style="font-size:10.5px;color:var(--muted);margin:2px 0 0;">This only changes how it looks on this device. Theme and batch colors follow whatever the manager has set in the main app.</p>
 
-    <label style="margin-top:16px;">Data source (GitHub, read-only)</label>
+    <label style="margin-top:16px;">Data source</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
-    <label for="githubTokenInput">Access token</label>
-    <input type="password" id="githubTokenInput" placeholder="Read-only fine-grained token">
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">This app only reads data — a read-only token is all you need. Ask your farm manager for one.</p>
-    <label for="githubRepoInput">Storage</label>
-    <label class="checkbox-row" style="margin-top:2px;"><input type="checkbox" id="useSharedStorageBox"> Use shared farm storage (vonrmangaron/farmdata)</label>
-    <input type="text" id="githubRepoInput" placeholder="e.g. vonrmangaron/farmdata">
     <label for="githubPathInput">Farm name</label>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
     <p style="font-size:11px;color:var(--danger);margin:2px 0 0;font-weight:600;">⚠️ Remember this exact name — you'll need to type it the same way on every other device to sync the same data.</p>
@@ -432,7 +426,8 @@
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const DEFAULT_EVENT_COLOR = '#000000';
-  const GITHUB_API = 'https://api.github.com';
+  const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
+  const HARDCODED_REPO = 'vonrmangaron/farmdata';
 
   let tasks = [], history = [], batches = [], events = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -440,7 +435,7 @@
   let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
   let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
   let dayModalOpenKey = null;
-  let ghToken=null, ghRepo=null, ghPath=null, ghFarmName=null, ghSha=null;
+  let ghPath=null, ghFarmName=null, ghSha=null;
 
   const $ = (sel)=> document.querySelector(sel);
 
@@ -549,22 +544,18 @@
   }
   function updateGithubStatusUI(){
     const el=$('#githubStatus'); if(!el) return;
-    if(ghToken && ghRepo && ghPath) el.textContent = `Connected — ${ghFarmName||ghPath} (${ghRepo})`;
-    else el.textContent = 'Enter the token, repo, and farm name your farm owner gave you.';
-    const t=$('#githubTokenInput'), r=$('#githubRepoInput'), p=$('#githubPathInput');
-    if(t && ghToken) t.value=ghToken; if(r && ghRepo) r.value=ghRepo; if(p && ghFarmName) p.value=ghFarmName;
-    const sharedBox = $('#useSharedStorageBox');
-    if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(r) r.readOnly = isShared; }
+    if(ghPath) el.textContent = `Connected — farm "${ghFarmName}"`;
+    else el.textContent = 'Enter the farm name your farm owner gave you.';
+    const p=$('#githubPathInput');
+    if(p && ghFarmName) p.value=ghFarmName;
   }
   async function initGithub(){
     try{
-      ghToken = localStorage.getItem('prodplan-viewer-gh-token') || null;
-      ghRepo = localStorage.getItem('prodplan-viewer-gh-repo') || null;
-      ghPath = localStorage.getItem('prodplan-viewer-gh-path') || null;
       ghFarmName = localStorage.getItem('prodplan-viewer-gh-farmname') || null;
+      ghPath = ghFarmName ? sanitizeFarmFileName(ghFarmName) : null;
     }catch(e){}
     updateGithubStatusUI();
-    if(ghToken && ghRepo && ghPath){
+    if(ghPath){
       showLoadingOverlay();
       let ok = false;
       try{
@@ -598,23 +589,15 @@
     if(el) el.classList.remove('show');
   }
   async function connectGithub(){
-    const token=$('#githubTokenInput').value.trim();
-    const repo=$('#githubRepoInput').value.trim();
     const name=$('#githubPathInput').value.trim();
-    if(!token || !repo){ showToast('Enter the token and repo.', true); return; }
     if(!name){ showToast('Enter the farm name.', true); return; }
-    ghToken=token; ghRepo=repo; ghFarmName=name; ghPath=sanitizeFarmFileName(name);
+    ghFarmName=name; ghPath=sanitizeFarmFileName(name);
     try{
-      localStorage.setItem('prodplan-viewer-gh-token', ghToken);
-      localStorage.setItem('prodplan-viewer-gh-repo', ghRepo);
-      localStorage.setItem('prodplan-viewer-gh-path', ghPath);
       localStorage.setItem('prodplan-viewer-gh-farmname', ghFarmName);
     }catch(e){}
     await pullFromGithub();
     updateGithubStatusUI();
   }
-  function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
-  function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
   function applyData(rawText, silent){
     try{
       const parsed = JSON.parse(rawText);
@@ -640,17 +623,14 @@
     clearTimeout(flashSynced._t); flashSynced._t=setTimeout(()=>el.classList.remove('show'),1500);
   }
   async function pullFromGithub(silent){
-    if(!ghToken || !ghRepo || !ghPath) return false;
+    if(!ghPath) return false;
     try{
-      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
-      });
-      if(res.status===404){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
-      if(!res.ok) throw new Error('GitHub responded '+res.status);
-      const data = await res.json();
-      ghSha = data.sha;
-      const content = b64DecodeUtf8(data.content);
-      applyData(content, silent);
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      if(!res.ok && res.status!==404) throw new Error('Sync server responded '+res.status);
+      const result = await res.json();
+      if(res.status===404 || result.notFound){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
+      ghSha = result.sha;
+      applyData(JSON.stringify(result.data), silent);
       if(!silent) showToast('Refreshed from the latest data.');
       return true;
     }catch(e){
@@ -660,64 +640,84 @@
     }
   }
 
-  async function toggleTaskDoneInViewer(id){
+  let pendingStatusChanges = new Map(); // taskId -> newStatus queued for the next batch push
+  let statusPushTimer = null;
+  let statusPushInFlight = false;
+
+  function toggleTaskDoneInViewer(id){
     const localTask = tasks.find(t=>t.id===id);
     if(!localTask) return;
-    const prevStatus = localTask.status;
-    const newStatus = prevStatus==='done' ? 'open' : 'done';
-    pendingToggleIds.add(id);
+    const newStatus = localTask.status==='done' ? 'open' : 'done';
     localTask.status = newStatus;
+    pendingToggleIds.add(id);
+    pendingStatusChanges.set(id, newStatus);
     renderAll();
+    clearTimeout(statusPushTimer);
+    statusPushTimer = setTimeout(flushStatusChanges, 900);
+  }
 
-    const ok = await pushStatusChangeWithRetry(id, newStatus, 1);
-    pendingToggleIds.delete(id);
+  async function flushStatusChanges(){
+    if(pendingStatusChanges.size===0) return;
+    if(statusPushInFlight){
+      // A batch is already mid-flight — wait for it to finish, then this will pick up anything new.
+      statusPushTimer = setTimeout(flushStatusChanges, 400);
+      return;
+    }
+    statusPushInFlight = true;
+    const batch = new Map(pendingStatusChanges);
+    pendingStatusChanges.clear();
+
+    const ok = await pushStatusChangesWithRetry(batch, 1);
+    statusPushInFlight = false;
+    batch.forEach((_, id)=> pendingToggleIds.delete(id));
 
     if(!ok){
-      const t2 = tasks.find(t=>t.id===id);
-      if(t2) t2.status = prevStatus;
+      batch.forEach((newStatus, id)=>{
+        const t = tasks.find(x=>x.id===id);
+        if(t) t.status = newStatus==='done' ? 'open' : 'done'; // revert this task's optimistic flip
+      });
       renderAll();
       showToast('Could not save — check your connection and try again.', true);
     }
+
+    // More toggles may have queued up while this batch was in flight — flush those too.
+    if(pendingStatusChanges.size>0){
+      statusPushTimer = setTimeout(flushStatusChanges, 300);
+    }
   }
 
-  async function pushStatusChangeWithRetry(id, newStatus, attempt){
-    if(!ghToken || !ghRepo || !ghPath) return false;
+  async function pushStatusChangesWithRetry(batch, attempt){
+    if(!ghPath) return false;
     try{
-      const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
-      });
-      if(!res.ok) throw new Error('GitHub responded '+res.status);
-      const data = await res.json();
-      const freshSha = data.sha;
-      const freshContent = JSON.parse(b64DecodeUtf8(data.content));
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      if(!res.ok) throw new Error('Sync server responded '+res.status);
+      const result = await res.json();
+      const freshSha = result.sha;
+      const freshContent = result.data;
       const freshTasks = freshContent.tasks || [];
-      const idx = freshTasks.findIndex(t=>t.id===id);
-      if(idx===-1){
-        // Task no longer exists remotely (e.g. deleted by the manager meanwhile) — nothing to save.
-        applyData(JSON.stringify(freshContent), true);
-        return true;
-      }
-      freshTasks[idx] = Object.assign({}, freshTasks[idx], { status:newStatus });
-      const merged = Object.assign({}, freshContent, { tasks:freshTasks });
-      const payload = JSON.stringify(merged, null, 2);
-      const body = { message:`ProdPlan.VM viewer status update ${new Date().toISOString()}`, content:b64EncodeUtf8(payload), sha:freshSha };
-      const putRes = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
-        method:'PUT',
-        headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
-        body: JSON.stringify(body)
+      batch.forEach((newStatus, id)=>{
+        const idx = freshTasks.findIndex(t=>t.id===id);
+        if(idx!==-1) freshTasks[idx] = Object.assign({}, freshTasks[idx], { status:newStatus });
+        // If idx===-1 the task was deleted remotely meanwhile — nothing to apply for it, not an error.
       });
-      if(putRes.status===409 || putRes.status===422){
-        if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangeWithRetry(id, newStatus, attempt+1); }
+      const merged = Object.assign({}, freshContent, { tasks:freshTasks });
+      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ sha: freshSha, data: merged })
+      });
+      if(putRes.status===409){
+        if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangesWithRetry(batch, attempt+1); }
         return false;
       }
-      if(!putRes.ok) throw new Error('GitHub responded '+putRes.status);
+      if(!putRes.ok) throw new Error('Sync server responded '+putRes.status);
       const putData = await putRes.json();
-      if(putData && putData.content && putData.content.sha) ghSha = putData.content.sha;
-      applyData(payload, true);
+      if(putData && putData.sha) ghSha = putData.sha;
+      applyData(JSON.stringify(merged), true);
       return true;
     }catch(e){
       console.error('Viewer status push failed', e);
-      if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangeWithRetry(id, newStatus, attempt+1); }
+      if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangesWithRetry(batch, attempt+1); }
       return false;
     }
   }
@@ -751,13 +751,13 @@
     card.className='task-card'+(t.status==='done'?' done':'');
     card.dataset.id = t.id;
     const isPending = pendingToggleIds.has(t.id);
-    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" ${isPending?'disabled':''}>${t.status==='done'?'Done':'Open'}</button>`;
+    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" ${isPending?'disabled':''}>${t.status==='done'?'↺ Reopen':'✓ Check'}</button>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
-      if(!(ghToken && ghRepo && ghPath)){ showToast('Connect to GitHub in Settings to save changes.', true); return; }
+      if(!ghPath){ showToast('Connect in Settings to save changes.', true); return; }
       if(pendingToggleIds.has(t.id)) return;
       toggleTaskDoneInViewer(t.id);
     });
@@ -1015,12 +1015,7 @@
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
   $('#connectGithubBtn').addEventListener('click', connectGithub);
-  $('#useSharedStorageBox').addEventListener('change', (e)=>{
-    const repoInput = $('#githubRepoInput');
-    if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
-    else{ repoInput.readOnly = false; }
-  });
-  $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghToken||!ghRepo||!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
+  $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
 
   // bottom nav (mobile)
   function bindIfExists(id, fn){ const el=$(id); if(el) el.addEventListener('click', fn); }
@@ -1075,7 +1070,7 @@
     });
   }
   initPullToRefresh($('#calendarWrap'), $('#pullRefreshIndicator'), async ()=>{
-    if(ghToken && ghRepo && ghPath){
+    if(ghPath){
       await pullFromGithub();
     } else {
       showToast('Connect in Settings to enable syncing.', true);
@@ -1083,7 +1078,7 @@
   });
 
   document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'visible' && ghToken && ghRepo && ghPath){
+    if(document.visibilityState === 'visible' && ghPath){
       pullFromGithub(true);
     }
   });
