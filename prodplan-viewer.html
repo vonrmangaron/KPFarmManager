@@ -43,6 +43,7 @@
 
   .shell{ display:flex; flex-direction:column; height:100vh; }
   .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:0 1px 4px rgba(0,0,0,0.04); flex-wrap:wrap; }
+  .topbar-left{ display:flex; align-items:center; gap:12px; min-width:0; }
   .barn-stripe{ height:4px; background:linear-gradient(90deg, var(--primary), var(--secondary)); }
   .brand{ font-weight:700; font-size:19px; color:var(--ink); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
   .brand .chick{font-size:20px;}
@@ -222,12 +223,40 @@
   .toast.error{background:var(--danger);}
 
   .bottom-nav{ display:none; }
+  .fab-notif{ display:none; }
   .sheet-overlay{ display:none; }
+
+  @media (max-width: 1024px){
+    .topbar-left{ flex-wrap:nowrap; flex-shrink:0; flex-grow:0; }
+    .brand{ flex-shrink:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .brand small{ display:none; }
+    .badge-viewonly{ display:none; }
+    .nav-group{ flex-shrink:0; gap:2px; margin-left:8px; padding-left:6px; border-left:1px solid var(--line); }
+    .nav-group .icon-btn{ width:24px; height:24px; font-size:12px; }
+    .toolbar-label{ font-size:11.5px; min-width:auto; white-space:nowrap; font-weight:700; }
+    .toolbar{ flex-wrap:wrap; justify-content:flex-end; row-gap:8px; }
+  }
+
   @media (max-width: 760px){
     .month-grid{grid-auto-rows:118px;}
     .toolbar .segmented, .toolbar #todayBtn,
-    .toolbar #settingsBtn, .toolbar #infoBtn{ display:none; }
+    .toolbar #settingsBtn, .toolbar #infoBtn, .toolbar #overdueBtn{ display:none; }
     .shell{ padding-bottom:64px; }
+    .fab-notif{
+      display:flex; position:fixed; right:16px; bottom:74px; z-index:37;
+      width:56px; height:56px; border-radius:50%; background:var(--danger); color:#fff;
+      border:none; font-size:24px; align-items:center; justify-content:center;
+      box-shadow:var(--shadow-lg); cursor:pointer;
+    }
+    .fab-notif .notif-badge{ top:-2px; right:-2px; }
+    .fab-notif.has-alert{ animation:fab-jump 1.4s ease-in-out infinite; }
+    @keyframes fab-jump{
+      0%, 100%{ transform:translateY(0); }
+      20%{ transform:translateY(-10px); }
+      35%{ transform:translateY(0); }
+      45%{ transform:translateY(-5px); }
+      55%{ transform:translateY(0); }
+    }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
     .bottom-nav button .bn-icon{ font-size:18px; line-height:1; }
@@ -284,17 +313,19 @@
 
 <div class="shell">
   <div class="topbar">
-    <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small> <span class="badge-viewonly">VIEW ONLY</span></div>
+    <div class="topbar-left">
+      <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small> <span class="badge-viewonly">VIEW ONLY</span></div>
+      <div class="nav-group" id="navGroup">
+        <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
+        <span class="toolbar-label" id="periodLabel"></span>
+        <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
+      </div>
+    </div>
     <div class="toolbar">
       <div class="segmented" role="group" aria-label="Calendar view">
         <button id="viewMonthBtn" class="active">Month</button>
         <button id="viewYearBtn">Year</button>
         <button id="viewListBtn">List</button>
-      </div>
-      <div class="nav-group" id="navGroup">
-        <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
-        <span class="toolbar-label" id="periodLabel"></span>
-        <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button id="infoBtn">Batches &amp; Events</button>
@@ -318,6 +349,8 @@
   <button id="navInfoBtn"><span class="bn-icon">🗂️</span>Info</button>
   <button id="navSettingsBtn"><span class="bn-icon">⚙</span>Settings</button>
 </nav>
+
+<button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
 
 <div class="scrim" id="scrim"></div>
 
@@ -450,6 +483,10 @@
     const count = getOverdueTasks().length;
     const badge = $('#overdueBadge');
     if(badge){ badge.textContent = count > 99 ? '99+' : count; badge.classList.toggle('hidden', count===0); }
+    const fabBadge = $('#fabNotifBadge');
+    if(fabBadge){ fabBadge.textContent = count > 99 ? '99+' : count; fabBadge.classList.toggle('hidden', count===0); }
+    const fabNotif = $('#fabNotifBtn');
+    if(fabNotif) fabNotif.classList.toggle('has-alert', count>0);
   }
   let overdueModalShownThisSession = false;
   function checkOverdueOnLoad(){
@@ -817,7 +854,8 @@
     const label=$('#periodLabel');
     if(viewMode==='list'){ label.textContent='All scheduled tasks'; return; }
     if(viewMode==='year'){ const start=currentDate; const end=new Date(start.getFullYear(), start.getMonth()+11, 1); label.textContent=`${start.toLocaleDateString(undefined,{month:'short',year:'numeric'})} – ${end.toLocaleDateString(undefined,{month:'short',year:'numeric'})}`; return; }
-    label.textContent = currentDate.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    const isNarrow = window.innerWidth <= 1024;
+    label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short',year:'numeric'} : {month:'long',year:'numeric'});
   }
   function syncViewButtons(){
     $('#viewMonthBtn').classList.toggle('active', viewMode==='month');
@@ -874,6 +912,7 @@
   $('#closeInfo').addEventListener('click', closeOverlays);
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
   $('#overdueBtn').addEventListener('click', openOverdueModal);
+  $('#fabNotifBtn').addEventListener('click', openOverdueModal);
   $('#closeSettings').addEventListener('click', closeOverlays);
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
