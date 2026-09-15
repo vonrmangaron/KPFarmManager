@@ -577,6 +577,15 @@
     }
     .sidebar.open{ transform:translateX(0); }
     .main{ position:relative; }
+
+    /* Compact date nav, moved beside the brand instead of wrapping onto its own row */
+    .topbar-left{ flex-wrap:nowrap; flex-shrink:0; flex-grow:0; }
+    .brand{ flex-shrink:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .brand small{ display:none; }
+    .nav-group{ flex-shrink:0; gap:2px; margin-left:8px; padding-left:6px; border-left:1px solid var(--line); }
+    .nav-group .icon-btn{ width:24px; height:24px; font-size:12px; }
+    .toolbar-label{ font-size:11.5px; min-width:auto; white-space:nowrap; font-weight:700; }
+    .toolbar{ flex-wrap:wrap; justify-content:flex-end; row-gap:8px; }
   }
 
   @media (max-width: 760px){
@@ -704,11 +713,26 @@
   <div class="loading-text">Loading latest data…</div>
 </div>
 
+<div class="loading-overlay" id="loadErrorOverlay" style="gap:16px;">
+  <div style="font-size:32px;">⚠️</div>
+  <div class="loading-text" style="font-size:15px;color:var(--ink);">Couldn't load your data</div>
+  <div class="loading-text" style="font-weight:400;max-width:320px;text-align:center;">Check your internet connection, or that your GitHub token, repo, and farm name are still correct.</div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn-app" id="retryLoadBtn" style="width:auto;padding:10px 20px;">Retry</button>
+    <button class="btn-app" id="openSettingsFromErrorBtn" style="width:auto;padding:10px 20px;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);">Open Settings</button>
+  </div>
+</div>
+
 <div class="shell">
   <div class="topbar">
     <div class="topbar-left">
       <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
       <div class="brand"><span class="chick">🐔</span>ProdPlan<span class="accent">.VM</span> <small>poultry production planner</small></div>
+      <div class="nav-group" id="navGroup">
+        <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
+        <span class="toolbar-label" id="periodLabel"></span>
+        <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -717,11 +741,6 @@
         <button id="viewYearBtn">Year</button>
         <button id="viewListBtn">List</button>
         <button id="viewKanbanBtn">Kanban</button>
-      </div>
-      <div class="nav-group" id="navGroup">
-        <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
-        <span class="toolbar-label" id="periodLabel"></span>
-        <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="btn-history" id="historyBtn">History</button>
@@ -1079,7 +1098,6 @@
 
 <script>
 (function(){
-  const STORAGE_KEY = 'schedule-data';
   // ---- Cloud sync via the GitHub Contents API (optional) ----
   // Each person using this app enters their OWN token, repo, and farm name in Settings —
   // nothing is hardcoded in this file, so there's nothing here for a public repo or "View
@@ -1259,18 +1277,6 @@
   // Prefers Claude.ai's built-in artifact storage when available; falls back to the
   // browser's own localStorage so the app also works when self-hosted (e.g. GitHub Pages).
   async function persist(){
-    const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates});
-    let savedViaPlatform = false;
-    try{
-      if(window.storage && typeof window.storage.set === 'function'){
-        await window.storage.set(STORAGE_KEY, payload, false);
-        savedViaPlatform = true;
-      }
-    }catch(e){ /* fall back to localStorage below */ }
-    if(!savedViaPlatform){
-      try{ localStorage.setItem(STORAGE_KEY, payload); }
-      catch(e){ console.error('Local browser save failed', e); return; }
-    }
     flashSaved();
     schedulePush();
   }
@@ -1312,35 +1318,47 @@
     pushToGithub(); // best-effort — the page may close before this completes
   }
   async function load(){
-    let raw = null;
-    try{
-      if(window.storage && typeof window.storage.get === 'function'){
-        const result = await window.storage.get(STORAGE_KEY);
-        if(result && result.value) raw = result.value;
-      }
-    }catch(e){ /* fall back to localStorage below */ }
-    if(!raw){
-      try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
-    }
-    if(raw){
-      try{
-        const parsed = JSON.parse(raw);
-        tasks = parsed.tasks || [];
-        history = parsed.history || [];
-        batches = parsed.batches || [];
-        events = parsed.events || [];
-        settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
-        frequentTemplates = parsed.frequentTemplates || [];
-      }catch(e){ tasks=[]; history=[]; batches=[]; events=[]; settings=Object.assign({},DEFAULT_SETTINGS); frequentTemplates=[]; }
-    }
-    migrateTaskOrder();
+    tasks=[]; history=[]; batches=[]; events=[];
+    settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
     applySettings();
-    updateBatchColorDefault();
-    updateEventColorDefault();
-    await initGithubSync();
-    renderAll();
+    try{
+      ghToken = localStorage.getItem('prodplan-gh-token') || null;
+      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
+      ghPath = localStorage.getItem('prodplan-gh-path') || null;
+      ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
+    }catch(e){}
+    updateGithubStatusUI();
+
+    if(ghToken && ghRepo && ghPath){
+      showLoadingOverlay();
+      let ok = false;
+      try{
+        ok = await Promise.race([
+          pullFromGithub(true),
+          new Promise(resolve=> setTimeout(()=>resolve(false), 6000))
+        ]);
+      }catch(e){ ok = false; }
+      hideLoadingOverlay();
+      if(!ok){
+        showLoadErrorOverlay();
+        return;
+      }
+    } else {
+      migrateTaskOrder();
+      updateBatchColorDefault();
+      updateEventColorDefault();
+      renderAll();
+    }
     checkOverdueTasksOnLoad();
     setTimeout(updateOverdueBadge, 300);
+  }
+  function showLoadErrorOverlay(){
+    const el = $('#loadErrorOverlay');
+    if(el) el.classList.add('show');
+  }
+  function hideLoadErrorOverlay(){
+    const el = $('#loadErrorOverlay');
+    if(el) el.classList.remove('show');
   }
   function flashSaved(){
     const el = $('#saveIndicator');
@@ -1365,23 +1383,6 @@
     const sharedBox = $('#useSharedStorageBox');
     if(sharedBox){ const isShared = ghRepo==='vonrmangaron/farmdata'; sharedBox.checked = isShared; if(repoInput) repoInput.readOnly = isShared; }
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
-  }
-  async function initGithubSync(){
-    try{
-      ghToken = localStorage.getItem('prodplan-gh-token') || null;
-      ghRepo = localStorage.getItem('prodplan-gh-repo') || null;
-      ghPath = localStorage.getItem('prodplan-gh-path') || null;
-      ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
-    }catch(e){}
-    updateGithubStatusUI();
-    if(ghToken && ghRepo && ghPath){
-      showLoadingOverlay();
-      await Promise.race([
-        pullFromGithub(true),
-        new Promise(resolve=> setTimeout(resolve, 6000))
-      ]);
-      hideLoadingOverlay();
-    }
   }
   function showLoadingOverlay(){
     const el = $('#loadingOverlay');
@@ -1414,7 +1415,7 @@
   function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
   function b64DecodeUtf8(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
   async function pullFromGithub(silent){
-    if(!ghToken || !ghRepo || !ghPath) return;
+    if(!ghToken || !ghRepo || !ghPath) return false;
     try{
       const res = await fetch(`${GITHUB_API}/repos/${ghRepo}/contents/${encodeURIComponent(ghPath)}`, {
         headers:{ Authorization:`token ${ghToken}`, Accept:'application/vnd.github+json' }
@@ -1422,7 +1423,7 @@
       if(res.status===404){
         await pushToGithub();
         if(!silent) showToast('Connected — created a new file in your GitHub repo.');
-        return;
+        return true;
       }
       if(!res.ok) throw new Error('GitHub responded ' + res.status);
       const data = await res.json();
@@ -1430,9 +1431,11 @@
       const content = b64DecodeUtf8(data.content);
       applyImportedData(content);
       if(!silent) showToast('Synced from GitHub.');
+      return true;
     }catch(e){
       console.error('GitHub pull failed', e);
       if(!silent) showToast('Could not sync from GitHub — check your token, repo, and path.', true);
+      return false;
     }
   }
   async function pushToGithub(){
@@ -2657,7 +2660,8 @@
       label.textContent = `${startStr} – ${endStr}`;
       return;
     }
-    label.textContent = currentDate.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    const isNarrow = window.innerWidth <= 1024;
+    label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', year:'numeric'} : {month:'long', year:'numeric'});
   }
   function syncViewButtons(){
     $('#viewMonthBtn').classList.toggle('active', viewMode==='month');
@@ -3361,6 +3365,11 @@
 
 
   $('#connectGithubBtn').addEventListener('click', connectGithub);
+  $('#retryLoadBtn').addEventListener('click', ()=>{ hideLoadErrorOverlay(); load(); });
+  $('#openSettingsFromErrorBtn').addEventListener('click', ()=>{
+    hideLoadErrorOverlay();
+    openDrawer('#settingsDrawer');
+  });
   $('#useSharedStorageBox').addEventListener('change', (e)=>{
     const repoInput = $('#githubRepoInput');
     if(e.target.checked){ repoInput.value = 'vonrmangaron/farmdata'; repoInput.readOnly = true; }
@@ -3423,6 +3432,7 @@
   });
   window.addEventListener('resize', ()=>{
     updateBatchStyleAvailability();
+    updatePeriodLabel();
     if(viewMode==='month') renderMonth();
   });
   document.addEventListener('visibilitychange', async ()=>{
