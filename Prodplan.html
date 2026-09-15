@@ -850,6 +850,7 @@
     <label for="setDefaultView">Default view when opening the app</label>
     <select id="setDefaultView">
       <option value="auto">Auto (Month on desktop, Agenda on phone)</option>
+      <option value="auto-board">Auto (Board on desktop, Agenda on phone)</option>
       <option value="month">Month</option>
       <option value="list">Agenda / List</option>
       <option value="kanban">Board</option>
@@ -1403,7 +1404,9 @@
       events = parsed.events || [];
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
-      if(settings.defaultView && settings.defaultView!=='auto'){
+      if(settings.defaultView==='auto-board'){
+        viewMode = window.innerWidth <= 1024 ? 'list' : 'kanban';
+      } else if(settings.defaultView && settings.defaultView!=='auto'){
         viewMode = settings.defaultView;
       } else {
         viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
