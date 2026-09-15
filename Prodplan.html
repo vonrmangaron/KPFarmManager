@@ -176,6 +176,17 @@
     transition:transform .12s ease, filter .12s ease;
   }
   .fab-viewer:hover{ filter:brightness(1.12); transform:scale(1.06); }
+  .fab-refresh{
+    position:fixed; bottom:24px; right:160px; z-index:45;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--primary); color:#fff; border:none;
+    font-size:24px; cursor:pointer; box-shadow:var(--shadow-lg);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .fab-refresh:hover{ filter:brightness(1.08); transform:scale(1.06); }
+  .fab-refresh.spinning{ animation:fab-refresh-spin 0.8s linear infinite; }
+  @keyframes fab-refresh-spin{ to{ transform:rotate(360deg); } }
   .brand{ font-weight:700; font-size:19px; letter-spacing:0.1px; color:var(--ink); display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; max-width:100%; }
   .brand .chick{font-size:20px;}
   .brand .accent{ background:linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
@@ -631,6 +642,7 @@
 
     .fab-delete{ display:none; } /* moved into the More sheet on phone */
     .fab-viewer{ display:none; } /* moved into the More sheet on phone */
+    .fab-refresh{ display:none; } /* mobile has swipe-to-refresh instead */
     .fab-add{
       display:flex; position:fixed; right:16px; bottom:74px; z-index:37;
       width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff;
@@ -819,6 +831,7 @@
   <button id="navMoreBtn"><span class="bn-icon">⋯</span>More</button>
 </nav>
 
+<button class="fab-refresh" id="fabRefreshBtn" title="Refresh from GitHub" aria-label="Refresh from GitHub">⟳</button>
 <button class="fab-viewer" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
 <button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
 <button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
@@ -895,6 +908,14 @@
       <option value="watermark-bottom-right">Watermark + Right</option>
     </select>
     <p id="batchStyleNote" style="font-size:10.5px;color:var(--muted);margin:2px 0 0;display:none;">On small screens, batch labels are automatically centered for readability — this choice only applies on larger screens.</p>
+
+    <label for="setDefaultView">Default view when opening the app</label>
+    <select id="setDefaultView">
+      <option value="auto">Auto (Month on desktop, Agenda on phone)</option>
+      <option value="month">Month</option>
+      <option value="list">Agenda / List</option>
+      <option value="kanban">Kanban</option>
+    </select>
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
 
@@ -1104,7 +1125,7 @@
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
-  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'bottom-left' };
+  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'bottom-left', defaultView:'auto' };
   const DEFAULT_EVENT_COLOR = '#000000';
   const ICON_RULES = [
     [/feed|grain|corn/i,'🌾'],
@@ -1254,11 +1275,12 @@
     document.body.classList.remove(...THEME_CLASSES);
     if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
     document.body.classList.toggle('hide-icons', !settings.showIcons);
-    const fs=$('#setFontSize'), th=$('#setTheme'), si=$('#setShowIcons'), bs=$('#setBatchStyle');
+    const fs=$('#setFontSize'), th=$('#setTheme'), si=$('#setShowIcons'), bs=$('#setBatchStyle'), dv=$('#setDefaultView');
     if(fs) fs.value = settings.fontSize;
     if(th) th.value = settings.theme;
     if(si) si.checked = settings.showIcons;
     if(bs) bs.value = settings.batchBadgeStyle;
+    if(dv) dv.value = settings.defaultView || 'auto';
     updateBatchStyleAvailability();
   }
   function updateBatchStyleAvailability(){
@@ -1459,6 +1481,11 @@
       events = parsed.events || [];
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
+      if(settings.defaultView && settings.defaultView!=='auto'){
+        viewMode = settings.defaultView;
+      } else {
+        viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
+      }
       migrateTaskOrder();
       applySettings(); updateBatchColorDefault(); updateEventColorDefault(); renderAll();
     }catch(e){ showToast('Could not read that synced data.', true); }
@@ -3351,6 +3378,7 @@
   $('#setTheme').addEventListener('change', (e)=>{ settings.theme = e.target.value; applySettings(); persist(); });
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
+  $('#setDefaultView').addEventListener('change', (e)=>{ settings.defaultView = e.target.value; persist(); });
   $('#resetSettingsBtn').addEventListener('click', ()=>{ settings = Object.assign({}, DEFAULT_SETTINGS); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
 
   $('#bulkDeleteModalBtn').addEventListener('click', ()=>{
@@ -3521,13 +3549,22 @@
       currentDist = 0;
     });
   }
-  initPullToRefresh($('#calendarWrap'), $('#pullRefreshIndicator'), async ()=>{
+  async function performManualRefresh(){
     if(ghToken && ghRepo && ghPath){
       if(pushPending){ await runScheduledPush(); }
       await pullFromGithub();
     } else {
       showToast('Connect to GitHub in Settings to enable syncing.', true);
     }
+  }
+  initPullToRefresh($('#calendarWrap'), $('#pullRefreshIndicator'), performManualRefresh);
+
+  $('#fabRefreshBtn').addEventListener('click', async ()=>{
+    const btn = $('#fabRefreshBtn');
+    if(btn.classList.contains('spinning')) return;
+    btn.classList.add('spinning');
+    try{ await performManualRefresh(); }
+    finally{ btn.classList.remove('spinning'); }
   });
 
   load();
