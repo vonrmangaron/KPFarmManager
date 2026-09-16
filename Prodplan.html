@@ -352,6 +352,23 @@
   .col-head .dbar > span{ display:block; height:100%; border-radius:99px; }
   .col-head .dfraction{ font-size:9px; font-weight:700; opacity:0.8; white-space:nowrap; }
   .col-head .doverdue{ position:absolute; top:-6px; right:-6px; background:var(--danger); color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:999px; box-shadow:var(--shadow-sm); z-index:1; }
+  .col-toggle-btn{
+    position:absolute; top:-6px; left:-6px; width:20px; height:20px; border-radius:50%;
+    border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer;
+    font-size:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:2;
+    transition:background .12s ease, color .12s ease;
+  }
+  .col-toggle-btn:hover{ background:var(--ink); color:var(--surface); }
+
+  .kanban-column.collapsed{ flex:0 0 44px; min-width:44px; width:44px; cursor:pointer; }
+  .kanban-column.collapsed .col-head{
+    display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:0;
+    padding:34px 6px 10px; min-height:180px; height:100%; position:relative;
+  }
+  .kanban-column.collapsed .col-toggle-btn{ position:absolute; top:6px; left:50%; transform:translateX(-50%) rotate(90deg); }
+  .kanban-column.collapsed .dtitle-vertical{
+    writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; font-size:11px; font-weight:700;
+  }
 
   .col-mon{ background:#F5F8FD; border-color:#D3E0F5; } .col-mon .col-head{ background:#E9F0FB; border-top-color:#3E6FBF; } .col-mon .dtitle{ color:#2C5296; } .col-mon .dbar>span{ background:#3E6FBF; }
   .col-tue{ background:#F3FAF9; border-color:#CFEEEA; } .col-tue .col-head{ background:#E7F6F3; border-top-color:#1F9E8F; } .col-tue .dtitle{ color:#186F64; } .col-tue .dbar>span{ background:#1F9E8F; }
@@ -1121,6 +1138,15 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
+  let collapsedKanbanCols = new Set(loadCollapsedKanbanCols()); // persisted across reloads
+  function loadCollapsedKanbanCols(){
+    try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }
+    catch(e){ return []; }
+  }
+  function saveCollapsedKanbanCols(){
+    try{ localStorage.setItem('prodplan-collapsed-kanban-days', JSON.stringify([...collapsedKanbanCols])); }
+    catch(e){}
+  }
   let viewMode = window.innerWidth <= 1024 ? 'list' : 'month'; // 'month' | 'year' | 'list'
   let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
   let sortables = [];
@@ -2537,28 +2563,44 @@
       const doneCount = dayTasks.filter(t=>t.status==='done').length;
       const openCount = dayTasks.length - doneCount;
       const allDone = dayTasks.length>0 && openCount===0;
-      col.className = 'kanban-column ' + dayClasses[i] + (isToday?' today':'') + (isWeekend?' weekend':'') + (allDone?' all-done':'');
+      const isCollapsed = collapsedKanbanCols.has(key);
+      col.className = 'kanban-column ' + dayClasses[i] + (isToday?' today':'') + (isWeekend?' weekend':'') + (allDone?' all-done':'') + (isCollapsed?' collapsed':'');
 
       const pct = dayTasks.length ? Math.round((doneCount/dayTasks.length)*100) : 0;
       const showOverdueFlag = isPast && openCount>0;
 
       const head = document.createElement('div');
       head.className = 'col-head';
-      head.innerHTML = `
-        ${showOverdueFlag ? `<span class="doverdue">⚠ ${openCount} open</span>` : ''}
-        <span class="dtitle">${dayNames[i]} ${d.getDate()} ${d.getFullYear()}</span>
-        <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>`;
-      col.appendChild(head);
-
-      const body = document.createElement('div');
-      body.className = 'day-tasks kanban-cards';
-      body.dataset.date = key;
-      if(dayTasks.length===0){
-        body.innerHTML = '<div class="col-empty">Nothing scheduled</div>';
+      if(isCollapsed){
+        head.innerHTML = `
+          <button class="col-toggle-btn" title="Expand day">↔</button>
+          <span class="dtitle-vertical">${dayNames[i]} ${d.getDate()} · ${dayTasks.length}</span>`;
       } else {
-        dayTasks.forEach(t=> body.appendChild(buildKanbanCard(t)));
+        head.innerHTML = `
+          <button class="col-toggle-btn" title="Collapse day">↔</button>
+          ${showOverdueFlag ? `<span class="doverdue">⚠ ${openCount} open</span>` : ''}
+          <span class="dtitle">${dayNames[i]} ${d.getDate()} ${d.getFullYear()}</span>
+          <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>`;
       }
-      col.appendChild(body);
+      col.appendChild(head);
+      head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(isCollapsed) collapsedKanbanCols.delete(key); else collapsedKanbanCols.add(key);
+        saveCollapsedKanbanCols();
+        renderKanban();
+      });
+
+      if(!isCollapsed){
+        const body = document.createElement('div');
+        body.className = 'day-tasks kanban-cards';
+        body.dataset.date = key;
+        if(dayTasks.length===0){
+          body.innerHTML = '<div class="col-empty">Nothing scheduled</div>';
+        } else {
+          dayTasks.forEach(t=> body.appendChild(buildKanbanCard(t)));
+        }
+        col.appendChild(body);
+      }
       board.appendChild(col);
     }
     wrap.appendChild(board);
