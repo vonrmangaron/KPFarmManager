@@ -353,19 +353,19 @@
   .col-head .dfraction{ font-size:9px; font-weight:700; opacity:0.8; white-space:nowrap; }
   .col-head .doverdue{ position:absolute; top:-6px; right:-6px; background:var(--danger); color:#fff; font-size:9px; font-weight:700; padding:1px 6px; border-radius:999px; box-shadow:var(--shadow-sm); z-index:1; }
   .col-toggle-btn{
-    position:absolute; top:-6px; left:-6px; width:20px; height:20px; border-radius:50%;
-    border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer;
-    font-size:10px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm); z-index:2;
-    transition:background .12s ease, color .12s ease;
+    width:28px; height:28px; border-radius:8px; border:none; flex-shrink:0;
+    background:rgba(0,0,0,0.08); color:inherit; cursor:pointer;
+    font-size:15px; display:flex; align-items:center; justify-content:center;
+    transition:background .12s ease;
   }
-  .col-toggle-btn:hover{ background:var(--ink); color:var(--surface); }
+  .col-toggle-btn:hover{ background:rgba(0,0,0,0.18); }
+  .col-head-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 
-  .kanban-column.collapsed{ flex:0 0 44px; min-width:44px; width:44px; cursor:pointer; }
+  .kanban-column.collapsed{ flex:0 0 46px; min-width:46px; width:46px; cursor:pointer; }
   .kanban-column.collapsed .col-head{
-    display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:0;
-    padding:34px 6px 10px; min-height:180px; height:100%; position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:0;
+    padding:10px 6px; min-height:180px; height:100%; position:relative;
   }
-  .kanban-column.collapsed .col-toggle-btn{ position:absolute; top:6px; left:50%; transform:translateX(-50%) rotate(90deg); }
   .kanban-column.collapsed .dtitle-vertical{
     writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; font-size:11px; font-weight:700;
   }
@@ -1434,7 +1434,11 @@
       events = parsed.events || [];
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
-      if(settings.defaultView==='auto-board'){
+      let sessionViewMode = null;
+      try{ sessionViewMode = sessionStorage.getItem('prodplan-session-viewmode'); }catch(e){}
+      if(sessionViewMode && ['month','year','list','kanban'].includes(sessionViewMode)){
+        viewMode = sessionViewMode;
+      } else if(settings.defaultView==='auto-board'){
         viewMode = window.innerWidth <= 1024 ? 'list' : 'kanban';
       } else if(settings.defaultView && settings.defaultView!=='auto'){
         viewMode = settings.defaultView;
@@ -2577,9 +2581,11 @@
           <span class="dtitle-vertical">${dayNames[i]} ${d.getDate()} · ${dayTasks.length}</span>`;
       } else {
         head.innerHTML = `
-          <button class="col-toggle-btn" title="Collapse day">↔</button>
           ${showOverdueFlag ? `<span class="doverdue">⚠ ${openCount} open</span>` : ''}
-          <span class="dtitle">${dayNames[i]} ${d.getDate()} ${d.getFullYear()}</span>
+          <div class="col-head-top">
+            <span class="dtitle">${dayNames[i]} ${d.getDate()} ${d.getFullYear()}</span>
+            <button class="col-toggle-btn" title="Collapse day">↔</button>
+          </div>
           <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>`;
       }
       col.appendChild(head);
@@ -2704,6 +2710,7 @@
     $('#navGroup').classList.toggle('hidden', viewMode==='list');
     $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
     $('#navMonthBtn').classList.toggle('active', isCalendar);
+    try{ sessionStorage.setItem('prodplan-session-viewmode', viewMode); }catch(e){}
   }
 
   function initSortables(){
