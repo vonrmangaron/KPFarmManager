@@ -1,5 +1,5 @@
 /**
- * ProdPlan.VM service worker
+ * CluckWise.vm service worker
  * --------------------------
  * Shared by both the main app and the read-only viewer.
  * Strategy: network-first for same-origin files (so you always get the latest
@@ -9,7 +9,7 @@
  * when there's a connection, and views/CSS/JS still work with none.
  */
 
-const CACHE_NAME = 'prodplan-vm-cache-v1';
+const CACHE_NAME = 'cluckwise-vm-cache-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
