@@ -2853,6 +2853,10 @@
     canvas.appendChild(fadeLeft);
     canvas.appendChild(fadeRight);
     wrap.appendChild(canvas);
+    const wrapStyle = getComputedStyle(wrap);
+    const wrapPadding = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
+    const availableHeight = wrap.clientHeight - wrapPadding;
+    if(availableHeight > 0) board.style.minHeight = availableHeight + 'px';
 
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
