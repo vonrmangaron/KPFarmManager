@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ProdWise.VM — Smart Production Planner</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json" />
-<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F0B854'/%3E%3Cstop offset='1' stop-color='%23A8721F'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cellipse cx='32' cy='38' rx='16' ry='15' fill='%23FFF'/%3E%3Ccircle cx='38' cy='26' r='10' fill='%23FFF'/%3E%3Cpath d='M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z' fill='%235E2E22'/%3E%3Cpath d='M 46 26 L 51 28 L 46 30 Z' fill='%23F0B854'/%3E%3Ccircle cx='40.5' cy='24.5' r='1.3' fill='%232B2116'/%3E%3Cpath d='M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z' fill='%23C1502E'/%3E%3C/svg%3E" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
 <meta name="theme-color" content="#E0A339" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -67,15 +66,8 @@ h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-se
   box-shadow:var(--shadow-sm);flex-wrap:wrap;}
 .brand{font-weight:700;font-size:20px;letter-spacing:0.1px;color:var(--ink);
   display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
-.brand-icon{
-  width:28px;
-  height:28px;
-  border-radius:6px;
-  display:inline-block;
-  vertical-align:middle;
-  flex-shrink:0;
-  object-fit:cover;
-}
+.brand-icon{width:30px;height:30px;border-radius:7px;display:inline-block;
+  vertical-align:middle;flex-shrink:0;}
 .brand .accent{background:linear-gradient(135deg,var(--primary),var(--secondary));
   -webkit-background-clip:text;background-clip:text;color:transparent;}
 .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -230,7 +222,13 @@ body.theme-dark .btn-primary{color:#1A2438;}
 .tab-btn:hover{background:var(--surface-soft);color:var(--ink);}
 .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
   color:#fff;box-shadow:var(--shadow-sm);}
+.tab-btn.tab-predictions{background:linear-gradient(135deg,rgba(76,122,59,0.14),rgba(76,122,59,0.06));
+  color:var(--success);border:1px dashed var(--success);}
+.tab-btn.tab-predictions:hover{background:var(--success-soft);}
+.tab-btn.tab-predictions.active{background:linear-gradient(135deg,var(--success),#36602A);
+  color:#fff;border-color:transparent;border-style:solid;}
 body.theme-dark .tab-btn.active{color:#1A2438;}
+body.theme-dark .tab-btn.tab-predictions.active{color:#1A2438;}
 
 main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 @media(max-width:640px){main{padding:16px;}}
@@ -654,6 +652,357 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .balance-pos{color:var(--primary-dark);font-weight:700;}
 .balance-neg{color:var(--danger);font-weight:700;}
 
+/* =========================================================
+   PREDICTIONS PAGE
+========================================================= */
+.predictions-head{background:linear-gradient(135deg,#4C7A3B,#36602A);color:#fff;
+  padding:18px 22px;border-radius:18px;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.predictions-head h1{margin:0;font-size:22px;font-weight:800;
+  display:flex;align-items:center;gap:10px;}
+.predictions-head .head-note{font-size:12.5px;font-weight:500;opacity:0.9;}
+
+/* Whole Farm KPI card */
+.farm-kpi-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-sm);
+}
+.farm-kpi-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:16px;
+}
+.farm-kpi-head h2{
+  margin:0;font-family:'Sora',sans-serif;font-weight:800;font-size:17px;
+  color:var(--ink);display:flex;align-items:center;gap:8px;
+}
+.farm-kpi-head .sub{font-size:11.5px;color:var(--muted);font-weight:500;}
+.farm-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:12px;
+  align-items:stretch;
+}
+@media(max-width:1100px){
+  .farm-kpi-grid{grid-template-columns:repeat(3, minmax(0, 1fr));}
+}
+@media(max-width:760px){
+  .farm-kpi-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+}
+@media(max-width:480px){
+  .farm-kpi-grid{grid-template-columns:1fr;}
+}
+.farm-kpi-tile{
+  background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:4px;
+  min-width:0;
+  min-height:110px;
+  transition:box-shadow .12s ease,border-color .12s ease;
+}
+.farm-kpi-tile:hover{box-shadow:var(--shadow-sm);}
+.farm-kpi-tile .fkt-lbl{
+  font-size:10.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.farm-kpi-tile .fkt-val{
+  font-family:'Sora',sans-serif;font-weight:800;font-size:20px;
+  color:var(--ink);line-height:1.15;
+  word-break:break-word;
+  margin-top:2px;
+}
+.farm-kpi-tile.amber .fkt-val{color:var(--primary-dark);}
+.farm-kpi-tile.green .fkt-val{color:var(--success);}
+.farm-kpi-tile.blue .fkt-val{color:var(--secondary);}
+.farm-kpi-tile .fkt-sub{
+  font-size:11px;color:var(--muted);margin-top:auto;
+  padding-top:6px;line-height:1.35;
+}
+.farm-feed-override{
+  width:100%;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:var(--ink);padding:4px 8px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  text-align:right;margin-top:8px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.farm-feed-override::-webkit-outer-spin-button,
+.farm-feed-override::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.farm-feed-override:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
+}
+.farm-feed-override.manual{
+  border-color:var(--primary);background:var(--primary-soft);
+}
+.farm-feed-override::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
+.farm-kpi-empty{
+  padding:24px 20px;text-align:center;color:var(--muted);
+  font-size:13px;font-style:italic;
+}
+
+.pred-grid{display:grid;grid-template-columns:1fr;gap:18px;}
+.pred-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:1000px){.pred-grid.compare{grid-template-columns:1fr;}}
+
+.pred-shed-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;box-shadow:var(--shadow-sm);min-width:0;}
+.pred-shed-head{padding:14px 18px;border-bottom:1px solid var(--line);
+  background:var(--surface-soft);display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.pred-shed-head h3{margin:0;font-size:16px;font-weight:800;
+  display:flex;align-items:center;gap:8px;color:var(--ink);}
+.pred-shed-body{padding:14px 18px 18px;}
+
+.pred-snapshot{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.pred-snap-item{background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;}
+.pred-snap-item .lbl{font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.pred-snap-item .val{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:16px;color:var(--ink);margin-top:2px;}
+.pred-snap-item .sub{font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
+
+.pred-target-curve{margin-top:14px;padding:12px 14px;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:12px;}
+.ptc-head{display:flex;align-items:baseline;justify-content:space-between;
+  gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.ptc-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);}
+.ptc-sub{font-size:11px;color:var(--muted);}
+.ptc-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:640px){.ptc-inputs{grid-template-columns:repeat(2,1fr);}}
+.ptc-input{background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;
+  min-width:0;}
+.ptc-input label{font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+
+/* Target Growth Curve input field — no spinner overlap */
+.ptc-input .ptc-field{display:flex;align-items:center;gap:8px;min-width:0;}
+.ptc-input input{
+  flex:1 1 auto;min-width:0;width:100%;
+  border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-soft);color:var(--ink);
+  padding:6px 10px;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+  text-align:right;
+  transition:border-color .15s ease,box-shadow .15s ease;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.ptc-input input::-webkit-outer-spin-button,
+.ptc-input input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ptc-input input:focus{
+  outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);
+}
+.ptc-input input.warn{border-color:var(--danger);background:var(--danger-soft);}
+.ptc-input input.filled{border-color:var(--primary);background:var(--primary-soft);}
+.ptc-input input::placeholder{
+  color: var(--muted);
+  opacity: 0.55;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 12.5px;
+  letter-spacing: 0;
+}
+.ptc-input .unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
+.ptc-input .ref{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.ptc-status{margin-top:10px;padding:8px 10px;background:var(--surface);
+  border:1px dashed var(--line);border-radius:8px;font-size:11.5px;
+  color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ptc-status strong{color:var(--ink);}
+.ptc-status .pill{display:inline-block;font-size:9.5px;font-weight:800;
+  padding:2px 7px;border-radius:999px;letter-spacing:0.05em;text-transform:uppercase;}
+.ptc-status .pill.pickup{background:var(--success-soft);color:var(--success);}
+.ptc-status .pill.target{background:var(--primary-soft);color:var(--primary-dark);}
+.ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);
+  border:1px solid var(--line);}
+
+.ptc-compare{margin-top:10px;padding:8px 10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;}
+.ptc-compare-title{font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+.ptc-compare-row{display:flex;justify-content:space-between;align-items:baseline;
+  gap:8px;font-size:12px;padding:3px 0;border-bottom:1px dashed var(--line);}
+.ptc-compare-row:last-child{border-bottom:none;}
+.ptc-compare-row .ptc-day{font-weight:700;color:var(--ink);min-width:52px;}
+.ptc-compare-row .ptc-vals{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;}
+.ptc-compare-row .ptc-delta{font-weight:800;}
+.ptc-compare-row .ptc-delta.pos{color:var(--success);}
+.ptc-compare-row .ptc-delta.neg{color:var(--danger);}
+.ptc-compare-row .ptc-delta.neu{color:var(--muted);}
+.ptc-compare-row .ptc-pending{color:var(--muted);font-style:italic;}
+
+.pred-estimates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;
+  margin-top:14px;}
+.pred-est-tile{background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px;
+  display:flex;flex-direction:column;gap:2px;
+  transition:box-shadow .12s ease,border-color .12s ease;}
+.pred-est-tile:hover{box-shadow:var(--shadow-sm);}
+.pred-est-tile .lbl{font-size:10.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.pred-est-tile .val{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:19px;color:var(--ink);line-height:1.15;}
+.pred-est-tile.amber .val{color:var(--primary-dark);}
+.pred-est-tile.green .val{color:var(--success);}
+.pred-est-tile.red .val{color:var(--danger);}
+
+.pred-confidence{display:flex;align-items:center;gap:8px;margin-top:14px;
+  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12.5px;}
+.pred-confidence .bar{flex:1;height:6px;background:var(--line);
+  border-radius:999px;overflow:hidden;position:relative;}
+.pred-confidence .bar-fill{height:100%;border-radius:999px;transition:width .3s ease;}
+.pred-confidence .bar-fill.low{background:#C1502E;}
+.pred-confidence .bar-fill.medium{background:#E0A339;}
+.pred-confidence .bar-fill.high{background:#4C7A3B;}
+.pred-confidence .pct{font-family:'Sora',sans-serif;font-weight:800;font-size:14px;}
+
+.pred-empty{padding:32px 24px;text-align:center;background:var(--surface);
+  border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:14px;}
+.pred-empty strong{color:var(--ink);}
+
+.pred-pickup-input{width:90px;padding:5px 8px;border:1px solid var(--line);
+  border-radius:7px;background:var(--surface);color:var(--ink);
+  font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;
+  text-align:right;
+  -moz-appearance: textfield;
+  appearance: textfield;}
+.pred-pickup-input::-webkit-outer-spin-button,
+.pred-pickup-input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pred-pickup-input:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.pred-pickup-input.manual{border-color:var(--primary);background:var(--primary-soft);}
+.pred-pickup-input.warn{border-color:var(--danger);background:var(--danger-soft);}
+.pred-revert-btn{border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);cursor:pointer;font-size:11px;padding:3px 7px;
+  border-radius:6px;margin-left:4px;line-height:1;}
+.pred-revert-btn:hover{background:var(--primary-soft);color:var(--primary-dark);}
+
+.pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);
+  text-align:right;font-variant-numeric:tabular-nums;}
+
+.pred-beta-row{display:flex;align-items:center;gap:10px;margin-top:14px;
+  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12.5px;flex-wrap:wrap;}
+.pred-beta-row label{font-weight:700;text-transform:uppercase;
+  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
+.pred-beta-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--primary);}
+.pred-beta-row input[type="number"]{width:70px;padding:5px 8px;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  text-align:center;
+  -moz-appearance: textfield;
+  appearance: textfield;}
+.pred-beta-row input[type="number"]::-webkit-outer-spin-button,
+.pred-beta-row input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pred-beta-row input[type="number"]:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+
+.pred-daily-range-bar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;margin:14px 0;box-shadow:var(--shadow-sm);
+}
+.pred-daily-range-bar label{
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12px;
+  color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;
+}
+.pred-daily-range-bar input[type="number"]{
+  width:72px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-soft);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;text-align:center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.pred-daily-range-bar input[type="number"]::-webkit-outer-spin-button,
+.pred-daily-range-bar input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pred-daily-range-bar input[type="number"]:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
+}
+.pred-daily-range-bar span{font-size:12px;color:var(--muted);font-weight:600;}
+.pred-daily-range-bar .pdrb-hint{
+  margin-left:auto;font-size:11px;color:var(--muted);font-weight:500;
+}
+
+.pred-daily-table{width:100%;border-collapse:collapse;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.pred-daily-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
+  font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);}
+.pred-daily-table td{padding:7px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
+.pred-daily-table tr:last-child td{border-bottom:none;}
+.pred-daily-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+.pred-daily-table tr.is-today td{background:var(--primary-soft);font-weight:700;}
+.pred-daily-table tr.is-today td:first-child{border-left:3px solid var(--primary);}
+.pred-daily-table tr.is-weekend td{background:var(--weekend-tint);}
+.pred-daily-table tr.is-weekend td:first-child{
+  border-left:3px solid var(--weekend-border);
+  color:var(--weekend-border);font-weight:800;
+}
+.pred-daily-table tr.is-today.is-weekend td{background:var(--weekend-tint);}
+.pred-daily-table tr.is-today.is-weekend td:first-child{border-left:3px solid var(--weekend-border);}
+.pred-daily-table tr.is-forecast-row td{background:rgba(176,132,99,0.08);}
+.pred-daily-table tr.is-forecast-row.is-weekend td{background:var(--weekend-tint);}
+.pred-daily-table .w-actual{font-weight:800;color:var(--success);}
+.pred-daily-table .w-forecast{font-weight:800;color:var(--primary-dark);font-style:italic;}
+.pred-daily-table .var-pos{color:var(--success);font-weight:700;}
+.pred-daily-table .var-neg{color:var(--danger);font-weight:700;}
+.pred-daily-table .var-neu{color:var(--muted);font-weight:700;}
+.pred-daily-table .days-pos{color:var(--success);font-weight:800;}
+.pred-daily-table .days-neg{color:var(--danger);font-weight:800;}
+.pred-daily-table .days-neu{color:var(--muted);font-weight:800;}
+
+.milestone-pill{
+  display:inline-block;font-size:9px;font-weight:800;
+  padding:1px 6px;border-radius:999px;margin-left:5px;
+  letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-family:'Sora',sans-serif;
+  box-shadow:0 1px 3px rgba(168,114,31,0.30);
+}
+body.theme-dark .milestone-pill{color:#1A2438;}
+
+.w-pill{display:inline-block;font-size:9px;font-weight:800;
+  padding:1px 6px;border-radius:999px;margin-left:4px;
+  letter-spacing:0.06em;text-transform:uppercase;vertical-align:middle;}
+.w-pill.actual{background:var(--success-soft);color:var(--success);}
+.w-pill.forecast{background:var(--secondary-soft);color:var(--secondary);}
+.w-pill.ai-target{background:var(--primary-soft);color:var(--primary-dark);}
+.w-pill.standard{background:var(--surface-soft);color:var(--muted);
+  border:1px solid var(--line);}
+
+.pred-days-behind{display:flex;align-items:center;gap:10px;margin-top:14px;
+  padding:10px 14px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:13px;flex-wrap:wrap;}
+.pred-days-behind .dbi-lbl{font-weight:700;text-transform:uppercase;
+  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
+.pred-days-behind .dbi-val{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:16px;}
+.pred-days-behind.ahead .dbi-val{color:var(--success);}
+.pred-days-behind.on-track .dbi-val{color:var(--success);}
+.pred-days-behind.behind .dbi-val{color:var(--primary-dark);}
+.pred-days-behind.behind-major .dbi-val{color:var(--danger);}
+.pred-days-behind .dbi-note{font-size:11.5px;color:var(--muted);}
+.pred-days-behind .dbi-note strong{color:var(--ink);}
+
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);
   background:#2B2116;color:#fff;padding:12px 20px;border-radius:999px;
   font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);
@@ -671,7 +1020,28 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <div class="shell">
   <header class="topbar">
     <div class="brand">
-      <img class="brand-icon" src="icons/icon-192.png" alt="prodwise" />
+      <svg class="brand-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="brandBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F0B854"/>
+            <stop offset="100%" stop-color="#A8721F"/>
+          </linearGradient>
+          <linearGradient id="brandChick" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="100%" stop-color="#F6E4C1"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="64" height="64" rx="14" ry="14" fill="url(#brandBg)"/>
+        <ellipse cx="25" cy="20" rx="22" ry="14" fill="#FFFFFF" opacity="0.10"/>
+        <path d="M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z" fill="#5E2E22"/>
+        <ellipse cx="32" cy="38" rx="16" ry="15" fill="url(#brandChick)"/>
+        <path d="M 27 40 Q 33 37 38 42 Q 33 46 27 44 Z" fill="#E8D4AA" opacity="0.75"/>
+        <circle cx="38" cy="26" r="10" fill="url(#brandChick)"/>
+        <path d="M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z" fill="#C1502E"/>
+        <path d="M 46 26 L 51 28 L 46 30 Z" fill="#F0B854"/>
+        <circle cx="40.5" cy="24.5" r="1.3" fill="#2B2116"/>
+        <circle cx="40.9" cy="24.1" r="0.4" fill="#FFFFFF" opacity="0.9"/>
+      </svg>
       ProdWise<span class="accent">.VM</span>
     </div>
     <div class="topbar-right">
@@ -725,9 +1095,14 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 
 <script>
 /* =========================================================
-   ProdWise.VM — Main App
-   - Excel import + cloud sync + silo planner
-   - PWA at root, CluckWise launcher
+   ProdWise.VM
+   - Ross 308 as-hatched curve (Aviagen 2022 combined M/F)
+   - Mode-aware AI forecast (pickups → targets → standard)
+   - Days-vs-Ross expressed purely in days
+   - Milestone highlight for weight-curve anchor days
+   - Whole Farm KPI card with manual feed override
+   - Per-shed density (fixed 3,162 m² floor area)
+   - Total Live Weight always shown in kg; Feed in tonnes with commas
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -737,12 +1112,12 @@ const SILO_KEY_V2 = 'prodwise_vm_silo_v2';
 const SILO_KEY    = 'prodwise_vm_silo_v3';
 const SESSION_KEY = 'prodwise_session_init_v1';
 const SYNC_FARMNAME_KEY = 'prodwise_sync_farmname_v1';
+const PRED_KEY    = 'prodwise_predictions_v1';
 const SHED_COUNT  = 8;
 const FEED_BLOCK_T = 60;
+const FIXED_FLOOR_AREA_M2 = 3162;
 
-/* CluckWise launcher URL */
 const CLUCKWISE_URL = './cluckwise/';
-
 const SYNC_WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
 const SYNC_REPO = 'vonrmangaron/farmdata';
 const SYNC_SUFFIX = '-feed';
@@ -750,10 +1125,16 @@ const SYNC_APP_TAG = 'prodwise';
 const MAX_EXCEL_WARN_BYTES = 2 * 1024 * 1024;
 
 const DEFAULT_VIEWS = { 1:'planner', 2:'planner', 3:'planner', 4:'planner' };
-
 const CONE_KG   = 10000;
 const RING_KG   = 8000;
 const MAX_RINGS = 5;
+
+const ROSS_308_WEIGHTS_KG = {
+  0: 0.044, 7: 0.2135, 14: 0.533, 21: 1.012, 28: 1.6165,
+  35: 2.2955, 42: 2.998, 49: 3.6815, 56: 4.318
+};
+
+const TARGET_DAYS = [7, 14, 21, 28];
 
 function ringsToKg(r){
   if (r === null || r === undefined || r === '' || isNaN(r)) return 0;
@@ -808,6 +1189,14 @@ let siloData = {
   3: { readings: [], deliveries: [] },
   4: { readings: [], deliveries: [] }
 };
+let predState = {
+  beta: 0.27,
+  targetHarvestWeightKg: { 1: 2.65, 2: 2.65, 3: 2.65, 4: 2.65 },
+  predGroup: 1,
+  predView: 'both',
+  dailyRange: { start: 1, end: 52 },
+  farmFeedOverride: null
+};
 let renderTimer = null;
 
 let syncFarmName = null;
@@ -832,6 +1221,7 @@ function iso(d){
 function addDays(d, n){ const x = new Date(dateOnly(d)); x.setDate(x.getDate()+n); return dateOnly(x); }
 function daysBetween(a, b){ return Math.round((dateOnly(b) - dateOnly(a)) / 86400000); }
 function isWeekend(d){ const day = dateOnly(d).getDay(); return day === 0 || day === 6; }
+function isMilestoneDay(age){ return Number.isFinite(age) && age > 0 && age % 7 === 0; }
 const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtShort(d){
@@ -909,6 +1299,38 @@ function getVal(row, keys){
   return '';
 }
 
+/* ---------- Ross 308 curve ---------- */
+function rossWeightKg(ageDays){
+  if (!Number.isFinite(ageDays)) return ROSS_308_WEIGHTS_KG[0];
+  if (ageDays <= 0) return ROSS_308_WEIGHTS_KG[0];
+  if (ageDays >= 56) return ROSS_308_WEIGHTS_KG[56];
+  const ages = Object.keys(ROSS_308_WEIGHTS_KG).map(Number).sort((a,b) => a-b);
+  for (let i = 0; i < ages.length - 1; i++){
+    const a0 = ages[i], a1 = ages[i+1];
+    if (ageDays >= a0 && ageDays <= a1){
+      const t = (ageDays - a0) / (a1 - a0);
+      return ROSS_308_WEIGHTS_KG[a0] + t * (ROSS_308_WEIGHTS_KG[a1] - ROSS_308_WEIGHTS_KG[a0]);
+    }
+  }
+  return ROSS_308_WEIGHTS_KG[56];
+}
+
+function findRossAgeForWeight(weightKg){
+  const w = Number(weightKg);
+  if (!Number.isFinite(w) || w <= ROSS_308_WEIGHTS_KG[0]) return 0;
+  if (w >= ROSS_308_WEIGHTS_KG[56]) return 56;
+  const ages = Object.keys(ROSS_308_WEIGHTS_KG).map(Number).sort((a,b) => a-b);
+  for (let i = 0; i < ages.length - 1; i++){
+    const a0 = ages[i], a1 = ages[i+1];
+    const w0 = ROSS_308_WEIGHTS_KG[a0], w1 = ROSS_308_WEIGHTS_KG[a1];
+    if (w >= w0 && w <= w1){
+      const t = (w - w0) / (w1 - w0);
+      return a0 + t * (a1 - a0);
+    }
+  }
+  return 56;
+}
+
 /* ---------- Excel parse ---------- */
 function parseShedsFromWorkbook(workbook){
   const sheetName =
@@ -923,7 +1345,8 @@ function parseShedsFromWorkbook(workbook){
 
   const sheds = Array.from({length: SHED_COUNT}, (_, i) => ({
     id: i + 1, placementDate: null, initialPopulation: 0, cleanoutDate: null,
-    mortality: 0, customFeedKg: null, pickups: []
+    mortality: 0, customFeedKg: null, pickups: [],
+    targetCurve: { 7: null, 14: null, 21: null, 28: null }
   }));
 
   let batchNumber = '', matched = 0, skipped = 0;
@@ -957,13 +1380,24 @@ function parseShedsFromWorkbook(workbook){
       const bRaw = getVal(row, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
       const fRaw = getVal(row, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
       const vRaw = getVal(row, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
+      const wRaw = getVal(row, [
+        `Pickup${p}Weight`, `Pickup ${p} Weight`,
+        `Pickup${p}TotalWeight`, `Pickup ${p} Total Weight`,
+        `Pickup${p}TotalWt`, `Pickup ${p} Total Wt`,
+        `P${p}Weight`, `P${p} Weight`
+      ]);
       const d = parseExcelDate(dRaw);
       const b = Number(bRaw);
+      const w = Number(wRaw);
       if (d && Number.isFinite(b) && b > 0){
+        const totalWeight = (Number.isFinite(w) && w > 0) ? w : null;
         pickups.push({
           date: d, birds: Math.floor(b),
           isFinal: parseBool(fRaw),
-          variance: Number.isFinite(Number(vRaw)) ? Number(vRaw) : null
+          variance: Number.isFinite(Number(vRaw)) ? Number(vRaw) : null,
+          totalWeightKg: totalWeight,
+          totalWeightKgFromExcel: totalWeight,
+          totalWeightKgManual: false
         });
       }
     }
@@ -993,7 +1427,7 @@ function parseShedsFromWorkbook(workbook){
   return { sheds, batchNumber, matched, skipped, sheetName };
 }
 
-/* ---------- Local persistence ---------- */
+/* ---------- Persistence ---------- */
 function saveState(){
   if (!farmData){ try { localStorage.removeItem(STORAGE_KEY); } catch(e){} return; }
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(farmData)); } catch(e){}
@@ -1011,8 +1445,18 @@ function loadState(){
         date: dateOnly(p.date),
         birds: Number(p.birds) || 0,
         isFinal: !!p.isFinal,
-        variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
+        variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null,
+        totalWeightKg: (p.totalWeightKg != null && Number.isFinite(Number(p.totalWeightKg))) ? Number(p.totalWeightKg) : null,
+        totalWeightKgFromExcel: (p.totalWeightKgFromExcel != null && Number.isFinite(Number(p.totalWeightKgFromExcel))) ? Number(p.totalWeightKgFromExcel) : null,
+        totalWeightKgManual: !!p.totalWeightKgManual
       }));
+      const tc = s.targetCurve || {};
+      s.targetCurve = {
+        7: (tc[7] != null && Number.isFinite(Number(tc[7])) && Number(tc[7]) > 0) ? Number(tc[7]) : null,
+        14: (tc[14] != null && Number.isFinite(Number(tc[14])) && Number(tc[14]) > 0) ? Number(tc[14]) : null,
+        21: (tc[21] != null && Number.isFinite(Number(tc[21])) && Number(tc[21]) > 0) ? Number(tc[21]) : null,
+        28: (tc[28] != null && Number.isFinite(Number(tc[28])) && Number(tc[28]) > 0) ? Number(tc[28]) : null
+      };
     });
     return parsed;
   } catch(e){ return null; }
@@ -1143,6 +1587,173 @@ function normalizeRing(r){
   return Math.max(0, Math.min(MAX_RINGS, Math.floor(n)));
 }
 
+function savePredState(){
+  try { localStorage.setItem(PRED_KEY, JSON.stringify(predState)); } catch(e){}
+}
+function loadPredState(){
+  try {
+    const raw = localStorage.getItem(PRED_KEY);
+    if (!raw) return;
+    const v = JSON.parse(raw);
+    if (!v || typeof v !== 'object') return;
+    if (Number.isFinite(v.beta)) predState.beta = Math.max(0, Math.min(0.6, v.beta));
+    if (v.targetHarvestWeightKg && typeof v.targetHarvestWeightKg === 'object'){
+      [1,2,3,4].forEach(g => {
+        const n = Number(v.targetHarvestWeightKg[g]);
+        if (Number.isFinite(n) && n > 0) predState.targetHarvestWeightKg[g] = n;
+      });
+    }
+    if ([1,2,3,4].includes(v.predGroup)) predState.predGroup = v.predGroup;
+    if (['shed1','shed2','both'].includes(v.predView)) predState.predView = v.predView;
+    if (v.dailyRange && typeof v.dailyRange === 'object'){
+      const s = Number(v.dailyRange.start), e = Number(v.dailyRange.end);
+      if (Number.isFinite(s) && Number.isFinite(e) && s >= 0 && e >= s && e <= 200){
+        predState.dailyRange = { start: Math.floor(s), end: Math.floor(e) };
+      }
+    }
+    if (v.farmFeedOverride != null && Number.isFinite(Number(v.farmFeedOverride)) && Number(v.farmFeedOverride) > 0){
+      predState.farmFeedOverride = Number(v.farmFeedOverride);
+    }
+  } catch(e){}
+}
+
+/* =========================================================
+   WEIGHT HELPERS
+========================================================= */
+function weightedPickups(shed){
+  return (shed.pickups || [])
+    .filter(p => p.totalWeightKg && p.totalWeightKg > 0 && p.birds > 0)
+    .slice()
+    .sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+}
+function lastWeightedPickup(shed){
+  const arr = weightedPickups(shed);
+  return arr.length ? arr[arr.length - 1] : null;
+}
+function pickupAvgKg(p){
+  if (!p || !p.totalWeightKg || !p.birds) return null;
+  return p.totalWeightKg / p.birds;
+}
+function observedDailyGain(shed){
+  const arr = weightedPickups(shed);
+  if (arr.length === 0) return null;
+  if (arr.length === 1){
+    const p = arr[0];
+    const age = ageInDays(shed, p.date);
+    const avg = pickupAvgKg(p);
+    if (age <= 0 || avg == null) return null;
+    return (avg - ROSS_308_WEIGHTS_KG[0]) / age;
+  }
+  const first = arr[0];
+  const last = arr[arr.length - 1];
+  const a0 = ageInDays(shed, first.date);
+  const a1 = ageInDays(shed, last.date);
+  const w0 = pickupAvgKg(first);
+  const w1 = pickupAvgKg(last);
+  if (a1 <= a0 || w0 == null || w1 == null) return null;
+  return (w1 - w0) / (a1 - a0);
+}
+
+function actualWeightOn(shed, date){
+  const arr = weightedPickups(shed);
+  if (arr.length === 0) return null;
+  const d = dateOnly(date);
+  const age = ageInDays(shed, d);
+
+  const exact = arr.find(p => iso(p.date) === iso(d));
+  if (exact) return pickupAvgKg(exact);
+
+  const before = [...arr].reverse().find(p => dateOnly(p.date) < d);
+  const after  = arr.find(p => dateOnly(p.date) > d);
+
+  if (before && after){
+    const a0 = ageInDays(shed, before.date);
+    const a1 = ageInDays(shed, after.date);
+    const w0 = pickupAvgKg(before);
+    const w1 = pickupAvgKg(after);
+    if (a1 === a0) return w0;
+    const t = (age - a0) / (a1 - a0);
+    return w0 + t * (w1 - w0);
+  }
+  if (!before && after){
+    const a1 = ageInDays(shed, after.date);
+    const w1 = pickupAvgKg(after);
+    const g = observedDailyGain(shed) || 0;
+    return Math.max(ROSS_308_WEIGHTS_KG[0], w1 - (a1 - age) * g);
+  }
+  if (before && !after){
+    const a0 = ageInDays(shed, before.date);
+    const w0 = pickupAvgKg(before);
+    const g = observedDailyGain(shed) || 0;
+    return w0 + (age - a0) * g;
+  }
+  return null;
+}
+
+function forecastFromPickups(shed, date){
+  const last = lastWeightedPickup(shed);
+  if (!last) return null;
+  const lastAge = ageInDays(shed, last.date);
+  const lastW = pickupAvgKg(last);
+  const targetAge = ageInDays(shed, date);
+  if (targetAge <= lastAge) return lastW;
+  const g = observedDailyGain(shed) || 0;
+  return lastW + (targetAge - lastAge) * g;
+}
+
+function getTargetCurve(shed){
+  const t = shed.targetCurve || {};
+  const pts = [];
+  TARGET_DAYS.forEach(day => {
+    const v = Number(t[day]);
+    if (Number.isFinite(v) && v > 0) pts.push({ day, kg: v });
+  });
+  return pts.sort((a,b) => a.day - b.day);
+}
+function hasTargetCurve(shed){
+  return getTargetCurve(shed).length > 0;
+}
+function forecastFromTargetCurve(shed, date){
+  const pts = getTargetCurve(shed);
+  if (pts.length === 0) return null;
+  const age = ageInDays(shed, date);
+  if (age <= 0) return ROSS_308_WEIGHTS_KG[0];
+  const anchors = [{ day: 0, kg: ROSS_308_WEIGHTS_KG[0] }, ...pts];
+  if (age <= anchors[0].day) return anchors[0].kg;
+  if (age >= anchors[anchors.length-1].day){
+    const last = anchors[anchors.length-1];
+    const prev = anchors[anchors.length-2] || { day: 0, kg: ROSS_308_WEIGHTS_KG[0] };
+    const slope = (last.kg - prev.kg) / (last.day - prev.day);
+    return Math.max(0, last.kg + (age - last.day) * slope);
+  }
+  for (let i = 0; i < anchors.length - 1; i++){
+    const a0 = anchors[i], a1 = anchors[i+1];
+    if (age >= a0.day && age <= a1.day){
+      const t = (age - a0.day) / (a1.day - a0.day);
+      return a0.kg + t * (a1.kg - a0.kg);
+    }
+  }
+  return null;
+}
+
+function forecastWeightModeAware(shed, date){
+  const last = lastWeightedPickup(shed);
+  if (last){
+    return { kg: forecastFromPickups(shed, date), mode: 'ai-pickup' };
+  }
+  if (hasTargetCurve(shed)){
+    const kg = forecastFromTargetCurve(shed, date);
+    if (kg != null) return { kg, mode: 'ai-target' };
+  }
+  return { kg: rossWeightKg(ageInDays(shed, date)), mode: 'standard' };
+}
+
+function daysVsTarget(currentAge, currentWeightKg){
+  if (!Number.isFinite(currentAge) || !Number.isFinite(currentWeightKg) || currentWeightKg <= 0) return null;
+  const rossAge = findRossAgeForWeight(currentWeightKg);
+  return rossAge - currentAge;
+}
+
 /* ---------- Cloud Sync ---------- */
 function sanitizeUserFarmName(name){
   let s = String(name || '').trim().toLowerCase();
@@ -1150,9 +1761,7 @@ function sanitizeUserFarmName(name){
   s = s.replace(/-feed$/i, '');
   return s;
 }
-function buildFileKey(farmName){
-  return sanitizeUserFarmName(farmName) + SYNC_SUFFIX;
-}
+function buildFileKey(farmName){ return sanitizeUserFarmName(farmName) + SYNC_SUFFIX; }
 function buildSyncUrl(farmName){
   const fileKey = buildFileKey(farmName);
   return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(fileKey)}&repo=${encodeURIComponent(SYNC_REPO)}`;
@@ -1176,15 +1785,10 @@ function loadSyncState(){
 }
 function saveSyncState(){
   try {
-    if (!syncFarmName){
-      localStorage.removeItem(SYNC_FARMNAME_KEY);
-      return;
-    }
+    if (!syncFarmName){ localStorage.removeItem(SYNC_FARMNAME_KEY); return; }
     localStorage.setItem(SYNC_FARMNAME_KEY, JSON.stringify({
-      farmName: syncFarmName,
-      lastSyncAt: syncLastSyncAt,
-      connectedAt: syncConnectedAt,
-      excelMeta: syncExcelMeta
+      farmName: syncFarmName, lastSyncAt: syncLastSyncAt,
+      connectedAt: syncConnectedAt, excelMeta: syncExcelMeta
     }));
   } catch(e){}
 }
@@ -1203,21 +1807,22 @@ function base64ToBlob(base64, mime){
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new Blob([bytes], { type: mime });
 }
-
 function buildCloudPayload(){
   return {
     app: SYNC_APP_TAG,
-    schemaVersion: 3,
+    schemaVersion: 5,
     lastUpdated: new Date().toISOString(),
     farmName: syncFarmName,
     farmData,
     siloData: serializeSiloDataForCloud(),
     excelMetadata: syncExcelMeta,
+    predictions: {
+      beta: predState.beta,
+      targetHarvestWeightKg: predState.targetHarvestWeightKg,
+      farmFeedOverride: predState.farmFeedOverride
+    },
     preferences: {
-      shedViewByGroup,
-      shedRange,
-      siloRange,
-      theme: loadTheme()
+      shedViewByGroup, shedRange, siloRange, theme: loadTheme()
     }
   };
 }
@@ -1227,23 +1832,18 @@ function serializeSiloDataForCloud(){
     const s = siloData[g] || { readings: [], deliveries: [] };
     out[g] = {
       readings: (s.readings || []).map(r => ({
-        date: r.date,
-        silo1Rings: r.silo1Rings,
-        silo2Rings: r.silo2Rings,
-        silo3Rings: r.silo3Rings
+        date: r.date, silo1Rings: r.silo1Rings,
+        silo2Rings: r.silo2Rings, silo3Rings: r.silo3Rings
       })),
       deliveries: (s.deliveries || []).map(d => ({
-        id: d.id,
-        date: d.date ? iso(d.date) : null,
+        id: d.id, date: d.date ? iso(d.date) : null,
         amountKg: Number(d.amountKg) || 0,
-        feedType: d.feedType || '',
-        note: d.note || ''
+        feedType: d.feedType || '', note: d.note || ''
       }))
     };
   });
   return out;
 }
-
 function applyCloudPayload(payload, options){
   options = options || {};
   if (!payload || typeof payload !== 'object') return false;
@@ -1257,20 +1857,32 @@ function applyCloudPayload(payload, options){
       batchNumber: String(payload.farmData.batchNumber || ''),
       importDate: payload.farmData.importDate || new Date().toISOString(),
       fileName: payload.farmData.fileName || '(from cloud)',
-      sheds: payload.farmData.sheds.map(s => ({
-        id: Number(s.id) || 0,
-        placementDate: s.placementDate ? dateOnly(s.placementDate) : null,
-        initialPopulation: Number(s.initialPopulation) || 0,
-        cleanoutDate: s.cleanoutDate ? dateOnly(s.cleanoutDate) : null,
-        mortality: Number(s.mortality) || 0,
-        customFeedKg: (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null,
-        pickups: (s.pickups || []).map(p => ({
-          date: p.date ? dateOnly(p.date) : null,
-          birds: Number(p.birds) || 0,
-          isFinal: !!p.isFinal,
-          variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
-        })).filter(p => p.date)
-      }))
+      sheds: payload.farmData.sheds.map(s => {
+        const tc = s.targetCurve || {};
+        return {
+          id: Number(s.id) || 0,
+          placementDate: s.placementDate ? dateOnly(s.placementDate) : null,
+          initialPopulation: Number(s.initialPopulation) || 0,
+          cleanoutDate: s.cleanoutDate ? dateOnly(s.cleanoutDate) : null,
+          mortality: Number(s.mortality) || 0,
+          customFeedKg: (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null,
+          pickups: (s.pickups || []).map(p => ({
+            date: p.date ? dateOnly(p.date) : null,
+            birds: Number(p.birds) || 0,
+            isFinal: !!p.isFinal,
+            variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null,
+            totalWeightKg: (p.totalWeightKg != null && Number.isFinite(Number(p.totalWeightKg))) ? Number(p.totalWeightKg) : null,
+            totalWeightKgFromExcel: (p.totalWeightKgFromExcel != null && Number.isFinite(Number(p.totalWeightKgFromExcel))) ? Number(p.totalWeightKgFromExcel) : null,
+            totalWeightKgManual: !!p.totalWeightKgManual
+          })).filter(p => p.date),
+          targetCurve: {
+            7: (tc[7] != null && Number.isFinite(Number(tc[7])) && Number(tc[7]) > 0) ? Number(tc[7]) : null,
+            14: (tc[14] != null && Number.isFinite(Number(tc[14])) && Number(tc[14]) > 0) ? Number(tc[14]) : null,
+            21: (tc[21] != null && Number.isFinite(Number(tc[21])) && Number(tc[21]) > 0) ? Number(tc[21]) : null,
+            28: (tc[28] != null && Number.isFinite(Number(tc[28])) && Number(tc[28]) > 0) ? Number(tc[28]) : null
+          }
+        };
+      })
     };
     saveState();
   }
@@ -1299,16 +1911,30 @@ function applyCloudPayload(payload, options){
     saveSiloData();
   }
 
+  if (payload.predictions && typeof payload.predictions === 'object'){
+    const p = payload.predictions;
+    if (Number.isFinite(p.beta)) predState.beta = Math.max(0, Math.min(0.6, p.beta));
+    if (p.targetHarvestWeightKg && typeof p.targetHarvestWeightKg === 'object'){
+      [1,2,3,4].forEach(g => {
+        const n = Number(p.targetHarvestWeightKg[g]);
+        if (Number.isFinite(n) && n > 0) predState.targetHarvestWeightKg[g] = n;
+      });
+    }
+    if (p.farmFeedOverride != null && Number.isFinite(Number(p.farmFeedOverride)) && Number(p.farmFeedOverride) > 0){
+      predState.farmFeedOverride = Number(p.farmFeedOverride);
+    } else if (p.farmFeedOverride === null){
+      predState.farmFeedOverride = null;
+    }
+    savePredState();
+  }
+
   const prefs = payload.preferences || {};
   if (prefs.shedViewByGroup && typeof prefs.shedViewByGroup === 'object'){
     const next = { ...DEFAULT_VIEWS };
     [1,2,3,4].forEach(g => {
-      if (['shed1','shed2','both','planner'].includes(prefs.shedViewByGroup[g])){
-        next[g] = prefs.shedViewByGroup[g];
-      }
+      if (['shed1','shed2','both','planner'].includes(prefs.shedViewByGroup[g])) next[g] = prefs.shedViewByGroup[g];
     });
-    shedViewByGroup = next;
-    saveShedViews();
+    shedViewByGroup = next; saveShedViews();
   }
   if (prefs.shedRange && typeof prefs.shedRange === 'object'){
     const s = Number(prefs.shedRange.start), e = Number(prefs.shedRange.end);
@@ -1318,17 +1944,13 @@ function applyCloudPayload(payload, options){
     const s = Number(prefs.siloRange.start), e = Number(prefs.siloRange.end);
     if (Number.isFinite(s) && Number.isFinite(e) && s <= e){ siloRange = { start:s, end:e }; }
   }
-  if (prefs.theme === 'dark' || prefs.theme === 'light'){
-    applyTheme(prefs.theme);
-    saveTheme(prefs.theme);
-  }
+  if (prefs.theme === 'dark' || prefs.theme === 'light'){ applyTheme(prefs.theme); saveTheme(prefs.theme); }
 
   syncExcelMeta = newExcelMeta;
   const newUploadedAt = newExcelMeta && newExcelMeta.uploadedAt;
   if (!options.isFirstPull && oldExcelUploadedAt && newUploadedAt && oldExcelUploadedAt !== newUploadedAt){
     showToast('📄 Excel updated on another device — re-import to load it.', true);
   }
-
   return true;
 }
 
@@ -1341,25 +1963,19 @@ async function fetchFromCloud(){
     const result = await res.json();
     if (result.notFound) return { ok: true, notFound: true };
     return { ok: true, data: result.data, sha: result.sha };
-  } catch (e){
-    return { ok: false, reason: e.message || 'network-error' };
-  }
+  } catch (e){ return { ok: false, reason: e.message || 'network-error' }; }
 }
-
 async function pullFromCloud(silent){
   if (!syncFarmName) return false;
-  syncState = 'pulling';
-  renderSyncButton();
+  syncState = 'pulling'; renderSyncButton();
   const r = await fetchFromCloud();
   if (!r.ok){
-    syncState = 'error';
-    renderSyncButton();
+    syncState = 'error'; renderSyncButton();
     if (!silent) showToast('Could not sync — check your connection.', true);
     return false;
   }
   if (r.notFound){
-    syncState = 'idle';
-    renderSyncButton();
+    syncState = 'idle'; renderSyncButton();
     await pushToCloud();
     if (!silent) showToast('Connected — created a new file for this farm.');
     return true;
@@ -1367,29 +1983,22 @@ async function pullFromCloud(silent){
   syncSha = r.sha || null;
   const ok = applyCloudPayload(r.data);
   if (!ok){
-    syncState = 'error';
-    renderSyncButton();
+    syncState = 'error'; renderSyncButton();
     if (!silent) showToast('Cloud file is not a ProdWise backup.', true);
     return false;
   }
-  syncLastSyncAt = Date.now();
-  saveSyncState();
-  syncState = 'idle';
-  renderSyncButton();
-  render();
+  syncLastSyncAt = Date.now(); saveSyncState();
+  syncState = 'idle'; renderSyncButton(); render();
   if (!silent) showToast('Synced ✓');
   return true;
 }
-
 async function pushToCloud(){
   if (!syncFarmName) return false;
-  syncState = 'pushing';
-  renderSyncButton();
+  syncState = 'pushing'; renderSyncButton();
   try {
     const body = { sha: syncSha, data: buildCloudPayload() };
     const res = await fetch(buildSyncUrl(syncFarmName), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     if (res.status === 409){
@@ -1397,92 +2006,66 @@ async function pushToCloud(){
       if (fresh && fresh.sha){
         syncSha = fresh.sha;
         const retry = await fetch(buildSyncUrl(syncFarmName), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sha: syncSha, data: buildCloudPayload() })
         });
         if (!retry.ok) throw new Error('Sync retry failed');
         const rr = await retry.json();
         if (rr && rr.sha) syncSha = rr.sha;
-      } else {
-        throw new Error('Could not refresh cloud state');
-      }
-    } else if (!res.ok){
-      throw new Error('Sync server responded ' + res.status);
-    } else {
+      } else throw new Error('Could not refresh cloud state');
+    } else if (!res.ok) throw new Error('Sync server responded ' + res.status);
+    else {
       const result = await res.json();
       if (result && result.sha) syncSha = result.sha;
     }
-    syncLastSyncAt = Date.now();
-    saveSyncState();
-    syncState = 'idle';
-    renderSyncButton();
+    syncLastSyncAt = Date.now(); saveSyncState();
+    syncState = 'idle'; renderSyncButton();
     return true;
   } catch (e){
     console.error('Push failed', e);
-    syncState = 'error';
-    renderSyncButton();
+    syncState = 'error'; renderSyncButton();
     return false;
   }
 }
-
 function schedulePush(){
   if (!syncFarmName || !syncConnectedAt) return;
   pushPending = true;
   clearTimeout(pushDebounceTimer);
   pushDebounceTimer = setTimeout(runScheduledPush, 2000);
-  if (!pushMaxWaitTimer){
-    pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
-  }
+  if (!pushMaxWaitTimer) pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
 }
 async function runScheduledPush(){
   clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
   clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
   if (!pushPending) return;
-  if (pushInFlight){
-    pushDebounceTimer = setTimeout(runScheduledPush, 2000);
-    return;
-  }
-  pushPending = false;
-  pushInFlight = true;
+  if (pushInFlight){ pushDebounceTimer = setTimeout(runScheduledPush, 2000); return; }
+  pushPending = false; pushInFlight = true;
   try { await pushToCloud(); } finally { pushInFlight = false; }
 }
 function flushPendingPush(){
   if (!pushPending) return;
   clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
   clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
-  pushPending = false;
-  pushToCloud();
+  pushPending = false; pushToCloud();
 }
-
 async function uploadExcelToCloud(file){
   if (!syncFarmName) return false;
-  syncState = 'pushing';
-  renderSyncButton();
+  syncState = 'pushing'; renderSyncButton();
   try {
     const buf = await file.arrayBuffer();
     const base64 = arrayBufferToBase64(buf);
     const uploadedAt = new Date().toISOString();
-    const wrapperData = {
-      name: file.name || 'sheds.xlsx',
-      size: file.size || buf.byteLength,
-      uploadedAt,
-      base64
-    };
-
+    const wrapperData = { name: file.name || 'sheds.xlsx', size: file.size || buf.byteLength, uploadedAt, base64 };
     let res = await fetch(buildExcelWrapperUrl(syncFarmName), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sha: syncExcelSha, data: wrapperData })
     });
-
     if (res.status === 409){
       const fresh = await fetch(buildExcelWrapperUrl(syncFarmName)).then(r => r.json()).catch(() => null);
       if (fresh && fresh.sha){
         syncExcelSha = fresh.sha;
         res = await fetch(buildExcelWrapperUrl(syncFarmName), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sha: syncExcelSha, data: wrapperData })
         });
       }
@@ -1490,240 +2073,141 @@ async function uploadExcelToCloud(file){
     if (!res.ok) throw new Error('Excel upload failed: ' + res.status);
     const result = await res.json().catch(() => null);
     if (result && result.sha) syncExcelSha = result.sha;
-
-    syncExcelMeta = {
-      name: wrapperData.name,
-      size: wrapperData.size,
-      uploadedAt
-    };
+    syncExcelMeta = { name: wrapperData.name, size: wrapperData.size, uploadedAt };
     saveSyncState();
     await pushToCloud();
-
-    syncState = 'idle';
-    renderSyncButton();
+    syncState = 'idle'; renderSyncButton();
     return true;
   } catch (e){
     console.error('Excel upload failed', e);
-    syncState = 'error';
-    renderSyncButton();
+    syncState = 'error'; renderSyncButton();
     showToast('Excel saved locally, but cloud upload failed.', true);
     return false;
   }
 }
-
 async function downloadExcelFromCloud(){
   if (!syncFarmName) return;
   try {
     const res = await fetch(buildExcelWrapperUrl(syncFarmName));
-    if (!res.ok){
-      showToast('Could not fetch the stored Excel.', true);
-      return;
-    }
+    if (!res.ok){ showToast('Could not fetch the stored Excel.', true); return; }
     const result = await res.json();
     const wrapper = result && result.data;
-    if (!wrapper || !wrapper.base64){
-      showToast('No stored Excel found.', true);
-      return;
-    }
-    const blob = base64ToBlob(wrapper.base64,
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    if (!wrapper || !wrapper.base64){ showToast('No stored Excel found.', true); return; }
+    const blob = base64ToBlob(wrapper.base64, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = wrapper.name || 'sheds.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    a.href = url; a.download = wrapper.name || 'sheds.xlsx';
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     showToast('Stored Excel downloaded.');
-  } catch (e){
-    console.error(e);
-    showToast('Download failed.', true);
-  }
+  } catch (e){ console.error(e); showToast('Download failed.', true); }
 }
-
 async function connectSync(farmName){
   const clean = sanitizeUserFarmName(farmName);
   if (!clean){ showToast('Enter a farm name.', true); return; }
-
-  syncFarmName = clean;
-  syncSha = null;
-  syncExcelSha = null;
-  syncExcelMeta = null;
-  syncConnectedAt = null;
-  syncLastSyncAt = null;
-  saveSyncState();
-  closeSyncModal();
-  renderSyncButton();
-
-  syncState = 'pulling';
-  renderSyncButton();
+  syncFarmName = clean; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+  syncConnectedAt = null; syncLastSyncAt = null;
+  saveSyncState(); closeSyncModal(); renderSyncButton();
+  syncState = 'pulling'; renderSyncButton();
   const r = await fetchFromCloud();
-  syncState = 'idle';
-  renderSyncButton();
-
-  if (!r.ok){
-    showToast('Could not reach the sync server.', true);
-    return;
-  }
+  syncState = 'idle'; renderSyncButton();
+  if (!r.ok){ showToast('Could not reach the sync server.', true); return; }
   if (r.notFound){
-    syncConnectedAt = Date.now();
-    saveSyncState();
+    syncConnectedAt = Date.now(); saveSyncState();
     await pushToCloud();
     showToast('Connected — created a new file for this farm.');
-    renderSyncButton();
-    return;
+    renderSyncButton(); return;
   }
-
   syncSha = r.sha || null;
   showFarmFoundPrompt(r.data, r.sha);
 }
-
 function disconnectSync(){
   if (!syncFarmName) return;
   if (!confirm('Disconnect cloud sync?\n\nYour data stays on this device and in the cloud. You can reconnect with the same farm name any time.')) return;
-  syncFarmName = null;
-  syncSha = null;
-  syncExcelSha = null;
-  syncExcelMeta = null;
-  syncConnectedAt = null;
-  syncLastSyncAt = null;
-  saveSyncState();
-  renderSyncButton();
-  closeSyncModal();
+  syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+  syncConnectedAt = null; syncLastSyncAt = null;
+  saveSyncState(); renderSyncButton(); closeSyncModal();
   showToast('Disconnected.');
 }
-
 function showFarmFoundPrompt(data, sha){
   const farm = (data && data.farmData) || {};
   const sheds = Array.isArray(farm.sheds) ? farm.sheds : [];
   const shedCount = sheds.filter(s => Number(s.initialPopulation) > 0).length;
   const batch = farm.batchNumber || '';
   const excelMeta = (data && data.excelMetadata) || null;
-  const lastUpdated = data && data.lastUpdated
-    ? new Date(data.lastUpdated).toLocaleString()
-    : '—';
-
+  const lastUpdated = data && data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : '—';
   const body = document.getElementById('farmFoundBody');
   const excelLine = excelMeta ? `
-    <div class="ff-row">
-      <span class="lbl">Excel file</span>
+    <div class="ff-row"><span class="lbl">Excel file</span>
       <span class="val">📄 ${escapeHtml(excelMeta.name || 'sheds.xlsx')}${
-        excelMeta.uploadedAt ? ' · ' + new Date(excelMeta.uploadedAt).toLocaleDateString() : ''
-      }</span>
-    </div>` : `
-    <div class="ff-row">
-      <span class="lbl">Excel file</span>
-      <span class="val" style="color:var(--muted);font-weight:500;">No Excel stored</span>
-    </div>`;
-
+        excelMeta.uploadedAt ? ' · ' + new Date(excelMeta.uploadedAt).toLocaleDateString() : ''}</span></div>` : `
+    <div class="ff-row"><span class="lbl">Excel file</span>
+      <span class="val" style="color:var(--muted);font-weight:500;">No Excel stored</span></div>`;
   body.innerHTML = `
     <div class="farm-found-icon">☁️</div>
     <div class="farm-found-title">Farm found: <strong>${escapeHtml(syncFarmName)}</strong></div>
     <div class="farm-found-sub">This farm already has data stored in the cloud.</div>
-
     <div class="farm-found-meta">
       <div class="ff-row"><span class="lbl">Last updated</span><span class="val">${escapeHtml(lastUpdated)}</span></div>
       <div class="ff-row"><span class="lbl">Sheds</span><span class="val">${shedCount} with population</span></div>
       ${batch ? `<div class="ff-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch)}</span></div>` : ''}
       ${excelLine}
     </div>
-
     <div class="ff-choices">
       <button class="ff-choice primary" id="ffLoadBtn" type="button">
         <span class="ff-icon">📥</span>
-        <div>
-          <div class="ff-choice-title">Load stored data</div>
-          <div class="ff-choice-sub">Use the cloud copy on this device</div>
-        </div>
+        <div><div class="ff-choice-title">Load stored data</div>
+        <div class="ff-choice-sub">Use the cloud copy on this device</div></div>
       </button>
       ${excelMeta ? `
         <button class="ff-choice" id="ffDownloadBtn" type="button">
           <span class="ff-icon">📄</span>
-          <div>
-            <div class="ff-choice-title">Download stored Excel</div>
-            <div class="ff-choice-sub">Save the cloud Excel to this device</div>
-          </div>
+          <div><div class="ff-choice-title">Download stored Excel</div>
+          <div class="ff-choice-sub">Save the cloud Excel to this device</div></div>
         </button>
       ` : ''}
       <button class="ff-choice" id="ffUploadBtn" type="button">
         <span class="ff-icon">📤</span>
-        <div>
-          <div class="ff-choice-title">Upload a newer Excel</div>
-          <div class="ff-choice-sub">Replaces the cloud copy with your file</div>
-        </div>
+        <div><div class="ff-choice-title">Upload a newer Excel</div>
+        <div class="ff-choice-sub">Replaces the cloud copy with your file</div></div>
       </button>
       <button class="ff-choice danger" id="ffFreshBtn" type="button">
         <span class="ff-icon">⚠️</span>
-        <div>
-          <div class="ff-choice-title">Start fresh</div>
-          <div class="ff-choice-sub">Overwrite the cloud with this device's data</div>
-        </div>
+        <div><div class="ff-choice-title">Start fresh</div>
+        <div class="ff-choice-sub">Overwrite the cloud with this device's data</div></div>
       </button>
     </div>
-
     <button class="ff-cancel" id="ffCancelBtn" type="button">Cancel — don't connect</button>
   `;
-
   const modal = document.getElementById('farmFoundModal');
   const scrim = document.getElementById('syncScrim');
-  modal.classList.add('open');
-  scrim.classList.add('open');
-
+  modal.classList.add('open'); scrim.classList.add('open');
   document.getElementById('ffLoadBtn').addEventListener('click', () => {
     applyCloudPayload(data, { isFirstPull: true });
-    syncSha = sha || null;
-    syncConnectedAt = Date.now();
-    syncLastSyncAt = Date.now();
-    saveSyncState();
-    closeFarmFoundModal();
-    renderSyncButton();
-    render();
+    syncSha = sha || null; syncConnectedAt = Date.now(); syncLastSyncAt = Date.now();
+    saveSyncState(); closeFarmFoundModal(); renderSyncButton(); render();
     showToast('Loaded data from the cloud.');
   });
-
   const dlBtn = document.getElementById('ffDownloadBtn');
-  if (dlBtn){
-    dlBtn.addEventListener('click', async () => { await downloadExcelFromCloud(); });
-  }
-
+  if (dlBtn) dlBtn.addEventListener('click', async () => { await downloadExcelFromCloud(); });
   document.getElementById('ffUploadBtn').addEventListener('click', () => {
-    syncSha = sha || null;
-    syncConnectedAt = Date.now();
-    saveSyncState();
-    closeFarmFoundModal();
-    renderSyncButton();
-    const input = document.getElementById('excelFile');
-    input.value = '';
-    input.click();
+    syncSha = sha || null; syncConnectedAt = Date.now(); saveSyncState();
+    closeFarmFoundModal(); renderSyncButton();
+    const input = document.getElementById('excelFile'); input.value = ''; input.click();
   });
-
   document.getElementById('ffFreshBtn').addEventListener('click', async () => {
     if (!confirm('This will overwrite the cloud copy with this device\'s data.\n\nThe stored Excel (if any) will remain in the cloud until you upload a new one.\n\nContinue?')) return;
-    syncSha = sha || null;
-    syncConnectedAt = Date.now();
-    saveSyncState();
-    closeFarmFoundModal();
-    renderSyncButton();
+    syncSha = sha || null; syncConnectedAt = Date.now(); saveSyncState();
+    closeFarmFoundModal(); renderSyncButton();
     await pushToCloud();
     showToast('This device\'s data pushed to the cloud.');
   });
-
   document.getElementById('ffCancelBtn').addEventListener('click', () => {
-    syncFarmName = null;
-    syncSha = null;
-    syncExcelSha = null;
-    syncExcelMeta = null;
-    syncConnectedAt = null;
-    syncLastSyncAt = null;
-    saveSyncState();
-    closeFarmFoundModal();
-    renderSyncButton();
+    syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+    syncConnectedAt = null; syncLastSyncAt = null;
+    saveSyncState(); closeFarmFoundModal(); renderSyncButton();
   });
-
-  document.getElementById('farmFoundClose').onclick = () => {
-    document.getElementById('ffCancelBtn').click();
-  };
+  document.getElementById('farmFoundClose').onclick = () => document.getElementById('ffCancelBtn').click();
 }
 function closeFarmFoundModal(){
   document.getElementById('farmFoundModal').classList.remove('open');
@@ -1735,25 +2219,16 @@ function applyTheme(theme){
   const isDark = theme === 'dark';
   document.body.classList.toggle('theme-dark', isDark);
   const btn = document.getElementById('themeToggle');
-  if (btn){
-    btn.textContent = isDark ? '☀️' : '🌙';
-    btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-  }
+  if (btn){ btn.textContent = isDark ? '☀️' : '🌙'; btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode'; }
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', isDark ? '#1A2438' : '#E0A339');
 }
-function loadTheme(){
-  try {
-    const t = localStorage.getItem(THEME_KEY);
-    return (t === 'dark' || t === 'light') ? t : 'light';
-  } catch(e){ return 'light'; }
-}
+function loadTheme(){ try { const t = localStorage.getItem(THEME_KEY); return (t === 'dark' || t === 'light') ? t : 'light'; } catch(e){ return 'light'; } }
 function saveTheme(t){ try { localStorage.setItem(THEME_KEY, t); } catch(e){} }
 function toggleTheme(){
   const cur = document.body.classList.contains('theme-dark') ? 'dark' : 'light';
   const next = cur === 'dark' ? 'light' : 'dark';
-  applyTheme(next); saveTheme(next);
-  schedulePush();
+  applyTheme(next); saveTheme(next); schedulePush();
 }
 
 /* ---------- Derived ---------- */
@@ -1761,13 +2236,8 @@ function ageInDays(shed, onDate = new Date()){
   if (!shed.placementDate) return 0;
   return Math.max(0, daysBetween(shed.placementDate, onDate));
 }
-function totalPicked(shed){
-  return (shed.pickups || []).reduce((s,p) => s + (Number(p.birds) || 0), 0);
-}
-function mortalityRate(shed){
-  if (!shed.initialPopulation) return 0;
-  return (Number(shed.mortality || 0) / shed.initialPopulation) * 100;
-}
+function totalPicked(shed){ return (shed.pickups || []).reduce((s,p) => s + (Number(p.birds) || 0), 0); }
+function mortalityRate(shed){ if (!shed.initialPopulation) return 0; return (Number(shed.mortality || 0) / shed.initialPopulation) * 100; }
 function finalPickupOf(shed){ return (shed.pickups || []).find(p => p.isFinal); }
 function shedsForGroup(g){
   if (!farmData) return [];
@@ -1797,47 +2267,220 @@ function shedFeedOn(shed, D){
   if (age <= 0 || live <= 0) return 0;
   return live * feedPerBirdKg(shed, age);
 }
-function groupDailyFeedOn(sheds, D){
-  return sheds.reduce((sum, s) => sum + shedFeedOn(s, D), 0);
-}
-function groupFeedToday(sheds, today = new Date()){
-  return groupDailyFeedOn(sheds, today);
-}
+function groupDailyFeedOn(sheds, D){ return sheds.reduce((sum, s) => sum + shedFeedOn(s, D), 0); }
+function groupFeedToday(sheds, today = new Date()){ return groupDailyFeedOn(sheds, today); }
+
+/* General-purpose feed formatter — auto picks kg or t */
 function fmtFeed(kg){
   if (!Number.isFinite(kg) || kg === 0) return '0 kg';
   const abs = Math.abs(kg);
   if (abs >= 1000) return (kg / 1000).toFixed(2) + ' t';
   return Math.round(kg).toLocaleString() + ' kg';
 }
+/* Always-kg formatter — never switches to tonnes. Used for Total Live Weight tile */
+function fmtKgAlways(kg){
+  if (!Number.isFinite(kg) || kg === 0) return '0 kg';
+  return Math.round(kg).toLocaleString() + ' kg';
+}
+/* Always-tonnes formatter with full comma-separated digits — used by KPI feed tile */
+function fmtTonnesAlways(kg){
+  if (!Number.isFinite(kg) || kg === 0) return '0.00 t';
+  const t = kg / 1000;
+  return t.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' t';
+}
 
-/* ---------- Shed forecast ---------- */
+/* =========================================================
+   PREDICTION ENGINE
+========================================================= */
+function computePredictions(shed, group){
+  const today = dateOnly(new Date());
+  const initialPop = Number(shed.initialPopulation) || 0;
+  const currentMort = Number(shed.mortality) || 0;
+  const currentAge = ageInDays(shed, today);
+  const liveNow = liveAtStartOfDay(shed, today);
+  const pickups = (shed.pickups || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  const finalAge = shed.cleanoutDate ? Math.max(currentAge, ageInDays(shed, shed.cleanoutDate)) : currentAge + 30;
+  const targetALW = Number(predState.targetHarvestWeightKg[group]) || 2.65;
+  const beta = Number(predState.beta) || 0.27;
+
+  let perfSum = 0, perfCount = 0;
+  for (const p of pickups){
+    const avg = pickupAvgKg(p);
+    if (avg && avg > 0){
+      const pAge = ageInDays(shed, p.date);
+      const curveW = rossWeightKg(pAge);
+      if (curveW > 0){ perfSum += (avg / curveW); perfCount++; }
+    }
+  }
+  const perfFactor = perfCount > 0 ? (perfSum / perfCount) : 1.0;
+  const curveFinal = rossWeightKg(finalAge);
+  const perfAdjustedFinal = curveFinal * perfFactor;
+  const progressT = Math.min(1, currentAge / Math.max(1, finalAge));
+  const estFinalALW = (perfCount > 0)
+    ? (perfAdjustedFinal * (1 - progressT * 0.5) + targetALW * (progressT * 0.5))
+    : targetALW;
+
+  const dailyMortRate = currentAge > 0 ? (currentMort / currentAge) : 0;
+  const daysRemaining = Math.max(0, finalAge - currentAge);
+  const estFinalMort = Math.min(initialPop, Math.round(currentMort + dailyMortRate * daysRemaining));
+  const estFinalLive = Math.max(0, initialPop - estFinalMort);
+  const estLivability = initialPop > 0 ? ((estFinalLive / initialPop) * 100) : 0;
+
+  let totalWeightKg = 0;
+  const pickupDetails = [];
+  let cumBirds = 0;
+  for (const p of pickups){
+    const pAge = ageInDays(shed, p.date);
+    const curveAtAge = rossWeightKg(pAge);
+    const avgFromExcel = pickupAvgKg(p);
+    const avgUsed = (avgFromExcel && avgFromExcel > 0) ? avgFromExcel : (curveAtAge * perfFactor);
+    const pickupWeightKg = Number(p.birds || 0) * avgUsed;
+    totalWeightKg += pickupWeightKg;
+    cumBirds += Number(p.birds || 0);
+    pickupDetails.push({
+      date: p.date, age: pAge,
+      birds: Number(p.birds || 0),
+      avgWeightKg: avgUsed,
+      totalWeightKg: Number(p.birds || 0) * avgUsed,
+      isFinal: !!p.isFinal, cumBirds,
+      isEstWeight: !(avgFromExcel && avgFromExcel > 0)
+    });
+  }
+  const finalLiveBirds = Math.max(0, estFinalLive - cumBirds);
+  totalWeightKg += finalLiveBirds * estFinalALW;
+
+  let totalFeedKg = 0;
+  if (shed.placementDate && shed.cleanoutDate){
+    let d = dateOnly(shed.placementDate);
+    const end = dateOnly(shed.cleanoutDate);
+    while (d <= end){ totalFeedKg += shedFeedOn(shed, d); d = addDays(d, 1); }
+  } else if (shed.placementDate){
+    let d = dateOnly(shed.placementDate);
+    const end = dateOnly(new Date());
+    while (d <= end){ totalFeedKg += shedFeedOn(shed, d); d = addDays(d, 1); }
+  }
+  const fcr = totalWeightKg > 0 ? (totalFeedKg / totalWeightKg) : 0;
+  const cfcr = fcr - (estFinalALW - 2.45) * beta;
+  const pif = (finalAge > 0 && fcr > 0) ? ((estLivability * estFinalALW) / (finalAge * fcr) * 100) : 0;
+  const remainingWeightKg = liveNow * rossWeightKg(currentAge) * perfFactor;
+  const confidence = computeConfidence(shed, finalAge);
+
+  return {
+    initialPop, currentMort, currentAge, liveNow,
+    pickupsCompleted: pickups.length,
+    remainingBirds: liveNow, remainingWeightKg,
+    finalAge, estFinalALW, estFinalMort, estFinalLive, estLivability,
+    totalWeightKg, totalFeedKg, fcr, cfcr, pif, beta,
+    perfFactor, confidence, pickupDetails,
+    hasWeightData: perfCount > 0
+  };
+}
+function computeConfidence(shed, finalAge){
+  const age = ageInDays(shed, new Date());
+  const pickups = shed.pickups || [];
+  const hasWeight = pickups.some(p => pickupAvgKg(p) != null);
+  const hasTargets = hasTargetCurve(shed);
+  const hasFinal = pickups.some(p => p.isFinal);
+  if (hasFinal) return 100;
+  let c = 30;
+  c += pickups.length * 10;
+  c += hasWeight ? 10 : 0;
+  c += hasTargets ? 5 : 0;
+  c += Math.floor((age / Math.max(1, finalAge)) * 10);
+  return Math.min(95, c);
+}
+function confidenceLabel(pct){
+  if (pct >= 80) return { label: 'High', cls: 'high' };
+  if (pct >= 50) return { label: 'Medium', cls: 'medium' };
+  return { label: 'Low', cls: 'low' };
+}
+
+/* =========================================================
+   WHOLE-FARM KPI TOTALS
+========================================================= */
+function computeFarmTotals(){
+  const sheds = (farmData && farmData.sheds) ? farmData.sheds : [];
+  let totalLiveWeight = 0;
+  let totalFeedAuto = 0;
+  let totalPlaced = 0;
+  let totalMortalityEst = 0;
+  let totalBirdsAtHarvest = 0;
+  let weightedAgeSum = 0;
+  let shedsWithData = 0;
+
+  for (const shed of sheds){
+    if (!shed.placementDate) continue;
+    const g = Math.floor((shed.id - 1) / 2) + 1;
+    const pred = computePredictions(shed, g);
+
+    totalLiveWeight += pred.totalWeightKg;
+    totalFeedAuto += pred.totalFeedKg;
+    totalPlaced += pred.initialPop;
+    totalMortalityEst += pred.estFinalMort;
+
+    const harvestedBirds = pred.pickupDetails.reduce((s,p) => s + p.birds, 0);
+    const remainingBirds = Math.max(0, pred.estFinalLive - harvestedBirds);
+    const batchBirds = harvestedBirds + remainingBirds;
+    totalBirdsAtHarvest += batchBirds;
+    weightedAgeSum += pred.finalAge * batchBirds;
+
+    shedsWithData++;
+  }
+
+  if (shedsWithData === 0){
+    return {
+      hasData: false, shedsWithData: 0,
+      totalLiveWeight: 0, totalFeedAuto: 0, totalFeed: 0,
+      fcr: 0, cfcr: 0, pif: 0, avgWeight: 0, livability: 0,
+      weightedAge: 0, placed: 0, mortality: 0, birdsAtHarvest: 0,
+      usingManualFeed: false
+    };
+  }
+
+  const avgWeight = totalBirdsAtHarvest > 0 ? totalLiveWeight / totalBirdsAtHarvest : 0;
+  const weightedAge = totalBirdsAtHarvest > 0 ? weightedAgeSum / totalBirdsAtHarvest : 0;
+  const livability = totalPlaced > 0 ? ((totalPlaced - totalMortalityEst) / totalPlaced) * 100 : 0;
+
+  const usingManualFeed = predState.farmFeedOverride != null && predState.farmFeedOverride > 0;
+  const totalFeed = usingManualFeed ? predState.farmFeedOverride : totalFeedAuto;
+
+  const fcr = totalLiveWeight > 0 ? totalFeed / totalLiveWeight : 0;
+  const beta = Number(predState.beta) || 0.27;
+  const cfcr = fcr > 0 ? fcr - (avgWeight - 2.45) * beta : 0;
+  const pif = (weightedAge > 0 && fcr > 0) ? ((livability * avgWeight) / (weightedAge * fcr) * 100) : 0;
+
+  return {
+    hasData: true, shedsWithData,
+    totalLiveWeight, totalFeedAuto, totalFeed,
+    fcr, cfcr, pif, avgWeight, livability,
+    weightedAge, placed: totalPlaced, mortality: totalMortalityEst,
+    birdsAtHarvest: totalBirdsAtHarvest,
+    usingManualFeed
+  };
+}
+
+/* ---------- Shed forecast (group pages) ---------- */
 function computeForecast(shed, range){
   const today = dateOnly(new Date());
   const rows = [];
   let totalFeed = 0;
   if (!shed.placementDate) return { rows: [], totalFeed: 0, notStarted: true };
-
   for (let off = range.start; off <= range.end; off++){
     const d = addDays(today, off);
     const isPast = off < 0;
     const isToday = off === 0;
-
     if (dateOnly(d) < dateOnly(shed.placementDate)){
-      rows.push({
-        date: d, age: 0, liveStart: 0, perBird: 0, dailyFeed: 0,
+      rows.push({ date: d, age: 0, liveStart: 0, perBird: 0, dailyFeed: 0,
         pickups: [], pickupsBirds: 0, liveAfter: 0,
-        isFinalDay: false, isToday, isPast, beforePlacement: true
-      });
+        isFinalDay: false, isToday, isPast, beforePlacement: true });
       continue;
     }
     if (shed.cleanoutDate && dateOnly(d) > dateOnly(shed.cleanoutDate)){
       const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
-      rows.push({
-        date: d, age: ageInDays(shed, d), liveStart: 0, perBird: 0, dailyFeed: 0,
+      rows.push({ date: d, age: ageInDays(shed, d), liveStart: 0, perBird: 0, dailyFeed: 0,
         pickups: pickupsToday,
         pickupsBirds: pickupsToday.reduce((s,p) => s + p.birds, 0),
-        liveAfter: 0, isFinalDay: false, isToday, isPast, afterCleanout: true
-      });
+        liveAfter: 0, isFinalDay: false, isToday, isPast, afterCleanout: true });
       continue;
     }
     const age = ageInDays(shed, d);
@@ -1849,11 +2492,9 @@ function computeForecast(shed, range){
     const dailyFeed = live * perBird;
     const liveAfter = Math.max(0, live - pickupsBirds);
     totalFeed += dailyFeed;
-    rows.push({
-      date: d, age, liveStart: live, perBird, dailyFeed,
+    rows.push({ date: d, age, liveStart: live, perBird, dailyFeed,
       pickups: pickupsToday, pickupsBirds, liveAfter,
-      isFinalDay, isToday, isPast
-    });
+      isFinalDay, isToday, isPast });
   }
   return { rows, totalFeed };
 }
@@ -1863,23 +2504,12 @@ function readingsSorted(group){
   const s = siloData[group] || { readings: [] };
   return (s.readings || []).slice().sort((a,b) => a.date.localeCompare(b.date));
 }
-function latestReading(group){
-  const arr = readingsSorted(group);
-  return arr.length ? arr[arr.length - 1] : null;
-}
-function readingTotalKg(reading){
-  if (!reading) return 0;
-  return ringsToKg(reading.silo1Rings) + ringsToKg(reading.silo2Rings) + ringsToKg(reading.silo3Rings);
-}
-function deliveriesForGroup(group){
-  const s = siloData[group] || { deliveries: [] };
-  return (s.deliveries || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-}
+function latestReading(group){ const arr = readingsSorted(group); return arr.length ? arr[arr.length - 1] : null; }
+function readingTotalKg(reading){ if (!reading) return 0; return ringsToKg(reading.silo1Rings) + ringsToKg(reading.silo2Rings) + ringsToKg(reading.silo3Rings); }
+function deliveriesForGroup(group){ const s = siloData[group] || { deliveries: [] }; return (s.deliveries || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date)); }
 function deliveriesKgOn(group, D){
   const d = dateOnly(D);
-  return deliveriesForGroup(group)
-    .filter(x => iso(x.date) === iso(d))
-    .reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
+  return deliveriesForGroup(group).filter(x => iso(x.date) === iso(d)).reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
 }
 function balanceOnEndOfDay(group, D){
   const latest = latestReading(group);
@@ -1897,9 +2527,7 @@ function balanceOnEndOfDay(group, D){
   }
   let bal = readingTotalKg(latest);
   for (let d = latestDate; d > targetD; d = addDays(d, -1)){
-    const cons = groupDailyFeedOn(sheds, d);
-    const del  = deliveriesKgOn(group, d);
-    bal = bal - del + cons;
+    bal = bal - deliveriesKgOn(group, d) + groupDailyFeedOn(sheds, d);
   }
   return bal;
 }
@@ -1912,9 +2540,7 @@ function consumptionSinceLatestReading(group){
   if (latestDate >= today) return 0;
   const sheds = shedsForGroup(group);
   let c = 0;
-  for (let d = addDays(latestDate, 1); d <= today; d = addDays(d, 1)){
-    c += groupDailyFeedOn(sheds, d);
-  }
+  for (let d = addDays(latestDate, 1); d <= today; d = addDays(d, 1)) c += groupDailyFeedOn(sheds, d);
   return c;
 }
 function deliveriesSinceLatestReading(group){
@@ -1924,9 +2550,7 @@ function deliveriesSinceLatestReading(group){
   const today = dateOnly(new Date());
   if (latestDate >= today) return 0;
   let d = 0;
-  for (let x = addDays(latestDate, 1); x <= today; x = addDays(x, 1)){
-    d += deliveriesKgOn(group, x);
-  }
+  for (let x = addDays(latestDate, 1); x <= today; x = addDays(x, 1)) d += deliveriesKgOn(group, x);
   return d;
 }
 function computeSiloForecast(group, range){
@@ -1934,7 +2558,6 @@ function computeSiloForecast(group, range){
   const today = dateOnly(new Date());
   const rows = [];
   let totalConsumption = 0, totalDelivered = 0;
-
   for (let off = range.start; off <= range.end; off++){
     const d = addDays(today, off);
     const isPast = off < 0;
@@ -1945,23 +2568,13 @@ function computeSiloForecast(group, range){
     const bal = balanceOnEndOfDay(group, d);
     totalConsumption += cons;
     totalDelivered += del;
-    rows.push({
-      date: d,
-      consumption: cons,
-      delivery: del,
-      deliveries: deliveriesOnDay,
-      balance: bal,
-      isToday, isPast, isFuture: !isPast && !isToday,
-      isWeekend: isWeekend(d)
-    });
+    rows.push({ date: d, consumption: cons, delivery: del,
+      deliveries: deliveriesOnDay, balance: bal,
+      isToday, isPast, isFuture: !isPast && !isToday, isWeekend: isWeekend(d) });
   }
-
   let depletedDate = null;
   for (const r of rows){
-    if (r.balance !== null && r.balance <= 0 && r.consumption > 0 && !r.isPast){
-      depletedDate = r.date;
-      break;
-    }
+    if (r.balance !== null && r.balance <= 0 && r.consumption > 0 && !r.isPast){ depletedDate = r.date; break; }
   }
   const endBalance = rows.length ? rows[rows.length - 1].balance : null;
   const totalStock = balanceOnEndOfDay(group, today);
@@ -1973,17 +2586,16 @@ function computeSiloForecast(group, range){
 function computeFeedSummary(group){
   const deliveries = deliveriesForGroup(group);
   const buckets = {
-    starter:    { id:'starter',    label:'Starter',    tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
-    grower:     { id:'grower',     label:'Grower',     tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
-    finisher:   { id:'finisher',   label:'Finisher',   tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
-    withdrawal: { id:'withdrawal', label:'Withdrawal', tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
-    unspecified:{ id:'unspecified',label:'Unspecified',tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 }
+    starter:{id:'starter',label:'Starter',tonnes:0,deliveries:0,blocks:0,remainder:0},
+    grower:{id:'grower',label:'Grower',tonnes:0,deliveries:0,blocks:0,remainder:0},
+    finisher:{id:'finisher',label:'Finisher',tonnes:0,deliveries:0,blocks:0,remainder:0},
+    withdrawal:{id:'withdrawal',label:'Withdrawal',tonnes:0,deliveries:0,blocks:0,remainder:0},
+    unspecified:{id:'unspecified',label:'Unspecified',tonnes:0,deliveries:0,blocks:0,remainder:0}
   };
   deliveries.forEach(d => {
     const t = (Number(d.amountKg) || 0) / 1000;
     const key = FEED_TYPES.some(f => f.id === d.feedType) ? d.feedType : 'unspecified';
-    buckets[key].tonnes += t;
-    buckets[key].deliveries += 1;
+    buckets[key].tonnes += t; buckets[key].deliveries += 1;
   });
   Object.values(buckets).forEach(b => {
     b.blocks = Math.floor(b.tonnes / FEED_BLOCK_T);
@@ -1993,54 +2605,34 @@ function computeFeedSummary(group){
   const totalBlocks = Object.values(buckets).reduce((s,b) => s + b.blocks, 0);
   return { buckets, totalTonnes, totalBlocks };
 }
-
 function renderFeedSummary(group){
   const summary = computeFeedSummary(group);
   const activeRows = ['starter','grower','finisher','withdrawal','unspecified']
-    .map(k => summary.buckets[k])
-    .filter(b => b.tonnes > 0);
+    .map(k => summary.buckets[k]).filter(b => b.tonnes > 0);
   if (activeRows.length === 0){
     return `
       <div class="feed-summary">
-        <div class="feed-summary-title">
-          📊 Feed Summary
-          <span class="sub">· per feed type · 1 block = 60 T</span>
-        </div>
+        <div class="feed-summary-title">📊 Feed Summary
+          <span class="sub">· per feed type · 1 block = 60 T</span></div>
         <div class="feed-summary-empty">No deliveries scheduled yet — add one above to see the block count.</div>
-      </div>
-    `;
+      </div>`;
   }
   const rows = activeRows.map(b => `
     <tr class="${b.blocks > 0 ? 'has-blocks' : ''}">
       <td>${feedTypeTagHtml(b.id)}</td>
       <td class="num">${b.tonnes.toFixed(2)} t</td>
       <td class="num">${b.deliveries}</td>
-      <td class="num">
-        ${b.blocks > 0
-          ? `<span class="block-count">${b.blocks}</span>`
-          : `<span class="block-count zero">0</span>`}
-      </td>
-      <td class="num rem">
-        ${b.remainder > 0.01 ? b.remainder.toFixed(2) + ' t' : '—'}
-      </td>
+      <td class="num">${b.blocks > 0 ? `<span class="block-count">${b.blocks}</span>` : `<span class="block-count zero">0</span>`}</td>
+      <td class="num rem">${b.remainder > 0.01 ? b.remainder.toFixed(2) + ' t' : '—'}</td>
     </tr>
   `).join('');
   return `
     <div class="feed-summary">
-      <div class="feed-summary-title">
-        📊 Feed Summary
-        <span class="sub">· per feed type · 1 block = 60 T</span>
-      </div>
+      <div class="feed-summary-title">📊 Feed Summary
+        <span class="sub">· per feed type · 1 block = 60 T</span></div>
       <table class="feed-summary-table">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th class="num">Total</th>
-            <th class="num">Orders</th>
-            <th class="num">60 T blocks</th>
-            <th class="num">Remainder</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Type</th><th class="num">Total</th><th class="num">Orders</th>
+          <th class="num">60 T blocks</th><th class="num">Remainder</th></tr></thead>
         <tbody>
           ${rows}
           <tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;">
@@ -2056,8 +2648,7 @@ function renderFeedSummary(group){
         Each 60 T of the same feed type counts as <strong>1 block</strong>.
         Example: 30 T Grower + 30 T Grower = 60 T → <strong>1 block</strong>.
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 /* ---------- Silo actions ---------- */
@@ -2068,26 +2659,22 @@ function setSiloRingsForToday(group, siloNum, rings){
   let reading = s.readings.find(r => r.date === todayIso);
   if (!reading){
     const prev = s.readings.length ? s.readings[s.readings.length - 1] : null;
-    reading = {
-      date: todayIso,
+    reading = { date: todayIso,
       silo1Rings: prev ? prev.silo1Rings : null,
       silo2Rings: prev ? prev.silo2Rings : null,
-      silo3Rings: prev ? prev.silo3Rings : null
-    };
+      silo3Rings: prev ? prev.silo3Rings : null };
     s.readings.push(reading);
     s.readings.sort((a,b) => a.date.localeCompare(b.date));
   }
   const key = `silo${siloNum}Rings`;
   reading[key] = (rings === null) ? null : normalizeRing(rings);
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
 }
 function addSiloDelivery(group, dateStr, amountT, feedType, note){
   const d = parseExcelDate(dateStr);
-  if (!d) { showToast('Pick a valid date.', true); return; }
+  if (!d){ showToast('Pick a valid date.', true); return; }
   const amountKg = Number(amountT) * 1000;
-  if (!Number.isFinite(amountKg) || amountKg <= 0) { showToast('Enter a positive amount in tonnes.', true); return; }
+  if (!Number.isFinite(amountKg) || amountKg <= 0){ showToast('Enter a positive amount in tonnes.', true); return; }
   if (!siloData[group]) siloData[group] = { readings: [], deliveries: [] };
   siloData[group].deliveries.push({
     id: String(Date.now()) + Math.random().toString(16).slice(2),
@@ -2096,9 +2683,7 @@ function addSiloDelivery(group, dateStr, amountT, feedType, note){
     note: String(note || '').trim()
   });
   siloData[group].deliveries.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
   showToast(`Delivery of ${amountT} t added on ${fmtShort(d)}.`);
 }
 function updateSiloDeliveryDate(group, id, newDateStr){
@@ -2107,41 +2692,31 @@ function updateSiloDeliveryDate(group, id, newDateStr){
   const nd = parseExcelDate(newDateStr); if (!nd) return;
   del.date = nd;
   s.deliveries.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
 }
 function updateSiloDeliveryAmount(group, id, newAmountStr){
   const s = siloData[group]; if (!s) return;
   const del = s.deliveries.find(d => d.id === id); if (!del) return;
-  const t = Number(newAmountStr);
-  if (!Number.isFinite(t) || t <= 0) return;
+  const t = Number(newAmountStr); if (!Number.isFinite(t) || t <= 0) return;
   del.amountKg = t * 1000;
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
 }
 function updateSiloDeliveryFeedType(group, id, newType){
   const s = siloData[group]; if (!s) return;
   const del = s.deliveries.find(d => d.id === id); if (!del) return;
   del.feedType = FEED_TYPES.some(f => f.id === newType) ? newType : '';
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
 }
 function updateSiloDeliveryNote(group, id, newNote){
   const s = siloData[group]; if (!s) return;
   const del = s.deliveries.find(d => d.id === id); if (!del) return;
   del.note = String(newNote || '').trim();
-  saveSiloData();
-  schedulePush();
+  saveSiloData(); schedulePush();
 }
 function removeSiloDelivery(group, id){
   const s = siloData[group]; if (!s) return;
   s.deliveries = s.deliveries.filter(d => d.id !== id);
-  saveSiloData();
-  schedulePush();
-  render();
+  saveSiloData(); schedulePush(); render();
 }
 
 /* ---------- Toast ---------- */
@@ -2158,43 +2733,67 @@ function showToast(msg, isError){
 /* ---------- Import ---------- */
 function triggerImport(){
   const input = document.getElementById('excelFile');
-  input.value = '';
-  input.click();
+  input.value = ''; input.click();
 }
 async function handleFile(file){
   if (!file) return;
-  if (typeof XLSX === 'undefined'){
-    showToast('Excel reader not available. Check your internet connection.', true);
-    return;
-  }
-
+  if (typeof XLSX === 'undefined'){ showToast('Excel reader not available. Check your internet connection.', true); return; }
   if (file.size > MAX_EXCEL_WARN_BYTES){
     const mb = (file.size / (1024*1024)).toFixed(1);
     if (!confirm(`This file is ${mb} MB — larger than usual.\n\nLoading and cloud upload may take a few seconds.\n\nContinue?`)) return;
   }
-
   const willReplaceLocal = !!farmData;
   const willReplaceCloudExcel = !!(syncFarmName && syncConnectedAt && syncExcelMeta && syncExcelMeta.name);
   if (willReplaceLocal || willReplaceCloudExcel){
     let msg = '';
     if (willReplaceLocal){
-      msg += 'This will replace your current shed data with the new file.\n\nSilo readings and deliveries stay untouched.';
+      msg += 'This will replace your current shed data with the new file.\n\nManual pickup weight edits and target curves will be kept.';
     }
     if (willReplaceCloudExcel){
       if (msg) msg += '\n\n';
-      const metaAge = syncExcelMeta.uploadedAt
-        ? ` (uploaded ${fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())})`
-        : '';
+      const metaAge = syncExcelMeta.uploadedAt ? ` (uploaded ${fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())})` : '';
       msg += `⚠️ The stored Excel on the cloud (${syncExcelMeta.name}${metaAge}) will also be replaced with this new file.`;
     }
     msg += '\n\nContinue?';
     if (!confirm(msg)) return;
   }
-
   try {
+    const manualWeights = {};
+    const manualTargets = {};
+    if (farmData && Array.isArray(farmData.sheds)){
+      farmData.sheds.forEach(s => {
+        (s.pickups || []).forEach(p => {
+          if (p.totalWeightKgManual && p.totalWeightKg != null){
+            manualWeights[`${s.id}_${iso(p.date)}`] = {
+              totalWeightKg: p.totalWeightKg,
+              totalWeightKgFromExcel: p.totalWeightKgFromExcel
+            };
+          }
+        });
+        const tc = s.targetCurve || {};
+        if (tc[7] || tc[14] || tc[21] || tc[28]){
+          manualTargets[s.id] = { ...tc };
+        }
+      });
+    }
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
     const result = parseShedsFromWorkbook(wb);
+    result.sheds.forEach(s => {
+      (s.pickups || []).forEach(p => {
+        const key = `${s.id}_${iso(p.date)}`;
+        if (manualWeights[key]){
+          p.totalWeightKg = manualWeights[key].totalWeightKg;
+          p.totalWeightKgManual = true;
+          if (p.totalWeightKgFromExcel == null && manualWeights[key].totalWeightKgFromExcel != null){
+            p.totalWeightKgFromExcel = manualWeights[key].totalWeightKgFromExcel;
+          }
+        }
+      });
+      if (manualTargets[s.id]){
+        s.targetCurve = { ...manualTargets[s.id] };
+      }
+    });
     farmData = {
       batchNumber: result.batchNumber || '',
       importDate: new Date().toISOString(),
@@ -2203,17 +2802,16 @@ async function handleFile(file){
     };
     activeTab = 'g1';
     saveState();
-
-    if (syncFarmName && syncConnectedAt){
-      await uploadExcelToCloud(file);
-    } else {
-      schedulePush();
-    }
-
+    if (syncFarmName && syncConnectedAt){ await uploadExcelToCloud(file); }
+    else { schedulePush(); }
     render();
+    const manualWeightCount = Object.keys(manualWeights).length;
+    const manualTargetCount = Object.keys(manualTargets).length;
     showToast(
       `✅ Imported ${result.matched} shed${result.matched === 1 ? '' : 's'}` +
       (result.skipped ? ` · ${result.skipped} row(s) skipped` : '') +
+      (manualWeightCount > 0 ? ` · kept ${manualWeightCount} weight edit${manualWeightCount === 1 ? '' : 's'}` : '') +
+      (manualTargetCount > 0 ? ` · kept ${manualTargetCount} target curve${manualTargetCount === 1 ? '' : 's'}` : '') +
       (result.batchNumber ? ` · Batch ${result.batchNumber}` : '')
     );
   } catch (err){
@@ -2241,27 +2839,88 @@ function updateShedField(shedIdx, key, rawValue){
   } else if (key === 'customFeedKg'){
     const s = String(rawValue ?? '').trim();
     if (s === '') shed.customFeedKg = null;
-    else {
-      const n = Number(s);
-      shed.customFeedKg = (Number.isFinite(n) && n > 0) ? n : null;
-    }
+    else { const n = Number(s); shed.customFeedKg = (Number.isFinite(n) && n > 0) ? n : null; }
   }
-  saveState();
-  schedulePush();
-  scheduleRender(60);
+  saveState(); schedulePush(); scheduleRender(60);
 }
 function setBatchNumber(v){
   if (!farmData) return;
   farmData.batchNumber = String(v ?? '').trim();
-  saveState();
-  schedulePush();
+  saveState(); schedulePush();
 }
 function setShedView(group, view){
   if (!['shed1','shed2','both','planner'].includes(view)) return;
   shedViewByGroup[group] = view;
-  saveShedViews();
-  schedulePush();
-  render();
+  saveShedViews(); schedulePush(); render();
+}
+
+/* ---------- Predictions interactions ---------- */
+function setPickupTotalWeight(shedId, pickupDateIso, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  const pickup = (shed.pickups || []).find(p => iso(p.date) === pickupDateIso); if (!pickup) return;
+  const v = String(value).trim();
+  if (v === ''){ pickup.totalWeightKg = null; pickup.totalWeightKgManual = false; }
+  else {
+    const n = Number(v); if (!Number.isFinite(n) || n <= 0) return;
+    pickup.totalWeightKg = n;
+    pickup.totalWeightKgManual = true;
+    if (pickup.totalWeightKgFromExcel == null) pickup.totalWeightKgFromExcel = n;
+  }
+  saveState(); schedulePush(); render();
+}
+function revertPickupTotalWeight(shedId, pickupDateIso){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  const pickup = (shed.pickups || []).find(p => iso(p.date) === pickupDateIso); if (!pickup) return;
+  pickup.totalWeightKg = pickup.totalWeightKgFromExcel || null;
+  pickup.totalWeightKgManual = false;
+  saveState(); schedulePush(); render();
+}
+function setTargetCurveValue(shedId, day, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  if (!shed.targetCurve) shed.targetCurve = { 7: null, 14: null, 21: null, 28: null };
+  const v = String(value).trim();
+  if (v === ''){ shed.targetCurve[day] = null; }
+  else { const n = Number(v); shed.targetCurve[day] = (Number.isFinite(n) && n > 0) ? n : null; }
+  saveState(); schedulePush(); render();
+}
+function setPredBeta(v){
+  let n = Number(v); if (!Number.isFinite(n)) n = 0.27;
+  n = Math.max(0, Math.min(0.6, n));
+  predState.beta = n;
+  savePredState(); schedulePush(); render();
+}
+function setTargetHarvestWeight(group, v){
+  let n = Number(v); if (!Number.isFinite(n) || n <= 0) n = 2.65;
+  n = Math.max(0.5, Math.min(5, n));
+  predState.targetHarvestWeightKg[group] = n;
+  savePredState(); schedulePush(); render();
+}
+function setPredGroup(g){ predState.predGroup = g; savePredState(); render(); }
+function setPredView(v){
+  if (!['shed1','shed2','both'].includes(v)) return;
+  predState.predView = v; savePredState(); render();
+}
+function setPredDailyRange(start, end){
+  let s = Number(start), e = Number(end);
+  if (!Number.isFinite(s)) s = 1;
+  if (!Number.isFinite(e)) e = 52;
+  s = Math.max(0, Math.min(200, Math.floor(s)));
+  e = Math.max(0, Math.min(200, Math.floor(e)));
+  if (e < s) e = s;
+  predState.dailyRange = { start: s, end: e };
+  savePredState(); schedulePush(); render();
+}
+function setFarmFeedOverride(rawVal){
+  const s = String(rawVal ?? '').trim();
+  if (s === ''){ predState.farmFeedOverride = null; }
+  else {
+    const n = Number(s);
+    predState.farmFeedOverride = (Number.isFinite(n) && n > 0) ? n : null;
+  }
+  savePredState(); schedulePush();
 }
 
 /* ---------- Sync UI ---------- */
@@ -2273,8 +2932,7 @@ function renderSyncButton(){
   btn.classList.remove('connected','syncing','error');
   if (syncState === 'pulling' || syncState === 'pushing'){
     btn.classList.add('syncing');
-    ico.textContent = '⟳';
-    ico.classList.add('sync-spin');
+    ico.textContent = '⟳'; ico.classList.add('sync-spin');
     lbl.textContent = syncState === 'pulling' ? 'Pulling…' : 'Saving…';
     btn.title = syncState === 'pulling' ? 'Fetching from cloud…' : 'Saving to cloud…';
     return;
@@ -2305,63 +2963,35 @@ function openSyncModal(){
   if (syncFarmName){
     body.innerHTML = `
       <div class="sync-status-card">
-        <div class="sync-status-row">
-          <span class="lbl">Farm</span>
-          <span class="val ok">${escapeHtml(syncFarmName)}</span>
-        </div>
-        <div class="sync-status-row">
-          <span class="lbl">Backed up as</span>
-          <span class="val">${escapeHtml(syncFarmName)}${SYNC_SUFFIX}.json</span>
-        </div>
-        <div class="sync-status-row">
-          <span class="lbl">Last sync</span>
-          <span class="val">${syncLastSyncAt ? fmtRelativeTime(syncLastSyncAt) : 'never'}</span>
-        </div>
+        <div class="sync-status-row"><span class="lbl">Farm</span><span class="val ok">${escapeHtml(syncFarmName)}</span></div>
+        <div class="sync-status-row"><span class="lbl">Backed up as</span><span class="val">${escapeHtml(syncFarmName)}${SYNC_SUFFIX}.json</span></div>
+        <div class="sync-status-row"><span class="lbl">Last sync</span><span class="val">${syncLastSyncAt ? fmtRelativeTime(syncLastSyncAt) : 'never'}</span></div>
         ${syncExcelMeta ? `
-          <div class="sync-status-row">
-            <span class="lbl">Stored Excel</span>
-            <span class="val">📄 ${escapeHtml(syncExcelMeta.name || 'sheds.xlsx')}${
-              syncExcelMeta.uploadedAt
-                ? ' · ' + fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())
-                : ''
-            }</span>
-          </div>
-        ` : ''}
+          <div class="sync-status-row"><span class="lbl">Stored Excel</span>
+          <span class="val">📄 ${escapeHtml(syncExcelMeta.name || 'sheds.xlsx')}${
+            syncExcelMeta.uploadedAt ? ' · ' + fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()) : ''}</span></div>` : ''}
         ${syncState === 'error' ? `
-          <div class="sync-status-row">
-            <span class="lbl">Status</span>
-            <span class="val err">Last attempt failed</span>
-          </div>
-        ` : ''}
+          <div class="sync-status-row"><span class="lbl">Status</span>
+          <span class="val err">Last attempt failed</span></div>` : ''}
       </div>
       <div class="sync-actions">
         <div class="sync-btn-row">
           <button class="btn-sync-primary" id="syncNowBtn">🔄 Sync now</button>
           <button class="btn-sync-primary ghost" id="syncChangeBtn">Change farm</button>
         </div>
-        ${syncExcelMeta ? `
-          <button class="btn-sync-primary ghost" id="syncDownloadExcelBtn">📄 Download stored Excel</button>
-        ` : ''}
+        ${syncExcelMeta ? `<button class="btn-sync-primary ghost" id="syncDownloadExcelBtn">📄 Download stored Excel</button>` : ''}
         <button class="btn-sync-primary danger" id="syncDisconnectBtn">Disconnect</button>
       </div>
-      <div class="sync-hint">
-        Data is stored in <strong>${escapeHtml(SYNC_REPO)}</strong> on GitHub. Enter the same farm name on any device to sync the same data.
-      </div>
-    `;
-    document.getElementById('syncNowBtn').addEventListener('click', async () => {
-      await pullFromCloud(false);
-    });
+      <div class="sync-hint">Data is stored in <strong>${escapeHtml(SYNC_REPO)}</strong> on GitHub. Enter the same farm name on any device to sync the same data.</div>`;
+    document.getElementById('syncNowBtn').addEventListener('click', async () => { await pullFromCloud(false); });
     document.getElementById('syncChangeBtn').addEventListener('click', () => {
       showConnectForm('Enter a new farm name to switch to. Your current data stays where it is.');
     });
     document.getElementById('syncDisconnectBtn').addEventListener('click', disconnectSync);
     const dl = document.getElementById('syncDownloadExcelBtn');
     if (dl) dl.addEventListener('click', async () => { await downloadExcelFromCloud(); });
-  } else {
-    showConnectForm();
-  }
-  modal.classList.add('open');
-  scrim.classList.add('open');
+  } else { showConnectForm(); }
+  modal.classList.add('open'); scrim.classList.add('open');
 }
 function showConnectForm(hint){
   const body = document.getElementById('syncModalBody');
@@ -2376,20 +3006,16 @@ function showConnectForm(hint){
       File will be saved as <strong>&lt;farm&gt;${SYNC_SUFFIX}.json</strong> — separate from Prodplan.
     </div>
     <button class="btn-sync-primary" id="syncConnectBtn">Connect</button>
-    <button class="btn-sync-primary ghost" id="syncCancelBtn">Cancel</button>
-  `;
+    <button class="btn-sync-primary ghost" id="syncCancelBtn">Cancel</button>`;
   const input = document.getElementById('syncFarmInput');
   setTimeout(() => input && input.focus(), 100);
-  const submit = () => {
-    const v = input.value.trim();
+  const submit = () => { const v = input.value.trim();
     if (!v){ showToast('Enter a farm name.', true); return; }
-    connectSync(v);
-  };
+    connectSync(v); };
   document.getElementById('syncConnectBtn').addEventListener('click', submit);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   document.getElementById('syncCancelBtn').addEventListener('click', () => {
-    if (!syncFarmName) closeSyncModal();
-    else openSyncModal();
+    if (!syncFarmName) closeSyncModal(); else openSyncModal();
   });
 }
 function closeSyncModal(){
@@ -2397,17 +3023,13 @@ function closeSyncModal(){
   document.getElementById('syncScrim').classList.remove('open');
 }
 function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 function escapeAttr(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-/* ---------- Rendering ---------- */
+/* ---------- Main Rendering ---------- */
 function scheduleRender(delay = 50){
   const active = document.activeElement;
   const activeId = active ? active.id : null;
@@ -2429,7 +3051,6 @@ function scheduleRender(delay = 50){
     }
   }, delay);
 }
-
 function render(){
   const batchEl = document.getElementById('batchNumber');
   if (batchEl){
@@ -2439,24 +3060,20 @@ function render(){
   }
   const label = document.getElementById('importBtnLabel');
   if (label) label.textContent = farmData ? 'Re-import Excel' : 'Import Excel';
-
   const tabsWrap = document.getElementById('tabsWrap');
   const app = document.getElementById('app');
-
   if (!farmData){
     tabsWrap.style.display = 'none';
     app.innerHTML = emptyStateHtml();
     return;
   }
-
   tabsWrap.style.display = 'block';
   document.getElementById('tabs').innerHTML = tabsHtml();
+  if (activeTab === 'predictions'){ app.innerHTML = renderPredictionsView(); return; }
   if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
-
   const g = Number(activeTab.replace('g', ''));
   app.innerHTML = groupViewHtml(g);
 }
-
 function emptyStateHtml(){
   return `
     <div class="empty-state">
@@ -2472,28 +3089,24 @@ function emptyStateHtml(){
         <div class="hint">Excel: look for a file named like <strong>sheds.xlsx</strong> or <strong>KP-2026.xlsx</strong></div>
         <div class="hint small">Cloud: enter the same farm name you used on your other device.</div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
 function tabsHtml(){
   const tabs = [
     { id: 'g1', label: 'Group 1' },
     { id: 'g2', label: 'Group 2' },
     { id: 'g3', label: 'Group 3' },
     { id: 'g4', label: 'Group 4' },
+    { id: 'predictions', label: '📊 Predictions', cls: 'tab-predictions' }
   ];
   return tabs.map(t => `
-    <button class="tab-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}">
+    <button class="tab-btn ${t.id === activeTab ? 'active' : ''} ${t.cls || ''}" data-tab="${t.id}">
       ${t.label}
-    </button>
-  `).join('');
+    </button>`).join('');
 }
-
 function groupViewHtml(g){
   const sheds = shedsForGroup(g);
   if (sheds.length === 0) return `<div class="empty-card">Group ${g} has no data.</div>`;
-
   const today = new Date();
   const init = sheds.reduce((s,x) => s + (x.initialPopulation || 0), 0);
   const mort = sheds.reduce((s,x) => s + Number(x.mortality || 0), 0);
@@ -2501,27 +3114,21 @@ function groupViewHtml(g){
   const live = sheds.reduce((s,x) => s + liveAtStartOfDay(x, today), 0);
   const mortRate = init > 0 ? (mort / init) * 100 : 0;
   const feedToday = groupFeedToday(sheds, today);
-
   const grad =
     g === 1 ? 'linear-gradient(135deg,#E0A339,#A8721F)' :
     g === 2 ? 'linear-gradient(135deg,#B08463,#5E2E22)' :
     g === 3 ? 'linear-gradient(135deg,#C9774A,#8F4A28)' :
               'linear-gradient(135deg,#A89055,#6E5A32)';
-
   const view = shedViewByGroup[g] || 'planner';
-
   let contentHtml = '';
-  if (view === 'planner'){
-    contentHtml = renderFeedPlanner(g, sheds, today);
-  } else {
+  if (view === 'planner'){ contentHtml = renderFeedPlanner(g, sheds, today); }
+  else {
     const visibleSheds =
       view === 'shed1' ? [sheds[0]] :
-      view === 'shed2' ? [sheds[1] || sheds[0]] :
-      sheds;
+      view === 'shed2' ? [sheds[1] || sheds[0]] : sheds;
     const gridClass = view === 'both' && sheds.length > 1 ? 'sheds-grid compare' : 'sheds-grid';
     contentHtml = `<div class="${gridClass}">${visibleSheds.map(s => shedCardHtml(s, today)).join('')}</div>`;
   }
-
   return `
     <div class="group-view-head" style="background:${grad}">
       <h1>Group ${g} <span>Sheds ${sheds.map(s => s.id).join(' & ')}</span></h1>
@@ -2533,31 +3140,23 @@ function groupViewHtml(g){
       </div>
     </div>
     ${shedTabsHtml(g, view, sheds)}
-    ${contentHtml}
-  `;
+    ${contentHtml}`;
 }
-
 function shedTabsHtml(g, view, sheds){
   if (sheds.length < 2) return '';
   const sA = sheds[0].id, sB = sheds[1].id;
   return `
     <div class="shed-tabs">
       <button class="stab ${view==='shed1'?'active':''}" data-shedview="shed1" data-group="${g}">
-        <span class="stab-icon">🏠</span> Shed ${sA}
-      </button>
+        <span class="stab-icon">🏠</span> Shed ${sA}</button>
       <button class="stab ${view==='shed2'?'active':''}" data-shedview="shed2" data-group="${g}">
-        <span class="stab-icon">🏠</span> Shed ${sB}
-      </button>
+        <span class="stab-icon">🏠</span> Shed ${sB}</button>
       <button class="stab both-btn ${view==='both'?'active':''}" data-shedview="both" data-group="${g}">
-        <span class="stab-icon">🏘️</span> Both sheds
-      </button>
+        <span class="stab-icon">🏘️</span> Both sheds</button>
       <button class="stab planner-btn ${view==='planner'?'active':''}" data-shedview="planner" data-group="${g}">
-        <span class="stab-icon">🌾</span> Feed &amp; Silo
-      </button>
-    </div>
-  `;
+        <span class="stab-icon">🌾</span> Feed &amp; Silo</button>
+    </div>`;
 }
-
 function rangeBarHtml(range, ctx){
   const presets = [
     { label: 'Last 7',  start: -7, end: 0 },
@@ -2586,10 +3185,8 @@ function rangeBarHtml(range, ctx){
           data-customrange-ctx="${ctx}" data-customrange-bound="end" />
         <span>days</span>
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
 function rangeLabel(range){
   if (range.start === -7 && range.end === 0)  return 'Last 7 days';
   if (range.start === 0  && range.end === 0)  return 'Today only';
@@ -2600,7 +3197,6 @@ function rangeLabel(range){
   if (range.start === 0 && range.end > 0) return `Next ${range.end} days`;
   return `${range.start} to ${range.end} days`;
 }
-
 function shedCardHtml(shed, today){
   const idx = shed.id - 1;
   const age = ageInDays(shed, today);
@@ -2608,7 +3204,6 @@ function shedCardHtml(shed, today){
   const picked = totalPicked(shed);
   const mRate = mortalityRate(shed);
   const fp = finalPickupOf(shed);
-
   const pills = [
     `<span class="tag muted">Age ${age}d</span>`,
     `<span class="tag amber">Live ${live.toLocaleString()}</span>`,
@@ -2618,14 +3213,11 @@ function shedCardHtml(shed, today){
     `<span class="tag muted">${shed.pickups.length}/5 pickups</span>`,
     fp ? `<span class="tag amber">FINAL</span>` : ''
   ].filter(Boolean).join('');
-
   const pickupsHtml = shed.pickups.length === 0
     ? `<div class="pickups-empty">No pickups recorded for this shed.</div>`
     : `
       <table class="pickups-table">
-        <thead>
-          <tr><th>Date</th><th class="num">Birds</th><th class="num">Variance</th><th>Note</th></tr>
-        </thead>
+        <thead><tr><th>Date</th><th class="num">Birds</th><th class="num">Variance</th><th>Note</th></tr></thead>
         <tbody>
           ${shed.pickups.map(p => {
             const v = Number(p.variance);
@@ -2640,16 +3232,12 @@ function shedCardHtml(shed, today){
                 <td class="num">${p.birds.toLocaleString()}</td>
                 <td class="num">${varHtml}</td>
                 <td>${p.isFinal ? '<span class="tag amber">FINAL</span>' : ''}</td>
-              </tr>
-            `;
+              </tr>`;
           }).join('')}
         </tbody>
-      </table>
-    `;
-
+      </table>`;
   const forecast = computeForecast(shed, shedRange);
   const forecastHtml = renderShedForecastTable(shed, forecast);
-
   return `
     <article class="shed-card">
       <div class="shed-card-head">
@@ -2706,10 +3294,8 @@ function shedCardHtml(shed, today){
           ${forecastHtml}
         </div>
       </div>
-    </article>
-  `;
+    </article>`;
 }
-
 function renderShedForecastTable(shed, forecast){
   const lbl = rangeLabel(shedRange);
   if (forecast.notStarted){
@@ -2717,16 +3303,14 @@ function renderShedForecastTable(shed, forecast){
       <div class="forecast-block">
         <h4>📈 Forecast <span class="window-label">${lbl}</span></h4>
         <div class="forecast-empty">Shed hasn't been placed yet — set a placement date to see the forecast.</div>
-      </div>
-    `;
+      </div>`;
   }
   if (forecast.rows.length === 0){
     return `
       <div class="forecast-block">
         <h4>📈 Forecast <span class="window-label">${lbl}</span></h4>
         <div class="forecast-empty">No forecast data available.</div>
-      </div>
-    `;
+      </div>`;
   }
   const rows = forecast.rows.map(r => {
     const weekend = isWeekend(r.date);
@@ -2753,25 +3337,15 @@ function renderShedForecastTable(shed, forecast){
         <td class="num">${r.dailyFeed.toFixed(1)} kg</td>
         <td>${pickupCell}</td>
         <td class="num ${liveAfterCls}">${r.liveAfter.toLocaleString()}</td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
-
   return `
     <div class="forecast-block">
       <h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4>
       <div class="forecast-table-wrap">
         <table class="forecast-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th class="num">Age</th>
-              <th class="num">Live (start)</th>
-              <th class="num">Daily Feed</th>
-              <th>Pickup</th>
-              <th class="num">Live (after)</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live (start)</th>
+            <th class="num">Daily Feed</th><th>Pickup</th><th class="num">Live (after)</th></tr></thead>
           <tbody>
             ${rows}
             <tr class="total-row">
@@ -2784,49 +3358,38 @@ function renderShedForecastTable(shed, forecast){
           </tbody>
         </table>
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
 function renderFeedPlanner(group, sheds, today){
   const forecast = computeSiloForecast(group, siloRange);
   const latest = latestReading(group);
   const latestDate = latest ? dateOnly(latest.date) : null;
   const daysSinceReading = latestDate ? Math.max(0, daysBetween(latestDate, today)) : null;
-
   const projected = currentBalanceKg(group);
   const consumedSince = consumptionSinceLatestReading(group);
   const deliveredSince = deliveriesSinceLatestReading(group);
-
   const hasReading = !!latest;
   const depletedWithinWindow = !!forecast.depletedDate;
-  const daysUntilDepletion = forecast.depletedDate
-    ? Math.max(0, daysBetween(today, forecast.depletedDate)) : null;
-
+  const daysUntilDepletion = forecast.depletedDate ? Math.max(0, daysBetween(today, forecast.depletedDate)) : null;
   let statusTone = 'green';
   let statusText = 'Sufficient';
   let statusSub = `Feed lasts past ${siloRange.end} days`;
-  if (!hasReading){
-    statusTone = 'amber'; statusText = 'No reading'; statusSub = 'Tap ring levels below';
-  } else if (depletedWithinWindow){
+  if (!hasReading){ statusTone = 'amber'; statusText = 'No reading'; statusSub = 'Tap ring levels below'; }
+  else if (depletedWithinWindow){
     if (daysUntilDepletion <= 2){ statusTone = 'red'; statusText = 'Critical'; statusSub = 'Order now!'; }
     else if (daysUntilDepletion <= 7){ statusTone = 'amber'; statusText = 'Low'; statusSub = 'Order soon'; }
     else { statusTone = 'green'; statusText = 'Planning needed'; statusSub = `Runs out in ${daysUntilDepletion} days`; }
   }
-
   const readingAgeBadge = hasReading
     ? (daysSinceReading === 0 ? 'Updated today' : `${daysSinceReading} day${daysSinceReading === 1 ? '' : 's'} ago`)
     : 'No reading yet';
-
   return `
     <div class="planner-wrap">
       <div class="planner-summary">
         <div class="summary-card">
           <div class="sc-label">Projected Stock Today</div>
           <div class="sc-value amber">${hasReading ? fmtFeed(projected) : '—'}</div>
-          <div class="sc-sub">
-            ${hasReading ? `${Math.round(projected).toLocaleString()} kg at end of today` : 'Tap ring levels below to record stock'}
-          </div>
+          <div class="sc-sub">${hasReading ? `${Math.round(projected).toLocaleString()} kg at end of today` : 'Tap ring levels below to record stock'}</div>
         </div>
         <div class="summary-card">
           <div class="sc-label">${depletedWithinWindow ? 'Depletes On' : 'Feed Lasts'}</div>
@@ -2844,30 +3407,18 @@ function renderFeedPlanner(group, sheds, today){
           <div class="sc-sub">${forecast.shortfall > 0 ? 'Consumption exceeds supply over range' : `Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div>
         </div>
       </div>
-
       ${hasReading ? `
         <div class="reading-info">
-          <div class="ri-item">
-            <span class="ri-label">Last reading:</span>
-            <span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span>
-          </div>
-          <div class="ri-item">
-            <span class="ri-label">Consumed since:</span>
-            <span class="ri-value red">−${fmtFeed(consumedSince)}</span>
-          </div>
+          <div class="ri-item"><span class="ri-label">Last reading:</span>
+            <span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span></div>
+          <div class="ri-item"><span class="ri-label">Consumed since:</span>
+            <span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>
           ${deliveredSince > 0 ? `
-            <div class="ri-item">
-              <span class="ri-label">Delivered since:</span>
-              <span class="ri-value">+${fmtFeed(deliveredSince)}</span>
-            </div>
-          ` : ''}
-          <div class="ri-item">
-            <span class="ri-label">Projected today:</span>
-            <span class="ri-value amber">${fmtFeed(projected)}</span>
-          </div>
-        </div>
-      ` : ''}
-
+            <div class="ri-item"><span class="ri-label">Delivered since:</span>
+              <span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>` : ''}
+          <div class="ri-item"><span class="ri-label">Projected today:</span>
+            <span class="ri-value amber">${fmtFeed(projected)}</span></div>
+        </div>` : ''}
       <div class="planner-card">
         <h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span></h3>
         <div class="silo-inputs">
@@ -2878,53 +3429,36 @@ function renderFeedPlanner(group, sheds, today){
           <span class="val">${hasReading ? (readingTotalKg(latest) / 1000).toFixed(2) + ' t' : '—'}
             <span style="font-size:13px;color:var(--muted);font-weight:600;">
               ${hasReading ? `(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})` : ''}
-            </span>
-          </span>
+            </span></span>
         </div>
         ${renderReadingHistory(group)}
       </div>
-
       ${rangeBarHtml(siloRange, 'silo')}
-
       <div class="planner-card">
         <h3>🚛 Scheduled Deliveries <span class="count">${deliveriesForGroup(group).length} scheduled · past deliveries are absorbed by readings</span></h3>
         ${renderDeliveriesList(group, deliveriesForGroup(group), latestDate)}
         <div class="add-delivery">
-          <div class="fld fld-date">
-            <label>Date</label>
-            <input id="newdel_date_${group}" type="date" value="${todayIso()}" />
-          </div>
-          <div class="fld fld-amount">
-            <label>Amount (t)</label>
-            <input id="newdel_amount_${group}" type="number" step="0.1" min="0.1" placeholder="10" />
-          </div>
-          <div class="fld fld-type">
-            <label>Feed Type</label>
+          <div class="fld fld-date"><label>Date</label>
+            <input id="newdel_date_${group}" type="date" value="${todayIso()}" /></div>
+          <div class="fld fld-amount"><label>Amount (t)</label>
+            <input id="newdel_amount_${group}" type="number" step="0.1" min="0.1" placeholder="10" /></div>
+          <div class="fld fld-type"><label>Feed Type</label>
             <select id="newdel_type_${group}">
               <option value="">— Unspecified —</option>
               ${FEED_TYPES.map(f => `<option value="${f.id}">${f.label}</option>`).join('')}
-            </select>
-          </div>
-          <div class="fld fld-note">
-            <label>Note (optional)</label>
-            <input id="newdel_note_${group}" type="text" placeholder="e.g. Order #1234" maxlength="60" />
-          </div>
-          <div class="fld fld-btn">
-            <button type="button" data-adddelivery="${group}">+ Add delivery</button>
-          </div>
+            </select></div>
+          <div class="fld fld-note"><label>Note (optional)</label>
+            <input id="newdel_note_${group}" type="text" placeholder="e.g. Order #1234" maxlength="60" /></div>
+          <div class="fld fld-btn"><button type="button" data-adddelivery="${group}">+ Add delivery</button></div>
         </div>
-
         ${renderFeedSummary(group)}
       </div>
-
       <div class="planner-card">
         <h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span></h3>
         ${renderSiloForecastTable(forecast)}
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
 function renderSiloInput(group, siloNum, rings){
   const isOff = (rings === null || rings === undefined || rings === '');
   const kg = ringsToKg(rings);
@@ -2936,32 +3470,21 @@ function renderSiloInput(group, siloNum, rings){
       </div>
       <div class="ring-picker">
         <button class="ring-off ${isOff ? 'active' : ''}"
-          type="button"
-          data-silo-group="${group}"
-          data-silo-num="${siloNum}"
-          data-silo-ring="off">Off</button>
+          type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>
         ${[0,1,2,3,4,5].map(r => `
           <div class="ring-slot ${r === rings ? 'active' : ''}">
             <button class="ring-btn ${r === rings ? 'active' : ''}"
-              type="button"
-              data-silo-group="${group}"
-              data-silo-num="${siloNum}"
-              data-silo-ring="${r}"
-              title="${r} ring${r === 1 ? '' : 's'} — ${(ringsToKg(r)/1000).toFixed(0)} t">
-              ${r}
-            </button>
+              type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}"
+              title="${r} ring${r === 1 ? '' : 's'} — ${(ringsToKg(r)/1000).toFixed(0)} t">${r}</button>
             <span class="ring-t">${(ringsToKg(r)/1000).toFixed(0)}t</span>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
       <div class="silo-total">
         <span class="lbl">${isOff ? 'Not in use' : 'This silo'}</span>
         <span class="val">${isOff ? '0 kg' : (kg/1000).toFixed(2) + ' t <span class="kg">('+kg.toLocaleString()+' kg)</span>'}</span>
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
 function renderReadingHistory(group){
   const arr = readingsSorted(group).slice().reverse().slice(0, 10);
   if (!arr.length){
@@ -2971,23 +3494,14 @@ function renderReadingHistory(group){
         <div style="font-size:12.5px;color:var(--muted);padding:8px 0;">
           Once you tap a ring level, each reading is saved with today's date.
         </div>
-      </details>
-    `;
+      </details>`;
   }
   const todayIso = iso(new Date());
   return `
     <details class="reading-history">
       <summary>🕘 Reading history (last ${arr.length})</summary>
       <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Silo 1</th>
-            <th>Silo 2</th>
-            <th>Silo 3</th>
-            <th class="num">Total</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th></tr></thead>
         <tbody>
           ${arr.map(r => {
             const total = readingTotalKg(r);
@@ -2999,15 +3513,12 @@ function renderReadingHistory(group){
                 <td>${r.silo2Rings === null ? '—' : r.silo2Rings + 'r'}</td>
                 <td>${r.silo3Rings === null ? '—' : r.silo3Rings + 'r'}</td>
                 <td class="num">${(total/1000).toFixed(2)} t</td>
-              </tr>
-            `;
+              </tr>`;
           }).join('')}
         </tbody>
       </table>
-    </details>
-  `;
+    </details>`;
 }
-
 function renderDeliveriesList(group, deliveries, latestReadingDate){
   if (!deliveries.length){
     return `<div class="deliveries-empty">No deliveries scheduled. Add one below to see how it affects depletion.</div>`;
@@ -3022,13 +3533,11 @@ function renderDeliveriesList(group, deliveries, latestReadingDate){
         return `
           <div class="delivery-row">
             <div class="d-date" style="display:flex;flex-direction:column;">
-              <input type="date"
-                value="${iso(del.date)}"
+              <input type="date" value="${iso(del.date)}"
                 data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="date" />
               ${dateBadge}
             </div>
-            <input class="d-amount" type="number" step="0.1" min="0.1"
-              value="${t.toFixed(2)}"
+            <input class="d-amount" type="number" step="0.1" min="0.1" value="${t.toFixed(2)}"
               data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="amount" />
             <select class="d-type"
               data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="feedType">
@@ -3041,19 +3550,13 @@ function renderDeliveriesList(group, deliveries, latestReadingDate){
               maxlength="60" />
             <button class="d-del" title="Remove delivery"
               data-removedelivery="${group}" data-delivery-id="${del.id}">✕</button>
-          </div>
-        `;
+          </div>`;
       }).join('')}
-    </div>
-  `;
+    </div>`;
 }
-
 function renderSiloForecastTable(forecast){
-  if (forecast.rows.length === 0){
-    return `<div class="forecast-empty">No forecast available.</div>`;
-  }
+  if (forecast.rows.length === 0) return `<div class="forecast-empty">No forecast available.</div>`;
   const hasReading = forecast.rows.some(r => r.balance !== null);
-
   const rows = forecast.rows.map(r => {
     const rowClasses = [
       r.isWeekend ? 'is-weekend' : '',
@@ -3061,14 +3564,12 @@ function renderSiloForecastTable(forecast){
       r.isToday ? 'is-today' : '',
       r.delivery > 0 ? 'pickup-day' : ''
     ].filter(Boolean).join(' ');
-
     let deliveryCell = '—';
     if (r.delivery > 0){
       const types = Array.from(new Set(r.deliveries.map(d => d.feedType).filter(Boolean)));
       const typeTags = types.map(t => feedTypeTagHtml(t)).join('');
       deliveryCell = `<span class="delivery-pill">+${(r.delivery / 1000).toFixed(1)} t</span> ${typeTags}`;
     }
-
     let balCell = '—';
     let balCls = '';
     let statusCell = '';
@@ -3076,18 +3577,12 @@ function renderSiloForecastTable(forecast){
       const bal = r.balance;
       balCls = bal > 0 ? 'balance-pos' : 'balance-neg';
       balCell = Math.round(bal).toLocaleString() + ' kg';
-      if (r.isPast){
-        statusCell = '<span class="tag muted">Actual</span>';
-      } else if (bal <= 0 && r.consumption > 0){
-        statusCell = '<span class="tag red">Empty</span>';
-      } else if (bal < 5000){
-        statusCell = '<span class="tag amber">Low</span>';
-      }
+      if (r.isPast) statusCell = '<span class="tag muted">Actual</span>';
+      else if (bal <= 0 && r.consumption > 0) statusCell = '<span class="tag red">Empty</span>';
+      else if (bal < 5000) statusCell = '<span class="tag amber">Low</span>';
     }
-
     const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
     const weekendTag = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
-
     return `
       <tr class="${rowClasses}">
         <td>${fmtShort(r.date)}${todayTag}${weekendTag}</td>
@@ -3095,22 +3590,13 @@ function renderSiloForecastTable(forecast){
         <td>${deliveryCell}</td>
         <td class="num ${balCls}">${balCell}</td>
         <td>${statusCell}</td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
-
   return `
     <div class="forecast-table-wrap">
       <table class="forecast-table" style="min-width:640px;">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th class="num">Daily Feed</th>
-            <th>Delivery</th>
-            <th class="num">Balance (end of day)</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Date</th><th class="num">Daily Feed</th><th>Delivery</th>
+          <th class="num">Balance (end of day)</th><th>Status</th></tr></thead>
         <tbody>
           ${rows}
           <tr class="total-row">
@@ -3122,14 +3608,630 @@ function renderSiloForecastTable(forecast){
           </tr>
         </tbody>
       </table>
+    </div>`;
+}
+
+/* =========================================================
+   PREDICTIONS PAGE
+========================================================= */
+function renderFarmKpiCard(){
+  const t = computeFarmTotals();
+
+  if (!t.hasData){
+    return `
+      <div class="farm-kpi-card">
+        <div class="farm-kpi-head">
+          <h2>🏭 Whole Farm KPIs</h2>
+          <span class="sub">Sum across all 8 sheds</span>
+        </div>
+        <div class="farm-kpi-empty">
+          No sheds placed yet — import Excel or add a placement date to see farm totals.
+        </div>
+      </div>`;
+  }
+
+  const overrideVal = predState.farmFeedOverride != null ? predState.farmFeedOverride : '';
+  const overrideCls = t.usingManualFeed ? 'manual' : '';
+  const feedSub = t.usingManualFeed
+    ? `Manual override · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`
+    : `Auto-calculated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
+
+  return `
+    <div class="farm-kpi-card">
+      <div class="farm-kpi-head">
+        <h2>🏭 Whole Farm KPIs</h2>
+        <span class="sub">Sum across ${t.shedsWithData} placed shed${t.shedsWithData === 1 ? '' : 's'} of ${SHED_COUNT}</span>
+      </div>
+      <div class="farm-kpi-grid">
+        <div class="farm-kpi-tile amber">
+          <div class="fkt-lbl">Total Live Weight</div>
+          <div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div>
+          <div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div>
+        </div>
+        <div class="farm-kpi-tile">
+          <div class="fkt-lbl">Total Feed Consumption</div>
+          <div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div>
+          <div class="fkt-sub" id="kpiFeedSub">${feedSub}</div>
+          <input id="farmFeedOverride" class="farm-feed-override ${overrideCls}"
+            type="number" step="100" min="0"
+            placeholder="Manual override (kg)"
+            value="${overrideVal}" />
+        </div>
+        <div class="farm-kpi-tile green">
+          <div class="fkt-lbl">FCR</div>
+          <div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div>
+          <div class="fkt-sub">Feed ÷ Live weight</div>
+        </div>
+        <div class="farm-kpi-tile green">
+          <div class="fkt-lbl">cFCR</div>
+          <div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div>
+          <div class="fkt-sub">β=${predState.beta.toFixed(3)} · ALW=${t.avgWeight.toFixed(3)} kg</div>
+        </div>
+        <div class="farm-kpi-tile blue">
+          <div class="fkt-lbl">PIF</div>
+          <div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div>
+          <div class="fkt-sub">(Livability × ALW) ÷ (Age × FCR) × 100</div>
+        </div>
+        <div class="farm-kpi-tile">
+          <div class="fkt-lbl">Total Average Weight</div>
+          <div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div>
+          <div class="fkt-sub">Weighted across ${t.birdsAtHarvest.toLocaleString()} birds</div>
+        </div>
+        <div class="farm-kpi-tile">
+          <div class="fkt-lbl">Livability</div>
+          <div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div>
+          <div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function updateFarmKpiValues(){
+  const t = computeFarmTotals();
+  const el = id => document.getElementById(id);
+  const set = (id, html) => { const e = el(id); if (e) e.innerHTML = html; };
+  if (!t.hasData) return;
+  set('kpiLiveWeight', fmtKgAlways(t.totalLiveWeight));
+  set('kpiFeed', fmtTonnesAlways(t.totalFeed));
+  const sub = el('kpiFeedSub');
+  if (sub){
+    sub.textContent = t.usingManualFeed
+      ? `Manual override · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`
+      : `Auto-calculated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
+  }
+  set('kpiFCR', t.fcr.toFixed(3));
+  set('kpiCFCR', t.cfcr.toFixed(3));
+  set('kpiPIF', t.pif.toFixed(2));
+  set('kpiAvgWeight', t.avgWeight.toFixed(3) + ' <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span>');
+  set('kpiLivability', t.livability.toFixed(2) + '%');
+}
+
+function renderPredictionsView(){
+  const g = predState.predGroup;
+  const sheds = shedsForGroup(g);
+  if (sheds.length === 0) return `<div class="empty-card">Group ${g} has no data.</div>`;
+  const view = predState.predView;
+  const visibleSheds =
+    view === 'shed1' ? [sheds[0]] :
+    view === 'shed2' ? [sheds[1] || sheds[0]] : sheds;
+  const gridClass = view === 'both' && sheds.length > 1 ? 'pred-grid compare' : 'pred-grid';
+  const groupNames = { 1:'Group 1', 2:'Group 2', 3:'Group 3', 4:'Group 4' };
+  return `
+    <div class="predictions-head">
+      <h1>📊 Results Predictions</h1>
+      <span class="head-note">Whole-farm KPIs · per-shed detail below</span>
     </div>
-  `;
+    ${renderFarmKpiCard()}
+    <div class="shed-tabs" style="margin-bottom:14px;">
+      ${[1,2,3,4].map(gi => `
+        <button class="stab ${predState.predGroup === gi ? 'active' : ''}"
+          data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}
+      <button class="stab planner-btn ${view==='both'?'active':''}" data-predview="both"
+        style="${view==='both'?'':'margin-left:auto;'}">🏘️ Both sheds</button>
+      <button class="stab ${view==='shed1'?'active':''}" data-predview="shed1" style="margin-left:${view==='both'?'12px':'0'};">🏠 Shed ${sheds[0]?.id || ''}</button>
+      ${sheds[1] ? `<button class="stab ${view==='shed2'?'active':''}" data-predview="shed2">🏠 Shed ${sheds[1].id}</button>` : ''}
+    </div>
+    <div class="pred-beta-row">
+      <label>⚙️ cFCR β factor:</label>
+      <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002"
+        value="${predState.beta}" />
+      <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002"
+        value="${predState.beta.toFixed(3)}" />
+      <span style="font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
+        Target ALW:
+        <input type="number" id="predTargetWeight_${g}" min="0.5" max="5" step="0.01"
+          value="${predState.targetHarvestWeightKg[g].toFixed(2)}"
+          style="width:70px;padding:4px 6px;border-radius:6px;border:1px solid var(--line);
+            background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;
+            font-weight:700;font-size:12px;text-align:center;" />
+        kg
+      </span>
+    </div>
+    <div class="${gridClass}" style="margin-top:14px;">
+      ${visibleSheds.map(s => renderPredictionsShedCard(s, g)).join('')}
+    </div>`;
+}
+
+/* ---------- Target curve panel ---------- */
+function renderTargetCurvePanel(shed){
+  const tc = shed.targetCurve || {};
+  const hasTargets = hasTargetCurve(shed);
+  const last = lastWeightedPickup(shed);
+  const hasPickups = !!last;
+
+  const inputs = TARGET_DAYS.map(day => {
+    const v = tc[day];
+    const filled = v != null && Number.isFinite(Number(v)) && Number(v) > 0;
+    const ref = rossWeightKg(day).toFixed(3);
+    let warn = false;
+    if (filled){
+      const num = Number(v);
+      if (num < ROSS_308_WEIGHTS_KG[0] || num > 6) warn = true;
+      const prevDay = TARGET_DAYS[TARGET_DAYS.indexOf(day) - 1];
+      if (prevDay != null){
+        const prevV = tc[prevDay];
+        if (prevV != null && Number.isFinite(Number(prevV)) && Number(prevV) > 0 && num <= Number(prevV)) warn = true;
+      }
+    }
+    const cls = warn ? 'warn' : (filled ? 'filled' : '');
+    return `
+      <div class="ptc-input">
+        <label>Day ${day}</label>
+        <div class="ptc-field">
+          <input type="number" step="0.001" min="0" placeholder="${ref}"
+            value="${filled ? Number(v).toFixed(3) : ''}"
+            class="${cls}"
+            data-target-shed="${shed.id}" data-target-day="${day}"
+            title="Ross 308 reference: ${ref} kg" />
+          <span class="unit">kg</span>
+        </div>
+        <span class="ref">Ross ref: ${ref} kg</span>
+      </div>`;
+  }).join('');
+
+  let sourcePill, sourceText;
+  if (hasPickups){
+    sourcePill = '<span class="pill pickup">Pickup data</span>';
+    const gain = observedDailyGain(shed);
+    sourceText = gain != null
+      ? `AI forecast uses official pickup weights · observed gain <strong>${(gain * 1000).toFixed(1)} g/day</strong>`
+      : `AI forecast uses official pickup weights`;
+  } else if (hasTargets){
+    sourcePill = '<span class="pill target">Target curve</span>';
+    sourceText = 'AI forecast uses the target curve you entered below';
+  } else {
+    sourcePill = '<span class="pill standard">Ross 308</span>';
+    sourceText = 'Using Ross 308 reference curve — enter targets or pickup data to improve';
+  }
+
+  let compareHtml = '';
+  if (hasPickups && hasTargets){
+    const rows = TARGET_DAYS.map(day => {
+      const target = tc[day];
+      if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return '';
+      const t = Number(target);
+      const refDate = addDays(shed.placementDate, day);
+      const now = dateOnly(new Date());
+      if (now < dateOnly(refDate)){
+        return `
+          <div class="ptc-compare-row">
+            <span class="ptc-day">Day ${day}</span>
+            <span class="ptc-vals">Target ${t.toFixed(3)} kg · <span class="ptc-pending">not reached yet</span></span>
+          </div>`;
+      }
+      const actual = actualWeightOn(shed, refDate);
+      if (actual == null){
+        return `
+          <div class="ptc-compare-row">
+            <span class="ptc-day">Day ${day}</span>
+            <span class="ptc-vals">Target ${t.toFixed(3)} kg · <span class="ptc-pending">no data</span></span>
+          </div>`;
+      }
+      const delta = actual - t;
+      const deltaCls = delta > 0.005 ? 'pos' : (delta < -0.005 ? 'neg' : 'neu');
+      const deltaStr = delta >= 0
+        ? `▲ +${Math.round(delta * 1000)} g`
+        : `▼ −${Math.abs(Math.round(delta * 1000))} g`;
+      return `
+        <div class="ptc-compare-row">
+          <span class="ptc-day">Day ${day}</span>
+          <span class="ptc-vals">
+            Target ${t.toFixed(3)} · Actual ${actual.toFixed(3)} ·
+            <span class="ptc-delta ${deltaCls}">${deltaStr}</span>
+          </span>
+        </div>`;
+    }).filter(Boolean).join('');
+    if (rows){
+      compareHtml = `
+        <div class="ptc-compare">
+          <div class="ptc-compare-title">Target vs Actual comparison</div>
+          ${rows}
+        </div>`;
+    }
+  }
+
+  return `
+    <div class="pred-target-curve">
+      <div class="ptc-head">
+        <span class="ptc-title">🎯 Target Growth Curve</span>
+        <span class="ptc-sub">Optional — AI projects forward from these weights until official pickup data arrives</span>
+      </div>
+      <div class="ptc-inputs">${inputs}</div>
+      <div class="ptc-status">
+        Using: ${sourcePill} · ${sourceText}
+      </div>
+      ${compareHtml}
+    </div>`;
+}
+
+/* ---------- Forecast-day selector bar ---------- */
+function forecastDayBarHtml(){
+  const r = predState.dailyRange;
+  return `
+    <div class="pred-daily-range-bar" style="margin:14px 0 10px;">
+      <label>📅 Forecast Day</label>
+      <input type="number" class="pred-daily-input" min="0" max="200"
+             data-pred-daily="start" value="${r.start}" />
+      <span>to</span>
+      <input type="number" class="pred-daily-input" min="0" max="200"
+             data-pred-daily="end" value="${r.end}" />
+      <span>of cycle</span>
+      <span class="pdrb-hint">Days from placement · milestone days (D7, D14, D21 …) are highlighted</span>
+    </div>`;
+}
+
+/* ---------- Daily performance ---------- */
+function renderDailyPerformance(shed){
+  if (!shed.placementDate){
+    return `
+      <div class="pickups-block" style="margin-top:14px;">
+        <h4>📅 Daily Performance — Actual + AI Forecast</h4>
+        <div class="forecast-empty">No placement date set — forecast unavailable.</div>
+      </div>`;
+  }
+
+  const today    = dateOnly(new Date());
+  const last     = lastWeightedPickup(shed);
+  const lastDate = last ? dateOnly(last.date) : null;
+
+  const startDay = Math.max(0, Math.floor(predState.dailyRange.start));
+  const endDay   = Math.max(startDay, Math.floor(predState.dailyRange.end));
+
+  const rows = [];
+  for (let day = startDay; day <= endDay; day++){
+    const d        = addDays(shed.placementDate, day);
+    const age      = day;
+    const live     = liveAtStartOfDay(shed, d);
+    const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+    const pickupsBirds = pickupsToday.reduce((s,p) => s + p.birds, 0);
+    const isToday  = iso(d) === iso(today);
+    const isPast   = d < today;
+    const wknd     = isWeekend(d);
+    const standard = age > 0 ? rossWeightKg(age) : 0;
+    const isMilestone = isMilestoneDay(age);
+
+    let weight = null;
+    let weightType = null;
+    if (age > 0){
+      if (lastDate && d <= lastDate){
+        weight = actualWeightOn(shed, d);
+        if (weight != null) weightType = 'actual';
+      } else {
+        const f = forecastWeightModeAware(shed, d);
+        if (f.kg != null) weight = f.kg;
+        if      (f.mode === 'ai-pickup') weightType = 'ai-pickup';
+        else if (f.mode === 'ai-target') weightType = 'ai-target';
+        else if (f.mode === 'standard')  weightType = 'standard';
+      }
+    }
+
+    let daysVar = null;
+    if (weight != null && age > 0){
+      daysVar = daysVsTarget(age, weight);
+    }
+
+    rows.push({
+      date: d, day, age, live, pickupsBirds,
+      standard, weight, weightType, daysVar,
+      isToday, isPast, isWeekend: wknd, isMilestone
+    });
+  }
+
+  let gainNote = '';
+  if (last){
+    const gain = observedDailyGain(shed);
+    const n = weightedPickups(shed).length;
+    gainNote = gain != null
+      ? `AI forecast uses <strong>observed gain ${(gain * 1000).toFixed(1)} g/day</strong> from ${n} pickup${n === 1 ? '' : 's'}`
+      : `AI forecast uses pickup weights`;
+  } else if (hasTargetCurve(shed)){
+    gainNote = `AI forecast interpolates between your <strong>target curve entries</strong>`;
+  } else {
+    gainNote = `No pickup or target data yet — using the <strong>Ross 308 reference curve</strong>`;
+  }
+
+  return `
+    <div class="pickups-block" style="margin-top:14px;">
+      <h4>📅 Daily Performance — Actual + AI Forecast
+        <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">
+          · Day ${startDay}–${endDay} of cycle · Standard = Ross 308 reference curve · ⭐ = milestone day
+        </span>
+      </h4>
+      <div class="forecast-table-wrap">
+        <table class="pred-daily-table" style="min-width:760px;">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="num">Age</th>
+              <th class="num">Live birds</th>
+              <th class="num">Weight (kg)</th>
+              <th class="num">Ross standard (kg)</th>
+              <th class="num">Days vs Ross</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const cls = [
+                r.isToday ? 'is-today' : '',
+                r.isWeekend ? 'is-weekend' : '',
+                (r.weightType === 'ai-pickup' || r.weightType === 'ai-target') ? 'is-forecast-row' : ''
+              ].filter(Boolean).join(' ');
+              const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
+              const wkndTag  = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
+              const pickupNote = r.pickupsBirds > 0
+                ? ` <span style="font-size:10px;color:var(--primary-dark);font-weight:700;">−${r.pickupsBirds.toLocaleString()}</span>`
+                : '';
+              const milestoneBadge = r.isMilestone ? `<span class="milestone-pill" title="Weight-curve milestone">★ D${r.age}</span>` : '';
+
+              let weightCell = '—';
+              if (r.weight != null){
+                if      (r.weightType === 'actual')    weightCell = `<span class="w-actual">${r.weight.toFixed(3)}</span><span class="w-pill actual">Actual</span>`;
+                else if (r.weightType === 'ai-pickup') weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">AI · pickup</span>`;
+                else if (r.weightType === 'ai-target') weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill ai-target">AI · target</span>`;
+                else if (r.weightType === 'standard')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill standard">Ross</span>`;
+              }
+
+              let daysCell = '—';
+              let daysCls  = '';
+              if (r.daysVar != null){
+                if (Math.abs(r.daysVar) < 0.1){
+                  daysCell = 'On target'; daysCls = 'days-neu';
+                } else if (r.daysVar > 0){
+                  daysCell = `${r.daysVar.toFixed(1)}d ahead`; daysCls = 'days-pos';
+                } else {
+                  daysCell = `${Math.abs(r.daysVar).toFixed(1)}d behind`; daysCls = 'days-neg';
+                }
+              }
+
+              const stdCell = r.age > 0 ? r.standard.toFixed(3) : '—';
+
+              return `
+                <tr class="${cls}">
+                  <td>${fmtShort(r.date)}${todayTag}${wkndTag}</td>
+                  <td class="num">${r.age}d${milestoneBadge}</td>
+                  <td class="num">${r.live.toLocaleString()}${pickupNote}</td>
+                  <td class="num">${weightCell}</td>
+                  <td class="num" style="color:var(--muted);">${stdCell}</td>
+                  <td class="num ${daysCls}">${daysCell}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        ${gainNote} ·
+        <strong>Actual</strong> shown up to the last pickup date ·
+        <strong>AI</strong> rows are forward projections ·
+        Standard = Ross 308 curve (Aviagen 2022, combined M/F average) ·
+        Days vs Ross = Ross-equivalent day − actual age (positive = ahead, negative = behind) ·
+        ⭐ milestone = every 7 days (D7, D14, D21, D28, D35, D42, D49, D56)
+      </div>
+    </div>`;
+}
+
+/* ---------- Days vs Ross ---------- */
+function renderDaysBehind(shed){
+  const today = dateOnly(new Date());
+  const currentAge = ageInDays(shed, today);
+  if (currentAge <= 0) return '';
+
+  const last = lastWeightedPickup(shed);
+  const hasTargets = hasTargetCurve(shed);
+  if (!last && !hasTargets) return '';
+
+  const lastDate = last ? dateOnly(last.date) : null;
+  let currentWeight;
+  let source;
+  if (lastDate && today <= lastDate){
+    currentWeight = actualWeightOn(shed, today);
+    source = 'Actual';
+  } else {
+    const f = forecastWeightModeAware(shed, today);
+    currentWeight = f.kg;
+    if (f.mode === 'ai-pickup') source = 'AI forecast (pickup)';
+    else if (f.mode === 'ai-target') source = 'AI forecast (target)';
+    else if (f.mode === 'standard'){ currentWeight = rossWeightKg(currentAge); source = 'Ross 308'; }
+  }
+  if (currentWeight == null) return '';
+
+  const daysVar = daysVsTarget(currentAge, currentWeight);
+  const rossAge = findRossAgeForWeight(currentWeight);
+
+  let status, cls, icon;
+  if (daysVar == null || Math.abs(daysVar) < 0.5){ status = 'On Target';             cls = 'on-track';     icon = '✅'; }
+  else if (daysVar > 0)                          { status = 'Ahead of Target';       cls = 'ahead';        icon = '🟢'; }
+  else if (daysVar >= -3)                        { status = 'Slightly Behind';       cls = 'behind';       icon = '🟡'; }
+  else                                           { status = 'Significantly Behind';  cls = 'behind-major'; icon = '🔴'; }
+
+  let daysText;
+  if (daysVar == null || Math.abs(daysVar) < 0.1){
+    daysText = 'On target — matches Ross 308';
+  } else if (daysVar > 0){
+    const n = daysVar;
+    daysText = `${n.toFixed(1)} day${Math.abs(n - 1) < 0.05 ? '' : 's'} ahead of Ross 308`;
+  } else {
+    const n = Math.abs(daysVar);
+    daysText = `${n.toFixed(1)} day${Math.abs(n - 1) < 0.05 ? '' : 's'} behind Ross 308`;
+  }
+
+  let sourcePill = '<span class="w-pill actual">Actual</span>';
+  if (source.startsWith('AI')){
+    sourcePill = source.includes('target')
+      ? '<span class="w-pill ai-target">AI · target</span>'
+      : '<span class="w-pill forecast">AI · pickup</span>';
+  } else if (source === 'Ross 308'){
+    sourcePill = '<span class="w-pill standard">Ross 308</span>';
+  }
+
+  return `
+    <div class="pred-days-behind ${cls}">
+      <span class="dbi-lbl">📏 vs Ross 308 standard</span>
+      <span class="dbi-val">${icon} ${status}</span>
+      <span class="dbi-note">
+        <strong>${daysText}</strong>
+        · ${source} weight <strong>${currentWeight.toFixed(3)} kg</strong> at age <strong>${currentAge}d</strong>
+        · Ross reaches that weight at <strong>day ${rossAge.toFixed(1)}</strong>
+        ${sourcePill}
+      </span>
+    </div>`;
+}
+
+function renderPredictionsShedCard(shed, group){
+  const pred = computePredictions(shed, group);
+  const conf = confidenceLabel(pred.confidence);
+  const pickups = pred.pickupDetails;
+  const hasAnyPickup = pickups.length > 0;
+  const hasEstimates = hasAnyPickup;
+
+  // Density — uses AI forecast weight on the birds still on farm, fixed floor area
+  const today = dateOnly(new Date());
+  const forecastKg = shed.placementDate ? (forecastWeightModeAware(shed, today).kg || 0) : 0;
+  const densityKg = pred.liveNow * forecastKg;
+  const densityVal = densityKg / FIXED_FLOOR_AREA_M2;
+  const densityDisplay = pred.liveNow === 0 ? '0.0' : densityVal.toFixed(1);
+
+  const snapshotHtml = `
+    <div class="pred-snapshot">
+      <div class="pred-snap-item"><div class="lbl">🐥 Birds placed</div><div class="val">${pred.initialPop.toLocaleString()}</div></div>
+      <div class="pred-snap-item"><div class="lbl">📆 Current age</div><div class="val">${pred.currentAge}d</div></div>
+      <div class="pred-snap-item"><div class="lbl">⚠️ Mortality</div><div class="val">${pred.currentMort.toLocaleString()}</div></div>
+      <div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div>
+      <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${pred.pickupsCompleted} of 5</div></div>
+      <div class="pred-snap-item">
+        <div class="lbl">📐 Density</div>
+        <div class="val">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div>
+        <div class="sub">${pred.liveNow.toLocaleString()} × ${forecastKg.toFixed(3)} kg ÷ 3,162 m²</div>
+      </div>
+    </div>`;
+
+  const pickupTableHtml = pickups.length === 0
+    ? `<div class="forecast-empty">No pickups yet — estimates unlock after the first pickup.</div>`
+    : `
+      <table class="pickups-table" style="font-size:12.5px;">
+        <thead>
+          <tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th>
+            <th class="num">Total wt (kg)</th><th class="num">Avg wt (kg/bird)</th></tr>
+        </thead>
+        <tbody>
+          ${pickups.map(p => {
+            const manual = (shed.pickups || []).find(x => iso(x.date) === iso(p.date));
+            const isManual = !!(manual && manual.totalWeightKgManual);
+            const hasExcelFrom = !!(manual && manual.totalWeightKgFromExcel != null);
+            const totalValue = (manual && manual.totalWeightKg != null) ? manual.totalWeightKg : '';
+            const warn = totalValue && (totalValue < 100 || totalValue > 40000);
+            const avgValue = p.avgWeightKg ? p.avgWeightKg.toFixed(3) : '—';
+            const avgWarn = p.avgWeightKg && (p.avgWeightKg < 0.3 || p.avgWeightKg > 5);
+            return `
+              <tr class="${p.isFinal ? 'is-final' : ''}">
+                <td>${fmtShort(p.date)}</td>
+                <td class="num">${p.age}d</td>
+                <td class="num">${p.birds.toLocaleString()}</td>
+                <td class="num">
+                  <input class="pred-pickup-input ${isManual?'manual':''} ${warn?'warn':''}"
+                    type="number" step="1" min="0"
+                    value="${totalValue}"
+                    placeholder="${p.isEstWeight ? 'Ross est.' : 'total kg'}"
+                    data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
+                    title="${isManual ? 'Manually edited — click ↺ to revert to Excel' : (p.isEstWeight ? 'No Excel weight — using Ross curve estimate' : 'From Excel')}" />
+                  ${isManual && hasExcelFrom ? `
+                    <button class="pred-revert-btn"
+                      data-pickup-revert-shed="${shed.id}" data-pickup-revert-date="${iso(p.date)}"
+                      title="Revert to Excel value (${manual.totalWeightKgFromExcel.toFixed(0)} kg)">↺</button>` : ''}
+                </td>
+                <td class="pred-avg-cell" style="${avgWarn?'color:var(--danger);':''}">${avgValue}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+
+  const estimatesHtml = hasEstimates ? `
+    <div class="pred-estimates">
+      <div class="pred-est-tile amber">
+        <div class="lbl">Est. Final Avg Weight</div>
+        <div class="val">${pred.estFinalALW.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div>
+      </div>
+      <div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${pred.fcr.toFixed(3)}</div></div>
+      <div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${pred.cfcr.toFixed(3)}</div></div>
+      <div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${pred.estLivability.toFixed(2)}%</div></div>
+      <div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${pred.estFinalMort.toLocaleString()}</div></div>
+      <div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(pred.totalWeightKg)}</div></div>
+      <div class="pred-est-tile amber" style="grid-column: span 2;">
+        <div class="lbl">Est. Final PIF</div>
+        <div class="val">${pred.pif.toFixed(2)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">(Livability × ALW) ÷ (Age × FCR) × 100</div>
+      </div>
+    </div>` : `
+    <div class="pred-empty" style="margin-top:14px;">
+      <strong>Estimates unlock after the first pickup.</strong><br>
+      Import Excel with pickup data to see projected final numbers.
+    </div>`;
+
+  const confidenceHtml = hasEstimates ? `
+    <div class="pred-confidence">
+      <span style="font-weight:700;font-size:11px;text-transform:uppercase;
+        letter-spacing:0.06em;color:var(--muted);">Confidence</span>
+      <div class="bar"><div class="bar-fill ${conf.cls}" style="width:${pred.confidence}%"></div></div>
+      <span class="pct" style="color:${conf.cls === 'low' ? 'var(--danger)' : (conf.cls === 'medium' ? 'var(--primary-dark)' : 'var(--success)')};">
+        ${pred.confidence}%
+      </span>
+      <span style="font-size:11px;color:var(--muted);">${conf.label}</span>
+    </div>` : '';
+
+  const targetPanelHtml = renderTargetCurvePanel(shed);
+  const daysBehindHtml = renderDaysBehind(shed);
+  const dailyPerfHtml = renderDailyPerformance(shed);
+
+  return `
+    <article class="pred-shed-card">
+      <div class="pred-shed-head">
+        <h3>🏠 Shed ${shed.id}</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="tag muted">Age ${pred.currentAge}d</span>
+          <span class="tag amber">Live ${pred.liveNow.toLocaleString()}</span>
+          ${pred.pickupsCompleted > 0 ? `<span class="tag green">${pred.pickupsCompleted} pickup${pred.pickupsCompleted === 1 ? '' : 's'}</span>` : ''}
+        </div>
+      </div>
+      <div class="pred-shed-body">
+        ${snapshotHtml}
+        ${targetPanelHtml}
+        ${daysBehindHtml}
+        ${forecastDayBarHtml()}
+        ${dailyPerfHtml}
+        <div class="pickups-block" style="margin-top:14px;">
+          <h4>Pickup History — average weight computed from total ÷ birds</h4>
+          ${pickupTableHtml}
+        </div>
+        ${estimatesHtml}
+        ${confidenceHtml}
+      </div>
+    </article>`;
 }
 
 /* ---------- Event wiring ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   applyTheme(loadTheme());
   loadSyncState();
+  loadPredState();
 
   const saved = loadState();
   if (saved) farmData = saved;
@@ -3139,26 +4241,25 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSyncButton();
   render();
 
-  if (syncFarmName && syncConnectedAt){
-    pullFromCloud(true).catch(() => {});
-  }
-
-  // Register PWA service worker
+  if (syncFarmName && syncConnectedAt){ pullFromCloud(true).catch(() => {}); }
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 
   document.addEventListener('click', (e) => {
-    if (e.target.closest('#cluckwiseBtn')){
-      window.open(CLUCKWISE_URL, '_blank', 'noopener');
-      return;
-    }
+    if (e.target.closest('#cluckwiseBtn')){ window.open(CLUCKWISE_URL, '_blank', 'noopener'); return; }
     if (e.target.closest('#themeToggle')){ toggleTheme(); return; }
     if (e.target.closest('#syncBtn')){ openSyncModal(); return; }
     if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn')){ triggerImport(); return; }
     if (e.target.closest('#emptyConnectBtn')){ openSyncModal(); return; }
+
+    const pg = e.target.closest('[data-predgroup]');
+    if (pg){ setPredGroup(Number(pg.dataset.predgroup)); return; }
+    const pv = e.target.closest('[data-predview]');
+    if (pv){ setPredView(pv.dataset.predview); return; }
+
+    const rv = e.target.closest('[data-pickup-revert-shed]');
+    if (rv){ revertPickupTotalWeight(Number(rv.dataset.pickupRevertShed), rv.dataset.pickupRevertDate); return; }
 
     const ringBtn = e.target.closest('.ring-btn, .ring-off');
     if (ringBtn){
@@ -3166,9 +4267,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const n = Number(ringBtn.dataset.siloNum);
       const raw = ringBtn.dataset.siloRing;
       if (Number.isFinite(g) && Number.isFinite(n)){
-        if (raw === 'off'){
-          setSiloRingsForToday(g, n, null);
-        } else {
+        if (raw === 'off') setSiloRingsForToday(g, n, null);
+        else {
           const r = Number(raw);
           const latest = latestReading(g);
           const current = latest ? latest[`silo${n}Rings`] : null;
@@ -3179,7 +4279,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const stab = e.target.closest('.stab');
+    const stab = e.target.closest('.stab[data-shedview]');
     if (stab){
       const g = Number(stab.dataset.group);
       const view = stab.dataset.shedview;
@@ -3193,18 +4293,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const siloVal = pill.dataset.silodays;
       if (shedVal){
         const [s, e] = shedVal.split(',').map(Number);
-        if (Number.isFinite(s) && Number.isFinite(e)){
-          shedRange = { start:s, end:e };
-          schedulePush();
-          render();
-        }
+        if (Number.isFinite(s) && Number.isFinite(e)){ shedRange = { start:s, end:e }; schedulePush(); render(); }
       } else if (siloVal){
         const [s, e] = siloVal.split(',').map(Number);
-        if (Number.isFinite(s) && Number.isFinite(e)){
-          siloRange = { start:s, end:e };
-          schedulePush();
-          render();
-        }
+        if (Number.isFinite(s) && Number.isFinite(e)){ siloRange = { start:s, end:e }; schedulePush(); render(); }
       }
       return;
     }
@@ -3219,7 +4311,6 @@ document.addEventListener('DOMContentLoaded', () => {
       addSiloDelivery(g, dateEl.value, amtEl.value, typEl.value, noteEl.value);
       return;
     }
-
     const rmBtn = e.target.closest('[data-removedelivery]');
     if (rmBtn){
       const g = Number(rmBtn.dataset.removedelivery);
@@ -3227,7 +4318,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (confirm('Remove this delivery?')) removeSiloDelivery(g, id);
       return;
     }
-
     const tabBtn = e.target.closest('[data-tab]');
     if (tabBtn){
       const t = tabBtn.dataset.tab;
@@ -3240,20 +4330,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const f = e.target.files && e.target.files[0];
     if (f) handleFile(f);
   });
-
-  document.getElementById('batchNumber').addEventListener('change', (e) => {
-    setBatchNumber(e.target.value);
-  });
+  document.getElementById('batchNumber').addEventListener('change', (e) => { setBatchNumber(e.target.value); });
   document.getElementById('batchNumber').addEventListener('blur', (e) => {
     if (farmData) e.target.value = farmData.batchNumber;
   });
-
-  document.getElementById('syncScrim').addEventListener('click', () => {
-    closeSyncModal();
-  });
+  document.getElementById('syncScrim').addEventListener('click', () => { closeSyncModal(); });
 
   document.addEventListener('change', (e) => {
     const t = e.target;
+
+    if (t.dataset && t.dataset.targetShed !== undefined && t.dataset.targetDay !== undefined){
+      setTargetCurveValue(Number(t.dataset.targetShed), Number(t.dataset.targetDay), t.value);
+      return;
+    }
+    if (t.dataset && t.dataset.pickupShed !== undefined && t.dataset.pickupDate){
+      setPickupTotalWeight(Number(t.dataset.pickupShed), t.dataset.pickupDate, t.value);
+      return;
+    }
+    if (t.id && t.id.startsWith('predTargetWeight_')){
+      const g = Number(t.id.replace('predTargetWeight_', ''));
+      setTargetHarvestWeight(g, t.value);
+      return;
+    }
+    if (t.id === 'predBetaNumber'){ setPredBeta(t.value); return; }
+
+    if (t.dataset && t.dataset.predDaily){
+      const bar = t.closest('.pred-daily-range-bar');
+      if (bar){
+        const sEl = bar.querySelector('[data-pred-daily="start"]');
+        const eEl = bar.querySelector('[data-pred-daily="end"]');
+        if (sEl && eEl) setPredDailyRange(sEl.value, eEl.value);
+      }
+      return;
+    }
 
     if (t.dataset && t.dataset.customrangeCtx && t.dataset.customrangeBound){
       const ctx = t.dataset.customrangeCtx;
@@ -3266,11 +4375,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (range.start > range.end) return;
       if (ctx === 'shed') shedRange = range;
       else siloRange = range;
-      schedulePush();
-      render();
+      schedulePush(); render();
       return;
     }
-
     if (t.dataset && t.dataset.deliveryGroup !== undefined && t.dataset.deliveryId){
       const g = Number(t.dataset.deliveryGroup);
       const id = t.dataset.deliveryId;
@@ -3281,16 +4388,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (field === 'note')     updateSiloDeliveryNote(g, id, t.value);
       return;
     }
-
     if (t instanceof HTMLInputElement && t.dataset && t.dataset.shed !== undefined && t.dataset.field){
       updateShedField(Number(t.dataset.shed), t.dataset.field, t.value);
     }
   });
 
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.id === 'predBetaSlider'){ setPredBeta(t.value); return; }
+    if (t.id === 'farmFeedOverride'){
+      setFarmFeedOverride(t.value);
+      t.classList.toggle('manual', predState.farmFeedOverride != null);
+      updateFarmKpiValues();
+      return;
+    }
+  });
+
   document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'hidden'){
-      flushPendingPush();
-    } else if (document.visibilityState === 'visible'){
+    if (document.visibilityState === 'hidden'){ flushPendingPush(); }
+    else if (document.visibilityState === 'visible'){
       if (syncFarmName && syncConnectedAt){
         if (pushPending){ await runScheduledPush(); }
         pullFromCloud(true).catch(() => {});
