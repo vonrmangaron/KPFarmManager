@@ -362,7 +362,21 @@
   .list-view{max-width:660px;margin:0 auto;}
 
   /* ---------- Kanban ---------- */
-  .kanban-board{ display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:6px; }
+  .kanban-board{ display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none; }
+  .kanban-board::-webkit-scrollbar{ display:none; }
+  .kanban-scroll-wrap{ position:relative; display:flex; align-items:flex-start; gap:0; }
+  .kanban-scroll-wrap .kanban-board{ flex:1; min-width:0; }
+  .kanban-nav-btn{
+    flex-shrink:0; align-self:center; width:36px; height:36px; border-radius:50%; border:1px solid var(--line);
+    background:var(--surface); color:var(--ink); font-size:18px; cursor:pointer; box-shadow:var(--shadow-md);
+    display:flex; align-items:center; justify-content:center; margin-top:60px;
+    position:sticky; z-index:6; transition:opacity .15s ease, transform .1s ease;
+  }
+  .kanban-nav-prev{ left:0; margin-right:10px; }
+  .kanban-nav-next{ right:0; margin-left:10px; }
+  .kanban-nav-btn:hover{ transform:scale(1.06); }
+  .kanban-nav-btn:active{ transform:scale(0.94); }
+  .kanban-nav-btn:disabled{ opacity:0.3; cursor:default; pointer-events:none; }
   .kanban-board.panning{ cursor:grabbing; user-select:none; }
   .kanban-column{ flex:0 0 270px; min-width:270px; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
   .col-head{
@@ -606,6 +620,7 @@
       overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       padding-bottom:4px;
     }
+    .kanban-nav-btn{ display:none; }
     .kanban-column{ flex:0 0 auto; width:calc(100vw - 76px); min-width:0; scroll-snap-align:start; }
     .kanban-column .col-head .dtitle{ font-size:14px; }
     .kanban-column .kcard .kbody{ padding:9px 10px; }
@@ -1144,6 +1159,13 @@
   let tasks = [];
   let orderCounter = Date.now();
   function nextOrder(){ return orderCounter++; }
+  // Open tasks always sort above done ones; within each group, manual drag-order is preserved.
+  function taskSortCompare(a, b){
+    const aDone = a.status==='done' ? 1 : 0;
+    const bDone = b.status==='done' ? 1 : 0;
+    if(aDone !== bDone) return aDone - bDone;
+    return (a.order||0) - (b.order||0);
+  }
   function migrateTaskOrder(){
     let needsOrder = false;
     tasks.forEach(t=>{ if(typeof t.order !== 'number') needsOrder = true; });
@@ -2219,7 +2241,7 @@
   function renderBacklog(){
     const list = $('#backlogList');
     list.innerHTML = '';
-    const open = tasks.filter(t=>t.date===null).sort((a,b)=>(a.order||0)-(b.order||0));
+    const open = tasks.filter(t=>t.date===null).sort(taskSortCompare);
     if(open.length===0){ list.innerHTML = '<div class="empty-note">No tasks waiting. Add one above.</div>'; }
     else open.forEach(t=> list.appendChild(buildTaskCard(t)));
   }
@@ -2452,7 +2474,7 @@
   function buildDayCount(key){
     const wrap = document.createElement('div');
     wrap.className = 'day-count';
-    const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
+    const dayTasks = tasks.filter(t=>t.date===key).sort(taskSortCompare);
     if(dayTasks.length===0) return wrap;
 
     const done = dayTasks.filter(t=>t.status==='done').length;
@@ -2654,7 +2676,7 @@
     }
     const groups = {};
     dated.forEach(t=>{ (groups[t.date] = groups[t.date] || []).push(t); });
-    Object.keys(groups).forEach(key=> groups[key].sort((a,b)=>(a.order||0)-(b.order||0)));
+    Object.keys(groups).forEach(key=> groups[key].sort(taskSortCompare));
     const todayKeyForGroups = dateKey(new Date());
     Object.keys(groups).sort().forEach(key=>{
       const groupEl = document.createElement('div');
@@ -2763,7 +2785,7 @@
       const isPast = key<todayKey;
       const isWeekend = i>=5;
       const col = document.createElement('div');
-      const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
+      const dayTasks = tasks.filter(t=>t.date===key).sort(taskSortCompare);
       const doneCount = dayTasks.filter(t=>t.status==='done').length;
       const openCount = dayTasks.length - doneCount;
       const allDone = dayTasks.length>0 && openCount===0;
@@ -2809,7 +2831,35 @@
       }
       board.appendChild(col);
     }
-    wrap.appendChild(board);
+
+    const scrollWrap = document.createElement('div');
+    scrollWrap.className = 'kanban-scroll-wrap';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'kanban-nav-btn kanban-nav-prev';
+    prevBtn.innerHTML = '‹';
+    prevBtn.setAttribute('aria-label', 'Scroll left');
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'kanban-nav-btn kanban-nav-next';
+    nextBtn.innerHTML = '›';
+    nextBtn.setAttribute('aria-label', 'Scroll right');
+    scrollWrap.appendChild(prevBtn);
+    scrollWrap.appendChild(board);
+    scrollWrap.appendChild(nextBtn);
+    wrap.appendChild(scrollWrap);
+
+    function scrollBoardBy(dir){
+      const firstCol = board.querySelector('.kanban-column');
+      const colWidth = firstCol ? firstCol.getBoundingClientRect().width + 15 : 285;
+      board.scrollBy({left: dir*colWidth*2, behavior:'smooth'});
+    }
+    prevBtn.addEventListener('click', ()=> scrollBoardBy(-1));
+    nextBtn.addEventListener('click', ()=> scrollBoardBy(1));
+    function updateNavButtonState(){
+      prevBtn.disabled = board.scrollLeft <= 4;
+      nextBtn.disabled = board.scrollLeft >= board.scrollWidth - board.clientWidth - 4;
+    }
+    updateNavButtonState();
+    board.addEventListener('scroll', updateNavButtonState);
 
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
@@ -3115,13 +3165,13 @@
     const list = $('#dayModalTaskList');
     list.dataset.date = key;
     list.innerHTML = '';
-    const dayTasks = tasks.filter(t=>t.date===key).sort((a,b)=>(a.order||0)-(b.order||0));
+    const dayTasks = tasks.filter(t=>t.date===key).sort(taskSortCompare);
     if(dayTasks.length===0) list.innerHTML = '<div class="empty-note">Nothing scheduled yet — add one above or drag a task here.</div>';
     else dayTasks.forEach(t=> list.appendChild(buildTaskCard(t)));
 
     const backlogBox = $('#dayModalBacklogList');
     backlogBox.innerHTML = '';
-    const open = tasks.filter(t=>t.date===null).sort((a,b)=>(a.order||0)-(b.order||0));
+    const open = tasks.filter(t=>t.date===null).sort(taskSortCompare);
     if(open.length===0){ backlogBox.innerHTML = '<div class="empty-note">Backlog is empty.</div>'; }
     else{
       open.forEach(t=>{
