@@ -1,0 +1,3297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ProdWise.VM — Smart Production Planner</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#E0A339" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ProdWise.VM" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#FBF7F1; --surface:#FFFFFF; --surface-soft:#F6F1E8; --line:#E8DFD1;
+  --ink:#2B2116; --muted:#8C7B68;
+  --primary:#E0A339; --primary-dark:#A8721F; --primary-soft:#F6E4C1;
+  --secondary:#B08463; --secondary-soft:#F0E4D6;
+  --danger:#C1502E; --danger-soft:#F5DDD2;
+  --success:#4C7A3B; --success-soft:#E4EFDD;
+  --past-row: rgba(140,123,104,0.06);
+  --pickup-row: #FCF6E6;
+  --pickup-final-row: #F8ECD0;
+  --weekend-tint: rgba(249,115,22,0.22);
+  --weekend-border: #EA580C;
+  --shadow-sm:0 1px 2px rgba(43,33,22,0.06);
+  --shadow-md:0 8px 22px rgba(43,33,22,0.09);
+  --shadow-lg:0 16px 40px rgba(43,33,22,0.16);
+}
+body.theme-dark{
+  --bg:#1A2438; --surface:#28324D; --surface-soft:#212A42; --line:#3C4869;
+  --ink:#EAEEF7; --muted:#9AA6BE;
+  --primary:#F0A840; --primary-dark:#FFC876; --primary-soft:#3D3320;
+  --secondary:#6FA8E8; --secondary-soft:#20304E;
+  --danger:#F0685A; --danger-soft:#3A2321;
+  --success:#6FB85C; --success-soft:#24382A;
+  --past-row: rgba(154,166,190,0.06);
+  --pickup-row: rgba(240,168,64,0.14);
+  --pickup-final-row: rgba(240,168,64,0.26);
+  --weekend-tint: rgba(240,168,64,0.24);
+  --weekend-border: #F97316;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.30);
+  --shadow-md:0 8px 22px rgba(0,0,0,0.35);
+  --shadow-lg:0 16px 40px rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{background:var(--bg);color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  transition:background .2s ease,color .2s ease;}
+h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-serif;}
+
+.shell{min-height:100%;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line);
+  box-shadow:var(--shadow-sm);flex-wrap:wrap;}
+.brand{font-weight:700;font-size:20px;letter-spacing:0.1px;color:var(--ink);
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+.brand .icon{font-size:22px;}
+.brand .accent{background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+.theme-btn{border:1px solid var(--line);background:var(--surface-soft);
+  color:var(--ink);width:40px;height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;transition:background .15s ease,transform .12s ease;}
+.theme-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+
+.cluckwise-btn{border:1px solid #7BC9D4;background:#E4F4F6;
+  color:#1F7A8C;height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;padding:0 16px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  transition:background .15s ease,transform .12s ease,color .15s ease;
+  text-decoration:none;white-space:nowrap;}
+.cluckwise-btn:hover{background:#1F7A8C;color:#fff;transform:translateY(-1px);}
+.cluckwise-btn .cw-icon{font-size:16px;line-height:1;}
+body.theme-dark .cluckwise-btn{border-color:#3E7B87;background:#1E2F38;color:#8FD9E3;}
+body.theme-dark .cluckwise-btn:hover{background:#3E7B87;color:#fff;}
+
+.sync-btn{border:1px solid var(--line);background:var(--surface-soft);
+  color:var(--ink);height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;padding:0 14px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  transition:background .15s ease,transform .12s ease;max-width:220px;}
+.sync-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+.sync-btn.connected{border-color:var(--success);background:var(--success-soft);color:var(--success);}
+.sync-btn.syncing{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-dark);}
+.sync-btn.error{border-color:var(--danger);background:var(--danger-soft);color:var(--danger);}
+.sync-btn .sync-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;}
+.sync-btn .sync-ico{font-size:15px;line-height:1;}
+.sync-btn .sync-spin{animation:sync-spin 1s linear infinite;display:inline-block;}
+@keyframes sync-spin{to{transform:rotate(360deg);}}
+
+.sync-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:9999;background:var(--surface);border:1px solid var(--line);
+  border-radius:18px;box-shadow:var(--shadow-lg);
+  width:460px;max-width:calc(100vw - 32px);max-height:88vh;
+  display:none;flex-direction:column;overflow:hidden;}
+.sync-modal.open{display:flex;}
+.sync-modal-head{display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;border-bottom:1px solid var(--line);}
+.sync-modal-head h3{margin:0;font-size:16px;font-weight:800;
+  display:flex;align-items:center;gap:8px;}
+.sync-modal-head button{border:none;background:transparent;font-size:20px;
+  color:var(--muted);cursor:pointer;line-height:1;}
+.sync-modal-head button:hover{color:var(--danger);}
+.sync-modal-body{padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.sync-modal-body label{font-size:12px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.sync-modal-body input[type="text"]{width:100%;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface-soft);color:var(--ink);padding:11px 13px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:15px;}
+.sync-modal-body input[type="text"]:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.sync-hint{font-size:11.5px;color:var(--muted);line-height:1.5;}
+.sync-hint strong{color:var(--danger);font-weight:700;}
+.sync-status-card{background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.sync-status-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;}
+.sync-status-row .lbl{color:var(--muted);font-weight:600;}
+.sync-status-row .val{color:var(--ink);font-weight:700;font-family:'Sora',sans-serif;
+  text-align:right;word-break:break-word;}
+.sync-status-row .val.ok{color:var(--success);}
+.sync-status-row .val.err{color:var(--danger);}
+.sync-actions{display:flex;flex-direction:column;gap:8px;}
+.sync-btn-row{display:flex;gap:8px;}
+.sync-btn-row > *{flex:1;}
+.btn-sync-primary{border:none;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;
+  padding:11px 18px;transition:filter .15s ease;display:inline-flex;
+  align-items:center;justify-content:center;gap:6px;}
+.btn-sync-primary:hover{filter:brightness(1.06);}
+.btn-sync-primary:disabled{opacity:0.5;cursor:default;filter:none;}
+.btn-sync-primary.ghost{background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);}
+.btn-sync-primary.ghost:hover{background:var(--primary-soft);color:var(--primary-dark);}
+.btn-sync-primary.danger{background:linear-gradient(135deg,#C1502E,#8F3B22);}
+body.theme-dark .btn-sync-primary{color:#1A2438;}
+body.theme-dark .btn-sync-primary.ghost{color:var(--ink);}
+.sync-scrim{position:fixed;inset:0;background:rgba(0,0,0,0.3);
+  z-index:9998;display:none;}
+.sync-scrim.open{display:block;}
+
+.farm-found-body{padding:20px 22px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.farm-found-icon{font-size:42px;line-height:1;text-align:center;margin-bottom:2px;}
+.farm-found-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;
+  text-align:center;color:var(--ink);margin-bottom:2px;}
+.farm-found-title strong{color:var(--primary-dark);}
+.farm-found-sub{font-size:12.5px;color:var(--muted);text-align:center;
+  line-height:1.5;margin-bottom:4px;}
+.farm-found-meta{background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
+.ff-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;}
+.ff-row .lbl{color:var(--muted);font-weight:600;}
+.ff-row .val{color:var(--ink);font-weight:700;font-family:'Sora',sans-serif;
+  text-align:right;word-break:break-word;max-width:60%;}
+.ff-choices{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.ff-choice{border:1px solid var(--line);background:var(--surface-soft);
+  border-radius:12px;padding:12px 14px;cursor:pointer;
+  display:flex;align-items:center;gap:12px;text-align:left;
+  font-family:'Inter',sans-serif;transition:background .15s ease,transform .1s ease,border-color .15s ease;}
+.ff-choice:hover{transform:translateY(-1px);}
+.ff-choice .ff-icon{font-size:22px;line-height:1;flex-shrink:0;width:28px;text-align:center;}
+.ff-choice .ff-choice-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--ink);}
+.ff-choice .ff-choice-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.ff-choice.primary{background:linear-gradient(135deg,rgba(76,122,59,0.10),rgba(76,122,59,0.04));
+  border-color:var(--success);}
+.ff-choice.primary:hover{background:var(--success-soft);}
+.ff-choice.primary .ff-choice-title{color:var(--success);}
+.ff-choice.danger{border-color:var(--danger-soft);}
+.ff-choice.danger:hover{background:var(--danger-soft);}
+.ff-choice.danger .ff-choice-title{color:var(--danger);}
+.ff-cancel{border:none;background:transparent;color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  padding:8px;cursor:pointer;text-align:center;width:100%;}
+.ff-cancel:hover{color:var(--danger);}
+
+.batch-input{display:flex;align-items:center;gap:8px;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:999px;padding:5px 8px 5px 14px;}
+.batch-input label{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.batch-input input{border:none;background:transparent;outline:none;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;
+  color:var(--ink);min-width:110px;padding:3px 0;}
+.batch-input input::placeholder{color:var(--muted);font-weight:500;}
+
+.btn-primary{border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:999px;
+  box-shadow:var(--shadow-sm);display:inline-flex;align-items:center;gap:8px;
+  transition:transform .12s ease,filter .12s ease;font-family:'Sora',sans-serif;}
+.btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px);}
+body.theme-dark .btn-primary{color:#1A2438;}
+
+.btn-cloud{border:1.5px dashed var(--secondary);background:var(--secondary-soft);
+  color:var(--secondary);cursor:pointer;font-weight:700;font-size:16px;
+  padding:14px 28px;border-radius:14px;font-family:'Sora',sans-serif;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:background .15s ease,color .15s ease;}
+.btn-cloud:hover{background:var(--secondary);color:#fff;}
+
+.barn-stripe{height:4px;background:linear-gradient(90deg,var(--primary),var(--secondary));}
+
+.tabs-wrap{background:var(--surface);border-bottom:1px solid var(--line);
+  padding:0 24px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tabs{display:flex;gap:4px;padding:10px 0;min-width:max-content;}
+.tab-btn{border:1px solid transparent;background:transparent;color:var(--muted);
+  font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;}
+.tab-btn:hover{background:var(--surface-soft);color:var(--ink);}
+.tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;box-shadow:var(--shadow-sm);}
+body.theme-dark .tab-btn.active{color:#1A2438;}
+
+main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
+@media(max-width:640px){main{padding:16px;}}
+
+.empty-state{display:flex;align-items:center;justify-content:center;min-height:60vh;}
+.empty-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;
+  box-shadow:var(--shadow-md);padding:48px 40px;text-align:center;max-width:560px;width:100%;}
+.empty-card .emoji{font-size:56px;line-height:1;margin-bottom:16px;}
+.empty-card h1{font-size:26px;font-weight:800;margin:0 0 10px;color:var(--ink);}
+.empty-card h1 .accent{background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.empty-card p{color:var(--muted);font-size:15px;margin:0 0 22px;line-height:1.6;}
+.empty-actions{display:flex;flex-direction:column;gap:12px;align-items:center;margin-bottom:20px;}
+.empty-actions .btn-primary{font-size:16px;padding:14px 28px;border-radius:14px;}
+.empty-or{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+.empty-card .hint{font-size:12.5px;color:var(--muted);}
+.empty-card .hint.small{margin-top:8px;font-size:11.5px;}
+
+.group-view-head{display:flex;align-items:center;justify-content:space-between;
+  gap:14px;flex-wrap:wrap;padding:18px 22px;border-radius:18px;color:#fff;margin-bottom:16px;}
+.group-view-head h1{margin:0;font-size:22px;font-weight:800;display:flex;align-items:baseline;gap:10px;}
+.group-view-head h1 span{font-size:13px;font-weight:500;opacity:0.85;}
+.group-view-head .pills{display:flex;flex-wrap:wrap;gap:6px;}
+.group-view-head .pills span{background:rgba(255,255,255,0.16);padding:5px 12px;
+  border-radius:999px;font-size:12px;font-weight:600;}
+.group-view-head .pills span strong{font-weight:800;}
+.group-view-head .pills span.feed-pill{background:rgba(255,255,255,0.28);
+  border:1px solid rgba(255,255,255,0.35);}
+
+.shed-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  padding:10px;box-shadow:var(--shadow-sm);}
+.stab{border:1px solid var(--line);background:var(--surface-soft);color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;
+  padding:11px 22px;border-radius:999px;cursor:pointer;
+  transition:background .15s ease,color .15s ease,transform .12s ease;
+  display:inline-flex;align-items:center;gap:8px;line-height:1;}
+.stab:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+.stab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
+body.theme-dark .stab.active{color:#1A2438;}
+.stab .stab-icon{font-size:16px;line-height:1;}
+.stab.both-btn{font-size:16px;font-weight:800;padding:13px 30px;
+  background:linear-gradient(135deg,rgba(224,163,57,0.12),rgba(176,132,99,0.12));
+  border:1.5px dashed var(--secondary);color:var(--secondary);}
+.stab.both-btn:hover{background:linear-gradient(135deg,var(--primary-soft),var(--secondary-soft));
+  color:var(--primary-dark);}
+.stab.both-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border:1.5px solid transparent;}
+body.theme-dark .stab.both-btn.active{color:#1A2438;}
+.stab.planner-btn{font-size:16px;font-weight:800;padding:13px 30px;
+  background:linear-gradient(135deg,rgba(76,122,59,0.12),rgba(76,122,59,0.06));
+  border:1.5px dashed var(--success);color:var(--success);margin-left:auto;}
+.stab.planner-btn:hover{background:var(--success-soft);color:var(--success);}
+.stab.planner-btn.active{background:linear-gradient(135deg,var(--success),#36602A);
+  color:#fff;border:1.5px solid transparent;}
+body.theme-dark .stab.planner-btn.active{color:#1A2438;}
+@media(max-width:640px){
+  .stab{font-size:13.5px;padding:10px 16px;}
+  .stab.both-btn,.stab.planner-btn{font-size:14.5px;padding:12px 22px;margin-left:0;}
+}
+
+.range-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;
+  padding:8px 12px;margin-bottom:12px;}
+.range-bar .forecast-label{font-family:'Sora',sans-serif;font-weight:700;
+  font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;
+  margin-right:4px;}
+.fpill{border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;padding:5px 12px;
+  border-radius:999px;cursor:pointer;
+  transition:background .15s ease,color .15s ease;}
+.fpill:hover{background:var(--primary-soft);color:var(--primary-dark);}
+.fpill.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;}
+body.theme-dark .fpill.active{color:#1A2438;}
+.custom-range{display:flex;align-items:center;gap:5px;margin-left:auto;}
+.custom-range input{width:52px;text-align:center;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;
+  font-weight:700;font-size:12px;padding:5px 6px;border-radius:7px;}
+.custom-range input:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.custom-range span{font-size:11.5px;color:var(--muted);font-weight:600;}
+@media(max-width:640px){.custom-range{margin-left:0;width:100%;}}
+
+.planner-range-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:10px 16px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.planner-range-bar .forecast-label{font-family:'Sora',sans-serif;font-weight:700;
+  font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;
+  margin-right:6px;}
+
+.sheds-grid{display:grid;grid-template-columns:1fr;gap:18px;}
+.sheds-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:1000px){.sheds-grid.compare{grid-template-columns:1fr;}}
+
+.shed-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  overflow:hidden;box-shadow:var(--shadow-sm);min-width:0;}
+.shed-card-head{padding:16px 20px;border-bottom:1px solid var(--line);background:var(--surface-soft);}
+.shed-card-head h3{margin:0 0 8px;font-size:17px;font-weight:800;
+  display:flex;align-items:center;gap:10px;color:var(--ink);}
+.shed-card-head .pills{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+  letter-spacing:0.04em;padding:3px 10px;border-radius:999px;text-transform:uppercase;}
+.tag.amber{background:var(--primary-soft);color:var(--primary-dark);}
+.tag.brown{background:var(--secondary-soft);color:var(--secondary);}
+.tag.red{background:var(--danger-soft);color:var(--danger);}
+.tag.green{background:var(--success-soft);color:var(--success);}
+.tag.muted{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
+
+.shed-body{padding:16px 20px 20px;}
+.sheds-grid.compare .shed-body{padding:14px 16px 18px;}
+
+.shed-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+@media(max-width:520px){.shed-grid{grid-template-columns:1fr;}}
+.sheds-grid.compare .shed-grid{grid-template-columns:1fr;gap:10px;}
+
+.panel{background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;}
+.panel h4{margin:0 0 10px;font-size:11.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:0.08em;color:var(--muted);}
+
+.field-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.field-row:last-child{margin-bottom:0;}
+.field-row label{font-size:12.5px;color:var(--ink);font-weight:500;flex:1;min-width:0;}
+.field-row input{border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--ink);padding:6px 9px;font-size:13px;font-weight:600;
+  font-family:'Inter',sans-serif;width:130px;text-align:right;}
+.field-row input:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.field-row input[type="date"]{width:150px;text-align:left;}
+
+.snapshot-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+.snapshot-row .lbl{color:var(--muted);}
+.snapshot-row .val{font-weight:700;color:var(--ink);}
+.snapshot-row .val.big{font-family:'Sora',sans-serif;font-size:15px;}
+
+.pickups-block{margin-top:16px;}
+.pickups-block h4{margin:0 0 8px;font-size:11.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+.pickups-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.pickups-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
+  font-weight:700;font-size:11.5px;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);}
+.pickups-table td{padding:8px 12px;border-bottom:1px solid var(--line);color:var(--ink);}
+.pickups-table tr:last-child td{border-bottom:none;}
+.pickups-table tr:nth-child(even) td{background:var(--surface-soft);}
+.pickups-table tr.is-final td{background:var(--primary-soft);}
+.pickups-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+.pickups-table .var-pos{color:var(--primary-dark);font-weight:700;}
+.pickups-table .var-neg{color:var(--danger);font-weight:700;}
+.pickups-empty{padding:10px 12px;color:var(--muted);font-size:13px;font-style:italic;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;}
+
+.forecast-section{margin-top:16px;}
+.forecast-block{margin-bottom:0;}
+.forecast-block h4{margin:0 0 8px;font-size:11.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.forecast-block h4 .window-label{font-family:'Inter',sans-serif;font-weight:500;
+  text-transform:none;letter-spacing:0;color:var(--muted);font-size:12px;}
+.forecast-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
+.forecast-table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;
+  background:var(--surface);}
+.forecast-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
+  font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);}
+.forecast-table td{padding:9px 12px;border-bottom:1px solid var(--line);
+  color:var(--ink);white-space:nowrap;}
+.forecast-table tr:last-child td{border-bottom:none;}
+.forecast-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+.forecast-table tr.is-weekend td{
+  background:var(--weekend-tint);
+  border-bottom-color:var(--weekend-border);
+}
+.forecast-table tr.is-weekend td:first-child{
+  border-left:6px solid var(--weekend-border);
+  color:var(--weekend-border);
+  font-weight:800;
+}
+body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
+.forecast-table tr.is-past.is-weekend td{background:var(--weekend-tint);color:var(--muted);}
+.forecast-table tr.is-past.is-weekend td:first-child{
+  border-left:6px solid var(--weekend-border);color:var(--weekend-border);
+}
+.forecast-table tr.is-today td{font-weight:700;}
+.forecast-table tr.is-today td:first-child{border-left:4px solid var(--secondary);}
+.forecast-table tr.is-today.is-weekend td:first-child{border-left:6px solid var(--weekend-border);}
+.forecast-table tr.pickup-day td{background:var(--pickup-row);}
+.forecast-table tr.pickup-day.is-final td{background:var(--pickup-final-row);}
+.forecast-table tr.pickup-day td:first-child{border-left:4px solid var(--primary);}
+.forecast-table tr.pickup-day.is-weekend td:first-child{border-left:6px solid var(--weekend-border);}
+
+.weekend-pill{display:inline-block;background:var(--weekend-border);color:#fff;
+  font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;
+  letter-spacing:0.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle;
+  font-family:'Sora',sans-serif;box-shadow:0 1px 2px rgba(0,0,0,0.12);}
+
+.forecast-table tr.total-row td{background:var(--surface-soft);font-weight:800;
+  font-family:'Sora',sans-serif;border-top:2px solid var(--line);}
+.forecast-table .pickup-pill{display:inline-block;background:var(--primary-soft);
+  color:var(--primary-dark);font-weight:700;font-size:11px;padding:2px 8px;
+  border-radius:999px;margin-right:6px;}
+.forecast-table .pickup-pill.final{background:var(--primary-dark);color:#1A2438;}
+.forecast-table .live-after{font-weight:700;color:var(--primary-dark);}
+.forecast-table .live-after.zero{color:var(--danger);}
+.forecast-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;font-size:13px;}
+.forecast-empty.completed{background:var(--secondary-soft);color:var(--secondary);
+  font-style:normal;font-weight:600;border-color:var(--secondary);}
+
+.sheds-grid.compare .forecast-table{min-width:540px;font-size:12.5px;}
+.sheds-grid.compare .forecast-table th,
+.sheds-grid.compare .forecast-table td{padding:7px 9px;}
+
+.planner-wrap{display:flex;flex-direction:column;gap:16px;}
+.planner-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.summary-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:14px 18px;box-shadow:var(--shadow-sm);}
+.summary-card .sc-label{font-size:11px;font-weight:700;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.summary-card .sc-value{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:22px;line-height:1.15;color:var(--ink);}
+.summary-card .sc-value.green{color:var(--success);}
+.summary-card .sc-value.amber{color:var(--primary-dark);}
+.summary-card .sc-value.red{color:var(--danger);}
+.summary-card .sc-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+.planner-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  padding:18px 20px;box-shadow:var(--shadow-sm);}
+.planner-card h3{margin:0 0 14px;font-size:15px;font-weight:800;
+  display:flex;align-items:center;gap:8px;color:var(--ink);}
+.planner-card h3 .count{font-family:'Inter',sans-serif;font-weight:600;
+  font-size:12.5px;color:var(--muted);}
+
+.reading-info{background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;}
+.reading-info .ri-item{display:flex;align-items:center;gap:6px;}
+.reading-info .ri-label{font-weight:700;text-transform:uppercase;
+  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
+.reading-info .ri-value{font-family:'Sora',sans-serif;font-weight:700;color:var(--ink);}
+.reading-info .ri-value.amber{color:var(--primary-dark);}
+.reading-info .ri-value.red{color:var(--danger);}
+
+.silo-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:800px){.silo-inputs{grid-template-columns:1fr;}}
+.silo-input{background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;}
+.silo-input.off{opacity:0.55;}
+.silo-input .silo-title{font-size:12px;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.06em;color:var(--muted);margin-bottom:10px;
+  display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.silo-input .silo-title .cap{font-size:10.5px;color:var(--muted);font-weight:600;
+  text-transform:none;letter-spacing:0;}
+.silo-input .silo-title .off-badge{background:var(--muted);color:var(--surface);
+  font-size:10px;padding:1px 7px;border-radius:999px;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.06em;}
+
+.ring-picker{display:grid;grid-template-columns:auto repeat(6,1fr);gap:5px;}
+.ring-off{
+  border:1.5px dashed var(--line);background:var(--surface);color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:800;font-size:10px;
+  border-radius:8px;cursor:pointer;padding:0 8px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;
+  text-transform:uppercase;letter-spacing:0.04em;
+}
+.ring-off:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
+.ring-off.active{background:var(--muted);color:var(--surface);border-color:var(--muted);
+  border-style:solid;}
+.ring-slot{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.ring-btn{
+  width:100%;aspect-ratio:1;border-radius:50%;
+  border:1.5px solid var(--line);background:var(--surface);color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+  cursor:pointer;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;
+  line-height:1;
+}
+.ring-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.ring-btn.active{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);
+}
+body.theme-dark .ring-btn.active{color:#1A2438;}
+.ring-slot .ring-t{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.ring-slot.active .ring-t{color:var(--primary-dark);font-weight:800;}
+
+.silo-total{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.silo-total .lbl{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.silo-total .val{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:16px;color:var(--primary-dark);}
+.silo-total .kg{font-size:11px;color:var(--muted);}
+
+.silo-grand-total{margin-top:14px;padding-top:14px;border-top:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.silo-grand-total .lbl{font-size:13px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.silo-grand-total .val{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:22px;color:var(--primary-dark);}
+
+.reading-history{margin-top:14px;}
+.reading-history summary{cursor:pointer;font-size:12.5px;font-weight:700;
+  color:var(--muted);padding:6px 0;user-select:none;}
+.reading-history summary:hover{color:var(--primary-dark);}
+.reading-history table{width:100%;border-collapse:collapse;font-size:12.5px;
+  margin-top:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;overflow:hidden;}
+.reading-history th{background:var(--surface-soft);font-weight:700;
+  text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;
+  color:var(--muted);text-align:left;padding:6px 10px;
+  border-bottom:1px solid var(--line);}
+.reading-history td{padding:6px 10px;border-bottom:1px solid var(--line);}
+.reading-history tr:last-child td{border-bottom:none;}
+.reading-history tr.today td{background:var(--primary-soft);font-weight:700;}
+.reading-history .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+.deliveries-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.delivery-row{display:grid;grid-template-columns:130px 90px 130px 1fr 36px;
+  gap:8px;align-items:center;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
+@media(max-width:800px){
+  .delivery-row{grid-template-columns:1fr 1fr;grid-template-areas:
+    "date amount" "type type" "note delete";}
+  .delivery-row .d-date{grid-area:date;}
+  .delivery-row .d-amount{grid-area:amount;}
+  .delivery-row .d-type{grid-area:type;}
+  .delivery-row .d-note{grid-area:note;}
+  .delivery-row .d-del{grid-area:delete;justify-self:end;}
+}
+.delivery-row input,
+.delivery-row select{border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--ink);padding:6px 9px;font-size:13px;font-weight:600;
+  font-family:'Inter',sans-serif;width:100%;min-width:0;}
+.delivery-row input:focus,
+.delivery-row select:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.delivery-row select{font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;}
+.delivery-row .d-del{border:1px solid var(--danger-soft);background:var(--danger-soft);
+  color:var(--danger);border-radius:8px;cursor:pointer;font-size:14px;
+  width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0;line-height:1;transition:background .15s ease,color .15s ease;}
+.delivery-row .d-del:hover{background:var(--danger);color:#fff;}
+
+.add-delivery{display:grid;grid-template-columns:130px 90px 130px 1fr auto;
+  gap:8px;align-items:end;margin-top:6px;}
+@media(max-width:800px){
+  .add-delivery{grid-template-columns:1fr 1fr;grid-template-areas:
+    "date amount" "type type" "note note" "btn btn";}
+  .add-delivery .fld-date{grid-area:date;}
+  .add-delivery .fld-amount{grid-area:amount;}
+  .add-delivery .fld-type{grid-area:type;}
+  .add-delivery .fld-note{grid-area:note;}
+  .add-delivery .fld-btn{grid-area:btn;}
+}
+.add-delivery .fld{display:flex;flex-direction:column;gap:4px;}
+.add-delivery label{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;}
+.add-delivery input,
+.add-delivery select{border:1px solid var(--line);border-radius:9px;background:var(--surface);
+  color:var(--ink);padding:9px 11px;font-family:'Inter',sans-serif;font-size:13.5px;
+  font-weight:600;width:100%;min-width:0;}
+.add-delivery select{font-family:'Sora',sans-serif;font-weight:700;cursor:pointer;}
+.add-delivery input:focus,
+.add-delivery select:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
+.add-delivery button{border:none;border-radius:9px;
+  background:linear-gradient(135deg,var(--success),#36602A);
+  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;
+  padding:10px 20px;cursor:pointer;height:38px;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.add-delivery button:hover{filter:brightness(1.08);}
+body.theme-dark .add-delivery button{color:#1A2438;}
+
+.deliveries-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
+  background:var(--surface-soft);border:1px dashed var(--line);border-radius:10px;font-size:13px;}
+
+.feed-summary{margin-top:20px;padding-top:18px;border-top:2px solid var(--line);}
+.feed-summary-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;
+  color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.feed-summary-title .sub{font-family:'Inter',sans-serif;font-weight:500;
+  font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;}
+.feed-summary-table{width:100%;border-collapse:collapse;font-size:13px;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.feed-summary-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
+  font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 12px;
+  border-bottom:1px solid var(--line);}
+.feed-summary-table td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink);}
+.feed-summary-table tr:last-child td{border-bottom:none;}
+.feed-summary-table tr.has-blocks td{background:rgba(76,122,59,0.05);}
+body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,0.07);}
+.feed-summary-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+.feed-summary-table .block-count{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;
+  color:var(--success);}
+.feed-summary-table .block-count.zero{color:var(--muted);font-weight:600;font-size:13px;}
+.feed-summary-table .rem{color:var(--muted);font-size:12px;}
+.feed-summary-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
+  background:var(--surface-soft);border:1px dashed var(--line);
+  border-radius:10px;font-size:13px;}
+
+.delivery-pill{display:inline-block;background:var(--success-soft);
+  color:var(--success);font-weight:700;font-size:11px;padding:2px 8px;
+  border-radius:999px;margin-right:6px;}
+
+.feed-tag{display:inline-block;font-size:10.5px;font-weight:700;
+  padding:1px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;
+  margin-left:4px;}
+.feed-tag.starter{background:var(--success-soft);color:var(--success);}
+.feed-tag.grower{background:var(--primary-soft);color:var(--primary-dark);}
+.feed-tag.finisher{background:var(--secondary-soft);color:var(--secondary);}
+.feed-tag.withdrawal{background:var(--danger-soft);color:var(--danger);}
+.feed-tag.unspecified{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
+
+.balance-pos{color:var(--primary-dark);font-weight:700;}
+.balance-neg{color:var(--danger);font-weight:700;}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,10px);
+  background:#2B2116;color:#fff;padding:12px 20px;border-radius:999px;
+  font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;
+  z-index:10000;max-width:calc(100vw - 32px);text-align:center;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.error{background:var(--danger);}
+
+footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
+  border-top:1px solid var(--line);background:var(--surface);margin-top:30px;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <span class="icon">🐔</span>
+      ProdWise<span class="accent">.VM</span>
+    </div>
+    <div class="topbar-right">
+      <button class="cluckwise-btn" id="cluckwiseBtn" type="button" title="Open CluckWise">
+        <span class="cw-icon">🐤</span> CluckWise
+      </button>
+      <button class="sync-btn" id="syncBtn" type="button" title="Cloud sync">
+        <span class="sync-ico" id="syncIcon">☁️</span>
+        <span class="sync-name" id="syncLabel">Connect</span>
+      </button>
+      <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark mode">🌙</button>
+      <div class="batch-input">
+        <label for="batchNumber">Batch</label>
+        <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
+      </div>
+      <button class="btn-primary" id="importBtn" type="button">
+        📥 <span id="importBtnLabel">Import Excel</span>
+      </button>
+    </div>
+  </header>
+  <div class="barn-stripe"></div>
+
+  <div class="tabs-wrap" id="tabsWrap" style="display:none;">
+    <nav class="tabs" id="tabs"></nav>
+  </div>
+
+  <main id="app"></main>
+
+  <footer>Made by Von Mangaron • Personal use only • not for commercial use</footer>
+</div>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls" hidden />
+<div class="toast" id="toast"></div>
+
+<div class="sync-scrim" id="syncScrim"></div>
+<div class="sync-modal" id="syncModal">
+  <div class="sync-modal-head">
+    <h3><span>☁️</span> Cloud Sync</h3>
+    <button type="button" onclick="closeSyncModal()" aria-label="Close">✕</button>
+  </div>
+  <div class="sync-modal-body" id="syncModalBody"></div>
+</div>
+
+<div class="sync-modal" id="farmFoundModal">
+  <div class="sync-modal-head">
+    <h3><span>☁️</span> Cloud Sync</h3>
+    <button type="button" id="farmFoundClose" aria-label="Close">✕</button>
+  </div>
+  <div class="farm-found-body" id="farmFoundBody"></div>
+</div>
+
+<script>
+/* =========================================================
+   ProdWise.VM — Main App
+   - Excel import + cloud sync + silo planner
+   - PWA at root, CluckWise launcher
+========================================================= */
+
+const STORAGE_KEY = 'prodwise_vm_phase2_v1';
+const VIEW_KEY    = 'prodwise_vm_shedview_v1';
+const THEME_KEY   = 'prodwise_vm_theme_v1';
+const SILO_KEY_V2 = 'prodwise_vm_silo_v2';
+const SILO_KEY    = 'prodwise_vm_silo_v3';
+const SESSION_KEY = 'prodwise_session_init_v1';
+const SYNC_FARMNAME_KEY = 'prodwise_sync_farmname_v1';
+const SHED_COUNT  = 8;
+const FEED_BLOCK_T = 60;
+
+/* CluckWise launcher URL — adjust if the path changes */
+const CLUCKWISE_URL = './CluckWise.html';
+
+const SYNC_WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
+const SYNC_REPO = 'vonrmangaron/farmdata';
+const SYNC_SUFFIX = '-feed';
+const SYNC_APP_TAG = 'prodwise';
+const MAX_EXCEL_WARN_BYTES = 2 * 1024 * 1024;
+
+const DEFAULT_VIEWS = { 1:'planner', 2:'planner', 3:'planner', 4:'planner' };
+
+const CONE_KG   = 10000;
+const RING_KG   = 8000;
+const MAX_RINGS = 5;
+
+function ringsToKg(r){
+  if (r === null || r === undefined || r === '' || isNaN(r)) return 0;
+  const n = Number(r);
+  if (n < 0) return 0;
+  if (n === 0) return CONE_KG;
+  return CONE_KG + RING_KG * Math.min(MAX_RINGS, Math.floor(n));
+}
+
+const FEED_TYPES = [
+  { id:'starter', label:'Starter' },
+  { id:'grower', label:'Grower' },
+  { id:'finisher', label:'Finisher' },
+  { id:'withdrawal', label:'Withdrawal' }
+];
+function feedTypeLabel(id){
+  const f = FEED_TYPES.find(x => x.id === id);
+  return f ? f.label : 'Unspecified';
+}
+function feedTypeTagHtml(id){
+  const cls = id && FEED_TYPES.some(f => f.id === id) ? id : 'unspecified';
+  return `<span class="feed-tag ${cls}">${feedTypeLabel(id)}</span>`;
+}
+
+const ROSS_308_FEED_INTAKE = {
+  1:19,2:15,3:19,4:24,5:28,6:33,7:37,8:42,9:47,10:51,
+  11:56,12:60,13:65,14:69,15:74,16:78,17:83,18:88,19:92,20:97,
+  21:101,22:106,23:110,24:115,25:119,26:124,27:129,28:133,29:138,30:142,
+  31:147,32:151,33:156,34:160,35:165,36:170,37:174,38:179,39:183,40:188,
+  41:192,42:197,43:201,44:206,45:211,46:215,47:220,48:223,49:225,50:227,
+  51:229,52:230,53:231,54:233,55:233,56:234,57:234,58:234,59:234,60:234
+};
+
+const KEYS = {
+  shedId:    ['Shed','shed','ShedId','Shed ID','ShedID','Shed#','Shed No','ShedNo'],
+  batch:     ['BatchNumber','Batch Number','Batch','Batch#'],
+  placement: ['PlacementDate','Placement Date','Placement','Placement_Dt'],
+  cleanout:  ['CleanoutDate','Cleanout Date','Cleanout','Cleanout_Dt'],
+  population:['InitialPopulation','Initial Population','Population','InitPop','InitialPop'],
+  mortality: ['Mortality','MortalityCount','Mortality Count','TotalMortality'],
+  customFeed:['CustomFeedKg','Custom Feed Kg','CustomFeed','Custom Feed'],
+};
+
+let farmData = null;
+let activeTab = 'g1';
+let shedRange = { start: 0, end: 0 };
+let siloRange = { start: 0, end: 14 };
+let shedViewByGroup = { ...DEFAULT_VIEWS };
+let siloData = {
+  1: { readings: [], deliveries: [] },
+  2: { readings: [], deliveries: [] },
+  3: { readings: [], deliveries: [] },
+  4: { readings: [], deliveries: [] }
+};
+let renderTimer = null;
+
+let syncFarmName = null;
+let syncSha = null;
+let syncExcelSha = null;
+let syncExcelMeta = null;
+let syncConnectedAt = null;
+let syncLastSyncAt = null;
+let syncState = 'idle';
+let pushDebounceTimer = null;
+let pushMaxWaitTimer = null;
+let pushPending = false;
+let pushInFlight = false;
+
+/* ---------- Date helpers ---------- */
+function dateOnly(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function iso(d){
+  if (!d) return '';
+  const x = dateOnly(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+}
+function addDays(d, n){ const x = new Date(dateOnly(d)); x.setDate(x.getDate()+n); return dateOnly(x); }
+function daysBetween(a, b){ return Math.round((dateOnly(b) - dateOnly(a)) / 86400000); }
+function isWeekend(d){ const day = dateOnly(d).getDay(); return day === 0 || day === 6; }
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtShort(d){
+  if (!d) return '—';
+  const x = dateOnly(d);
+  return `${WD[x.getDay()]} ${String(x.getDate()).padStart(2,'0')} ${MO[x.getMonth()]} ${x.getFullYear()}`;
+}
+function fmtShortNoYear(d){
+  if (!d) return '—';
+  const x = dateOnly(d);
+  return `${WD[x.getDay()]} ${String(x.getDate()).padStart(2,'0')} ${MO[x.getMonth()]}`;
+}
+function todayIso(){ return iso(new Date()); }
+function fmtRelativeTime(ts){
+  if (!ts) return '—';
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function parseExcelDate(v){
+  if (v == null || v === '') return null;
+  if (v instanceof Date && !isNaN(v.getTime())) return dateOnly(v);
+  if (typeof v === 'number' && isFinite(v)){
+    if (v <= 0) return null;
+    const ms = Math.round((v - 25569) * 86400 * 1000);
+    const utc = new Date(ms);
+    return dateOnly(new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate()));
+  }
+  let s = String(v).trim();
+  if (!s) return null;
+  s = s.split(' ')[0].trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m){
+    const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+    return isNaN(d.getTime()) ? null : dateOnly(d);
+  }
+  s = s.replace(/[-.]/g, '/');
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m){
+    const d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+    return isNaN(d.getTime()) ? null : dateOnly(d);
+  }
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if (m){
+    const yy2 = Number(m[3]);
+    const yy = yy2 <= 79 ? 2000 + yy2 : 1900 + yy2;
+    const d = new Date(yy, Number(m[2])-1, Number(m[1]));
+    return isNaN(d.getTime()) ? null : dateOnly(d);
+  }
+  return null;
+}
+function isInvalidCleanout(v){
+  if (v == null || v === '') return true;
+  if (typeof v === 'number' && v === 0) return true;
+  const s = String(v).trim();
+  if (!s || s === '0/1/1900' || s === '1/1/1900' || s === '1900-01-01') return true;
+  return parseExcelDate(v) === null;
+}
+function parseBool(v){
+  const s = String(v ?? '').trim().toLowerCase();
+  return s === 'true' || s === 'yes' || s === 'y' || s === '1';
+}
+function getVal(row, keys){
+  for (const k of keys){
+    if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== ''){
+      return row[k];
+    }
+  }
+  return '';
+}
+
+/* ---------- Excel parse ---------- */
+function parseShedsFromWorkbook(workbook){
+  const sheetName =
+    workbook.SheetNames.find(n => String(n).toLowerCase() === 'sheds')
+    || workbook.SheetNames[0];
+  if (!sheetName) throw new Error('No worksheet found in the file.');
+  const ws = workbook.Sheets[sheetName];
+  if (!ws) throw new Error('The worksheet appears to be empty.');
+
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false, dateNF: 'dd/mm/yyyy' });
+  if (!rows.length) throw new Error('No data rows found in the file.');
+
+  const sheds = Array.from({length: SHED_COUNT}, (_, i) => ({
+    id: i + 1, placementDate: null, initialPopulation: 0, cleanoutDate: null,
+    mortality: 0, customFeedKg: null, pickups: []
+  }));
+
+  let batchNumber = '', matched = 0, skipped = 0;
+
+  for (const row of rows){
+    const shedId = Number(getVal(row, KEYS.shedId));
+    if (!Number.isFinite(shedId) || shedId < 1 || shedId > SHED_COUNT){ skipped++; continue; }
+    const idx = shedId - 1;
+
+    const bn = String(getVal(row, KEYS.batch) || '').trim();
+    if (!batchNumber && bn) batchNumber = bn;
+
+    const placement  = parseExcelDate(getVal(row, KEYS.placement));
+    const population = Number(getVal(row, KEYS.population));
+    const mortality  = Number(getVal(row, KEYS.mortality));
+    const customFeed = Number(getVal(row, KEYS.customFeed));
+    const cleanoutRaw = getVal(row, KEYS.cleanout);
+
+    if (placement) sheds[idx].placementDate = placement;
+    if (Number.isFinite(population) && population > 0) sheds[idx].initialPopulation = Math.floor(population);
+    if (Number.isFinite(mortality)) sheds[idx].mortality = Math.floor(mortality);
+    if (Number.isFinite(customFeed) && customFeed > 0) sheds[idx].customFeedKg = customFeed;
+
+    let cleanout = parseExcelDate(cleanoutRaw);
+    if (isInvalidCleanout(cleanoutRaw) && placement) cleanout = addDays(placement, 52);
+    sheds[idx].cleanoutDate = cleanout;
+
+    const pickups = [];
+    for (let p = 1; p <= 5; p++){
+      const dRaw = getVal(row, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
+      const bRaw = getVal(row, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
+      const fRaw = getVal(row, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
+      const vRaw = getVal(row, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
+      const d = parseExcelDate(dRaw);
+      const b = Number(bRaw);
+      if (d && Number.isFinite(b) && b > 0){
+        pickups.push({
+          date: d, birds: Math.floor(b),
+          isFinal: parseBool(fRaw),
+          variance: Number.isFinite(Number(vRaw)) ? Number(vRaw) : null
+        });
+      }
+    }
+
+    pickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+    let finalSeen = false;
+    for (const p of pickups){
+      if (p.isFinal && !finalSeen) finalSeen = true;
+      else if (p.isFinal && finalSeen) p.isFinal = false;
+    }
+    if (pickups.length === 5 && !pickups.some(p => p.isFinal)) pickups[4].isFinal = true;
+
+    const fp = pickups.find(p => p.isFinal);
+    if (fp){
+      sheds[idx].cleanoutDate = dateOnly(fp.date);
+      const totalPicked = pickups.reduce((s,p) => s + p.birds, 0);
+      sheds[idx].mortality = Math.max(0, sheds[idx].initialPopulation - totalPicked);
+    }
+
+    sheds[idx].pickups = pickups;
+    matched++;
+  }
+
+  if (matched === 0){
+    throw new Error("No shed rows found. Make sure the 'Shed' column contains numbers 1 through 8.");
+  }
+  return { sheds, batchNumber, matched, skipped, sheetName };
+}
+
+/* ---------- Local persistence ---------- */
+function saveState(){
+  if (!farmData){ try { localStorage.removeItem(STORAGE_KEY); } catch(e){} return; }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(farmData)); } catch(e){}
+}
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.sheds)) return null;
+    parsed.sheds.forEach(s => {
+      s.placementDate = s.placementDate ? dateOnly(s.placementDate) : null;
+      s.cleanoutDate  = s.cleanoutDate  ? dateOnly(s.cleanoutDate)  : null;
+      s.pickups = (s.pickups || []).map(p => ({
+        date: dateOnly(p.date),
+        birds: Number(p.birds) || 0,
+        isFinal: !!p.isFinal,
+        variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
+      }));
+    });
+    return parsed;
+  } catch(e){ return null; }
+}
+function saveShedViews(){
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify(shedViewByGroup)); } catch(e){}
+}
+function loadShedViews(){
+  try {
+    const raw = localStorage.getItem(VIEW_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw);
+    if (!v || typeof v !== 'object') return null;
+    const out = { ...DEFAULT_VIEWS };
+    [1,2,3,4].forEach(g => {
+      if (['shed1','shed2','both','planner'].includes(v[g])) out[g] = v[g];
+    });
+    return out;
+  } catch(e){ return null; }
+}
+function isFreshSession(){
+  try { return !sessionStorage.getItem(SESSION_KEY); } catch(e){ return false; }
+}
+function markSessionActive(){
+  try { sessionStorage.setItem(SESSION_KEY, '1'); } catch(e){}
+}
+function initShedViews(){
+  if (isFreshSession()){
+    markSessionActive();
+    shedViewByGroup = { ...DEFAULT_VIEWS };
+    saveShedViews();
+    return;
+  }
+  const saved = loadShedViews();
+  shedViewByGroup = saved || { ...DEFAULT_VIEWS };
+}
+function saveSiloData(){
+  try {
+    const serial = {};
+    [1,2,3,4].forEach(g => {
+      const s = siloData[g] || { readings: [], deliveries: [] };
+      serial[g] = {
+        readings: (s.readings || []).map(r => ({
+          date: r.date,
+          silo1Rings: r.silo1Rings,
+          silo2Rings: r.silo2Rings,
+          silo3Rings: r.silo3Rings
+        })),
+        deliveries: (s.deliveries || []).map(d => ({
+          id: d.id,
+          date: d.date ? iso(d.date) : null,
+          amountKg: Number(d.amountKg) || 0,
+          feedType: d.feedType || '',
+          note: d.note || ''
+        }))
+      };
+    });
+    localStorage.setItem(SILO_KEY, JSON.stringify(serial));
+  } catch(e){}
+}
+function loadSiloData(){
+  try {
+    const raw = localStorage.getItem(SILO_KEY);
+    if (raw){
+      const v = JSON.parse(raw);
+      if (v && typeof v === 'object'){
+        const out = {};
+        [1,2,3,4].forEach(g => {
+          const s = v[g] || {};
+          out[g] = {
+            readings: Array.isArray(s.readings) ? s.readings.map(r => ({
+              date: String(r.date || ''),
+              silo1Rings: normalizeRing(r.silo1Rings),
+              silo2Rings: normalizeRing(r.silo2Rings),
+              silo3Rings: normalizeRing(r.silo3Rings)
+            })).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b) => a.date.localeCompare(b.date)) : [],
+            deliveries: Array.isArray(s.deliveries) ? s.deliveries.map(d => ({
+              id: d.id || String(Date.now()) + Math.random().toString(16).slice(2),
+              date: d.date ? dateOnly(d.date) : null,
+              amountKg: Number(d.amountKg) || 0,
+              feedType: FEED_TYPES.some(f => f.id === d.feedType) ? d.feedType : '',
+              note: d.note || ''
+            })).filter(d => d.date && d.amountKg > 0) : []
+          };
+        });
+        return out;
+      }
+    }
+    const rawV2 = localStorage.getItem(SILO_KEY_V2);
+    if (rawV2){
+      const v2 = JSON.parse(rawV2);
+      if (v2 && typeof v2 === 'object'){
+        const out = {};
+        const todayIso = iso(new Date());
+        [1,2,3,4].forEach(g => {
+          const s = v2[g] || {};
+          const toRings = (kg) => {
+            const n = Number(kg);
+            if (!Number.isFinite(n) || n < CONE_KG) return null;
+            const r = Math.round((n - CONE_KG) / RING_KG);
+            return Math.max(0, Math.min(MAX_RINGS, r));
+          };
+          const r1 = toRings(s.silo1Kg);
+          const r2 = toRings(s.silo2Kg);
+          const r3 = toRings(s.silo3Kg);
+          const hasAny = (r1 !== null || r2 !== null || r3 !== null);
+          out[g] = {
+            readings: hasAny ? [{ date: todayIso, silo1Rings: r1, silo2Rings: r2, silo3Rings: r3 }] : [],
+            deliveries: Array.isArray(s.deliveries) ? s.deliveries.map(d => ({
+              id: d.id || String(Date.now()) + Math.random().toString(16).slice(2),
+              date: d.date ? dateOnly(d.date) : null,
+              amountKg: Number(d.amountKg) || 0,
+              feedType: '',
+              note: d.note || ''
+            })).filter(d => d.date && d.amountKg > 0) : []
+          };
+        });
+        return out;
+      }
+    }
+    return null;
+  } catch(e){ return null; }
+}
+function normalizeRing(r){
+  if (r === null || r === undefined || r === '') return null;
+  const n = Number(r);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.max(0, Math.min(MAX_RINGS, Math.floor(n)));
+}
+
+/* ---------- Cloud Sync ---------- */
+function sanitizeUserFarmName(name){
+  let s = String(name || '').trim().toLowerCase();
+  s = s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  s = s.replace(/-feed$/i, '');
+  return s;
+}
+function buildFileKey(farmName){
+  return sanitizeUserFarmName(farmName) + SYNC_SUFFIX;
+}
+function buildSyncUrl(farmName){
+  const fileKey = buildFileKey(farmName);
+  return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(fileKey)}&repo=${encodeURIComponent(SYNC_REPO)}`;
+}
+function buildExcelWrapperUrl(farmName){
+  const fileKey = sanitizeUserFarmName(farmName) + SYNC_SUFFIX + '-file';
+  return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(fileKey)}&repo=${encodeURIComponent(SYNC_REPO)}`;
+}
+function loadSyncState(){
+  try {
+    const raw = localStorage.getItem(SYNC_FARMNAME_KEY);
+    if (!raw) return;
+    const v = JSON.parse(raw);
+    if (v && typeof v.farmName === 'string' && v.farmName){
+      syncFarmName = v.farmName;
+      syncLastSyncAt = v.lastSyncAt || null;
+      syncConnectedAt = v.connectedAt || null;
+      syncExcelMeta = v.excelMeta || null;
+    }
+  } catch(e){}
+}
+function saveSyncState(){
+  try {
+    if (!syncFarmName){
+      localStorage.removeItem(SYNC_FARMNAME_KEY);
+      return;
+    }
+    localStorage.setItem(SYNC_FARMNAME_KEY, JSON.stringify({
+      farmName: syncFarmName,
+      lastSyncAt: syncLastSyncAt,
+      connectedAt: syncConnectedAt,
+      excelMeta: syncExcelMeta
+    }));
+  } catch(e){}
+}
+function arrayBufferToBase64(buf){
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+function base64ToBlob(base64, mime){
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+function buildCloudPayload(){
+  return {
+    app: SYNC_APP_TAG,
+    schemaVersion: 3,
+    lastUpdated: new Date().toISOString(),
+    farmName: syncFarmName,
+    farmData,
+    siloData: serializeSiloDataForCloud(),
+    excelMetadata: syncExcelMeta,
+    preferences: {
+      shedViewByGroup,
+      shedRange,
+      siloRange,
+      theme: loadTheme()
+    }
+  };
+}
+function serializeSiloDataForCloud(){
+  const out = {};
+  [1,2,3,4].forEach(g => {
+    const s = siloData[g] || { readings: [], deliveries: [] };
+    out[g] = {
+      readings: (s.readings || []).map(r => ({
+        date: r.date,
+        silo1Rings: r.silo1Rings,
+        silo2Rings: r.silo2Rings,
+        silo3Rings: r.silo3Rings
+      })),
+      deliveries: (s.deliveries || []).map(d => ({
+        id: d.id,
+        date: d.date ? iso(d.date) : null,
+        amountKg: Number(d.amountKg) || 0,
+        feedType: d.feedType || '',
+        note: d.note || ''
+      }))
+    };
+  });
+  return out;
+}
+
+function applyCloudPayload(payload, options){
+  options = options || {};
+  if (!payload || typeof payload !== 'object') return false;
+  if (payload.app && payload.app !== SYNC_APP_TAG) return false;
+
+  const oldExcelUploadedAt = syncExcelMeta && syncExcelMeta.uploadedAt;
+  const newExcelMeta = payload.excelMetadata || null;
+
+  if (payload.farmData && Array.isArray(payload.farmData.sheds)){
+    farmData = {
+      batchNumber: String(payload.farmData.batchNumber || ''),
+      importDate: payload.farmData.importDate || new Date().toISOString(),
+      fileName: payload.farmData.fileName || '(from cloud)',
+      sheds: payload.farmData.sheds.map(s => ({
+        id: Number(s.id) || 0,
+        placementDate: s.placementDate ? dateOnly(s.placementDate) : null,
+        initialPopulation: Number(s.initialPopulation) || 0,
+        cleanoutDate: s.cleanoutDate ? dateOnly(s.cleanoutDate) : null,
+        mortality: Number(s.mortality) || 0,
+        customFeedKg: (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null,
+        pickups: (s.pickups || []).map(p => ({
+          date: p.date ? dateOnly(p.date) : null,
+          birds: Number(p.birds) || 0,
+          isFinal: !!p.isFinal,
+          variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null
+        })).filter(p => p.date)
+      }))
+    };
+    saveState();
+  }
+
+  if (payload.siloData && typeof payload.siloData === 'object'){
+    const incoming = {};
+    [1,2,3,4].forEach(g => {
+      const s = payload.siloData[g] || {};
+      incoming[g] = {
+        readings: Array.isArray(s.readings) ? s.readings.map(r => ({
+          date: String(r.date || ''),
+          silo1Rings: normalizeRing(r.silo1Rings),
+          silo2Rings: normalizeRing(r.silo2Rings),
+          silo3Rings: normalizeRing(r.silo3Rings)
+        })).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b) => a.date.localeCompare(b.date)) : [],
+        deliveries: Array.isArray(s.deliveries) ? s.deliveries.map(d => ({
+          id: d.id || String(Date.now()) + Math.random().toString(16).slice(2),
+          date: d.date ? dateOnly(d.date) : null,
+          amountKg: Number(d.amountKg) || 0,
+          feedType: FEED_TYPES.some(f => f.id === d.feedType) ? d.feedType : '',
+          note: d.note || ''
+        })).filter(d => d.date && d.amountKg > 0) : []
+      };
+    });
+    siloData = incoming;
+    saveSiloData();
+  }
+
+  const prefs = payload.preferences || {};
+  if (prefs.shedViewByGroup && typeof prefs.shedViewByGroup === 'object'){
+    const next = { ...DEFAULT_VIEWS };
+    [1,2,3,4].forEach(g => {
+      if (['shed1','shed2','both','planner'].includes(prefs.shedViewByGroup[g])){
+        next[g] = prefs.shedViewByGroup[g];
+      }
+    });
+    shedViewByGroup = next;
+    saveShedViews();
+  }
+  if (prefs.shedRange && typeof prefs.shedRange === 'object'){
+    const s = Number(prefs.shedRange.start), e = Number(prefs.shedRange.end);
+    if (Number.isFinite(s) && Number.isFinite(e) && s <= e){ shedRange = { start:s, end:e }; }
+  }
+  if (prefs.siloRange && typeof prefs.siloRange === 'object'){
+    const s = Number(prefs.siloRange.start), e = Number(prefs.siloRange.end);
+    if (Number.isFinite(s) && Number.isFinite(e) && s <= e){ siloRange = { start:s, end:e }; }
+  }
+  if (prefs.theme === 'dark' || prefs.theme === 'light'){
+    applyTheme(prefs.theme);
+    saveTheme(prefs.theme);
+  }
+
+  syncExcelMeta = newExcelMeta;
+  const newUploadedAt = newExcelMeta && newExcelMeta.uploadedAt;
+  if (!options.isFirstPull && oldExcelUploadedAt && newUploadedAt && oldExcelUploadedAt !== newUploadedAt){
+    showToast('📄 Excel updated on another device — re-import to load it.', true);
+  }
+
+  return true;
+}
+
+async function fetchFromCloud(){
+  if (!syncFarmName) return { ok: false, reason: 'no-farm' };
+  try {
+    const res = await fetch(buildSyncUrl(syncFarmName));
+    if (res.status === 404) return { ok: true, notFound: true };
+    if (!res.ok) return { ok: false, reason: 'http-' + res.status };
+    const result = await res.json();
+    if (result.notFound) return { ok: true, notFound: true };
+    return { ok: true, data: result.data, sha: result.sha };
+  } catch (e){
+    return { ok: false, reason: e.message || 'network-error' };
+  }
+}
+
+async function pullFromCloud(silent){
+  if (!syncFarmName) return false;
+  syncState = 'pulling';
+  renderSyncButton();
+  const r = await fetchFromCloud();
+  if (!r.ok){
+    syncState = 'error';
+    renderSyncButton();
+    if (!silent) showToast('Could not sync — check your connection.', true);
+    return false;
+  }
+  if (r.notFound){
+    syncState = 'idle';
+    renderSyncButton();
+    await pushToCloud();
+    if (!silent) showToast('Connected — created a new file for this farm.');
+    return true;
+  }
+  syncSha = r.sha || null;
+  const ok = applyCloudPayload(r.data);
+  if (!ok){
+    syncState = 'error';
+    renderSyncButton();
+    if (!silent) showToast('Cloud file is not a ProdWise backup.', true);
+    return false;
+  }
+  syncLastSyncAt = Date.now();
+  saveSyncState();
+  syncState = 'idle';
+  renderSyncButton();
+  render();
+  if (!silent) showToast('Synced ✓');
+  return true;
+}
+
+async function pushToCloud(){
+  if (!syncFarmName) return false;
+  syncState = 'pushing';
+  renderSyncButton();
+  try {
+    const body = { sha: syncSha, data: buildCloudPayload() };
+    const res = await fetch(buildSyncUrl(syncFarmName), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.status === 409){
+      const fresh = await fetch(buildSyncUrl(syncFarmName)).then(r => r.json()).catch(() => null);
+      if (fresh && fresh.sha){
+        syncSha = fresh.sha;
+        const retry = await fetch(buildSyncUrl(syncFarmName), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sha: syncSha, data: buildCloudPayload() })
+        });
+        if (!retry.ok) throw new Error('Sync retry failed');
+        const rr = await retry.json();
+        if (rr && rr.sha) syncSha = rr.sha;
+      } else {
+        throw new Error('Could not refresh cloud state');
+      }
+    } else if (!res.ok){
+      throw new Error('Sync server responded ' + res.status);
+    } else {
+      const result = await res.json();
+      if (result && result.sha) syncSha = result.sha;
+    }
+    syncLastSyncAt = Date.now();
+    saveSyncState();
+    syncState = 'idle';
+    renderSyncButton();
+    return true;
+  } catch (e){
+    console.error('Push failed', e);
+    syncState = 'error';
+    renderSyncButton();
+    return false;
+  }
+}
+
+function schedulePush(){
+  if (!syncFarmName || !syncConnectedAt) return;
+  pushPending = true;
+  clearTimeout(pushDebounceTimer);
+  pushDebounceTimer = setTimeout(runScheduledPush, 2000);
+  if (!pushMaxWaitTimer){
+    pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
+  }
+}
+async function runScheduledPush(){
+  clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
+  clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
+  if (!pushPending) return;
+  if (pushInFlight){
+    pushDebounceTimer = setTimeout(runScheduledPush, 2000);
+    return;
+  }
+  pushPending = false;
+  pushInFlight = true;
+  try { await pushToCloud(); } finally { pushInFlight = false; }
+}
+function flushPendingPush(){
+  if (!pushPending) return;
+  clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
+  clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
+  pushPending = false;
+  pushToCloud();
+}
+
+async function uploadExcelToCloud(file){
+  if (!syncFarmName) return false;
+  syncState = 'pushing';
+  renderSyncButton();
+  try {
+    const buf = await file.arrayBuffer();
+    const base64 = arrayBufferToBase64(buf);
+    const uploadedAt = new Date().toISOString();
+    const wrapperData = {
+      name: file.name || 'sheds.xlsx',
+      size: file.size || buf.byteLength,
+      uploadedAt,
+      base64
+    };
+
+    let res = await fetch(buildExcelWrapperUrl(syncFarmName), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sha: syncExcelSha, data: wrapperData })
+    });
+
+    if (res.status === 409){
+      const fresh = await fetch(buildExcelWrapperUrl(syncFarmName)).then(r => r.json()).catch(() => null);
+      if (fresh && fresh.sha){
+        syncExcelSha = fresh.sha;
+        res = await fetch(buildExcelWrapperUrl(syncFarmName), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sha: syncExcelSha, data: wrapperData })
+        });
+      }
+    }
+    if (!res.ok) throw new Error('Excel upload failed: ' + res.status);
+    const result = await res.json().catch(() => null);
+    if (result && result.sha) syncExcelSha = result.sha;
+
+    syncExcelMeta = {
+      name: wrapperData.name,
+      size: wrapperData.size,
+      uploadedAt
+    };
+    saveSyncState();
+    await pushToCloud();
+
+    syncState = 'idle';
+    renderSyncButton();
+    return true;
+  } catch (e){
+    console.error('Excel upload failed', e);
+    syncState = 'error';
+    renderSyncButton();
+    showToast('Excel saved locally, but cloud upload failed.', true);
+    return false;
+  }
+}
+
+async function downloadExcelFromCloud(){
+  if (!syncFarmName) return;
+  try {
+    const res = await fetch(buildExcelWrapperUrl(syncFarmName));
+    if (!res.ok){
+      showToast('Could not fetch the stored Excel.', true);
+      return;
+    }
+    const result = await res.json();
+    const wrapper = result && result.data;
+    if (!wrapper || !wrapper.base64){
+      showToast('No stored Excel found.', true);
+      return;
+    }
+    const blob = base64ToBlob(wrapper.base64,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = wrapper.name || 'sheds.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Stored Excel downloaded.');
+  } catch (e){
+    console.error(e);
+    showToast('Download failed.', true);
+  }
+}
+
+async function connectSync(farmName){
+  const clean = sanitizeUserFarmName(farmName);
+  if (!clean){ showToast('Enter a farm name.', true); return; }
+
+  syncFarmName = clean;
+  syncSha = null;
+  syncExcelSha = null;
+  syncExcelMeta = null;
+  syncConnectedAt = null;
+  syncLastSyncAt = null;
+  saveSyncState();
+  closeSyncModal();
+  renderSyncButton();
+
+  syncState = 'pulling';
+  renderSyncButton();
+  const r = await fetchFromCloud();
+  syncState = 'idle';
+  renderSyncButton();
+
+  if (!r.ok){
+    showToast('Could not reach the sync server.', true);
+    return;
+  }
+  if (r.notFound){
+    syncConnectedAt = Date.now();
+    saveSyncState();
+    await pushToCloud();
+    showToast('Connected — created a new file for this farm.');
+    renderSyncButton();
+    return;
+  }
+
+  syncSha = r.sha || null;
+  showFarmFoundPrompt(r.data, r.sha);
+}
+
+function disconnectSync(){
+  if (!syncFarmName) return;
+  if (!confirm('Disconnect cloud sync?\n\nYour data stays on this device and in the cloud. You can reconnect with the same farm name any time.')) return;
+  syncFarmName = null;
+  syncSha = null;
+  syncExcelSha = null;
+  syncExcelMeta = null;
+  syncConnectedAt = null;
+  syncLastSyncAt = null;
+  saveSyncState();
+  renderSyncButton();
+  closeSyncModal();
+  showToast('Disconnected.');
+}
+
+function showFarmFoundPrompt(data, sha){
+  const farm = (data && data.farmData) || {};
+  const sheds = Array.isArray(farm.sheds) ? farm.sheds : [];
+  const shedCount = sheds.filter(s => Number(s.initialPopulation) > 0).length;
+  const batch = farm.batchNumber || '';
+  const excelMeta = (data && data.excelMetadata) || null;
+  const lastUpdated = data && data.lastUpdated
+    ? new Date(data.lastUpdated).toLocaleString()
+    : '—';
+
+  const body = document.getElementById('farmFoundBody');
+  const excelLine = excelMeta ? `
+    <div class="ff-row">
+      <span class="lbl">Excel file</span>
+      <span class="val">📄 ${escapeHtml(excelMeta.name || 'sheds.xlsx')}${
+        excelMeta.uploadedAt ? ' · ' + new Date(excelMeta.uploadedAt).toLocaleDateString() : ''
+      }</span>
+    </div>` : `
+    <div class="ff-row">
+      <span class="lbl">Excel file</span>
+      <span class="val" style="color:var(--muted);font-weight:500;">No Excel stored</span>
+    </div>`;
+
+  body.innerHTML = `
+    <div class="farm-found-icon">☁️</div>
+    <div class="farm-found-title">Farm found: <strong>${escapeHtml(syncFarmName)}</strong></div>
+    <div class="farm-found-sub">This farm already has data stored in the cloud.</div>
+
+    <div class="farm-found-meta">
+      <div class="ff-row"><span class="lbl">Last updated</span><span class="val">${escapeHtml(lastUpdated)}</span></div>
+      <div class="ff-row"><span class="lbl">Sheds</span><span class="val">${shedCount} with population</span></div>
+      ${batch ? `<div class="ff-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch)}</span></div>` : ''}
+      ${excelLine}
+    </div>
+
+    <div class="ff-choices">
+      <button class="ff-choice primary" id="ffLoadBtn" type="button">
+        <span class="ff-icon">📥</span>
+        <div>
+          <div class="ff-choice-title">Load stored data</div>
+          <div class="ff-choice-sub">Use the cloud copy on this device</div>
+        </div>
+      </button>
+      ${excelMeta ? `
+        <button class="ff-choice" id="ffDownloadBtn" type="button">
+          <span class="ff-icon">📄</span>
+          <div>
+            <div class="ff-choice-title">Download stored Excel</div>
+            <div class="ff-choice-sub">Save the cloud Excel to this device</div>
+          </div>
+        </button>
+      ` : ''}
+      <button class="ff-choice" id="ffUploadBtn" type="button">
+        <span class="ff-icon">📤</span>
+        <div>
+          <div class="ff-choice-title">Upload a newer Excel</div>
+          <div class="ff-choice-sub">Replaces the cloud copy with your file</div>
+        </div>
+      </button>
+      <button class="ff-choice danger" id="ffFreshBtn" type="button">
+        <span class="ff-icon">⚠️</span>
+        <div>
+          <div class="ff-choice-title">Start fresh</div>
+          <div class="ff-choice-sub">Overwrite the cloud with this device's data</div>
+        </div>
+      </button>
+    </div>
+
+    <button class="ff-cancel" id="ffCancelBtn" type="button">Cancel — don't connect</button>
+  `;
+
+  const modal = document.getElementById('farmFoundModal');
+  const scrim = document.getElementById('syncScrim');
+  modal.classList.add('open');
+  scrim.classList.add('open');
+
+  document.getElementById('ffLoadBtn').addEventListener('click', () => {
+    applyCloudPayload(data, { isFirstPull: true });
+    syncSha = sha || null;
+    syncConnectedAt = Date.now();
+    syncLastSyncAt = Date.now();
+    saveSyncState();
+    closeFarmFoundModal();
+    renderSyncButton();
+    render();
+    showToast('Loaded data from the cloud.');
+  });
+
+  const dlBtn = document.getElementById('ffDownloadBtn');
+  if (dlBtn){
+    dlBtn.addEventListener('click', async () => { await downloadExcelFromCloud(); });
+  }
+
+  document.getElementById('ffUploadBtn').addEventListener('click', () => {
+    syncSha = sha || null;
+    syncConnectedAt = Date.now();
+    saveSyncState();
+    closeFarmFoundModal();
+    renderSyncButton();
+    const input = document.getElementById('excelFile');
+    input.value = '';
+    input.click();
+  });
+
+  document.getElementById('ffFreshBtn').addEventListener('click', async () => {
+    if (!confirm('This will overwrite the cloud copy with this device\'s data.\n\nThe stored Excel (if any) will remain in the cloud until you upload a new one.\n\nContinue?')) return;
+    syncSha = sha || null;
+    syncConnectedAt = Date.now();
+    saveSyncState();
+    closeFarmFoundModal();
+    renderSyncButton();
+    await pushToCloud();
+    showToast('This device\'s data pushed to the cloud.');
+  });
+
+  document.getElementById('ffCancelBtn').addEventListener('click', () => {
+    syncFarmName = null;
+    syncSha = null;
+    syncExcelSha = null;
+    syncExcelMeta = null;
+    syncConnectedAt = null;
+    syncLastSyncAt = null;
+    saveSyncState();
+    closeFarmFoundModal();
+    renderSyncButton();
+  });
+
+  document.getElementById('farmFoundClose').onclick = () => {
+    document.getElementById('ffCancelBtn').click();
+  };
+}
+function closeFarmFoundModal(){
+  document.getElementById('farmFoundModal').classList.remove('open');
+  document.getElementById('syncScrim').classList.remove('open');
+}
+
+/* ---------- Theme ---------- */
+function applyTheme(theme){
+  const isDark = theme === 'dark';
+  document.body.classList.toggle('theme-dark', isDark);
+  const btn = document.getElementById('themeToggle');
+  if (btn){
+    btn.textContent = isDark ? '☀️' : '🌙';
+    btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', isDark ? '#1A2438' : '#E0A339');
+}
+function loadTheme(){
+  try {
+    const t = localStorage.getItem(THEME_KEY);
+    return (t === 'dark' || t === 'light') ? t : 'light';
+  } catch(e){ return 'light'; }
+}
+function saveTheme(t){ try { localStorage.setItem(THEME_KEY, t); } catch(e){} }
+function toggleTheme(){
+  const cur = document.body.classList.contains('theme-dark') ? 'dark' : 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next); saveTheme(next);
+  schedulePush();
+}
+
+/* ---------- Derived ---------- */
+function ageInDays(shed, onDate = new Date()){
+  if (!shed.placementDate) return 0;
+  return Math.max(0, daysBetween(shed.placementDate, onDate));
+}
+function totalPicked(shed){
+  return (shed.pickups || []).reduce((s,p) => s + (Number(p.birds) || 0), 0);
+}
+function mortalityRate(shed){
+  if (!shed.initialPopulation) return 0;
+  return (Number(shed.mortality || 0) / shed.initialPopulation) * 100;
+}
+function finalPickupOf(shed){ return (shed.pickups || []).find(p => p.isFinal); }
+function shedsForGroup(g){
+  if (!farmData) return [];
+  const a = farmData.sheds[(g-1)*2];
+  const b = farmData.sheds[(g-1)*2 + 1];
+  return [a, b].filter(Boolean);
+}
+function liveAtStartOfDay(shed, D){
+  const d = dateOnly(D);
+  if (!shed.placementDate) return 0;
+  if (d < dateOnly(shed.placementDate)) return 0;
+  if (shed.cleanoutDate && d > dateOnly(shed.cleanoutDate)) return 0;
+  const beforeD = (shed.pickups || [])
+    .filter(p => dateOnly(p.date) < d)
+    .reduce((s,p) => s + p.birds, 0);
+  return Math.max(0, shed.initialPopulation - Number(shed.mortality || 0) - beforeD);
+}
+function feedPerBirdKg(shed, ageDays){
+  if (shed.customFeedKg != null && shed.customFeedKg > 0) return shed.customFeedKg;
+  if (ageDays <= 0) return 0;
+  const age = Math.min(60, Math.max(1, Math.floor(ageDays)));
+  return (ROSS_308_FEED_INTAKE[age] || 234) / 1000;
+}
+function shedFeedOn(shed, D){
+  const age = ageInDays(shed, D);
+  const live = liveAtStartOfDay(shed, D);
+  if (age <= 0 || live <= 0) return 0;
+  return live * feedPerBirdKg(shed, age);
+}
+function groupDailyFeedOn(sheds, D){
+  return sheds.reduce((sum, s) => sum + shedFeedOn(s, D), 0);
+}
+function groupFeedToday(sheds, today = new Date()){
+  return groupDailyFeedOn(sheds, today);
+}
+function fmtFeed(kg){
+  if (!Number.isFinite(kg) || kg === 0) return '0 kg';
+  const abs = Math.abs(kg);
+  if (abs >= 1000) return (kg / 1000).toFixed(2) + ' t';
+  return Math.round(kg).toLocaleString() + ' kg';
+}
+
+/* ---------- Shed forecast ---------- */
+function computeForecast(shed, range){
+  const today = dateOnly(new Date());
+  const rows = [];
+  let totalFeed = 0;
+  if (!shed.placementDate) return { rows: [], totalFeed: 0, notStarted: true };
+
+  for (let off = range.start; off <= range.end; off++){
+    const d = addDays(today, off);
+    const isPast = off < 0;
+    const isToday = off === 0;
+
+    if (dateOnly(d) < dateOnly(shed.placementDate)){
+      rows.push({
+        date: d, age: 0, liveStart: 0, perBird: 0, dailyFeed: 0,
+        pickups: [], pickupsBirds: 0, liveAfter: 0,
+        isFinalDay: false, isToday, isPast, beforePlacement: true
+      });
+      continue;
+    }
+    if (shed.cleanoutDate && dateOnly(d) > dateOnly(shed.cleanoutDate)){
+      const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+      rows.push({
+        date: d, age: ageInDays(shed, d), liveStart: 0, perBird: 0, dailyFeed: 0,
+        pickups: pickupsToday,
+        pickupsBirds: pickupsToday.reduce((s,p) => s + p.birds, 0),
+        liveAfter: 0, isFinalDay: false, isToday, isPast, afterCleanout: true
+      });
+      continue;
+    }
+    const age = ageInDays(shed, d);
+    const live = liveAtStartOfDay(shed, d);
+    const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+    const pickupsBirds = pickupsToday.reduce((s,p) => s + p.birds, 0);
+    const isFinalDay = pickupsToday.some(p => p.isFinal);
+    const perBird = feedPerBirdKg(shed, age);
+    const dailyFeed = live * perBird;
+    const liveAfter = Math.max(0, live - pickupsBirds);
+    totalFeed += dailyFeed;
+    rows.push({
+      date: d, age, liveStart: live, perBird, dailyFeed,
+      pickups: pickupsToday, pickupsBirds, liveAfter,
+      isFinalDay, isToday, isPast
+    });
+  }
+  return { rows, totalFeed };
+}
+
+/* ---------- Silo ---------- */
+function readingsSorted(group){
+  const s = siloData[group] || { readings: [] };
+  return (s.readings || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+}
+function latestReading(group){
+  const arr = readingsSorted(group);
+  return arr.length ? arr[arr.length - 1] : null;
+}
+function readingTotalKg(reading){
+  if (!reading) return 0;
+  return ringsToKg(reading.silo1Rings) + ringsToKg(reading.silo2Rings) + ringsToKg(reading.silo3Rings);
+}
+function deliveriesForGroup(group){
+  const s = siloData[group] || { deliveries: [] };
+  return (s.deliveries || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+}
+function deliveriesKgOn(group, D){
+  const d = dateOnly(D);
+  return deliveriesForGroup(group)
+    .filter(x => iso(x.date) === iso(d))
+    .reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
+}
+function balanceOnEndOfDay(group, D){
+  const latest = latestReading(group);
+  if (!latest) return null;
+  const latestDate = dateOnly(latest.date);
+  const targetD = dateOnly(D);
+  const sheds = shedsForGroup(group);
+  if (targetD.getTime() === latestDate.getTime()) return readingTotalKg(latest);
+  if (targetD > latestDate){
+    let bal = readingTotalKg(latest);
+    for (let d = addDays(latestDate, 1); d <= targetD; d = addDays(d, 1)){
+      bal = bal + deliveriesKgOn(group, d) - groupDailyFeedOn(sheds, d);
+    }
+    return bal;
+  }
+  let bal = readingTotalKg(latest);
+  for (let d = latestDate; d > targetD; d = addDays(d, -1)){
+    const cons = groupDailyFeedOn(sheds, d);
+    const del  = deliveriesKgOn(group, d);
+    bal = bal - del + cons;
+  }
+  return bal;
+}
+function currentBalanceKg(group){ return balanceOnEndOfDay(group, new Date()); }
+function consumptionSinceLatestReading(group){
+  const latest = latestReading(group);
+  if (!latest) return 0;
+  const latestDate = dateOnly(latest.date);
+  const today = dateOnly(new Date());
+  if (latestDate >= today) return 0;
+  const sheds = shedsForGroup(group);
+  let c = 0;
+  for (let d = addDays(latestDate, 1); d <= today; d = addDays(d, 1)){
+    c += groupDailyFeedOn(sheds, d);
+  }
+  return c;
+}
+function deliveriesSinceLatestReading(group){
+  const latest = latestReading(group);
+  if (!latest) return 0;
+  const latestDate = dateOnly(latest.date);
+  const today = dateOnly(new Date());
+  if (latestDate >= today) return 0;
+  let d = 0;
+  for (let x = addDays(latestDate, 1); x <= today; x = addDays(x, 1)){
+    d += deliveriesKgOn(group, x);
+  }
+  return d;
+}
+function computeSiloForecast(group, range){
+  const sheds = shedsForGroup(group);
+  const today = dateOnly(new Date());
+  const rows = [];
+  let totalConsumption = 0, totalDelivered = 0;
+
+  for (let off = range.start; off <= range.end; off++){
+    const d = addDays(today, off);
+    const isPast = off < 0;
+    const isToday = off === 0;
+    const cons = groupDailyFeedOn(sheds, d);
+    const del  = deliveriesKgOn(group, d);
+    const deliveriesOnDay = deliveriesForGroup(group).filter(x => iso(x.date) === iso(d));
+    const bal = balanceOnEndOfDay(group, d);
+    totalConsumption += cons;
+    totalDelivered += del;
+    rows.push({
+      date: d,
+      consumption: cons,
+      delivery: del,
+      deliveries: deliveriesOnDay,
+      balance: bal,
+      isToday, isPast, isFuture: !isPast && !isToday,
+      isWeekend: isWeekend(d)
+    });
+  }
+
+  let depletedDate = null;
+  for (const r of rows){
+    if (r.balance !== null && r.balance <= 0 && r.consumption > 0 && !r.isPast){
+      depletedDate = r.date;
+      break;
+    }
+  }
+  const endBalance = rows.length ? rows[rows.length - 1].balance : null;
+  const totalStock = balanceOnEndOfDay(group, today);
+  const shortfall = Math.max(0, totalConsumption - (totalStock || 0) - totalDelivered);
+  return { rows, totalStock, totalConsumption, totalDelivered, depletedDate, endBalance, shortfall };
+}
+
+/* ---------- Feed Summary ---------- */
+function computeFeedSummary(group){
+  const deliveries = deliveriesForGroup(group);
+  const buckets = {
+    starter:    { id:'starter',    label:'Starter',    tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
+    grower:     { id:'grower',     label:'Grower',     tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
+    finisher:   { id:'finisher',   label:'Finisher',   tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
+    withdrawal: { id:'withdrawal', label:'Withdrawal', tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 },
+    unspecified:{ id:'unspecified',label:'Unspecified',tonnes: 0, deliveries: 0, blocks: 0, remainder: 0 }
+  };
+  deliveries.forEach(d => {
+    const t = (Number(d.amountKg) || 0) / 1000;
+    const key = FEED_TYPES.some(f => f.id === d.feedType) ? d.feedType : 'unspecified';
+    buckets[key].tonnes += t;
+    buckets[key].deliveries += 1;
+  });
+  Object.values(buckets).forEach(b => {
+    b.blocks = Math.floor(b.tonnes / FEED_BLOCK_T);
+    b.remainder = b.tonnes - (b.blocks * FEED_BLOCK_T);
+  });
+  const totalTonnes = Object.values(buckets).reduce((s,b) => s + b.tonnes, 0);
+  const totalBlocks = Object.values(buckets).reduce((s,b) => s + b.blocks, 0);
+  return { buckets, totalTonnes, totalBlocks };
+}
+
+function renderFeedSummary(group){
+  const summary = computeFeedSummary(group);
+  const activeRows = ['starter','grower','finisher','withdrawal','unspecified']
+    .map(k => summary.buckets[k])
+    .filter(b => b.tonnes > 0);
+  if (activeRows.length === 0){
+    return `
+      <div class="feed-summary">
+        <div class="feed-summary-title">
+          📊 Feed Summary
+          <span class="sub">· per feed type · 1 block = 60 T</span>
+        </div>
+        <div class="feed-summary-empty">No deliveries scheduled yet — add one above to see the block count.</div>
+      </div>
+    `;
+  }
+  const rows = activeRows.map(b => `
+    <tr class="${b.blocks > 0 ? 'has-blocks' : ''}">
+      <td>${feedTypeTagHtml(b.id)}</td>
+      <td class="num">${b.tonnes.toFixed(2)} t</td>
+      <td class="num">${b.deliveries}</td>
+      <td class="num">
+        ${b.blocks > 0
+          ? `<span class="block-count">${b.blocks}</span>`
+          : `<span class="block-count zero">0</span>`}
+      </td>
+      <td class="num rem">
+        ${b.remainder > 0.01 ? b.remainder.toFixed(2) + ' t' : '—'}
+      </td>
+    </tr>
+  `).join('');
+  return `
+    <div class="feed-summary">
+      <div class="feed-summary-title">
+        📊 Feed Summary
+        <span class="sub">· per feed type · 1 block = 60 T</span>
+      </div>
+      <table class="feed-summary-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th class="num">Total</th>
+            <th class="num">Orders</th>
+            <th class="num">60 T blocks</th>
+            <th class="num">Remainder</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;">
+            <td>Total</td>
+            <td class="num">${summary.totalTonnes.toFixed(2)} t</td>
+            <td class="num">${activeRows.reduce((s,b) => s + b.deliveries, 0)}</td>
+            <td class="num">${summary.totalBlocks}</td>
+            <td class="num rem">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Each 60 T of the same feed type counts as <strong>1 block</strong>.
+        Example: 30 T Grower + 30 T Grower = 60 T → <strong>1 block</strong>.
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Silo actions ---------- */
+function setSiloRingsForToday(group, siloNum, rings){
+  if (!siloData[group]) siloData[group] = { readings: [], deliveries: [] };
+  const s = siloData[group];
+  const todayIso = iso(new Date());
+  let reading = s.readings.find(r => r.date === todayIso);
+  if (!reading){
+    const prev = s.readings.length ? s.readings[s.readings.length - 1] : null;
+    reading = {
+      date: todayIso,
+      silo1Rings: prev ? prev.silo1Rings : null,
+      silo2Rings: prev ? prev.silo2Rings : null,
+      silo3Rings: prev ? prev.silo3Rings : null
+    };
+    s.readings.push(reading);
+    s.readings.sort((a,b) => a.date.localeCompare(b.date));
+  }
+  const key = `silo${siloNum}Rings`;
+  reading[key] = (rings === null) ? null : normalizeRing(rings);
+  saveSiloData();
+  schedulePush();
+  render();
+}
+function addSiloDelivery(group, dateStr, amountT, feedType, note){
+  const d = parseExcelDate(dateStr);
+  if (!d) { showToast('Pick a valid date.', true); return; }
+  const amountKg = Number(amountT) * 1000;
+  if (!Number.isFinite(amountKg) || amountKg <= 0) { showToast('Enter a positive amount in tonnes.', true); return; }
+  if (!siloData[group]) siloData[group] = { readings: [], deliveries: [] };
+  siloData[group].deliveries.push({
+    id: String(Date.now()) + Math.random().toString(16).slice(2),
+    date: d, amountKg,
+    feedType: FEED_TYPES.some(f => f.id === feedType) ? feedType : '',
+    note: String(note || '').trim()
+  });
+  siloData[group].deliveries.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  saveSiloData();
+  schedulePush();
+  render();
+  showToast(`Delivery of ${amountT} t added on ${fmtShort(d)}.`);
+}
+function updateSiloDeliveryDate(group, id, newDateStr){
+  const s = siloData[group]; if (!s) return;
+  const del = s.deliveries.find(d => d.id === id); if (!del) return;
+  const nd = parseExcelDate(newDateStr); if (!nd) return;
+  del.date = nd;
+  s.deliveries.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  saveSiloData();
+  schedulePush();
+  render();
+}
+function updateSiloDeliveryAmount(group, id, newAmountStr){
+  const s = siloData[group]; if (!s) return;
+  const del = s.deliveries.find(d => d.id === id); if (!del) return;
+  const t = Number(newAmountStr);
+  if (!Number.isFinite(t) || t <= 0) return;
+  del.amountKg = t * 1000;
+  saveSiloData();
+  schedulePush();
+  render();
+}
+function updateSiloDeliveryFeedType(group, id, newType){
+  const s = siloData[group]; if (!s) return;
+  const del = s.deliveries.find(d => d.id === id); if (!del) return;
+  del.feedType = FEED_TYPES.some(f => f.id === newType) ? newType : '';
+  saveSiloData();
+  schedulePush();
+  render();
+}
+function updateSiloDeliveryNote(group, id, newNote){
+  const s = siloData[group]; if (!s) return;
+  const del = s.deliveries.find(d => d.id === id); if (!del) return;
+  del.note = String(newNote || '').trim();
+  saveSiloData();
+  schedulePush();
+}
+function removeSiloDelivery(group, id){
+  const s = siloData[group]; if (!s) return;
+  s.deliveries = s.deliveries.filter(d => d.id !== id);
+  saveSiloData();
+  schedulePush();
+  render();
+}
+
+/* ---------- Toast ---------- */
+let toastTimer = null;
+function showToast(msg, isError){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', !!isError);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+/* ---------- Import ---------- */
+function triggerImport(){
+  const input = document.getElementById('excelFile');
+  input.value = '';
+  input.click();
+}
+async function handleFile(file){
+  if (!file) return;
+  if (typeof XLSX === 'undefined'){
+    showToast('Excel reader not available. Check your internet connection.', true);
+    return;
+  }
+
+  if (file.size > MAX_EXCEL_WARN_BYTES){
+    const mb = (file.size / (1024*1024)).toFixed(1);
+    if (!confirm(`This file is ${mb} MB — larger than usual.\n\nLoading and cloud upload may take a few seconds.\n\nContinue?`)) return;
+  }
+
+  const willReplaceLocal = !!farmData;
+  const willReplaceCloudExcel = !!(syncFarmName && syncConnectedAt && syncExcelMeta && syncExcelMeta.name);
+  if (willReplaceLocal || willReplaceCloudExcel){
+    let msg = '';
+    if (willReplaceLocal){
+      msg += 'This will replace your current shed data with the new file.\n\nSilo readings and deliveries stay untouched.';
+    }
+    if (willReplaceCloudExcel){
+      if (msg) msg += '\n\n';
+      const metaAge = syncExcelMeta.uploadedAt
+        ? ` (uploaded ${fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())})`
+        : '';
+      msg += `⚠️ The stored Excel on the cloud (${syncExcelMeta.name}${metaAge}) will also be replaced with this new file.`;
+    }
+    msg += '\n\nContinue?';
+    if (!confirm(msg)) return;
+  }
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+    const result = parseShedsFromWorkbook(wb);
+    farmData = {
+      batchNumber: result.batchNumber || '',
+      importDate: new Date().toISOString(),
+      fileName: file.name,
+      sheds: result.sheds
+    };
+    activeTab = 'g1';
+    saveState();
+
+    if (syncFarmName && syncConnectedAt){
+      await uploadExcelToCloud(file);
+    } else {
+      schedulePush();
+    }
+
+    render();
+    showToast(
+      `✅ Imported ${result.matched} shed${result.matched === 1 ? '' : 's'}` +
+      (result.skipped ? ` · ${result.skipped} row(s) skipped` : '') +
+      (result.batchNumber ? ` · Batch ${result.batchNumber}` : '')
+    );
+  } catch (err){
+    console.error(err);
+    showToast('Import failed: ' + (err && err.message ? err.message : 'Unknown error.'), true);
+  }
+}
+
+/* ---------- Editing ---------- */
+function updateShedField(shedIdx, key, rawValue){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedIdx]; if (!shed) return;
+  if (key === 'placementDate' || key === 'cleanoutDate'){
+    shed[key] = rawValue ? parseExcelDate(rawValue) : null;
+    if (key === 'cleanoutDate'){
+      const fp = finalPickupOf(shed);
+      if (fp) shed.cleanoutDate = dateOnly(fp.date);
+    }
+  } else if (key === 'initialPopulation'){
+    const n = Number(rawValue);
+    shed.initialPopulation = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  } else if (key === 'mortality'){
+    const n = Number(rawValue);
+    shed.mortality = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  } else if (key === 'customFeedKg'){
+    const s = String(rawValue ?? '').trim();
+    if (s === '') shed.customFeedKg = null;
+    else {
+      const n = Number(s);
+      shed.customFeedKg = (Number.isFinite(n) && n > 0) ? n : null;
+    }
+  }
+  saveState();
+  schedulePush();
+  scheduleRender(60);
+}
+function setBatchNumber(v){
+  if (!farmData) return;
+  farmData.batchNumber = String(v ?? '').trim();
+  saveState();
+  schedulePush();
+}
+function setShedView(group, view){
+  if (!['shed1','shed2','both','planner'].includes(view)) return;
+  shedViewByGroup[group] = view;
+  saveShedViews();
+  schedulePush();
+  render();
+}
+
+/* ---------- Sync UI ---------- */
+function renderSyncButton(){
+  const btn = document.getElementById('syncBtn');
+  const ico = document.getElementById('syncIcon');
+  const lbl = document.getElementById('syncLabel');
+  if (!btn) return;
+  btn.classList.remove('connected','syncing','error');
+  if (syncState === 'pulling' || syncState === 'pushing'){
+    btn.classList.add('syncing');
+    ico.textContent = '⟳';
+    ico.classList.add('sync-spin');
+    lbl.textContent = syncState === 'pulling' ? 'Pulling…' : 'Saving…';
+    btn.title = syncState === 'pulling' ? 'Fetching from cloud…' : 'Saving to cloud…';
+    return;
+  }
+  ico.classList.remove('sync-spin');
+  if (syncState === 'error'){
+    btn.classList.add('error');
+    ico.textContent = '⚠️';
+    lbl.textContent = syncFarmName || 'Sync error';
+    btn.title = 'Last sync failed — click to retry';
+    return;
+  }
+  if (syncFarmName){
+    btn.classList.add('connected');
+    ico.textContent = '☁️';
+    lbl.textContent = syncFarmName;
+    btn.title = `Connected — last sync ${fmtRelativeTime(syncLastSyncAt)}`;
+  } else {
+    ico.textContent = '☁️';
+    lbl.textContent = 'Connect';
+    btn.title = 'Set up cloud sync';
+  }
+}
+function openSyncModal(){
+  const modal = document.getElementById('syncModal');
+  const scrim = document.getElementById('syncScrim');
+  const body = document.getElementById('syncModalBody');
+  if (syncFarmName){
+    body.innerHTML = `
+      <div class="sync-status-card">
+        <div class="sync-status-row">
+          <span class="lbl">Farm</span>
+          <span class="val ok">${escapeHtml(syncFarmName)}</span>
+        </div>
+        <div class="sync-status-row">
+          <span class="lbl">Backed up as</span>
+          <span class="val">${escapeHtml(syncFarmName)}${SYNC_SUFFIX}.json</span>
+        </div>
+        <div class="sync-status-row">
+          <span class="lbl">Last sync</span>
+          <span class="val">${syncLastSyncAt ? fmtRelativeTime(syncLastSyncAt) : 'never'}</span>
+        </div>
+        ${syncExcelMeta ? `
+          <div class="sync-status-row">
+            <span class="lbl">Stored Excel</span>
+            <span class="val">📄 ${escapeHtml(syncExcelMeta.name || 'sheds.xlsx')}${
+              syncExcelMeta.uploadedAt
+                ? ' · ' + fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())
+                : ''
+            }</span>
+          </div>
+        ` : ''}
+        ${syncState === 'error' ? `
+          <div class="sync-status-row">
+            <span class="lbl">Status</span>
+            <span class="val err">Last attempt failed</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="sync-actions">
+        <div class="sync-btn-row">
+          <button class="btn-sync-primary" id="syncNowBtn">🔄 Sync now</button>
+          <button class="btn-sync-primary ghost" id="syncChangeBtn">Change farm</button>
+        </div>
+        ${syncExcelMeta ? `
+          <button class="btn-sync-primary ghost" id="syncDownloadExcelBtn">📄 Download stored Excel</button>
+        ` : ''}
+        <button class="btn-sync-primary danger" id="syncDisconnectBtn">Disconnect</button>
+      </div>
+      <div class="sync-hint">
+        Data is stored in <strong>${escapeHtml(SYNC_REPO)}</strong> on GitHub. Enter the same farm name on any device to sync the same data.
+      </div>
+    `;
+    document.getElementById('syncNowBtn').addEventListener('click', async () => {
+      await pullFromCloud(false);
+    });
+    document.getElementById('syncChangeBtn').addEventListener('click', () => {
+      showConnectForm('Enter a new farm name to switch to. Your current data stays where it is.');
+    });
+    document.getElementById('syncDisconnectBtn').addEventListener('click', disconnectSync);
+    const dl = document.getElementById('syncDownloadExcelBtn');
+    if (dl) dl.addEventListener('click', async () => { await downloadExcelFromCloud(); });
+  } else {
+    showConnectForm();
+  }
+  modal.classList.add('open');
+  scrim.classList.add('open');
+}
+function showConnectForm(hint){
+  const body = document.getElementById('syncModalBody');
+  body.innerHTML = `
+    <label for="syncFarmInput">Farm name</label>
+    <input id="syncFarmInput" type="text" placeholder="e.g. kiripark1"
+      autocomplete="off" spellcheck="false" maxlength="40" />
+    <div class="sync-hint">
+      ${hint ? escapeHtml(hint) : 'Use the same name on every device to sync the same data.'}
+      ${hint ? '<br><br>' : ''}
+      Backed up to <strong>${escapeHtml(SYNC_REPO)}</strong> on GitHub.
+      File will be saved as <strong>&lt;farm&gt;${SYNC_SUFFIX}.json</strong> — separate from Prodplan.
+    </div>
+    <button class="btn-sync-primary" id="syncConnectBtn">Connect</button>
+    <button class="btn-sync-primary ghost" id="syncCancelBtn">Cancel</button>
+  `;
+  const input = document.getElementById('syncFarmInput');
+  setTimeout(() => input && input.focus(), 100);
+  const submit = () => {
+    const v = input.value.trim();
+    if (!v){ showToast('Enter a farm name.', true); return; }
+    connectSync(v);
+  };
+  document.getElementById('syncConnectBtn').addEventListener('click', submit);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  document.getElementById('syncCancelBtn').addEventListener('click', () => {
+    if (!syncFarmName) closeSyncModal();
+    else openSyncModal();
+  });
+}
+function closeSyncModal(){
+  document.getElementById('syncModal').classList.remove('open');
+  document.getElementById('syncScrim').classList.remove('open');
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function escapeAttr(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ---------- Rendering ---------- */
+function scheduleRender(delay = 50){
+  const active = document.activeElement;
+  const activeId = active ? active.id : null;
+  let selStart = null, selEnd = null;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')){
+    try { selStart = active.selectionStart; selEnd = active.selectionEnd; } catch(e){}
+  }
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    render();
+    if (activeId){
+      const el = document.getElementById(activeId);
+      if (el){
+        el.focus();
+        if (selStart != null && typeof el.setSelectionRange === 'function'){
+          try { el.setSelectionRange(selStart, selEnd); } catch(e){}
+        }
+      }
+    }
+  }, delay);
+}
+
+function render(){
+  const batchEl = document.getElementById('batchNumber');
+  if (batchEl){
+    const want = farmData ? farmData.batchNumber : '';
+    if (batchEl.value !== want) batchEl.value = want;
+    batchEl.disabled = !farmData;
+  }
+  const label = document.getElementById('importBtnLabel');
+  if (label) label.textContent = farmData ? 'Re-import Excel' : 'Import Excel';
+
+  const tabsWrap = document.getElementById('tabsWrap');
+  const app = document.getElementById('app');
+
+  if (!farmData){
+    tabsWrap.style.display = 'none';
+    app.innerHTML = emptyStateHtml();
+    return;
+  }
+
+  tabsWrap.style.display = 'block';
+  document.getElementById('tabs').innerHTML = tabsHtml();
+  if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
+
+  const g = Number(activeTab.replace('g', ''));
+  app.innerHTML = groupViewHtml(g);
+}
+
+function emptyStateHtml(){
+  return `
+    <div class="empty-state">
+      <div class="empty-card">
+        <div class="emoji">🐔</div>
+        <h1>Welcome to <span class="accent">ProdWise.VM</span></h1>
+        <p>Start by importing your sheds Excel file, or connect to cloud sync to load your data from another device.</p>
+        <div class="empty-actions">
+          <button class="btn-primary" id="emptyImportBtn" type="button">📥 Import Excel</button>
+          <span class="empty-or">or</span>
+          <button class="btn-cloud" id="emptyConnectBtn" type="button">☁️ Connect to cloud</button>
+        </div>
+        <div class="hint">Excel: look for a file named like <strong>sheds.xlsx</strong> or <strong>KP-2026.xlsx</strong></div>
+        <div class="hint small">Cloud: enter the same farm name you used on your other device.</div>
+      </div>
+    </div>
+  `;
+}
+
+function tabsHtml(){
+  const tabs = [
+    { id: 'g1', label: 'Group 1' },
+    { id: 'g2', label: 'Group 2' },
+    { id: 'g3', label: 'Group 3' },
+    { id: 'g4', label: 'Group 4' },
+  ];
+  return tabs.map(t => `
+    <button class="tab-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}">
+      ${t.label}
+    </button>
+  `).join('');
+}
+
+function groupViewHtml(g){
+  const sheds = shedsForGroup(g);
+  if (sheds.length === 0) return `<div class="empty-card">Group ${g} has no data.</div>`;
+
+  const today = new Date();
+  const init = sheds.reduce((s,x) => s + (x.initialPopulation || 0), 0);
+  const mort = sheds.reduce((s,x) => s + Number(x.mortality || 0), 0);
+  const picked = sheds.reduce((s,x) => s + totalPicked(x), 0);
+  const live = sheds.reduce((s,x) => s + liveAtStartOfDay(x, today), 0);
+  const mortRate = init > 0 ? (mort / init) * 100 : 0;
+  const feedToday = groupFeedToday(sheds, today);
+
+  const grad =
+    g === 1 ? 'linear-gradient(135deg,#E0A339,#A8721F)' :
+    g === 2 ? 'linear-gradient(135deg,#B08463,#5E2E22)' :
+    g === 3 ? 'linear-gradient(135deg,#C9774A,#8F4A28)' :
+              'linear-gradient(135deg,#A89055,#6E5A32)';
+
+  const view = shedViewByGroup[g] || 'planner';
+
+  let contentHtml = '';
+  if (view === 'planner'){
+    contentHtml = renderFeedPlanner(g, sheds, today);
+  } else {
+    const visibleSheds =
+      view === 'shed1' ? [sheds[0]] :
+      view === 'shed2' ? [sheds[1] || sheds[0]] :
+      sheds;
+    const gridClass = view === 'both' && sheds.length > 1 ? 'sheds-grid compare' : 'sheds-grid';
+    contentHtml = `<div class="${gridClass}">${visibleSheds.map(s => shedCardHtml(s, today)).join('')}</div>`;
+  }
+
+  return `
+    <div class="group-view-head" style="background:${grad}">
+      <h1>Group ${g} <span>Sheds ${sheds.map(s => s.id).join(' & ')}</span></h1>
+      <div class="pills">
+        <span>Live <strong>${live.toLocaleString()}</strong></span>
+        <span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span>
+        <span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span>
+        <span>Picked <strong>${picked.toLocaleString()}</strong></span>
+      </div>
+    </div>
+    ${shedTabsHtml(g, view, sheds)}
+    ${contentHtml}
+  `;
+}
+
+function shedTabsHtml(g, view, sheds){
+  if (sheds.length < 2) return '';
+  const sA = sheds[0].id, sB = sheds[1].id;
+  return `
+    <div class="shed-tabs">
+      <button class="stab ${view==='shed1'?'active':''}" data-shedview="shed1" data-group="${g}">
+        <span class="stab-icon">🏠</span> Shed ${sA}
+      </button>
+      <button class="stab ${view==='shed2'?'active':''}" data-shedview="shed2" data-group="${g}">
+        <span class="stab-icon">🏠</span> Shed ${sB}
+      </button>
+      <button class="stab both-btn ${view==='both'?'active':''}" data-shedview="both" data-group="${g}">
+        <span class="stab-icon">🏘️</span> Both sheds
+      </button>
+      <button class="stab planner-btn ${view==='planner'?'active':''}" data-shedview="planner" data-group="${g}">
+        <span class="stab-icon">🌾</span> Feed &amp; Silo
+      </button>
+    </div>
+  `;
+}
+
+function rangeBarHtml(range, ctx){
+  const presets = [
+    { label: 'Last 7',  start: -7, end: 0 },
+    { label: 'Today',   start: 0,  end: 0 },
+    { label: 'Next 7',  start: 0,  end: 7 },
+    { label: 'Next 14', start: 0,  end: 14 },
+    { label: 'Next 21', start: 0,  end: 21 }
+  ];
+  const attr = ctx === 'shed' ? 'data-days' : 'data-silodays';
+  return `
+    <div class="${ctx === 'shed' ? 'range-bar' : 'planner-range-bar'}">
+      <span class="forecast-label">Range:</span>
+      ${presets.map(p => {
+        const active = (p.start === range.start && p.end === range.end);
+        return `<button class="fpill ${active?'active':''}" ${attr}="${p.start},${p.end}">${p.label}</button>`;
+      }).join('')}
+      <div class="custom-range">
+        <input type="number" min="-90" max="90"
+          id="${ctx === 'shed' ? 'shedCustomStart' : 'siloCustomStart'}"
+          value="${range.start}"
+          data-customrange-ctx="${ctx}" data-customrange-bound="start" />
+        <span>to</span>
+        <input type="number" min="-90" max="90"
+          id="${ctx === 'shed' ? 'shedCustomEnd' : 'siloCustomEnd'}"
+          value="${range.end}"
+          data-customrange-ctx="${ctx}" data-customrange-bound="end" />
+        <span>days</span>
+      </div>
+    </div>
+  `;
+}
+
+function rangeLabel(range){
+  if (range.start === -7 && range.end === 0)  return 'Last 7 days';
+  if (range.start === 0  && range.end === 0)  return 'Today only';
+  if (range.start === 0  && range.end === 7)  return 'Next 7 days';
+  if (range.start === 0  && range.end === 14) return 'Next 14 days';
+  if (range.start === 0  && range.end === 21) return 'Next 21 days';
+  if (range.start < 0 && range.end === 0) return `Last ${Math.abs(range.start)} days`;
+  if (range.start === 0 && range.end > 0) return `Next ${range.end} days`;
+  return `${range.start} to ${range.end} days`;
+}
+
+function shedCardHtml(shed, today){
+  const idx = shed.id - 1;
+  const age = ageInDays(shed, today);
+  const live = liveAtStartOfDay(shed, today);
+  const picked = totalPicked(shed);
+  const mRate = mortalityRate(shed);
+  const fp = finalPickupOf(shed);
+
+  const pills = [
+    `<span class="tag muted">Age ${age}d</span>`,
+    `<span class="tag amber">Live ${live.toLocaleString()}</span>`,
+    picked > 0 ? `<span class="tag brown">Picked ${picked.toLocaleString()}</span>` : '',
+    shed.mortality > 0 ? `<span class="tag red">Mort ${shed.mortality.toLocaleString()} (${mRate.toFixed(2)}%)</span>` : '',
+    shed.customFeedKg ? `<span class="tag amber">Custom ${shed.customFeedKg} kg/b</span>` : '',
+    `<span class="tag muted">${shed.pickups.length}/5 pickups</span>`,
+    fp ? `<span class="tag amber">FINAL</span>` : ''
+  ].filter(Boolean).join('');
+
+  const pickupsHtml = shed.pickups.length === 0
+    ? `<div class="pickups-empty">No pickups recorded for this shed.</div>`
+    : `
+      <table class="pickups-table">
+        <thead>
+          <tr><th>Date</th><th class="num">Birds</th><th class="num">Variance</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          ${shed.pickups.map(p => {
+            const v = Number(p.variance);
+            let varHtml = '—';
+            if (Number.isFinite(v)){
+              const cls = v > 0 ? 'var-pos' : (v < 0 ? 'var-neg' : '');
+              varHtml = `<span class="${cls}">${v > 0 ? '+' : ''}${v.toLocaleString()}</span>`;
+            }
+            return `
+              <tr class="${p.isFinal ? 'is-final' : ''}">
+                <td>${fmtShort(p.date)}</td>
+                <td class="num">${p.birds.toLocaleString()}</td>
+                <td class="num">${varHtml}</td>
+                <td>${p.isFinal ? '<span class="tag amber">FINAL</span>' : ''}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+  const forecast = computeForecast(shed, shedRange);
+  const forecastHtml = renderShedForecastTable(shed, forecast);
+
+  return `
+    <article class="shed-card">
+      <div class="shed-card-head">
+        <h3>Shed ${shed.id}</h3>
+        <div class="pills">${pills}</div>
+      </div>
+      <div class="shed-body">
+        <div class="shed-grid">
+          <div class="panel">
+            <h4>Inputs (editable)</h4>
+            <div class="field-row">
+              <label for="placement_${idx}">Placement Date</label>
+              <input id="placement_${idx}" type="date" value="${iso(shed.placementDate)}"
+                data-shed="${idx}" data-field="placementDate" />
+            </div>
+            <div class="field-row">
+              <label for="pop_${idx}">Initial Population</label>
+              <input id="pop_${idx}" type="number" min="0" value="${shed.initialPopulation}"
+                data-shed="${idx}" data-field="initialPopulation" />
+            </div>
+            <div class="field-row">
+              <label for="mort_${idx}">Mortality</label>
+              <input id="mort_${idx}" type="number" min="0" value="${shed.mortality}"
+                data-shed="${idx}" data-field="mortality" />
+            </div>
+            <div class="field-row">
+              <label for="customFeed_${idx}">Custom Feed (kg/bird)</label>
+              <input id="customFeed_${idx}" type="number" step="0.001" min="0"
+                value="${shed.customFeedKg ?? ''}" placeholder="blank = Ross 308"
+                data-shed="${idx}" data-field="customFeedKg" />
+            </div>
+            <div class="field-row">
+              <label for="cleanout_${idx}">Cleanout Date</label>
+              <input id="cleanout_${idx}" type="date" value="${iso(shed.cleanoutDate)}"
+                data-shed="${idx}" data-field="cleanoutDate"
+                ${fp ? 'title="Set automatically from the final pickup"' : ''} />
+            </div>
+          </div>
+          <div class="panel">
+            <h4>Snapshot (today)</h4>
+            <div class="snapshot-row"><span class="lbl">Age</span><span class="val">${age} days</span></div>
+            <div class="snapshot-row"><span class="lbl">Live birds</span><span class="val big">${live.toLocaleString()}</span></div>
+            <div class="snapshot-row"><span class="lbl">Mortality</span><span class="val">${shed.mortality.toLocaleString()} (${mRate.toFixed(2)}%)</span></div>
+            <div class="snapshot-row"><span class="lbl">Total picked</span><span class="val">${picked.toLocaleString()}</span></div>
+            <div class="snapshot-row"><span class="lbl">Cleanout</span><span class="val">${shed.cleanoutDate ? fmtShort(shed.cleanoutDate) : '—'}</span></div>
+          </div>
+        </div>
+        <div class="pickups-block">
+          <h4>Pickups (${shed.pickups.length}/5)</h4>
+          ${pickupsHtml}
+        </div>
+        <div class="forecast-section">
+          ${rangeBarHtml(shedRange, 'shed')}
+          ${forecastHtml}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderShedForecastTable(shed, forecast){
+  const lbl = rangeLabel(shedRange);
+  if (forecast.notStarted){
+    return `
+      <div class="forecast-block">
+        <h4>📈 Forecast <span class="window-label">${lbl}</span></h4>
+        <div class="forecast-empty">Shed hasn't been placed yet — set a placement date to see the forecast.</div>
+      </div>
+    `;
+  }
+  if (forecast.rows.length === 0){
+    return `
+      <div class="forecast-block">
+        <h4>📈 Forecast <span class="window-label">${lbl}</span></h4>
+        <div class="forecast-empty">No forecast data available.</div>
+      </div>
+    `;
+  }
+  const rows = forecast.rows.map(r => {
+    const weekend = isWeekend(r.date);
+    const rowClasses = [
+      weekend ? 'is-weekend' : '',
+      r.isPast ? 'is-past' : '',
+      r.isToday ? 'is-today' : '',
+      r.pickupsBirds > 0 ? 'pickup-day' : '',
+      r.isFinalDay ? 'is-final' : ''
+    ].filter(Boolean).join(' ');
+    let pickupCell = '—';
+    if (r.pickupsBirds > 0){
+      const finalTag = r.isFinalDay ? `<span class="pickup-pill final">FINAL</span>` : '';
+      pickupCell = `${finalTag}<span class="pickup-pill">−${r.pickupsBirds.toLocaleString()}</span>`;
+    }
+    const liveAfterCls = r.liveAfter === 0 ? 'live-after zero' : 'live-after';
+    const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
+    const weekendTag = weekend ? ' <span class="weekend-pill">Weekend</span>' : '';
+    return `
+      <tr class="${rowClasses}">
+        <td>${fmtShort(r.date)}${todayTag}${weekendTag}</td>
+        <td class="num">${r.age}d</td>
+        <td class="num">${r.liveStart.toLocaleString()}</td>
+        <td class="num">${r.dailyFeed.toFixed(1)} kg</td>
+        <td>${pickupCell}</td>
+        <td class="num ${liveAfterCls}">${r.liveAfter.toLocaleString()}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="forecast-block">
+      <h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4>
+      <div class="forecast-table-wrap">
+        <table class="forecast-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="num">Age</th>
+              <th class="num">Live (start)</th>
+              <th class="num">Daily Feed</th>
+              <th>Pickup</th>
+              <th class="num">Live (after)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr class="total-row">
+              <td colspan="3">Total over range</td>
+              <td class="num">${forecast.totalFeed.toFixed(1)} kg</td>
+              <td colspan="2" style="font-size:12px;font-weight:600;color:var(--muted);">
+                ${(forecast.totalFeed / 1000).toFixed(2)} tonnes
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderFeedPlanner(group, sheds, today){
+  const forecast = computeSiloForecast(group, siloRange);
+  const latest = latestReading(group);
+  const latestDate = latest ? dateOnly(latest.date) : null;
+  const daysSinceReading = latestDate ? Math.max(0, daysBetween(latestDate, today)) : null;
+
+  const projected = currentBalanceKg(group);
+  const consumedSince = consumptionSinceLatestReading(group);
+  const deliveredSince = deliveriesSinceLatestReading(group);
+
+  const hasReading = !!latest;
+  const depletedWithinWindow = !!forecast.depletedDate;
+  const daysUntilDepletion = forecast.depletedDate
+    ? Math.max(0, daysBetween(today, forecast.depletedDate)) : null;
+
+  let statusTone = 'green';
+  let statusText = 'Sufficient';
+  let statusSub = `Feed lasts past ${siloRange.end} days`;
+  if (!hasReading){
+    statusTone = 'amber'; statusText = 'No reading'; statusSub = 'Tap ring levels below';
+  } else if (depletedWithinWindow){
+    if (daysUntilDepletion <= 2){ statusTone = 'red'; statusText = 'Critical'; statusSub = 'Order now!'; }
+    else if (daysUntilDepletion <= 7){ statusTone = 'amber'; statusText = 'Low'; statusSub = 'Order soon'; }
+    else { statusTone = 'green'; statusText = 'Planning needed'; statusSub = `Runs out in ${daysUntilDepletion} days`; }
+  }
+
+  const readingAgeBadge = hasReading
+    ? (daysSinceReading === 0 ? 'Updated today' : `${daysSinceReading} day${daysSinceReading === 1 ? '' : 's'} ago`)
+    : 'No reading yet';
+
+  return `
+    <div class="planner-wrap">
+      <div class="planner-summary">
+        <div class="summary-card">
+          <div class="sc-label">Projected Stock Today</div>
+          <div class="sc-value amber">${hasReading ? fmtFeed(projected) : '—'}</div>
+          <div class="sc-sub">
+            ${hasReading ? `${Math.round(projected).toLocaleString()} kg at end of today` : 'Tap ring levels below to record stock'}
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">${depletedWithinWindow ? 'Depletes On' : 'Feed Lasts'}</div>
+          <div class="sc-value ${statusTone}">${depletedWithinWindow ? fmtShort(forecast.depletedDate) : (hasReading ? `> ${siloRange.end} days` : '—')}</div>
+          <div class="sc-sub">${depletedWithinWindow ? `${daysUntilDepletion} day${daysUntilDepletion === 1 ? '' : 's'} from now` : (hasReading ? `Balance at end: ${fmtFeed(forecast.endBalance)}` : '')}</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">Status</div>
+          <div class="sc-value ${statusTone}">${statusText}</div>
+          <div class="sc-sub">${statusSub}</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">${forecast.shortfall > 0 ? 'Shortfall' : 'Coverage'}</div>
+          <div class="sc-value ${forecast.shortfall > 0 ? 'red' : 'green'}">${forecast.shortfall > 0 ? fmtFeed(forecast.shortfall) : '✅ Covered'}</div>
+          <div class="sc-sub">${forecast.shortfall > 0 ? 'Consumption exceeds supply over range' : `Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div>
+        </div>
+      </div>
+
+      ${hasReading ? `
+        <div class="reading-info">
+          <div class="ri-item">
+            <span class="ri-label">Last reading:</span>
+            <span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span>
+          </div>
+          <div class="ri-item">
+            <span class="ri-label">Consumed since:</span>
+            <span class="ri-value red">−${fmtFeed(consumedSince)}</span>
+          </div>
+          ${deliveredSince > 0 ? `
+            <div class="ri-item">
+              <span class="ri-label">Delivered since:</span>
+              <span class="ri-value">+${fmtFeed(deliveredSince)}</span>
+            </div>
+          ` : ''}
+          <div class="ri-item">
+            <span class="ri-label">Projected today:</span>
+            <span class="ri-value amber">${fmtFeed(projected)}</span>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="planner-card">
+        <h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span></h3>
+        <div class="silo-inputs">
+          ${[1,2,3].map(n => renderSiloInput(group, n, latest ? latest[`silo${n}Rings`] : null)).join('')}
+        </div>
+        <div class="silo-grand-total">
+          <span class="lbl">Reading Total</span>
+          <span class="val">${hasReading ? (readingTotalKg(latest) / 1000).toFixed(2) + ' t' : '—'}
+            <span style="font-size:13px;color:var(--muted);font-weight:600;">
+              ${hasReading ? `(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})` : ''}
+            </span>
+          </span>
+        </div>
+        ${renderReadingHistory(group)}
+      </div>
+
+      ${rangeBarHtml(siloRange, 'silo')}
+
+      <div class="planner-card">
+        <h3>🚛 Scheduled Deliveries <span class="count">${deliveriesForGroup(group).length} scheduled · past deliveries are absorbed by readings</span></h3>
+        ${renderDeliveriesList(group, deliveriesForGroup(group), latestDate)}
+        <div class="add-delivery">
+          <div class="fld fld-date">
+            <label>Date</label>
+            <input id="newdel_date_${group}" type="date" value="${todayIso()}" />
+          </div>
+          <div class="fld fld-amount">
+            <label>Amount (t)</label>
+            <input id="newdel_amount_${group}" type="number" step="0.1" min="0.1" placeholder="10" />
+          </div>
+          <div class="fld fld-type">
+            <label>Feed Type</label>
+            <select id="newdel_type_${group}">
+              <option value="">— Unspecified —</option>
+              ${FEED_TYPES.map(f => `<option value="${f.id}">${f.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="fld fld-note">
+            <label>Note (optional)</label>
+            <input id="newdel_note_${group}" type="text" placeholder="e.g. Order #1234" maxlength="60" />
+          </div>
+          <div class="fld fld-btn">
+            <button type="button" data-adddelivery="${group}">+ Add delivery</button>
+          </div>
+        </div>
+
+        ${renderFeedSummary(group)}
+      </div>
+
+      <div class="planner-card">
+        <h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span></h3>
+        ${renderSiloForecastTable(forecast)}
+      </div>
+    </div>
+  `;
+}
+
+function renderSiloInput(group, siloNum, rings){
+  const isOff = (rings === null || rings === undefined || rings === '');
+  const kg = ringsToKg(rings);
+  return `
+    <div class="silo-input ${isOff ? 'off' : ''}">
+      <div class="silo-title">
+        <span>Silo ${siloNum}</span>
+        ${isOff ? `<span class="off-badge">Off</span>` : `<span class="cap">Max 50 t</span>`}
+      </div>
+      <div class="ring-picker">
+        <button class="ring-off ${isOff ? 'active' : ''}"
+          type="button"
+          data-silo-group="${group}"
+          data-silo-num="${siloNum}"
+          data-silo-ring="off">Off</button>
+        ${[0,1,2,3,4,5].map(r => `
+          <div class="ring-slot ${r === rings ? 'active' : ''}">
+            <button class="ring-btn ${r === rings ? 'active' : ''}"
+              type="button"
+              data-silo-group="${group}"
+              data-silo-num="${siloNum}"
+              data-silo-ring="${r}"
+              title="${r} ring${r === 1 ? '' : 's'} — ${(ringsToKg(r)/1000).toFixed(0)} t">
+              ${r}
+            </button>
+            <span class="ring-t">${(ringsToKg(r)/1000).toFixed(0)}t</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="silo-total">
+        <span class="lbl">${isOff ? 'Not in use' : 'This silo'}</span>
+        <span class="val">${isOff ? '0 kg' : (kg/1000).toFixed(2) + ' t <span class="kg">('+kg.toLocaleString()+' kg)</span>'}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderReadingHistory(group){
+  const arr = readingsSorted(group).slice().reverse().slice(0, 10);
+  if (!arr.length){
+    return `
+      <details class="reading-history">
+        <summary>🕘 Reading history (empty)</summary>
+        <div style="font-size:12.5px;color:var(--muted);padding:8px 0;">
+          Once you tap a ring level, each reading is saved with today's date.
+        </div>
+      </details>
+    `;
+  }
+  const todayIso = iso(new Date());
+  return `
+    <details class="reading-history">
+      <summary>🕘 Reading history (last ${arr.length})</summary>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Silo 1</th>
+            <th>Silo 2</th>
+            <th>Silo 3</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${arr.map(r => {
+            const total = readingTotalKg(r);
+            const cls = r.date === todayIso ? 'today' : '';
+            return `
+              <tr class="${cls}">
+                <td>${fmtShort(dateOnly(r.date))}</td>
+                <td>${r.silo1Rings === null ? '—' : r.silo1Rings + 'r'}</td>
+                <td>${r.silo2Rings === null ? '—' : r.silo2Rings + 'r'}</td>
+                <td>${r.silo3Rings === null ? '—' : r.silo3Rings + 'r'}</td>
+                <td class="num">${(total/1000).toFixed(2)} t</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </details>
+  `;
+}
+
+function renderDeliveriesList(group, deliveries, latestReadingDate){
+  if (!deliveries.length){
+    return `<div class="deliveries-empty">No deliveries scheduled. Add one below to see how it affects depletion.</div>`;
+  }
+  const sorted = deliveries.slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  return `
+    <div class="deliveries-list">
+      ${sorted.map(del => {
+        const t = (del.amountKg || 0) / 1000;
+        const absorbed = latestReadingDate && dateOnly(del.date) <= latestReadingDate;
+        const dateBadge = absorbed ? ' <span style="font-size:10px;color:var(--muted);">(absorbed by reading)</span>' : '';
+        return `
+          <div class="delivery-row">
+            <div class="d-date" style="display:flex;flex-direction:column;">
+              <input type="date"
+                value="${iso(del.date)}"
+                data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="date" />
+              ${dateBadge}
+            </div>
+            <input class="d-amount" type="number" step="0.1" min="0.1"
+              value="${t.toFixed(2)}"
+              data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="amount" />
+            <select class="d-type"
+              data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="feedType">
+              <option value="">— Unspecified —</option>
+              ${FEED_TYPES.map(f => `<option value="${f.id}" ${del.feedType===f.id?'selected':''}>${f.label}</option>`).join('')}
+            </select>
+            <input class="d-note" type="text" placeholder="Note"
+              value="${escapeAttr(del.note || '')}"
+              data-delivery-group="${group}" data-delivery-id="${del.id}" data-field="note"
+              maxlength="60" />
+            <button class="d-del" title="Remove delivery"
+              data-removedelivery="${group}" data-delivery-id="${del.id}">✕</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderSiloForecastTable(forecast){
+  if (forecast.rows.length === 0){
+    return `<div class="forecast-empty">No forecast available.</div>`;
+  }
+  const hasReading = forecast.rows.some(r => r.balance !== null);
+
+  const rows = forecast.rows.map(r => {
+    const rowClasses = [
+      r.isWeekend ? 'is-weekend' : '',
+      r.isPast ? 'is-past' : '',
+      r.isToday ? 'is-today' : '',
+      r.delivery > 0 ? 'pickup-day' : ''
+    ].filter(Boolean).join(' ');
+
+    let deliveryCell = '—';
+    if (r.delivery > 0){
+      const types = Array.from(new Set(r.deliveries.map(d => d.feedType).filter(Boolean)));
+      const typeTags = types.map(t => feedTypeTagHtml(t)).join('');
+      deliveryCell = `<span class="delivery-pill">+${(r.delivery / 1000).toFixed(1)} t</span> ${typeTags}`;
+    }
+
+    let balCell = '—';
+    let balCls = '';
+    let statusCell = '';
+    if (r.balance !== null){
+      const bal = r.balance;
+      balCls = bal > 0 ? 'balance-pos' : 'balance-neg';
+      balCell = Math.round(bal).toLocaleString() + ' kg';
+      if (r.isPast){
+        statusCell = '<span class="tag muted">Actual</span>';
+      } else if (bal <= 0 && r.consumption > 0){
+        statusCell = '<span class="tag red">Empty</span>';
+      } else if (bal < 5000){
+        statusCell = '<span class="tag amber">Low</span>';
+      }
+    }
+
+    const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
+    const weekendTag = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
+
+    return `
+      <tr class="${rowClasses}">
+        <td>${fmtShort(r.date)}${todayTag}${weekendTag}</td>
+        <td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>
+        <td>${deliveryCell}</td>
+        <td class="num ${balCls}">${balCell}</td>
+        <td>${statusCell}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="forecast-table-wrap">
+      <table class="forecast-table" style="min-width:640px;">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="num">Daily Feed</th>
+            <th>Delivery</th>
+            <th class="num">Balance (end of day)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="total-row">
+            <td>Totals</td>
+            <td class="num">${fmtFeed(forecast.totalConsumption)}</td>
+            <td>${forecast.totalDelivered > 0 ? '+' + fmtFeed(forecast.totalDelivered) : '—'}</td>
+            <td class="num ${(forecast.endBalance || 0) > 0 ? 'balance-pos' : 'balance-neg'}">${forecast.endBalance !== null ? fmtFeed(forecast.endBalance) : '—'}</td>
+            <td>${hasReading ? (forecast.shortfall > 0 ? '<span class="tag red">Shortfall</span>' : '<span class="tag green">OK</span>') : '<span class="tag muted">—</span>'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---------- Event wiring ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(loadTheme());
+  loadSyncState();
+
+  const saved = loadState();
+  if (saved) farmData = saved;
+  initShedViews();
+  const savedSilo = loadSiloData();
+  if (savedSilo) siloData = savedSilo;
+  renderSyncButton();
+  render();
+
+  if (syncFarmName && syncConnectedAt){
+    pullFromCloud(true).catch(() => {});
+  }
+
+  // Register PWA service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#cluckwiseBtn')){
+      window.open(CLUCKWISE_URL, '_blank', 'noopener');
+      return;
+    }
+    if (e.target.closest('#themeToggle')){ toggleTheme(); return; }
+    if (e.target.closest('#syncBtn')){ openSyncModal(); return; }
+    if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn')){ triggerImport(); return; }
+    if (e.target.closest('#emptyConnectBtn')){ openSyncModal(); return; }
+
+    const ringBtn = e.target.closest('.ring-btn, .ring-off');
+    if (ringBtn){
+      const g = Number(ringBtn.dataset.siloGroup);
+      const n = Number(ringBtn.dataset.siloNum);
+      const raw = ringBtn.dataset.siloRing;
+      if (Number.isFinite(g) && Number.isFinite(n)){
+        if (raw === 'off'){
+          setSiloRingsForToday(g, n, null);
+        } else {
+          const r = Number(raw);
+          const latest = latestReading(g);
+          const current = latest ? latest[`silo${n}Rings`] : null;
+          if (current === r) setSiloRingsForToday(g, n, null);
+          else setSiloRingsForToday(g, n, r);
+        }
+      }
+      return;
+    }
+
+    const stab = e.target.closest('.stab');
+    if (stab){
+      const g = Number(stab.dataset.group);
+      const view = stab.dataset.shedview;
+      if (g && view) setShedView(g, view);
+      return;
+    }
+
+    const pill = e.target.closest('.fpill');
+    if (pill){
+      const shedVal = pill.dataset.days;
+      const siloVal = pill.dataset.silodays;
+      if (shedVal){
+        const [s, e] = shedVal.split(',').map(Number);
+        if (Number.isFinite(s) && Number.isFinite(e)){
+          shedRange = { start:s, end:e };
+          schedulePush();
+          render();
+        }
+      } else if (siloVal){
+        const [s, e] = siloVal.split(',').map(Number);
+        if (Number.isFinite(s) && Number.isFinite(e)){
+          siloRange = { start:s, end:e };
+          schedulePush();
+          render();
+        }
+      }
+      return;
+    }
+
+    const addBtn = e.target.closest('[data-adddelivery]');
+    if (addBtn){
+      const g = Number(addBtn.dataset.adddelivery);
+      const dateEl = document.getElementById(`newdel_date_${g}`);
+      const amtEl  = document.getElementById(`newdel_amount_${g}`);
+      const typEl  = document.getElementById(`newdel_type_${g}`);
+      const noteEl = document.getElementById(`newdel_note_${g}`);
+      addSiloDelivery(g, dateEl.value, amtEl.value, typEl.value, noteEl.value);
+      return;
+    }
+
+    const rmBtn = e.target.closest('[data-removedelivery]');
+    if (rmBtn){
+      const g = Number(rmBtn.dataset.removedelivery);
+      const id = rmBtn.dataset.deliveryId;
+      if (confirm('Remove this delivery?')) removeSiloDelivery(g, id);
+      return;
+    }
+
+    const tabBtn = e.target.closest('[data-tab]');
+    if (tabBtn){
+      const t = tabBtn.dataset.tab;
+      if (t){ activeTab = t; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      return;
+    }
+  });
+
+  document.getElementById('excelFile').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) handleFile(f);
+  });
+
+  document.getElementById('batchNumber').addEventListener('change', (e) => {
+    setBatchNumber(e.target.value);
+  });
+  document.getElementById('batchNumber').addEventListener('blur', (e) => {
+    if (farmData) e.target.value = farmData.batchNumber;
+  });
+
+  document.getElementById('syncScrim').addEventListener('click', () => {
+    closeSyncModal();
+  });
+
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+
+    if (t.dataset && t.dataset.customrangeCtx && t.dataset.customrangeBound){
+      const ctx = t.dataset.customrangeCtx;
+      const bound = t.dataset.customrangeBound;
+      const val = Number(t.value);
+      if (!Number.isFinite(val)) return;
+      const clamped = Math.max(-90, Math.min(90, Math.floor(val)));
+      const range = ctx === 'shed' ? { ...shedRange } : { ...siloRange };
+      range[bound] = clamped;
+      if (range.start > range.end) return;
+      if (ctx === 'shed') shedRange = range;
+      else siloRange = range;
+      schedulePush();
+      render();
+      return;
+    }
+
+    if (t.dataset && t.dataset.deliveryGroup !== undefined && t.dataset.deliveryId){
+      const g = Number(t.dataset.deliveryGroup);
+      const id = t.dataset.deliveryId;
+      const field = t.dataset.field;
+      if (field === 'date')     updateSiloDeliveryDate(g, id, t.value);
+      if (field === 'amount')   updateSiloDeliveryAmount(g, id, t.value);
+      if (field === 'feedType') updateSiloDeliveryFeedType(g, id, t.value);
+      if (field === 'note')     updateSiloDeliveryNote(g, id, t.value);
+      return;
+    }
+
+    if (t instanceof HTMLInputElement && t.dataset && t.dataset.shed !== undefined && t.dataset.field){
+      updateShedField(Number(t.dataset.shed), t.dataset.field, t.value);
+    }
+  });
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'hidden'){
+      flushPendingPush();
+    } else if (document.visibilityState === 'visible'){
+      if (syncFarmName && syncConnectedAt){
+        if (pushPending){ await runScheduledPush(); }
+        pullFromCloud(true).catch(() => {});
+      }
+    }
+  });
+  window.addEventListener('pagehide', flushPendingPush);
+  window.addEventListener('beforeunload', flushPendingPush);
+});
+</script>
+
+</body>
+</html>
