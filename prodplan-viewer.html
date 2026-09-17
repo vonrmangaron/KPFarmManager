@@ -122,6 +122,10 @@
   .hero-ring{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.35); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; }
   .hero-progress-text{ font-size:13.5px; font-weight:600; opacity:0.85; }
   .hero-progress-text strong{ font-family:'Sora',sans-serif; font-size:15px; }
+  .hero-audit-banner{
+    margin-top:14px; padding:9px 12px; border-radius:12px; background:rgba(0,0,0,0.12);
+    font-size:12.5px; font-weight:700; color:inherit;
+  }
 
   /* ---------- section headers ---------- */
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:26px 0 12px; }
@@ -174,6 +178,17 @@
   .task-status-btn.done{ background:var(--secondary-soft); color:var(--secondary); }
   .task-status-btn:hover{ filter:brightness(0.94); }
   .task-status-btn:active{ transform:scale(0.9); }
+  .task-card.just-completed{ animation:task-complete-pulse 0.5s ease; }
+  .task-card.just-completed .task-status-btn{ animation:task-complete-pop 0.5s ease; }
+  @keyframes task-complete-pulse{
+    0%{ background:var(--success-soft, var(--secondary-soft)); }
+    100%{ background:var(--surface); }
+  }
+  @keyframes task-complete-pop{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.25); }
+    100%{ transform:scale(1); }
+  }
   .task-status-btn svg{ width:22px; height:22px; }
 
   .empty-note{
@@ -191,6 +206,12 @@
   .audit-body{ flex:1; min-width:0; }
   .audit-name{ font-weight:700; font-size:14.5px; color:var(--ink); margin-bottom:2px; }
   .audit-sub{ font-size:12.5px; color:var(--muted); }
+  .audit-card.audit-today{ border-color:var(--primary); border-width:1.5px; background:var(--primary-soft); }
+  .audit-today-badge{
+    align-self:flex-start; flex-shrink:0; background:var(--primary); color:#241A08; font-size:10px; font-weight:800;
+    padding:3px 8px; border-radius:999px; font-family:'Sora',sans-serif;
+  }
+  body.theme-dark .audit-today-badge{ color:#1A1300; }
 
   /* ---------- settings sheet ---------- */
   .scrim{ position:fixed; inset:0; background:rgba(20,15,8,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity .18s ease; }
@@ -312,7 +333,7 @@
       <div id="taskListSection"></div>
     </div>
     <div>
-      <div class="section-head"><h2>Upcoming Audits</h2></div>
+      <div class="section-head"><h2 id="upcomingAuditsTitle">Upcoming Audits</h2></div>
       <div id="auditsSection"></div>
     </div>
   </div>
@@ -323,7 +344,7 @@
 <div class="scrim" id="scrim"></div>
 
 <div class="modal" id="overdueTransferModal">
-  <div class="modal-head"><h2>Overdue tasks</h2><button id="closeOverdueTransferModal" aria-label="Close">✕</button></div>
+  <div class="modal-head"><h2 id="overdueModalTitle">Overdue tasks</h2><button id="closeOverdueTransferModal" aria-label="Close">✕</button></div>
   <div class="modal-body">
     <p style="font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.6;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open. Mark them done below if they're finished, or let your manager know so they can reschedule them.</p>
     <div id="overdueTransferList"></div>
@@ -333,20 +354,27 @@
 
 <div class="sheet" id="settingsSheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2>Settings</h2><button id="closeSettings" aria-label="Close">✕</button></div>
+  <div class="sheet-head"><h2 id="settingsTitle">Settings</h2><button id="closeSettings" aria-label="Close">✕</button></div>
   <div class="sheet-body">
-    <span class="field-label">Task text size</span>
+    <span class="field-label" id="fontSizeLabel">Task text size</span>
     <select id="setFontSize">
-      <option value="small">Small</option>
-      <option value="medium">Medium</option>
-      <option value="large">Large</option>
+      <option value="small" id="fontSizeSmallOpt">Small</option>
+      <option value="medium" id="fontSizeMediumOpt">Medium</option>
+      <option value="large" id="fontSizeLargeOpt">Large</option>
     </select>
-    <p class="field-note">This only changes how it looks on this device. Colors and theme follow whatever the manager has set in the main app.</p>
+    <p class="field-note" id="fontSizeNote">This only changes how it looks on this device. Colors and theme follow whatever the manager has set in the main app.</p>
 
-    <span class="field-label">Farm connection</span>
+    <span class="field-label" id="languageLabel">Language</span>
+    <select id="setLanguage">
+      <option value="en">English</option>
+      <option value="es">Español</option>
+      <option value="tl">Tagalog</option>
+    </select>
+
+    <span class="field-label" id="farmConnLabel">Farm connection</span>
     <div class="status-line" id="githubStatus">Not connected</div>
     <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
-    <p class="field-note">⚠️ Enter the exact farm name your farm owner gave you.</p>
+    <p class="field-note" id="farmNameNote">⚠️ Enter the exact farm name your farm owner gave you.</p>
     <button class="btn-primary" id="connectGithubBtn">Connect</button>
     <button class="btn-secondary" id="syncGithubBtn">Refresh now</button>
   </div>
@@ -354,8 +382,59 @@
 
 <script>
 (function(){
-  const DEFAULT_SETTINGS = { fontSize:'medium' };
+  const DEFAULT_SETTINGS = { fontSize:'medium', lang:'en' };
   const FONT_SIZE_MAP = { small:'13px', medium:'15px', large:'17px' };
+  const TRANSLATIONS = {
+    en: {
+      today:'Today', thisWeek:'This Week', upcoming:'Upcoming',
+      nothingToday:'Nothing scheduled today.', enjoyQuiet:'Enjoy the quiet one.',
+      allDone:'All done for today!', hereWhatsOn:"Here's what's on today.",
+      tasksComplete:'tasks complete', auditToday:'Audit today',
+      noTasksToday:'No tasks scheduled for today.', noTasksWeek:'No tasks scheduled this week.',
+      noTasksUpcoming:'No upcoming tasks scheduled.', noAudits:'No upcoming audits scheduled.',
+      upcomingAudits:'Upcoming Audits', settings:'Settings', taskTextSize:'Task text size',
+      small:'Small', medium:'Medium', large:'Large',
+      settingsNote:'This only changes how it looks on this device. Colors and theme follow whatever the manager has set in the main app.',
+      language:'Language', farmConnection:'Farm connection', connect:'Connect', refreshNow:'Refresh now',
+      farmNamePlaceholder:'e.g. Riverside Farm', farmNameNote:'⚠️ Enter the exact farm name your farm owner gave you.',
+      overdueTasks:'Overdue tasks', gotIt:'Got it', synced:'Synced', loadingTasks:"Loading today's tasks…",
+      connectedFarm:'Connected — farm', enterFarmName:'Enter the farm name your farm owner gave you.'
+    },
+    es: {
+      today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
+      nothingToday:'No hay tareas para hoy.', enjoyQuiet:'Disfruta el día tranquilo.',
+      allDone:'¡Todo listo por hoy!', hereWhatsOn:'Esto es lo de hoy.',
+      tasksComplete:'tareas completadas', auditToday:'Auditoría hoy',
+      noTasksToday:'No hay tareas programadas para hoy.', noTasksWeek:'No hay tareas esta semana.',
+      noTasksUpcoming:'No hay tareas próximas.', noAudits:'No hay auditorías próximas.',
+      upcomingAudits:'Próximas Auditorías', settings:'Ajustes', taskTextSize:'Tamaño del texto',
+      small:'Pequeño', medium:'Mediano', large:'Grande',
+      settingsNote:'Esto solo cambia cómo se ve en este dispositivo. Los colores siguen lo que el gerente configuró en la app principal.',
+      language:'Idioma', farmConnection:'Conexión de granja', connect:'Conectar', refreshNow:'Actualizar ahora',
+      farmNamePlaceholder:'ej. Granja Riverside', farmNameNote:'⚠️ Escribe el nombre exacto que te dio el dueño de la granja.',
+      overdueTasks:'Tareas atrasadas', gotIt:'Entendido', synced:'Guardado', loadingTasks:'Cargando tareas de hoy…',
+      connectedFarm:'Conectado — granja', enterFarmName:'Escribe el nombre que te dio el dueño de la granja.'
+    },
+    tl: {
+      today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
+      nothingToday:'Walang gawain ngayon.', enjoyQuiet:'Mag-relax muna.',
+      allDone:'Tapos na ang lahat ngayon!', hereWhatsOn:'Ito ang mga gawain ngayon.',
+      tasksComplete:'gawaing tapos na', auditToday:'May audit ngayon',
+      noTasksToday:'Walang naka-schedule na gawain ngayon.', noTasksWeek:'Walang gawain ngayong linggo.',
+      noTasksUpcoming:'Walang paparating na gawain.', noAudits:'Walang paparating na audit.',
+      upcomingAudits:'Mga Paparating na Audit', settings:'Mga Setting', taskTextSize:'Laki ng titik',
+      small:'Maliit', medium:'Katamtaman', large:'Malaki',
+      settingsNote:'Ito lang ang magbabago kung paano tumingin sa device na ito. Ang kulay ay sinusunod mula sa pangunahing app.',
+      language:'Wika', farmConnection:'Koneksyon ng bukid', connect:'Kumonekta', refreshNow:'I-refresh ngayon',
+      farmNamePlaceholder:'hal. Riverside Farm', farmNameNote:'⚠️ Ilagay ang eksaktong pangalan na ibinigay ng may-ari ng bukid.',
+      overdueTasks:'Mga huling gawain', gotIt:'Sige', synced:'Na-save', loadingTasks:'Naglo-load ng mga gawain ngayon…',
+      connectedFarm:'Konektado — bukid', enterFarmName:'Ilagay ang pangalan na ibinigay ng may-ari ng bukid.'
+    }
+  };
+  function t(key){
+    const lang = settings.lang || 'en';
+    return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+  }
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const DEFAULT_EVENT_COLOR = '#000000';
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
@@ -438,6 +517,26 @@
     document.body.classList.toggle('hide-icons', !syncedDisplay.showIcons);
     const fs=$('#setFontSize');
     if(fs) fs.value=settings.fontSize;
+    applyLanguage();
+  }
+  function applyLanguage(){
+    const lang=$('#setLanguage');
+    if(lang) lang.value = settings.lang || 'en';
+    $('#settingsTitle').textContent = t('settings');
+    $('#fontSizeLabel').textContent = t('taskTextSize');
+    $('#fontSizeSmallOpt').textContent = t('small');
+    $('#fontSizeMediumOpt').textContent = t('medium');
+    $('#fontSizeLargeOpt').textContent = t('large');
+    $('#fontSizeNote').textContent = t('settingsNote');
+    $('#languageLabel').textContent = t('language');
+    $('#farmConnLabel').textContent = t('farmConnection');
+    $('#farmNameNote').textContent = t('farmNameNote');
+    $('#connectGithubBtn').textContent = t('connect');
+    $('#syncGithubBtn').textContent = t('refreshNow');
+    $('#githubPathInput').placeholder = t('farmNamePlaceholder');
+    $('#upcomingAuditsTitle').textContent = t('upcomingAudits');
+    $('#overdueModalTitle').textContent = t('overdueTasks');
+    $('#dismissOverdueTransfer').textContent = t('gotIt');
   }
   function loadLocalPrefs(){
     try{ settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('prodplan-viewer-prefs')||'{}')); }catch(e){}
@@ -450,8 +549,8 @@
   }
   function updateGithubStatusUI(){
     const el=$('#githubStatus'); if(!el) return;
-    if(ghPath) el.textContent = `Connected — farm "${ghFarmName}"`;
-    else el.textContent = 'Enter the farm name your farm owner gave you.';
+    if(ghPath) el.textContent = `${t('connectedFarm')} "${ghFarmName}"`;
+    else el.textContent = t('enterFarmName');
     const p=$('#githubPathInput');
     if(p && ghFarmName) p.value=ghFarmName;
   }
@@ -534,11 +633,13 @@
   let statusPushTimer = null;
   let statusPushInFlight = false;
 
+  let justCompletedId = null;
   function toggleTaskDoneInViewer(id){
     const localTask = tasks.find(t=>t.id===id);
     if(!localTask) return;
     const newStatus = localTask.status==='done' ? 'open' : 'done';
     localTask.status = newStatus;
+    if(newStatus==='done') justCompletedId = id;
     pendingStatusChanges.set(id, newStatus);
     renderAll();
     clearTimeout(statusPushTimer);
@@ -618,7 +719,8 @@
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function buildReadOnlyTaskCard(t){
     const card=document.createElement('div');
-    card.className='task-card'+(t.status==='done'?' done':'');
+    const wasJustCompleted = t.id===justCompletedId;
+    card.className='task-card'+(t.status==='done'?' done':'')+(wasJustCompleted?' just-completed':'');
     card.dataset.id = t.id;
     card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
@@ -629,6 +731,10 @@
       if(!ghPath){ showToast('Connect in Settings to save changes.', true); return; }
       toggleTaskDoneInViewer(t.id);
     });
+    if(wasJustCompleted){
+      justCompletedId = null;
+      setTimeout(()=> card.classList.remove('just-completed'), 700);
+    }
     return card;
   }
 
@@ -642,7 +748,7 @@
   }
   function renderAgendaFilterBar(){
     const bar=$('#agendaFilterBar'); bar.innerHTML='';
-    [['today','Today'],['week','This Week'],['upcoming','Upcoming']].forEach(([key,label])=>{
+    [['today',t('today')],['week',t('thisWeek')],['upcoming',t('upcoming')]].forEach(([key,label])=>{
       const btn=document.createElement('button');
       btn.textContent=label; btn.className = agendaFilter===key ? 'active' : '';
       btn.addEventListener('click', ()=>{ agendaFilter=key; renderList(); });
@@ -656,23 +762,37 @@
     const total = todayTasks.length;
     $('#heroDate').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
     if(total===0){
-      $('#heroTitle').textContent = "Nothing scheduled today.";
-      $('#heroProgressText').innerHTML = 'Enjoy the quiet one.';
+      $('#heroTitle').textContent = t('nothingToday');
+      $('#heroProgressText').innerHTML = t('enjoyQuiet');
     } else if(done===total){
-      $('#heroTitle').textContent = "All done for today!";
-      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> tasks complete`;
+      $('#heroTitle').textContent = t('allDone');
+      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> ${t('tasksComplete')}`;
     } else {
-      $('#heroTitle').textContent = "Here's what's on today.";
-      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> tasks complete`;
+      $('#heroTitle').textContent = t('hereWhatsOn');
+      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> ${t('tasksComplete')}`;
     }
     $('#heroRing').textContent = `${done}/${total}`;
+
+    const todaysAudits = events.filter(e=> e.date===todayKey);
+    let banner = document.getElementById('heroAuditBanner');
+    if(todaysAudits.length>0){
+      if(!banner){
+        banner = document.createElement('div');
+        banner.id = 'heroAuditBanner';
+        banner.className = 'hero-audit-banner';
+        $('.hero-card').appendChild(banner);
+      }
+      banner.textContent = `📋 ${t('auditToday')}: ${todaysAudits.map(e=>e.name).join(', ')}`;
+    } else if(banner){
+      banner.remove();
+    }
   }
   function renderList(){
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
     const dated=getAgendaTasks();
     if(dated.length===0){
-      const emptyMsg = agendaFilter==='today' ? 'No tasks scheduled for today.' : agendaFilter==='week' ? 'No tasks scheduled this week.' : 'No upcoming tasks scheduled.';
+      const emptyMsg = agendaFilter==='today' ? t('noTasksToday') : agendaFilter==='week' ? t('noTasksWeek') : t('noTasksUpcoming');
       const note=document.createElement('div'); note.className='empty-note'; note.textContent=emptyMsg;
       wrap.appendChild(note); return;
     }
@@ -693,13 +813,14 @@
     const todayKey = dateKey(new Date());
     const upcoming = events.filter(e=> e.date >= todayKey).sort((a,b)=> a.date.localeCompare(b.date));
     if(upcoming.length===0){
-      wrap.innerHTML = '<div class="empty-note">No upcoming audits scheduled.</div>';
+      wrap.innerHTML = `<div class="empty-note">${t('noAudits')}</div>`;
       return;
     }
     upcoming.forEach(ev=>{
       const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1);
-      const card = document.createElement('div'); card.className='audit-card';
-      card.innerHTML = `<span class="audit-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>`;
+      const isToday = ev.date===todayKey;
+      const card = document.createElement('div'); card.className='audit-card'+(isToday?' audit-today':'');
+      card.innerHTML = `<span class="audit-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>${isToday?'<span class="audit-today-badge">TODAY</span>':''}`;
       card.querySelector('.audit-name').textContent = ev.batchNumber ? `${ev.name} (Batch #${ev.batchNumber})` : ev.name;
       card.querySelector('.audit-sub').textContent = `${formatFull(ev.date)} • prep week ${formatFull(cs)}–${formatFull(ce)}`;
       wrap.appendChild(card);
@@ -727,6 +848,7 @@
   $('#closeSettings').addEventListener('click', closeOverlays);
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
+  $('#setLanguage').addEventListener('change', (e)=>{ settings.lang=e.target.value; applySettings(); saveLocalPrefs(); updateGithubStatusUI(); renderAll(); });
   $('#connectGithubBtn').addEventListener('click', connectGithub);
   $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
 
