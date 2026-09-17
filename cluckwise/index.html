@@ -364,19 +364,6 @@
   /* ---------- Kanban ---------- */
   .kanban-board{ display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none; }
   .kanban-board::-webkit-scrollbar{ display:none; }
-  .kanban-scroll-wrap{ position:relative; display:flex; align-items:flex-start; gap:0; }
-  .kanban-scroll-wrap .kanban-board{ flex:1; min-width:0; }
-  .kanban-nav-btn{
-    flex-shrink:0; align-self:center; width:36px; height:36px; border-radius:50%; border:1px solid var(--line);
-    background:var(--surface); color:var(--ink); font-size:18px; cursor:pointer; box-shadow:var(--shadow-md);
-    display:flex; align-items:center; justify-content:center; margin-top:60px;
-    position:sticky; z-index:6; transition:opacity .15s ease, transform .1s ease;
-  }
-  .kanban-nav-prev{ left:0; margin-right:10px; }
-  .kanban-nav-next{ right:0; margin-left:10px; }
-  .kanban-nav-btn:hover{ transform:scale(1.06); }
-  .kanban-nav-btn:active{ transform:scale(0.94); }
-  .kanban-nav-btn:disabled{ opacity:0.3; cursor:default; pointer-events:none; }
   .kanban-board.panning{ cursor:grabbing; user-select:none; }
   .kanban-column{ flex:0 0 270px; min-width:270px; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
   .col-head{
@@ -620,7 +607,6 @@
       overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
       padding-bottom:4px;
     }
-    .kanban-nav-btn{ display:none; }
     .kanban-column{ flex:0 0 auto; width:calc(100vw - 76px); min-width:0; scroll-snap-align:start; }
     .kanban-column .col-head .dtitle{ font-size:14px; }
     .kanban-column .kcard .kbody{ padding:9px 10px; }
@@ -2831,35 +2817,7 @@
       }
       board.appendChild(col);
     }
-
-    const scrollWrap = document.createElement('div');
-    scrollWrap.className = 'kanban-scroll-wrap';
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'kanban-nav-btn kanban-nav-prev';
-    prevBtn.innerHTML = '‹';
-    prevBtn.setAttribute('aria-label', 'Scroll left');
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'kanban-nav-btn kanban-nav-next';
-    nextBtn.innerHTML = '›';
-    nextBtn.setAttribute('aria-label', 'Scroll right');
-    scrollWrap.appendChild(prevBtn);
-    scrollWrap.appendChild(board);
-    scrollWrap.appendChild(nextBtn);
-    wrap.appendChild(scrollWrap);
-
-    function scrollBoardBy(dir){
-      const firstCol = board.querySelector('.kanban-column');
-      const colWidth = firstCol ? firstCol.getBoundingClientRect().width + 15 : 285;
-      board.scrollBy({left: dir*colWidth*2, behavior:'smooth'});
-    }
-    prevBtn.addEventListener('click', ()=> scrollBoardBy(-1));
-    nextBtn.addEventListener('click', ()=> scrollBoardBy(1));
-    function updateNavButtonState(){
-      prevBtn.disabled = board.scrollLeft <= 4;
-      nextBtn.disabled = board.scrollLeft >= board.scrollWidth - board.clientWidth - 4;
-    }
-    updateNavButtonState();
-    board.addEventListener('scroll', updateNavButtonState);
+    wrap.appendChild(board);
 
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
@@ -2880,31 +2838,74 @@
       }, 80);
     });
 
-    // Mouse drag-to-pan (desktop) — click and hold on empty column space, then drag left/right.
-    // Deliberately ignores drags starting on a card so SortableJS's own drag-reorder keeps working.
+    // Drag-to-pan with momentum (desktop/tablet width) — click/touch and hold on empty board
+    // space, then drag left/right; releasing while moving continues scrolling with decaying
+    // velocity, like a native touch scroll. Deliberately ignores drags starting on a card or
+    // button so SortableJS's own drag-reorder and the collapse toggle keep working untouched.
+    // Touch is scoped to the fixed-column desktop/tablet layout only — mobile already has its
+    // own tuned scroll-snap swipe (one column at a time), and layering this on top of that
+    // would fight the browser's native snap behavior rather than complement it.
     let isPanning = false, panStartX = 0, panScrollLeft = 0, didPan = false;
-    board.addEventListener('mousedown', (e)=>{
-      if(e.target.closest('.kcard') || e.target.closest('button')) return;
+    let velocityX = 0, lastMoveX = 0, lastMoveTime = 0, momentumFrame = null;
+
+    function cancelMomentum(){ if(momentumFrame){ cancelAnimationFrame(momentumFrame); momentumFrame = null; } }
+    function startMomentum(){
+      let vx = velocityX * 16;
+      const decay = 0.94;
+      function step(){
+        if(Math.abs(vx) < 0.5){ momentumFrame = null; return; }
+        board.scrollLeft -= vx;
+        vx *= decay;
+        momentumFrame = requestAnimationFrame(step);
+      }
+      momentumFrame = requestAnimationFrame(step);
+    }
+    function panEligible(target){ return !target.closest('.kcard') && !target.closest('button'); }
+    function panStart(clientX, target){
+      if(!panEligible(target)) return false;
+      cancelMomentum();
       isPanning = true; didPan = false;
       board.classList.add('panning');
-      panStartX = e.pageX;
-      panScrollLeft = board.scrollLeft;
-    });
-    window.addEventListener('mousemove', (e)=>{
+      panStartX = clientX; panScrollLeft = board.scrollLeft;
+      lastMoveX = clientX; lastMoveTime = performance.now();
+      velocityX = 0;
+      return true;
+    }
+    function panMove(clientX){
       if(!isPanning) return;
-      const dx = e.pageX - panStartX;
+      const dx = clientX - panStartX;
       if(Math.abs(dx) > 3) didPan = true;
       board.scrollLeft = panScrollLeft - dx;
-    });
-    window.addEventListener('mouseup', ()=>{
+      const now = performance.now();
+      const dt = now - lastMoveTime;
+      if(dt > 0) velocityX = (clientX - lastMoveX) / dt;
+      lastMoveX = clientX; lastMoveTime = now;
+    }
+    function panEnd(){
       if(!isPanning) return;
       isPanning = false;
       board.classList.remove('panning');
-      if(didPan){ suppressNextClick = true; setTimeout(()=>{ suppressNextClick = false; }, 80); }
-    });
-    board.addEventListener('mouseleave', ()=>{
-      if(isPanning){ isPanning = false; board.classList.remove('panning'); }
-    });
+      if(didPan){
+        suppressNextClick = true; setTimeout(()=>{ suppressNextClick = false; }, 80);
+        startMomentum();
+      }
+    }
+
+    board.addEventListener('mousedown', (e)=> panStart(e.pageX, e.target));
+    window.addEventListener('mousemove', (e)=> panMove(e.pageX));
+    window.addEventListener('mouseup', panEnd);
+    board.addEventListener('mouseleave', ()=>{ if(isPanning){ isPanning=false; board.classList.remove('panning'); } });
+
+    board.addEventListener('touchstart', (e)=>{
+      if(window.innerWidth<=760) return;
+      panStart(e.touches[0].clientX, e.target);
+    }, {passive:true});
+    board.addEventListener('touchmove', (e)=>{
+      if(!isPanning) return;
+      panMove(e.touches[0].clientX);
+    }, {passive:true});
+    board.addEventListener('touchend', panEnd);
+    board.addEventListener('touchcancel', panEnd);
 
     if(currentDate.toDateString ? dateKey(currentDate)===todayKey : false){
       const todayCol = board.querySelector('.kanban-column.today');
