@@ -145,6 +145,9 @@
   .quick-actions{ display:flex; gap:8px; margin-bottom:18px; }
 
   .save-indicator{font-size:12px;color:var(--secondary);opacity:0;transition:opacity .4s ease;font-weight:500;}
+  .save-indicator.syncing{ color:var(--muted); animation:sync-pulse 1.2s ease-in-out infinite; }
+  .save-indicator.sync-error{ color:var(--danger); font-weight:700; animation:none; }
+  @keyframes sync-pulse{ 0%,100%{opacity:0.6;} 50%{opacity:1;} }
   .save-indicator.show{opacity:1;}
 
   .main{flex:1;display:flex;min-height:0;}
@@ -220,7 +223,27 @@
 
   .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;align-items:center;gap:9px;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
   .task-card.overdue{ border-color:var(--danger); border-left-width:4px; background:var(--danger-soft); }
+  .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
+  body.theme-dark .task-card.high-priority{ background:#3D3320; }
   .overdue-flag{ color:var(--danger); font-size:15px; flex-shrink:0; }
+  .priority-flag{ font-size:14px; flex-shrink:0; }
+  .task-note-flag{ font-size:13px; flex-shrink:0; opacity:0.7; cursor:help; }
+  .bulk-select-cb{ width:20px; height:20px; flex-shrink:0; accent-color:var(--primary); cursor:pointer; }
+  .bulk-action-bar{
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:60;
+    display:flex; align-items:center; gap:10px; background:var(--ink); color:#fff;
+    padding:10px 14px 10px 18px; border-radius:999px; box-shadow:var(--shadow-lg);
+  }
+  body.theme-dark .bulk-action-bar{ background:var(--surface); border:1px solid var(--line); }
+  .bulk-count{ font-size:13px; font-weight:700; white-space:nowrap; }
+  .bulk-btn{
+    border:none; border-radius:999px; padding:9px 16px; font-weight:700; font-size:13px; cursor:pointer;
+    white-space:nowrap; transition:filter .12s ease;
+  }
+  .bulk-btn:hover{ filter:brightness(1.1); }
+  .bulk-btn.bulk-done{ background:var(--primary); color:#241A08; }
+  .bulk-btn.bulk-delete{ background:var(--danger-soft); color:var(--danger); }
+  .bulk-btn.bulk-delete.confirm{ background:var(--danger); color:#fff; }
   .task-card:hover{box-shadow:var(--shadow-md); transform:translateY(-1px);}
   .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
@@ -942,6 +965,10 @@
       <span class="dlabel">Assignees</span>
       <div class="assignee-list" id="detailAssigneeList"></div>
     </div>
+    <div class="drow" id="detailNotesRow" style="display:none;align-items:flex-start;">
+      <span class="dlabel">Notes</span>
+      <span class="dvalue" id="detailNotes" style="white-space:pre-wrap;"></span>
+    </div>
     <div class="series-note" id="detailSeriesNote" style="display:none;"></div>
   </div>
   <div class="detail-actions">
@@ -984,6 +1011,12 @@
       <input type="date" id="editTaskUntilInput">
     </div>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Repeating creates individual occurrences up to the date above — you can still edit or delete any single one later.</p>
+    <label for="editTaskNotesInput">Notes (optional)</label>
+    <textarea id="editTaskNotesInput" maxlength="300" rows="2" placeholder="e.g. Gate was jammed, used side entrance" style="width:100%;border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:14.5px;font-family:inherit;color:var(--ink);resize:vertical;"></textarea>
+    <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskPriorityInput"> 🔥 Mark as high priority</label>
+    <div id="editTaskSeriesRow" style="display:none;">
+      <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskApplySeriesInput"> 🔁 Also apply name, notes, priority and assignees to all future occurrences in this series</label>
+    </div>
     <button class="btn-app" id="saveEditTaskBtn" style="margin-top:10px;">Save changes</button>
   </div>
 </div>
@@ -1066,6 +1099,7 @@
     <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="reportChecklistOnly"> Print as a physical checklist (task names with checkboxes only — no summary)</label>
 
     <button class="btn-app" id="confirmReportBtn" style="margin-top:10px;">Download PDF</button>
+    <button class="btn-ai-wide" id="exportCsvBtn" style="margin-top:8px;">Download CSV</button>
   </div>
 </div>
 
@@ -1264,8 +1298,22 @@
   // Prefers Claude.ai's built-in artifact storage when available; falls back to the
   // browser's own localStorage so the app also works when self-hosted (e.g. GitHub Pages).
   async function persist(){
-    flashSaved();
+    showSyncPending();
     schedulePush();
+  }
+  function showSyncPending(){
+    const el = $('#saveIndicator');
+    clearTimeout(flashSaved._t);
+    el.textContent = 'Syncing…';
+    el.classList.remove('sync-error');
+    el.classList.add('show', 'syncing');
+  }
+  function showSyncError(){
+    const el = $('#saveIndicator');
+    clearTimeout(flashSaved._t);
+    el.textContent = 'Sync failed — retrying';
+    el.classList.remove('syncing');
+    el.classList.add('show', 'sync-error');
   }
 
   // ---------- debounced GitHub sync ----------
@@ -1285,17 +1333,22 @@
       pushMaxWaitTimer = setTimeout(runScheduledPush, 30000);
     }
   }
-  async function runScheduledPush(){
+  async function runScheduledPush(retryCount){
+    retryCount = retryCount || 0;
     clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
     clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
-    if(!pushPending) return;
+    if(!pushPending && retryCount===0) return;
     if(pushInFlight){
-      pushDebounceTimer = setTimeout(runScheduledPush, 2000);
+      pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount), 2000);
       return;
     }
     pushPending = false;
     pushInFlight = true;
-    try{ await pushToGithub(); } finally { pushInFlight = false; }
+    let ok = false;
+    try{ ok = await pushToGithub(); } finally { pushInFlight = false; }
+    if(!ok && retryCount < 4){
+      pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount+1), 4000 * (retryCount+1));
+    }
   }
   function flushPendingPush(){
     if(!pushPending) return;
@@ -1347,6 +1400,8 @@
   }
   function flashSaved(){
     const el = $('#saveIndicator');
+    el.textContent = 'Saved';
+    el.classList.remove('sync-error', 'syncing');
     el.classList.add('show');
     clearTimeout(flashSaved._t);
     flashSaved._t = setTimeout(()=>el.classList.remove('show'), 1200);
@@ -1412,7 +1467,7 @@
     }
   }
   async function pushToGithub(){
-    if(!ghPath) return;
+    if(!ghPath) return false;
     try{
       const data = {tasks, history, batches, events, settings, frequentTemplates};
       const body = { sha: ghSha, data };
@@ -1421,9 +1476,16 @@
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify(body)
       });
+      if(!res.ok) throw new Error('Sync server responded '+res.status);
       const result = await res.json();
       if(result && result.sha) ghSha = result.sha;
-    }catch(e){ console.error('Push failed', e); }
+      flashSaved();
+      return true;
+    }catch(e){
+      console.error('Push failed', e);
+      showSyncError();
+      return false;
+    }
   }
   function applyImportedData(rawText){
     try{
@@ -1600,14 +1662,29 @@
     if(count>0) addHistory('Recurring task created', `"${baseTask.name}" repeats ${(REPEAT_LABELS[rule]||rule).toLowerCase()} — ${count} occurrence(s) added through ${formatFull(untilDate)}`);
     return count;
   }
-  function editTask(id, name, dateVal, repeatRule, untilDate, assignees){
+  function editTask(id, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
     const oldLabel = taskLabel(t);
+    const thisDate = t.date;
     t.name = name;
     t.date = dateVal;
     t.assignees = assignees ? assignees.slice() : [];
-    addHistory('Edited', `${oldLabel} updated to "${name}"${dateVal ? ' on '+formatFull(dateVal) : ' (Backlog)'}${t.assignees.length ? ' — assigned to '+t.assignees.join(', ') : ''}`);
+    t.notes = notes || '';
+    t.priority = priority || null;
+    let seriesCount = 0;
+    if(applyToSeries && t.seriesId){
+      tasks.forEach(sib=>{
+        if(sib.id!==t.id && sib.seriesId===t.seriesId && sib.date && thisDate && sib.date>=thisDate){
+          sib.name = name;
+          sib.notes = notes || '';
+          sib.priority = priority || null;
+          sib.assignees = assignees ? assignees.slice() : [];
+          seriesCount++;
+        }
+      });
+    }
+    addHistory('Edited', `${oldLabel} updated to "${name}"${dateVal ? ' on '+formatFull(dateVal) : ' (Backlog)'}${t.assignees.length ? ' — assigned to '+t.assignees.join(', ') : ''}${seriesCount>0 ? ` (and ${seriesCount} future occurrence(s) in the series)` : ''}`);
     let count = 0;
     if(repeatRule && repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
       count = generateRecurrence(t, repeatRule, untilDate);
@@ -1953,6 +2030,52 @@
     }
   }
 
+  function exportTasksCSV(opts){
+    let scopedBatch = null, rangeStart = null, rangeEnd = null;
+    if(opts.type==='batch' && opts.batchNumber){
+      scopedBatch = batches.find(b=>b.number===opts.batchNumber) || null;
+      if(scopedBatch){ rangeStart = scopedBatch.start; rangeEnd = scopedBatch.end; }
+    } else if(opts.type==='range' && opts.start && opts.end){
+      rangeStart = opts.start; rangeEnd = opts.end;
+    }
+    const inScope = (t)=>{
+      if(!rangeStart) return true;
+      if(!t.date) return false;
+      return t.date>=rangeStart && t.date<=rangeEnd;
+    };
+    const scopedTasks = tasks.filter(inScope).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+
+    const escapeCsv = (val)=>{
+      const s = (val===null || val===undefined) ? '' : String(val);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    };
+    const headers = ['Date','Task','Status','Priority','Assignees','Notes','Batch'];
+    const rows = scopedTasks.map(t=>{
+      const activeBatch = t.date ? batchesForDate(t.date).find(b=>b) : null;
+      return [
+        t.date ? formatFull(t.date) : 'Backlog',
+        t.name,
+        t.status==='done' ? 'Done' : 'Open',
+        t.priority==='high' ? 'High' : 'Normal',
+        (t.assignees||[]).join('; '),
+        t.notes || '',
+        activeBatch ? '#'+activeBatch.number : ''
+      ].map(escapeCsv).join(',');
+    });
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const suffix = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
+    a.href = url;
+    a.download = `CluckWise-Tasks${suffix}-${dateKey(new Date())}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`CSV exported — ${scopedTasks.length} task(s).`);
+  }
+
   // ---------- overdue task notification ----------
   function refreshOverdueList(){
     const todayKey = dateKey(new Date());
@@ -2039,18 +2162,23 @@
   }
   const CHECK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  function buildTaskCard(task){
+  let bulkSelectMode = false;
+  let bulkSelectedIds = new Set();
+  function buildTaskCard(task, selectable){
     const card = document.createElement('div');
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
-    card.className = 'task-card' + (task.status==='done' ? ' done' : '') + (isOverdue ? ' overdue' : '');
+    const isHighPriority = task.priority === 'high' && task.status!=='done';
+    card.className = 'task-card' + (task.status==='done' ? ' done' : '') + (isOverdue ? ' overdue' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
     card.dataset.id = task.id;
     card.innerHTML = `
-      ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠</span>' : ''}
+      ${selectable ? `<input type="checkbox" class="bulk-select-cb" ${bulkSelectedIds.has(task.id)?'checked':''}>` : ''}
+      ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : '')}
       <span class="task-icon"></span>
       <span class="task-body"><span class="task-name"></span></span>
+      ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝</span>` : ''}
       ${buildAssigneeAvatarsHtml(task.assignees)}
-      <span class="task-actions">
+      <span class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
         <button class="btn-edit" title="Edit">✎</button>
         <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
         <button class="btn-delete" title="Delete">🗑️</button>
@@ -2058,6 +2186,16 @@
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
     card.querySelector('.task-name').textContent = task.name;
+    if(selectable){
+      const cb = card.querySelector('.bulk-select-cb');
+      const toggleSelection = ()=>{
+        if(bulkSelectedIds.has(task.id)) bulkSelectedIds.delete(task.id); else bulkSelectedIds.add(task.id);
+        cb.checked = bulkSelectedIds.has(task.id);
+        updateBulkActionBar();
+      };
+      cb.addEventListener('click', (e)=>{ e.stopPropagation(); toggleSelection(); });
+      card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
+    }
     return card;
   }
 
@@ -2485,7 +2623,22 @@
     wrap.innerHTML = '';
     const box = document.createElement('div');
     box.className = 'list-view';
-    box.appendChild(buildAgendaFilterBar());
+    const filterRow = document.createElement('div');
+    filterRow.style.cssText = 'display:flex; align-items:center; gap:10px;';
+    filterRow.appendChild(buildAgendaFilterBar());
+    filterRow.style.justifyContent = 'space-between';
+    const selectToggleBtn = document.createElement('button');
+    selectToggleBtn.className = 'btn-ai-wide';
+    selectToggleBtn.style.cssText = 'flex-shrink:0; padding:8px 14px; font-size:12.5px; margin-bottom:14px;';
+    selectToggleBtn.textContent = bulkSelectMode ? 'Cancel' : 'Select';
+    selectToggleBtn.addEventListener('click', ()=>{
+      bulkSelectMode = !bulkSelectMode;
+      bulkSelectedIds.clear();
+      updateBulkActionBar();
+      renderList();
+    });
+    filterRow.appendChild(selectToggleBtn);
+    box.appendChild(filterRow);
     if(agendaFilter==='upcoming'){
       const evSection = buildUpcomingEventsSection();
       if(evSection) box.appendChild(evSection);
@@ -2515,11 +2668,58 @@
       const listEl = document.createElement('div');
       listEl.className = 'day-tasks list-tasks';
       listEl.dataset.date = key;
-      groups[key].forEach(t=> listEl.appendChild(buildTaskCard(t)));
+      groups[key].forEach(t=> listEl.appendChild(buildTaskCard(t, bulkSelectMode)));
       groupEl.appendChild(listEl);
       box.appendChild(groupEl);
     });
     wrap.appendChild(box);
+  }
+
+  function updateBulkActionBar(){
+    let bar = document.getElementById('bulkActionBar');
+    if(bulkSelectedIds.size===0){
+      if(bar) bar.remove();
+      return;
+    }
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'bulkActionBar';
+      bar.className = 'bulk-action-bar';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = `
+      <span class="bulk-count">${bulkSelectedIds.size} selected</span>
+      <button class="bulk-btn bulk-done" id="bulkMarkDoneBtn">✓ Mark done</button>
+      <button class="bulk-btn bulk-delete" id="bulkDeleteBtn">🗑️ Delete</button>
+    `;
+    bar.querySelector('#bulkMarkDoneBtn').addEventListener('click', ()=>{
+      let count = 0;
+      bulkSelectedIds.forEach(id=>{
+        const t = tasks.find(x=>x.id===id);
+        if(t && t.status!=='done'){ t.status='done'; addHistory('Completed', taskLabel(t)); count++; }
+      });
+      persist();
+      bulkSelectedIds.clear(); bulkSelectMode = false;
+      renderAll();
+      showToast(`${count} task(s) marked done.`);
+    });
+    const delBtn = bar.querySelector('#bulkDeleteBtn');
+    delBtn.addEventListener('click', ()=>{
+      if(!delBtn.classList.contains('confirm')){
+        delBtn.classList.add('confirm');
+        delBtn.textContent = `Confirm delete (${bulkSelectedIds.size})?`;
+        clearTimeout(delBtn._t);
+        delBtn._t = setTimeout(()=>{ delBtn.classList.remove('confirm'); delBtn.textContent = '🗑️ Delete'; }, 3000);
+        return;
+      }
+      const count = bulkSelectedIds.size;
+      tasks = tasks.filter(t=>!bulkSelectedIds.has(t.id));
+      addHistory('Removed', `${count} task(s) bulk-deleted`);
+      persist();
+      bulkSelectedIds.clear(); bulkSelectMode = false;
+      renderAll();
+      showToast(`${count} task(s) deleted.`);
+    });
   }
 
   function buildKanbanCard(task){
@@ -2538,7 +2738,7 @@
         <span class="kdot ${task.status==='done'?'done':'open'}"></span>
       </div>`;
     renderIconInto(card.querySelector('.kicon'), task.icon);
-    card.querySelector('.kname').textContent = task.name;
+    card.querySelector('.kname').textContent = (task.priority==='high' && task.status!=='done' ? '🔥 ' : '') + task.name;
     card.addEventListener('click', (e)=>{
       if(suppressNextClick) return;
       openTaskDetailModal(task.id);
@@ -2830,6 +3030,14 @@
       assigneeRow.style.display = 'none';
     }
 
+    const notesRow = $('#detailNotesRow');
+    if(t.notes){
+      notesRow.style.display = 'flex';
+      $('#detailNotes').textContent = t.notes;
+    } else {
+      notesRow.style.display = 'none';
+    }
+
     const seriesNote = $('#detailSeriesNote');
     if(t.seriesId){
       const siblings = tasks.filter(x=>x.seriesId===t.seriesId);
@@ -2861,6 +3069,15 @@
     $('#editTaskUntilRow').style.display = 'none';
     const base = t.date || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    $('#editTaskNotesInput').value = t.notes || '';
+    $('#editTaskPriorityInput').checked = t.priority === 'high';
+    const seriesRow = $('#editTaskSeriesRow');
+    if(t.seriesId){
+      seriesRow.style.display = 'block';
+      $('#editTaskApplySeriesInput').checked = false;
+    } else {
+      seriesRow.style.display = 'none';
+    }
     refreshAssigneeDatalist();
     openDrawer('#editTaskModal');
   }
@@ -2879,6 +3096,9 @@
     $('#editTaskUntilRow').style.display = 'none';
     const base = prefillDate || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    $('#editTaskNotesInput').value = '';
+    $('#editTaskPriorityInput').checked = false;
+    $('#editTaskSeriesRow').style.display = 'none';
     refreshAssigneeDatalist();
     openDrawer('#editTaskModal');
     setTimeout(()=> $('#editTaskNameInput').focus(), 200);
@@ -3156,7 +3376,7 @@
     $('#reportRangeStart').value = dateKey(monday);
     $('#reportRangeEnd').value = dateKey(sunday);
   });
-  $('#confirmReportBtn').addEventListener('click', ()=>{
+  function getReportOptsFromForm(){
     const scope = $('#reportScopeSelect').value;
     let opts = {type:'all'};
     if(scope==='batch'){
@@ -3165,13 +3385,24 @@
     } else if(scope==='range'){
       const start = $('#reportRangeStart').value;
       const end = $('#reportRangeEnd').value;
-      if(!start || !end){ showToast('Choose both a start and end date.', true); return; }
-      if(end < start){ showToast('End date must be after the start date.', true); return; }
+      if(!start || !end){ showToast('Choose both a start and end date.', true); return null; }
+      if(end < start){ showToast('End date must be after the start date.', true); return null; }
       opts = {type:'range', start, end};
     }
     opts.checklistOnly = $('#reportChecklistOnly').checked;
+    return opts;
+  }
+  $('#confirmReportBtn').addEventListener('click', ()=>{
+    const opts = getReportOptsFromForm();
+    if(!opts) return;
     closeOverlays();
     generateReport(opts);
+  });
+  $('#exportCsvBtn').addEventListener('click', ()=>{
+    const opts = getReportOptsFromForm();
+    if(!opts) return;
+    closeOverlays();
+    exportTasksCSV(opts);
   });
 
   $('#openBatchModalBtn').addEventListener('click', ()=> openDrawer('#batchModal'));
@@ -3364,11 +3595,18 @@
     const dateVal = $('#editTaskDateInput').value || null;
     const repeatRule = $('#editTaskRepeatSelect').value;
     const untilDate = $('#editTaskUntilInput').value || null;
+    const notes = $('#editTaskNotesInput').value.trim();
+    const priority = $('#editTaskPriorityInput').checked ? 'high' : null;
+    const applyToSeries = $('#editTaskSeriesRow').style.display!=='none' && $('#editTaskApplySeriesInput').checked;
     if(repeatRule!=='none' && !dateVal){ showToast('Pick a date before setting a repeat rule.', true); return; }
     if(repeatRule!=='none' && (!untilDate || untilDate<=dateVal)){ showToast('Pick a valid "Repeat until" date after the task date.', true); return; }
 
     if(taskModalMode==='create'){
-      const newTask = addTask(name, guessIcon(name), dateVal, assignees.length ? {assignees} : null);
+      const meta = {};
+      if(assignees.length) meta.assignees = assignees;
+      if(notes) meta.notes = notes;
+      if(priority) meta.priority = priority;
+      const newTask = addTask(name, guessIcon(name), dateVal, Object.keys(meta).length ? meta : null);
       let count = 0;
       if(repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
         count = generateRecurrence(newTask, repeatRule, untilDate);
@@ -3380,9 +3618,9 @@
     }
 
     if(!editingTaskId) return;
-    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees);
+    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries);
     closeOverlays();
-    showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : 'Task updated.');
+    showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
   });
   $('#closeBatchModal').addEventListener('click', closeOverlays);
   $('#closeEventModal').addEventListener('click', closeOverlays);
