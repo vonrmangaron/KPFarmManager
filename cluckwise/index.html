@@ -362,9 +362,29 @@
   .list-view{max-width:660px;margin:0 auto;}
 
   /* ---------- Kanban ---------- */
-  .kanban-board{ display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none; }
-  .kanban-board::-webkit-scrollbar{ display:none; }
-  .kanban-board.panning{ cursor:grabbing; user-select:none; }
+  .kanban-canvas{ position:relative; }
+  .kanban-board{
+    display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:14px;
+    will-change:scroll-position; transform:translateZ(0); -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin; scrollbar-color:#4A90D9 rgba(0,0,0,0.08);
+  }
+  .kanban-board.panning{ cursor:grabbing; user-select:none; -webkit-user-select:none; filter:brightness(0.99); }
+  .kanban-board.panning .kanban-column{ transition:none; }
+  .kanban-board::-webkit-scrollbar{ height:12px; }
+  .kanban-board::-webkit-scrollbar-track{ background:rgba(0,0,0,0.07); border-radius:999px; margin:0 2px; }
+  .kanban-board::-webkit-scrollbar-thumb{
+    background:linear-gradient(90deg, #3E7CB1, #6FA8E8); border-radius:999px;
+    border:2.5px solid transparent; background-clip:padding-box; min-width:40px;
+    transition:background .2s ease;
+  }
+  .kanban-board::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(90deg, #2E6595, #5A98D8); background-clip:padding-box;
+  }
+  .kanban-fade{ position:absolute; top:0; bottom:14px; width:44px; pointer-events:none; z-index:4; opacity:0; transition:opacity .2s ease; }
+  .kanban-fade-left{ left:0; background:linear-gradient(90deg, var(--bg), transparent); }
+  .kanban-fade-right{ right:0; background:linear-gradient(270deg, var(--bg), transparent); }
+  .kanban-canvas.show-fade-left .kanban-fade-left{ opacity:1; }
+  .kanban-canvas.show-fade-right .kanban-fade-right{ opacity:1; }
   .kanban-column{ flex:0 0 270px; min-width:270px; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
   .col-head{
     padding:9px 10px; margin-bottom:8px; border-radius:8px; font-family:'Sora',sans-serif;
@@ -491,6 +511,11 @@
     font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:9px 6px; border-radius:999px; cursor:pointer;
   }
   .agenda-filter button.active{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; border-color:transparent; }
+  .select-toggle-btn{
+    flex:0 0 auto; width:auto; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark);
+    font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:9px 16px; border-radius:999px; cursor:pointer;
+    white-space:nowrap;
+  }
   .list-group{margin-bottom:20px;}
   .list-date{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
   .list-date-main{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink);overflow-wrap:break-word;}
@@ -2636,8 +2661,8 @@
     filterRow.appendChild(buildAgendaFilterBar());
     filterRow.style.justifyContent = 'space-between';
     const selectToggleBtn = document.createElement('button');
-    selectToggleBtn.className = 'btn-ai-wide';
-    selectToggleBtn.style.cssText = 'flex-shrink:0; padding:8px 14px; font-size:12.5px; margin-bottom:14px;';
+    selectToggleBtn.className = 'select-toggle-btn';
+    selectToggleBtn.style.cssText = 'margin-bottom:14px;';
     selectToggleBtn.textContent = bulkSelectMode ? 'Cancel' : 'Select';
     selectToggleBtn.addEventListener('click', ()=>{
       bulkSelectMode = !bulkSelectMode;
@@ -2817,7 +2842,16 @@
       }
       board.appendChild(col);
     }
-    wrap.appendChild(board);
+    const canvas = document.createElement('div');
+    canvas.className = 'kanban-canvas';
+    canvas.appendChild(board);
+    const fadeLeft = document.createElement('div');
+    fadeLeft.className = 'kanban-fade kanban-fade-left';
+    const fadeRight = document.createElement('div');
+    fadeRight.className = 'kanban-fade kanban-fade-right';
+    canvas.appendChild(fadeLeft);
+    canvas.appendChild(fadeRight);
+    wrap.appendChild(canvas);
 
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
@@ -2906,6 +2940,25 @@
     }, {passive:true});
     board.addEventListener('touchend', panEnd);
     board.addEventListener('touchcancel', panEnd);
+
+    // Vertical mouse-wheel scrolling translates to horizontal board movement — a standard
+    // mouse has no horizontal wheel axis, so without this, wheel users would be stuck.
+    // Trackpad horizontal swipes already arrive as native deltaX and pass through untouched.
+    board.addEventListener('wheel', (e)=>{
+      if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){
+        e.preventDefault();
+        board.scrollLeft += e.deltaY;
+      }
+    }, {passive:false});
+
+    // Edge fade indicators — a subtle cue that more columns exist off-screen in that direction.
+    function updateEdgeFades(){
+      canvas.classList.toggle('show-fade-left', board.scrollLeft > 4);
+      canvas.classList.toggle('show-fade-right', board.scrollLeft < board.scrollWidth - board.clientWidth - 4);
+    }
+    updateEdgeFades();
+    board.addEventListener('scroll', updateEdgeFades);
+    window.addEventListener('resize', updateEdgeFades);
 
     if(currentDate.toDateString ? dateKey(currentDate)===todayKey : false){
       const todayCol = board.querySelector('.kanban-column.today');
