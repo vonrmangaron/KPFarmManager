@@ -745,7 +745,7 @@
     if(agendaFilter==='today') filtered = tasks.filter(t=> t.date===todayKey);
     else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(t=> t.date && t.date>=todayKey && t.date<=weekEnd); }
     else filtered = tasks.filter(t=> t.date && t.date>=todayKey);
-    return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.order||0)-(b.order||0)));
+    return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.status==='done'?1:0)-(b.status==='done'?1:0)) || ((a.order||0)-(b.order||0)));
   }
   function renderAgendaFilterBar(){
     const bar=$('#agendaFilterBar'); bar.innerHTML='';
