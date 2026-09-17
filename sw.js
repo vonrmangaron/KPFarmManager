@@ -1,24 +1,36 @@
-/**
- * CluckWise.vm service worker
- * --------------------------
- * Shared by both the main app and the read-only viewer.
- * Strategy: network-first for same-origin files (so you always get the latest
- * version when online), falling back to the last cached copy when offline.
- * Cross-origin requests (GitHub API, Google Fonts, jsPDF, SortableJS CDN) are
- * left alone entirely — never cached here — so synced data is always fresh
- * when there's a connection, and views/CSS/JS still work with none.
- */
+/* ProdWise.VM — service worker
+   Cache strategy:
+   - App shell (HTML, manifest, icons) — network-first for HTML, cache-first for assets
+   - CDN assets (SheetJS, Google Fonts) — cache-first with long TTL
+   - Cloud sync (workers.dev) — always network (never cached)
+*/
 
-const CACHE_NAME = 'cluckwise-vm-cache-v2';
+const CACHE_VERSION = 'prodwise-v1';
 
-self.addEventListener('install', () => {
+const APP_SHELL = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_VERSION).then((cache) =>
+      cache.addAll(APP_SHELL).catch(() => {})
+    )
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== CACHE_VERSION)
+            .map((k) => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
@@ -26,22 +38,57 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+
+  // Never cache cloud sync calls
+  if (url.hostname.endsWith('workers.dev')) return;
+
+  // Only handle GET
   if (req.method !== 'GET') return;
 
-  const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // don't touch cross-origin requests
+  // CDN assets: cache-first
+  const isCDN =
+    url.hostname.includes('cdnjs.cloudflare.com') ||
+    url.hostname.includes('cdn.jsdelivr.net') ||
+    url.hostname.includes('fonts.googleapis.com') ||
+    url.hostname.includes('fonts.gstatic.com');
 
-  event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      try {
-        const fresh = await fetch(req);
-        cache.put(req, fresh.clone());
-        return fresh;
-      } catch (err) {
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        throw err;
-      }
-    })
-  );
+  if (isCDN) {
+    event.respondWith(
+      caches.match(req).then((hit) =>
+        hit || fetch(req).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          return res;
+        }).catch(() => caches.match('./index.html'))
+      )
+    );
+    return;
+  }
+
+  // Same-origin
+  if (url.origin === self.location.origin) {
+    // HTML navigation: network-first (so updates roll in fast)
+    if (req.mode === 'navigate' || req.destination === 'document') {
+      event.respondWith(
+        fetch(req).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          return res;
+        }).catch(() => caches.match('./index.html'))
+      );
+      return;
+    }
+    // Other assets: cache-first
+    event.respondWith(
+      caches.match(req).then((hit) => {
+        if (hit) return hit;
+        return fetch(req).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+          return res;
+        }).catch(() => caches.match('./index.html'));
+      })
+    );
+  }
 });
