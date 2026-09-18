@@ -1248,6 +1248,7 @@
   function sameDay(a,b){ return dateKey(a)===dateKey(b); }
   function formatShort(key){ if(!key) return 'Backlog'; return toDateObj(key).toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
   function formatFull(key){ return toDateObj(key).toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'}); }
+  function formatFullWithWeekday(key){ return toDateObj(key).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'}); }
   function addDaysStr(key, days){ const dt = toDateObj(key); dt.setDate(dt.getDate()+days); return dateKey(dt); }
   function getMonday(date){
     const d = new Date(date);
@@ -2704,7 +2705,7 @@
       const doneCount = groups[key].filter(t=>t.status==='done').length;
       const isPastGroup = key < todayKeyForGroups;
       groupEl.innerHTML = `<div class="list-date"><span class="list-date-main"></span><span class="list-date-sub"></span></div>`;
-      groupEl.querySelector('.list-date-main').textContent = (isPastGroup ? '⚠ Overdue — ' : '') + formatFull(key);
+      groupEl.querySelector('.list-date-main').textContent = (isPastGroup ? '⚠ Overdue — ' : '') + formatFullWithWeekday(key);
       if(isPastGroup) groupEl.querySelector('.list-date-main').style.color = 'var(--danger)';
       groupEl.querySelector('.list-date-sub').textContent = `${doneCount}/${groups[key].length} done`;
       const listEl = document.createElement('div');
@@ -2827,7 +2828,7 @@
         head.innerHTML = `
           ${showOverdueFlag ? `<span class="doverdue">⚠ ${openCount} open</span>` : ''}
           <div class="col-head-top">
-            <span class="dtitle">${dayNames[i]} ${d.getDate()} ${d.getFullYear()}</span>
+            <span class="dtitle">${formatFullWithWeekday(key)}</span>
             <button class="col-toggle-btn" title="Collapse day">↔</button>
           </div>
           <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>`;
