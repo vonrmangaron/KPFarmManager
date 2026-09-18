@@ -61,9 +61,16 @@ body{background:var(--bg);color:var(--ink);
 h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-serif;}
 
 .shell{min-height:100%;display:flex;flex-direction:column;}
+
+.sticky-header{position:sticky; top:0; z-index:100;}
+.sticky-header .topbar{box-shadow:none;}
+.sticky-header::after{
+  content:"";display:block;height:1px;background:var(--line);box-shadow:var(--shadow-sm);
+}
+
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
   padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line);
-  box-shadow:var(--shadow-sm);flex-wrap:wrap;}
+  flex-wrap:wrap;}
 .brand{font-weight:700;font-size:20px;letter-spacing:0.1px;color:var(--ink);
   display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
 .brand-icon{width:30px;height:30px;border-radius:7px;display:inline-block;
@@ -118,7 +125,7 @@ body.theme-dark .batch-history-btn:hover{background:var(--secondary);color:#1A24
   width:460px;max-width:calc(100vw - 32px);max-height:88vh;
   display:none;flex-direction:column;overflow:hidden;}
 .sync-modal.open{display:flex;}
-.sync-modal.wide{width:540px;}
+.sync-modal.wide{width:600px;}
 .sync-modal-head{display:flex;justify-content:space-between;align-items:center;
   padding:16px 20px;border-bottom:1px solid var(--line);}
 .sync-modal-head h3{margin:0;font-size:16px;font-weight:800;
@@ -157,179 +164,71 @@ body.theme-dark .batch-history-btn:hover{background:var(--secondary);color:#1A24
 .btn-sync-primary.ghost{background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);}
 .btn-sync-primary.ghost:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .btn-sync-primary.danger{background:linear-gradient(135deg,#C1502E,#8F3B22);}
+.btn-sync-primary.success{background:linear-gradient(135deg,var(--success),#36602A);}
 body.theme-dark .btn-sync-primary{color:#1A2438;}
 body.theme-dark .btn-sync-primary.ghost{color:var(--ink);}
-.sync-scrim{position:fixed;inset:0;background:rgba(0,0,0,0.3);
-  z-index:9998;display:none;}
+.sync-scrim{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9998;display:none;}
 .sync-scrim.open{display:block;}
 
 .new-batch-checkbox-label{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  background:var(--surface-soft);
-  border:1px solid var(--line);
-  border-radius:10px;
-  font-size:12.5px;
-  color:var(--ink);
-  cursor:pointer;
-  text-transform:none;
-  letter-spacing:0;
-  font-weight:500;
-  font-family:'Inter',sans-serif;
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12.5px;color:var(--ink);cursor:pointer;
+  text-transform:none;letter-spacing:0;font-weight:500;font-family:'Inter',sans-serif;
 }
 .new-batch-checkbox-label input[type="checkbox"]{
   width:16px;height:16px;accent-color:var(--primary-dark);cursor:pointer;flex-shrink:0;
 }
 .new-batch-checkbox-label:hover{background:var(--primary-soft);border-color:var(--primary-soft);}
 
-.nb-question{
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:14.5px;
-  color:var(--ink);
-  margin:2px 0 -2px;
-}
+.nb-question{font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;color:var(--ink);margin:2px 0 -2px;}
 
-/* Batch History rows */
-.batch-list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+.batch-list{display:flex;flex-direction:column;gap:8px;}
 .batch-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 14px;
-  background:var(--surface-soft);
-  border:1px solid var(--line);
-  border-radius:12px;
-  transition:background .15s ease,border-color .15s ease,transform .1s ease;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;transition:background .15s ease,border-color .15s ease,transform .1s ease;
 }
-.batch-row:hover{
-  transform:translateY(-1px);
-  border-color:var(--primary-soft);
-}
-.batch-row.current{
-  background:linear-gradient(135deg,rgba(76,122,59,0.10),rgba(76,122,59,0.04));
-  border-color:var(--success);
-}
+.batch-row:hover{transform:translateY(-1px);border-color:var(--primary-soft);}
+.batch-row.current{background:linear-gradient(135deg,rgba(76,122,59,0.10),rgba(76,122,59,0.04));border-color:var(--success);}
 .batch-row-info{flex:1;min-width:0;}
-.batch-row-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-  font-family:'Sora',sans-serif;
-  font-weight:800;
-  font-size:14px;
-  color:var(--ink);
-}
+.batch-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;color:var(--ink);}
 .batch-row.current .batch-row-title{color:var(--success);}
-.batch-current-badge{
-  display:inline-block;
-  font-size:9.5px;
-  font-weight:800;
-  padding:2px 7px;
-  border-radius:999px;
-  letter-spacing:0.06em;
-  text-transform:uppercase;
-  background:var(--success);
-  color:#fff;
-  font-family:'Sora',sans-serif;
-}
-.batch-row-meta{
-  font-size:11.5px;
-  color:var(--muted);
-  margin-top:3px;
-}
-.batch-row-actions{
-  display:flex;
-  gap:6px;
-  flex-shrink:0;
-}
-.batch-open-btn{
-  border:none;
-  border-radius:8px;
+.batch-current-badge{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;
+  border-radius:999px;letter-spacing:0.06em;text-transform:uppercase;
+  background:var(--success);color:#fff;font-family:'Sora',sans-serif;}
+.batch-row-meta{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.batch-row-actions{display:flex;gap:6px;flex-shrink:0;}
+.batch-open-btn{border:none;border-radius:8px;
   background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:12.5px;
-  padding:7px 14px;
-  cursor:pointer;
-  transition:filter .12s ease,transform .1s ease;
-}
+  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  padding:7px 14px;cursor:pointer;transition:filter .12s ease,transform .1s ease;}
 .batch-open-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 body.theme-dark .batch-open-btn{color:#1A2438;}
-.batch-dl-btn{
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:var(--surface);
-  color:var(--muted);
-  font-size:14px;
-  padding:6px 10px;
-  cursor:pointer;
-  transition:background .12s ease,color .12s ease;
-  line-height:1;
-}
+.batch-dl-btn{border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--muted);font-size:14px;padding:6px 10px;cursor:pointer;
+  transition:background .12s ease,color .12s ease;line-height:1;}
 .batch-dl-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
-.batch-list-status{
-  text-align:center;
-  padding:24px 20px;
-  color:var(--muted);
-  font-size:13px;
-  font-style:italic;
-}
+.batch-list-status{text-align:center;padding:24px 20px;color:var(--muted);
+  font-size:13px;font-style:italic;}
 .batch-list-status.error{color:var(--danger);font-style:normal;}
 
-/* Batch History pagination */
-.batch-pagination{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:10px 12px;
-  background:var(--surface-soft);
-  border:1px solid var(--line);
-  border-radius:10px;
-  margin-top:4px;
-}
-.batch-page-btn{
-  border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--ink);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:12.5px;
-  padding:7px 14px;
-  border-radius:8px;
-  cursor:pointer;
+.batch-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;margin-top:4px;}
+.batch-page-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  padding:7px 14px;border-radius:8px;cursor:pointer;
   transition:background .12s ease, color .12s ease, border-color .12s ease, transform .1s ease;
-  white-space:nowrap;
-}
+  white-space:nowrap;}
 .batch-page-btn:hover:not(:disabled){
-  background:var(--primary-soft);
-  color:var(--primary-dark);
-  border-color:var(--primary-soft);
-  transform:translateY(-1px);
+  background:var(--primary-soft);color:var(--primary-dark);
+  border-color:var(--primary-soft);transform:translateY(-1px);
 }
-.batch-page-btn:disabled{
-  opacity:0.4;
-  cursor:default;
-}
-.batch-page-info{
-  font-family:'Inter',sans-serif;
-  font-size:12px;
-  color:var(--muted);
-  font-weight:600;
-  text-align:center;
-  flex:1;
-  min-width:0;
-}
+.batch-page-btn:disabled{opacity:0.4;cursor:default;}
+.batch-page-info{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);
+  font-weight:600;text-align:center;flex:1;min-width:0;}
 
 .farm-found-body{padding:20px 22px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
 .farm-found-icon{font-size:42px;line-height:1;text-align:center;margin-bottom:2px;}
@@ -413,28 +312,16 @@ body.theme-dark .btn-primary{color:#1A2438;}
 body.theme-dark .tab-btn.active{color:#1A2438;}
 body.theme-dark .tab-btn.tab-predictions.active{color:#1A2438;}
 
-/* CluckWise tab — sits after the Predictions tab in the tabs nav */
 .tab-btn.tab-cluckwise{
   background:linear-gradient(135deg,rgba(31,122,140,0.14),rgba(31,122,140,0.06));
-  color:#1F7A8C;
-  border:1px dashed #7BC9D4;
+  color:#1F7A8C;border:1px dashed #7BC9D4;
 }
-.tab-btn.tab-cluckwise:hover{
-  background:#1F7A8C;
-  color:#fff;
-  border-color:#1F7A8C;
-  border-style:solid;
-}
+.tab-btn.tab-cluckwise:hover{background:#1F7A8C;color:#fff;border-color:#1F7A8C;border-style:solid;}
 body.theme-dark .tab-btn.tab-cluckwise{
-  color:#8FD9E3;
-  border-color:#3E7B87;
+  color:#8FD9E3;border-color:#3E7B87;
   background:linear-gradient(135deg,rgba(31,122,140,0.30),rgba(31,122,140,0.14));
 }
-body.theme-dark .tab-btn.tab-cluckwise:hover{
-  background:#3E7B87;
-  color:#fff;
-  border-color:#3E7B87;
-}
+body.theme-dark .tab-btn.tab-cluckwise:hover{background:#3E7B87;color:#fff;border-color:#3E7B87;}
 
 main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 @media(max-width:640px){main{padding:16px;}}
@@ -481,8 +368,7 @@ body.theme-dark .stab.active{color:#1A2438;}
 .stab.both-btn{font-size:16px;font-weight:800;padding:13px 30px;
   background:linear-gradient(135deg,rgba(224,163,57,0.12),rgba(176,132,99,0.12));
   border:1.5px dashed var(--secondary);color:var(--secondary);}
-.stab.both-btn:hover{background:linear-gradient(135deg,var(--primary-soft),var(--secondary-soft));
-  color:var(--primary-dark);}
+.stab.both-btn:hover{background:linear-gradient(135deg,var(--primary-soft),var(--secondary-soft));color:var(--primary-dark);}
 .stab.both-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
   color:#fff;border:1.5px solid transparent;}
 body.theme-dark .stab.both-btn.active{color:#1A2438;}
@@ -506,8 +392,7 @@ body.theme-dark .stab.planner-btn.active{color:#1A2438;}
   margin-right:4px;}
 .fpill{border:1px solid var(--line);background:var(--surface);color:var(--muted);
   font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;padding:5px 12px;
-  border-radius:999px;cursor:pointer;
-  transition:background .15s ease,color .15s ease;}
+  border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease;}
 .fpill:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .fpill.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
   color:#fff;border-color:transparent;}
@@ -516,8 +401,7 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .custom-range input{width:52px;text-align:center;border:1px solid var(--line);
   background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;
   font-weight:700;font-size:12px;padding:5px 6px;border-radius:7px;}
-.custom-range input:focus{outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);}
+.custom-range input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .custom-range span{font-size:11.5px;color:var(--muted);font-weight:600;}
 @media(max-width:640px){.custom-range{margin-left:0;width:100%;}}
 
@@ -525,8 +409,7 @@ body.theme-dark .fpill.active{color:#1A2438;}
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
   padding:10px 16px;margin:0 0 16px;box-shadow:var(--shadow-sm);}
 .planner-range-bar .forecast-label{font-family:'Sora',sans-serif;font-weight:700;
-  font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;
-  margin-right:6px;}
+  font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-right:6px;}
 
 .sheds-grid{display:grid;grid-template-columns:1fr;gap:18px;}
 .sheds-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
@@ -545,6 +428,8 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .tag.red{background:var(--danger-soft);color:var(--danger);}
 .tag.green{background:var(--success-soft);color:var(--success);}
 .tag.muted{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
+.tag.manual-source{background:#E8F0F8;color:#2C6DA0;border:1px solid #B9D3E8;}
+body.theme-dark .tag.manual-source{background:#1A2C3E;color:#8FC7EA;border-color:#2E4C6B;}
 
 .shed-body{padding:16px 20px 20px;}
 .sheds-grid.compare .shed-body{padding:14px 16px 18px;}
@@ -553,8 +438,7 @@ body.theme-dark .fpill.active{color:#1A2438;}
 @media(max-width:520px){.shed-grid{grid-template-columns:1fr;}}
 .sheds-grid.compare .shed-grid{grid-template-columns:1fr;gap:10px;}
 
-.panel{background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;
-  padding:12px 14px;}
+.panel{background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
 .panel h4{margin:0 0 10px;font-size:11.5px;font-weight:800;text-transform:uppercase;
   letter-spacing:0.08em;color:var(--muted);}
 
@@ -564,8 +448,7 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .field-row input{border:1px solid var(--line);border-radius:8px;background:var(--surface);
   color:var(--ink);padding:6px 9px;font-size:13px;font-weight:600;
   font-family:'Inter',sans-serif;width:130px;text-align:right;}
-.field-row input:focus{outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);}
+.field-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .field-row input[type="date"]{width:150px;text-align:left;}
 
 .snapshot-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
@@ -574,8 +457,9 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .snapshot-row .val.big{font-family:'Sora',sans-serif;font-size:15px;}
 
 .pickups-block{margin-top:16px;}
-.pickups-block h4{margin:0 0 8px;font-size:11.5px;font-weight:800;
+.pickups-block > h4{margin:0 0 8px;font-size:11.5px;font-weight:800;
   text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+.pickups-block h4.pickup-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .pickups-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);
   border:1px solid var(--line);border-radius:10px;overflow:hidden;}
 .pickups-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
@@ -590,6 +474,175 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .pickups-table .var-neg{color:var(--danger);font-weight:700;}
 .pickups-empty{padding:10px 12px;color:var(--muted);font-size:13px;font-style:italic;
   background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;}
+
+.btn-pickup-add{
+  border:1px solid var(--primary);background:var(--primary-soft);
+  color:var(--primary-dark);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  text-transform:none;letter-spacing:0;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;
+}
+.btn-pickup-add:hover:not(:disabled){background:var(--primary);color:#fff;}
+.btn-pickup-add:disabled{opacity:0.4;cursor:not-allowed;}
+body.theme-dark .btn-pickup-add:hover:not(:disabled){color:#1A2438;}
+
+.pickups-scroll{overflow-x:auto;border-radius:10px;}
+
+.pickup-actions{position:relative;display:inline-block;}
+.pickup-actions-btn{
+  border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  border-radius:7px;cursor:pointer;font-size:14px;padding:2px 8px;line-height:1;
+  font-weight:800;transition:background .12s ease,color .12s ease,border-color .12s ease;
+}
+.pickup-actions-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.pickup-actions.open .pickup-actions-btn{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.pickup-actions-menu{
+  display:none;position:fixed;top:0;left:0;z-index:1200;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow-lg);padding:4px;min-width:220px;
+}
+.pickup-actions.open .pickup-actions-menu{display:flex;flex-direction:column;gap:2px;}
+.pickup-actions-menu button{
+  border:none;background:transparent;color:var(--ink);
+  text-align:left;padding:8px 12px;border-radius:6px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.pickup-actions-menu button:hover{background:var(--primary-soft);color:var(--primary-dark);}
+.pickup-actions-menu button.danger:hover{background:var(--danger-soft);color:var(--danger);}
+
+/* Mortality rate bar (per shed) */
+.mort-rate-bar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:14px;padding:9px 12px;
+  background:var(--surface-soft);border:1px dashed var(--line);
+  border-radius:10px;font-size:12px;
+}
+.mort-rate-bar .mr-label{
+  font-family:'Sora',sans-serif;font-weight:700;
+  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;
+}
+.mort-rate-bar input[type="range"]{
+  flex:1 1 120px;min-width:100px;accent-color:var(--primary);
+}
+.mort-rate-bar input[type="number"]{
+  width:66px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;
+  background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  text-align:center;
+  -moz-appearance:textfield;appearance:textfield;
+}
+.mort-rate-bar input[type="number"]::-webkit-outer-spin-button,
+.mort-rate-bar input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.mort-rate-bar input[type="number"]:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
+}
+.mort-rate-bar .mr-unit{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
+
+.mp-field{display:flex;flex-direction:column;gap:6px;}
+.mp-field > label{
+  font-size:11.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;
+  display:flex;align-items:center;gap:6px;
+}
+.mp-field input[type="number"],
+.mp-field input[type="date"]{
+  width:100%;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface-soft);color:var(--ink);
+  padding:10px 12px;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;
+  -moz-appearance:textfield;appearance:textfield;
+}
+.mp-field input::-webkit-outer-spin-button,
+.mp-field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.mp-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mp-field input.auto-calc{background:var(--primary-soft);border-color:var(--primary);}
+.mp-field .auto-chip{
+  display:inline-block;font-size:9px;font-weight:800;
+  padding:1px 6px;border-radius:999px;
+  background:var(--primary);color:#fff;
+  letter-spacing:0.06em;text-transform:uppercase;font-family:'Sora',sans-serif;
+}
+body.theme-dark .mp-field .auto-chip{color:#1A2438;}
+.mp-checkbox-row{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:13px;cursor:pointer;
+  font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink);
+}
+.mp-checkbox-row input[type="checkbox"]{
+  width:16px;height:16px;accent-color:var(--primary-dark);cursor:pointer;flex-shrink:0;
+}
+.mp-hint{
+  font-size:11.5px;color:var(--muted);line-height:1.5;
+  padding:10px 12px;background:var(--surface-soft);
+  border-radius:8px;border:1px dashed var(--line);
+}
+.mp-hint strong{color:var(--ink);}
+
+.conflict-shed{margin-bottom:16px;}
+.conflict-shed-title{
+  font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+}
+.conflict-shed-title .count{
+  font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;color:var(--muted);
+  text-transform:none;letter-spacing:0;
+}
+.conflict-row{
+  display:flex;gap:12px;padding:10px 12px;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:10px;margin-bottom:6px;
+  align-items:flex-start;flex-wrap:wrap;
+}
+.conflict-row-info{flex:1 1 260px;min-width:0;font-size:12.5px;line-height:1.5;}
+.conflict-row-date{
+  font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
+  margin-bottom:4px;
+}
+.conflict-row-info .side{display:flex;gap:8px;align-items:baseline;margin-bottom:2px;flex-wrap:wrap;}
+.conflict-row-info .side .lbl{
+  color:var(--muted);font-weight:700;font-size:10px;
+  text-transform:uppercase;letter-spacing:0.06em;min-width:60px;
+}
+.conflict-row-info .side.existing .val{color:var(--primary-dark);font-weight:600;}
+.conflict-row-info .side.imported .val{color:var(--success);font-weight:600;}
+.conflict-radio{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.conflict-radio label{
+  display:flex;align-items:center;gap:6px;padding:6px 10px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  cursor:pointer;font-size:12px;font-weight:700;
+  text-transform:none;letter-spacing:0;
+  transition:background .12s ease,border-color .12s ease;
+}
+.conflict-radio label:hover{background:var(--primary-soft);border-color:var(--primary-soft);}
+.conflict-radio label input{accent-color:var(--primary-dark);cursor:pointer;margin:0;}
+.conflict-radio label:has(input:checked){
+  background:var(--primary-soft);border-color:var(--primary);color:var(--primary-dark);
+}
+.conflict-new{
+  padding:8px 12px;background:var(--success-soft);
+  border-radius:8px;margin-bottom:6px;
+  font-size:12px;color:var(--success);font-weight:600;
+}
+.conflict-existing-only{
+  padding:8px 12px;background:var(--surface-soft);
+  border:1px dashed var(--line);border-radius:8px;margin-bottom:6px;
+  font-size:12px;color:var(--muted);font-weight:600;
+}
+.conflict-bulk{
+  display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;
+  background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;margin-bottom:12px;
+}
+.conflict-bulk button{
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:6px 12px;border-radius:8px;cursor:pointer;
+  font-size:12px;font-weight:700;font-family:'Sora',sans-serif;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;
+}
+.conflict-bulk button:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
 
 .forecast-section{margin-top:16px;}
 .forecast-block{margin-bottom:0;}
@@ -609,14 +662,10 @@ body.theme-dark .fpill.active{color:#1A2438;}
 .forecast-table tr:last-child td{border-bottom:none;}
 .forecast-table .num{text-align:right;font-variant-numeric:tabular-nums;}
 
-.forecast-table tr.is-weekend td{
-  background:var(--weekend-tint);
-  border-bottom-color:var(--weekend-border);
-}
+.forecast-table tr.is-weekend td{background:var(--weekend-tint);border-bottom-color:var(--weekend-border);}
 .forecast-table tr.is-weekend td:first-child{
   border-left:6px solid var(--weekend-border);
-  color:var(--weekend-border);
-  font-weight:800;
+  color:var(--weekend-border);font-weight:800;
 }
 body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
 .forecast-table tr.is-past.is-weekend td{background:var(--weekend-tint);color:var(--muted);}
@@ -674,97 +723,35 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
   font-size:12.5px;color:var(--muted);}
 
 .planner-card-toggle{
-  width:100%;
-  background:transparent;
-  border:none;
-  padding:0;
-  margin:0 0 14px;
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  cursor:pointer;
-  color:inherit;
-  font-family:inherit;
-  text-align:left;
+  width:100%;background:transparent;border:none;padding:0;margin:0 0 14px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  cursor:pointer;color:inherit;font-family:inherit;text-align:left;
   transition:opacity .15s ease;
 }
 .planner-card-toggle:hover{opacity:0.85;}
 .planner-card-toggle:focus{outline:none;}
-.planner-card-toggle:focus-visible{
-  outline:2px solid var(--primary);
-  outline-offset:3px;
-  border-radius:6px;
-}
-.planner-card-toggle h3{
-  margin:0;
-  font-size:15px;
-  font-weight:800;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:var(--ink);
-  flex-wrap:wrap;
-}
-.planner-card-toggle h3 .count{
-  font-family:'Inter',sans-serif;
-  font-weight:600;
-  font-size:12.5px;
-  color:var(--muted);
-}
+.planner-card-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:6px;}
+.planner-card-toggle h3{margin:0;font-size:15px;font-weight:800;
+  display:flex;align-items:center;gap:8px;color:var(--ink);flex-wrap:wrap;}
+.planner-card-toggle h3 .count{font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;color:var(--muted);}
 .planner-card-toggle .collapse-caret{
-  font-size:20px;
-  font-weight:800;
-  color:var(--primary-dark);
+  font-size:20px;font-weight:800;color:var(--primary-dark);
   transition:transform .22s ease, background .15s ease, color .15s ease;
-  flex-shrink:0;
-  line-height:1;
-  margin-top:-2px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:28px;
-  height:28px;
-  border-radius:8px;
-  background:var(--primary-soft);
+  flex-shrink:0;line-height:1;margin-top:-2px;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:8px;background:var(--primary-soft);
 }
-.planner-card-toggle:hover .collapse-caret{
-  background:var(--primary);
-  color:#fff;
-}
-body.theme-dark .planner-card-toggle:hover .collapse-caret{
-  color:#1A2438;
-}
-.planner-card-toggle.open .collapse-caret{
-  transform:rotate(180deg);
-}
-.planner-card-body.collapsed{
-  display:none;
-}
-.delivery-type-chips{
-  display:inline-flex;
-  flex-wrap:wrap;
-  gap:5px;
-  margin-left:2px;
-}
+.planner-card-toggle:hover .collapse-caret{background:var(--primary);color:#fff;}
+body.theme-dark .planner-card-toggle:hover .collapse-caret{color:#1A2438;}
+.planner-card-toggle.open .collapse-caret{transform:rotate(180deg);}
+.planner-card-body.collapsed{display:none;}
+.delivery-type-chips{display:inline-flex;flex-wrap:wrap;gap:5px;margin-left:2px;}
 .delivery-type-chips .chip{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  padding:1px 8px;
-  border-radius:999px;
-  font-size:10.5px;
-  font-weight:700;
-  background:var(--surface);
-  border:1px solid var(--line);
-  color:var(--ink);
-  font-family:'Inter',sans-serif;
+  display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;
+  font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);
+  color:var(--ink);font-family:'Inter',sans-serif;
 }
-.delivery-type-chips .chip .num{
-  font-family:'Sora',sans-serif;
-  font-weight:800;
-  font-size:11px;
-}
+.delivery-type-chips .chip .num{font-family:'Sora',sans-serif;font-weight:800;font-size:11px;}
 .delivery-type-chips .chip.starter{background:var(--success-soft);border-color:transparent;color:var(--success);}
 .delivery-type-chips .chip.grower{background:var(--primary-soft);border-color:transparent;color:var(--primary-dark);}
 .delivery-type-chips .chip.finisher{background:var(--secondary-soft);border-color:transparent;color:var(--secondary);}
@@ -805,23 +792,18 @@ body.theme-dark .planner-card-toggle:hover .collapse-caret{
   text-transform:uppercase;letter-spacing:0.04em;
 }
 .ring-off:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
-.ring-off.active{background:var(--muted);color:var(--surface);border-color:var(--muted);
-  border-style:solid;}
+.ring-off.active{background:var(--muted);color:var(--surface);border-color:var(--muted);border-style:solid;}
 .ring-slot{display:flex;flex-direction:column;align-items:center;gap:2px;}
 .ring-btn{
   width:100%;aspect-ratio:1;border-radius:50%;
   border:1.5px solid var(--line);background:var(--surface);color:var(--muted);
   font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
-  cursor:pointer;padding:0;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .12s ease,color .12s ease,border-color .12s ease;
-  line-height:1;
+  cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;line-height:1;
 }
 .ring-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
-.ring-btn.active{
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);
-}
+.ring-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
 body.theme-dark .ring-btn.active{color:#1A2438;}
 .ring-slot .ring-t{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap;}
 .ring-slot.active .ring-t{color:var(--primary-dark);font-weight:800;}
@@ -830,8 +812,7 @@ body.theme-dark .ring-btn.active{color:#1A2438;}
   display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .silo-total .lbl{font-size:11px;font-weight:700;color:var(--muted);
   text-transform:uppercase;letter-spacing:0.06em;}
-.silo-total .val{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:16px;color:var(--primary-dark);}
+.silo-total .val{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:var(--primary-dark);}
 .silo-total .kg{font-size:11px;color:var(--muted);}
 
 .silo-grand-total{margin-top:14px;padding-top:14px;border-top:1.5px solid var(--line);
@@ -850,8 +831,7 @@ body.theme-dark .ring-btn.active{color:#1A2438;}
   border-radius:10px;overflow:hidden;}
 .reading-history th{background:var(--surface-soft);font-weight:700;
   text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;
-  color:var(--muted);text-align:left;padding:6px 10px;
-  border-bottom:1px solid var(--line);}
+  color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);}
 .reading-history td{padding:6px 10px;border-bottom:1px solid var(--line);}
 .reading-history tr:last-child td{border-bottom:none;}
 .reading-history tr.today td{background:var(--primary-soft);font-weight:700;}
@@ -926,20 +906,17 @@ body.theme-dark .add-delivery button{color:#1A2438;}
   background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
 .feed-summary-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
   font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
-  color:var(--muted);text-align:left;padding:8px 12px;
-  border-bottom:1px solid var(--line);}
+  color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);}
 .feed-summary-table td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink);}
 .feed-summary-table tr:last-child td{border-bottom:none;}
 .feed-summary-table tr.has-blocks td{background:rgba(76,122,59,0.05);}
 body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,0.07);}
 .feed-summary-table .num{text-align:right;font-variant-numeric:tabular-nums;}
-.feed-summary-table .block-count{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;
-  color:var(--success);}
+.feed-summary-table .block-count{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;color:var(--success);}
 .feed-summary-table .block-count.zero{color:var(--muted);font-weight:600;font-size:13px;}
 .feed-summary-table .rem{color:var(--muted);font-size:12px;}
 .feed-summary-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
-  background:var(--surface-soft);border:1px dashed var(--line);
-  border-radius:10px;font-size:13px;}
+  background:var(--surface-soft);border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 
 .delivery-pill{display:inline-block;background:var(--success-soft);
   color:var(--success);font-weight:700;font-size:11px;padding:2px 8px;
@@ -960,8 +937,7 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .predictions-head{background:linear-gradient(135deg,#4C7A3B,#36602A);color:#fff;
   padding:18px 22px;border-radius:18px;margin-bottom:16px;
   display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
-.predictions-head h1{margin:0;font-size:22px;font-weight:800;
-  display:flex;align-items:center;gap:10px;}
+.predictions-head h1{margin:0;font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px;}
 .predictions-head .head-note{font-size:12.5px;font-weight:500;opacity:0.9;}
 
 .farm-kpi-card{
@@ -978,26 +954,15 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 }
 .farm-kpi-head .sub{font-size:11.5px;color:var(--muted);font-weight:500;}
 .farm-kpi-grid{
-  display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:12px;
-  align-items:stretch;
+  display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:12px;align-items:stretch;
 }
-@media(max-width:1100px){
-  .farm-kpi-grid{grid-template-columns:repeat(3, minmax(0, 1fr));}
-}
-@media(max-width:760px){
-  .farm-kpi-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
-}
-@media(max-width:480px){
-  .farm-kpi-grid{grid-template-columns:1fr;}
-}
+@media(max-width:1100px){.farm-kpi-grid{grid-template-columns:repeat(3, minmax(0, 1fr));}}
+@media(max-width:760px){.farm-kpi-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}}
+@media(max-width:480px){.farm-kpi-grid{grid-template-columns:1fr;}}
 .farm-kpi-tile{
   background:var(--surface-soft);border:1px solid var(--line);
   border-radius:12px;padding:14px 16px;
-  display:flex;flex-direction:column;gap:4px;
-  min-width:0;
-  min-height:110px;
+  display:flex;flex-direction:column;gap:4px;min-width:0;min-height:110px;
   transition:box-shadow .12s ease,border-color .12s ease;
 }
 .farm-kpi-tile:hover{box-shadow:var(--shadow-sm);}
@@ -1008,40 +973,28 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 }
 .farm-kpi-tile .fkt-val{
   font-family:'Sora',sans-serif;font-weight:800;font-size:20px;
-  color:var(--ink);line-height:1.15;
-  word-break:break-word;
-  margin-top:2px;
+  color:var(--ink);line-height:1.15;word-break:break-word;margin-top:2px;
 }
 .farm-kpi-tile.amber .fkt-val{color:var(--primary-dark);}
 .farm-kpi-tile.green .fkt-val{color:var(--success);}
 .farm-kpi-tile.blue .fkt-val{color:var(--secondary);}
 .farm-kpi-tile .fkt-sub{
-  font-size:11px;color:var(--muted);margin-top:auto;
-  padding-top:6px;line-height:1.35;
+  font-size:11px;color:var(--muted);margin-top:auto;padding-top:6px;line-height:1.35;
 }
 .farm-feed-override{
   width:100%;border:1px solid var(--line);border-radius:7px;
   background:var(--surface);color:var(--ink);padding:4px 8px;
   font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
   text-align:right;margin-top:8px;
-  -moz-appearance: textfield;
-  appearance: textfield;
+  -moz-appearance:textfield;appearance:textfield;
 }
 .farm-feed-override::-webkit-outer-spin-button,
-.farm-feed-override::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-.farm-feed-override:focus{
-  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
-}
-.farm-feed-override.manual{
-  border-color:var(--primary);background:var(--primary-soft);
-}
+.farm-feed-override::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.farm-feed-override:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.farm-feed-override.manual{border-color:var(--primary);background:var(--primary-soft);}
 .farm-feed-override::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
 .farm-kpi-empty{
-  padding:24px 20px;text-align:center;color:var(--muted);
-  font-size:13px;font-style:italic;
+  padding:24px 20px;text-align:center;color:var(--muted);font-size:13px;font-style:italic;
 }
 
 .pred-grid{display:grid;grid-template-columns:1fr;gap:18px;}
@@ -1075,41 +1028,26 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .ptc-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 @media(max-width:640px){.ptc-inputs{grid-template-columns:repeat(2,1fr);}}
 .ptc-input{background:var(--surface);border:1px solid var(--line);
-  border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;
-  min-width:0;}
+  border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-width:0;}
 .ptc-input label{font-size:10px;font-weight:700;color:var(--muted);
   text-transform:uppercase;letter-spacing:0.06em;}
-
 .ptc-input .ptc-field{display:flex;align-items:center;gap:8px;min-width:0;}
 .ptc-input input{
   flex:1 1 auto;min-width:0;width:100%;
   border:1px solid var(--line);border-radius:7px;
   background:var(--surface-soft);color:var(--ink);
-  padding:6px 10px;
-  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
-  text-align:right;
-  transition:border-color .15s ease,box-shadow .15s ease;
-  -moz-appearance: textfield;
-  appearance: textfield;
+  padding:6px 10px;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+  text-align:right;transition:border-color .15s ease,box-shadow .15s ease;
+  -moz-appearance:textfield;appearance:textfield;
 }
 .ptc-input input::-webkit-outer-spin-button,
-.ptc-input input::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-.ptc-input input:focus{
-  outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);
-}
+.ptc-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.ptc-input input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .ptc-input input.warn{border-color:var(--danger);background:var(--danger-soft);}
 .ptc-input input.filled{border-color:var(--primary);background:var(--primary-soft);}
 .ptc-input input::placeholder{
-  color: var(--muted);
-  opacity: 0.55;
-  font-weight: 600;
-  font-style: italic;
-  font-size: 12.5px;
-  letter-spacing: 0;
+  color:var(--muted);opacity:0.55;font-weight:600;font-style:italic;
+  font-size:12.5px;letter-spacing:0;
 }
 .ptc-input .unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
 .ptc-input .ref{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1122,8 +1060,7 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
   padding:2px 7px;border-radius:999px;letter-spacing:0.05em;text-transform:uppercase;}
 .ptc-status .pill.pickup{background:var(--success-soft);color:var(--success);}
 .ptc-status .pill.target{background:var(--primary-soft);color:var(--primary-dark);}
-.ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);
-  border:1px solid var(--line);}
+.ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
 
 .ptc-compare{margin-top:10px;padding:8px 10px;background:var(--surface);
   border:1px solid var(--line);border-radius:10px;}
@@ -1140,8 +1077,16 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .ptc-compare-row .ptc-delta.neu{color:var(--muted);}
 .ptc-compare-row .ptc-pending{color:var(--muted);font-style:italic;}
 
-.pred-estimates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;
-  margin-top:14px;}
+.pred-estimates-head{
+  margin-top:14px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.06em;color:var(--muted);
+}
+.pred-estimates-head .sub{
+  font-weight:500;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted);
+}
+.pred-estimates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;}
 .pred-est-tile{background:var(--surface);border:1px solid var(--line);
   border-radius:12px;padding:10px 12px;
   display:flex;flex-direction:column;gap:2px;
@@ -1173,22 +1118,12 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .pred-pickup-input{width:90px;padding:5px 8px;border:1px solid var(--line);
   border-radius:7px;background:var(--surface);color:var(--ink);
   font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;
-  text-align:right;
-  -moz-appearance: textfield;
-  appearance: textfield;}
+  text-align:right;-moz-appearance:textfield;appearance:textfield;}
 .pred-pickup-input::-webkit-outer-spin-button,
-.pred-pickup-input::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-.pred-pickup-input:focus{outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);}
+.pred-pickup-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.pred-pickup-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .pred-pickup-input.manual{border-color:var(--primary);background:var(--primary-soft);}
 .pred-pickup-input.warn{border-color:var(--danger);background:var(--danger-soft);}
-.pred-revert-btn{border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);cursor:pointer;font-size:11px;padding:3px 7px;
-  border-radius:6px;margin-left:4px;line-height:1;}
-.pred-revert-btn:hover{background:var(--primary-soft);color:var(--primary-dark);}
 
 .pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);
   text-align:right;font-variant-numeric:tabular-nums;}
@@ -1202,14 +1137,9 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .pred-beta-row input[type="number"]{width:70px;padding:5px 8px;
   border:1px solid var(--line);border-radius:7px;background:var(--surface);
   color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
-  text-align:center;
-  -moz-appearance: textfield;
-  appearance: textfield;}
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
 .pred-beta-row input[type="number"]::-webkit-outer-spin-button,
-.pred-beta-row input[type="number"]::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
+.pred-beta-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .pred-beta-row input[type="number"]:focus{outline:none;border-color:var(--primary);
   box-shadow:0 0 0 3px var(--primary-soft);}
 
@@ -1226,17 +1156,12 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
   width:72px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;
   background:var(--surface-soft);color:var(--ink);
   font-family:'Sora',sans-serif;font-weight:800;font-size:14px;text-align:center;
-  -moz-appearance: textfield;
-  appearance: textfield;
+  -moz-appearance:textfield;appearance:textfield;
 }
 .pred-daily-range-bar input[type="number"]::-webkit-outer-spin-button,
-.pred-daily-range-bar input[type="number"]::-webkit-inner-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-.pred-daily-range-bar input[type="number"]:focus{
-  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
-}
+.pred-daily-range-bar input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.pred-daily-range-bar input[type="number"]:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);}
 .pred-daily-range-bar span{font-size:12px;color:var(--muted);font-weight:600;}
 .pred-daily-range-bar .pdrb-hint{
   margin-left:auto;font-size:11px;color:var(--muted);font-weight:500;
@@ -1286,16 +1211,14 @@ body.theme-dark .milestone-pill{color:#1A2438;}
 .w-pill.actual{background:var(--success-soft);color:var(--success);}
 .w-pill.forecast{background:var(--secondary-soft);color:var(--secondary);}
 .w-pill.ai-target{background:var(--primary-soft);color:var(--primary-dark);}
-.w-pill.standard{background:var(--surface-soft);color:var(--muted);
-  border:1px solid var(--line);}
+.w-pill.standard{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
 
 .pred-days-behind{display:flex;align-items:center;gap:10px;margin-top:14px;
   padding:10px 14px;background:var(--surface-soft);border:1px solid var(--line);
   border-radius:10px;font-size:13px;flex-wrap:wrap;}
 .pred-days-behind .dbi-lbl{font-weight:700;text-transform:uppercase;
   font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
-.pred-days-behind .dbi-val{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:16px;}
+.pred-days-behind .dbi-val{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;}
 .pred-days-behind.ahead .dbi-val{color:var(--success);}
 .pred-days-behind.on-track .dbi-val{color:var(--success);}
 .pred-days-behind.behind .dbi-val{color:var(--primary-dark);}
@@ -1318,57 +1241,59 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <body>
 
 <div class="shell">
-  <header class="topbar">
-    <div class="brand">
-      <svg class="brand-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="brandBg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#F0B854"/>
-            <stop offset="100%" stop-color="#A8721F"/>
-          </linearGradient>
-          <linearGradient id="brandChick" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#FFFFFF"/>
-            <stop offset="100%" stop-color="#F6E4C1"/>
-          </linearGradient>
-        </defs>
-        <rect x="0" y="0" width="64" height="64" rx="14" ry="14" fill="url(#brandBg)"/>
-        <ellipse cx="25" cy="20" rx="22" ry="14" fill="#FFFFFF" opacity="0.10"/>
-        <path d="M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z" fill="#5E2E22"/>
-        <ellipse cx="32" cy="38" rx="16" ry="15" fill="url(#brandChick)"/>
-        <path d="M 27 40 Q 33 37 38 42 Q 33 46 27 44 Z" fill="#E8D4AA" opacity="0.75"/>
-        <circle cx="38" cy="26" r="10" fill="url(#brandChick)"/>
-        <path d="M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z" fill="#C1502E"/>
-        <path d="M 46 26 L 51 28 L 46 30 Z" fill="#F0B854"/>
-        <circle cx="40.5" cy="24.5" r="1.3" fill="#2B2116"/>
-        <circle cx="40.9" cy="24.1" r="0.4" fill="#FFFFFF" opacity="0.9"/>
-      </svg>
-      ProdWise<span class="accent">.VM</span>
-    </div>
-    <div class="topbar-right">
-      <button class="sync-btn" id="syncBtn" type="button" title="Cloud sync">
-        <span class="sync-ico" id="syncIcon">☁️</span>
-        <span class="sync-name" id="syncLabel">Connect</span>
-      </button>
-      <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark mode">🌙</button>
-      <div class="batch-input">
-        <label for="batchNumber">Batch</label>
-        <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
+  <div class="sticky-header">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F0B854"/>
+              <stop offset="100%" stop-color="#A8721F"/>
+            </linearGradient>
+            <linearGradient id="brandChick" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="100%" stop-color="#F6E4C1"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="64" height="64" rx="14" ry="14" fill="url(#brandBg)"/>
+          <ellipse cx="25" cy="20" rx="22" ry="14" fill="#FFFFFF" opacity="0.10"/>
+          <path d="M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z" fill="#5E2E22"/>
+          <ellipse cx="32" cy="38" rx="16" ry="15" fill="url(#brandChick)"/>
+          <path d="M 27 40 Q 33 37 38 42 Q 33 46 27 44 Z" fill="#E8D4AA" opacity="0.75"/>
+          <circle cx="38" cy="26" r="10" fill="url(#brandChick)"/>
+          <path d="M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z" fill="#C1502E"/>
+          <path d="M 46 26 L 51 28 L 46 30 Z" fill="#F0B854"/>
+          <circle cx="40.5" cy="24.5" r="1.3" fill="#2B2116"/>
+          <circle cx="40.9" cy="24.1" r="0.4" fill="#FFFFFF" opacity="0.9"/>
+        </svg>
+        ProdWise<span class="accent">.VM</span>
       </div>
-      <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">
-        🔄 New Batch
-      </button>
-      <button class="batch-history-btn" id="batchHistoryBtn" type="button" title="View past batches">
-        📁 Batch History
-      </button>
-      <button class="btn-primary" id="importBtn" type="button">
-        📥 <span id="importBtnLabel">Import Excel</span>
-      </button>
-    </div>
-  </header>
-  <div class="barn-stripe"></div>
+      <div class="topbar-right">
+        <button class="sync-btn" id="syncBtn" type="button" title="Cloud sync">
+          <span class="sync-ico" id="syncIcon">☁️</span>
+          <span class="sync-name" id="syncLabel">Connect</span>
+        </button>
+        <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark mode">🌙</button>
+        <div class="batch-input">
+          <label for="batchNumber">Batch</label>
+          <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
+        </div>
+        <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">
+          🔄 New Batch
+        </button>
+        <button class="batch-history-btn" id="batchHistoryBtn" type="button" title="View past batches">
+          📁 Batch History
+        </button>
+        <button class="btn-primary" id="importBtn" type="button">
+          📥 <span id="importBtnLabel">Import Excel</span>
+        </button>
+      </div>
+    </header>
+    <div class="barn-stripe"></div>
 
-  <div class="tabs-wrap" id="tabsWrap" style="display:none;">
-    <nav class="tabs" id="tabs"></nav>
+    <div class="tabs-wrap" id="tabsWrap" style="display:none;">
+      <nav class="tabs" id="tabs"></nav>
+    </div>
   </div>
 
   <main id="app"></main>
@@ -1380,6 +1305,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <div class="toast" id="toast"></div>
 
 <div class="sync-scrim" id="syncScrim"></div>
+
 <div class="sync-modal" id="syncModal">
   <div class="sync-modal-head">
     <h3><span>☁️</span> Cloud Sync</h3>
@@ -1412,17 +1338,43 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
   <div class="sync-modal-body" id="batchHistoryModalBody"></div>
 </div>
 
+<div class="sync-modal" id="manualPickupModal">
+  <div class="sync-modal-head">
+    <h3 id="manualPickupModalTitle"><span>📝</span> Pickup</h3>
+    <button type="button" id="manualPickupClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sync-modal-body" id="manualPickupModalBody"></div>
+</div>
+
+<div class="sync-modal" id="importConflictModal">
+  <div class="sync-modal-head">
+    <h3><span>⚠️</span> Existing Pickup Data</h3>
+    <button type="button" id="importConflictClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sync-modal-body" id="importConflictBody"></div>
+</div>
+
+<div class="sync-modal wide" id="importReviewModal">
+  <div class="sync-modal-head">
+    <h3><span>🔀</span> Review Pickup Data</h3>
+    <button type="button" id="importReviewClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sync-modal-body" id="importReviewBody"></div>
+</div>
+
 <script>
 /* =========================================================
    ProdWise.VM
    - Ross 308 as-hatched curve (Aviagen 2022 combined M/F)
    - Mode-aware AI forecast (pickups → targets → standard)
-   - Whole Farm KPI card with manual feed override
-   - Per-shed density (fixed 3,162 m² floor area)
-   - Per-batch cloud files (suffix added to file keys)
-   - New Batch reset with 2-phase farm choice + JSON backup
-   - Batch History browser with pagination (4 per page)
-   - CluckWise as a tab in the top tabs row
+   - Group-level combined result (2 sheds sharing a silo)
+   - Whole Farm KPI card (all 8 sheds)
+   - Manual pickup entry (birds/avg/total auto-calc) alongside Excel
+   - Import conflict prompt on per-shed date collisions only
+   - Sticky top navigation
+   - Fixed-position pickup actions menu (no clipping)
+   - Per-shed mortality rate (default 0.1% of live/day, editable)
+   - Mortality estimate anchors at real data, rolls forward at rate
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1436,6 +1388,9 @@ const PRED_KEY    = 'prodwise_predictions_v1';
 const SHED_COUNT  = 8;
 const FEED_BLOCK_T = 60;
 const FIXED_FLOOR_AREA_M2 = 3162;
+const MAX_PICKUPS_PER_SHED = 5;
+const DEFAULT_MORT_RATE_PCT = 0.1;
+const MAX_MORT_RATE_PCT = 5;
 
 const CLUCKWISE_URL = './cluckwise/';
 const SYNC_WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
@@ -1514,13 +1469,13 @@ let predState = {
   targetHarvestWeightKg: { 1: 2.65, 2: 2.65, 3: 2.65, 4: 2.65 },
   predGroup: 1,
   predView: 'both',
-  dailyRange: { start: 1, end: 52 },
+  dailyRange: { start: 0, end: 52 },
   farmFeedOverride: null,
   deliveriesOpen: true,
   batchNumber: ''
 };
-let newBatchModalPhase = 'choice';   // 'choice' | 'batchNumber'
-let batchHistoryCache = null;        // { farmName, files: [...] } after successful fetch
+let newBatchModalPhase = 'choice';
+let batchHistoryCache = null;
 let batchHistoryPage = 0;
 const BATCHES_PER_PAGE = 4;
 let renderTimer = null;
@@ -1536,6 +1491,10 @@ let pushDebounceTimer = null;
 let pushMaxWaitTimer = null;
 let pushPending = false;
 let pushInFlight = false;
+
+let manualPickupState = null;
+let pendingImport = null;
+let reviewChoices = {};
 
 /* ---------- Date helpers ---------- */
 function dateOnly(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
@@ -1663,6 +1622,76 @@ function findRossAgeForWeight(weightKg){
   return 56;
 }
 
+/* ---------- Pickup Age helper ---------- */
+function pickupAge(shed, pickup){
+  if (pickup && pickup.ageOverride != null && Number.isFinite(Number(pickup.ageOverride))){
+    return Math.max(0, Math.floor(Number(pickup.ageOverride)));
+  }
+  if (!shed || !shed.placementDate || !pickup || !pickup.date) return 0;
+  return Math.max(0, daysBetween(shed.placementDate, pickup.date));
+}
+
+/* ---------- Mortality rate helpers ---------- */
+function shedMortRate(shed){
+  if (!shed) return DEFAULT_MORT_RATE_PCT;
+  const v = Number(shed.mortalityRatePercent);
+  if (!Number.isFinite(v) || v < 0) return DEFAULT_MORT_RATE_PCT;
+  return Math.max(0, Math.min(MAX_MORT_RATE_PCT, v));
+}
+
+/**
+ * Estimate final mortality for a shed.
+ * - If real mortality is recorded (> 0), anchor at that point and roll forward.
+ * - Otherwise assume the configured rate has been running since placement.
+ * - In both cases, roll forward day by day at (rate% of that day's live birds).
+ * This means the daily loss naturally decays as the flock shrinks in percentage mode.
+ */
+function estimateShedFinalMortality(shed, finalAge, currentAge){
+  const initialPop = Number(shed.initialPopulation) || 0;
+  if (initialPop <= 0){
+    return { currentMortEffective: 0, estFinalMort: 0, estFinalLive: 0, estLivability: 0 };
+  }
+  const actualMort = Math.max(0, Number(shed.mortality) || 0);
+  const ratePercent = shedMortRate(shed);
+  const dailyRate = ratePercent / 100;
+
+  let liveAtNow, mortAtNow;
+  if (actualMort > 0){
+    liveAtNow = Math.max(0, initialPop - actualMort);
+    mortAtNow = actualMort;
+  } else {
+    liveAtNow = initialPop;
+    mortAtNow = 0;
+    const simDays = Math.max(0, Math.floor(currentAge));
+    for (let d = 0; d < simDays; d++){
+      const loss = liveAtNow * dailyRate;
+      liveAtNow = Math.max(0, liveAtNow - loss);
+      mortAtNow += loss;
+    }
+    mortAtNow = Math.round(mortAtNow);
+    liveAtNow = Math.max(0, initialPop - mortAtNow);
+  }
+
+  let projectedLive = liveAtNow;
+  let projectedMort = mortAtNow;
+  const daysRemaining = Math.max(0, Math.floor(finalAge - currentAge));
+  for (let d = 0; d < daysRemaining; d++){
+    const loss = projectedLive * dailyRate;
+    projectedLive = Math.max(0, projectedLive - loss);
+    projectedMort += loss;
+  }
+
+  const estFinalMort = Math.min(initialPop, Math.round(projectedMort));
+  const estFinalLive = Math.max(0, initialPop - estFinalMort);
+  const estLivability = (estFinalLive / initialPop) * 100;
+  return {
+    currentMortEffective: Math.round(mortAtNow),
+    estFinalMort,
+    estFinalLive,
+    estLivability
+  };
+}
+
 /* ---------- Excel parse ---------- */
 function parseShedsFromWorkbook(workbook){
   const sheetName =
@@ -1678,7 +1707,8 @@ function parseShedsFromWorkbook(workbook){
   const sheds = Array.from({length: SHED_COUNT}, (_, i) => ({
     id: i + 1, placementDate: null, initialPopulation: 0, cleanoutDate: null,
     mortality: 0, customFeedKg: null, pickups: [],
-    targetCurve: { 7: null, 14: null, 21: null, 28: null }
+    targetCurve: { 7: null, 14: null, 21: null, 28: null },
+    mortalityRatePercent: DEFAULT_MORT_RATE_PCT
   }));
 
   let batchNumber = '', matched = 0, skipped = 0;
@@ -1729,7 +1759,9 @@ function parseShedsFromWorkbook(workbook){
           variance: Number.isFinite(Number(vRaw)) ? Number(vRaw) : null,
           totalWeightKg: totalWeight,
           totalWeightKgFromExcel: totalWeight,
-          totalWeightKgManual: false
+          totalWeightKgManual: false,
+          source: 'excel',
+          ageOverride: null
         });
       }
     }
@@ -1780,7 +1812,9 @@ function loadState(){
         variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null,
         totalWeightKg: (p.totalWeightKg != null && Number.isFinite(Number(p.totalWeightKg))) ? Number(p.totalWeightKg) : null,
         totalWeightKgFromExcel: (p.totalWeightKgFromExcel != null && Number.isFinite(Number(p.totalWeightKgFromExcel))) ? Number(p.totalWeightKgFromExcel) : null,
-        totalWeightKgManual: !!p.totalWeightKgManual
+        totalWeightKgManual: !!p.totalWeightKgManual,
+        source: (p.source === 'manual') ? 'manual' : 'excel',
+        ageOverride: (p.ageOverride != null && Number.isFinite(Number(p.ageOverride))) ? Number(p.ageOverride) : null
       }));
       const tc = s.targetCurve || {};
       s.targetCurve = {
@@ -1789,6 +1823,8 @@ function loadState(){
         21: (tc[21] != null && Number.isFinite(Number(tc[21])) && Number(tc[21]) > 0) ? Number(tc[21]) : null,
         28: (tc[28] != null && Number.isFinite(Number(tc[28])) && Number(tc[28]) > 0) ? Number(tc[28]) : null
       };
+      const mr = Number(s.mortalityRatePercent);
+      s.mortalityRatePercent = (Number.isFinite(mr) && mr >= 0) ? Math.max(0, Math.min(MAX_MORT_RATE_PCT, mr)) : DEFAULT_MORT_RATE_PCT;
     });
     return parsed;
   } catch(e){ return null; }
@@ -1832,17 +1868,13 @@ function saveSiloData(){
       const s = siloData[g] || { readings: [], deliveries: [] };
       serial[g] = {
         readings: (s.readings || []).map(r => ({
-          date: r.date,
-          silo1Rings: r.silo1Rings,
-          silo2Rings: r.silo2Rings,
-          silo3Rings: r.silo3Rings
+          date: r.date, silo1Rings: r.silo1Rings,
+          silo2Rings: r.silo2Rings, silo3Rings: r.silo3Rings
         })),
         deliveries: (s.deliveries || []).map(d => ({
-          id: d.id,
-          date: d.date ? iso(d.date) : null,
+          id: d.id, date: d.date ? iso(d.date) : null,
           amountKg: Number(d.amountKg) || 0,
-          feedType: d.feedType || '',
-          note: d.note || ''
+          feedType: d.feedType || '', note: d.note || ''
         }))
       };
     });
@@ -1939,7 +1971,7 @@ function loadPredState(){
     if (['shed1','shed2','both'].includes(v.predView)) predState.predView = v.predView;
     if (v.dailyRange && typeof v.dailyRange === 'object'){
       const s = Number(v.dailyRange.start), e = Number(v.dailyRange.end);
-      if (Number.isFinite(s) && Number.isFinite(e) && s >= 0 && e >= s && e <= 200){
+      if (Number.isFinite(s) && Number.isFinite(e) && s >= -200 && e >= s && e <= 200){
         predState.dailyRange = { start: Math.floor(s), end: Math.floor(e) };
       }
     }
@@ -1977,15 +2009,15 @@ function observedDailyGain(shed){
   if (arr.length === 0) return null;
   if (arr.length === 1){
     const p = arr[0];
-    const age = ageInDays(shed, p.date);
+    const age = pickupAge(shed, p);
     const avg = pickupAvgKg(p);
     if (age <= 0 || avg == null) return null;
     return (avg - ROSS_308_WEIGHTS_KG[0]) / age;
   }
   const first = arr[0];
   const last = arr[arr.length - 1];
-  const a0 = ageInDays(shed, first.date);
-  const a1 = ageInDays(shed, last.date);
+  const a0 = pickupAge(shed, first);
+  const a1 = pickupAge(shed, last);
   const w0 = pickupAvgKg(first);
   const w1 = pickupAvgKg(last);
   if (a1 <= a0 || w0 == null || w1 == null) return null;
@@ -2005,8 +2037,8 @@ function actualWeightOn(shed, date){
   const after  = arr.find(p => dateOnly(p.date) > d);
 
   if (before && after){
-    const a0 = ageInDays(shed, before.date);
-    const a1 = ageInDays(shed, after.date);
+    const a0 = pickupAge(shed, before);
+    const a1 = pickupAge(shed, after);
     const w0 = pickupAvgKg(before);
     const w1 = pickupAvgKg(after);
     if (a1 === a0) return w0;
@@ -2014,13 +2046,13 @@ function actualWeightOn(shed, date){
     return w0 + t * (w1 - w0);
   }
   if (!before && after){
-    const a1 = ageInDays(shed, after.date);
+    const a1 = pickupAge(shed, after);
     const w1 = pickupAvgKg(after);
     const g = observedDailyGain(shed) || 0;
     return Math.max(ROSS_308_WEIGHTS_KG[0], w1 - (a1 - age) * g);
   }
   if (before && !after){
-    const a0 = ageInDays(shed, before.date);
+    const a0 = pickupAge(shed, before);
     const w0 = pickupAvgKg(before);
     const g = observedDailyGain(shed) || 0;
     return w0 + (age - a0) * g;
@@ -2031,7 +2063,7 @@ function actualWeightOn(shed, date){
 function forecastFromPickups(shed, date){
   const last = lastWeightedPickup(shed);
   if (!last) return null;
-  const lastAge = ageInDays(shed, last.date);
+  const lastAge = pickupAge(shed, last);
   const lastW = pickupAvgKg(last);
   const targetAge = ageInDays(shed, date);
   if (targetAge <= lastAge) return lastW;
@@ -2178,7 +2210,7 @@ function base64ToBlob(base64, mime){
 function buildCloudPayload(){
   return {
     app: SYNC_APP_TAG,
-    schemaVersion: 6,
+    schemaVersion: 8,
     lastUpdated: new Date().toISOString(),
     farmName: syncFarmName,
     batchNumber: predState.batchNumber || (farmData && farmData.batchNumber) || '',
@@ -2236,6 +2268,7 @@ function applyCloudPayload(payload, options){
       fileName: payload.farmData.fileName || '(from cloud)',
       sheds: payload.farmData.sheds.map(s => {
         const tc = s.targetCurve || {};
+        const mr = Number(s.mortalityRatePercent);
         return {
           id: Number(s.id) || 0,
           placementDate: s.placementDate ? dateOnly(s.placementDate) : null,
@@ -2243,6 +2276,7 @@ function applyCloudPayload(payload, options){
           cleanoutDate: s.cleanoutDate ? dateOnly(s.cleanoutDate) : null,
           mortality: Number(s.mortality) || 0,
           customFeedKg: (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null,
+          mortalityRatePercent: (Number.isFinite(mr) && mr >= 0) ? Math.max(0, Math.min(MAX_MORT_RATE_PCT, mr)) : DEFAULT_MORT_RATE_PCT,
           pickups: (s.pickups || []).map(p => ({
             date: p.date ? dateOnly(p.date) : null,
             birds: Number(p.birds) || 0,
@@ -2250,7 +2284,9 @@ function applyCloudPayload(payload, options){
             variance: (p.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : null,
             totalWeightKg: (p.totalWeightKg != null && Number.isFinite(Number(p.totalWeightKg))) ? Number(p.totalWeightKg) : null,
             totalWeightKgFromExcel: (p.totalWeightKgFromExcel != null && Number.isFinite(Number(p.totalWeightKgFromExcel))) ? Number(p.totalWeightKgFromExcel) : null,
-            totalWeightKgManual: !!p.totalWeightKgManual
+            totalWeightKgManual: !!p.totalWeightKgManual,
+            source: (p.source === 'manual') ? 'manual' : 'excel',
+            ageOverride: (p.ageOverride != null && Number.isFinite(Number(p.ageOverride))) ? Number(p.ageOverride) : null
           })).filter(p => p.date),
           targetCurve: {
             7: (tc[7] != null && Number.isFinite(Number(tc[7])) && Number(tc[7]) > 0) ? Number(tc[7]) : null,
@@ -2592,14 +2628,14 @@ function closeFarmFoundModal(){
   updateScrimVisibility();
 }
 
-/* ---------- Helper: scrim visibility ---------- */
 function updateScrimVisibility(){
-  const anyOpen = ['syncModal','farmFoundModal','newBatchModal','batchHistoryModal']
+  const anyOpen = ['syncModal','farmFoundModal','newBatchModal','batchHistoryModal',
+                   'manualPickupModal','importConflictModal','importReviewModal']
     .some(id => document.getElementById(id).classList.contains('open'));
   document.getElementById('syncScrim').classList.toggle('open', anyOpen);
 }
 
-/* ---------- New Batch modal — 2-phase ---------- */
+/* ---------- New Batch modal ---------- */
 function openNewBatchModal(){
   newBatchModalPhase = 'choice';
   const modal = document.getElementById('newBatchModal');
@@ -2846,7 +2882,7 @@ async function startNewBatch(){
 }
 
 /* =========================================================
-   BATCH HISTORY (with pagination)
+   BATCH HISTORY
 ========================================================= */
 function openBatchHistoryModal(){
   batchHistoryPage = 0;
@@ -3015,14 +3051,10 @@ function renderBatchListPage(){
   const body = document.getElementById('batchHistoryModalBody');
   if (!body) return;
   body.querySelectorAll('[data-batch-open]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      openPastBatch(btn.dataset.batchOpen);
-    });
+    btn.addEventListener('click', () => { openPastBatch(btn.dataset.batchOpen); });
   });
   body.querySelectorAll('[data-batch-download]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      downloadPastBatch(btn.dataset.batchDownload);
-    });
+    btn.addEventListener('click', () => { downloadPastBatch(btn.dataset.batchDownload); });
   });
   body.querySelectorAll('[data-batch-page]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3218,7 +3250,7 @@ function computePredictions(shed, group){
   for (const p of pickups){
     const avg = pickupAvgKg(p);
     if (avg && avg > 0){
-      const pAge = ageInDays(shed, p.date);
+      const pAge = pickupAge(shed, p);
       const curveW = rossWeightKg(pAge);
       if (curveW > 0){ perfSum += (avg / curveW); perfCount++; }
     }
@@ -3231,17 +3263,16 @@ function computePredictions(shed, group){
     ? (perfAdjustedFinal * (1 - progressT * 0.5) + targetALW * (progressT * 0.5))
     : targetALW;
 
-  const dailyMortRate = currentAge > 0 ? (currentMort / currentAge) : 0;
-  const daysRemaining = Math.max(0, finalAge - currentAge);
-  const estFinalMort = Math.min(initialPop, Math.round(currentMort + dailyMortRate * daysRemaining));
-  const estFinalLive = Math.max(0, initialPop - estFinalMort);
-  const estLivability = initialPop > 0 ? ((estFinalLive / initialPop) * 100) : 0;
+  const mortEstimate = estimateShedFinalMortality(shed, finalAge, currentAge);
+  const estFinalMort = mortEstimate.estFinalMort;
+  const estFinalLive = mortEstimate.estFinalLive;
+  const estLivability = mortEstimate.estLivability;
 
   let totalWeightKg = 0;
   const pickupDetails = [];
   let cumBirds = 0;
   for (const p of pickups){
-    const pAge = ageInDays(shed, p.date);
+    const pAge = pickupAge(shed, p);
     const curveAtAge = rossWeightKg(pAge);
     const avgFromExcel = pickupAvgKg(p);
     const avgUsed = (avgFromExcel && avgFromExcel > 0) ? avgFromExcel : (curveAtAge * perfFactor);
@@ -3286,6 +3317,65 @@ function computePredictions(shed, group){
     hasWeightData: perfCount > 0
   };
 }
+
+function computeGroupPredictions(group){
+  const sheds = shedsForGroup(group);
+  let totalLiveWeight = 0;
+  let totalFeedKg = 0;
+  let totalPlaced = 0;
+  let totalMortalityEst = 0;
+  let totalBirdsAtHarvest = 0;
+  let weightedAgeSum = 0;
+  let shedsWithData = 0;
+  let confidenceSum = 0;
+
+  for (const shed of sheds){
+    if (!shed.placementDate) continue;
+    const pred = computePredictions(shed, group);
+
+    totalLiveWeight += pred.totalWeightKg;
+    totalFeedKg += pred.totalFeedKg;
+    totalPlaced += pred.initialPop;
+    totalMortalityEst += pred.estFinalMort;
+
+    const harvestedBirds = pred.pickupDetails.reduce((s,p) => s + p.birds, 0);
+    const remainingBirds = Math.max(0, pred.estFinalLive - harvestedBirds);
+    const batchBirds = harvestedBirds + remainingBirds;
+    totalBirdsAtHarvest += batchBirds;
+    weightedAgeSum += pred.finalAge * batchBirds;
+    confidenceSum += pred.confidence;
+    shedsWithData++;
+  }
+
+  if (shedsWithData === 0){
+    return {
+      hasData: false, shedsWithData: 0, shedIds: sheds.map(s => s.id),
+      totalLiveWeight: 0, totalFeedKg: 0,
+      totalPlaced: 0, totalMortalityEst: 0, totalBirdsAtHarvest: 0,
+      avgWeight: 0, weightedAge: 0, livability: 0,
+      fcr: 0, cfcr: 0, pif: 0, confidence: 0
+    };
+  }
+
+  const avgWeight = totalBirdsAtHarvest > 0 ? totalLiveWeight / totalBirdsAtHarvest : 0;
+  const weightedAge = totalBirdsAtHarvest > 0 ? weightedAgeSum / totalBirdsAtHarvest : 0;
+  const livability = totalPlaced > 0 ? ((totalPlaced - totalMortalityEst) / totalPlaced) * 100 : 0;
+
+  const fcr = totalLiveWeight > 0 ? totalFeedKg / totalLiveWeight : 0;
+  const beta = Number(predState.beta) || 0.27;
+  const cfcr = fcr > 0 ? fcr - (avgWeight - 2.45) * beta : 0;
+  const pif = (weightedAge > 0 && fcr > 0) ? ((livability * avgWeight) / (weightedAge * fcr) * 100) : 0;
+  const confidence = Math.round(confidenceSum / shedsWithData);
+
+  return {
+    hasData: true, shedsWithData, shedIds: sheds.map(s => s.id),
+    totalLiveWeight, totalFeedKg,
+    totalPlaced, totalMortalityEst, totalBirdsAtHarvest,
+    avgWeight, weightedAge, livability,
+    fcr, cfcr, pif, confidence
+  };
+}
+
 function computeConfidence(shed, finalAge){
   const age = ageInDays(shed, new Date());
   const pickups = shed.pickups || [];
@@ -3370,7 +3460,7 @@ function computeFarmTotals(){
   };
 }
 
-/* ---------- Shed forecast (group pages) ---------- */
+/* ---------- Shed forecast ---------- */
 function computeForecast(shed, range){
   const today = dateOnly(new Date());
   const rows = [];
@@ -3641,7 +3731,634 @@ function showToast(msg, isError){
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
 
-/* ---------- Import ---------- */
+/* =========================================================
+   MANUAL PICKUP ENTRY
+========================================================= */
+function openManualPickupModal(shedId, editDateIso){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const pickups = shed.pickups || [];
+
+  if (editDateIso){
+    const p = pickups.find(x => iso(x.date) === editDateIso);
+    if (!p) return;
+    const avg = (p.totalWeightKg && p.birds) ? (p.totalWeightKg / p.birds) : null;
+    manualPickupState = {
+      shedId, mode: 'edit',
+      originalDateIso: editDateIso,
+      dateIso: iso(p.date),
+      ageValue: pickupAge(shed, p),
+      ageTouched: (p.ageOverride != null),
+      birds: p.birds || '',
+      avgWeight: avg != null ? Number(avg.toFixed(3)) : '',
+      totalWeight: p.totalWeightKg != null ? Number(p.totalWeightKg.toFixed(2)) : '',
+      lastEdited: 'avg',
+      isFinal: !!p.isFinal
+    };
+  } else {
+    if (pickups.length >= MAX_PICKUPS_PER_SHED){
+      showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups (maximum).`, true);
+      return;
+    }
+    const today = todayIso();
+    const computedAge = shed.placementDate ? Math.max(0, daysBetween(shed.placementDate, dateOnly(today))) : 0;
+    manualPickupState = {
+      shedId, mode: 'add',
+      originalDateIso: null,
+      dateIso: today,
+      ageValue: computedAge,
+      ageTouched: false,
+      birds: '',
+      avgWeight: '',
+      totalWeight: '',
+      lastEdited: 'avg',
+      isFinal: false
+    };
+  }
+  renderManualPickupModal();
+  const modal = document.getElementById('manualPickupModal');
+  const scrim = document.getElementById('syncScrim');
+  modal.classList.add('open'); scrim.classList.add('open');
+}
+function closeManualPickupModal(){
+  document.getElementById('manualPickupModal').classList.remove('open');
+  manualPickupState = null;
+  updateScrimVisibility();
+}
+function renderManualPickupModal(){
+  const body = document.getElementById('manualPickupModalBody');
+  const titleEl = document.getElementById('manualPickupModalTitle');
+  const s = manualPickupState;
+  if (!s || !body) return;
+  const shed = farmData.sheds[s.shedId - 1];
+  if (titleEl){
+    titleEl.innerHTML = s.mode === 'add'
+      ? `<span>📝</span> Add Pickup — Shed ${s.shedId}`
+      : `<span>✎</span> Edit Pickup — Shed ${s.shedId}`;
+  }
+  const pickupCount = (shed.pickups || []).length;
+  const canSave = s.mode === 'edit' || pickupCount < MAX_PICKUPS_PER_SHED;
+
+  body.innerHTML = `
+    <div class="sync-status-card">
+      <div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div>
+      <div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate ? fmtShort(shed.placementDate) : '—'}</span></div>
+      <div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div>
+    </div>
+    <div class="mp-field">
+      <label>Date</label>
+      <input type="date" id="mpDate" value="${s.dateIso}" />
+    </div>
+    <div class="mp-field">
+      <label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched ? 'display:none;' : ''}">auto</span></label>
+      <input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" />
+    </div>
+    <div class="mp-field">
+      <label>No. of Birds</label>
+      <input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" />
+    </div>
+    <div class="mp-field">
+      <label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label>
+      <input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" />
+    </div>
+    <div class="mp-field">
+      <label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label>
+      <input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" />
+    </div>
+    <label class="mp-checkbox-row">
+      <input type="checkbox" id="mpFinal" ${s.isFinal ? 'checked' : ''} />
+      <span>This is the final pickup (sets cleanout date &amp; mortality)</span>
+    </label>
+    <div class="mp-hint">
+      Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.
+      The field marked <strong>auto</strong> is computed for you — edit either side and the other updates instantly.
+    </div>
+    <div class="sync-actions">
+      <button class="btn-sync-primary" id="mpSaveBtn" ${canSave ? '' : 'disabled'}>
+        ${s.mode === 'add' ? '＋ Add Pickup' : '✓ Save Changes'}
+      </button>
+      <button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button>
+    </div>`;
+
+  const dateEl  = document.getElementById('mpDate');
+  const ageEl   = document.getElementById('mpAge');
+  const birdsEl = document.getElementById('mpBirds');
+  const avgEl   = document.getElementById('mpAvg');
+  const totalEl = document.getElementById('mpTotal');
+  const ageChipEl = document.getElementById('mpAgeChip');
+
+  const onDateChange = () => {
+    s.dateIso = dateEl.value;
+    if (s.ageTouched) return;
+    const d = parseExcelDate(dateEl.value);
+    if (!d) return;
+    const a = shed.placementDate ? Math.max(0, daysBetween(shed.placementDate, d)) : 0;
+    ageEl.value = a;
+    s.ageValue = a;
+    if (ageChipEl) ageChipEl.style.display = '';
+  };
+  const onAgeChange = () => {
+    s.ageTouched = true;
+    if (ageChipEl) ageChipEl.style.display = 'none';
+    const a = Number(ageEl.value);
+    if (Number.isFinite(a) && a >= 0) s.ageValue = Math.floor(a);
+  };
+  const onBirdsChange = () => { refreshManualPickupCalc(); };
+  const onAvgChange   = () => { s.lastEdited = 'avg';   refreshManualPickupCalc(); };
+  const onTotalChange = () => { s.lastEdited = 'total'; refreshManualPickupCalc(); };
+
+  dateEl.addEventListener('input', onDateChange);
+  dateEl.addEventListener('change', onDateChange);
+  ageEl.addEventListener('input', onAgeChange);
+  birdsEl.addEventListener('input', onBirdsChange);
+  avgEl.addEventListener('input', onAvgChange);
+  totalEl.addEventListener('input', onTotalChange);
+
+  refreshManualPickupCalc();
+
+  document.getElementById('mpSaveBtn').addEventListener('click', saveManualPickup);
+  document.getElementById('mpCancelBtn').addEventListener('click', closeManualPickupModal);
+
+  setTimeout(() => { birdsEl && birdsEl.focus(); }, 80);
+}
+function refreshManualPickupCalc(){
+  const s = manualPickupState;
+  if (!s) return;
+  const avgEl   = document.getElementById('mpAvg');
+  const totalEl = document.getElementById('mpTotal');
+  const birdsEl = document.getElementById('mpBirds');
+  const avgChip   = document.getElementById('mpAvgChip');
+  const totalChip = document.getElementById('mpTotalChip');
+  if (!avgEl || !totalEl || !birdsEl) return;
+
+  const birds = Number(birdsEl.value);
+  const avgVal   = avgEl.value === '' ? null : Number(avgEl.value);
+  const totalVal = totalEl.value === '' ? null : Number(totalEl.value);
+  const birdsOK = Number.isFinite(birds) && birds > 0;
+  const avgOK   = avgVal != null && Number.isFinite(avgVal) && avgVal > 0;
+  const totalOK = totalVal != null && Number.isFinite(totalVal) && totalVal > 0;
+
+  avgEl.classList.remove('auto-calc');
+  totalEl.classList.remove('auto-calc');
+  if (avgChip)   avgChip.style.display = 'none';
+  if (totalChip) totalChip.style.display = 'none';
+
+  if (s.lastEdited === 'avg' && birdsOK && avgOK){
+    const computed = birds * avgVal;
+    totalEl.value = computed.toFixed(2);
+    totalEl.classList.add('auto-calc');
+    if (totalChip) totalChip.style.display = '';
+    s.totalWeight = computed;
+    s.avgWeight = avgVal;
+  } else if (s.lastEdited === 'total' && birdsOK && totalOK){
+    const computed = totalVal / birds;
+    avgEl.value = computed.toFixed(3);
+    avgEl.classList.add('auto-calc');
+    if (avgChip) avgChip.style.display = '';
+    s.avgWeight = computed;
+    s.totalWeight = totalVal;
+  }
+}
+function saveManualPickup(){
+  const s = manualPickupState;
+  if (!s) return;
+  const shed = farmData.sheds[s.shedId - 1];
+  if (!shed) return;
+
+  const dateStr  = document.getElementById('mpDate').value;
+  const ageVal   = Number(document.getElementById('mpAge').value);
+  const birdsVal = Number(document.getElementById('mpBirds').value);
+  const avgVal   = Number(document.getElementById('mpAvg').value);
+  const totalVal = Number(document.getElementById('mpTotal').value);
+  const isFinal  = document.getElementById('mpFinal').checked;
+
+  const dateObj = parseExcelDate(dateStr);
+  if (!dateObj){ showToast('Pick a valid date.', true); return; }
+  if (!Number.isFinite(birdsVal) || birdsVal <= 0){ showToast('Enter a valid number of birds.', true); return; }
+
+  let avg = null, total = null;
+  if (s.lastEdited === 'avg'){
+    if (!Number.isFinite(avgVal) || avgVal <= 0){
+      showToast('Enter an average weight or a total weight.', true); return;
+    }
+    avg = avgVal;
+    total = birdsVal * avg;
+  } else {
+    if (!Number.isFinite(totalVal) || totalVal <= 0){
+      showToast('Enter a total weight or an average weight.', true); return;
+    }
+    total = totalVal;
+    avg = total / birdsVal;
+  }
+
+  const age = (Number.isFinite(ageVal) && ageVal >= 0) ? Math.floor(ageVal) : 0;
+  const ageOverride = s.ageTouched ? age : null;
+
+  const newPickup = {
+    date: dateObj,
+    birds: Math.floor(birdsVal),
+    isFinal,
+    variance: null,
+    totalWeightKg: total,
+    totalWeightKgFromExcel: null,
+    totalWeightKgManual: true,
+    source: 'manual',
+    ageOverride
+  };
+
+  if (!shed.pickups) shed.pickups = [];
+
+  if (s.mode === 'add'){
+    if (shed.pickups.length >= MAX_PICKUPS_PER_SHED){
+      showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups.`, true); return;
+    }
+    const dup = shed.pickups.find(p => iso(p.date) === iso(dateObj));
+    if (dup){
+      if (!confirm('A pickup already exists for this date. Add another anyway?')) return;
+    }
+    shed.pickups.push(newPickup);
+  } else {
+    const idx = shed.pickups.findIndex(p => iso(p.date) === s.originalDateIso);
+    if (idx < 0){ showToast('Pickup not found.', true); return; }
+    const original = shed.pickups[idx];
+    newPickup.source = original.source || 'excel';
+    newPickup.totalWeightKgFromExcel = original.totalWeightKgFromExcel;
+    if (newPickup.source === 'manual'){
+      newPickup.totalWeightKgManual = true;
+    } else {
+      newPickup.totalWeightKgManual = (original.totalWeightKgFromExcel == null)
+        ? true
+        : (Math.abs(Number(total) - Number(original.totalWeightKgFromExcel)) > 0.01);
+    }
+    shed.pickups[idx] = newPickup;
+  }
+
+  reflowShedPickups(shed);
+  saveState(); schedulePush();
+  closeManualPickupModal();
+  render();
+  showToast(s.mode === 'add' ? '✅ Pickup added.' : '✅ Pickup updated.');
+}
+function reflowShedPickups(shed){
+  if (!shed || !Array.isArray(shed.pickups)) return;
+  shed.pickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  let finalSeen = false;
+  for (const p of shed.pickups){
+    if (p.isFinal && !finalSeen) finalSeen = true;
+    else if (p.isFinal && finalSeen) p.isFinal = false;
+  }
+  const fp = shed.pickups.find(p => p.isFinal);
+  if (fp){
+    shed.cleanoutDate = dateOnly(fp.date);
+    const totalPicked = shed.pickups.reduce((sum,p) => sum + (Number(p.birds) || 0), 0);
+    shed.mortality = Math.max(0, (shed.initialPopulation || 0) - totalPicked);
+  }
+}
+function deleteManualPickup(shedId, dateIso){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const p = (shed.pickups || []).find(x => iso(x.date) === dateIso);
+  if (!p) return;
+  const label = p.source === 'manual' ? 'manually-entered' : 'Excel-imported';
+  if (!confirm(`Delete this ${label} pickup from ${fmtShort(p.date)}?`)) return;
+  shed.pickups = (shed.pickups || []).filter(x => iso(x.date) !== dateIso);
+  reflowShedPickups(shed);
+  saveState(); schedulePush(); render();
+  showToast('Pickup deleted.');
+}
+
+/* =========================================================
+   EXCEL IMPORT FLOW
+========================================================= */
+function detectPickupCollisions(currentFarmData, incomingSheds){
+  const result = { hasAny: false, byShed: {} };
+  if (!currentFarmData || !Array.isArray(currentFarmData.sheds)) return result;
+  for (const inc of incomingSheds){
+    const cur = currentFarmData.sheds[inc.id - 1];
+    if (!cur || !cur.pickups || cur.pickups.length === 0) continue;
+    const curDates = new Map();
+    cur.pickups.forEach(p => curDates.set(iso(p.date), p));
+    const incPickups = inc.pickups || [];
+    const incDates = new Set(incPickups.map(p => iso(p.date)));
+    const conflicts = [];
+    const newOnly = [];
+    const existingOnly = [];
+    for (const ip of incPickups){
+      const k = iso(ip.date);
+      if (curDates.has(k)){
+        conflicts.push({ dateIso: k, existing: curDates.get(k), imported: ip });
+      } else {
+        newOnly.push(ip);
+      }
+    }
+    for (const cp of cur.pickups){
+      const k = iso(cp.date);
+      if (!incDates.has(k)) existingOnly.push(cp);
+    }
+    if (conflicts.length > 0){
+      result.hasAny = true;
+      result.byShed[inc.id] = { shedId: inc.id, conflicts, newOnly, existingOnly };
+    }
+  }
+  return result;
+}
+function openImportConflictModal(){
+  const body = document.getElementById('importConflictBody');
+  if (!body || !pendingImport) return;
+  const c = pendingImport.collisions;
+  let totalConflicts = 0;
+  let shedCount = 0;
+  Object.values(c.byShed).forEach(x => { totalConflicts += x.conflicts.length; shedCount++; });
+  body.innerHTML = `
+    <div class="farm-found-icon">⚠️</div>
+    <div class="farm-found-title">Existing pickup data found</div>
+    <div class="farm-found-sub">
+      ${totalConflicts} conflicting record${totalConflicts === 1 ? '' : 's'} across
+      ${shedCount} shed${shedCount === 1 ? '' : 's'}. Choose how to proceed.
+    </div>
+    <div class="ff-choices">
+      <button class="ff-choice primary" id="impReviewBtn" type="button">
+        <span class="ff-icon">🔀</span>
+        <div>
+          <div class="ff-choice-title">Review and choose</div>
+          <div class="ff-choice-sub">Compare each conflict and pick record by record</div>
+        </div>
+      </button>
+      <button class="ff-choice danger" id="impReplaceAllBtn" type="button">
+        <span class="ff-icon">♻️</span>
+        <div>
+          <div class="ff-choice-title">Replace all with Excel</div>
+          <div class="ff-choice-sub">Use the imported file verbatim — manual edits will be discarded</div>
+        </div>
+      </button>
+      <button class="ff-choice secondary" id="impCancelBtn" type="button">
+        <span class="ff-icon">🛡️</span>
+        <div>
+          <div class="ff-choice-title">Keep existing pickups &amp; cancel pickup update</div>
+          <div class="ff-choice-sub">Imported shed metadata will still be applied</div>
+        </div>
+      </button>
+    </div>
+    <button class="ff-cancel" id="impFullCancelBtn" type="button">Cancel entire import</button>
+  `;
+  document.getElementById('impReviewBtn').addEventListener('click', () => {
+    closeImportConflictModal();
+    openImportReviewModal();
+  });
+  document.getElementById('impReplaceAllBtn').addEventListener('click', () => {
+    closeImportConflictModal();
+    finalizeImport('replace');
+  });
+  document.getElementById('impCancelBtn').addEventListener('click', () => {
+    closeImportConflictModal();
+    finalizeImport('skip');
+  });
+  document.getElementById('impFullCancelBtn').addEventListener('click', () => {
+    closeImportConflictModal();
+    pendingImport = null;
+    showToast('Import cancelled.');
+  });
+  const modal = document.getElementById('importConflictModal');
+  const scrim = document.getElementById('syncScrim');
+  modal.classList.add('open'); scrim.classList.add('open');
+}
+function closeImportConflictModal(){
+  document.getElementById('importConflictModal').classList.remove('open');
+  updateScrimVisibility();
+}
+function openImportReviewModal(){
+  if (!pendingImport) return;
+  reviewChoices = {};
+  Object.values(pendingImport.collisions.byShed).forEach(shed => {
+    shed.conflicts.forEach(c => {
+      reviewChoices[`${shed.shedId}|${c.dateIso}`] = 'existing';
+    });
+  });
+  renderImportReviewBody();
+  const modal = document.getElementById('importReviewModal');
+  const scrim = document.getElementById('syncScrim');
+  modal.classList.add('open'); scrim.classList.add('open');
+}
+function closeImportReviewModal(){
+  document.getElementById('importReviewModal').classList.remove('open');
+  updateScrimVisibility();
+}
+function renderImportReviewBody(){
+  const body = document.getElementById('importReviewBody');
+  if (!body || !pendingImport) return;
+  const c = pendingImport.collisions;
+  const shedIds = Object.keys(c.byShed).map(Number).sort((a,b) => a - b);
+  let totalConflicts = 0, totalNew = 0, totalExistingOnly = 0;
+  shedIds.forEach(sid => {
+    totalConflicts += c.byShed[sid].conflicts.length;
+    totalNew += c.byShed[sid].newOnly.length;
+    totalExistingOnly += c.byShed[sid].existingOnly.length;
+  });
+
+  const shedSections = shedIds.map(sid => {
+    const s = c.byShed[sid];
+    const conflictRows = s.conflicts.map(cf => {
+      const key = `${sid}|${cf.dateIso}`;
+      const cur = cf.existing;
+      const imp = cf.imported;
+      const curBirds = cur.birds || 0;
+      const impBirds = imp.birds || 0;
+      const curAvg = (cur.totalWeightKg && cur.birds) ? (cur.totalWeightKg / cur.birds) : null;
+      const impAvg = (imp.totalWeightKg && imp.birds) ? (imp.totalWeightKg / imp.birds) : null;
+      const curTotal = cur.totalWeightKg;
+      const impTotal = imp.totalWeightKg;
+      const curSrc = cur.source === 'manual' ? 'Manual' : 'Excel';
+      const impSrc = imp.source === 'manual' ? 'Manual' : 'Excel';
+      const fmtNum = n => (n == null) ? '—' : Math.round(n).toLocaleString();
+      const fmtW  = n => (n == null) ? '—' : Number(n).toFixed(3) + ' kg';
+      const fmtT  = n => (n == null) ? '—' : Math.round(Number(n)).toLocaleString() + ' kg';
+      const isChecked = (v) => reviewChoices[key] === v ? 'checked' : '';
+      return `
+        <div class="conflict-row">
+          <div class="conflict-row-info">
+            <div class="conflict-row-date">${fmtShort(cf.existing.date)}</div>
+            <div class="side existing"><span class="lbl">Existing (${curSrc})</span>
+              <span class="val">${fmtNum(curBirds)} birds · ${fmtW(curAvg)} · ${fmtT(curTotal)} total</span></div>
+            <div class="side imported"><span class="lbl">Imported (${impSrc})</span>
+              <span class="val">${fmtNum(impBirds)} birds · ${fmtW(impAvg)} · ${fmtT(impTotal)} total</span></div>
+          </div>
+          <div class="conflict-radio">
+            <label><input type="radio" name="c-${sid}-${cf.dateIso}" value="existing" ${isChecked('existing')} /> Keep</label>
+            <label><input type="radio" name="c-${sid}-${cf.dateIso}" value="imported" ${isChecked('imported')} /> Use Imported</label>
+          </div>
+        </div>`;
+    }).join('');
+
+    const newLines = s.newOnly.length
+      ? `<div class="conflict-new">＋ ${s.newOnly.length} new imported record${s.newOnly.length === 1 ? '' : 's'} will be added</div>` : '';
+    const existingOnlyLines = s.existingOnly.length
+      ? `<div class="conflict-existing-only">🛡️ ${s.existingOnly.length} existing-only record${s.existingOnly.length === 1 ? '' : 's'} will be kept</div>` : '';
+
+    return `
+      <div class="conflict-shed">
+        <div class="conflict-shed-title">
+          <span>Shed ${sid}</span>
+          <span class="count">${s.conflicts.length} conflict${s.conflicts.length === 1 ? '' : 's'}</span>
+        </div>
+        ${conflictRows}
+        ${newLines}
+        ${existingOnlyLines}
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="sync-hint">
+      Choose per conflict whether to <strong>keep your existing record</strong> or
+      <strong>use the imported Excel record</strong>. Nothing is written until you press Apply.
+      New Excel records will be added; existing-only records will be kept.
+    </div>
+    <div class="conflict-bulk">
+      <button type="button" data-bulk="all-existing">All: keep existing</button>
+      <button type="button" data-bulk="all-imported">All: use imported</button>
+    </div>
+    ${shedSections}
+    <div class="sync-actions">
+      <button class="btn-sync-primary" id="impReviewApplyBtn">
+        ✓ Apply (${totalConflicts} conflict${totalConflicts === 1 ? '' : 's'}, ${totalNew} new, ${totalExistingOnly} kept)
+      </button>
+      <button class="btn-sync-primary ghost" id="impReviewBackBtn">← Back</button>
+    </div>`;
+
+  body.querySelectorAll('input[type="radio"]').forEach(r => {
+    r.addEventListener('change', (e) => {
+      const parts = e.target.name.split('-');
+      const sid = parts[1];
+      const dateIso = parts.slice(2).join('-');
+      reviewChoices[`${sid}|${dateIso}`] = e.target.value;
+    });
+  });
+  body.querySelectorAll('[data-bulk]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.bulk;
+      const val = mode === 'all-existing' ? 'existing' : 'imported';
+      body.querySelectorAll('input[type="radio"]').forEach(r => {
+        const parts = r.name.split('-');
+        const sid = parts[1];
+        const dateIso = parts.slice(2).join('-');
+        if (r.value === val){
+          r.checked = true;
+          reviewChoices[`${sid}|${dateIso}`] = val;
+        }
+      });
+    });
+  });
+  document.getElementById('impReviewApplyBtn').addEventListener('click', () => {
+    closeImportReviewModal();
+    finalizeImport('review');
+  });
+  document.getElementById('impReviewBackBtn').addEventListener('click', () => {
+    closeImportReviewModal();
+    openImportConflictModal();
+  });
+}
+function finalizeImport(mode){
+  if (!pendingImport) return;
+  const { file, result, manualTargets, shedRates } = pendingImport;
+  const reviewMap = mode === 'review' ? { ...reviewChoices } : null;
+  pendingImport = null;
+  reviewChoices = {};
+
+  const finalSheds = result.sheds.map(inc => {
+    const cur = farmData ? farmData.sheds[inc.id - 1] : null;
+    const curPickups = (cur && cur.pickups) ? cur.pickups : [];
+    const incPickups = inc.pickups || [];
+
+    let finalPickups;
+    if (!cur || curPickups.length === 0){
+      finalPickups = incPickups.map(p => ({ ...p }));
+    } else if (mode === 'replace'){
+      finalPickups = incPickups.map(p => ({ ...p }));
+    } else if (mode === 'skip'){
+      finalPickups = curPickups.map(p => ({ ...p }));
+    } else {
+      const incMap = new Map();
+      incPickups.forEach(p => incMap.set(iso(p.date), p));
+      const curMap = new Map();
+      curPickups.forEach(p => curMap.set(iso(p.date), p));
+      const allDates = new Set([...incMap.keys(), ...curMap.keys()]);
+      finalPickups = [];
+      for (const dk of allDates){
+        const c = curMap.get(dk);
+        const i = incMap.get(dk);
+        if (c && i){
+          const key = `${inc.id}|${dk}`;
+          const choice = reviewMap[key] || 'existing';
+          finalPickups.push(choice === 'imported' ? { ...i } : { ...c });
+        } else if (i){
+          finalPickups.push({ ...i });
+        } else if (c){
+          finalPickups.push({ ...c });
+        }
+      }
+    }
+    finalPickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+    let finalSeen = false;
+    for (const p of finalPickups){
+      if (p.isFinal && !finalSeen) finalSeen = true;
+      else if (p.isFinal && finalSeen) p.isFinal = false;
+    }
+    if (finalPickups.length === 5 && !finalPickups.some(p => p.isFinal)) finalPickups[4].isFinal = true;
+
+    const tc = manualTargets[inc.id] ? { ...manualTargets[inc.id] } : inc.targetCurve;
+    const rate = (shedRates && shedRates[inc.id] != null)
+      ? shedRates[inc.id]
+      : (inc.mortalityRatePercent != null ? inc.mortalityRatePercent : DEFAULT_MORT_RATE_PCT);
+
+    let cleanoutDate = inc.cleanoutDate;
+    let mortality = inc.mortality;
+    const fp = finalPickups.find(p => p.isFinal);
+    if (fp){
+      cleanoutDate = dateOnly(fp.date);
+      const totalPicked = finalPickups.reduce((sum,p) => sum + (Number(p.birds) || 0), 0);
+      mortality = Math.max(0, (inc.initialPopulation || 0) - totalPicked);
+    }
+
+    return {
+      ...inc,
+      pickups: finalPickups,
+      targetCurve: tc,
+      cleanoutDate,
+      mortality,
+      mortalityRatePercent: rate
+    };
+  });
+
+  if (!predState.batchNumber && result.batchNumber){
+    predState.batchNumber = sanitizeBatchNumber(result.batchNumber);
+    savePredState();
+  }
+
+  farmData = {
+    batchNumber: predState.batchNumber || result.batchNumber || '',
+    importDate: new Date().toISOString(),
+    fileName: file.name,
+    sheds: finalSheds
+  };
+  activeTab = 'g1';
+  saveState();
+
+  (async () => {
+    if (syncFarmName && syncConnectedAt){ await uploadExcelToCloud(file); }
+    else { schedulePush(); }
+    render();
+    const manualTargetCount = Object.keys(manualTargets).length;
+    const modeLabel = mode === 'replace' ? 'replaced' : (mode === 'skip' ? 'kept existing' : 'merged');
+    showToast(
+      `✅ Imported ${result.matched} shed${result.matched === 1 ? '' : 's'}` +
+      (result.skipped ? ` · ${result.skipped} row(s) skipped` : '') +
+      ` · pickups ${modeLabel}` +
+      (manualTargetCount > 0 ? ` · kept ${manualTargetCount} target curve${manualTargetCount === 1 ? '' : 's'}` : '') +
+      (farmData.batchNumber ? ` · Batch ${farmData.batchNumber}` : '')
+    );
+  })();
+}
 function triggerImport(){
   const input = document.getElementById('excelFile');
   input.value = ''; input.click();
@@ -3658,7 +4375,7 @@ async function handleFile(file){
   if (willReplaceLocal || willReplaceCloudExcel){
     let msg = '';
     if (willReplaceLocal){
-      msg += 'This will replace your current shed data with the new file.\n\nManual pickup weight edits and target curves will be kept.';
+      msg += 'This will update your current shed data with the new file.\n\nTarget curves, mortality rates, and placement dates are preserved.';
     }
     if (willReplaceCloudExcel){
       if (msg) msg += '\n\n';
@@ -3669,66 +4386,31 @@ async function handleFile(file){
     if (!confirm(msg)) return;
   }
   try {
-    const manualWeights = {};
     const manualTargets = {};
+    const shedRates = {};
     if (farmData && Array.isArray(farmData.sheds)){
       farmData.sheds.forEach(s => {
-        (s.pickups || []).forEach(p => {
-          if (p.totalWeightKgManual && p.totalWeightKg != null){
-            manualWeights[`${s.id}_${iso(p.date)}`] = {
-              totalWeightKg: p.totalWeightKg,
-              totalWeightKgFromExcel: p.totalWeightKgFromExcel
-            };
-          }
-        });
         const tc = s.targetCurve || {};
         if (tc[7] || tc[14] || tc[21] || tc[28]){
           manualTargets[s.id] = { ...tc };
+        }
+        if (s.mortalityRatePercent != null && Number.isFinite(Number(s.mortalityRatePercent))){
+          shedRates[s.id] = Number(s.mortalityRatePercent);
         }
       });
     }
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array', cellDates: true });
     const result = parseShedsFromWorkbook(wb);
-    result.sheds.forEach(s => {
-      (s.pickups || []).forEach(p => {
-        const key = `${s.id}_${iso(p.date)}`;
-        if (manualWeights[key]){
-          p.totalWeightKg = manualWeights[key].totalWeightKg;
-          p.totalWeightKgManual = true;
-          if (p.totalWeightKgFromExcel == null && manualWeights[key].totalWeightKgFromExcel != null){
-            p.totalWeightKgFromExcel = manualWeights[key].totalWeightKgFromExcel;
-          }
-        }
-      });
-      if (manualTargets[s.id]){
-        s.targetCurve = { ...manualTargets[s.id] };
-      }
-    });
-    if (!predState.batchNumber && result.batchNumber){
-      predState.batchNumber = sanitizeBatchNumber(result.batchNumber);
-      savePredState();
+
+    const collisions = detectPickupCollisions(farmData, result.sheds);
+    if (collisions.hasAny){
+      pendingImport = { file, result, manualTargets, shedRates, collisions };
+      openImportConflictModal();
+      return;
     }
-    farmData = {
-      batchNumber: predState.batchNumber || result.batchNumber || '',
-      importDate: new Date().toISOString(),
-      fileName: file.name,
-      sheds: result.sheds
-    };
-    activeTab = 'g1';
-    saveState();
-    if (syncFarmName && syncConnectedAt){ await uploadExcelToCloud(file); }
-    else { schedulePush(); }
-    render();
-    const manualWeightCount = Object.keys(manualWeights).length;
-    const manualTargetCount = Object.keys(manualTargets).length;
-    showToast(
-      `✅ Imported ${result.matched} shed${result.matched === 1 ? '' : 's'}` +
-      (result.skipped ? ` · ${result.skipped} row(s) skipped` : '') +
-      (manualWeightCount > 0 ? ` · kept ${manualWeightCount} weight edit${manualWeightCount === 1 ? '' : 's'}` : '') +
-      (manualTargetCount > 0 ? ` · kept ${manualTargetCount} target curve${manualTargetCount === 1 ? '' : 's'}` : '') +
-      (farmData.batchNumber ? ` · Batch ${farmData.batchNumber}` : '')
-    );
+    pendingImport = { file, result, manualTargets, shedRates, collisions: { hasAny: false, byShed: {} } };
+    finalizeImport('replace');
   } catch (err){
     console.error(err);
     showToast('Import failed: ' + (err && err.message ? err.message : 'Unknown error.'), true);
@@ -3755,6 +4437,9 @@ function updateShedField(shedIdx, key, rawValue){
     const s = String(rawValue ?? '').trim();
     if (s === '') shed.customFeedKg = null;
     else { const n = Number(s); shed.customFeedKg = (Number.isFinite(n) && n > 0) ? n : null; }
+  } else if (key === 'mortalityRatePercent'){
+    const n = Number(rawValue);
+    if (Number.isFinite(n) && n >= 0) shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, n));
   }
   saveState(); schedulePush(); scheduleRender(60);
 }
@@ -3800,6 +4485,7 @@ function revertPickupTotalWeight(shedId, pickupDateIso){
   pickup.totalWeightKg = pickup.totalWeightKgFromExcel || null;
   pickup.totalWeightKgManual = false;
   saveState(); schedulePush(); render();
+  showToast('↺ Weight reverted to Excel value.');
 }
 function setTargetCurveValue(shedId, day, value){
   if (!farmData) return;
@@ -3809,6 +4495,14 @@ function setTargetCurveValue(shedId, day, value){
   if (v === ''){ shed.targetCurve[day] = null; }
   else { const n = Number(v); shed.targetCurve[day] = (Number.isFinite(n) && n > 0) ? n : null; }
   saveState(); schedulePush(); render();
+}
+function setShedMortRate(shedId, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return;
+  shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, n));
+  saveState(); schedulePush(); scheduleRender(30);
 }
 function setPredBeta(v){
   let n = Number(v); if (!Number.isFinite(n)) n = 0.27;
@@ -3829,10 +4523,10 @@ function setPredView(v){
 }
 function setPredDailyRange(start, end){
   let s = Number(start), e = Number(end);
-  if (!Number.isFinite(s)) s = 1;
+  if (!Number.isFinite(s)) s = 0;
   if (!Number.isFinite(e)) e = 52;
-  s = Math.max(0, Math.min(200, Math.floor(s)));
-  e = Math.max(0, Math.min(200, Math.floor(e)));
+  s = Math.max(-200, Math.min(200, Math.floor(s)));
+  e = Math.max(-200, Math.min(200, Math.floor(e)));
   if (e < s) e = s;
   predState.dailyRange = { start: s, end: e };
   savePredState(); schedulePush(); render();
@@ -3960,6 +4654,35 @@ function escapeHtml(s){
 }
 function escapeAttr(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ---------- Pickup actions menu positioning ---------- */
+function closeAllPickupActionsMenus(exceptWrap){
+  document.querySelectorAll('.pickup-actions.open').forEach(el => {
+    if (el !== exceptWrap) el.classList.remove('open');
+  });
+}
+function openPickupActionsMenu(wrap){
+  closeAllPickupActionsMenus(wrap);
+  wrap.classList.add('open');
+  const btn = wrap.querySelector('.pickup-actions-btn');
+  const menu = wrap.querySelector('.pickup-actions-menu');
+  if (!btn || !menu) return;
+  const r = btn.getBoundingClientRect();
+  const mr = menu.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+  let top = r.bottom + 4;
+  if (top + mr.height > vh - 8){
+    const altTop = r.top - mr.height - 4;
+    if (altTop >= 8) top = altTop;
+    else top = Math.max(8, vh - mr.height - 8);
+  }
+  let left = r.right - mr.width;
+  if (left < 8) left = 8;
+  if (left + mr.width > vw - 8) left = vw - mr.width - 8;
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
 }
 
 /* ---------- Main Rendering ---------- */
@@ -4164,6 +4887,7 @@ function shedCardHtml(shed, today){
   const picked = totalPicked(shed);
   const mRate = mortalityRate(shed);
   const fp = finalPickupOf(shed);
+  const canAddPickup = (shed.pickups || []).length < MAX_PICKUPS_PER_SHED;
   const pills = [
     `<span class="tag muted">Age ${age}d</span>`,
     `<span class="tag amber">Live ${live.toLocaleString()}</span>`,
@@ -4186,9 +4910,12 @@ function shedCardHtml(shed, today){
               const cls = v > 0 ? 'var-pos' : (v < 0 ? 'var-neg' : '');
               varHtml = `<span class="${cls}">${v > 0 ? '+' : ''}${v.toLocaleString()}</span>`;
             }
+            const srcBadge = p.source === 'manual'
+              ? `<span class="tag manual-source" style="font-size:9px;padding:1px 6px;margin-left:6px;">Manual</span>`
+              : '';
             return `
               <tr class="${p.isFinal ? 'is-final' : ''}">
-                <td>${fmtShort(p.date)}</td>
+                <td>${fmtShort(p.date)}${srcBadge}</td>
                 <td class="num">${p.birds.toLocaleString()}</td>
                 <td class="num">${varHtml}</td>
                 <td>${p.isFinal ? '<span class="tag amber">FINAL</span>' : ''}</td>
@@ -4246,7 +4973,16 @@ function shedCardHtml(shed, today){
           </div>
         </div>
         <div class="pickups-block">
-          <h4>Pickups (${shed.pickups.length}/5)</h4>
+          <h4 class="pickup-header">
+            <span>Pickups (${shed.pickups.length}/${MAX_PICKUPS_PER_SHED})</span>
+            <button class="btn-pickup-add"
+              data-goto-predpickup="${shed.id}"
+              type="button"
+              ${canAddPickup ? '' : 'disabled'}
+              title="${canAddPickup ? 'Add a pickup on the Predictions tab' : 'Maximum 5 pickups reached'}">
+              ＋ Add Pickup
+            </button>
+          </h4>
           ${pickupsHtml}
         </div>
         <div class="forecast-section">
@@ -4711,7 +5447,7 @@ function renderPredictionsView(){
   return `
     <div class="predictions-head">
       <h1>📊 Results Predictions</h1>
-      <span class="head-note">Whole-farm KPIs · per-shed detail below</span>
+      <span class="head-note">Whole-farm KPIs · group result · per-shed detail below</span>
     </div>
     ${renderFarmKpiCard()}
     <div class="shed-tabs" style="margin-bottom:14px;">
@@ -4856,23 +5592,36 @@ function renderTargetCurvePanel(shed){
     </div>`;
 }
 
-/* ---------- Forecast-day selector bar ---------- */
+/* ---------- Forecast-day selector bar (today-relative) ---------- */
 function forecastDayBarHtml(){
   const r = predState.dailyRange;
+  const presets = [
+    { label: 'Last 7',  start: -7, end: 0 },
+    { label: 'Today',   start: 0,  end: 0 },
+    { label: 'Next 7',  start: 0,  end: 7 },
+    { label: 'Next 14', start: 0,  end: 14 },
+    { label: 'Next 21', start: 0,  end: 21 }
+  ];
   return `
     <div class="pred-daily-range-bar" style="margin:14px 0 10px;">
       <label>📅 Forecast Day</label>
-      <input type="number" class="pred-daily-input" min="0" max="200"
-             data-pred-daily="start" value="${r.start}" />
-      <span>to</span>
-      <input type="number" class="pred-daily-input" min="0" max="200"
-             data-pred-daily="end" value="${r.end}" />
-      <span>of cycle</span>
-      <span class="pdrb-hint">Days from placement · milestone days (D7, D14, D21 …) are highlighted</span>
+      ${presets.map(p => {
+        const active = (p.start === r.start && p.end === r.end);
+        return `<button class="fpill ${active ? 'active' : ''}" data-preddays="${p.start},${p.end}">${p.label}</button>`;
+      }).join('')}
+      <div class="custom-range">
+        <input type="number" min="-200" max="200"
+               data-pred-daily="start" value="${r.start}" />
+        <span>to</span>
+        <input type="number" min="-200" max="200"
+               data-pred-daily="end" value="${r.end}" />
+        <span>days from today</span>
+      </div>
+      <span class="pdrb-hint" style="margin-left:0;">Days relative to today · milestone days (D7, D14, D21 …) are highlighted</span>
     </div>`;
 }
 
-/* ---------- Daily performance ---------- */
+/* ---------- Daily performance (per shed) ---------- */
 function renderDailyPerformance(shed){
   if (!shed.placementDate){
     return `
@@ -4886,8 +5635,9 @@ function renderDailyPerformance(shed){
   const last     = lastWeightedPickup(shed);
   const lastDate = last ? dateOnly(last.date) : null;
 
-  const startDay = Math.max(0, Math.floor(predState.dailyRange.start));
-  const endDay   = Math.max(startDay, Math.floor(predState.dailyRange.end));
+  const currentAge = ageInDays(shed, today);
+  const startDay = Math.max(0, currentAge + Math.floor(predState.dailyRange.start));
+  const endDay   = Math.max(startDay, currentAge + Math.floor(predState.dailyRange.end));
 
   const rows = [];
   for (let day = startDay; day <= endDay; day++){
@@ -5021,7 +5771,7 @@ function renderDailyPerformance(shed){
     </div>`;
 }
 
-/* ---------- Days vs Ross ---------- */
+/* ---------- Days vs Ross (per shed) ---------- */
 function renderDaysBehind(shed){
   const today = dateOnly(new Date());
   const currentAge = ageInDays(shed, today);
@@ -5090,10 +5840,11 @@ function renderDaysBehind(shed){
 
 function renderPredictionsShedCard(shed, group){
   const pred = computePredictions(shed, group);
-  const conf = confidenceLabel(pred.confidence);
+  const grp = computeGroupPredictions(group);
+  const groupSheds = shedsForGroup(group);
+  const groupHasPickups = groupSheds.some(s => (s.pickups || []).length > 0);
+  const groupConf = confidenceLabel(grp && grp.hasData ? grp.confidence : pred.confidence);
   const pickups = pred.pickupDetails;
-  const hasAnyPickup = pickups.length > 0;
-  const hasEstimates = hasAnyPickup;
 
   const today = dateOnly(new Date());
   const forecastKg = shed.placementDate ? (forecastWeightModeAware(shed, today).kg || 0) : 0;
@@ -5107,7 +5858,7 @@ function renderPredictionsShedCard(shed, group){
       <div class="pred-snap-item"><div class="lbl">📆 Current age</div><div class="val">${pred.currentAge}d</div></div>
       <div class="pred-snap-item"><div class="lbl">⚠️ Mortality</div><div class="val">${pred.currentMort.toLocaleString()}</div></div>
       <div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div>
-      <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${pred.pickupsCompleted} of 5</div></div>
+      <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${pred.pickupsCompleted} of ${MAX_PICKUPS_PER_SHED}</div></div>
       <div class="pred-snap-item">
         <div class="lbl">📐 Density</div>
         <div class="val">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div>
@@ -5115,77 +5866,125 @@ function renderPredictionsShedCard(shed, group){
       </div>
     </div>`;
 
+  const ratePct = shedMortRate(shed);
+  const rateBarHtml = `
+    <div class="mort-rate-bar">
+      <span class="mr-label">🩺 Daily mortality rate</span>
+      <input type="range" id="mortRateSlider_${shed.id}" min="0" max="1" step="0.01"
+        value="${ratePct}" data-mortrate-shed="${shed.id}" />
+      <input type="number" id="mortRateNum_${shed.id}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01"
+        value="${ratePct.toFixed(2)}" data-mortrate-shed="${shed.id}" />
+      <span class="mr-unit">% of live birds / day</span>
+    </div>`;
+
+  const pickupRows = pickups.map(p => {
+    const stored = (shed.pickups || []).find(x => iso(x.date) === iso(p.date)) || {};
+    const isManualWeight = !!stored.totalWeightKgManual;
+    const hasExcelFrom = stored.totalWeightKgFromExcel != null;
+    const isManualSource = stored.source === 'manual';
+    const totalValue = (stored.totalWeightKg != null) ? stored.totalWeightKg : '';
+    const warn = totalValue && (totalValue < 100 || totalValue > 40000);
+    const avgValue = p.avgWeightKg ? p.avgWeightKg.toFixed(3) : '—';
+    const avgWarn = p.avgWeightKg && (p.avgWeightKg < 0.3 || p.avgWeightKg > 5);
+    const ageBadge = stored.ageOverride != null ? ' *' : '';
+    const sourceBadge = isManualSource ? `<span class="tag manual-source" style="font-size:9px;padding:1px 6px;margin-left:6px;">Manual</span>` : '';
+    const showRevert = isManualWeight && hasExcelFrom;
+    return `
+      <tr class="${p.isFinal ? 'is-final' : ''}">
+        <td>${fmtShort(p.date)}${sourceBadge}</td>
+        <td class="num" title="${stored.ageOverride != null ? 'Age manually set' : 'Age derived from placement date'}">${p.age}d${ageBadge}</td>
+        <td class="num">${p.birds.toLocaleString()}</td>
+        <td class="num">
+          <input class="pred-pickup-input ${isManualWeight?'manual':''} ${warn?'warn':''}"
+            type="number" step="1" min="0"
+            value="${totalValue}"
+            placeholder="${p.isEstWeight ? 'Ross est.' : 'total kg'}"
+            data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
+            title="${isManualWeight ? 'Manually edited' : (p.isEstWeight ? 'No Excel weight — using Ross curve estimate' : 'From Excel')}" />
+        </td>
+        <td class="pred-avg-cell" style="${avgWarn?'color:var(--danger);':''}">${avgValue}</td>
+        <td style="text-align:right;">
+          <div class="pickup-actions">
+            <button class="pickup-actions-btn" type="button"
+              data-pickup-actions-btn="${shed.id}|${iso(p.date)}"
+              aria-label="Pickup actions">⋯</button>
+            <div class="pickup-actions-menu">
+              <button type="button" data-pickup-edit="${shed.id}|${iso(p.date)}">✎ Edit pickup</button>
+              ${showRevert ? `<button type="button" data-pickup-revert="${shed.id}|${iso(p.date)}">↺ Revert weight to Excel</button>` : ''}
+              <button type="button" class="danger" data-pickup-delete="${shed.id}|${iso(p.date)}">✕ Delete pickup</button>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
   const pickupTableHtml = pickups.length === 0
     ? `<div class="forecast-empty">No pickups yet — estimates unlock after the first pickup.</div>`
     : `
-      <table class="pickups-table" style="font-size:12.5px;">
-        <thead>
-          <tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th>
-            <th class="num">Total wt (kg)</th><th class="num">Avg wt (kg/bird)</th></tr>
-        </thead>
-        <tbody>
-          ${pickups.map(p => {
-            const manual = (shed.pickups || []).find(x => iso(x.date) === iso(p.date));
-            const isManual = !!(manual && manual.totalWeightKgManual);
-            const hasExcelFrom = !!(manual && manual.totalWeightKgFromExcel != null);
-            const totalValue = (manual && manual.totalWeightKg != null) ? manual.totalWeightKg : '';
-            const warn = totalValue && (totalValue < 100 || totalValue > 40000);
-            const avgValue = p.avgWeightKg ? p.avgWeightKg.toFixed(3) : '—';
-            const avgWarn = p.avgWeightKg && (p.avgWeightKg < 0.3 || p.avgWeightKg > 5);
-            return `
-              <tr class="${p.isFinal ? 'is-final' : ''}">
-                <td>${fmtShort(p.date)}</td>
-                <td class="num">${p.age}d</td>
-                <td class="num">${p.birds.toLocaleString()}</td>
-                <td class="num">
-                  <input class="pred-pickup-input ${isManual?'manual':''} ${warn?'warn':''}"
-                    type="number" step="1" min="0"
-                    value="${totalValue}"
-                    placeholder="${p.isEstWeight ? 'Ross est.' : 'total kg'}"
-                    data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
-                    title="${isManual ? 'Manually edited — click ↺ to revert to Excel' : (p.isEstWeight ? 'No Excel weight — using Ross curve estimate' : 'From Excel')}" />
-                  ${isManual && hasExcelFrom ? `
-                    <button class="pred-revert-btn"
-                      data-pickup-revert-shed="${shed.id}" data-pickup-revert-date="${iso(p.date)}"
-                      title="Revert to Excel value (${manual.totalWeightKgFromExcel.toFixed(0)} kg)">↺</button>` : ''}
-                </td>
-                <td class="pred-avg-cell" style="${avgWarn?'color:var(--danger);':''}">${avgValue}</td>
-              </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`;
+      <div class="pickups-scroll">
+        <table class="pickups-table" style="font-size:12.5px;min-width:560px;">
+          <thead>
+            <tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th>
+              <th class="num">Total wt (kg)</th><th class="num">Avg wt (kg/bird)</th>
+              <th style="width:44px;text-align:right;">Actions</th></tr>
+          </thead>
+          <tbody>${pickupRows}</tbody>
+        </table>
+      </div>`;
 
-  const estimatesHtml = hasEstimates ? `
+  const canAdd = pickups.length < MAX_PICKUPS_PER_SHED;
+  const pickupHeaderHtml = `
+    <h4 class="pickup-header">
+      <span>Pickup History — average weight computed from total ÷ birds</span>
+      <button class="btn-pickup-add"
+        data-pickup-add="${shed.id}"
+        type="button"
+        ${canAdd ? '' : 'disabled'}
+        title="${canAdd ? 'Add a pickup manually' : 'Maximum 5 pickups reached'}">
+        ＋ Add Pickup
+      </button>
+    </h4>`;
+
+  const groupLabel = grp && grp.hasData
+    ? `Group ${group} Combined Result`
+    : `Group ${group} Result`;
+  const groupShedsLabel = groupSheds.map(s => `Shed ${s.id}`).join(' + ');
+
+  const estimatesHtml = (groupHasPickups && grp && grp.hasData) ? `
+    <div class="pred-estimates-head">
+      <span>📊 ${groupLabel}</span>
+      <span class="sub">· ${groupShedsLabel} · batch result</span>
+    </div>
     <div class="pred-estimates">
       <div class="pred-est-tile amber">
         <div class="lbl">Est. Final Avg Weight</div>
-        <div class="val">${pred.estFinalALW.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div>
+        <div class="val">${grp.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div>
       </div>
-      <div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${pred.fcr.toFixed(3)}</div></div>
-      <div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${pred.cfcr.toFixed(3)}</div></div>
-      <div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${pred.estLivability.toFixed(2)}%</div></div>
-      <div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${pred.estFinalMort.toLocaleString()}</div></div>
-      <div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(pred.totalWeightKg)}</div></div>
+      <div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${grp.fcr.toFixed(3)}</div></div>
+      <div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${grp.cfcr.toFixed(3)}</div></div>
+      <div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${grp.livability.toFixed(2)}%</div></div>
+      <div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${grp.totalMortalityEst.toLocaleString()}</div></div>
+      <div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(grp.totalLiveWeight)}</div></div>
       <div class="pred-est-tile amber" style="grid-column: span 2;">
         <div class="lbl">Est. Final PIF</div>
-        <div class="val">${pred.pif.toFixed(2)}</div>
+        <div class="val">${grp.pif.toFixed(2)}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px;">(Livability × ALW) ÷ (Age × FCR) × 100</div>
       </div>
     </div>` : `
     <div class="pred-empty" style="margin-top:14px;">
-      <strong>Estimates unlock after the first pickup.</strong><br>
-      Import Excel with pickup data to see projected final numbers.
+      <strong>Group estimates unlock after the group's first pickup.</strong><br>
+      Add a pickup manually, or import Excel with pickup data.
     </div>`;
 
-  const confidenceHtml = hasEstimates ? `
+  const confidenceHtml = (groupHasPickups && grp && grp.hasData) ? `
     <div class="pred-confidence">
       <span style="font-weight:700;font-size:11px;text-transform:uppercase;
-        letter-spacing:0.06em;color:var(--muted);">Confidence</span>
-      <div class="bar"><div class="bar-fill ${conf.cls}" style="width:${pred.confidence}%"></div></div>
-      <span class="pct" style="color:${conf.cls === 'low' ? 'var(--danger)' : (conf.cls === 'medium' ? 'var(--primary-dark)' : 'var(--success)')};">
-        ${pred.confidence}%
+        letter-spacing:0.06em;color:var(--muted);">Group Confidence</span>
+      <div class="bar"><div class="bar-fill ${groupConf.cls}" style="width:${grp.confidence}%"></div></div>
+      <span class="pct" style="color:${groupConf.cls === 'low' ? 'var(--danger)' : (groupConf.cls === 'medium' ? 'var(--primary-dark)' : 'var(--success)')};">
+        ${grp.confidence}%
       </span>
-      <span style="font-size:11px;color:var(--muted);">${conf.label}</span>
+      <span style="font-size:11px;color:var(--muted);">${groupConf.label}</span>
     </div>` : '';
 
   const targetPanelHtml = renderTargetCurvePanel(shed);
@@ -5193,7 +5992,7 @@ function renderPredictionsShedCard(shed, group){
   const dailyPerfHtml = renderDailyPerformance(shed);
 
   return `
-    <article class="pred-shed-card">
+    <article class="pred-shed-card" id="pred-shed-card-${shed.id}">
       <div class="pred-shed-head">
         <h3>🏠 Shed ${shed.id}</h3>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -5204,12 +6003,13 @@ function renderPredictionsShedCard(shed, group){
       </div>
       <div class="pred-shed-body">
         ${snapshotHtml}
+        ${rateBarHtml}
         ${targetPanelHtml}
         ${daysBehindHtml}
         ${forecastDayBarHtml()}
         ${dailyPerfHtml}
         <div class="pickups-block" style="margin-top:14px;">
-          <h4>Pickup History — average weight computed from total ÷ birds</h4>
+          ${pickupHeaderHtml}
           ${pickupTableHtml}
         </div>
         ${estimatesHtml}
@@ -5253,16 +6053,70 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('#newBatchClose')){ closeNewBatchModal(); return; }
     if (e.target.closest('#batchHistoryClose')){ closeBatchHistoryModal(); return; }
     if (e.target.closest('#farmFoundClose')){ closeFarmFoundModal(); return; }
+    if (e.target.closest('#manualPickupClose')){ closeManualPickupModal(); return; }
+    if (e.target.closest('#importConflictClose')){ closeImportConflictModal(); pendingImport = null; return; }
+    if (e.target.closest('#importReviewClose')){ closeImportReviewModal(); return; }
     if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn')){ triggerImport(); return; }
     if (e.target.closest('#emptyConnectBtn')){ openSyncModal(); return; }
+
+    const gotoBtn = e.target.closest('[data-goto-predpickup]');
+    if (gotoBtn){
+      const shedId = Number(gotoBtn.dataset.gotoPredpickup);
+      if (!Number.isFinite(shedId)) return;
+      const group = Math.floor((shedId - 1) / 2) + 1;
+      const isFirstOfGroup = (shedId % 2 === 1);
+      activeTab = 'predictions';
+      predState.predGroup = group;
+      predState.predView = isFirstOfGroup ? 'shed1' : 'shed2';
+      savePredState();
+      render();
+      const card = document.getElementById(`pred-shed-card-${shedId}`);
+      if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
+      openManualPickupModal(shedId);
+      return;
+    }
+
+    const addPickupBtn = e.target.closest('[data-pickup-add]');
+    if (addPickupBtn){
+      openManualPickupModal(Number(addPickupBtn.dataset.pickupAdd));
+      return;
+    }
+    const actionsBtn = e.target.closest('[data-pickup-actions-btn]');
+    if (actionsBtn){
+      e.stopPropagation();
+      const wrap = actionsBtn.closest('.pickup-actions');
+      const wasOpen = wrap.classList.contains('open');
+      closeAllPickupActionsMenus();
+      if (!wasOpen) openPickupActionsMenu(wrap);
+      return;
+    }
+    const editBtn = e.target.closest('[data-pickup-edit]');
+    if (editBtn){
+      closeAllPickupActionsMenus();
+      const parts = editBtn.dataset.pickupEdit.split('|');
+      openManualPickupModal(Number(parts[0]), parts[1]);
+      return;
+    }
+    const revertBtn = e.target.closest('[data-pickup-revert]');
+    if (revertBtn){
+      closeAllPickupActionsMenus();
+      const parts = revertBtn.dataset.pickupRevert.split('|');
+      revertPickupTotalWeight(Number(parts[0]), parts[1]);
+      return;
+    }
+    const deleteBtn = e.target.closest('[data-pickup-delete]');
+    if (deleteBtn){
+      closeAllPickupActionsMenus();
+      const parts = deleteBtn.dataset.pickupDelete.split('|');
+      deleteManualPickup(Number(parts[0]), parts[1]);
+      return;
+    }
+    closeAllPickupActionsMenus();
 
     const pg = e.target.closest('[data-predgroup]');
     if (pg){ setPredGroup(Number(pg.dataset.predgroup)); return; }
     const pv = e.target.closest('[data-predview]');
     if (pv){ setPredView(pv.dataset.predview); return; }
-
-    const rv = e.target.closest('[data-pickup-revert-shed]');
-    if (rv){ revertPickupTotalWeight(Number(rv.dataset.pickupRevertShed), rv.dataset.pickupRevertDate); return; }
 
     const toggleDel = e.target.closest('[data-toggle-deliveries]');
     if (toggleDel){
@@ -5301,12 +6155,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pill){
       const shedVal = pill.dataset.days;
       const siloVal = pill.dataset.silodays;
+      const predVal = pill.dataset.preddays;
       if (shedVal){
         const [s, e] = shedVal.split(',').map(Number);
         if (Number.isFinite(s) && Number.isFinite(e)){ shedRange = { start:s, end:e }; schedulePush(); render(); }
       } else if (siloVal){
         const [s, e] = siloVal.split(',').map(Number);
         if (Number.isFinite(s) && Number.isFinite(e)){ siloRange = { start:s, end:e }; schedulePush(); render(); }
+      } else if (predVal){
+        const [s, e] = predVal.split(',').map(Number);
+        if (Number.isFinite(s) && Number.isFinite(e)){
+          predState.dailyRange = { start:s, end:e };
+          savePredState(); schedulePush(); render();
+        }
       }
       return;
     }
@@ -5350,10 +6211,27 @@ document.addEventListener('DOMContentLoaded', () => {
     closeFarmFoundModal();
     closeNewBatchModal();
     closeBatchHistoryModal();
+    closeManualPickupModal();
+    closeImportConflictModal();
+    closeImportReviewModal();
   });
 
   document.addEventListener('change', (e) => {
     const t = e.target;
+
+    if (t.dataset && t.dataset.mortrateShed !== undefined){
+      const shedId = Number(t.dataset.mortrateShed);
+      const val = Number(t.value);
+      if (Number.isFinite(val) && val >= 0 && shedId >= 1 && shedId <= SHED_COUNT && farmData){
+        const shed = farmData.sheds[shedId - 1];
+        if (shed){
+          shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, val));
+          saveState(); schedulePush();
+          scheduleRender(30);
+        }
+      }
+      return;
+    }
 
     if (t.dataset && t.dataset.targetShed !== undefined && t.dataset.targetDay !== undefined){
       setTargetCurveValue(Number(t.dataset.targetShed), Number(t.dataset.targetDay), t.value);
@@ -5411,6 +6289,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('input', (e) => {
     const t = e.target;
+
+    if (t.dataset && t.dataset.mortrateShed !== undefined){
+      const sid = t.dataset.mortrateShed;
+      const slider = document.getElementById(`mortRateSlider_${sid}`);
+      const num = document.getElementById(`mortRateNum_${sid}`);
+      if (t === slider && num) num.value = t.value;
+      else if (t === num && slider) slider.value = t.value;
+      return;
+    }
+
     if (t.id === 'predBetaSlider'){ setPredBeta(t.value); return; }
     if (t.id === 'farmFeedOverride'){
       setFarmFeedOverride(t.value);
@@ -5418,6 +6306,13 @@ document.addEventListener('DOMContentLoaded', () => {
       updateFarmKpiValues();
       return;
     }
+  });
+
+  document.addEventListener('scroll', () => {
+    closeAllPickupActionsMenus();
+  }, { capture: true, passive: true });
+  window.addEventListener('resize', () => {
+    closeAllPickupActionsMenus();
   });
 
   document.addEventListener('visibilitychange', async () => {
