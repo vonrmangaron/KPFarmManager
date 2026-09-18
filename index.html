@@ -3542,7 +3542,7 @@ function renderFeedSummary(group){
       <div class="feed-summary-title">📊 Feed Summary
         <span class="sub">· per feed type · 1 block = 60 T</span></div>
       <table class="feed-summary-table">
-        <thead><tr><th>Type</th><th class="num">Total</th><th class="num">Orders</th>
+        <thead><tr><th>Type</th><th class="num">Total</th><th class="num">Deliveries</th>
           <th class="num">60 T blocks</th><th class="num">Remainder</th></tr></thead>
         <tbody>
           ${rows}
@@ -4332,11 +4332,12 @@ function renderDeliveriesSummary(group){
     .map(k => ({
       id: k,
       label: summary.buckets[k].label,
-      count: summary.buckets[k].deliveries
+      deliveries: summary.buckets[k].deliveries,
+      blocks: summary.buckets[k].blocks
     }))
-    .filter(x => x.count > 0);
+    .filter(x => x.deliveries > 0);
   const chips = activeTypes.map(t =>
-    `<span class="chip ${t.id}">${t.label} <span class="num">${t.count}</span></span>`
+    `<span class="chip ${t.id}">${t.label} <span class="num">${t.blocks}</span></span>`
   ).join('');
   return `<span class="count">${totalOrders} ${orderWord}</span>
           <span class="delivery-type-chips">${chips}</span>`;
