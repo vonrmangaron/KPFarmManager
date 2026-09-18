@@ -156,6 +156,9 @@
     transition:box-shadow .15s ease;
   }
   .task-card.done{ opacity:0.68; }
+  .task-card.high-priority{ border-color:#E0A339; background:#FFF8E8; }
+  body.theme-dark .task-card.high-priority{ background:#3D3320; border-color:#8A6A1F; }
+  .priority-flag{ font-size:14px; flex-shrink:0; }
   .task-icon{ font-size:22px; width:30px; text-align:center; flex-shrink:0; }
   .task-icon img{ width:24px; height:24px; object-fit:contain; }
   .task-body{ flex:1; min-width:0; }
@@ -722,9 +725,10 @@
   function buildReadOnlyTaskCard(t){
     const card=document.createElement('div');
     const wasJustCompleted = t.id===justCompletedId;
-    card.className='task-card'+(t.status==='done'?' done':'')+(wasJustCompleted?' just-completed':'');
+    const isHighPriority = t.priority === 'high' && t.status!=='done';
+    card.className='task-card'+(t.status==='done'?' done':'')+(wasJustCompleted?' just-completed':'')+(isHighPriority?' high-priority':'');
     card.dataset.id = t.id;
-    card.innerHTML = `<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>`;
+    card.innerHTML = `${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
     const statusBtn = card.querySelector('.task-status-btn');
