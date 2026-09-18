@@ -152,9 +152,17 @@
 
   .task-card{
     background:var(--surface); border:1px solid var(--line); border-radius:16px;
-    padding:14px 14px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-sm);
+    padding:14px 14px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow-sm);
     transition:box-shadow .15s ease;
   }
+  .task-card-row{ display:flex; align-items:center; gap:12px; }
+  .task-note-callout{
+    display:flex; gap:8px; align-items:flex-start; padding:10px 12px; border-radius:10px;
+    background:#FFF4CC; border:1px solid #E0A339;
+  }
+  body.theme-dark .task-note-callout{ background:#3D3320; border-color:#8A6A1F; }
+  .tnc-icon{ font-size:15px; flex-shrink:0; line-height:1.4; }
+  .tnc-text{ font-size:13px; color:var(--ink); white-space:pre-wrap; line-height:1.4; }
   .task-card.done{ opacity:0.68; }
   .task-card.high-priority{ border-color:#E0A339; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; border-color:#8A6A1F; }
@@ -728,9 +736,10 @@
     const isHighPriority = t.priority === 'high' && t.status!=='done';
     card.className='task-card'+(t.status==='done'?' done':'')+(wasJustCompleted?' just-completed':'')+(isHighPriority?' high-priority':'');
     card.dataset.id = t.id;
-    card.innerHTML = `${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>`;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${t.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderIconInto(card.querySelector('.task-icon'), t.icon);
     card.querySelector('.task-name').textContent = t.name;
+    if(t.notes) card.querySelector('.tnc-text').textContent = t.notes;
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
