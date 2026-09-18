@@ -78,17 +78,6 @@ h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-se
   font-size:18px;line-height:1;transition:background .15s ease,transform .12s ease;}
 .theme-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
 
-.cluckwise-btn{border:1px solid #7BC9D4;background:#E4F4F6;
-  color:#1F7A8C;height:40px;border-radius:999px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:8px;padding:0 16px;
-  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
-  transition:background .15s ease,transform .12s ease,color .15s ease;
-  text-decoration:none;white-space:nowrap;}
-.cluckwise-btn:hover{background:#1F7A8C;color:#fff;transform:translateY(-1px);}
-.cluckwise-btn .cw-icon{font-size:16px;line-height:1;}
-body.theme-dark .cluckwise-btn{border-color:#3E7B87;background:#1E2F38;color:#8FD9E3;}
-body.theme-dark .cluckwise-btn:hover{background:#3E7B87;color:#fff;}
-
 .sync-btn{border:1px solid var(--line);background:var(--surface-soft);
   color:var(--ink);height:40px;border-radius:999px;cursor:pointer;
   display:inline-flex;align-items:center;gap:8px;padding:0 14px;
@@ -423,6 +412,29 @@ body.theme-dark .btn-primary{color:#1A2438;}
   color:#fff;border-color:transparent;border-style:solid;}
 body.theme-dark .tab-btn.active{color:#1A2438;}
 body.theme-dark .tab-btn.tab-predictions.active{color:#1A2438;}
+
+/* CluckWise tab — sits after the Predictions tab in the tabs nav */
+.tab-btn.tab-cluckwise{
+  background:linear-gradient(135deg,rgba(31,122,140,0.14),rgba(31,122,140,0.06));
+  color:#1F7A8C;
+  border:1px dashed #7BC9D4;
+}
+.tab-btn.tab-cluckwise:hover{
+  background:#1F7A8C;
+  color:#fff;
+  border-color:#1F7A8C;
+  border-style:solid;
+}
+body.theme-dark .tab-btn.tab-cluckwise{
+  color:#8FD9E3;
+  border-color:#3E7B87;
+  background:linear-gradient(135deg,rgba(31,122,140,0.30),rgba(31,122,140,0.14));
+}
+body.theme-dark .tab-btn.tab-cluckwise:hover{
+  background:#3E7B87;
+  color:#fff;
+  border-color:#3E7B87;
+}
 
 main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 @media(max-width:640px){main{padding:16px;}}
@@ -1333,9 +1345,6 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
       ProdWise<span class="accent">.VM</span>
     </div>
     <div class="topbar-right">
-      <button class="cluckwise-btn" id="cluckwiseBtn" type="button" title="Open CluckWise">
-        <span class="cw-icon">🐤</span> CluckWise
-      </button>
       <button class="sync-btn" id="syncBtn" type="button" title="Cloud sync">
         <span class="sync-ico" id="syncIcon">☁️</span>
         <span class="sync-name" id="syncLabel">Connect</span>
@@ -1413,6 +1422,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
    - Per-batch cloud files (suffix added to file keys)
    - New Batch reset with 2-phase farm choice + JSON backup
    - Batch History browser with pagination (4 per page)
+   - CluckWise as a tab in the top tabs row
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -2839,7 +2849,6 @@ async function startNewBatch(){
    BATCH HISTORY (with pagination)
 ========================================================= */
 function openBatchHistoryModal(){
-  // Always reset to page 1 and clear the cache so we get fresh data
   batchHistoryPage = 0;
   batchHistoryCache = null;
   const modal = document.getElementById('batchHistoryModal');
@@ -2858,7 +2867,7 @@ function parseBatchFileInfo(farmName, fileName){
   const base = `${farm}${SYNC_SUFFIX}`;
   if (!fileName.startsWith(base)) return null;
   if (!fileName.endsWith('.json')) return null;
-  if (fileName.endsWith('-file.json')) return null;   // skip Excel wrappers
+  if (fileName.endsWith('-file.json')) return null;
   const middle = fileName.slice(base.length, -'.json'.length);
   if (middle === '') return { batchKey: '', label: 'Legacy', isLegacy: true };
   if (!middle.startsWith('-')) return null;
@@ -4045,10 +4054,15 @@ function tabsHtml(){
     { id: 'g4', label: 'Group 4' },
     { id: 'predictions', label: '📊 Predictions', cls: 'tab-predictions' }
   ];
-  return tabs.map(t => `
+  const mainTabs = tabs.map(t => `
     <button class="tab-btn ${t.id === activeTab ? 'active' : ''} ${t.cls || ''}" data-tab="${t.id}">
       ${t.label}
     </button>`).join('');
+  const cluckwiseTab = `
+    <button class="tab-btn tab-cluckwise" id="cluckwiseBtn" type="button" title="Open CluckWise">
+      🐔 CluckWise
+    </button>`;
+  return mainTabs + cluckwiseTab;
 }
 function groupViewHtml(g){
   const sheds = shedsForGroup(g);
