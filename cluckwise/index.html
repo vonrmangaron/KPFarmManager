@@ -249,14 +249,13 @@
   .inline-add-expand:hover{ background:var(--primary-soft); color:var(--primary-dark); }
   .inline-add-cancel:hover{ background:var(--danger-soft); color:var(--danger); }
 
-  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
-  .task-card-top{ display:flex; align-items:flex-start; gap:9px; min-width:0; }
+  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;align-items:center;gap:9px;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
   .task-card.overdue{ border-color:var(--danger); border-left-width:4px; background:var(--danger-soft); }
   .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; }
-  .overdue-flag{ color:var(--danger); font-size:15px; flex-shrink:0; margin-top:1px; }
-  .priority-flag{ font-size:14px; flex-shrink:0; margin-top:1px; }
-  .task-note-flag{ font-size:13px; flex-shrink:0; opacity:0.7; cursor:help; margin-top:1px; }
+  .overdue-flag{ color:var(--danger); font-size:15px; flex-shrink:0; }
+  .priority-flag{ font-size:14px; flex-shrink:0; }
+  .task-note-flag{ font-size:13px; flex-shrink:0; opacity:0.7; cursor:help; }
   .bulk-select-cb{ width:20px; height:20px; flex-shrink:0; accent-color:var(--primary); cursor:pointer; }
   .bulk-action-bar{
     position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:60;
@@ -274,17 +273,14 @@
   .bulk-btn.bulk-delete{ background:var(--danger-soft); color:var(--danger); }
   .bulk-btn.bulk-delete.confirm{ background:var(--danger); color:#fff; }
   .task-card:hover{box-shadow:var(--shadow-md); transform:translateY(-1px);}
-  .task-icon{font-size:16px;line-height:1;flex-shrink:0;margin-top:1px;}
+  .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
   .task-card.sortable-ghost{opacity:0.35;}
   .task-card.sortable-drag{cursor:grabbing; box-shadow:var(--shadow-lg);}
   body.hide-icons .task-icon{display:none;}
 
   .task-body{flex:1; min-width:0;}
-  .task-name{
-    font-size:var(--task-font-size);font-weight:500;line-height:1.3;word-break:break-word;overflow-wrap:break-word;color:var(--ink);
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  }
+  .task-name{font-size:var(--task-font-size);font-weight:500;line-height:1.15;word-break:break-word;overflow-wrap:break-word;color:var(--ink);}
   .task-card.done .task-name{text-decoration:line-through;color:var(--muted);}
 
   .task-avatar{
@@ -293,7 +289,7 @@
     font-size:10px;font-weight:700;color:#fff;font-family:'Sora',sans-serif;
     cursor:default; border:1.5px solid var(--surface); box-shadow:0 0 0 1px var(--line);
   }
-  .task-avatars{ display:flex; flex-shrink:0; margin-top:1px; }
+  .task-avatars{ display:flex; flex-shrink:0; }
   .task-avatars .task-avatar{ margin-left:-7px; }
   .task-avatars .task-avatar:first-child{ margin-left:0; }
   .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
@@ -311,7 +307,7 @@
     font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
   }
   .assignee-chip .chip-remove:hover{ background:rgba(0,0,0,0.35); }
-  .task-actions{display:flex;gap:4px;flex-shrink:0;justify-content:flex-end;}
+  .task-actions{display:flex;gap:4px;flex-shrink:0;}
   .task-actions button{ width:24px;height:24px;border:none;font-weight:700;font-size:12.5px; cursor:pointer;border-radius:999px;display:flex;align-items:center;justify-content:center; transition:background .15s ease, color .15s ease, transform .1s ease; }
   .task-actions button svg{ width:13px; height:13px; }
   .task-actions .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
@@ -611,10 +607,10 @@
   .form-modal.open{display:flex;}
   .backlog-modal{ width:560px; }
   .backlog-modal-row{ flex-wrap:wrap; }
-  .backlog-modal-actions{ display:flex; gap:8px; justify-content:flex-end; }
   .backlog-schedule-btn{
     flex-shrink:0; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark);
     font-family:'Sora',sans-serif; font-weight:700; font-size:11.5px; padding:5px 10px; border-radius:999px; cursor:pointer;
+    margin-left:auto;
   }
   .backlog-schedule-btn:hover{ background:var(--primary); color:#fff; }
   .backlog-edit-btn{
@@ -2304,19 +2300,17 @@
     card.className = 'task-card' + (task.status==='done' ? ' done' : '') + (isOverdue ? ' overdue' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
     card.dataset.id = task.id;
     card.innerHTML = `
-      <div class="task-card-top">
-        ${selectable ? `<input type="checkbox" class="bulk-select-cb" ${bulkSelectedIds.has(task.id)?'checked':''}>` : ''}
-        ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : '')}
-        <span class="task-icon"></span>
-        <span class="task-body"><span class="task-name"></span></span>
-        ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝</span>` : ''}
-        ${buildAssigneeAvatarsHtml(task.assignees)}
-      </div>
-      <div class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
+      ${selectable ? `<input type="checkbox" class="bulk-select-cb" ${bulkSelectedIds.has(task.id)?'checked':''}>` : ''}
+      ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : '')}
+      <span class="task-icon"></span>
+      <span class="task-body"><span class="task-name"></span></span>
+      ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝</span>` : ''}
+      ${buildAssigneeAvatarsHtml(task.assignees)}
+      <span class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
         <button class="btn-edit" title="Edit">✎</button>
         <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
         <button class="btn-delete" title="Delete">🗑️</button>
-      </div>`;
+      </span>`;
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
     card.querySelector('.task-name').textContent = task.name;
@@ -2929,8 +2923,6 @@
       card.classList.add('backlog-modal-row');
       const cb = card.querySelector('.bulk-select-cb');
       if(cb) cb.checked = backlogSelectedIds.has(t.id);
-      const actionsRow = document.createElement('div');
-      actionsRow.className = 'backlog-modal-actions';
       const scheduleBtn = document.createElement('button');
       scheduleBtn.className = 'backlog-schedule-btn';
       scheduleBtn.type = 'button';
@@ -2940,7 +2932,7 @@
         backlogScheduleOpenFor = backlogScheduleOpenFor===t.id ? null : t.id;
         renderBacklogModalList();
       });
-      actionsRow.appendChild(scheduleBtn);
+      card.appendChild(scheduleBtn);
       const editBtn = document.createElement('button');
       editBtn.className = 'backlog-edit-btn';
       editBtn.type = 'button';
@@ -2949,8 +2941,7 @@
         e.stopPropagation();
         openEditTaskModal(t.id);
       });
-      actionsRow.appendChild(editBtn);
-      card.appendChild(actionsRow);
+      card.appendChild(editBtn);
       list.appendChild(card);
       if(backlogScheduleOpenFor===t.id){
         const row = document.createElement('div');
