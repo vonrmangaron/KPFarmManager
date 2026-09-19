@@ -273,6 +273,44 @@
   }
   .task-card.expanded .task-reveal{ max-height:60px; opacity:1; margin-top:8px; }
   .task-reveal .task-actions{ margin-left:auto; }
+
+  .task-card-top{ position:relative; }
+  .task-menu-btn{
+    flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft);
+    color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    margin-left:auto; opacity:0; transition:opacity .12s ease, background .12s ease, color .12s ease;
+  }
+  .task-menu-btn:hover{ background:var(--ink); color:var(--surface); }
+  @media (hover:hover){
+    .task-card:hover .task-menu-btn{ opacity:1; }
+  }
+  @media (hover:none){
+    .task-menu-btn{ opacity:1; }
+  }
+  .task-card.menu-open .task-menu-btn{ opacity:1; background:var(--ink); color:var(--surface); }
+  .task-menu-popup{
+    display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:8; min-width:190px;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px;
+  }
+  .task-card.menu-open .task-menu-popup{ display:block; }
+  .task-menu-item{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent;
+    color:var(--ink); font-family:'Sora',sans-serif; font-size:13px; font-weight:600; padding:9px 10px; border-radius:8px; cursor:pointer;
+  }
+  .task-menu-item:hover{ background:var(--surface-soft); }
+  .task-menu-item.danger{ color:var(--danger); }
+  .task-menu-item.danger:hover{ background:var(--danger-soft); }
+  .task-menu-item .tmi-ic{ width:16px; height:16px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .task-menu-item .tmi-ic svg{ width:13px; height:13px; }
+  .task-menu-sep{ height:1px; background:var(--line); margin:5px 4px; }
+  .task-menu-flag{
+    font-size:11.5px; font-weight:700; color:var(--muted); padding:6px 10px 8px; border-bottom:1px solid var(--line); margin-bottom:4px;
+    white-space:normal; word-break:break-word;
+  }
+  .task-menu-flag.overdue-flag{ color:var(--danger); }
+  .task-menu-flag.priority-flag{ color:#966E00; }
+  body.theme-dark .task-menu-flag.priority-flag{ color:#E0B84D; }
+
   .bulk-select-cb{ width:20px; height:20px; flex-shrink:0; accent-color:var(--primary); cursor:pointer; }
   .bulk-action-bar{
     position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:60;
@@ -2311,11 +2349,14 @@
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   let bulkSelectMode = false;
   let bulkSelectedIds = new Set();
-  function collapseAllExpandedCards(except){
-    document.querySelectorAll('.task-card.expanded, .frequent-chip.expanded').forEach(el=>{
-      if(el!==except) el.classList.remove('expanded');
+  function closeAllTaskMenus(except){
+    document.querySelectorAll('.task-card.menu-open').forEach(el=>{
+      if(el!==except) el.classList.remove('menu-open');
     });
   }
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('.task-menu-btn') && !e.target.closest('.task-menu-popup')) closeAllTaskMenus();
+  });
   function buildTaskCard(task, selectable, opts){
     opts = opts || {};
     const card = document.createElement('div');
@@ -2331,16 +2372,17 @@
         <span class="task-body"><span class="task-name"></span></span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
+        ${!selectable ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
       </div>
-      <div class="task-reveal">
-        ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠ Overdue</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥 High priority</span>' : '')}
-        ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝 Note</span>` : ''}
-        <div class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
-          <button class="btn-edit" title="Edit">✎</button>
-          <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
-          <button class="btn-delete" title="Delete">🗑️</button>
-        </div>
-      </div>`;
+      ${!selectable ? `<div class="task-menu-popup">
+        ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
+        ${task.notes ? `<div class="task-menu-flag task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝 ${task.notes.length>40 ? task.notes.slice(0,40)+'…' : task.notes}</div>` : ''}
+        <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
+        <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
+        <div class="task-menu-sep"></div>
+        <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
+      </div>` : ''}`;
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
     card.querySelector('.task-name').textContent = task.name;
@@ -2357,11 +2399,21 @@
       cb.addEventListener('click', (e)=>{ e.stopPropagation(); toggleSelection(); });
       card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
     } else if(!opts.disableTapExpand){
+      const menuBtn = card.querySelector('.task-menu-btn');
+      menuBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const willOpen = !card.classList.contains('menu-open');
+        closeAllTaskMenus(card);
+        card.classList.toggle('menu-open', willOpen);
+      });
+      card.querySelector('.btn-open-card').addEventListener('click', (e)=>{
+        e.stopPropagation();
+        card.classList.remove('menu-open');
+        openTaskDetailModal(task.id);
+      });
       card.querySelector('.task-card-top').addEventListener('click', (e)=>{
-        if(e.target.closest('.task-note-dot')) return;
-        const willExpand = !card.classList.contains('expanded');
-        collapseAllExpandedCards(card);
-        card.classList.toggle('expanded', willExpand);
+        if(e.target.closest('.task-menu-btn')) return;
+        openTaskDetailModal(task.id);
       });
     }
     return card;
