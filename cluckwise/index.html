@@ -251,19 +251,28 @@
   .inline-add-expand:hover{ background:var(--primary-soft); color:var(--primary-dark); }
   .inline-add-cancel:hover{ background:var(--danger-soft); color:var(--danger); }
 
-  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
-  .task-card-top{ display:flex; align-items:flex-start; gap:9px; min-width:0; }
+  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;flex-direction:column;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
+  .task-card-top{ display:flex; align-items:center; gap:9px; min-width:0; cursor:pointer; }
   .task-card.overdue{ border-color:var(--danger); border-left-width:4px; background:var(--danger-soft); }
   .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; }
-  .overdue-flag{ color:var(--danger); font-size:15px; flex-shrink:0; margin-top:1px; }
-  .priority-flag{ font-size:14px; flex-shrink:0; margin-top:1px; }
+  .overdue-flag{ color:var(--danger); font-size:12.5px; font-weight:700; flex-shrink:0; }
+  .priority-flag{ font-size:12.5px; font-weight:700; flex-shrink:0; }
   .task-note-flag{
     display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; color:var(--muted);
     background:var(--surface-soft); border:1px solid var(--line); border-radius:999px; padding:2px 8px; cursor:help; flex-shrink:0;
   }
-  .task-meta-row{ display:flex; align-items:center; gap:8px; padding-left:25px; flex-wrap:wrap; }
-  body.hide-icons .task-meta-row{ padding-left:0; }
+  .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
+  .task-reveal{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; max-height:0; opacity:0; overflow:hidden;
+    transition:max-height .18s ease, opacity .15s ease, margin-top .18s ease; margin-top:0; padding-left:25px;
+  }
+  body.hide-icons .task-reveal{ padding-left:0; }
+  @media (hover:hover){
+    .task-card:hover .task-reveal{ max-height:60px; opacity:1; margin-top:8px; }
+  }
+  .task-card.expanded .task-reveal{ max-height:60px; opacity:1; margin-top:8px; }
+  .task-reveal .task-actions{ margin-left:auto; }
   .bulk-select-cb{ width:20px; height:20px; flex-shrink:0; accent-color:var(--primary); cursor:pointer; }
   .bulk-action-bar{
     position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:60;
@@ -2302,7 +2311,13 @@
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   let bulkSelectMode = false;
   let bulkSelectedIds = new Set();
-  function buildTaskCard(task, selectable){
+  function collapseAllExpandedCards(except){
+    document.querySelectorAll('.task-card.expanded, .frequent-chip.expanded').forEach(el=>{
+      if(el!==except) el.classList.remove('expanded');
+    });
+  }
+  function buildTaskCard(task, selectable, opts){
+    opts = opts || {};
     const card = document.createElement('div');
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
@@ -2312,18 +2327,19 @@
     card.innerHTML = `
       <div class="task-card-top">
         ${selectable ? `<input type="checkbox" class="bulk-select-cb" ${bulkSelectedIds.has(task.id)?'checked':''}>` : ''}
-        ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : '')}
         <span class="task-icon"></span>
         <span class="task-body"><span class="task-name"></span></span>
-      </div>
-      ${(task.notes || (task.assignees && task.assignees.length)) ? `<div class="task-meta-row">
-        ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝 Note</span>` : ''}
         ${buildAssigneeAvatarsHtml(task.assignees)}
-      </div>` : ''}
-      <div class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
-        <button class="btn-edit" title="Edit">✎</button>
-        <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
-        <button class="btn-delete" title="Delete">🗑️</button>
+        ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
+      </div>
+      <div class="task-reveal">
+        ${isOverdue ? '<span class="overdue-flag" title="Overdue">⚠ Overdue</span>' : (isHighPriority ? '<span class="priority-flag" title="High priority">🔥 High priority</span>' : '')}
+        ${task.notes ? `<span class="task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝 Note</span>` : ''}
+        <div class="task-actions" ${selectable ? 'style="display:none;"' : ''}>
+          <button class="btn-edit" title="Edit">✎</button>
+          <button class="btn-done" title="${task.status==='done'?'Reopen':'Mark done'}">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button>
+          <button class="btn-delete" title="Delete">🗑️</button>
+        </div>
       </div>`;
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
@@ -2340,6 +2356,13 @@
       cb.checked = selectedIds.has(task.id);
       cb.addEventListener('click', (e)=>{ e.stopPropagation(); toggleSelection(); });
       card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
+    } else if(!opts.disableTapExpand){
+      card.querySelector('.task-card-top').addEventListener('click', (e)=>{
+        if(e.target.closest('.task-note-dot')) return;
+        const willExpand = !card.classList.contains('expanded');
+        collapseAllExpandedCards(card);
+        card.classList.toggle('expanded', willExpand);
+      });
     }
     return card;
   }
@@ -2352,12 +2375,21 @@
     card.dataset.name = item.name;
     card.dataset.icon = item.icon;
     card.innerHTML = `
-      <span class="task-icon"></span>
-      <span class="task-body"><span class="task-name"></span></span>
-      <span class="task-actions"><button class="btn-freq-delete" title="Remove from frequent list">🗑️</button></span>`;
+      <div class="task-card-top">
+        <span class="task-icon"></span>
+        <span class="task-body"><span class="task-name"></span></span>
+      </div>
+      <div class="task-reveal">
+        <span class="task-actions"><button class="btn-freq-delete" title="Remove from frequent list">🗑️</button></span>
+      </div>`;
     renderIconInto(card.querySelector('.task-icon'), item.icon);
     card.querySelector('.task-name').textContent = item.name;
     card.querySelector('.btn-freq-delete').addEventListener('click', (e)=>{ e.stopPropagation(); removeFrequentTemplate(item.id); });
+    card.querySelector('.task-card-top').addEventListener('click', ()=>{
+      const willExpand = !card.classList.contains('expanded');
+      collapseAllExpandedCards(card);
+      card.classList.toggle('expanded', willExpand);
+    });
     return card;
   }
 
@@ -3518,7 +3550,7 @@
     if(open.length===0){ backlogBox.innerHTML = '<div class="empty-note">Backlog is empty.</div>'; }
     else{
       open.forEach(t=>{
-        const card = buildTaskCard(t);
+        const card = buildTaskCard(t, null, {disableTapExpand: true});
         card.title = 'Tap to add to this day, or drag';
         card.addEventListener('click', (e)=>{
           if(e.target.closest('.btn-done') || e.target.closest('.btn-delete') || e.target.closest('.btn-edit')) return;
