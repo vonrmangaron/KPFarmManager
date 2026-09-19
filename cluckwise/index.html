@@ -190,7 +190,7 @@
   .btn-ai-wide:hover{background:var(--primary);color:var(--ink);}
   .btn-ai-wide:disabled{opacity:0.7;cursor:default;}
 
-  .frequent-list{display:flex;flex-direction:column;gap:8px;min-height:20px;}
+  .frequent-list{display:flex;flex-direction:column;gap:8px;min-height:20px;max-height:220px;overflow-y:auto;padding-right:2px;}
   .frequent-chip{border-style:dashed !important;}
 
   .batches-list, .events-list{display:flex;flex-direction:column;gap:14px;}
@@ -607,6 +607,9 @@
   .form-modal-body > *{ margin-bottom:4px; } /* fallback spacing for browsers with poor flex-gap support */
   .form-modal-body > *:last-child{ margin-bottom:0; }
   .form-modal-body label{font-size:12px;color:var(--muted);font-weight:600;}
+  .name-label-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .priority-inline-check{ display:flex; align-items:center; gap:5px; font-size:12.5px !important; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap; }
+  .priority-inline-check input[type="checkbox"]{ width:15px; height:15px; margin:0; accent-color:var(--primary); flex-shrink:0; }
   .form-modal-body input:not([type="checkbox"]), .form-modal-body select{
     border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:16px;width:100%;color:var(--ink);
   }
@@ -831,7 +834,7 @@
       </div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
-        <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;">Frequent tasks</h2>
+        <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;" id="frequentTasksHeader">Frequent tasks</h2>
         <button class="icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" style="width:26px;height:26px;font-size:14px;flex-shrink:0;">+</button>
       </div>
       <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
@@ -1017,9 +1020,15 @@
 <div class="form-modal" id="editTaskModal">
   <div class="form-modal-head"><h2 id="editTaskModalTitle">Edit task</h2><button id="closeEditTaskModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <label for="editTaskNameInput">Task name</label>
+    <div class="name-label-row">
+      <label for="editTaskNameInput">Task name</label>
+      <label class="priority-inline-check" for="editTaskPriorityInput"><input type="checkbox" id="editTaskPriorityInput"> 🔥 High priority</label>
+    </div>
     <input type="text" id="editTaskNameInput" maxlength="50">
     <div class="char-count" id="editTaskNameCharCount">0 / 50</div>
+
+    <label for="editTaskNotesInput">Notes (optional)</label>
+    <textarea id="editTaskNotesInput" maxlength="300" rows="2" placeholder="e.g. Gate was jammed, used side entrance" style="width:100%;border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical;"></textarea>
 
     <label for="editTaskAssigneeInput">Assignees (optional)</label>
     <div class="ai-icon-row">
@@ -1046,9 +1055,6 @@
       <input type="date" id="editTaskUntilInput">
     </div>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Repeating creates individual occurrences up to the date above — you can still edit or delete any single one later.</p>
-    <label for="editTaskNotesInput">Notes (optional)</label>
-    <textarea id="editTaskNotesInput" maxlength="300" rows="2" placeholder="e.g. Gate was jammed, used side entrance" style="width:100%;border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical;"></textarea>
-    <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskPriorityInput"> 🔥 Mark as high priority</label>
     <div id="editTaskSeriesRow" style="display:none;">
       <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskApplySeriesInput"> 🔁 Also apply name, notes, priority and assignees to all future occurrences in this series</label>
     </div>
@@ -2267,10 +2273,13 @@
   function renderFrequentTasks(){
     const box = $('#frequentList');
     box.innerHTML = '';
+    const header = $('#frequentTasksHeader');
     if(!frequentTemplates.length){
+      header.textContent = 'Frequent tasks';
       box.innerHTML = '<div class="empty-note">Check "Save as a frequent task" when adding a task to build this list.</div>';
       return;
     }
+    header.textContent = `Frequent tasks (${frequentTemplates.length})`;
     frequentTemplates.forEach(item=> box.appendChild(buildFrequentChip(item)));
   }
 
