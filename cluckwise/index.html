@@ -217,6 +217,12 @@
   .event-edit .save-event{border:none;background:var(--secondary);color:#fff;border-radius:7px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;}
 
   .backlog-list, .day-tasks{display:flex;flex-direction:column;gap:8px;min-height:24px;}
+  .view-all-backlog-btn{
+    width:100%; text-align:center; border:1px dashed var(--line); background:transparent; color:var(--primary-dark);
+    font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:8px; border-radius:8px; cursor:pointer;
+    transition:background .12s ease;
+  }
+  .view-all-backlog-btn:hover{ background:var(--primary-soft); }
   .backlog-list > *, .day-tasks > *{ flex-shrink:0; }
   .backlog-list > *, .day-tasks > *{ margin-bottom:8px; } /* fallback spacing for browsers with poor flex-gap support */
   .backlog-list > *:last-child, .day-tasks > *:last-child{ margin-bottom:0; }
@@ -599,6 +605,38 @@
     display:none; flex-direction:column; overflow:hidden;
   }
   .form-modal.open{display:flex;}
+  .backlog-modal{ width:560px; }
+  .backlog-modal-row{ flex-wrap:wrap; }
+  .backlog-schedule-btn{
+    flex-shrink:0; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark);
+    font-family:'Sora',sans-serif; font-weight:700; font-size:11.5px; padding:5px 10px; border-radius:999px; cursor:pointer;
+    margin-left:auto;
+  }
+  .backlog-schedule-btn:hover{ background:var(--primary); color:#fff; }
+  .backlog-edit-btn{
+    flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted);
+    font-family:'Sora',sans-serif; font-weight:700; font-size:11.5px; padding:5px 10px; border-radius:999px; cursor:pointer;
+  }
+  .backlog-edit-btn:hover{ background:var(--ink); color:var(--surface); }
+  .backlog-schedule-row{
+    display:flex; gap:8px; align-items:center; padding:8px 12px; margin:-4px 0 4px; background:var(--surface-soft);
+    border-radius:10px; border:1px solid var(--line);
+  }
+  .backlog-schedule-row input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:14px; }
+  .backlog-schedule-confirm{
+    flex-shrink:0; border:none; background:var(--primary); color:#241A08; font-weight:700; font-size:12.5px;
+    padding:7px 14px; border-radius:8px; cursor:pointer;
+  }
+  .bulk-date-input{ border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; }
+  .backlog-modal-toolbar{ display:flex; gap:8px; padding:0 18px 12px; border-bottom:1px solid var(--line); }
+  .backlog-modal-toolbar input{
+    flex:1; min-width:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px;
+    padding:8px 12px; font-size:14px; color:var(--ink);
+  }
+  .backlog-modal-toolbar select{
+    flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px;
+    padding:8px 10px; font-size:13px; color:var(--ink);
+  }
   .form-modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);}
   .form-modal-head h2{font-size:17px;margin:0;font-weight:800;overflow-wrap:break-word;min-width:0;}
   .form-modal-head button{border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;}
@@ -839,7 +877,7 @@
       </div>
       <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
 
-      <h2>Backlog</h2>
+      <h2 id="backlogHeader">Backlog</h2>
       <div class="backlog-list" id="backlogList" data-date="backlog"></div>
 
       <h2>Batches</h2>
@@ -1071,10 +1109,11 @@
 </div>
 
 <div class="form-modal" id="batchModal">
-  <div class="form-modal-head"><h2>Add batch</h2><button id="closeBatchModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-head"><h2 id="batchModalTitle">Add batch</h2><button id="closeBatchModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
     <label for="batchNumberInput">Batch number</label>
     <input type="text" id="batchNumberInput" placeholder="e.g. B-1024">
+    <p id="batchExistingNote" style="display:none;font-size:12px;color:var(--primary-dark);background:var(--primary-soft);padding:8px 10px;border-radius:8px;margin:2px 0 0;"></p>
     <label for="batchStartInput">Start date</label>
     <input type="date" id="batchStartInput">
     <label for="batchEndInput">End date (optional)</label>
@@ -1089,6 +1128,20 @@
 
     <button class="btn-app" id="addBatchBtn" style="margin-top:6px;">Add batch</button>
   </div>
+</div>
+
+<div class="form-modal backlog-modal" id="backlogModal">
+  <div class="form-modal-head"><h2 id="backlogModalTitle">Backlog</h2><button id="closeBacklogModal" aria-label="Close">✕</button></div>
+  <div class="backlog-modal-toolbar">
+    <input type="text" id="backlogSearchInput" placeholder="Search backlog...">
+    <select id="backlogSortSelect">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="az">A–Z</option>
+    </select>
+  </div>
+  <div id="backlogModalInlineAddWrap" style="padding:0 18px;"></div>
+  <div class="form-modal-body" id="backlogModalList" style="padding-top:8px;"></div>
 </div>
 
 <div class="form-modal" id="eventModal">
@@ -1615,13 +1668,43 @@
     while(taskDate <= batchEndDate){
       const dayAge = week*7;
       const name = `Weight Shed ${shedNum} - (Day ${dayAge})`;
-      addTask(name, '⚖️', taskDate, { batchNumber, shedNum: String(shedNum) });
+      addTask(name, '⚖️', taskDate, { batchNumber, shedNum: String(shedNum), source: 'auto-weight' });
       count++;
       week++;
       taskDate = addDaysStr(placementDate, week*7);
     }
-    addHistory('Weight schedule added', `${count} weekly weight checks added for Shed ${shedNum} (Batch #${batchNumber}, placed ${formatFull(placementDate)}, through batch end ${formatFull(batchEndDate)})`);
     return count;
+  }
+  // Diffs the batch's OLD shed schedule against a NEW one and applies only the minimum
+  // change needed: unchanged sheds are left completely untouched (no regeneration, no churn),
+  // changed/removed sheds have ONLY their own auto-generated weight tasks cleared (never
+  // manually-added or autopopulated tasks that happen to share the batch number), and
+  // changed/added sheds get freshly generated. Returns a summary for the caller's toast.
+  function syncBatchShedSchedules(batchNumber, oldSheds, newSheds, oldEndDate, newEndDate){
+    oldSheds = oldSheds || [];
+    const oldByShed = new Map(oldSheds.map(s=> [String(s.shed), s.placement]));
+    const newByShed = new Map(newSheds.map(s=> [String(s.shed), s.placement]));
+    const endDateChanged = oldEndDate !== newEndDate;
+    const refreshed = [], unchanged = [], removed = [];
+
+    function clearShedAutoTasks(shedNum){
+      tasks = tasks.filter(t=> !(t.source==='auto-weight' && t.batchNumber===batchNumber && t.shedNum===String(shedNum)));
+    }
+
+    oldByShed.forEach((placement, shedNum)=>{
+      if(!newByShed.has(shedNum)){ clearShedAutoTasks(shedNum); removed.push(shedNum); }
+    });
+    newByShed.forEach((placement, shedNum)=>{
+      if(!endDateChanged && oldByShed.get(shedNum) === placement){ unchanged.push(shedNum); return; }
+      clearShedAutoTasks(shedNum);
+      generateShedWeightTasks(shedNum, placement, batchNumber, newEndDate);
+      refreshed.push(shedNum);
+    });
+
+    if(refreshed.length || removed.length){
+      addHistory('Weight schedule synced', `Batch #${batchNumber}: shed(s) ${refreshed.join(', ')||'—'} refreshed, ${removed.join(', ')||'none'} removed, ${unchanged.length} unchanged`);
+    }
+    return { refreshed, unchanged, removed };
   }
   function renderShedInputs(n){
     const box = $('#shedInputsContainer');
@@ -2232,12 +2315,15 @@
     renderIconInto(card.querySelector('.task-icon'), task.icon);
     card.querySelector('.task-name').textContent = task.name;
     if(selectable){
+      const selectedIds = selectable.ids || bulkSelectedIds;
+      const onUpdate = selectable.onUpdate || updateBulkActionBar;
       const cb = card.querySelector('.bulk-select-cb');
       const toggleSelection = ()=>{
-        if(bulkSelectedIds.has(task.id)) bulkSelectedIds.delete(task.id); else bulkSelectedIds.add(task.id);
-        cb.checked = bulkSelectedIds.has(task.id);
-        updateBulkActionBar();
+        if(selectedIds.has(task.id)) selectedIds.delete(task.id); else selectedIds.add(task.id);
+        cb.checked = selectedIds.has(task.id);
+        onUpdate();
       };
+      cb.checked = selectedIds.has(task.id);
       cb.addEventListener('click', (e)=>{ e.stopPropagation(); toggleSelection(); });
       card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
     }
@@ -2261,12 +2347,24 @@
     return card;
   }
 
+  const SIDEBAR_BACKLOG_CAP = 4;
   function renderBacklog(){
     const list = $('#backlogList');
     list.innerHTML = '';
     const open = tasks.filter(t=>t.date===null).sort(taskSortCompare);
+    const header = $('#backlogHeader');
+    header.textContent = open.length ? `Backlog (${open.length})` : 'Backlog';
     if(open.length===0){ list.innerHTML = '<div class="empty-note">No tasks waiting.</div>'; }
-    else open.forEach(t=> list.appendChild(buildTaskCard(t)));
+    else{
+      open.slice(0, SIDEBAR_BACKLOG_CAP).forEach(t=> list.appendChild(buildTaskCard(t)));
+      if(open.length > SIDEBAR_BACKLOG_CAP){
+        const viewAllBtn = document.createElement('button');
+        viewAllBtn.className = 'view-all-backlog-btn';
+        viewAllBtn.textContent = `View all ${open.length} →`;
+        viewAllBtn.addEventListener('click', openBacklogModal);
+        list.appendChild(viewAllBtn);
+      }
+    }
     list.appendChild(buildInlineAddRow('backlog', null));
   }
 
@@ -2305,7 +2403,10 @@
           <label style="font-size:10.5px;color:var(--muted);">Number of sheds</label>
           <input type="number" class="edit-shed-count" min="0" max="30" value="${(b.sheds||[]).length}">
           <div class="edit-shed-inputs" style="display:flex;flex-direction:column;gap:6px;"></div>
-          <button class="save-batch">Save changes</button>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <button class="save-batch" style="flex:1;">Save changes</button>
+            <button class="cancel-batch-edit" type="button" style="flex:0 0 auto;">Cancel</button>
+          </div>
         </div>`;
       const editPanel = row.querySelector('.batch-edit');
       const shedInputsBox = row.querySelector('.edit-shed-inputs');
@@ -2315,6 +2416,14 @@
         renderEditShedInputs(shedInputsBox, n, b.sheds||[]);
       });
       row.querySelector('.edit-batch').addEventListener('click', ()=> editPanel.classList.toggle('open'));
+      row.querySelector('.cancel-batch-edit').addEventListener('click', ()=>{
+        row.querySelector('.edit-start').value = b.start;
+        row.querySelector('.edit-end').value = b.end;
+        row.querySelector('.edit-color').value = c;
+        row.querySelector('.edit-shed-count').value = (b.sheds||[]).length;
+        renderEditShedInputs(shedInputsBox, (b.sheds||[]).length, b.sheds||[]);
+        editPanel.classList.remove('open');
+      });
       row.querySelector('.remove-batch').addEventListener('click', function(){
         if(this.dataset.pending!=='true'){
           this.dataset.pending = 'true';
@@ -2339,20 +2448,23 @@
       row.querySelector('.save-batch').addEventListener('click', ()=>{
         const ns = row.querySelector('.edit-start').value;
         const ne = row.querySelector('.edit-end').value;
+        if(ne && ne < ns){ showToast('End date must be after the start date.', true); return; }
         const nc = row.querySelector('.edit-color').value;
+        const oldEnd = b.end;
         const updatedBatch = upsertBatch(b.number, ns, ne, nc);
-        // Clear previously generated weight-check tasks for this batch, then regenerate from the edited shed list
-        tasks = tasks.filter(t=> t.batchNumber !== b.number);
+        const oldSheds = (b.sheds || []).slice();
         const newSheds = [];
         shedInputsBox.querySelectorAll('.edit-shed-date').forEach(inp=>{
-          if(inp.value){
-            generateShedWeightTasks(inp.dataset.shed, inp.value, b.number, updatedBatch.end);
-            newSheds.push({ shed: inp.dataset.shed, placement: inp.value });
-          }
+          if(inp.value) newSheds.push({ shed: inp.dataset.shed, placement: inp.value });
         });
+        const sync = syncBatchShedSchedules(b.number, oldSheds, newSheds, oldEnd, updatedBatch.end);
         updatedBatch.sheds = newSheds;
         persist(); renderAll();
-        showToast('Batch updated.');
+        const parts = [];
+        if(sync.refreshed.length) parts.push(`${sync.refreshed.length} refreshed`);
+        if(sync.unchanged.length) parts.push(`${sync.unchanged.length} unchanged`);
+        if(sync.removed.length) parts.push(`${sync.removed.length} removed`);
+        showToast(`Batch #${b.number} updated${parts.length ? ' — '+parts.join(', ') : ''}.`);
       });
       box.appendChild(row);
     });
@@ -2771,6 +2883,132 @@
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
       renderAll();
+      showToast(`${count} task(s) deleted.`);
+    });
+  }
+
+  // ---------- dedicated Backlog view ----------
+  let backlogSelectedIds = new Set();
+  let backlogScheduleOpenFor = null;
+  function openBacklogModal(){
+    backlogSelectedIds.clear();
+    backlogScheduleOpenFor = null;
+    $('#backlogSearchInput').value = '';
+    $('#backlogSortSelect').value = 'newest';
+    const inlineWrap = $('#backlogModalInlineAddWrap');
+    inlineWrap.innerHTML = '';
+    inlineWrap.appendChild(buildInlineAddRow('backlog-modal', null));
+    renderBacklogModalList();
+    openDrawer('#backlogModal');
+  }
+  function renderBacklogModalList(){
+    const list = $('#backlogModalList');
+    list.innerHTML = '';
+    const q = ($('#backlogSearchInput').value || '').trim().toLowerCase();
+    const sortMode = $('#backlogSortSelect').value;
+    let items = tasks.filter(t=>t.date===null);
+    $('#backlogModalTitle').textContent = `Backlog (${items.length})`;
+    if(q) items = items.filter(t=> t.name.toLowerCase().includes(q));
+    if(sortMode==='newest') items.sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
+    else if(sortMode==='oldest') items.sort((a,b)=> (a.createdAt||0)-(b.createdAt||0));
+    else if(sortMode==='az') items.sort((a,b)=> a.name.localeCompare(b.name));
+
+    if(items.length===0){
+      list.innerHTML = `<div class="empty-note">${q ? 'No backlog tasks match your search.' : 'No tasks waiting.'}</div>`;
+      updateBacklogBulkActionBar();
+      return;
+    }
+    items.forEach(t=>{
+      const card = buildTaskCard(t, { ids: backlogSelectedIds, onUpdate: updateBacklogBulkActionBar });
+      card.classList.add('backlog-modal-row');
+      const cb = card.querySelector('.bulk-select-cb');
+      if(cb) cb.checked = backlogSelectedIds.has(t.id);
+      const scheduleBtn = document.createElement('button');
+      scheduleBtn.className = 'backlog-schedule-btn';
+      scheduleBtn.type = 'button';
+      scheduleBtn.textContent = '📅 Schedule';
+      scheduleBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        backlogScheduleOpenFor = backlogScheduleOpenFor===t.id ? null : t.id;
+        renderBacklogModalList();
+      });
+      card.appendChild(scheduleBtn);
+      const editBtn = document.createElement('button');
+      editBtn.className = 'backlog-edit-btn';
+      editBtn.type = 'button';
+      editBtn.textContent = '✎ Edit';
+      editBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openEditTaskModal(t.id);
+      });
+      card.appendChild(editBtn);
+      list.appendChild(card);
+      if(backlogScheduleOpenFor===t.id){
+        const row = document.createElement('div');
+        row.className = 'backlog-schedule-row';
+        row.innerHTML = `<input type="date" class="backlog-schedule-date"><button class="backlog-schedule-confirm">Move to date</button>`;
+        row.querySelector('.backlog-schedule-confirm').addEventListener('click', ()=>{
+          const val = row.querySelector('.backlog-schedule-date').value;
+          if(!val){ showToast('Pick a date first.', true); return; }
+          t.date = val;
+          addHistory('Scheduled', `${taskLabel(t)} moved from Backlog to ${formatFull(val)}`);
+          persist(); renderAll();
+          backlogScheduleOpenFor = null;
+          renderBacklogModalList();
+          showToast(`Moved to ${formatFull(val)}.`);
+        });
+        list.appendChild(row);
+      }
+    });
+    updateBacklogBulkActionBar();
+  }
+  function updateBacklogBulkActionBar(){
+    let bar = document.getElementById('backlogBulkActionBar');
+    if(backlogSelectedIds.size===0){
+      if(bar) bar.remove();
+      return;
+    }
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'backlogBulkActionBar';
+      bar.className = 'bulk-action-bar';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = `
+      <span class="bulk-count">${backlogSelectedIds.size} selected</span>
+      <input type="date" id="backlogBulkDateInput" class="bulk-date-input">
+      <button class="bulk-btn bulk-done" id="backlogBulkScheduleBtn">📅 Schedule selected</button>
+      <button class="bulk-btn bulk-delete" id="backlogBulkDeleteBtn">🗑️ Delete</button>
+    `;
+    bar.querySelector('#backlogBulkScheduleBtn').addEventListener('click', ()=>{
+      const val = bar.querySelector('#backlogBulkDateInput').value;
+      if(!val){ showToast('Pick a date first.', true); return; }
+      let count = 0;
+      backlogSelectedIds.forEach(id=>{
+        const t = tasks.find(x=>x.id===id);
+        if(t){ t.date = val; count++; }
+      });
+      addHistory('Scheduled', `${count} task(s) moved from Backlog to ${formatFull(val)}`);
+      persist();
+      backlogSelectedIds.clear();
+      renderAll(); renderBacklogModalList();
+      showToast(`${count} task(s) moved to ${formatFull(val)}.`);
+    });
+    const delBtn = bar.querySelector('#backlogBulkDeleteBtn');
+    delBtn.addEventListener('click', ()=>{
+      if(!delBtn.classList.contains('confirm')){
+        delBtn.classList.add('confirm');
+        delBtn.textContent = `Confirm delete (${backlogSelectedIds.size})?`;
+        clearTimeout(delBtn._t);
+        delBtn._t = setTimeout(()=>{ delBtn.classList.remove('confirm'); delBtn.textContent = '🗑️ Delete'; }, 3000);
+        return;
+      }
+      const count = backlogSelectedIds.size;
+      tasks = tasks.filter(t=>!backlogSelectedIds.has(t.id));
+      addHistory('Removed', `${count} task(s) bulk-deleted from Backlog`);
+      persist();
+      backlogSelectedIds.clear();
+      renderAll(); renderBacklogModalList();
       showToast(`${count} task(s) deleted.`);
     });
   }
@@ -3363,32 +3601,63 @@
     const n = Math.max(0, Math.min(30, parseInt(e.target.value, 10) || 0));
     renderShedInputs(n);
   });
+  $('#batchNumberInput').addEventListener('input', (e)=>{
+    const number = e.target.value.trim();
+    const existing = number ? batches.find(b=>b.number===number) : null;
+    const note = $('#batchExistingNote');
+    if(existing){
+      $('#batchModalTitle').textContent = `Edit Batch #${number}`;
+      $('#addBatchBtn').textContent = 'Save changes';
+      note.style.display = 'block';
+      note.textContent = `Batch #${number} already exists (${formatFull(existing.start)} – ${formatFull(existing.end)}). Saving will update it.`;
+      if(!$('#batchStartInput').value) $('#batchStartInput').value = existing.start;
+      if(!$('#batchEndInput').value) $('#batchEndInput').value = existing.end;
+      const shedCount = (existing.sheds||[]).length;
+      if(!$('#shedCountInput').value && shedCount){
+        $('#shedCountInput').value = shedCount;
+        renderShedInputs(shedCount);
+        (existing.sheds||[]).forEach(s=>{
+          const inp = document.querySelector(`.shed-date-input[data-shed="${s.shed}"]`);
+          if(inp) inp.value = s.placement;
+        });
+      }
+    } else {
+      $('#batchModalTitle').textContent = 'Add batch';
+      $('#addBatchBtn').textContent = 'Add batch';
+      note.style.display = 'none';
+    }
+  });
 
   $('#addBatchBtn').addEventListener('click', ()=>{
     const number = $('#batchNumberInput').value.trim();
     if(!number){ showToast('Enter a batch number.', true); return; }
     const start = $('#batchStartInput').value;
     const end = $('#batchEndInput').value;
+    if(end && end < start){ showToast('End date must be after the start date.', true); return; }
     const color = $('#batchColorInput').value;
     const withChecklist = $('#batchChecklistBox').checked;
+    const wasExisting = batches.some(b=>b.number===number);
+    const oldEnd = wasExisting ? batches.find(b=>b.number===number).end : null;
     const savedBatch = upsertBatch(number, start, end, color);
+    const oldSheds = (savedBatch.sheds || []).slice();
     if(withChecklist) addPrepChecklistToBacklog(`Batch #${number}`);
-    let shedsScheduled = 0;
-    const sheds = [];
+    const newSheds = [];
     document.querySelectorAll('.shed-date-input').forEach(inp=>{
-      if(inp.value){
-        generateShedWeightTasks(inp.dataset.shed, inp.value, number, savedBatch.end);
-        sheds.push({ shed: inp.dataset.shed, placement: inp.value });
-        shedsScheduled++;
-      }
+      if(inp.value) newSheds.push({ shed: inp.dataset.shed, placement: inp.value });
     });
-    savedBatch.sheds = sheds;
+    const sync = syncBatchShedSchedules(number, oldSheds, newSheds, oldEnd, savedBatch.end);
+    savedBatch.sheds = newSheds;
     persist(); renderAll();
     $('#batchNumberInput').value=''; $('#batchStartInput').value=''; $('#batchEndInput').value=''; $('#batchChecklistBox').checked=false;
     $('#shedCountInput').value=''; $('#shedInputsContainer').innerHTML='';
     updateBatchColorDefault();
     closeOverlays();
-    showToast(shedsScheduled ? `Batch added — weight checks scheduled for ${shedsScheduled} shed(s).` : 'Batch added.');
+    const parts = [];
+    if(sync.refreshed.length) parts.push(`${sync.refreshed.length} shed schedule(s) refreshed`);
+    if(sync.unchanged.length) parts.push(`${sync.unchanged.length} unchanged`);
+    if(sync.removed.length) parts.push(`${sync.removed.length} removed`);
+    const shedSummary = parts.length ? ` — ${parts.join(', ')}` : '';
+    showToast(wasExisting ? `Batch #${number} updated${shedSummary}.` : `Batch #${number} added${shedSummary}.`);
   });
 
   $('#addEventBtn').addEventListener('click', ()=>{
@@ -3465,7 +3734,20 @@
     exportTasksCSV(opts);
   });
 
-  $('#openBatchModalBtn').addEventListener('click', ()=> openDrawer('#batchModal'));
+  function openBatchModal(){
+    $('#batchModalTitle').textContent = 'Add batch';
+    $('#addBatchBtn').textContent = 'Add batch';
+    $('#batchExistingNote').style.display = 'none';
+    $('#batchNumberInput').value = '';
+    $('#batchStartInput').value = '';
+    $('#batchEndInput').value = '';
+    $('#batchChecklistBox').checked = false;
+    $('#shedCountInput').value = '';
+    $('#shedInputsContainer').innerHTML = '';
+    updateBatchColorDefault();
+    openDrawer('#batchModal');
+  }
+  $('#openBatchModalBtn').addEventListener('click', openBatchModal);
   function populateEventBatchSelect(){
     const sel = $('#eventBatchSelect');
     sel.innerHTML = '<option value="">— None —</option>';
@@ -3556,7 +3838,7 @@
     closeOverlays();
     openCreateTaskModal(null);
   });
-  $('#quickAddBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#batchModal'); });
+  $('#quickAddBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openBatchModal(); });
   $('#quickAddEventBtn').addEventListener('click', ()=>{ closeOverlays(); populateEventBatchSelect(); openDrawer('#eventModal'); });
 
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
@@ -3717,6 +3999,9 @@
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
   });
   $('#closeBatchModal').addEventListener('click', closeOverlays);
+  $('#closeBacklogModal').addEventListener('click', closeOverlays);
+  $('#backlogSearchInput').addEventListener('input', renderBacklogModalList);
+  $('#backlogSortSelect').addEventListener('change', renderBacklogModalList);
   $('#closeEventModal').addEventListener('click', closeOverlays);
   $('#closeReportModal').addEventListener('click', closeOverlays);
   $('#closeOverdueModal').addEventListener('click', closeOverlays);
