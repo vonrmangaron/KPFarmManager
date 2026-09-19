@@ -432,10 +432,39 @@ body.theme-dark .tag.official-source{background:#24382A;color:#9DD48C;border-col
 .field-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .field-row input[type="date"]{width:150px;text-align:left;}
 
-.snapshot-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+.snapshot-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:4px 0;gap:10px;}
 .snapshot-row .lbl{color:var(--muted);}
-.snapshot-row .val{font-weight:700;color:var(--ink);}
+.snapshot-row .val{font-weight:700;color:var(--ink);display:inline-flex;align-items:center;gap:6px;}
 .snapshot-row .val.big{font-family:'Sora',sans-serif;font-size:15px;}
+
+.snapshot-mort-input{
+  width:82px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+  text-align:right;-moz-appearance:textfield;appearance:textfield;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.snapshot-mort-input::-webkit-outer-spin-button,
+.snapshot-mort-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.snapshot-mort-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mort-pct{font-size:11px;color:var(--muted);font-weight:600;}
+
+.mort-rate-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:14px;padding:9px 12px;
+  background:var(--surface-soft);border:1px dashed var(--line);
+  border-radius:10px;font-size:12px;}
+.mort-rate-bar .mr-label{font-family:'Sora',sans-serif;font-weight:700;
+  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;}
+.mort-rate-bar input[type="range"]{flex:1 1 120px;min-width:100px;accent-color:var(--primary);}
+.mort-rate-bar input[type="number"]{width:66px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;
+  background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.mort-rate-bar input[type="number"]::-webkit-outer-spin-button,
+.mort-rate-bar input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.mort-rate-bar input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.mort-rate-bar .mr-unit{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
 
 .pickups-block{margin-top:16px;}
 .pickups-block > h4{margin:0 0 8px;font-size:11.5px;font-weight:800;
@@ -494,7 +523,6 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 .pickup-actions-menu button:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .pickup-actions-menu button.danger:hover{background:var(--danger-soft);color:var(--danger);}
 
-/* Custom day rows (inside In-Yard Growth Curve panel) */
 .custom-day-list{
   margin-top:12px;padding-top:12px;
   border-top:1px dashed var(--line);
@@ -531,23 +559,6 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 .custom-day-row .cd-actions button.del:hover{
   background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);
 }
-
-.mort-rate-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  margin-top:14px;padding:9px 12px;
-  background:var(--surface-soft);border:1px dashed var(--line);
-  border-radius:10px;font-size:12px;}
-.mort-rate-bar .mr-label{font-family:'Sora',sans-serif;font-weight:700;
-  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
-  color:var(--muted);white-space:nowrap;}
-.mort-rate-bar input[type="range"]{flex:1 1 120px;min-width:100px;accent-color:var(--primary);}
-.mort-rate-bar input[type="number"]{width:66px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;
-  background:var(--surface);color:var(--ink);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
-  text-align:center;-moz-appearance:textfield;appearance:textfield;}
-.mort-rate-bar input[type="number"]::-webkit-outer-spin-button,
-.mort-rate-bar input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.mort-rate-bar input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.mort-rate-bar .mr-unit{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
 
 .mp-field{display:flex;flex-direction:column;gap:6px;}
 .mp-field > label{font-size:11.5px;font-weight:700;color:var(--muted);
@@ -919,6 +930,7 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .farm-kpi-tile.amber .fkt-val{color:var(--primary-dark);}
 .farm-kpi-tile.green .fkt-val{color:var(--success);}
 .farm-kpi-tile.blue .fkt-val{color:var(--secondary);}
+.farm-kpi-tile.red .fkt-val{color:var(--danger);}
 .farm-kpi-tile .fkt-sub{font-size:11px;color:var(--muted);margin-top:auto;padding-top:6px;line-height:1.35;}
 .farm-feed-override{width:100%;border:1px solid var(--line);border-radius:7px;
   background:var(--surface);color:var(--ink);padding:4px 8px;
@@ -994,6 +1006,22 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
 .ptc-status .pill.gompertz{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;}
 
+.scale-corr{margin-top:12px;padding:10px 12px;
+  background:var(--surface);border:1px dashed var(--line);border-radius:10px;}
+.scale-corr-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.scale-corr-title{font-family:'Sora',sans-serif;font-weight:800;font-size:12px;color:var(--ink);}
+.scale-corr-help{font-size:11px;color:var(--muted);line-height:1.4;}
+.scale-corr-controls{display:flex;align-items:center;gap:8px;}
+.scale-corr-controls input[type="range"]{flex:1;min-width:100px;accent-color:var(--secondary);}
+.scale-corr-controls input[type="number"]{width:64px;padding:4px 8px;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.scale-corr-controls input[type="number"]::-webkit-outer-spin-button,
+.scale-corr-controls input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.scale-corr-controls input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.scale-corr-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
+
 .pred-estimates-head{margin-top:14px;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   font-size:11px;font-weight:700;text-transform:uppercase;
@@ -1054,21 +1082,6 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .pred-beta-row input[type="number"]::-webkit-outer-spin-button,
 .pred-beta-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .pred-beta-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-
-.bias-row{display:flex;align-items:center;gap:10px;margin-top:10px;
-  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:12.5px;flex-wrap:wrap;}
-.bias-row label{font-weight:700;text-transform:uppercase;
-  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
-.bias-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--secondary);}
-.bias-row input[type="number"]{width:70px;padding:5px 8px;
-  border:1px solid var(--line);border-radius:7px;background:var(--surface);
-  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
-  text-align:center;-moz-appearance:textfield;appearance:textfield;}
-.bias-row input[type="number"]::-webkit-outer-spin-button,
-.bias-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.bias-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.bias-row .br-hint{font-size:11px;color:var(--muted);font-weight:500;}
 
 .pred-daily-range-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;
@@ -1290,7 +1303,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 
 <div class="sync-modal" id="sampleModal">
   <div class="sync-modal-head">
-    <h3 id="sampleModalTitle"><span>📏</span> Custom Day Reading</h3>
+    <h3 id="sampleModalTitle"><span>📏</span> Extra Reading Day</h3>
     <button type="button" id="sampleClose" aria-label="Close">✕</button>
   </div>
   <div class="sync-modal-body" id="sampleModalBody"></div>
@@ -1316,17 +1329,25 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 /* =========================================================
    ProdWise.VM
    - Ross 308 as-hatched curve (Aviagen 2022 combined M/F)
-   - Gompertz weight prediction (S-curve fit, all anchors)
-   - Unified In-Yard Growth Curve panel (fixed Day 7/14/21/28 grid
-     + optional custom-day entries)
+   - AI growth curve (Gompertz S-curve fit, all anchors)
+   - Unified In-Yard Growth Curve panel (Day 7/14/21/28 grid
+     + extra reading days)
+   - Scale correction (formerly "sampling bias factor") now
+     lives inside the In-Yard panel; saves on input & flushes
+     before page unload so it survives reloads
+   - Per-shed "Daily mortality rate" slider kept below the
+     Snapshot on the Predictions page (separate control from
+     the editable mortality number)
    - Group-level combined result (2 sheds sharing a silo)
-   - Whole Farm KPI card (all 8 sheds)
+   - Whole Farm KPI card (all 8 sheds) — Total Mortality tile
+     shows total count + rate
+   - Per-shed Snapshot Mortality is editable (both group view
+     and Predictions page)
    - Manual pickup entry + import conflict prompt
    - Sticky top navigation + fixed-position actions menu
-   - Per-shed mortality rate (default 0.1% of live/day, editable)
    - Forecast-day bar: today-relative presets + cycle-day inputs
    - Chick weight default 0.044 kg
-   - Sampling bias factor (default 0.90)
+   - Scale correction default 90%
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1607,7 +1628,7 @@ function sampleAge(shed, sample){
   return Math.max(0, daysBetween(shed.placementDate, sample.date));
 }
 
-/* ---------- Chick weight / bias helpers ---------- */
+/* ---------- Chick weight / scale correction helpers ---------- */
 function shedChickWeight(shed){
   if (!shed) return DEFAULT_CHICK_WEIGHT_KG;
   const v = Number(shed.chickWeightKg);
@@ -1622,7 +1643,10 @@ function currentBiasFactor(){
   return DEFAULT_BIAS_FACTOR;
 }
 
-/* ---------- Mortality rate helpers ---------- */
+/* ---------- Mortality rate helpers ----------
+   The per-shed "Daily mortality rate" slider controls the forward-
+   looking mortality projection. It is a SEPARATE control from the
+   editable mortality count in the Snapshot panel. */
 function shedMortRate(shed){
   if (!shed) return DEFAULT_MORT_RATE_PCT;
   const v = Number(shed.mortalityRatePercent);
@@ -1672,11 +1696,7 @@ function estimateShedFinalMortality(shed, finalAge, currentAge){
 }
 
 /* =========================================================
-   GOMPERTZ FITTING — W(t) = A * exp(-b * exp(-k * t))
-   Now reads from BOTH:
-   - targetCurve (fixed Day 7/14/21/28 grid — the primary input)
-   - inYardSamples (custom off-cycle entries)
-   Both are treated as in-yard readings (bias applied unless marked official).
+   AI GROWTH CURVE FITTING
 ========================================================= */
 function collectShedWeightAnchors(shed){
   const anchors = [];
@@ -1684,7 +1704,6 @@ function collectShedWeightAnchors(shed){
   const chickW = shedChickWeight(shed);
   anchors.push({ t: 0, w: chickW, wgt: 1.0, source: 'day-old' });
 
-  // Fixed grid from targetCurve — in-yard readings, bias applied
   const tc = shed.targetCurve || {};
   const gridDays = new Set();
   TARGET_DAYS.forEach(day => {
@@ -1695,18 +1714,16 @@ function collectShedWeightAnchors(shed){
     }
   });
 
-  // Custom entries from inYardSamples
   (shed.inYardSamples || []).forEach(s => {
     if (!s.date || !(s.avgWeightKg > 0)) return;
     const age = sampleAge(shed, s);
     if (age <= 0) return;
-    if (gridDays.has(age)) return; // grid wins on conflicts
+    if (gridDays.has(age)) return;
     const scaled = s.isOfficial ? s.avgWeightKg : (s.avgWeightKg * bias);
     const wgt = s.isOfficial ? 1.0 : 0.55;
     anchors.push({ t: age, w: scaled, wgt, source: s.isOfficial ? 'official-sample' : 'in-yard-custom' });
   });
 
-  // Official pickups
   (shed.pickups || []).forEach(p => {
     const avg = pickupAvgKg(p);
     if (!avg || avg <= 0) return;
@@ -3453,6 +3470,7 @@ function computeFarmTotals(){
   let totalLiveWeight = 0, totalFeedAuto = 0, totalPlaced = 0;
   let totalMortalityEst = 0, totalBirdsAtHarvest = 0;
   let weightedAgeSum = 0, shedsWithData = 0;
+  let totalCurrentMort = 0;
   for (const shed of sheds){
     if (!shed.placementDate) continue;
     const g = Math.floor((shed.id - 1) / 2) + 1;
@@ -3461,6 +3479,7 @@ function computeFarmTotals(){
     totalFeedAuto += pred.totalFeedKg;
     totalPlaced += pred.initialPop;
     totalMortalityEst += pred.estFinalMort;
+    totalCurrentMort += Math.max(0, Number(shed.mortality) || 0);
     const harvestedBirds = pred.pickupDetails.reduce((s,p) => s + p.birds, 0);
     const remainingBirds = Math.max(0, pred.estFinalLive - harvestedBirds);
     const batchBirds = harvestedBirds + remainingBirds;
@@ -3474,7 +3493,8 @@ function computeFarmTotals(){
       totalLiveWeight: 0, totalFeedAuto: 0, totalFeed: 0,
       fcr: 0, cfcr: 0, pif: 0, avgWeight: 0, livability: 0,
       weightedAge: 0, placed: 0, mortality: 0, birdsAtHarvest: 0,
-      usingManualFeed: false
+      usingManualFeed: false,
+      totalCurrentMortality: 0, currentMortRate: 0
     };
   }
   const avgWeight = totalBirdsAtHarvest > 0 ? totalLiveWeight / totalBirdsAtHarvest : 0;
@@ -3492,7 +3512,9 @@ function computeFarmTotals(){
     fcr, cfcr, pif, avgWeight, livability,
     weightedAge, placed: totalPlaced, mortality: totalMortalityEst,
     birdsAtHarvest: totalBirdsAtHarvest,
-    usingManualFeed
+    usingManualFeed,
+    totalCurrentMortality: totalCurrentMort,
+    currentMortRate: totalPlaced > 0 ? (totalCurrentMort / totalPlaced) * 100 : 0
   };
 }
 
@@ -4020,8 +4042,7 @@ function deleteManualPickup(shedId, dateIso){
 }
 
 /* =========================================================
-   CUSTOM DAY SAMPLE ENTRY (off-cycle dates)
-   No birds count — just date + avg weight + optional official flag.
+   EXTRA READING DAY (off-cycle sample)
 ========================================================= */
 function openSampleModal(shedId, editIdx){
   if (!farmData) return;
@@ -4066,15 +4087,15 @@ function renderSampleModal(){
   const shed = farmData.sheds[s.shedId - 1];
   if (titleEl){
     titleEl.innerHTML = s.mode === 'add'
-      ? `<span>📏</span> Custom Day Reading — Shed ${s.shedId}`
-      : `<span>✎</span> Edit Custom Day — Shed ${s.shedId}`;
+      ? `<span>📏</span> Extra Reading Day — Shed ${s.shedId}`
+      : `<span>✎</span> Edit Extra Reading — Shed ${s.shedId}`;
   }
   const count = (shed.inYardSamples || []).length;
   body.innerHTML = `
     <div class="sync-status-card">
       <div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div>
       <div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate ? fmtShort(shed.placementDate) : '—'}</span></div>
-      <div class="sync-status-row"><span class="lbl">Custom days</span><span class="val">${count}</span></div>
+      <div class="sync-status-row"><span class="lbl">Extra readings</span><span class="val">${count}</span></div>
     </div>
     <div class="mp-field">
       <label>Date</label>
@@ -4090,16 +4111,16 @@ function renderSampleModal(){
     </div>
     <label class="mp-checkbox-row">
       <input type="checkbox" id="smOfficial" ${s.isOfficial ? 'checked' : ''} />
-      <span>This is an official integrator sample (trusted more than in-yard)</span>
+      <span>This number came from the plant or company (not your shed scale)</span>
     </label>
     <div class="mp-hint">
-      Use this for readings that don't land on Day 7, 14, 21, or 28.
-      In-yard readings are bias-adjusted (×${(currentBiasFactor()*100).toFixed(0)}%) before feeding the forecast.
-      Mark <strong>official</strong> only if the number came from the integrator.
+      Use this for weigh-ins that don't land on Day 7, 14, 21, or 28.
+      Shed scale readings are adjusted ×${(currentBiasFactor()*100).toFixed(0)}% to match plant weights.
+      Tick the box only if the number came from the plant or company.
     </div>
     <div class="sync-actions">
       <button class="btn-sync-primary" id="smSaveBtn">
-        ${s.mode === 'add' ? '＋ Add Custom Day' : '✓ Save Changes'}
+        ${s.mode === 'add' ? '＋ Add Extra Reading' : '✓ Save Changes'}
       </button>
       <button class="btn-sync-primary ghost" id="smCancelBtn">Cancel</button>
     </div>`;
@@ -4156,17 +4177,17 @@ function saveSample(){
   saveState(); schedulePush();
   closeSampleModal();
   render();
-  showToast(s.mode === 'add' ? '✅ Custom day added.' : '✅ Custom day updated.');
+  showToast(s.mode === 'add' ? '✅ Extra reading day added.' : '✅ Extra reading day updated.');
 }
 function deleteSample(shedId, idx){
   if (!farmData) return;
   const shed = farmData.sheds[shedId - 1];
   if (!shed || !shed.inYardSamples || !shed.inYardSamples[idx]) return;
   const x = shed.inYardSamples[idx];
-  if (!confirm(`Delete this custom reading from ${fmtShort(x.date)}?`)) return;
+  if (!confirm(`Delete this extra reading from ${fmtShort(x.date)}?`)) return;
   shed.inYardSamples.splice(idx, 1);
   saveState(); schedulePush(); render();
-  showToast('Custom day deleted.');
+  showToast('Extra reading day deleted.');
 }
 
 /* =========================================================
@@ -4475,7 +4496,7 @@ async function handleFile(file){
   if (willReplaceLocal || willReplaceCloudExcel){
     let msg = '';
     if (willReplaceLocal){
-      msg += 'This will update your current shed data with the new file.\n\nIn-yard readings, custom days, mortality rates, and chick weights are preserved.';
+      msg += 'This will update your current shed data with the new file.\n\nIn-yard readings, extra reading days, mortality rates, and chick weights are preserved.';
     }
     if (willReplaceCloudExcel){
       if (msg) msg += '\n\n';
@@ -4644,13 +4665,34 @@ function setFarmFeedOverride(rawVal){
   }
   savePredState(); schedulePush();
 }
+/* Scale correction: save on every input; caller decides when to re-render. */
 function setBiasFactor(value){
   if (!farmData) return;
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return;
   const v = Math.max(MIN_BIAS_FACTOR, Math.min(MAX_BIAS_FACTOR, n));
   farmData.biasFactor = v;
+  saveState(); schedulePush();
+}
+/* Daily mortality rate: save on change and re-render (forward projection changes). */
+function setShedMortRate(shedId, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return;
+  shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, n));
   saveState(); schedulePush(); scheduleRender(30);
+}
+/* Live-editing helper: update one shed's mortality count without a full re-render */
+function liveUpdateShedMortality(shedIdx, rawValue){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedIdx];
+  if (!shed) return;
+  const n = Number(rawValue);
+  shed.mortality = (Number.isFinite(n) && n >= 0) ? Math.floor(n) : 0;
+  saveState(); schedulePush();
+  if (activeTab === 'predictions') updateFarmKpiValues();
 }
 
 /* ---------- Sync UI ---------- */
@@ -5073,7 +5115,7 @@ function shedCardHtml(shed, today){
             <div class="field-row">
               <label for="customFeed_${idx}">Custom Feed (kg/bird)</label>
               <input id="customFeed_${idx}" type="number" step="0.001" min="0"
-                value="${shed.customFeedKg ?? ''}" placeholder="blank = Ross 308"
+                value="${shed.customFeedKg ?? ''}" placeholder="blank = Standard"
                 data-shed="${idx}" data-field="customFeedKg" />
             </div>
             <div class="field-row">
@@ -5087,7 +5129,16 @@ function shedCardHtml(shed, today){
             <h4>Snapshot (today)</h4>
             <div class="snapshot-row"><span class="lbl">Age</span><span class="val">${age} days</span></div>
             <div class="snapshot-row"><span class="lbl">Live birds</span><span class="val big">${live.toLocaleString()}</span></div>
-            <div class="snapshot-row"><span class="lbl">Mortality</span><span class="val">${shed.mortality.toLocaleString()} (${mRate.toFixed(2)}%)</span></div>
+            <div class="snapshot-row">
+              <span class="lbl">Mortality</span>
+              <span class="val">
+                <input type="number" class="snapshot-mort-input" min="0" step="1"
+                  value="${Math.max(0, Number(shed.mortality) || 0)}"
+                  data-shed="${idx}" data-field="mortality"
+                  id="snapshotMortG_${shed.id}" />
+                <span class="mort-pct">(${mRate.toFixed(2)}%)</span>
+              </span>
+            </div>
             <div class="snapshot-row"><span class="lbl">Total picked</span><span class="val">${picked.toLocaleString()}</span></div>
             <div class="snapshot-row"><span class="lbl">Cleanout</span><span class="val">${shed.cleanoutDate ? fmtShort(shed.cleanoutDate) : '—'}</span></div>
           </div>
@@ -5501,17 +5552,17 @@ function renderFarmKpiCard(){
         <div class="farm-kpi-tile green">
           <div class="fkt-lbl">FCR</div>
           <div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div>
-          <div class="fkt-sub">Feed ÷ Live weight</div>
+          <div class="fkt-sub">Feed ÷ weight gained</div>
         </div>
         <div class="farm-kpi-tile green">
           <div class="fkt-lbl">cFCR</div>
           <div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div>
-          <div class="fkt-sub">β=${predState.beta.toFixed(3)} · ALW=${t.avgWeight.toFixed(3)} kg</div>
+          <div class="fkt-sub">FCR adjusted for final weight (${t.avgWeight.toFixed(2)} kg)</div>
         </div>
         <div class="farm-kpi-tile blue">
           <div class="fkt-lbl">PIF</div>
           <div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div>
-          <div class="fkt-sub">(Livability × ALW) ÷ (Age × FCR) × 100</div>
+          <div class="fkt-sub">Overall score: weight × survival ÷ (age × FCR)</div>
         </div>
         <div class="farm-kpi-tile">
           <div class="fkt-lbl">Total Average Weight</div>
@@ -5522,6 +5573,11 @@ function renderFarmKpiCard(){
           <div class="fkt-lbl">Livability</div>
           <div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div>
           <div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div>
+        </div>
+        <div class="farm-kpi-tile red">
+          <div class="fkt-lbl">Total Mortality</div>
+          <div class="fkt-val" id="kpiMortality">${t.totalCurrentMortality.toLocaleString()}</div>
+          <div class="fkt-sub" id="kpiMortalitySub">${t.currentMortRate.toFixed(2)}% of ${t.placed.toLocaleString()} placed</div>
         </div>
       </div>
     </div>`;
@@ -5545,6 +5601,9 @@ function updateFarmKpiValues(){
   set('kpiPIF', t.pif.toFixed(2));
   set('kpiAvgWeight', t.avgWeight.toFixed(3) + ' <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span>');
   set('kpiLivability', t.livability.toFixed(2) + '%');
+  set('kpiMortality', t.totalCurrentMortality.toLocaleString());
+  const msub = el('kpiMortalitySub');
+  if (msub) msub.textContent = `${t.currentMortRate.toFixed(2)}% of ${t.placed.toLocaleString()} placed`;
 }
 
 function renderPredictionsView(){
@@ -5557,7 +5616,6 @@ function renderPredictionsView(){
     view === 'shed2' ? [sheds[1] || sheds[0]] : sheds;
   const gridClass = view === 'both' && sheds.length > 1 ? 'pred-grid compare' : 'pred-grid';
   const groupNames = { 1:'Group 1', 2:'Group 2', 3:'Group 3', 4:'Group 4' };
-  const biasPct = (currentBiasFactor() * 100);
   return `
     <div class="predictions-head">
       <h1>📊 Results Predictions</h1>
@@ -5574,13 +5632,13 @@ function renderPredictionsView(){
       ${sheds[1] ? `<button class="stab ${view==='shed2'?'active':''}" data-predview="shed2">🏠 Shed ${sheds[1].id}</button>` : ''}
     </div>
     <div class="pred-beta-row">
-      <label>⚙️ cFCR β factor:</label>
+      <label>⚙️ cFCR adjustment factor:</label>
       <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002"
         value="${predState.beta}" />
       <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002"
         value="${predState.beta.toFixed(3)}" />
       <span style="font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-        Target ALW:
+        Target weight at harvest:
         <input type="number" id="predTargetWeight_${g}" min="0.5" max="5" step="0.01"
           value="${predState.targetHarvestWeightKg[g].toFixed(2)}"
           style="width:70px;padding:4px 6px;border-radius:6px;border:1px solid var(--line);
@@ -5589,20 +5647,12 @@ function renderPredictionsView(){
         kg
       </span>
     </div>
-    <div class="bias-row">
-      <label>📏 Sampling bias factor:</label>
-      <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-        value="${biasPct}" />
-      <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-        value="${biasPct.toFixed(0)}" />
-      <span class="br-hint">% — adjusts in-yard readings to official equivalents</span>
-    </div>
     <div class="${gridClass}" style="margin-top:14px;">
       ${visibleSheds.map(s => renderPredictionsShedCard(s, g)).join('')}
     </div>`;
 }
 
-/* ---------- Merged In-Yard Growth Curve panel ---------- */
+/* ---------- In-Yard Growth Curve panel (with scale correction inside) ---------- */
 function renderInYardCurvePanel(shed){
   const tc = shed.targetCurve || {};
   const fit = getShedGompertzFit(shed);
@@ -5633,10 +5683,10 @@ function renderInYardCurvePanel(shed){
             value="${filled ? Number(v).toFixed(3) : ''}"
             class="${cls}"
             data-target-shed="${shed.id}" data-target-day="${day}"
-            title="Ross 308 reference: ${ref} kg" />
+            title="Standard: ${ref} kg" />
           <span class="unit">kg</span>
         </div>
-        <span class="ref">Ross ref: ${ref} kg</span>
+        <span class="ref">Standard: ${ref} kg</span>
       </div>`;
   }).join('');
 
@@ -5644,10 +5694,10 @@ function renderInYardCurvePanel(shed){
   if (samples.length > 0){
     customRows = `
       <div class="custom-day-list">
-        <div class="custom-day-list-title">Custom days (off-cycle readings)</div>
+        <div class="custom-day-list-title">Extra reading days</div>
         ${samples.map((x, i) => {
           const age = sampleAge(shed, x);
-          const officialBadge = x.isOfficial ? '<span class="tag official-source" style="font-size:9px;padding:1px 6px;">Official</span>' : '';
+          const officialBadge = x.isOfficial ? '<span class="tag official-source" style="font-size:9px;padding:1px 6px;">Plant</span>' : '';
           return `
             <div class="custom-day-row">
               <span class="cd-day">Day ${age}</span>
@@ -5665,26 +5715,26 @@ function renderInYardCurvePanel(shed){
 
   let sourcePill, sourceText;
   if (hasFit){
-    sourcePill = '<span class="pill gompertz">AI · curve</span>';
+    sourcePill = '<span class="pill gompertz">AI curve</span>';
     const nGrid = TARGET_DAYS.filter(d => tc[d] > 0).length;
     const nCustom = samples.length;
     const nPickups = (shed.pickups || []).filter(p => pickupAvgKg(p)).length;
     const parts = [];
-    if (nGrid > 0) parts.push(`${nGrid} grid reading${nGrid === 1 ? '' : 's'}`);
-    if (nCustom > 0) parts.push(`${nCustom} custom`);
-    if (nPickups > 0) parts.push(`${nPickups} pickup${nPickups === 1 ? '' : 's'}`);
-    sourceText = `Fitted from <strong>${parts.join(' + ') || 'chick weight only'}</strong>`;
+    if (nGrid > 0) parts.push(`${nGrid} check-day${nGrid === 1 ? '' : 's'}`);
+    if (nCustom > 0) parts.push(`${nCustom} extra reading${nCustom === 1 ? '' : 's'}`);
+    if (nPickups > 0) parts.push(`${nPickups} pickup weight${nPickups === 1 ? '' : 's'}`);
+    sourceText = `Based on <strong>${parts.join(' + ') || 'chick weight only'}</strong>`;
   } else {
     const nTotal = TARGET_DAYS.filter(d => tc[d] > 0).length + samples.length;
     if (nTotal === 0){
-      sourcePill = '<span class="pill standard">Ross 308</span>';
-      sourceText = 'Enter your scale readings above to sharpen the forecast';
+      sourcePill = '<span class="pill standard">Standard curve</span>';
+      sourceText = 'Enter your shed scale readings above to sharpen the forecast';
     } else if (nTotal === 1){
-      sourcePill = '<span class="pill target">In-yard only</span>';
+      sourcePill = '<span class="pill target">Reading only</span>';
       sourceText = 'One reading logged — enter more to unlock the AI curve';
     } else {
-      sourcePill = '<span class="pill target">Ross scaled</span>';
-      sourceText = 'Not enough points for a full fit — using Ross-scaled estimate';
+      sourcePill = '<span class="pill target">Adjusted standard</span>';
+      sourceText = 'Not enough readings for the AI curve — using the adjusted standard curve';
     }
   }
 
@@ -5693,14 +5743,29 @@ function renderInYardCurvePanel(shed){
       <div class="ptc-head">
         <span class="ptc-title">📏 In-Yard Growth Curve</span>
         <button class="btn-sample-add" data-sample-add="${shed.id}" type="button" title="Add a reading for a day other than 7/14/21/28">
-          ＋ Custom day
+          ＋ Extra reading day
         </button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">
-        Enter your scale readings at the standard check days. Bias-adjusted ×${biasPct}% to match official weight. Use <strong>＋ Custom day</strong> for off-cycle readings.
+        Enter your shed scale readings on the standard check days.
+        The app adjusts them ×${biasPct}% to match the plant weight.
+        Use <strong>＋ Extra reading day</strong> for off-schedule weigh-ins.
       </div>
       <div class="ptc-inputs">${inputs}</div>
       ${customRows}
+      <div class="scale-corr">
+        <div class="scale-corr-head">
+          <span class="scale-corr-title">📐 Scale correction</span>
+          <span class="scale-corr-help">How much your shed scale reads heavier than the plant weight.</span>
+        </div>
+        <div class="scale-corr-controls">
+          <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
+            value="${biasPct}" />
+          <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
+            value="${biasPct}" />
+          <span class="scale-corr-unit">%</span>
+        </div>
+      </div>
       <div class="ptc-status">
         Using: ${sourcePill} · ${sourceText}
       </div>
@@ -5760,7 +5825,6 @@ function renderDailyPerformance(shed){
 
   const today    = dateOnly(new Date());
   const last     = lastWeightedPickup(shed);
-  const lastDate = last ? dateOnly(last.date) : null;
   const currentAge = ageInDays(shed, today);
   const fit = getShedGompertzFit(shed);
 
@@ -5822,23 +5886,27 @@ function renderDailyPerformance(shed){
     const nGrid = TARGET_DAYS.filter(d => shed.targetCurve && shed.targetCurve[d] > 0).length;
     const nCustom = (shed.inYardSamples || []).length;
     const nPickups = (shed.pickups || []).filter(p => pickupAvgKg(p)).length;
-    sourceNote = `AI forecast fitted with <strong>Gompertz S-curve</strong> from ${nGrid} grid, ${nCustom} custom, ${nPickups} pickup${nPickups === 1 ? '' : 's'}`;
+    const parts = [];
+    if (nGrid > 0) parts.push(`${nGrid} check-day${nGrid === 1 ? '' : 's'}`);
+    if (nCustom > 0) parts.push(`${nCustom} extra reading${nCustom === 1 ? '' : 's'}`);
+    if (nPickups > 0) parts.push(`${nPickups} pickup weight${nPickups === 1 ? '' : 's'}`);
+    sourceNote = `Based on ${parts.join(', ') || 'chick weight only'}.`;
   } else if (last){
     const gain = observedDailyGain(shed);
     sourceNote = gain != null
-      ? `AI forecast uses <strong>observed gain ${(gain * 1000).toFixed(1)} g/day</strong> from pickups (not enough points for a Gompertz fit)`
-      : `AI forecast uses pickup weights`;
+      ? `Based on pickup weights — observed gain of ${(gain * 1000).toFixed(1)} g/day.`
+      : `Based on pickup weights.`;
   } else if (TARGET_DAYS.some(d => shed.targetCurve && shed.targetCurve[d] > 0) || (shed.inYardSamples || []).length > 0){
-    sourceNote = `AI forecast interpolates between your <strong>in-yard readings</strong>`;
+    sourceNote = `Based on your shed scale readings.`;
   } else {
-    sourceNote = `No readings yet — using the <strong>Ross 308 reference curve</strong>`;
+    sourceNote = `No readings yet — showing the standard growth curve.`;
   }
 
   return `
     <div class="pickups-block" style="margin-top:14px;">
       <h4>📅 Daily Performance — Actual + AI Forecast
         <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">
-          · Day ${startDay}–${endDay} of cycle · ⭐ = milestone · 📏 = reading
+          · Day ${startDay}–${endDay} of cycle · ⭐ = check day · 📏 = weighed
         </span>
       </h4>
       <div class="forecast-table-wrap">
@@ -5849,8 +5917,8 @@ function renderDailyPerformance(shed){
               <th class="num">Age</th>
               <th class="num">Live birds</th>
               <th class="num">Weight (kg)</th>
-              <th class="num">Ross standard (kg)</th>
-              <th class="num">Days vs Ross</th>
+              <th class="num">Standard (kg)</th>
+              <th class="num">Days vs Standard</th>
             </tr>
           </thead>
           <tbody>
@@ -5865,23 +5933,23 @@ function renderDailyPerformance(shed){
               const pickupNote = r.pickupsBirds > 0
                 ? ` <span style="font-size:10px;color:var(--primary-dark);font-weight:700;">−${r.pickupsBirds.toLocaleString()}</span>`
                 : '';
-              const milestoneBadge = r.isMilestone ? `<span class="milestone-pill" title="Weight-curve milestone">★ D${r.age}</span>` : '';
+              const milestoneBadge = r.isMilestone ? `<span class="milestone-pill" title="Check day">★ Day ${r.age}</span>` : '';
 
               let readingBadge = '';
               if (r.gridVal != null){
-                readingBadge = `<span class="sample-pill" title="In-yard reading: ${r.gridVal.toFixed(3)} kg">📏</span>`;
+                readingBadge = `<span class="sample-pill" title="Shed scale reading: ${r.gridVal.toFixed(3)} kg">📏</span>`;
               } else if (r.customOn){
-                readingBadge = `<span class="sample-pill" title="${r.customOn.isOfficial ? 'Official' : 'In-yard'}: ${r.customOn.avgWeightKg.toFixed(3)} kg">📏</span>`;
+                readingBadge = `<span class="sample-pill" title="${r.customOn.isOfficial ? 'Plant weight' : 'Shed scale'}: ${r.customOn.avgWeightKg.toFixed(3)} kg">📏</span>`;
               }
 
               let weightCell = '—';
               if (r.weight != null){
                 const bandStr = (r.band != null && r.weightType === 'gompertz') ? `<span class="conf-band">±${(r.band*100).toFixed(0)}%</span>` : '';
-                if      (r.weightType === 'gompertz')   weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span>${bandStr}<span class="w-pill gompertz">AI · curve</span>`;
-                else if (r.weightType === 'ross-scaled') weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">Ross scaled</span>`;
-                else if (r.weightType === 'ai-pickup')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">AI · pickup</span>`;
-                else if (r.weightType === 'ai-target')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill ai-target">AI · target</span>`;
-                else if (r.weightType === 'standard')   weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill standard">Ross</span>`;
+                if      (r.weightType === 'gompertz')   weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span>${bandStr}<span class="w-pill gompertz">AI curve</span>`;
+                else if (r.weightType === 'ross-scaled') weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">Adjusted</span>`;
+                else if (r.weightType === 'ai-pickup')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">From pickup</span>`;
+                else if (r.weightType === 'ai-target')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill ai-target">From targets</span>`;
+                else if (r.weightType === 'standard')   weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill standard">Standard</span>`;
               }
 
               let daysCell = '—';
@@ -5908,16 +5976,12 @@ function renderDailyPerformance(shed){
         </table>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;">
-        ${sourceNote} ·
-        <strong>AI · curve</strong> = Gompertz fit through all readings (± shows confidence band) ·
-        <strong>📏</strong> = reading day ·
-        Standard = Ross 308 curve (Aviagen 2022, combined M/F average) ·
-        Days vs Ross = Ross-equivalent day − actual age (positive = ahead, negative = behind)
+        ${sourceNote}
       </div>
     </div>`;
 }
 
-/* ---------- Days vs Ross (per shed) ---------- */
+/* ---------- Days vs standard (per shed) ---------- */
 function renderDaysBehind(shed){
   const today = dateOnly(new Date());
   const currentAge = ageInDays(shed, today);
@@ -5927,33 +5991,23 @@ function renderDaysBehind(shed){
   const currentWeight = f.kg;
   const band = f.band || null;
   const daysVar = daysVsTarget(currentAge, currentWeight);
-  const rossAge = findRossAgeForWeight(currentWeight);
   let status, cls, icon;
   if (daysVar == null || Math.abs(daysVar) < 0.5){ status = 'On Target';             cls = 'on-track';     icon = '✅'; }
-  else if (daysVar > 0)                          { status = 'Ahead of Target';       cls = 'ahead';        icon = '🟢'; }
+  else if (daysVar > 0)                          { status = 'Ahead of Standard';     cls = 'ahead';        icon = '🟢'; }
   else if (daysVar >= -3)                        { status = 'Slightly Behind';       cls = 'behind';       icon = '🟡'; }
   else                                           { status = 'Significantly Behind';  cls = 'behind-major'; icon = '🔴'; }
   let daysText;
-  if (daysVar == null || Math.abs(daysVar) < 0.1){ daysText = 'On target — matches Ross 308'; }
-  else if (daysVar > 0){ daysText = `${daysVar.toFixed(1)} day${Math.abs(daysVar - 1) < 0.05 ? '' : 's'} ahead of Ross 308`; }
-  else { daysText = `${Math.abs(daysVar).toFixed(1)} day${Math.abs(daysVar - 1) < 0.05 ? '' : 's'} behind Ross 308`; }
-  let sourcePill = '<span class="w-pill actual">Ross ref</span>';
-  let sourceLabel = 'Weight source';
-  if (f.mode === 'gompertz'){ sourcePill = '<span class="w-pill gompertz">Gompertz</span>'; sourceLabel = 'Fitted curve'; }
-  else if (f.mode === 'ross-scaled'){ sourcePill = '<span class="w-pill forecast">Ross scaled</span>'; sourceLabel = 'Scaled Ross'; }
-  else if (f.mode === 'ai-pickup'){ sourcePill = '<span class="w-pill forecast">Pickup</span>'; sourceLabel = 'Pickup gain'; }
-  else if (f.mode === 'ai-target'){ sourcePill = '<span class="w-pill ai-target">Target</span>'; sourceLabel = 'Target curve'; }
-  else if (f.mode === 'standard'){ sourcePill = '<span class="w-pill standard">Ross</span>'; sourceLabel = 'Ross reference'; }
-  const bandStr = band != null ? ` (±${(band*100).toFixed(0)}%)` : '';
+  if (daysVar == null || Math.abs(daysVar) < 0.1){ daysText = 'Matching the standard growth curve'; }
+  else if (daysVar > 0){ daysText = `${daysVar.toFixed(1)} day${Math.abs(daysVar - 1) < 0.05 ? '' : 's'} ahead of the standard`; }
+  else { daysText = `${Math.abs(daysVar).toFixed(1)} day${Math.abs(daysVar - 1) < 0.05 ? '' : 's'} behind the standard`; }
+  const bandStr = band != null ? ` <span style="color:var(--muted);font-weight:500;">(±${(band*100).toFixed(0)}% margin)</span>` : '';
   return `
     <div class="pred-days-behind ${cls}">
-      <span class="dbi-lbl">📏 vs Ross 308 standard</span>
+      <span class="dbi-lbl">📏 vs standard growth</span>
       <span class="dbi-val">${icon} ${status}</span>
       <span class="dbi-note">
         <strong>${daysText}</strong>
-        · ${sourceLabel} weight <strong>${currentWeight.toFixed(3)} kg</strong>${bandStr} at age <strong>${currentAge}d</strong>
-        · Ross reaches that weight at <strong>day ${rossAge.toFixed(1)}</strong>
-        ${sourcePill}
+        · Currently <strong>${currentWeight.toFixed(3)} kg</strong>${bandStr} at day <strong>${currentAge}</strong>
       </span>
     </div>`;
 }
@@ -5975,11 +6029,23 @@ function renderPredictionsShedCard(shed, group){
   const densityVal = densityKg / FIXED_FLOOR_AREA_M2;
   const densityDisplay = pred.liveNow === 0 ? '0.0' : densityVal.toFixed(1);
 
+  const currentMortRate = pred.initialPop > 0 ? ((pred.currentMort / pred.initialPop) * 100).toFixed(2) : '0.00';
+
   const snapshotHtml = `
     <div class="pred-snapshot">
       <div class="pred-snap-item"><div class="lbl">🐥 Birds placed</div><div class="val">${pred.initialPop.toLocaleString()}</div></div>
       <div class="pred-snap-item"><div class="lbl">📆 Current age</div><div class="val">${pred.currentAge}d</div></div>
-      <div class="pred-snap-item"><div class="lbl">⚠️ Mortality</div><div class="val">${pred.currentMort.toLocaleString()}</div></div>
+      <div class="pred-snap-item">
+        <div class="lbl">⚠️ Mortality</div>
+        <div class="val">
+          <input type="number" class="snapshot-mort-input" min="0" step="1"
+            value="${Math.max(0, Number(shed.mortality) || 0)}"
+            data-shed="${shed.id - 1}" data-field="mortality"
+            id="snapshotMortP_${shed.id}"
+            title="Edit actual mortality count for this shed" />
+        </div>
+        <div class="sub">${currentMortRate}% of placed</div>
+      </div>
       <div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div>
       <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${pred.pickupsCompleted} of ${MAX_PICKUPS_PER_SHED}</div></div>
       <div class="pred-snap-item">
@@ -6023,9 +6089,9 @@ function renderPredictionsShedCard(shed, group){
           <input class="pred-pickup-input ${isManualWeight?'manual':''} ${warn?'warn':''}"
             type="number" step="1" min="0"
             value="${totalValue}"
-            placeholder="${p.isEstWeight ? 'Ross est.' : 'total kg'}"
+            placeholder="${p.isEstWeight ? 'Standard est.' : 'total kg'}"
             data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
-            title="${isManualWeight ? 'Manually edited' : (p.isEstWeight ? 'No Excel weight — using Ross curve estimate' : 'From Excel')}" />
+            title="${isManualWeight ? 'Manually edited' : (p.isEstWeight ? 'No Excel weight — using standard curve estimate' : 'From Excel')}" />
         </td>
         <td class="pred-avg-cell" style="${avgWarn?'color:var(--danger);':''}">${avgValue}</td>
         <td style="text-align:right;">
@@ -6091,12 +6157,12 @@ function renderPredictionsShedCard(shed, group){
       <div class="pred-est-tile amber" style="grid-column: span 2;">
         <div class="lbl">Est. Final PIF</div>
         <div class="val">${grp.pif.toFixed(2)}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px;">(Livability × ALW) ÷ (Age × FCR) × 100</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Overall score: weight × survival ÷ (age × FCR)</div>
       </div>
     </div>` : `
     <div class="pred-empty" style="margin-top:14px;">
       <strong>Group estimates unlock after the first reading or pickup.</strong><br>
-      Enter in-yard readings at Day 7/14/21/28, or import Excel with pickup data.
+      Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.
     </div>`;
 
   const confidenceHtml = (groupHasData && grp && grp.hasData) ? `
@@ -6371,15 +6437,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    /* Daily mortality rate: persist to the shed on change */
     if (t.dataset && t.dataset.mortrateShed !== undefined){
-      const shedId = Number(t.dataset.mortrateShed);
+      const sid = Number(t.dataset.mortrateShed);
       const val = Number(t.value);
-      if (Number.isFinite(val) && val >= 0 && shedId >= 1 && shedId <= SHED_COUNT && farmData){
-        const shed = farmData.sheds[shedId - 1];
-        if (shed){
-          shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, val));
-          saveState(); schedulePush(); scheduleRender(30);
-        }
+      if (Number.isFinite(sid) && sid >= 1 && sid <= SHED_COUNT && Number.isFinite(val)){
+        setShedMortRate(sid, val);
       }
       return;
     }
@@ -6398,9 +6461,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     if (t.id === 'predBetaNumber'){ setPredBeta(t.value); return; }
-    if (t.id === 'biasNumber'){
-      const v = Number(t.value);
-      if (Number.isFinite(v)){ setBiasFactor(v / 100); }
+
+    /* Scale correction: on release, re-render so all dependent values update */
+    if (t.id === 'biasSlider' || t.id === 'biasNumber'){
+      scheduleRender(60);
       return;
     }
 
@@ -6436,6 +6500,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('input', (e) => {
     const t = e.target;
 
+    /* Daily mortality rate: mirror slider <-> number box (no re-render here) */
     if (t.dataset && t.dataset.mortrateShed !== undefined){
       const sid = t.dataset.mortrateShed;
       const slider = document.getElementById(`mortRateSlider_${sid}`);
@@ -6452,14 +6517,29 @@ document.addEventListener('DOMContentLoaded', () => {
       updateFarmKpiValues();
       return;
     }
+
+    /* Scale correction: save on every input (both slider and number box).
+       Value persists even if the tab closes mid-drag.
+       Re-render is skipped here so the slider drag stays smooth —
+       it's triggered on the change event instead. */
     if (t.id === 'biasSlider'){
       const num = document.getElementById('biasNumber');
       if (num) num.value = t.value;
+      const v = Number(t.value);
+      if (Number.isFinite(v)) setBiasFactor(v / 100);
       return;
     }
     if (t.id === 'biasNumber'){
       const slider = document.getElementById('biasSlider');
       if (slider) slider.value = t.value;
+      const v = Number(t.value);
+      if (Number.isFinite(v)) setBiasFactor(v / 100);
+      return;
+    }
+
+    /* Live update of the Whole-Farm KPI tile when editing a shed's mortality */
+    if (t.dataset && t.dataset.shed !== undefined && t.dataset.field === 'mortality'){
+      liveUpdateShedMortality(Number(t.dataset.shed), t.value);
       return;
     }
   });
