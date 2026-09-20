@@ -116,6 +116,15 @@
   .nav-group{display:flex;align-items:center;gap:6px;}
   .nav-group.hidden{visibility:hidden; pointer-events:none;}
   .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;line-height:1;cursor:pointer; display:flex;align-items:center;justify-content:center;transition:background .15s ease; }
+  .section-header-left{ display:flex; align-items:center; gap:6px; min-width:0; }
+  .section-collapse-btn{
+    flex-shrink:0; width:20px; height:20px; border:none; background:transparent; color:var(--muted);
+    font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:transform .18s ease;
+  }
+  .section-collapse-btn.collapsed{ transform:rotate(-90deg); }
+  .collapsible-section{ max-height:2000px; overflow:hidden; transition:max-height .22s ease, opacity .18s ease; opacity:1; }
+  .collapsible-section.collapsed{ max-height:0; opacity:0; }
   .notif-btn{ position:relative; }
   .notif-badge{
     position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px;
@@ -289,7 +298,7 @@
   }
   .task-card.menu-open .task-menu-btn{ opacity:1; background:var(--ink); color:var(--surface); }
   .task-menu-popup{
-    display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:8; min-width:190px;
+    display:none; position:fixed; z-index:80; width:190px;
     background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px;
   }
   .task-card.menu-open .task-menu-popup{ display:block; }
@@ -929,13 +938,25 @@
       </div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
-        <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;" id="frequentTasksHeader">Frequent tasks</h2>
+        <div class="section-header-left">
+          <button class="section-collapse-btn" id="frequentCollapseBtn" aria-label="Collapse Frequent tasks" title="Collapse">▾</button>
+          <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;" id="frequentTasksHeader">Frequent tasks</h2>
+        </div>
         <button class="icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" style="width:26px;height:26px;font-size:14px;flex-shrink:0;">+</button>
       </div>
+      <div class="collapsible-section" id="frequentSectionBody">
       <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
+      </div>
 
-      <h2 id="backlogHeader">Backlog</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
+        <div class="section-header-left">
+          <button class="section-collapse-btn" id="backlogCollapseBtn" aria-label="Collapse Backlog" title="Collapse">▾</button>
+          <h2 id="backlogHeader">Backlog</h2>
+        </div>
+      </div>
+      <div class="collapsible-section" id="backlogSectionBody">
       <div class="backlog-list" id="backlogList" data-date="backlog"></div>
+      </div>
 
       <h2>Batches</h2>
       <div class="batches-list" id="batchesList"></div>
@@ -2354,9 +2375,22 @@
       if(el!==except) el.classList.remove('menu-open');
     });
   }
+  function positionTaskMenuPopup(btn, popup){
+    const btnRect = btn.getBoundingClientRect();
+    const popupW = 190, popupH = popup.offsetHeight || 180;
+    let left = btnRect.right + 8;
+    if(left + popupW > window.innerWidth - 8) left = btnRect.left - popupW - 8;
+    if(left < 8) left = Math.min(btnRect.right - popupW, window.innerWidth - popupW - 8);
+    let top = btnRect.top;
+    if(top + popupH > window.innerHeight - 8) top = window.innerHeight - popupH - 8;
+    if(top < 8) top = 8;
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+  }
   document.addEventListener('click', (e)=>{
     if(!e.target.closest('.task-menu-btn') && !e.target.closest('.task-menu-popup')) closeAllTaskMenus();
   });
+  window.addEventListener('scroll', ()=> closeAllTaskMenus(), true);
   function buildTaskCard(task, selectable, opts){
     opts = opts || {};
     const card = document.createElement('div');
@@ -2400,10 +2434,12 @@
       card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
     } else if(!opts.disableTapExpand){
       const menuBtn = card.querySelector('.task-menu-btn');
+      const popup = card.querySelector('.task-menu-popup');
       menuBtn.addEventListener('click', (e)=>{
         e.stopPropagation();
         const willOpen = !card.classList.contains('menu-open');
         closeAllTaskMenus(card);
+        if(willOpen) positionTaskMenuPopup(menuBtn, popup);
         card.classList.toggle('menu-open', willOpen);
       });
       card.querySelector('.btn-open-card').addEventListener('click', (e)=>{
@@ -3664,6 +3700,27 @@
     input.value = '';
     renderAssigneeChips(boxId, arr);
   }
+
+  function loadCollapsedSidebarSections(){
+    try{ return new Set(JSON.parse(localStorage.getItem('prodplan-collapsed-sidebar-sections') || '[]')); }catch(e){ return new Set(); }
+  }
+  const collapsedSidebarSections = loadCollapsedSidebarSections();
+  function saveCollapsedSidebarSections(){
+    try{ localStorage.setItem('prodplan-collapsed-sidebar-sections', JSON.stringify([...collapsedSidebarSections])); }catch(e){}
+  }
+  function wireSectionCollapse(btnId, bodyId, key){
+    const btn = $(btnId), body = $(bodyId);
+    if(collapsedSidebarSections.has(key)){ btn.classList.add('collapsed'); body.classList.add('collapsed'); }
+    btn.addEventListener('click', ()=>{
+      const nowCollapsed = !body.classList.contains('collapsed');
+      btn.classList.toggle('collapsed', nowCollapsed);
+      body.classList.toggle('collapsed', nowCollapsed);
+      if(nowCollapsed) collapsedSidebarSections.add(key); else collapsedSidebarSections.delete(key);
+      saveCollapsedSidebarSections();
+    });
+  }
+  wireSectionCollapse('#frequentCollapseBtn', '#frequentSectionBody', 'frequent');
+  wireSectionCollapse('#backlogCollapseBtn', '#backlogSectionBody', 'backlog');
 
   $('#quickFrequentAddBtn').addEventListener('click', ()=>{
     let added = 0;
