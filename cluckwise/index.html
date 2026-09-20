@@ -235,7 +235,7 @@
   }
   .view-all-backlog-btn:hover{ background:var(--primary-soft); }
   .backlog-list > *, .day-tasks > *{ flex-shrink:0; }
-  .backlog-list > *, .day-tasks > *{ margin-bottom:8px; } /* fallback spacing for browsers with poor flex-gap support */
+  .backlog-list > *, .day-tasks > *{ margin-bottom:8px; }
   .backlog-list > *:last-child, .day-tasks > *:last-child{ margin-bottom:0; }
   .empty-note{font-size:13px;color:var(--muted);padding:10px 4px;}
 
@@ -260,8 +260,8 @@
   .inline-add-expand:hover{ background:var(--primary-soft); color:var(--primary-dark); }
   .inline-add-cancel:hover{ background:var(--danger-soft); color:var(--danger); }
 
-  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;flex-direction:column;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease, transform .15s ease; min-width:0; }
-  .task-card-top{ display:flex; align-items:center; gap:9px; min-width:0; cursor:pointer; }
+  .task-card{ background:var(--surface);border:1px solid var(--line);border-radius:12px; padding:10px 12px;display:flex;flex-direction:column;cursor:grab; box-shadow:var(--shadow-sm);transition:box-shadow .15s ease; min-width:0; }
+  .task-card-top{ display:flex; align-items:center; gap:9px; min-width:0; cursor:pointer; position:relative; }
   .task-card.overdue{ border-color:var(--danger); border-left-width:4px; background:var(--danger-soft); }
   .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; }
@@ -273,7 +273,6 @@
   }
   .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
 
-  .task-card-top{ position:relative; }
   .task-menu-btn{
     flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft);
     color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -341,7 +340,7 @@
   .bulk-btn.bulk-delete{ background:var(--danger-soft); color:var(--danger); }
   .bulk-btn.bulk-delete.confirm{ background:var(--danger); color:#fff; }
   .task-card:hover{box-shadow:var(--shadow-md);}
-  .task-icon{font-size:16px;line-height:1;flex-shrink:0;margin-top:1px;}
+  .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
   .task-card.sortable-ghost{opacity:0.35;}
   .task-card.sortable-drag{cursor:grabbing; box-shadow:var(--shadow-lg);}
@@ -359,7 +358,7 @@
     font-size:10px;font-weight:700;color:#fff;font-family:'Sora',sans-serif;
     cursor:default; border:1.5px solid var(--surface); box-shadow:0 0 0 1px var(--line);
   }
-  .task-avatars{ display:flex; flex-shrink:0; margin-top:1px; }
+  .task-avatars{ display:flex; flex-shrink:0; }
   .task-avatars .task-avatar{ margin-left:-7px; }
   .task-avatars .task-avatar:first-child{ margin-left:0; }
   .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
@@ -411,8 +410,8 @@
 
   .month-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:136px;gap:10px;}
 
-  .day-cell{ position:relative; background:var(--surface);border:1px solid var(--line);border-radius:14px; padding:7px;padding-bottom:22px;display:flex;flex-direction:column;gap:4px;min-width:0; cursor:pointer; overflow:hidden; box-shadow:var(--shadow-sm); transition:box-shadow .15s ease, transform .12s ease; }
-  .day-cell:hover{box-shadow:var(--shadow-md); transform:translateY(-2px);}
+  .day-cell{ position:relative; background:var(--surface);border:1px solid var(--line);border-radius:14px; padding:7px;padding-bottom:22px;display:flex;flex-direction:column;gap:4px;min-width:0; cursor:pointer; overflow:hidden; box-shadow:var(--shadow-sm); transition:box-shadow .15s ease; }
+  .day-cell:hover{box-shadow:var(--shadow-md);}
   .day-cell:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   button:focus-visible, .icon-btn:focus-visible, .task-card:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   .day-cell.weekend{background:var(--weekend-bg); border-top:3px solid var(--secondary);}
@@ -572,6 +571,10 @@
   .kdot.done{ background:var(--secondary); }
   .kcard .task-avatars{ flex-shrink:0; }
   .kcard .task-avatars .task-avatar{ width:15px;height:15px;font-size:7px; }
+  .kcard .task-menu-btn{ width:20px; height:20px; font-size:12px; margin-left:2px; }
+  @media (hover:hover){ .kcard:hover .task-menu-btn{ opacity:1; } }
+  @media (hover:none){ .kcard .task-menu-btn{ opacity:1; } }
+  .kcard.menu-open .task-menu-btn{ opacity:1; background:var(--ink); color:var(--surface); }
 
   .kanban-column.all-done{ opacity:0.55; filter:grayscale(0.7); transition:opacity .2s ease, filter .2s ease; }
   .kanban-column.all-done:hover{ opacity:0.85; filter:grayscale(0.3); }
@@ -711,7 +714,7 @@
   .form-modal-head button{border:none;background:transparent;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;}
   .form-modal-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
   .form-modal-body > *{ flex-shrink:0; }
-  .form-modal-body > *{ margin-bottom:4px; } /* fallback spacing for browsers with poor flex-gap support */
+  .form-modal-body > *{ margin-bottom:4px; }
   .form-modal-body > *:last-child{ margin-bottom:0; }
   .form-modal-body label{font-size:12px;color:var(--muted);font-weight:600;}
   .name-label-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
@@ -756,7 +759,6 @@
     .sidebar.open{ transform:translateX(0); }
     .main{ position:relative; }
 
-    /* Compact date nav, moved beside the brand instead of wrapping onto its own row */
     .topbar-left{ flex-wrap:nowrap; flex-shrink:0; flex-grow:0; }
     .brand{ flex-shrink:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
     .brand small{ display:none; }
@@ -786,10 +788,9 @@
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
 
-    /* Hide the desktop toolbar controls that move into the bottom nav / More sheet */
     .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn,
     .toolbar #reportBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
-    .shell{ padding-bottom:64px; } /* room for the bottom nav */
+    .shell{ padding-bottom:64px; }
 
     .bottom-nav{
       display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36;
@@ -805,9 +806,9 @@
     .bottom-nav button .bn-icon{ font-size:18px; line-height:1; }
     .bottom-nav button.active{ color:var(--primary-dark); }
 
-    .fab-delete{ display:none; } /* moved into the More sheet on phone */
-    .fab-viewer{ display:none; } /* moved into the More sheet on phone */
-    .fab-refresh{ display:none; } /* mobile has swipe-to-refresh instead */
+    .fab-delete{ display:none; }
+    .fab-viewer{ display:none; }
+    .fab-refresh{ display:none; }
     .fab-add{
       display:flex; position:fixed; right:16px; bottom:74px; z-index:37;
       width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff;
@@ -852,7 +853,6 @@
       font-size:15px; color:#fff; flex-shrink:0;
     }
 
-    /* Bigger, consistent touch targets */
     .icon-btn{ width:38px; height:38px; font-size:17px; }
     #settingsBtn{ width:38px; height:38px; font-size:19px; }
     #overdueBtn{ width:38px; height:38px; }
@@ -860,7 +860,6 @@
     .task-actions button svg{ width:15px; height:15px; }
     .day-cell{ cursor:pointer; }
 
-    /* Full-screen sheets instead of small centered popups */
     .form-modal{
       top:0; left:0; right:0; bottom:0; width:100%; height:100%;
       max-width:100%; max-height:100%; transform:none; border-radius:0;
@@ -1130,9 +1129,7 @@
     <div class="series-note" id="detailSeriesNote" style="display:none;"></div>
   </div>
   <div class="detail-actions">
-    <button class="dbtn edit" id="detailEditBtn">✎ Edit</button>
     <button class="dbtn done" id="detailDoneBtn"></button>
-    <button class="dbtn delete" id="detailDeleteBtn">🗑️</button>
   </div>
 </div>
 
@@ -1286,6 +1283,15 @@
   </div>
 </div>
 
+<div class="form-modal" id="seriesDeleteModal">
+  <div class="form-modal-head"><h2>🗑️ Delete repeating task</h2><button id="closeSeriesDeleteModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px;">This task is part of a repeating series. What would you like to delete?</p>
+    <button class="btn-app" id="seriesDeleteSingleBtn">Just this task</button>
+    <button class="btn-danger-outline" id="seriesDeleteAllBtn" style="margin-top:10px;">This and all future occurrences</button>
+  </div>
+</div>
+
 <script>
 (function(){
   // ---- Cloud sync via a Cloudflare Worker proxy (optional) ----
@@ -1362,7 +1368,7 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
-  let collapsedKanbanCols = new Set(loadCollapsedKanbanCols()); // persisted across reloads
+  let collapsedKanbanCols = new Set(loadCollapsedKanbanCols());
   function loadCollapsedKanbanCols(){
     try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }
     catch(e){ return []; }
@@ -1371,8 +1377,8 @@
     try{ localStorage.setItem('prodplan-collapsed-kanban-days', JSON.stringify([...collapsedKanbanCols])); }
     catch(e){}
   }
-  let viewMode = window.innerWidth <= 1024 ? 'list' : 'month'; // 'month' | 'year' | 'list'
-  let agendaFilter = 'today'; // 'today' | 'week' | 'upcoming'
+  let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
+  let agendaFilter = 'today';
   let sortables = [];
   const pendingDeletes = new Map();
   let dayModalOpenKey = null;
@@ -1392,7 +1398,7 @@
   function addDaysStr(key, days){ const dt = toDateObj(key); dt.setDate(dt.getDate()+days); return dateKey(dt); }
   function getMonday(date){
     const d = new Date(date);
-    const day = d.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
+    const day = d.getDay();
     const diff = day===0 ? -6 : 1-day;
     d.setDate(d.getDate()+diff);
     return d;
@@ -1485,8 +1491,6 @@
   }
 
   // ---------- persistence ----------
-  // Prefers Claude.ai's built-in artifact storage when available; falls back to the
-  // browser's own localStorage so the app also works when self-hosted (e.g. GitHub Pages).
   async function persist(){
     showSyncPending();
     schedulePush();
@@ -1507,10 +1511,6 @@
   }
 
   // ---------- debounced GitHub sync ----------
-  // Waits 2s after the last change before pushing (resets on every new change),
-  // but never waits longer than 30s straight, so a burst of rapid edits still
-  // lands soon. Also flushes immediately if the app is closed/backgrounded
-  // mid-countdown, so nothing gets silently lost.
   let pushDebounceTimer = null;
   let pushMaxWaitTimer = null;
   let pushInFlight = false;
@@ -1545,7 +1545,7 @@
     clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
     clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
     pushPending = false;
-    pushToGithub(); // best-effort — the page may close before this completes
+    pushToGithub();
   }
   async function load(){
     tasks=[]; history=[]; batches=[]; events=[];
@@ -1756,11 +1756,6 @@
     }
     return count;
   }
-  // Diffs the batch's OLD shed schedule against a NEW one and applies only the minimum
-  // change needed: unchanged sheds are left completely untouched (no regeneration, no churn),
-  // changed/removed sheds have ONLY their own auto-generated weight tasks cleared (never
-  // manually-added or autopopulated tasks that happen to share the batch number), and
-  // changed/added sheds get freshly generated. Returns a summary for the caller's toast.
   function syncBatchShedSchedules(batchNumber, oldSheds, newSheds, oldEndDate, newEndDate){
     oldSheds = oldSheds || [];
     const oldByShed = new Map(oldSheds.map(s=> [String(s.shed), s.placement]));
@@ -1820,10 +1815,7 @@
     return t;
   }
 
-  // ---------- inline task add — replaces the old sidebar composer. One shared builder used
-  // by Kanban columns, List/Agenda date groups, Backlog, and the Day modal. Keeps whichever
-  // row was last used open (by key) across re-renders, so adding several tasks in a row
-  // doesn't require re-clicking "+ Add task" each time. ----------
+  // ---------- inline task add ----------
   let activeInlineAddKey = null;
   function buildInlineAddRow(key, dateVal){
     const wrap = document.createElement('div');
@@ -2009,20 +2001,6 @@
     frequentTemplates = frequentTemplates.filter(x=>x.id!==id);
     addHistory('Frequent task removed', `"${t.name}" removed from Frequent tasks`);
     persist(); renderAll();
-  }
-
-  // ---------- AI (Anthropic API) — icon suggestion only ----------
-  async function callClaude(prompt){
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user', content: prompt}] })
-    });
-    const data = await response.json();
-    return (data.content||[]).map(b=>b.text||'').join('\n');
-  }
-  function parseJsonLoose(text){
-    try{ const clean = text.replace(/```json|```/g,'').trim(); return JSON.parse(clean); }catch(e){ return null; }
   }
 
   // ---------- report (client-side PDF via jsPDF) ----------
@@ -2373,11 +2351,12 @@
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   let bulkSelectMode = false;
   let bulkSelectedIds = new Set();
-  let activeMenuPopup = null, activeMenuHome = null, activeMenuCard = null;
+  let activeMenuPopup = null, activeMenuHome = null, activeMenuCard = null, lastMenuOpenAt = 0;
   function closeAllTaskMenus(){
     if(activeMenuPopup){
       activeMenuPopup.style.display = 'none';
-      if(activeMenuHome) activeMenuHome.appendChild(activeMenuPopup);
+      if(activeMenuHome && document.contains(activeMenuHome)) activeMenuHome.appendChild(activeMenuPopup);
+      else if(activeMenuPopup.parentNode) activeMenuPopup.parentNode.removeChild(activeMenuPopup);
       if(activeMenuCard) activeMenuCard.classList.remove('menu-open');
     }
     activeMenuPopup = null; activeMenuHome = null; activeMenuCard = null;
@@ -2391,6 +2370,7 @@
     popup.style.display = 'block';
     positionTaskMenuPopup(menuBtn, popup);
     card.classList.add('menu-open');
+    lastMenuOpenAt = Date.now();
   }
   function positionTaskMenuPopup(btn, popup){
     const btnRect = btn.getBoundingClientRect();
@@ -2407,7 +2387,10 @@
   document.addEventListener('click', (e)=>{
     if(!e.target.closest('.task-menu-btn') && !e.target.closest('.task-menu-popup')) closeAllTaskMenus();
   });
-  window.addEventListener('scroll', ()=> closeAllTaskMenus(), true);
+  window.addEventListener('scroll', ()=>{
+    if(Date.now() - lastMenuOpenAt < 250) return;
+    closeAllTaskMenus();
+  }, true);
   function buildTaskCard(task, selectable, opts){
     opts = opts || {};
     const card = document.createElement('div');
@@ -2931,7 +2914,7 @@
     let filtered;
     if(agendaFilter==='today') filtered = tasks.filter(t=> t.date===todayKey || (t.status!=='done' && t.date && t.date<todayKey));
     else if(agendaFilter==='week'){ const weekEnd = addDaysStr(todayKey,6); filtered = tasks.filter(t=> t.date && t.date>=todayKey && t.date<=weekEnd); }
-    else filtered = tasks.filter(t=> t.date && t.date>=todayKey); // upcoming — never shows past/old tasks
+    else filtered = tasks.filter(t=> t.date && t.date>=todayKey);
     return filtered.sort((a,b)=> a.date.localeCompare(b.date));
   }
   function buildAgendaFilterBar(){
@@ -3199,7 +3182,10 @@
 
   function buildKanbanCard(task){
     const card = document.createElement('div');
-    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (task.priority==='high' && task.status!=='done' ? ' high-priority' : '');
+    const todayKey = dateKey(new Date());
+    const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
+    const isHighPriority = task.priority === 'high' && task.status!=='done';
+    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
     card.dataset.id = task.id;
     const activeBatch = batchesForDate(task.date||'').find(b=> b);
     const stripColor = activeBatch ? colorForBatchNumber(activeBatch.number) : 'var(--line)';
@@ -3212,11 +3198,34 @@
         ${task.notes ? `<span class="knote-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝</span>` : ''}
         ${avatarsHtml}
         <span class="kdot ${task.status==='done'?'done':'open'}"></span>
+        <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
+      </div>
+      <div class="task-menu-popup">
+        ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
+        <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
+        <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
+        <div class="task-menu-sep"></div>
+        <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
       </div>`;
     renderIconInto(card.querySelector('.kicon'), task.icon);
     card.querySelector('.kname').textContent = (task.priority==='high' && task.status!=='done' ? '🔥 ' : '') + task.name;
+    const menuBtn = card.querySelector('.task-menu-btn');
+    const popup = card.querySelector('.task-menu-popup');
+    popup.dataset.taskId = task.id;
+    menuBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(activeMenuPopup === popup) closeAllTaskMenus();
+      else openTaskMenu(card, menuBtn, popup);
+    });
+    card.querySelector('.btn-open-card').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      closeAllTaskMenus();
+      openTaskDetailModal(task.id);
+    });
     card.addEventListener('click', (e)=>{
       if(suppressNextClick) return;
+      if(e.target.closest('.task-menu-btn') || e.target.closest('.task-menu-popup')) return;
       openTaskDetailModal(task.id);
     });
     return card;
@@ -3320,13 +3329,6 @@
       }, 80);
     });
 
-    // Drag-to-pan with momentum (desktop/tablet width) — click/touch and hold on empty board
-    // space, then drag left/right; releasing while moving continues scrolling with decaying
-    // velocity, like a native touch scroll. Deliberately ignores drags starting on a card or
-    // button so SortableJS's own drag-reorder and the collapse toggle keep working untouched.
-    // Touch is scoped to the fixed-column desktop/tablet layout only — mobile already has its
-    // own tuned scroll-snap swipe (one column at a time), and layering this on top of that
-    // would fight the browser's native snap behavior rather than complement it.
     let isPanning = false, panStartX = 0, panScrollLeft = 0, didPan = false;
     let velocityX = 0, lastMoveX = 0, lastMoveTime = 0, momentumFrame = null;
 
@@ -3389,9 +3391,6 @@
     board.addEventListener('touchend', panEnd);
     board.addEventListener('touchcancel', panEnd);
 
-    // Vertical mouse-wheel scrolling translates to horizontal board movement — a standard
-    // mouse has no horizontal wheel axis, so without this, wheel users would be stuck.
-    // Trackpad horizontal swipes already arrive as native deltaX and pass through untouched.
     board.addEventListener('wheel', (e)=>{
       if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){
         e.preventDefault();
@@ -3399,7 +3398,6 @@
       }
     }, {passive:false});
 
-    // Edge fade indicators — a subtle cue that more columns exist off-screen in that direction.
     function updateEdgeFades(){
       canvas.classList.toggle('show-fade-left', board.scrollLeft > 4);
       canvas.classList.toggle('show-fade-right', board.scrollLeft < board.scrollWidth - board.clientWidth - 4);
@@ -3486,7 +3484,7 @@
         },
         onAdd:(evt)=>{
           const item = evt.item;
-          if(item.dataset.template==='true') return; // a frequent chip dropped on itself — nothing to do
+          if(item.dataset.template==='true') return;
           const id = item.dataset.id;
           const t = tasks.find(x=>x.id===id);
           if(!t) return;
@@ -3524,6 +3522,7 @@
   }
 
   function renderAll(){
+    closeAllTaskMenus();
     renderBacklog();
     renderFrequentTasks();
     renderBatches();
@@ -3704,6 +3703,7 @@
     const popup = el.closest('.task-menu-popup');
     return popup ? popup.dataset.taskId : null;
   }
+  let pendingSeriesDeleteId = null;
   document.addEventListener('click', (e)=>{
     const editBtn = e.target.closest('.btn-edit');
     const doneBtn = e.target.closest('.btn-done');
@@ -3716,6 +3716,13 @@
     if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
       const id = taskIdFromEl(delBtn);
+      const target = tasks.find(x=>x.id===id);
+      if(target && target.seriesId && !pendingDeletes.has(id)){
+        pendingSeriesDeleteId = id;
+        closeAllTaskMenus();
+        openDrawer('#seriesDeleteModal');
+        return;
+      }
       if(pendingDeletes.has(id)){
         clearTimeout(pendingDeletes.get(id)); pendingDeletes.delete(id); deleteTask(id);
       } else {
@@ -3910,7 +3917,7 @@
   });
   $('#reportPresetWeek').addEventListener('click', ()=>{
     const today = new Date();
-    const weekday = (today.getDay()+6)%7; // Monday=0
+    const weekday = (today.getDay()+6)%7;
     const monday = new Date(today); monday.setDate(today.getDate()-weekday);
     const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
     $('#reportRangeStart').value = dateKey(monday);
@@ -4010,6 +4017,8 @@
     $('#reportModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
+    $('#backlogModal').classList.remove('open');
+    $('#seriesDeleteModal').classList.remove('open');
     document.querySelector('.sidebar').classList.remove('open');
     $('#quickAddSheet').classList.add('hidden');
     $('#moreSheet').classList.add('hidden');
@@ -4018,6 +4027,7 @@
     editingTaskId = null;
     deleteAllPending = false;
     overdueModalOpen = false;
+    pendingSeriesDeleteId = null;
   }
   function toggleSidebar(){
     const sb = document.querySelector('.sidebar');
@@ -4094,34 +4104,10 @@
   $('#closeSettings').addEventListener('click', closeOverlays);
   $('#closeDayModal').addEventListener('click', closeOverlays);
   $('#closeTaskDetailModal').addEventListener('click', closeOverlays);
-  $('#detailEditBtn').addEventListener('click', ()=>{
-    const id = detailTaskId;
-    closeOverlays();
-    if(id) openEditTaskModal(id);
-  });
   $('#detailDoneBtn').addEventListener('click', ()=>{
     if(!detailTaskId) return;
     toggleDone(detailTaskId);
     openTaskDetailModal(detailTaskId);
-  });
-  $('#detailDeleteBtn').addEventListener('click', function(){
-    if(!detailTaskId) return;
-    if(this.classList.contains('confirm')){
-      const id = detailTaskId;
-      closeOverlays();
-      deleteTask(id);
-    } else {
-      this.classList.add('confirm');
-      this.style.background = 'var(--danger)';
-      this.style.color = '#fff';
-      this.textContent = '⚠';
-      setTimeout(()=>{
-        this.classList.remove('confirm');
-        this.style.background = '';
-        this.style.color = '';
-        this.textContent = '🗑️';
-      }, 2500);
-    }
   });
   $('#closeEditTaskModal').addEventListener('click', closeOverlays);
   $('#editTaskRepeatSelect').addEventListener('change', (e)=>{
@@ -4215,6 +4201,30 @@
   $('#backlogSortSelect').addEventListener('change', renderBacklogModalList);
   $('#closeEventModal').addEventListener('click', closeOverlays);
   $('#closeReportModal').addEventListener('click', closeOverlays);
+  $('#closeSeriesDeleteModal').addEventListener('click', closeOverlays);
+  $('#seriesDeleteSingleBtn').addEventListener('click', ()=>{
+    if(!pendingSeriesDeleteId) return;
+    const id = pendingSeriesDeleteId;
+    pendingSeriesDeleteId = null;
+    closeOverlays();
+    deleteTask(id);
+  });
+  $('#seriesDeleteAllBtn').addEventListener('click', ()=>{
+    if(!pendingSeriesDeleteId) return;
+    const id = pendingSeriesDeleteId;
+    const target = tasks.find(x=>x.id===id);
+    pendingSeriesDeleteId = null;
+    closeOverlays();
+    if(!target || !target.seriesId){ if(id) deleteTask(id); return; }
+    const toDelete = target.date
+      ? tasks.filter(x=> x.seriesId===target.seriesId && x.date && x.date >= target.date)
+      : [target];
+    const count = toDelete.length;
+    tasks = tasks.filter(x=> !toDelete.includes(x));
+    addHistory('Removed', `${count} occurrence(s) of "${target.name}" deleted from series`);
+    persist(); renderAll();
+    showToast(`${count} occurrence(s) deleted.`);
+  });
   $('#closeOverdueModal').addEventListener('click', closeOverlays);
   $('#moveOverdueToTodayBtn').addEventListener('click', ()=>{
     const count = transferOverdueToToday();
