@@ -83,11 +83,19 @@ h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-se
   font-size:18px;line-height:1;transition:background .15s ease,transform .12s ease;}
 .theme-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
 
-.settings-btn{border:1px solid var(--line);background:var(--surface-soft);
-  color:var(--ink);width:40px;height:40px;border-radius:999px;cursor:pointer;
-  display:inline-flex;align-items:center;justify-content:center;
-  font-size:18px;line-height:1;transition:background .15s ease,transform .12s ease;}
-.settings-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+.sync-btn{border:1px solid var(--line);background:var(--surface-soft);
+  color:var(--ink);height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;padding:0 14px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  transition:background .15s ease,transform .12s ease;max-width:220px;}
+.sync-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+.sync-btn.connected{border-color:var(--success);background:var(--success-soft);color:var(--success);}
+.sync-btn.syncing{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-dark);}
+.sync-btn.error{border-color:var(--danger);background:var(--danger-soft);color:var(--danger);}
+.sync-btn .sync-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;}
+.sync-btn .sync-ico{font-size:15px;line-height:1;}
+.sync-btn .sync-spin{animation:sync-spin 1s linear infinite;display:inline-block;}
+@keyframes sync-spin{to{transform:rotate(360deg);}}
 
 .new-batch-btn{border:1px solid var(--primary);background:var(--primary-soft);
   color:var(--primary-dark);height:40px;border-radius:999px;cursor:pointer;
@@ -99,87 +107,15 @@ h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-se
 body.theme-dark .new-batch-btn{border-color:var(--primary-dark);background:var(--primary-soft);color:var(--primary-dark);}
 body.theme-dark .new-batch-btn:hover{background:var(--primary-dark);color:#1A2438;}
 
-/* ============ SETTINGS DRAWER ============ */
-.settings-scrim{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,0.55);
-  z-index:9990;
-  display:none; opacity:0;
-  transition:opacity .22s ease;
-}
-body.theme-dark .settings-scrim{background:rgba(0,0,0,0.68);}
-.settings-scrim.open{display:block; opacity:1;}
-
-.settings-drawer{
-  position:fixed;
-  top:0; right:0; bottom:0;
-  width:460px;
-  max-width:calc(100vw - 24px);
-  background:var(--surface);
-  border-left:1px solid var(--line);
-  box-shadow:-8px 0 32px rgba(0,0,0,0.20);
-  z-index:9991;
-  display:flex; flex-direction:column;
-  transform:translateX(100%);
-  transition:transform .22s ease;
-  overflow:hidden;
-}
-body.theme-dark .settings-drawer{box-shadow:-8px 0 32px rgba(0,0,0,0.55);}
-.settings-drawer.open{transform:translateX(0);}
-.settings-drawer-head{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:16px 20px; border-bottom:1px solid var(--line);
-  background:var(--surface-soft); flex-shrink:0;
-}
-.settings-drawer-head h3{
-  margin:0; font-family:'Sora',sans-serif; font-weight:800; font-size:16px;
-  color:var(--ink); display:flex; align-items:center; gap:8px;
-}
-.settings-drawer-close{
-  border:none; background:transparent; color:var(--muted);
-  cursor:pointer; font-size:20px; line-height:1;
-  width:32px; height:32px; border-radius:8px;
-  display:inline-flex; align-items:center; justify-content:center;
-  transition:background .15s ease,color .15s ease;
-}
-.settings-drawer-close:hover{background:var(--danger-soft); color:var(--danger);}
-.settings-drawer-body{
-  flex:1; overflow-y:auto; padding:16px 20px 24px;
-  display:flex; flex-direction:column; gap:14px;
-}
-
-/* ============ SETTINGS CARDS ============ */
-.settings-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
-  padding:16px 18px;box-shadow:var(--shadow-sm);}
-.settings-card h3{margin:0 0 12px;font-size:14.5px;font-weight:800;
-  display:flex;align-items:center;gap:8px;color:var(--ink);flex-wrap:wrap;}
-.settings-card h3 .sub{font-family:'Inter',sans-serif;font-weight:500;font-size:12px;color:var(--muted);margin-left:auto;}
-.settings-desc{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 12px;}
-
-.settings-btn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
-.settings-action-btn{
-  border:1px solid var(--line);
-  background:var(--surface-soft);
-  color:var(--ink);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:13.5px;
-  padding:14px 18px;
-  border-radius:12px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  transition:background .15s ease, transform .1s ease, border-color .15s ease, color .15s ease;
-  min-height:52px;
-}
-.settings-action-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);transform:translateY(-1px);}
-.settings-action-btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;}
-.settings-action-btn.primary:hover{filter:brightness(1.06);color:#fff;transform:translateY(-1px);}
-.settings-action-btn:disabled{opacity:0.6;cursor:default;filter:none;transform:none;}
-body.theme-dark .settings-action-btn.primary{color:#1A2438;}
-body.theme-dark .settings-action-btn.primary:hover{color:#1A2438;}
+.batch-history-btn{border:1px solid var(--secondary);background:var(--secondary-soft);
+  color:var(--secondary);height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;padding:0 16px;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  transition:background .15s ease,transform .12s ease,color .15s ease;
+  white-space:nowrap;}
+.batch-history-btn:hover{background:var(--secondary);color:#fff;transform:translateY(-1px);}
+body.theme-dark .batch-history-btn{border-color:var(--secondary);background:var(--secondary-soft);color:var(--secondary);}
+body.theme-dark .batch-history-btn:hover{background:var(--secondary);color:#1A2438;}
 
 .sync-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   z-index:9999;background:var(--surface);border:1px solid var(--line);
@@ -227,8 +163,12 @@ body.theme-dark .settings-action-btn.primary:hover{color:#1A2438;}
 .btn-sync-primary.ghost:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .btn-sync-primary.danger{background:linear-gradient(135deg,#C1502E,#8F3B22);}
 .btn-sync-primary.success{background:linear-gradient(135deg,var(--success),#36602A);}
+.btn-sync-primary.test{background:var(--surface-soft);color:var(--secondary);
+  border:1.5px dashed var(--secondary);}
+.btn-sync-primary.test:hover{background:var(--secondary-soft);filter:none;}
 body.theme-dark .btn-sync-primary{color:#1A2438;}
 body.theme-dark .btn-sync-primary.ghost{color:var(--ink);}
+body.theme-dark .btn-sync-primary.test{color:var(--secondary);}
 .sync-scrim{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9998;display:none;}
 .sync-scrim.open{display:block;}
 
@@ -261,9 +201,27 @@ body.theme-dark .btn-sync-primary.ghost{color:var(--ink);}
   padding:7px 14px;cursor:pointer;transition:filter .12s ease,transform .1s ease;}
 .batch-open-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 body.theme-dark .batch-open-btn{color:#1A2438;}
+.batch-dl-btn{border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--muted);font-size:14px;padding:6px 10px;cursor:pointer;
+  transition:background .12s ease,color .12s ease;line-height:1;}
+.batch-dl-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
 .batch-list-status{text-align:center;padding:24px 20px;color:var(--muted);
   font-size:13px;font-style:italic;}
 .batch-list-status.error{color:var(--danger);font-style:normal;}
+
+.batch-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;margin-top:4px;}
+.batch-page-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  padding:7px 14px;border-radius:8px;cursor:pointer;
+  transition:background .12s ease, color .12s ease, border-color .12s ease, transform .1s ease;
+  white-space:nowrap;}
+.batch-page-btn:hover:not(:disabled){background:var(--primary-soft);color:var(--primary-dark);
+  border-color:var(--primary-soft);transform:translateY(-1px);}
+.batch-page-btn:disabled{opacity:0.4;cursor:default;}
+.batch-page-info{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);
+  font-weight:600;text-align:center;flex:1;min-width:0;}
 
 .farm-found-body{padding:20px 22px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
 .farm-found-icon{font-size:42px;line-height:1;text-align:center;margin-bottom:2px;}
@@ -383,6 +341,7 @@ main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 .shed-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:16px;
   padding:10px;box-shadow:var(--shadow-sm);}
+/* Sticky variant for the Predictions page only */
 .shed-tabs.pred-sticky-tabs{
   position:sticky;
   top:var(--sticky-header-h, 130px);
@@ -556,6 +515,7 @@ body.theme-dark .tag.final-source{color:#1A2438;}
 .btn-pickup-add:disabled{opacity:0.4;cursor:not-allowed;}
 body.theme-dark .btn-pickup-add:hover:not(:disabled){color:#1A2438;}
 
+/* Pickup-plan pill (shed pickup header) */
 .pickup-plan-pill{
   border:1px solid var(--primary);
   background:var(--primary-soft);
@@ -619,6 +579,9 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 .pickup-actions-menu button:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .pickup-actions-menu button.danger:hover{background:var(--danger-soft);color:var(--danger);}
 
+/* ============================================================
+   PREDICTED PICKUPS (Pickup Plan)
+   ============================================================ */
 .pickup-plan-block{margin-top:16px;padding:12px 14px;
   background:linear-gradient(135deg,rgba(176,132,99,0.06),rgba(224,163,57,0.06));
   border:1.5px dashed var(--secondary);border-radius:12px;}
@@ -687,6 +650,7 @@ body.theme-dark .btn-pp-autofill:hover{color:#1A2438;}
 .btn-pp-clear:hover{background:var(--danger);color:#fff;}
 body.theme-dark .btn-pp-clear:hover{color:#1A2438;}
 
+/* Small auto-fill / clear buttons for all sheds (live in the density title row) */
 .btn-global-autofill-sm{
   border:1px solid var(--success);
   background:var(--success-soft);
@@ -736,6 +700,7 @@ body.theme-dark .btn-global-autofill-sm:hover{color:#1A2438;}
 }
 body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
 
+/* Per-shed target pickups row */
 .pp-target-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   margin-top:10px;padding:8px 12px;
   background:var(--surface);border:1px dashed var(--line);border-radius:10px;
@@ -785,6 +750,10 @@ body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
 .shed-density-override .ovr-inputs input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .shed-density-override .ovr-inputs input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .shed-density-override .ovr-inputs span{font-size:10.5px;color:var(--muted);font-weight:600;}
+
+/* ============================================================
+   END PREDICTED PICKUPS
+   ============================================================ */
 
 .custom-day-list{
   margin-top:12px;padding-top:12px;
@@ -859,6 +828,7 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
   border-radius:8px;border:1px dashed var(--line);}
 .mp-hint strong{color:var(--ink);}
 
+/* Delivery modal preview */
 .dv-preview{padding:10px 12px;background:var(--surface-soft);
   border:1px solid var(--line);border-radius:10px;font-size:12px;
   display:flex;flex-direction:column;gap:6px;}
@@ -925,71 +895,61 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
   font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
   color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);}
 .forecast-table td{padding:9px 12px;border-bottom:1px solid var(--line);
-  color:var(--ink);white-space:nowrap;position:relative;}
+  color:var(--ink);white-space:nowrap;}
 .forecast-table tr:last-child td{border-bottom:none;}
 .forecast-table .num{text-align:right;font-variant-numeric:tabular-nums;}
 
+/* Clickable forecast rows */
 .forecast-table tr.fdr-clickable{cursor:pointer;}
 .forecast-table tr.fdr-clickable:hover td{background:rgba(224,163,57,0.12);}
 .forecast-table tr.fdr-open td{background:rgba(224,163,57,0.16);}
-.forecast-table tr.fdr-blocked{cursor:not-allowed;}
-.forecast-table tr.fdr-blocked:hover td{background:inherit;}
-.forecast-table tr.fdr-blocked td{opacity:0.95;}
 
-/* Inline delivery form — absolute-positioned so it floats over the row
-   without changing the row's height or width. */
+/* Inline delivery form — horizontal compact row */
 .inline-del{
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0;
-  padding: 4px 6px;
-  background: var(--surface);
-  border: 1.5px solid var(--primary);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  box-shadow: var(--shadow-md);
-  z-index: 5;
-  white-space: nowrap;
+  margin-top:6px;
+  padding:5px;
+  background:var(--surface);
+  border:1.5px solid var(--primary);
+  border-radius:8px;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:4px;
+  min-width:200px;
+  flex-wrap:nowrap;
+  box-shadow:var(--shadow-sm);
 }
 .inline-del-input{
-  flex: 1 1 auto;
-  min-width: 50px;
-  width: auto;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface-soft);
-  color: var(--ink);
-  padding: 4px 8px;
-  font-family: 'Sora', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  text-align: center;
-  -moz-appearance: textfield;
-  appearance: textfield;
+  width:60px;
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface-soft);
+  color:var(--ink);
+  padding:5px 6px;
+  font-family:'Sora',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  text-align:center;
+  -moz-appearance:textfield;
+  appearance:textfield;
 }
 .inline-del-input::-webkit-outer-spin-button,
 .inline-del-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .inline-del-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .inline-del-btn{
-  flex: 0 0 auto;
-  border: 1px solid var(--line);
-  background: var(--surface-soft);
-  color: var(--ink);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 5px 8px;
-  font-weight: 700;
-  font-family: 'Sora', sans-serif;
-  white-space: nowrap;
-  transition: background .12s ease, color .12s ease, border-color .12s ease;
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  background:var(--surface-soft);
+  color:var(--ink);
+  border-radius:6px;
+  cursor:pointer;
+  font-size:11px;
+  padding:5px 8px;
+  font-weight:700;
+  font-family:'Sora',sans-serif;
+  white-space:nowrap;
+  transition:background .12s ease, color .12s ease, border-color .12s ease;
 }
 .inline-del-btn.test{border-color:var(--secondary);background:var(--secondary-soft);color:var(--secondary);}
 .inline-del-btn.test:hover{background:var(--secondary);color:#fff;}
@@ -1088,6 +1048,7 @@ body.theme-dark .planner-card-toggle:hover .collapse-caret{color:#1A2438;}
 .delivery-type-chips .chip.withdrawal{background:var(--danger-soft);border-color:transparent;color:var(--danger);}
 .delivery-type-chips .chip.unspecified{background:var(--surface-soft);border-color:var(--line);color:var(--muted);}
 
+/* Clear test deliveries button on forecast header (no auto-margin now; wrapper handles alignment) */
 .btn-clear-tests{
   border:1px solid var(--secondary);background:var(--secondary-soft);
   color:var(--secondary);
@@ -1099,6 +1060,7 @@ body.theme-dark .planner-card-toggle:hover .collapse-caret{color:#1A2438;}
 .btn-clear-tests:hover{background:var(--secondary);color:#fff;}
 body.theme-dark .btn-clear-tests:hover{color:#1A2438;}
 
+/* Group-leftover chip on the Feed Balance Forecast heading */
 .forecast-leftover-chip{
   font-family:'Sora',sans-serif;
   font-weight:800;
@@ -1121,6 +1083,7 @@ body.theme-dark .btn-clear-tests:hover{color:#1A2438;}
   font-weight:600;
 }
 
+/* Test delivery pill + remove button in forecast cell */
 .delivery-pill.test{background:linear-gradient(135deg,rgba(176,132,99,0.22),rgba(94,46,34,0.16));
   color:var(--secondary);border:1px dashed var(--secondary);}
 .test-x{
@@ -1344,6 +1307,7 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .farm-feed-override:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .farm-feed-override.manual{border-color:var(--primary);background:var(--primary-soft);}
 .farm-feed-override::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
+/* Leftover input under feed tile */
 .farm-leftover-label{
   display:block;
   margin-top:8px;
@@ -1696,6 +1660,10 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
         ProdWise<span class="accent">.VM</span>
       </div>
       <div class="topbar-right">
+        <button class="sync-btn" id="syncBtn" type="button" title="Cloud sync">
+          <span class="sync-ico" id="syncIcon">☁️</span>
+          <span class="sync-name" id="syncLabel">Connect</span>
+        </button>
         <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark mode">🌙</button>
         <div class="batch-input">
           <label for="batchNumber">Batch</label>
@@ -1704,8 +1672,11 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
         <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">
           🔄 New Batch
         </button>
-        <button class="settings-btn" id="settingsBtn" type="button" title="Open Settings" aria-label="Open Settings">
-          ⚙️
+        <button class="batch-history-btn" id="batchHistoryBtn" type="button" title="View past batches">
+          📁 Batch History
+        </button>
+        <button class="btn-primary" id="importBtn" type="button">
+          📥 <span id="importBtnLabel">Import Excel</span>
         </button>
       </div>
     </header>
@@ -1724,22 +1695,12 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <input type="file" id="excelFile" accept=".xlsx,.xls" hidden />
 <div class="toast" id="toast"></div>
 
-<!-- Settings slide-in drawer -->
-<div class="settings-scrim" id="settingsScrim"></div>
-<aside class="settings-drawer" id="settingsDrawer" aria-hidden="true" aria-label="Settings">
-  <div class="settings-drawer-head">
-    <h3><span>⚙️</span> Settings</h3>
-    <button type="button" class="settings-drawer-close" id="settingsDrawerClose" aria-label="Close settings">✕</button>
-  </div>
-  <div class="settings-drawer-body" id="settingsDrawerBody"></div>
-</aside>
-
 <div class="sync-scrim" id="syncScrim"></div>
 
 <div class="sync-modal" id="syncModal">
   <div class="sync-modal-head">
     <h3><span>☁️</span> Cloud Sync</h3>
-    <button type="button" id="syncModalClose" aria-label="Close">✕</button>
+    <button type="button" onclick="closeSyncModal()" aria-label="Close">✕</button>
   </div>
   <div class="sync-modal-body" id="syncModalBody"></div>
 </div>
@@ -1766,14 +1727,6 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
     <button type="button" id="batchHistoryClose" aria-label="Close">✕</button>
   </div>
   <div class="sync-modal-body" id="batchHistoryModalBody"></div>
-</div>
-
-<div class="sync-modal wide" id="farmBatchPickerModal">
-  <div class="sync-modal-head">
-    <h3><span>📁</span> Choose a batch</h3>
-    <button type="button" id="farmBatchPickerClose" aria-label="Close">✕</button>
-  </div>
-  <div class="sync-modal-body" id="farmBatchPickerBody"></div>
 </div>
 
 <div class="sync-modal" id="manualPickupModal">
@@ -1827,15 +1780,22 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - Cloud connect: hardened. listFarmBatches now returns
-     {ok, files, reason} so we can tell "no batches" from
-     "network error". 10s timeout via AbortController. Real
-     error toast shown if the listing fails. Button shows a
-     "Connecting…" state during the request.
-   - Inline delivery form is now position:absolute inside the
-     delivery td, anchored left/right with the input taking the
-     flexible middle. Row height and width never change; the
-     form just floats over the row.
+   - Inline delivery form: click any future weekday row on
+     the Feed Balance Forecast to open a compact horizontal
+     row inside the Delivery cell of that row:
+     [ input 60px ] [🚜 Test] [✅ Actual] [✕]
+     Enter key = Test, Escape = cancel, input auto-focuses.
+   - Age column added to Feed Balance Forecast.
+   - Feed Summary block count is now exact (0.5 granularity).
+   - NEW: Whole-farm "Leftover at cleanout (kg)" input under
+     "Est. Total Feed Consumption" in the KPI card. When set,
+     FCR/cFCR/PIF recompute from (Manual Override if set else
+     Auto) − Leftover.
+   - NEW: Group leftover chip at the right of the Feed Balance
+     Forecast heading: "🧺 12.35 t at cleanout" (or "🧺 —").
+   - NEW: Clickable pickup-plan pill next to the Pickups header
+     in Group view shed cards and in the Predictions pickup
+     section. Jumps to that shed's Predictions card.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1866,8 +1826,6 @@ const GOMPERTZ_K_MAX = 0.12;
 const GOMPERTZ_A_MAX = 30;
 const MAX_UNCERTAINTY = 0.35;
 
-const DEFAULT_SHED_POPULATION = 52000;
-
 const DEFAULT_DENSITY_GLOBAL = {
   maxDensity: 32,
   triggerDensity: 31,
@@ -1880,7 +1838,7 @@ const SYNC_WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
 const SYNC_REPO = 'vonrmangaron/farmdata';
 const SYNC_SUFFIX = '-feed';
 const SYNC_APP_TAG = 'prodwise';
-const SYNC_SCHEMA_VERSION = 12;
+const SYNC_SCHEMA_VERSION = 11;
 const MAX_EXCEL_WARN_BYTES = 2 * 1024 * 1024;
 
 const DEFAULT_VIEWS = { 1:'planner', 2:'planner', 3:'planner', 4:'planner' };
@@ -1948,9 +1906,11 @@ let siloData = {
   3: { readings: [], deliveries: [] },
   4: { readings: [], deliveries: [] }
 };
+/* Test deliveries: session-only, cleared on page reload. Never persisted or synced. */
 let testDeliveries = { 1: [], 2: [], 3: [], 4: [] };
 
-let inlineDeliveryState = null;
+/* Inline delivery form state (which forecast row has an open input). */
+let inlineDeliveryState = null; // { group, dateIso } | null
 
 let predState = {
   beta: 0.27,
@@ -1994,9 +1954,8 @@ let pendingImport = null;
 let reviewChoices = {};
 
 let gompertzCache = new Map();
-let settingsDrawerOpen = false;
 
-/* ---------- Sticky header height ---------- */
+/* ---------- Sticky header height (for sticky prediction tabs) ---------- */
 function updateStickyHeaderHeight(){
   const header = document.querySelector('.sticky-header');
   if (!header) return;
@@ -2050,6 +2009,8 @@ function fmtBytes(n){
 function uid(prefix){
   return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
+/* Format a block count exactly to 2 decimals, trimming trailing zeros:
+   3.5 → "3.5", 3.75 → "3.75", 4.00 → "4". */
 function fmtBlocks(n){
   if (!Number.isFinite(n) || n === 0) return '0';
   const s = n.toFixed(2);
@@ -2123,6 +2084,7 @@ function rossWeightKg(ageDays){
   }
   return ROSS_308_WEIGHTS_KG[56];
 }
+
 function findRossAgeForWeight(weightKg){
   const w = Number(weightKg);
   if (!Number.isFinite(w) || w <= ROSS_308_WEIGHTS_KG[0]) return 0;
@@ -2916,6 +2878,39 @@ function observedDailyGain(shed){
   return (w1 - w0) / (a1 - a0);
 }
 
+function actualWeightOn(shed, date){
+  const arr = weightedPickups(shed);
+  if (arr.length === 0) return null;
+  const d = dateOnly(date);
+  const age = ageInDays(shed, d);
+  const exact = arr.find(p => iso(p.date) === iso(d));
+  if (exact) return pickupAvgKg(exact);
+  const before = [...arr].reverse().find(p => dateOnly(p.date) < d);
+  const after  = arr.find(p => dateOnly(p.date) > d);
+  if (before && after){
+    const a0 = pickupAge(shed, before);
+    const a1 = pickupAge(shed, after);
+    const w0 = pickupAvgKg(before);
+    const w1 = pickupAvgKg(after);
+    if (a1 === a0) return w0;
+    const t = (age - a0) / (a1 - a0);
+    return w0 + t * (w1 - w0);
+  }
+  if (!before && after){
+    const a1 = pickupAge(shed, after);
+    const w1 = pickupAvgKg(after);
+    const g = observedDailyGain(shed) || 0;
+    return Math.max(ROSS_308_WEIGHTS_KG[0], w1 - (a1 - age) * g);
+  }
+  if (before && !after){
+    const a0 = pickupAge(shed, before);
+    const w0 = pickupAvgKg(before);
+    const g = observedDailyGain(shed) || 0;
+    return w0 + (age - a0) * g;
+  }
+  return null;
+}
+
 function forecastFromPickups(shed, date){
   const last = lastWeightedPickup(shed);
   if (!last) return null;
@@ -3297,15 +3292,15 @@ async function fetchFromCloud(){
 }
 async function pullFromCloud(silent){
   if (!syncFarmName) return false;
-  syncState = 'pulling'; renderSettingsDrawerBody();
+  syncState = 'pulling'; renderSyncButton();
   const r = await fetchFromCloud();
   if (!r.ok){
-    syncState = 'error'; renderSettingsDrawerBody();
+    syncState = 'error'; renderSyncButton();
     if (!silent) showToast('Could not sync — check your connection.', true);
     return false;
   }
   if (r.notFound){
-    syncState = 'idle'; renderSettingsDrawerBody();
+    syncState = 'idle'; renderSyncButton();
     await pushToCloud();
     if (!silent) showToast('Connected — created a new file for this farm.');
     return true;
@@ -3313,18 +3308,18 @@ async function pullFromCloud(silent){
   syncSha = r.sha || null;
   const ok = applyCloudPayload(r.data);
   if (!ok){
-    syncState = 'error'; renderSettingsDrawerBody();
+    syncState = 'error'; renderSyncButton();
     if (!silent) showToast('Cloud file is not a ProdWise backup.', true);
     return false;
   }
   syncLastSyncAt = Date.now(); saveSyncState();
-  syncState = 'idle'; renderSettingsDrawerBody(); render();
+  syncState = 'idle'; renderSyncButton(); render();
   if (!silent) showToast('Synced ✓');
   return true;
 }
 async function pushToCloud(){
   if (!syncFarmName) return false;
-  syncState = 'pushing'; renderSettingsDrawerBody();
+  syncState = 'pushing'; renderSyncButton();
   try {
     const body = { sha: syncSha, data: buildCloudPayload() };
     const res = await fetch(buildSyncUrl(syncFarmName), {
@@ -3349,11 +3344,11 @@ async function pushToCloud(){
       if (result && result.sha) syncSha = result.sha;
     }
     syncLastSyncAt = Date.now(); saveSyncState();
-    syncState = 'idle'; renderSettingsDrawerBody();
+    syncState = 'idle'; renderSyncButton();
     return true;
   } catch (e){
     console.error('Push failed', e);
-    syncState = 'error'; renderSettingsDrawerBody();
+    syncState = 'error'; renderSyncButton();
     return false;
   }
 }
@@ -3380,7 +3375,7 @@ function flushPendingPush(){
 }
 async function uploadExcelToCloud(file){
   if (!syncFarmName) return false;
-  syncState = 'pushing'; renderSettingsDrawerBody();
+  syncState = 'pushing'; renderSyncButton();
   try {
     const buf = await file.arrayBuffer();
     const base64 = arrayBufferToBase64(buf);
@@ -3406,11 +3401,11 @@ async function uploadExcelToCloud(file){
     syncExcelMeta = { name: wrapperData.name, size: wrapperData.size, uploadedAt };
     saveSyncState();
     await pushToCloud();
-    syncState = 'idle'; renderSettingsDrawerBody();
+    syncState = 'idle'; renderSyncButton();
     return true;
   } catch (e){
     console.error('Excel upload failed', e);
-    syncState = 'error'; renderSettingsDrawerBody();
+    syncState = 'error'; renderSyncButton();
     showToast('Excel saved locally, but cloud upload failed.', true);
     return false;
   }
@@ -3432,382 +3427,129 @@ async function downloadExcelFromCloud(){
     showToast('Stored Excel downloaded.');
   } catch (e){ console.error(e); showToast('Download failed.', true); }
 }
-
-/* ============================================================
-   DEFAULT BATCH STATE + RESET
-   ============================================================ */
-function buildDefaultShed(id){
-  return {
-    id,
-    placementDate: null,
-    initialPopulation: DEFAULT_SHED_POPULATION,
-    cleanoutDate: null,
-    mortality: 0,
-    customFeedKg: null,
-    pickups: [],
-    targetCurve: { 7: null, 14: null, 21: null, 28: null },
-    mortalityRatePercent: DEFAULT_MORT_RATE_PCT,
-    chickWeightKg: DEFAULT_CHICK_WEIGHT_KG,
-    inYardSamples: [],
-    predictedPickups: [],
-    targetPickups: null,
-    densitySettings: { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null }
-  };
-}
-function buildDefaultFarmData(batchNumber){
-  return {
-    batchNumber: batchNumber || '',
-    importDate: new Date().toISOString(),
-    fileName: null,
-    biasFactor: DEFAULT_BIAS_FACTOR,
-    sheds: Array.from({ length: SHED_COUNT }, (_, i) => buildDefaultShed(i + 1))
-  };
-}
-function resetAllToDefaults(batchNumber){
-  farmData = buildDefaultFarmData(batchNumber);
-  predState.batchNumber = batchNumber || '';
-  predState.farmFeedOverride = null;
-  predState.farmLeftoverKg = null;
-  predState.predGroup = 1;
-  predState.predView = 'both';
-  predState.beta = 0.27;
-  predState.targetHarvestWeightKg = { 1: 2.65, 2: 2.65, 3: 2.65, 4: 2.65 };
-  predState.densityGlobal = { ...DEFAULT_DENSITY_GLOBAL };
-  predState.deliveriesOpen = true;
-  predState.adjOpen = false;
-
-  siloData = {
-    1: { readings: [], deliveries: [] },
-    2: { readings: [], deliveries: [] },
-    3: { readings: [], deliveries: [] },
-    4: { readings: [], deliveries: [] }
-  };
-  testDeliveries = { 1: [], 2: [], 3: [], 4: [] };
-  shedViewByGroup = { ...DEFAULT_VIEWS };
-  shedRange = { start: 0, end: 0 };
-  siloRange = { start: 0, end: 14 };
-  inlineDeliveryState = null;
-  activeTab = 'g1';
-  dailyRangeState = { ...DEFAULT_DAILY_RANGE };
-
-  saveState(); saveSiloData(); savePredState(); saveShedViews();
-}
-
-/* ============================================================
-   SETTINGS DRAWER
-   ============================================================ */
-function openSettingsDrawer(){
-  settingsDrawerOpen = true;
-  renderSettingsDrawerBody();
-  const drawer = document.getElementById('settingsDrawer');
-  const scrim = document.getElementById('settingsScrim');
-  if (drawer) drawer.classList.add('open');
-  if (scrim) scrim.classList.add('open');
-  if (drawer) drawer.setAttribute('aria-hidden', 'false');
-}
-function closeSettingsDrawer(){
-  settingsDrawerOpen = false;
-  const drawer = document.getElementById('settingsDrawer');
-  const scrim = document.getElementById('settingsScrim');
-  if (drawer) drawer.classList.remove('open');
-  if (scrim) scrim.classList.remove('open');
-  if (drawer) drawer.setAttribute('aria-hidden', 'true');
-}
-function renderSettingsDrawerBody(){
-  const body = document.getElementById('settingsDrawerBody');
-  if (!body) return;
-  body.innerHTML = renderSettingsDataCard() + renderSettingsSyncCard() + renderSettingsBatchHistoryCard();
-}
-function renderSettingsDataCard(){
-  return `
-    <div class="settings-card">
-      <h3>📥 Import Excel</h3>
-      <p class="settings-desc">
-        Import the sheds Excel file to fill in shed data for the current batch.
-        In-yard readings, extra reading days, mortality rates, chick weights, and
-        target-pickup settings are preserved across re-imports.
-      </p>
-      <div class="settings-btn-grid">
-        <button class="settings-action-btn primary" id="settingsImportBtn" type="button">📥 Import Excel</button>
-      </div>
-    </div>`;
-}
-function renderSettingsSyncCard(){
-  if (!syncFarmName){
-    return `
-      <div class="settings-card">
-        <h3>☁️ Cloud Sync</h3>
-        <p class="settings-desc">
-          Not connected yet. Enter a farm name to sync your data across devices.
-          If the farm doesn't exist, you'll be asked to confirm creating it.
-        </p>
-        <div class="mp-field" style="margin-bottom:10px;">
-          <label for="settingsFarmInput">Farm name</label>
-          <input type="text" id="settingsFarmInput" placeholder="e.g. kiripark1" autocomplete="off" spellcheck="false" maxlength="40" />
-        </div>
-        <div class="settings-btn-grid">
-          <button class="settings-action-btn primary" id="settingsConnectBtn" type="button">☁️ Connect</button>
-        </div>
-        <div class="sync-hint" style="margin-top:10px;">
-          Backed up to <strong>${escapeHtml(SYNC_REPO)}</strong> on GitHub.
-        </div>
-      </div>`;
-  }
-  const batch = currentBatchKey();
-  const fileName = batch
-    ? `${sanitizeUserFarmName(syncFarmName)}${SYNC_SUFFIX}-${batch}.json`
-    : `${sanitizeUserFarmName(syncFarmName)}${SYNC_SUFFIX}.json`;
-  return `
-    <div class="settings-card">
-      <h3>☁️ Cloud Sync <span class="sub">${escapeHtml(syncFarmName)}</span></h3>
-      <div class="sync-status-card" style="margin-bottom:14px;">
-        <div class="sync-status-row"><span class="lbl">Farm</span><span class="val ok">${escapeHtml(syncFarmName)}</span></div>
-        ${batch ? `<div class="sync-status-row"><span class="lbl">Batch</span><span class="val ok">${escapeHtml(batch)}</span></div>` : ''}
-        <div class="sync-status-row"><span class="lbl">Backed up as</span><span class="val">${escapeHtml(fileName)}</span></div>
-        <div class="sync-status-row"><span class="lbl">Last sync</span><span class="val">${syncLastSyncAt ? fmtRelativeTime(syncLastSyncAt) : 'never'}</span></div>
-        ${syncExcelMeta ? `
-          <div class="sync-status-row"><span class="lbl">Stored Excel</span>
-          <span class="val">📄 ${escapeHtml(syncExcelMeta.name || 'sheds.xlsx')}${
-            syncExcelMeta.uploadedAt ? ' · ' + fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()) : ''}</span></div>` : ''}
-        ${syncState === 'error' ? `
-          <div class="sync-status-row"><span class="lbl">Status</span>
-          <span class="val err">Last attempt failed</span></div>` : ''}
-      </div>
-      <div class="settings-btn-grid">
-        <button class="settings-action-btn" id="settingsSyncNowBtn" type="button">🔄 Sync now</button>
-        <button class="settings-action-btn" id="settingsChangeFarmBtn" type="button">↔️ Change farm</button>
-        ${syncExcelMeta ? `<button class="settings-action-btn" id="settingsDlExcelBtn" type="button">📄 Download Excel</button>` : ''}
-        <button class="settings-action-btn" id="settingsDlBatchBtn" type="button">📥 Download batch JSON</button>
-        <button class="settings-action-btn" id="settingsDisconnectBtn" type="button" style="color:var(--danger);border-color:var(--danger-soft);">🔌 Disconnect</button>
-      </div>
-    </div>`;
-}
-function renderSettingsBatchHistoryCard(){
-  const connected = !!syncFarmName;
-  return `
-    <div class="settings-card">
-      <h3>📁 Batch History</h3>
-      <p class="settings-desc">
-        Browse past batches stored in the cloud${connected ? ` for <strong>${escapeHtml(syncFarmName)}</strong>` : ''}.
-        Opening a past batch saves your current work first, then loads the chosen batch.
-      </p>
-      <div class="settings-btn-grid">
-        <button class="settings-action-btn primary" id="settingsBatchHistoryBtn" type="button" ${connected ? '' : 'disabled'}>
-          📁 View past batches
-        </button>
-      </div>
-      ${!connected ? `<div class="sync-hint" style="margin-top:10px;">Connect to a farm first.</div>` : ''}
-    </div>`;
-}
-
-/* ============================================================
-   CONNECT FLOW (hardened)
-   ============================================================ */
-async function listFarmBatches(farmName){
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10000);
-  try {
-    const res = await fetch(buildListingUrl(farmName), { signal: controller.signal });
-    clearTimeout(timer);
-    if (!res.ok){
-      return { ok: false, reason: 'http-' + res.status, files: [] };
-    }
-    const result = await res.json();
-    const rawFiles = (result && Array.isArray(result.files)) ? result.files : [];
-    const parsed = [];
-    for (const f of rawFiles){
-      const info = parseBatchFileInfo(farmName, f.name);
-      if (!info) continue;
-      parsed.push({ ...info, size: f.size, sha: f.sha, fileName: f.name });
-    }
-    parsed.sort((a, b) => {
-      if (a.isLegacy && !b.isLegacy) return 1;
-      if (b.isLegacy && !a.isLegacy) return -1;
-      return compareBatchKeys(a.batchKey, b.batchKey);
-    });
-    return { ok: true, files: parsed };
-  } catch (e){
-    clearTimeout(timer);
-    return {
-      ok: false,
-      reason: (e && e.name === 'AbortError') ? 'timeout' : ((e && e.message) || 'network-error'),
-      files: []
-    };
-  }
-}
-
-async function handleConnectFarm(farmName){
+async function connectSync(farmName){
   const clean = sanitizeUserFarmName(farmName);
   if (!clean){ showToast('Enter a farm name.', true); return; }
-
-  /* Visual feedback on the connect button. */
-  const btn = document.getElementById('settingsConnectBtn');
-  const oldBtnHTML = btn ? btn.innerHTML : null;
-  if (btn){
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Connecting…';
+  syncFarmName = clean; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+  syncConnectedAt = null; syncLastSyncAt = null;
+  saveSyncState(); closeSyncModal(); renderSyncButton();
+  syncState = 'pulling'; renderSyncButton();
+  const r = await fetchFromCloud();
+  syncState = 'idle'; renderSyncButton();
+  if (!r.ok){ showToast('Could not reach the sync server.', true); return; }
+  if (r.notFound){
+    syncConnectedAt = Date.now(); saveSyncState();
+    await pushToCloud();
+    showToast('Connected — created a new file for this farm.');
+    renderSyncButton(); return;
   }
-
-  try {
-    const isSwitch = !!syncFarmName && syncFarmName !== clean;
-    if (isSwitch && syncConnectedAt && pushPending){
-      try { await runScheduledPush(); } catch(e){}
-    }
-
-    const listing = await listFarmBatches(clean);
-
-    if (!listing.ok){
-      const msg = listing.reason === 'timeout'
-        ? '⏱️ Cloud did not respond — check your connection and try again.'
-        : 'Could not reach the cloud — check your connection.';
-      showToast(msg, true);
-      return;
-    }
-
-    if (listing.files.length === 0){
-      if (!confirm(`Farm "${clean}" not found in the cloud.\n\nCreate a new farm?`)) return;
-      syncFarmName = clean;
-      syncSha = null;
-      syncExcelSha = null;
-      syncExcelMeta = null;
-      syncConnectedAt = null;
-      syncLastSyncAt = null;
-      saveSyncState();
-      closeSyncModal();
-      closeSettingsDrawer();
-      newBatchModalPhase = 'batchNumber';
-      openNewBatchModal();
-      return;
-    }
-
-    if (listing.files.length === 1){
-      await loadFarmBatchFromCloud(clean, listing.files[0].batchKey);
-      return;
-    }
-
-    syncFarmName = clean;
-    closeSettingsDrawer();
-    openFarmBatchPickerModal(clean, listing.files);
-  } finally {
-    if (btn && oldBtnHTML !== null){
-      btn.disabled = false;
-      btn.innerHTML = oldBtnHTML;
-    }
-  }
+  syncSha = r.sha || null;
+  showFarmFoundPrompt(r.data, r.sha);
 }
-
-async function loadFarmBatchFromCloud(farmName, batchKey){
-  resetAllToDefaults(batchKey);
-  syncFarmName = farmName;
-  syncSha = null;
-  syncExcelSha = null;
-  syncExcelMeta = null;
-  syncConnectedAt = Date.now();
-  syncLastSyncAt = null;
-
-  closeFarmBatchPickerModal();
-  closeSyncModal();
-  closeSettingsDrawer();
-  syncState = 'pulling'; renderSettingsDrawerBody();
-
-  let payload = null, sha = null;
-  try {
-    const res = await fetch(buildBatchUrl(farmName, batchKey));
-    if (res.ok){
-      const result = await res.json();
-      if (!result.notFound && result.data){
-        payload = result.data;
-        sha = result.sha || null;
-      }
-    }
-  } catch (e){}
-
-  if (payload){
-    applyCloudPayload(payload, { isFirstPull: true });
-    syncSha = sha;
-    syncLastSyncAt = Date.now();
-    showToast(`✅ Loaded ${batchKey ? 'batch ' + batchKey : 'legacy batch'}.`);
-  } else {
-    showToast('No data found — starting with default sheds.');
-  }
-
-  saveSyncState();
-  syncState = 'idle'; renderSettingsDrawerBody(); render();
+function disconnectSync(){
+  if (!syncFarmName) return;
+  if (!confirm('Disconnect cloud sync?\n\nYour data stays on this device and in the cloud. You can reconnect with the same farm name any time.')) return;
+  syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+  syncConnectedAt = null; syncLastSyncAt = null;
+  saveSyncState(); renderSyncButton(); closeSyncModal();
+  showToast('Disconnected.');
 }
-function openFarmBatchPickerModal(farmName, files){
-  const modal = document.getElementById('farmBatchPickerModal');
+function showFarmFoundPrompt(data, sha){
+  const farm = (data && data.farmData) || {};
+  const sheds = Array.isArray(farm.sheds) ? farm.sheds : [];
+  const shedCount = sheds.filter(s => Number(s.initialPopulation) > 0).length;
+  const batch = data.batchNumber || farm.batchNumber || '';
+  const excelMeta = (data && data.excelMetadata) || null;
+  const lastUpdated = data && data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : '—';
+  const body = document.getElementById('farmFoundBody');
+  const excelLine = excelMeta ? `
+    <div class="ff-row"><span class="lbl">Excel file</span>
+      <span class="val">📄 ${escapeHtml(excelMeta.name || 'sheds.xlsx')}${
+        excelMeta.uploadedAt ? ' · ' + new Date(excelMeta.uploadedAt).toLocaleDateString() : ''}</span></div>` : `
+    <div class="ff-row"><span class="lbl">Excel file</span>
+      <span class="val" style="color:var(--muted);font-weight:500;">No Excel stored</span></div>`;
+  body.innerHTML = `
+    <div class="farm-found-icon">☁️</div>
+    <div class="farm-found-title">Farm found: <strong>${escapeHtml(syncFarmName)}</strong></div>
+    <div class="farm-found-sub">This farm already has data stored in the cloud${batch ? ' for batch <strong>' + escapeHtml(batch) + '</strong>' : ''}.</div>
+    <div class="farm-found-meta">
+      <div class="ff-row"><span class="lbl">Last updated</span><span class="val">${escapeHtml(lastUpdated)}</span></div>
+      <div class="ff-row"><span class="lbl">Sheds</span><span class="val">${shedCount} with population</span></div>
+      ${batch ? `<div class="ff-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch)}</span></div>` : ''}
+      ${excelLine}
+    </div>
+    <div class="ff-choices">
+      <button class="ff-choice primary" id="ffLoadBtn" type="button">
+        <span class="ff-icon">📥</span>
+        <div><div class="ff-choice-title">Load stored data</div>
+        <div class="ff-choice-sub">Use the cloud copy on this device</div></div>
+      </button>
+      ${excelMeta ? `
+        <button class="ff-choice" id="ffDownloadBtn" type="button">
+          <span class="ff-icon">📄</span>
+          <div><div class="ff-choice-title">Download stored Excel</div>
+          <div class="ff-choice-sub">Save the cloud Excel to this device</div></div>
+        </button>
+      ` : ''}
+      <button class="ff-choice" id="ffUploadBtn" type="button">
+        <span class="ff-icon">📤</span>
+        <div><div class="ff-choice-title">Upload a newer Excel</div>
+        <div class="ff-choice-sub">Replaces the cloud copy with your file</div></div>
+      </button>
+      <button class="ff-choice danger" id="ffFreshBtn" type="button">
+        <span class="ff-icon">⚠️</span>
+        <div><div class="ff-choice-title">Start fresh</div>
+        <div class="ff-choice-sub">Overwrite the cloud with this device's data</div></div>
+      </button>
+    </div>
+    <button class="ff-cancel" id="ffCancelBtn" type="button">Cancel — don't connect</button>
+  `;
+  const modal = document.getElementById('farmFoundModal');
   const scrim = document.getElementById('syncScrim');
-  renderFarmBatchPickerBody(farmName, files);
   modal.classList.add('open'); scrim.classList.add('open');
+  document.getElementById('ffLoadBtn').addEventListener('click', () => {
+    applyCloudPayload(data, { isFirstPull: true });
+    syncSha = sha || null; syncConnectedAt = Date.now(); syncLastSyncAt = Date.now();
+    saveSyncState(); closeFarmFoundModal(); renderSyncButton(); render();
+    showToast('Loaded data from the cloud.');
+  });
+  const dlBtn = document.getElementById('ffDownloadBtn');
+  if (dlBtn) dlBtn.addEventListener('click', async () => { await downloadExcelFromCloud(); });
+  document.getElementById('ffUploadBtn').addEventListener('click', () => {
+    syncSha = sha || null; syncConnectedAt = Date.now(); saveSyncState();
+    closeFarmFoundModal(); renderSyncButton();
+    const input = document.getElementById('excelFile'); input.value = ''; input.click();
+  });
+  document.getElementById('ffFreshBtn').addEventListener('click', async () => {
+    if (!confirm('This will overwrite the cloud copy with this device\'s data.\n\nThe stored Excel (if any) will remain in the cloud until you upload a new one.\n\nContinue?')) return;
+    syncSha = sha || null; syncConnectedAt = Date.now(); saveSyncState();
+    closeFarmFoundModal(); renderSyncButton();
+    await pushToCloud();
+    showToast('This device\'s data pushed to the cloud.');
+  });
+  document.getElementById('ffCancelBtn').addEventListener('click', () => {
+    syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+    syncConnectedAt = null; syncLastSyncAt = null;
+    saveSyncState(); closeFarmFoundModal(); renderSyncButton();
+  });
+  document.getElementById('farmFoundClose').onclick = () => document.getElementById('ffCancelBtn').click();
 }
-function closeFarmBatchPickerModal(){
-  document.getElementById('farmBatchPickerModal').classList.remove('open');
+function closeFarmFoundModal(){
+  document.getElementById('farmFoundModal').classList.remove('open');
   updateScrimVisibility();
 }
-function renderFarmBatchPickerBody(farmName, files){
-  const body = document.getElementById('farmBatchPickerBody');
-  if (!body) return;
-  const rows = files.map(p => {
-    const sizeStr = fmtBytes(p.size);
-    const metaBits = [];
-    if (sizeStr) metaBits.push(sizeStr);
-    if (p.isLegacy) metaBits.push('original file');
-    const meta = metaBits.join(' · ');
-    return `
-      <div class="batch-row" data-pick-batch="${escapeAttr(p.batchKey)}">
-        <div class="batch-row-info">
-          <div class="batch-row-title"><span>${escapeHtml(p.label)}</span></div>
-          ${meta ? `<div class="batch-row-meta">${escapeHtml(meta)}</div>` : ''}
-        </div>
-        <div class="batch-row-actions">
-          <button class="batch-open-btn" type="button" data-pick-batch-open="${escapeAttr(p.batchKey)}">Load</button>
-        </div>
-      </div>`;
-  }).join('');
-  body.innerHTML = `
-    <div class="sync-status-card">
-      <div class="sync-status-row"><span class="lbl">Farm</span><span class="val ok">${escapeHtml(farmName)}</span></div>
-      <div class="sync-status-row"><span class="lbl">Batches found</span><span class="val">${files.length}</span></div>
-    </div>
-    <div class="nb-question">Choose a batch to load:</div>
-    <div class="batch-list">${rows}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
-      <button class="btn-sync-primary success" id="fbpCreateNewBtn" type="button">➕ Create new batch</button>
-      <button class="btn-sync-primary ghost" id="fbpCancelBtn" type="button">Cancel</button>
-    </div>`;
-  body.querySelectorAll('[data-pick-batch-open]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const bk = btn.dataset.pickBatchOpen || '';
-      loadFarmBatchFromCloud(farmName, bk);
-    });
-  });
-  const createBtn = document.getElementById('fbpCreateNewBtn');
-  if (createBtn){
-    createBtn.addEventListener('click', () => {
-      closeFarmBatchPickerModal();
-      newBatchModalPhase = 'batchNumber';
-      openNewBatchModal();
-    });
-  }
-  const cancelBtn = document.getElementById('fbpCancelBtn');
-  if (cancelBtn){
-    cancelBtn.addEventListener('click', () => {
-      closeFarmBatchPickerModal();
-      if (!syncConnectedAt){
-        syncFarmName = null;
-        saveSyncState();
-        renderSettingsDrawerBody();
-      }
-    });
-  }
+
+function updateScrimVisibility(){
+  const anyOpen = ['syncModal','farmFoundModal','newBatchModal','batchHistoryModal',
+                   'manualPickupModal','sampleModal','predictedPickupModal','deliveryModal',
+                   'importConflictModal','importReviewModal']
+    .some(id => document.getElementById(id).classList.contains('open'));
+  document.getElementById('syncScrim').classList.toggle('open', anyOpen);
 }
 
-/* ============================================================
-   NEW BATCH MODAL
-   ============================================================ */
-function openNewBatchModal(initialPhase){
-  closeSettingsDrawer();
-  newBatchModalPhase = initialPhase || 'choice';
+/* ---------- New Batch modal ---------- */
+function openNewBatchModal(){
+  newBatchModalPhase = 'choice';
   const modal = document.getElementById('newBatchModal');
   const scrim = document.getElementById('syncScrim');
   renderNewBatchModalBody();
@@ -3821,28 +3563,22 @@ function renderNewBatchModalBody(){
   const body = document.getElementById('newBatchModalBody');
   if (!body) return;
   const isConnected = !!(syncFarmName && syncConnectedAt);
-  if (newBatchModalPhase === 'batchNumber' && syncFarmName){
-    renderNewBatchNumberPhase(body);
-    return;
-  }
   if (!isConnected){
     body.innerHTML = `
       <div class="farm-found-icon">🔌</div>
       <div class="farm-found-title">Not connected</div>
-      <div class="farm-found-sub">Connect to a farm first, then come back here to start a new batch.</div>
+      <div class="farm-found-sub">Connect to a farm first from the Cloud Sync menu, then come back here to start a new batch.</div>
       <div class="sync-actions">
         <button class="btn-sync-primary" id="nbGoConnectBtn" type="button">☁️ Go to Cloud Sync</button>
         <button class="btn-sync-primary ghost" id="nbCancelBtn" type="button">Cancel</button>
       </div>`;
     document.getElementById('nbGoConnectBtn').addEventListener('click', () => {
-      closeNewBatchModal(); setTimeout(() => { openSettingsDrawer(); openSyncModal(); }, 150);
+      closeNewBatchModal(); setTimeout(() => openSyncModal(), 150);
     });
     document.getElementById('nbCancelBtn').addEventListener('click', closeNewBatchModal);
     return;
   }
   if (newBatchModalPhase === 'choice'){ renderNewBatchFarmChoicePhase(body); }
-  else if (newBatchModalPhase === 'batchNumber'){ renderNewBatchNumberPhase(body); }
-  else if (newBatchModalPhase === 'proceed'){ renderNewBatchProceedPhase(body); }
   else { renderNewBatchNumberPhase(body); }
 }
 function renderNewBatchFarmChoicePhase(body){
@@ -3889,8 +3625,8 @@ function renderNewBatchFarmChoicePhase(body){
     syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
     syncConnectedAt = null; syncLastSyncAt = null;
     saveSyncState();
-    closeNewBatchModal(); renderSettingsDrawerBody(); render();
-    setTimeout(() => { openSettingsDrawer(); openSyncModal(); }, 200);
+    closeNewBatchModal(); renderSyncButton(); render();
+    setTimeout(() => openSyncModal(), 200);
   });
   document.getElementById('nbCancelBtn').addEventListener('click', closeNewBatchModal);
 }
@@ -3899,11 +3635,13 @@ function renderNewBatchNumberPhase(body){
   const currentBatch = (predState.batchNumber || (farmData && farmData.batchNumber) || '').trim() || 'Unnamed';
   const shedCount = farmData ? farmData.sheds.filter(s => s.initialPopulation > 0).length : 0;
   const totalPlaced = farmData ? farmData.sheds.reduce((s,x) => s + (x.initialPopulation || 0), 0) : 0;
+  const hasExcel = !!(syncExcelMeta && syncExcelMeta.name);
   body.innerHTML = `
     <div class="sync-status-card">
-      <div class="sync-status-row"><span class="lbl">Farm</span><span class="val ok">${escapeHtml(farmName || '(new)')}</span></div>
+      <div class="sync-status-row"><span class="lbl">Farm</span><span class="val ok">${escapeHtml(farmName)}</span></div>
       <div class="sync-status-row"><span class="lbl">Current batch</span><span class="val">${escapeHtml(currentBatch)}</span></div>
       <div class="sync-status-row"><span class="lbl">Sheds placed</span><span class="val">${shedCount} of 8 · ${totalPlaced.toLocaleString()} birds</span></div>
+      ${hasExcel ? `<div class="sync-status-row"><span class="lbl">Stored Excel</span><span class="val">📄 ${escapeHtml(syncExcelMeta.name)}</span></div>` : ''}
     </div>
     <label for="newBatchNumberInput">New batch number</label>
     <input id="newBatchNumberInput" type="text" placeholder="e.g. B12 or 2025-03"
@@ -3911,90 +3649,28 @@ function renderNewBatchNumberPhase(body){
     <div class="sync-hint">
       Your current batch's data <strong>stays safe</strong> in the cloud under its own file.
       A fresh cloud file will be created for the new batch and the app will reconnect automatically.
-      All shed fields will reset to default (52,000 birds placed per shed, empty dates).
+      Next step will be to import the Excel file for the new batch.
     </div>
     <label class="new-batch-checkbox-label">
       <input type="checkbox" id="downloadBackupCheckbox" checked />
       <span>Download current batch as a JSON backup before starting</span>
     </label>
     <div class="sync-actions">
-      <button class="btn-sync-primary danger" id="newBatchNextBtn" type="button">Next →</button>
+      <button class="btn-sync-primary danger" id="confirmNewBatchBtn" type="button">🔄 Start New Batch</button>
       <button class="btn-sync-primary ghost" id="backToFarmChoiceBtn" type="button">← Back</button>
     </div>`;
   const inp = document.getElementById('newBatchNumberInput');
   setTimeout(() => { if (inp) inp.focus(); }, 100);
-  document.getElementById('newBatchNextBtn').addEventListener('click', () => {
-    const raw = inp ? inp.value.trim() : '';
-    const clean = sanitizeBatchNumber(raw);
-    if (!clean){ showToast('Enter a batch number (letters, numbers, dashes).', true); if (inp) inp.focus(); return; }
-    const currentClean = sanitizeBatchNumber(predState.batchNumber || (farmData && farmData.batchNumber) || '');
-    if (clean === currentClean){ showToast('That is already the current batch number.', true); if (inp) inp.focus(); return; }
-    pendingNewBatchClean = clean;
-    pendingNewBatchDownload = !!(document.getElementById('downloadBackupCheckbox') || {}).checked;
-    newBatchModalPhase = 'proceed';
-    renderNewBatchModalBody();
+  document.getElementById('confirmNewBatchBtn').addEventListener('click', startNewBatch);
+  document.getElementById('backToFarmChoiceBtn').addEventListener('click', () => {
+    newBatchModalPhase = 'choice'; renderNewBatchModalBody();
   });
-  const backBtn = document.getElementById('backToFarmChoiceBtn');
-  if (backBtn){
-    backBtn.addEventListener('click', () => {
-      if (syncConnectedAt){
-        newBatchModalPhase = 'choice'; renderNewBatchModalBody();
-      } else {
-        closeNewBatchModal();
-      }
-    });
-  }
   if (inp){
     inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('newBatchNextBtn').click(); }
-      if (e.key === 'Escape'){ e.preventDefault(); closeNewBatchModal(); }
+      if (e.key === 'Enter'){ e.preventDefault(); startNewBatch(); }
+      if (e.key === 'Escape'){ e.preventDefault(); newBatchModalPhase = 'choice'; renderNewBatchModalBody(); }
     });
   }
-}
-/* Stash the batch number / download choice between phases so the proceed
-   phase doesn't need to read the (already replaced) DOM. */
-let pendingNewBatchClean = '';
-let pendingNewBatchDownload = true;
-
-function renderNewBatchProceedPhase(body){
-  const clean = pendingNewBatchClean || '';
-  const downloadBackup = pendingNewBatchDownload;
-  body.innerHTML = `
-    <div class="farm-found-icon">✅</div>
-    <div class="farm-found-title">Batch <strong>${escapeHtml(clean)}</strong> ready</div>
-    <div class="farm-found-sub">
-      All shed fields will be reset to defaults:
-      <strong>52,000 birds placed</strong> per shed, 0 mortality,
-      0.044 kg chick weight, empty placement &amp; cleanout dates.
-    </div>
-    <div class="nb-question">How would you like to proceed?</div>
-    <div class="ff-choices">
-      <button class="ff-choice primary" id="nbProceedUploadBtn" type="button">
-        <span class="ff-icon">📥</span>
-        <div>
-          <div class="ff-choice-title">Upload Excel now</div>
-          <div class="ff-choice-sub">Replace the defaults with real shed data from your Excel file</div>
-        </div>
-      </button>
-      <button class="ff-choice secondary" id="nbProceedDefaultsBtn" type="button">
-        <span class="ff-icon">▶️</span>
-        <div>
-          <div class="ff-choice-title">Continue with defaults</div>
-          <div class="ff-choice-sub">Start the batch with 8 default sheds — you can plan by hand and import later</div>
-        </div>
-      </button>
-    </div>
-    <button class="ff-cancel" id="nbProceedCancelBtn" type="button">← Back</button>`;
-  document.getElementById('nbProceedUploadBtn').addEventListener('click', async () => {
-    await startNewBatch(clean, { downloadBackup, openFilePicker: true });
-  });
-  document.getElementById('nbProceedDefaultsBtn').addEventListener('click', async () => {
-    await startNewBatch(clean, { downloadBackup, openFilePicker: false });
-  });
-  document.getElementById('nbProceedCancelBtn').addEventListener('click', () => {
-    newBatchModalPhase = 'batchNumber';
-    renderNewBatchModalBody();
-  });
 }
 function downloadCurrentBatchAsJson(){
   const batchRaw = (predState.batchNumber || (farmData && farmData.batchNumber) || '').trim();
@@ -4014,44 +3690,48 @@ function downloadCurrentBatchAsJson(){
   URL.revokeObjectURL(url);
   showToast('📥 Batch backup downloaded.');
 }
-async function startNewBatch(cleanBatchNumber, opts){
-  opts = opts || {};
-  const clean = sanitizeBatchNumber(cleanBatchNumber);
-  if (!clean){ showToast('Enter a batch number.', true); return; }
-
-  if (opts.downloadBackup !== false){
-    try { downloadCurrentBatchAsJson(); } catch(e){ console.error(e); }
-  }
-
+async function startNewBatch(){
+  const input = document.getElementById('newBatchNumberInput');
+  const downloadCb = document.getElementById('downloadBackupCheckbox');
+  const raw = input ? input.value.trim() : '';
+  const clean = sanitizeBatchNumber(raw);
+  if (!clean){ showToast('Enter a batch number (letters, numbers, dashes).', true); if (input) input.focus(); return; }
+  const currentClean = sanitizeBatchNumber(predState.batchNumber || (farmData && farmData.batchNumber) || '');
+  if (clean === currentClean){ showToast('That is already the current batch number.', true); if (input) input.focus(); return; }
+  if (downloadCb && downloadCb.checked){ try { downloadCurrentBatchAsJson(); } catch(e){ console.error(e); } }
   clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
   clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
   pushPending = false;
-
   const farmToKeep = syncFarmName;
   syncSha = null; syncExcelSha = null; syncExcelMeta = null;
   syncConnectedAt = null; syncLastSyncAt = null;
   saveSyncState();
-
-  resetAllToDefaults(clean);
-
+  farmData = null;
+  siloData = {
+    1: { readings: [], deliveries: [] },
+    2: { readings: [], deliveries: [] },
+    3: { readings: [], deliveries: [] },
+    4: { readings: [], deliveries: [] }
+  };
+  testDeliveries = { 1: [], 2: [], 3: [], 4: [] };
+  inlineDeliveryState = null;
+  predState.batchNumber = clean;
+  predState.farmFeedOverride = null;
+  predState.farmLeftoverKg = null;
+  dailyRangeState = { ...DEFAULT_DAILY_RANGE };
+  saveState(); saveSiloData(); savePredState();
   if (farmToKeep){
     syncFarmName = farmToKeep;
     syncConnectedAt = Date.now();
     syncLastSyncAt = null;
     saveSyncState();
-    closeNewBatchModal();
-    renderSettingsDrawerBody(); render();
-    await pushToCloud();
+    closeNewBatchModal(); renderSyncButton(); render();
+    const pushed = await pushToCloud();
+    if (pushed){ showToast(`✅ New batch "${raw}" started — import your Excel file.`); }
+    else { showToast(`✅ New batch "${raw}" started — cloud will retry when online.`, true); }
   } else {
-    closeNewBatchModal();
-    renderSettingsDrawerBody(); render();
-  }
-
-  if (opts.openFilePicker){
-    showToast(`✅ Batch "${clean}" started — pick the Excel file now.`);
-    setTimeout(() => triggerImport(), 220);
-  } else {
-    showToast(`✅ Batch "${clean}" started with default sheds.`);
+    closeNewBatchModal(); renderSyncButton(); render();
+    showToast(`✅ New batch "${raw}" started.`);
   }
 }
 
@@ -4059,7 +3739,6 @@ async function startNewBatch(cleanBatchNumber, opts){
    BATCH HISTORY
 ========================================================= */
 function openBatchHistoryModal(){
-  closeSettingsDrawer();
   batchHistoryPage = 0; batchHistoryCache = null;
   const modal = document.getElementById('batchHistoryModal');
   const scrim = document.getElementById('syncScrim');
@@ -4102,7 +3781,7 @@ async function renderBatchHistoryModalBody(){
         <button class="btn-sync-primary ghost" id="bhCancelBtn" type="button">Cancel</button>
       </div>`;
     document.getElementById('bhGoConnectBtn').addEventListener('click', () => {
-      closeBatchHistoryModal(); setTimeout(() => { openSettingsDrawer(); openSyncModal(); }, 150);
+      closeBatchHistoryModal(); setTimeout(() => openSyncModal(), 150);
     });
     document.getElementById('bhCancelBtn').addEventListener('click', closeBatchHistoryModal);
     return;
@@ -4179,6 +3858,7 @@ function renderBatchListPage(){
         </div>
         <div class="batch-row-actions">
           ${!isCurrent ? `<button class="batch-open-btn" data-batch-open="${escapeAttr(p.batchKey)}" type="button">Open</button>` : ''}
+          <button class="batch-dl-btn" data-batch-download="${escapeAttr(p.batchKey)}" type="button" title="Download JSON">📥</button>
         </div>
       </div>`;
   }).join('');
@@ -4206,6 +3886,9 @@ function renderBatchListPage(){
   if (!body) return;
   body.querySelectorAll('[data-batch-open]').forEach(btn => {
     btn.addEventListener('click', () => { openPastBatch(btn.dataset.batchOpen); });
+  });
+  body.querySelectorAll('[data-batch-download]').forEach(btn => {
+    btn.addEventListener('click', () => { downloadPastBatch(btn.dataset.batchDownload); });
   });
   body.querySelectorAll('[data-batch-page]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -4237,8 +3920,53 @@ async function openPastBatch(targetBatchKey){
     const ok = await pushToCloud();
     if (!ok){ showToast('Could not save current batch — check your connection.', true); return; }
   }
-  closeBatchHistoryModal();
-  await loadFarmBatchFromCloud(syncFarmName, targetBatchKey);
+  predState.batchNumber = targetBatchKey || '';
+  predState.farmFeedOverride = null;
+  predState.farmLeftoverKg = null;
+  dailyRangeState = { ...DEFAULT_DAILY_RANGE };
+  farmData = null;
+  siloData = {
+    1: { readings: [], deliveries: [] },
+    2: { readings: [], deliveries: [] },
+    3: { readings: [], deliveries: [] },
+    4: { readings: [], deliveries: [] }
+  };
+  testDeliveries = { 1: [], 2: [], 3: [], 4: [] };
+  inlineDeliveryState = null;
+  syncSha = null; syncExcelSha = null; syncExcelMeta = null;
+  syncConnectedAt = Date.now(); syncLastSyncAt = Date.now();
+  saveState(); saveSiloData(); savePredState(); saveSyncState();
+  closeBatchHistoryModal(); renderSyncButton(); render();
+  const pulled = await pullFromCloud(false);
+  if (pulled){ showToast(`✅ Switched to ${targetLabel}.`); }
+  else { showToast(`Switched to ${targetLabel} — will retry sync when online.`, true); }
+}
+async function downloadPastBatch(targetBatchKey){
+  if (!syncFarmName) return;
+  const url = buildBatchUrl(syncFarmName, targetBatchKey);
+  try {
+    const res = await fetch(url);
+    if (!res.ok){ showToast('Could not fetch that batch.', true); return; }
+    const result = await res.json();
+    if (result.notFound || !result.data){ showToast('Batch file not found in the cloud.', true); return; }
+    const payload = result.data;
+    payload.exportedAt = new Date().toISOString();
+    payload.exportedBy = 'ProdWise.VM';
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    const farm = sanitizeUserFarmName(syncFarmName);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.download = `${farm}-feed-${targetBatchKey || 'legacy'}-${dateStr}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(objUrl);
+    showToast('📥 Batch downloaded.');
+  } catch (e){
+    console.error(e);
+    showToast('Download failed.', true);
+  }
 }
 
 /* ---------- Theme ---------- */
@@ -4517,6 +4245,7 @@ function computeFarmTotals(){
     shedsWithData++;
   }
 
+  /* NEW: leftover handling for whole-farm KPIs */
   const autoLeftover = totalFarmLeftover();
   const leftoverKg = (predState.farmLeftoverKg != null
     && Number.isFinite(Number(predState.farmLeftoverKg))
@@ -4559,6 +4288,8 @@ function computeFarmTotals(){
     estMortRate: totalPlaced > 0 ? (totalMortalityEst / totalPlaced) * 100 : 0
   };
 }
+
+/* Sub-text for the feed-consumption tile, aware of override + leftover. */
 function farmFeedSubText(t){
   if (t.usingManualFeed && t.leftoverApplied){
     return `Manual override − leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
@@ -4622,19 +4353,23 @@ function readingsSorted(group){
 function latestReading(group){ const arr = readingsSorted(group); return arr.length ? arr[arr.length - 1] : null; }
 function readingTotalKg(reading){ if (!reading) return 0; return ringsToKg(reading.silo1Rings) + ringsToKg(reading.silo2Rings) + ringsToKg(reading.silo3Rings); }
 
+/* Real (saved) deliveries only. */
 function deliveriesForGroup(group){
   const s = siloData[group] || { deliveries: [] };
   return (s.deliveries || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
 }
+/* Real + test (test are session-only and only affect the forecast/balance). */
 function allDeliveriesForGroup(group){
   const real = deliveriesForGroup(group).map(d => ({ ...d, isTest: false }));
   const tests = (testDeliveries[group] || []).map(t => ({ ...t, isTest: true }));
   return real.concat(tests).sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
 }
+/* Real only. */
 function deliveriesKgOn(group, D){
   const d = dateOnly(D);
   return deliveriesForGroup(group).filter(x => iso(x.date) === iso(d)).reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
 }
+/* Real + tests. Used for balance and forecast computations. */
 function deliveriesKgOnAll(group, D){
   const d = dateOnly(D);
   return allDeliveriesForGroup(group).filter(x => iso(x.date) === iso(d)).reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
@@ -4710,6 +4445,7 @@ function computeSiloForecast(group, range){
   return { rows, totalStock, totalConsumption, totalDelivered, depletedDate, endBalance, shortfall };
 }
 
+/* ---------- Per-shed ages at a date (for the Age column in forecast) ---------- */
 function shedAgesAtDateForGroup(group, date){
   const sheds = shedsForGroup(group);
   return sheds.map(s => {
@@ -4727,6 +4463,7 @@ function formatAgesPair(ages){
   return ages.map(a => a === null ? '—' : a + 'd').join(' / ');
 }
 
+/* ---------- Projected leftover at cleanout ---------- */
 function projectedLeftoverForGroup(group){
   const sheds = shedsForGroup(group);
   const cleanouts = sheds.map(s => s.cleanoutDate).filter(Boolean);
@@ -4745,6 +4482,7 @@ function totalFarmLeftover(){
   return any ? sum : null;
 }
 
+/* ---------- Feed Summary (real deliveries only) ---------- */
 function computeFeedSummary(group){
   const deliveries = deliveriesForGroup(group);
   const buckets = {
@@ -4760,7 +4498,7 @@ function computeFeedSummary(group){
     buckets[key].tonnes += t; buckets[key].deliveries += 1;
   });
   Object.values(buckets).forEach(b => {
-    b.blocks = b.tonnes / FEED_BLOCK_T;
+    b.blocks = b.tonnes / FEED_BLOCK_T; /* exact fraction of a 60 T block */
   });
   const totalTonnes = Object.values(buckets).reduce((s,b) => s + b.tonnes, 0);
   const totalBlocks = Object.values(buckets).reduce((s,b) => s + b.blocks, 0);
@@ -4842,25 +4580,8 @@ function addSiloDelivery(group, dateStr, amountT, feedType, note){
     note: String(note || '').trim()
   });
   siloData[group].deliveries.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-
-  let replacedTestCount = 0;
-  if (testDeliveries[group] && testDeliveries[group].length > 0){
-    const before = testDeliveries[group].length;
-    testDeliveries[group] = testDeliveries[group].filter(t => iso(t.date) !== iso(d));
-    replacedTestCount = before - testDeliveries[group].length;
-    if (replacedTestCount > 0 &&
-        inlineDeliveryState && inlineDeliveryState.group === group &&
-        inlineDeliveryState.dateIso === iso(d)){
-      inlineDeliveryState = null;
-    }
-  }
-
   saveSiloData(); schedulePush(); render();
-  if (replacedTestCount > 0){
-    showToast(`Delivery of ${amountT} t added on ${fmtShort(d)} — replaced ${replacedTestCount} test deliver${replacedTestCount === 1 ? 'y' : 'ies'}.`);
-  } else {
-    showToast(`Delivery of ${amountT} t added on ${fmtShort(d)}.`);
-  }
+  showToast(`Delivery of ${amountT} t added on ${fmtShort(d)}.`);
 }
 function updateSiloDeliveryDate(group, id, newDateStr){
   const s = siloData[group]; if (!s) return;
@@ -4895,6 +4616,7 @@ function removeSiloDelivery(group, id){
   saveSiloData(); schedulePush(); render();
 }
 
+/* ---------- Test delivery actions ---------- */
 function addTestDelivery(group, dateStr, amountT){
   const d = parseExcelDate(dateStr);
   if (!d){ showToast('Pick a valid date.', true); return false; }
@@ -4904,7 +4626,7 @@ function addTestDelivery(group, dateStr, amountT){
   testDeliveries[group].push({
     id: 'test_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     date: d, amountKg,
-    feedType: '',
+    feedType: '', /* test deliveries have no feed type */
     note: ''
   });
   testDeliveries[group].sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
@@ -4931,7 +4653,7 @@ function clearTestDeliveries(group){
   showToast(`🧹 Cleared ${count} test deliver${count === 1 ? 'y' : 'ies'}.`);
 }
 
-/* ---------- Delivery modal ---------- */
+/* ---------- Delivery modal (Actual deliveries only) ---------- */
 function openDeliveryModal(group, dateIso, prefillAmount){
   if (!farmData) return;
   const d = parseExcelDate(dateIso);
@@ -5708,7 +5430,7 @@ function clearPredictedPickupsForShed(shedId){
 }
 
 /* =========================================================
-   EXTRA READING DAY
+   EXTRA READING DAY (off-cycle sample)
 ========================================================= */
 function openSampleModal(shedId, editIdx){
   if (!farmData) return;
@@ -6190,6 +5912,21 @@ async function handleFile(file){
     const mb = (file.size / (1024*1024)).toFixed(1);
     if (!confirm(`This file is ${mb} MB — larger than usual.\n\nLoading and cloud upload may take a few seconds.\n\nContinue?`)) return;
   }
+  const willReplaceLocal = !!farmData;
+  const willReplaceCloudExcel = !!(syncFarmName && syncConnectedAt && syncExcelMeta && syncExcelMeta.name);
+  if (willReplaceLocal || willReplaceCloudExcel){
+    let msg = '';
+    if (willReplaceLocal){
+      msg += 'This will update your current shed data with the new file.\n\nIn-yard readings, extra reading days, mortality rates, chick weights, and target-pickup settings are preserved.';
+    }
+    if (willReplaceCloudExcel){
+      if (msg) msg += '\n\n';
+      const metaAge = syncExcelMeta.uploadedAt ? ` (uploaded ${fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime())})` : '';
+      msg += `⚠️ The stored Excel on the cloud (${syncExcelMeta.name}${metaAge}) will also be replaced with this new file.`;
+    }
+    msg += '\n\nContinue?';
+    if (!confirm(msg)) return;
+  }
   try {
     const manualTargets = {}, shedRates = {}, shedSamples = {}, shedChickWeights = {}, shedPredictedPickups = {}, shedTargetPickups = {};
     if (farmData && Array.isArray(farmData.sheds)){
@@ -6370,6 +6107,7 @@ function setFarmFeedOverride(rawVal){
   }
   savePredState(); schedulePush();
 }
+/* NEW: whole-farm leftover (kg). Empty = use auto-sum only for display. */
 function setFarmLeftover(rawVal){
   const s = String(rawVal ?? '').trim();
   if (s === ''){ predState.farmLeftoverKg = null; }
@@ -6436,8 +6174,40 @@ function setShedDensityOverride(shedId, field, value){
 }
 
 /* ---------- Sync UI ---------- */
+function renderSyncButton(){
+  const btn = document.getElementById('syncBtn');
+  const ico = document.getElementById('syncIcon');
+  const lbl = document.getElementById('syncLabel');
+  if (!btn) return;
+  btn.classList.remove('connected','syncing','error');
+  if (syncState === 'pulling' || syncState === 'pushing'){
+    btn.classList.add('syncing');
+    ico.textContent = '⟳'; ico.classList.add('sync-spin');
+    lbl.textContent = syncState === 'pulling' ? 'Pulling…' : 'Saving…';
+    btn.title = syncState === 'pulling' ? 'Fetching from cloud…' : 'Saving to cloud…';
+    return;
+  }
+  ico.classList.remove('sync-spin');
+  if (syncState === 'error'){
+    btn.classList.add('error');
+    ico.textContent = '⚠️';
+    lbl.textContent = syncFarmName || 'Sync error';
+    btn.title = 'Last sync failed — click to retry';
+    return;
+  }
+  if (syncFarmName){
+    btn.classList.add('connected');
+    ico.textContent = '☁️';
+    const batch = currentBatchKey();
+    lbl.textContent = batch ? `${syncFarmName} · ${batch}` : syncFarmName;
+    btn.title = `Connected — last sync ${fmtRelativeTime(syncLastSyncAt)}`;
+  } else {
+    ico.textContent = '☁️';
+    lbl.textContent = 'Connect';
+    btn.title = 'Set up cloud sync';
+  }
+}
 function openSyncModal(){
-  closeSettingsDrawer();
   const modal = document.getElementById('syncModal');
   const scrim = document.getElementById('syncScrim');
   const body = document.getElementById('syncModalBody');
@@ -6456,6 +6226,9 @@ function openSyncModal(){
           <div class="sync-status-row"><span class="lbl">Stored Excel</span>
           <span class="val">📄 ${escapeHtml(syncExcelMeta.name || 'sheds.xlsx')}${
             syncExcelMeta.uploadedAt ? ' · ' + fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()) : ''}</span></div>` : ''}
+        ${syncState === 'error' ? `
+          <div class="sync-status-row"><span class="lbl">Status</span>
+          <span class="val err">Last attempt failed</span></div>` : ''}
       </div>
       <div class="sync-actions">
         <div class="sync-btn-row">
@@ -6497,7 +6270,7 @@ function showConnectForm(hint){
   setTimeout(() => input && input.focus(), 100);
   const submit = () => { const v = input.value.trim();
     if (!v){ showToast('Enter a farm name.', true); return; }
-    handleConnectFarm(v); };
+    connectSync(v); };
   document.getElementById('syncConnectBtn').addEventListener('click', submit);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   document.getElementById('syncCancelBtn').addEventListener('click', () => {
@@ -6507,14 +6280,6 @@ function showConnectForm(hint){
 function closeSyncModal(){
   document.getElementById('syncModal').classList.remove('open');
   updateScrimVisibility();
-}
-function disconnectSync(){
-  if (!syncFarmName) return;
-  if (!confirm('Disconnect cloud sync?\n\nYour data stays on this device and in the cloud. You can reconnect with the same farm name any time.')) return;
-  syncFarmName = null; syncSha = null; syncExcelSha = null; syncExcelMeta = null;
-  syncConnectedAt = null; syncLastSyncAt = null;
-  saveSyncState(); closeSyncModal(); renderSettingsDrawerBody(); render();
-  showToast('Disconnected.');
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -6552,6 +6317,10 @@ function openPickupActionsMenu(wrap){
   menu.style.left = left + 'px';
 }
 
+/* ---------- Pickup-plan pill helper ---------- */
+/* Clickable pill that jumps to the shed's Predictions card.
+   Shows "✅ Batch complete" when a real final exists, else
+   "🎯 N planned" when active predicted pickups exist. */
 function pickupPlanPillHtml(shed){
   if (!shed) return '';
   const hasRealFinal = (shed.pickups || []).some(p => p.isFinal);
@@ -6600,8 +6369,8 @@ function render(){
         ? 'Batch number is locked. Use "New Batch" to change it.'
         : 'Enter or import a batch number';
     }
-    if (settingsDrawerOpen) renderSettingsDrawerBody();
-
+    const label = document.getElementById('importBtnLabel');
+    if (label) label.textContent = farmData ? 'Re-import Excel' : 'Import Excel';
     const tabsWrap = document.getElementById('tabsWrap');
     const app = document.getElementById('app');
     if (!farmData){
@@ -6615,6 +6384,7 @@ function render(){
     if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
     const g = Number(activeTab.replace('g', ''));
     app.innerHTML = groupViewHtml(g);
+    // If an inline delivery form is open, refocus its input after render.
     if (inlineDeliveryState){
       requestAnimationFrame(() => {
         const input = document.querySelector('.inline-del-input');
@@ -7013,6 +6783,7 @@ function renderFeedPlanner(group, sheds, today){
   const hasTests = (testDeliveries[group] || []).length > 0;
   const testCount = (testDeliveries[group] || []).length;
 
+  /* NEW: group leftover chip for the Feed Balance Forecast heading */
   const leftover = projectedLeftoverForGroup(group);
   const leftoverOk = leftover && leftover.balance !== null;
   const leftoverStr = leftoverOk ? `${(leftover.balance/1000).toFixed(2)} t at cleanout` : '—';
@@ -7097,7 +6868,6 @@ function renderFeedPlanner(group, sheds, today){
         ${renderSiloForecastTable(forecast, group)}
         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">
           💡 Click any future weekday row to plan a delivery — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Actual</strong> (recorded in Scheduled Deliveries).
-          Rows with an official delivery already scheduled are locked — edit that delivery in Scheduled Deliveries first.
         </div>
       </div>
       <div class="planner-card">
@@ -7218,25 +6988,21 @@ function renderSiloForecastTable(forecast, group){
   if (forecast.rows.length === 0) return `<div class="forecast-empty">No forecast available.</div>`;
   const hasReading = forecast.rows.some(r => r.balance !== null);
   const rows = forecast.rows.map(r => {
-    const baseClickable = !r.isPast && !r.isWeekend;
-    const hasRealDelivery = (r.deliveries || []).some(d => !d.isTest);
-    const isBlocked = baseClickable && hasRealDelivery;
-    const isClickable = baseClickable && !hasRealDelivery;
+    const clickable = !r.isPast && !r.isWeekend;
     const isInlineOpen = inlineDeliveryState &&
       inlineDeliveryState.group === group &&
       inlineDeliveryState.dateIso === iso(r.date) &&
-      isClickable;
+      clickable;
     const rowClasses = [
       r.isWeekend ? 'is-weekend' : '',
       r.isPast ? 'is-past' : '',
       r.isToday ? 'is-today' : '',
       r.delivery > 0 ? 'pickup-day' : '',
-      isClickable ? 'fdr-clickable' : '',
-      isBlocked ? 'fdr-blocked' : '',
+      clickable ? 'fdr-clickable' : '',
       isInlineOpen ? 'fdr-open' : ''
     ].filter(Boolean).join(' ');
-    const clickAttrs = baseClickable
-      ? ` data-forecast-date="${iso(r.date)}" data-forecast-group="${group}"${isBlocked ? ' data-blocked="1"' : ''}`
+    const clickAttrs = clickable
+      ? ` data-forecast-date="${iso(r.date)}" data-forecast-group="${group}"`
       : '';
 
     let deliveryCell = '—';
@@ -7257,10 +7023,11 @@ function renderSiloForecastTable(forecast, group){
       deliveryCell = chunks.join(' ');
     }
 
+    /* Horizontal inline form (inside this Delivery cell only) */
     if (isInlineOpen){
       deliveryCell += `
         <div class="inline-del">
-          <input type="number" class="inline-del-input" placeholder="tonnes" min="0.1" step="0.1" value="" />
+          <input type="number" class="inline-del-input" placeholder="t" min="0.1" step="0.1" value="" />
           <button type="button" class="inline-del-btn test" data-inline-test="${group}|${iso(r.date)}" title="Add as test delivery (no feed type, session only)">🚜 Test</button>
           <button type="button" class="inline-del-btn actual" data-inline-actual="${group}|${iso(r.date)}" title="Record as actual delivery">✅ Actual</button>
           <button type="button" class="inline-del-btn cancel" data-inline-cancel="1" title="Cancel">✕</button>
@@ -7281,6 +7048,7 @@ function renderSiloForecastTable(forecast, group){
     const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
     const weekendTag = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
 
+    /* Age cell — per-shed ages shown as "24d / 28d" if they differ, else "24d". */
     const ages = shedAgesAtDateForGroup(group, r.date);
     const agesStr = formatAgesPair(ages);
 
@@ -7298,7 +7066,7 @@ function renderSiloForecastTable(forecast, group){
     <div class="forecast-table-wrap">
       <table class="forecast-table" style="min-width:700px;">
         <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Daily Feed</th><th>Delivery</th>
-          <th class="num">End Balance</th><th>Status</th></tr></thead>
+          <th class="num">Balance (end of day)</th><th>Status</th></tr></thead>
         <tbody>
           ${rows}
           <tr class="total-row">
@@ -7399,6 +7167,7 @@ function renderFarmKpiCard(){
       </div>
     </div>`;
 }
+
 function updateFarmKpiValues(){
   const t = computeFarmTotals();
   const el = id => document.getElementById(id);
@@ -7416,6 +7185,7 @@ function updateFarmKpiValues(){
   set('kpiMortality', t.mortality.toLocaleString());
   const msub = el('kpiMortalitySub');
   if (msub) msub.textContent = `${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed`;
+  /* Keep leftover input placeholder fresh in case auto-leftover changed */
   const lo = el('farmLeftoverInput');
   if (lo){
     const want = t.autoLeftover != null
@@ -7424,6 +7194,8 @@ function updateFarmKpiValues(){
     if (lo.placeholder !== want) lo.placeholder = want;
   }
 }
+
+/* ---------- Collapsible prediction adjustments ---------- */
 function renderAdjustmentCollapse(group){
   const isOpen = predState.adjOpen === true;
   const biasPct = Math.round(currentBiasFactor() * 100);
@@ -7510,6 +7282,7 @@ function renderAdjustmentCollapse(group){
       </div>
     </div>`;
 }
+
 function renderPredictionsView(){
   const g = predState.predGroup;
   const sheds = shedsForGroup(g);
@@ -7540,6 +7313,8 @@ function renderPredictionsView(){
       ${visibleSheds.map(s => renderPredictionsShedCard(s, g)).join('')}
     </div>`;
 }
+
+/* ---------- In-Yard Growth Curve panel ---------- */
 function renderInYardCurvePanel(shed){
   const tc = shed.targetCurve || {};
   const fit = getShedGompertzFit(shed);
@@ -7645,6 +7420,8 @@ function renderInYardCurvePanel(shed){
       </div>
     </div>`;
 }
+
+/* ---------- Forecast-day selector bar ---------- */
 function forecastDayBarHtml(){
   const s = dailyRangeState;
   const presets = [
@@ -7684,6 +7461,8 @@ function forecastDayBarHtml(){
       <span class="pdrb-resolved">${resolvedLabel}</span>
     </div>`;
 }
+
+/* ---------- Daily performance (per shed) ---------- */
 function renderDailyPerformance(shed){
   if (!shed.placementDate){
     return `
@@ -7858,6 +7637,8 @@ function renderDailyPerformance(shed){
       </div>
     </div>`;
 }
+
+/* ---------- Days vs standard (per shed) ---------- */
 function renderDaysBehind(shed){
   const today = dateOnly(new Date());
   const currentAge = ageInDays(shed, today);
@@ -7887,6 +7668,8 @@ function renderDaysBehind(shed){
       </span>
     </div>`;
 }
+
+/* ---------- Predicted Pickups block ---------- */
 function renderPickupPlanBlock(shed){
   const pps = (shed.predictedPickups || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
   const realDates = new Set((shed.pickups || []).map(p => iso(p.date)));
@@ -8055,6 +7838,7 @@ function renderPickupPlanBlock(shed){
       ${densityOverrideHtml}
     </div>`;
 }
+
 function renderPredictionsShedCard(shed, group){
   const pred = computePredictions(shed, group);
   const grp = computeGroupPredictions(group);
@@ -8273,6 +8057,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initShedViews();
   const savedSilo = loadSiloData();
   if (savedSilo) siloData = savedSilo;
+  renderSyncButton();
   render();
 
   if (syncFarmName && syncConnectedAt){
@@ -8287,18 +8072,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
     if (e.target.closest('#cluckwiseBtn')){ window.open(CLUCKWISE_URL, '_blank', 'noopener'); return; }
     if (e.target.closest('#themeToggle')){ toggleTheme(); return; }
-    if (e.target.closest('#settingsBtn')){ openSettingsDrawer(); return; }
-    if (e.target.closest('#settingsDrawerClose')){ closeSettingsDrawer(); return; }
-    if (e.target.closest('#settingsScrim')){ closeSettingsDrawer(); return; }
+    if (e.target.closest('#syncBtn')){ openSyncModal(); return; }
     if (e.target.closest('#newBatchBtn')){ openNewBatchModal(); return; }
+    if (e.target.closest('#batchHistoryBtn')){ openBatchHistoryModal(); return; }
     if (e.target.closest('#newBatchClose')){ closeNewBatchModal(); return; }
     if (e.target.closest('#batchHistoryClose')){ closeBatchHistoryModal(); return; }
-    if (e.target.closest('#farmBatchPickerClose')){
-      closeFarmBatchPickerModal();
-      if (!syncConnectedAt){ syncFarmName = null; saveSyncState(); renderSettingsDrawerBody(); render(); }
-      return;
-    }
-    if (e.target.closest('#syncModalClose')){ closeSyncModal(); return; }
     if (e.target.closest('#farmFoundClose')){ closeFarmFoundModal(); return; }
     if (e.target.closest('#manualPickupClose')){ closeManualPickupModal(); return; }
     if (e.target.closest('#sampleClose')){ closeSampleModal(); return; }
@@ -8306,22 +8084,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('#deliveryClose')){ closeDeliveryModal(); return; }
     if (e.target.closest('#importConflictClose')){ closeImportConflictModal(); pendingImport = null; return; }
     if (e.target.closest('#importReviewClose')){ closeImportReviewModal(); return; }
-    if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn') || e.target.closest('#settingsImportBtn')){ triggerImport(); return; }
+    if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn')){ triggerImport(); return; }
     if (e.target.closest('#emptyConnectBtn')){ openSyncModal(); return; }
-
-    if (e.target.closest('#settingsConnectBtn')){
-      const inp = document.getElementById('settingsFarmInput');
-      const v = inp ? inp.value.trim() : '';
-      if (!v){ showToast('Enter a farm name.', true); return; }
-      handleConnectFarm(v);
-      return;
-    }
-    if (e.target.closest('#settingsSyncNowBtn')){ pullFromCloud(false); return; }
-    if (e.target.closest('#settingsChangeFarmBtn')){ openSyncModal(); return; }
-    if (e.target.closest('#settingsDlExcelBtn')){ downloadExcelFromCloud(); return; }
-    if (e.target.closest('#settingsDlBatchBtn')){ downloadCurrentBatchAsJson(); return; }
-    if (e.target.closest('#settingsDisconnectBtn')){ disconnectSync(); return; }
-    if (e.target.closest('#settingsBatchHistoryBtn')){ openBatchHistoryModal(); return; }
 
     if (e.target.closest('[data-toggle-adjustments]')){
       toggleAdjCollapse();
@@ -8336,6 +8100,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    /* Inline delivery form buttons (handled BEFORE row click) */
     const inlineTestBtn = e.target.closest('[data-inline-test]');
     if (inlineTestBtn){
       e.stopPropagation();
@@ -8371,6 +8136,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    /* Test delivery: remove one */
     const removeTestBtn = e.target.closest('[data-remove-test]');
     if (removeTestBtn){
       e.stopPropagation();
@@ -8378,21 +8144,19 @@ document.addEventListener('DOMContentLoaded', () => {
       removeTestDelivery(Number(parts[0]), parts[1]);
       return;
     }
+    /* Test deliveries: clear all */
     const clearTestsBtn = e.target.closest('[data-clear-tests]');
     if (clearTestsBtn){
       clearTestDeliveries(Number(clearTestsBtn.dataset.clearTests));
       return;
     }
 
+    /* Forecast row click → open inline delivery input */
     const forecastRow = e.target.closest('[data-forecast-date]');
     if (forecastRow && !e.target.closest('.inline-del')){
       const g = Number(forecastRow.dataset.forecastGroup);
       const dIso = forecastRow.dataset.forecastDate;
       if (Number.isFinite(g) && dIso){
-        if (forecastRow.dataset.blocked === '1'){
-          showToast('⚠️ Official delivery already scheduled on this day — delete it in Scheduled Deliveries to unlock this row.', true);
-          return;
-        }
         if (inlineDeliveryState && inlineDeliveryState.group === g && inlineDeliveryState.dateIso === dIso){
           inlineDeliveryState = null;
         } else {
@@ -8403,6 +8167,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    /* Pickup-plan pill → jump to Predictions card (does NOT open a modal) */
     const gotoCardBtn = e.target.closest('[data-goto-predcard]');
     if (gotoCardBtn){
       const shedId = Number(gotoCardBtn.dataset.gotoPredcard);
@@ -8596,13 +8361,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* Enter key inside inline delivery input triggers Test (default). */
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape'){
-      if (settingsDrawerOpen){
-        closeSettingsDrawer();
-        return;
-      }
-    }
     if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('inline-del-input')){
       e.preventDefault();
       const form = e.target.closest('.inline-del');
@@ -8631,7 +8391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeFarmFoundModal();
     closeNewBatchModal();
     closeBatchHistoryModal();
-    closeFarmBatchPickerModal();
     closeManualPickupModal();
     closeSampleModal();
     closePredictedPickupModal();
@@ -8775,6 +8534,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    /* NEW: leftover input on the whole-farm KPI card */
     if (t.id === 'farmLeftoverInput'){
       setFarmLeftover(t.value);
       t.classList.toggle('manual', predState.farmLeftoverKg != null && predState.farmLeftoverKg > 0);
