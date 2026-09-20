@@ -272,16 +272,6 @@
     background:var(--surface-soft); border:1px solid var(--line); border-radius:999px; padding:2px 8px; cursor:help; flex-shrink:0;
   }
   .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
-  .task-reveal{
-    display:flex; align-items:center; gap:8px; flex-wrap:wrap; max-height:0; opacity:0; overflow:hidden;
-    transition:max-height .18s ease, opacity .15s ease, margin-top .18s ease; margin-top:0; padding-left:25px;
-  }
-  body.hide-icons .task-reveal{ padding-left:0; }
-  @media (hover:hover){
-    .task-card:hover .task-reveal{ max-height:60px; opacity:1; margin-top:8px; }
-  }
-  .task-card.expanded .task-reveal{ max-height:60px; opacity:1; margin-top:8px; }
-  .task-reveal .task-actions{ margin-left:auto; }
 
   .task-card-top{ position:relative; }
   .task-menu-btn{
@@ -297,6 +287,18 @@
     .task-menu-btn{ opacity:1; }
   }
   .task-card.menu-open .task-menu-btn{ opacity:1; background:var(--ink); color:var(--surface); }
+  .btn-freq-delete{
+    flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft);
+    font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    margin-left:auto; opacity:0; transition:opacity .12s ease, background .12s ease;
+  }
+  .btn-freq-delete:hover{ background:var(--danger-soft); }
+  @media (hover:hover){
+    .frequent-chip:hover .btn-freq-delete{ opacity:1; }
+  }
+  @media (hover:none){
+    .btn-freq-delete{ opacity:1; }
+  }
   .task-menu-popup{
     display:none; position:fixed; z-index:80; width:190px;
     background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px;
@@ -2406,9 +2408,9 @@
         <span class="task-body"><span class="task-name"></span></span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
-        ${!selectable ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
+        ${!opts.disableTapExpand ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
       </div>
-      ${!selectable ? `<div class="task-menu-popup">
+      ${!opts.disableTapExpand ? `<div class="task-menu-popup">
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         ${task.notes ? `<div class="task-menu-flag task-note-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝 ${task.notes.length>40 ? task.notes.slice(0,40)+'…' : task.notes}</div>` : ''}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
@@ -2424,15 +2426,15 @@
       const selectedIds = selectable.ids || bulkSelectedIds;
       const onUpdate = selectable.onUpdate || updateBulkActionBar;
       const cb = card.querySelector('.bulk-select-cb');
-      const toggleSelection = ()=>{
+      cb.checked = selectedIds.has(task.id);
+      cb.addEventListener('click', (e)=>{
+        e.stopPropagation();
         if(selectedIds.has(task.id)) selectedIds.delete(task.id); else selectedIds.add(task.id);
         cb.checked = selectedIds.has(task.id);
         onUpdate();
-      };
-      cb.checked = selectedIds.has(task.id);
-      cb.addEventListener('click', (e)=>{ e.stopPropagation(); toggleSelection(); });
-      card.addEventListener('click', (e)=>{ if(e.target!==cb) toggleSelection(); });
-    } else if(!opts.disableTapExpand){
+      });
+    }
+    if(!opts.disableTapExpand){
       const menuBtn = card.querySelector('.task-menu-btn');
       const popup = card.querySelector('.task-menu-popup');
       menuBtn.addEventListener('click', (e)=>{
@@ -2448,7 +2450,7 @@
         openTaskDetailModal(task.id);
       });
       card.querySelector('.task-card-top').addEventListener('click', (e)=>{
-        if(e.target.closest('.task-menu-btn')) return;
+        if(e.target.closest('.task-menu-btn') || e.target.classList.contains('bulk-select-cb')) return;
         openTaskDetailModal(task.id);
       });
     }
@@ -2466,18 +2468,11 @@
       <div class="task-card-top">
         <span class="task-icon"></span>
         <span class="task-body"><span class="task-name"></span></span>
-      </div>
-      <div class="task-reveal">
-        <span class="task-actions"><button class="btn-freq-delete" title="Remove from frequent list">🗑️</button></span>
+        <button class="btn-freq-delete" type="button" title="Remove from frequent list">🗑️</button>
       </div>`;
     renderIconInto(card.querySelector('.task-icon'), item.icon);
     card.querySelector('.task-name').textContent = item.name;
     card.querySelector('.btn-freq-delete').addEventListener('click', (e)=>{ e.stopPropagation(); removeFrequentTemplate(item.id); });
-    card.querySelector('.task-card-top').addEventListener('click', ()=>{
-      const willExpand = !card.classList.contains('expanded');
-      collapseAllExpandedCards(card);
-      card.classList.toggle('expanded', willExpand);
-    });
     return card;
   }
 
@@ -3069,15 +3064,6 @@
         renderBacklogModalList();
       });
       actionsRow.appendChild(scheduleBtn);
-      const editBtn = document.createElement('button');
-      editBtn.className = 'backlog-edit-btn';
-      editBtn.type = 'button';
-      editBtn.textContent = '✎ Edit';
-      editBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        openEditTaskModal(t.id);
-      });
-      actionsRow.appendChild(editBtn);
       card.appendChild(actionsRow);
       list.appendChild(card);
       if(backlogScheduleOpenFor===t.id){
