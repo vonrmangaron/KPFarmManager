@@ -287,31 +287,6 @@
     .task-menu-btn{ opacity:1; }
   }
   .task-card.menu-open .task-menu-btn{ opacity:1; background:var(--ink); color:var(--surface); }
-  .btn-freq-delete{
-    flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft);
-    font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-    margin-left:auto; opacity:0; transition:opacity .12s ease, background .12s ease;
-  }
-  .btn-freq-delete:hover{ background:var(--danger-soft); }
-  @media (hover:hover){
-    .frequent-chip:hover .btn-freq-delete{ opacity:1; }
-  }
-  @media (hover:none){
-    .btn-freq-delete{ opacity:1; }
-  }
-  .btn-freq-edit{
-    flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft);
-    color:var(--muted); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-    margin-left:auto; opacity:0; transition:opacity .12s ease, background .12s ease, color .12s ease;
-  }
-  .btn-freq-edit:hover{ background:var(--ink); color:var(--surface); }
-  @media (hover:hover){
-    .frequent-chip:hover .btn-freq-edit{ opacity:1; }
-  }
-  @media (hover:none){
-    .btn-freq-edit{ opacity:1; }
-  }
-  .btn-freq-delete{ margin-left:6px; }
   .frequent-chip .task-card-top{ display:flex; }
   .frequent-chip.editing-freq .task-card-top{ display:none; }
   .freq-edit-row{ display:none; align-items:center; gap:8px; }
@@ -331,7 +306,6 @@
     display:none; position:fixed; z-index:80; width:190px;
     background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px;
   }
-  .task-card.menu-open .task-menu-popup{ display:block; }
   .task-menu-item{
     display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent;
     color:var(--ink); font-family:'Sora',sans-serif; font-size:13px; font-weight:600; padding:9px 10px; border-radius:8px; cursor:pointer;
@@ -408,7 +382,6 @@
   .task-actions button svg{ width:13px; height:13px; }
   .task-actions .btn-done{ background:var(--secondary-soft); color:var(--secondary); }
   .task-actions .btn-done:hover{background:var(--secondary); color:#fff; transform:scale(1.08);}
-  .task-actions .btn-delete, .task-actions .btn-freq-delete{ background:var(--danger-soft); color:var(--danger); font-size:11px; }
   .task-actions .btn-delete:hover, .task-actions .btn-freq-delete:hover{background:var(--danger); color:#fff; transform:scale(1.08);}
   .task-actions .btn-delete.confirm{background:var(--danger); color:#fff;}
 
@@ -2400,10 +2373,24 @@
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   let bulkSelectMode = false;
   let bulkSelectedIds = new Set();
-  function closeAllTaskMenus(except){
-    document.querySelectorAll('.task-card.menu-open').forEach(el=>{
-      if(el!==except) el.classList.remove('menu-open');
-    });
+  let activeMenuPopup = null, activeMenuHome = null, activeMenuCard = null;
+  function closeAllTaskMenus(){
+    if(activeMenuPopup){
+      activeMenuPopup.style.display = 'none';
+      if(activeMenuHome) activeMenuHome.appendChild(activeMenuPopup);
+      if(activeMenuCard) activeMenuCard.classList.remove('menu-open');
+    }
+    activeMenuPopup = null; activeMenuHome = null; activeMenuCard = null;
+  }
+  function openTaskMenu(card, menuBtn, popup){
+    closeAllTaskMenus();
+    activeMenuHome = popup.parentNode;
+    activeMenuPopup = popup;
+    activeMenuCard = card;
+    document.body.appendChild(popup);
+    popup.style.display = 'block';
+    positionTaskMenuPopup(menuBtn, popup);
+    card.classList.add('menu-open');
   }
   function positionTaskMenuPopup(btn, popup){
     const btnRect = btn.getBoundingClientRect();
@@ -2464,16 +2451,15 @@
     if(!opts.disableTapExpand){
       const menuBtn = card.querySelector('.task-menu-btn');
       const popup = card.querySelector('.task-menu-popup');
+      popup.dataset.taskId = task.id;
       menuBtn.addEventListener('click', (e)=>{
         e.stopPropagation();
-        const willOpen = !card.classList.contains('menu-open');
-        closeAllTaskMenus(card);
-        card.classList.toggle('menu-open', willOpen);
-        if(willOpen) positionTaskMenuPopup(menuBtn, popup);
+        if(activeMenuPopup === popup) closeAllTaskMenus();
+        else openTaskMenu(card, menuBtn, popup);
       });
       card.querySelector('.btn-open-card').addEventListener('click', (e)=>{
         e.stopPropagation();
-        card.classList.remove('menu-open');
+        closeAllTaskMenus();
         openTaskDetailModal(task.id);
       });
       card.querySelector('.task-card-top').addEventListener('click', (e)=>{
@@ -2495,8 +2481,11 @@
       <div class="task-card-top">
         <span class="task-icon"></span>
         <span class="task-body"><span class="task-name"></span></span>
-        <button class="btn-freq-edit" type="button" title="Rename">✎</button>
-        <button class="btn-freq-delete" type="button" title="Remove from frequent list">🗑️</button>
+        <button class="task-menu-btn" type="button" aria-label="Template menu" title="More options">⋯</button>
+      </div>
+      <div class="task-menu-popup">
+        <button class="task-menu-item btn-freq-edit-item" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-freq-delete-item danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
       </div>
       <div class="freq-edit-row">
         <span class="freq-edit-icon"></span>
@@ -2506,11 +2495,18 @@
       </div>`;
     renderIconInto(card.querySelector('.task-icon'), item.icon);
     card.querySelector('.task-name').textContent = item.name;
-    card.querySelector('.btn-freq-delete').addEventListener('click', (e)=>{ e.stopPropagation(); removeFrequentTemplate(item.id); });
-    const editRow = card.querySelector('.freq-edit-row');
+    const menuBtn = card.querySelector('.task-menu-btn');
+    const popup = card.querySelector('.task-menu-popup');
+    popup.dataset.taskId = item.id;
+    menuBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(activeMenuPopup === popup) closeAllTaskMenus();
+      else openTaskMenu(card, menuBtn, popup);
+    });
     const editInput = card.querySelector('.freq-edit-input');
     const editIconPreview = card.querySelector('.freq-edit-icon');
     function openEdit(){
+      closeAllTaskMenus();
       card.classList.add('editing-freq');
       editInput.value = item.name;
       renderIconInto(editIconPreview, item.icon);
@@ -2529,7 +2525,8 @@
         showToast('Frequent task updated.');
       }
     }
-    card.querySelector('.btn-freq-edit').addEventListener('click', (e)=>{ e.stopPropagation(); openEdit(); });
+    card.querySelector('.btn-freq-edit-item').addEventListener('click', (e)=>{ e.stopPropagation(); openEdit(); });
+    card.querySelector('.btn-freq-delete-item').addEventListener('click', (e)=>{ e.stopPropagation(); closeAllTaskMenus(); removeFrequentTemplate(item.id); });
     editInput.addEventListener('input', ()=> renderIconInto(editIconPreview, guessIcon(editInput.value.trim())));
     editInput.addEventListener('keydown', (e)=>{
       if(e.key==='Enter'){ e.preventDefault(); saveEdit(); }
@@ -3701,18 +3698,24 @@
   }
 
   // ---------- event delegation ----------
+  function taskIdFromEl(el){
+    const card = el.closest('.task-card');
+    if(card && card.dataset.id) return card.dataset.id;
+    const popup = el.closest('.task-menu-popup');
+    return popup ? popup.dataset.taskId : null;
+  }
   document.addEventListener('click', (e)=>{
     const editBtn = e.target.closest('.btn-edit');
     const doneBtn = e.target.closest('.btn-done');
     const delBtn = e.target.closest('.btn-delete');
     if(editBtn){
-      const card = editBtn.closest('.task-card');
-      if(card && card.dataset.id) openEditTaskModal(card.dataset.id);
+      const id = taskIdFromEl(editBtn);
+      if(id) openEditTaskModal(id);
       return;
     }
-    if(doneBtn){ toggleDone(doneBtn.closest('.task-card').dataset.id); return; }
+    if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
-      const id = delBtn.closest('.task-card').dataset.id;
+      const id = taskIdFromEl(delBtn);
       if(pendingDeletes.has(id)){
         clearTimeout(pendingDeletes.get(id)); pendingDeletes.delete(id); deleteTask(id);
       } else {
@@ -4330,9 +4333,10 @@
 
 
   document.addEventListener('keydown', (e)=>{
-    if(e.key==='Escape') closeOverlays();
+    if(e.key==='Escape'){ closeAllTaskMenus(); closeOverlays(); }
   });
   window.addEventListener('resize', ()=>{
+    closeAllTaskMenus();
     updateBatchStyleAvailability();
     updatePeriodLabel();
     if(viewMode==='month') renderMonth();
