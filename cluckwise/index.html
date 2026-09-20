@@ -61,6 +61,59 @@
     --shadow-lg:0 16px 40px rgba(0,0,0,0.45);
   }
 
+  .sidebar,
+  .calendar-wrap,
+  .form-modal-body,
+  .history-list,
+  .settings-body,
+  .frequent-list {
+    scrollbar-width: thin;
+  }
+  .sidebar::-webkit-scrollbar,
+  .calendar-wrap::-webkit-scrollbar,
+  .form-modal-body::-webkit-scrollbar,
+  .history-list::-webkit-scrollbar,
+  .settings-body::-webkit-scrollbar,
+  .frequent-list::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .sidebar::-webkit-scrollbar-track,
+  .calendar-wrap::-webkit-scrollbar-track,
+  .form-modal-body::-webkit-scrollbar-track,
+  .history-list::-webkit-scrollbar-track,
+  .settings-body::-webkit-scrollbar-track,
+  .frequent-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+  }
+  .sidebar::-webkit-scrollbar-thumb,
+  .calendar-wrap::-webkit-scrollbar-thumb,
+  .form-modal-body::-webkit-scrollbar-thumb,
+  .history-list::-webkit-scrollbar-thumb,
+  .settings-body::-webkit-scrollbar-thumb,
+  .frequent-list::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background .15s ease;
+  }
+  .sidebar::-webkit-scrollbar-thumb:hover,
+  .calendar-wrap::-webkit-scrollbar-thumb:hover,
+  .form-modal-body::-webkit-scrollbar-thumb:hover,
+  .history-list::-webkit-scrollbar-thumb:hover,
+  .settings-body::-webkit-scrollbar-thumb:hover,
+  .frequent-list::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+    background-clip: padding-box;
+  }
+  .sidebar::-webkit-scrollbar-corner,
+  .calendar-wrap::-webkit-scrollbar-corner,
+  .form-modal-body::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   *{box-sizing:border-box;}
   html,body{height:100%;}
   html{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; text-size-adjust:100%; }
@@ -460,12 +513,10 @@
   /* ---------- Kanban ---------- */
   .kanban-canvas{ position:relative; }
   .kanban-board{
-    display:flex; gap:15px; align-items:flex-start; overflow-x:auto; cursor:grab; padding-bottom:14px;
+    display:flex; gap:15px; align-items:flex-start; overflow-x:auto; padding-bottom:14px;
     will-change:scroll-position; transform:translateZ(0); -webkit-overflow-scrolling:touch;
     scrollbar-width:thin; scrollbar-color:#4A90D9 rgba(0,0,0,0.08);
   }
-  .kanban-board.panning{ cursor:grabbing; user-select:none; -webkit-user-select:none; filter:brightness(0.99); }
-  .kanban-board.panning .kanban-column{ transition:none; }
   .kanban-board::-webkit-scrollbar{ height:12px; }
   .kanban-board::-webkit-scrollbar-track{ background:rgba(0,0,0,0.07); border-radius:999px; margin:0 2px; }
   .kanban-board::-webkit-scrollbar-thumb{
@@ -481,7 +532,7 @@
   .kanban-fade-right{ right:0; background:linear-gradient(270deg, var(--bg), transparent); }
   .kanban-canvas.show-fade-left .kanban-fade-left{ opacity:1; }
   .kanban-canvas.show-fade-right .kanban-fade-right{ opacity:1; }
-  .kanban-column{ flex:0 0 270px; min-width:270px; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; }
+  .kanban-column{ flex:0 0 270px; min-width:270px; max-height:100%; display:flex; flex-direction:column; border-radius:10px; border:1px solid var(--line); padding:7px; overflow:hidden; }
   .col-head{
     padding:9px 10px; margin-bottom:8px; border-radius:8px; font-family:'Sora',sans-serif;
     border-top:3px solid var(--line); position:relative;
@@ -518,7 +569,6 @@
   .col-sat{ background:#FAF4F1; border-color:#EAD9D1; } .col-sat .col-head{ background:var(--secondary-soft); border-top-color:var(--secondary); } .col-sat .dtitle{ color:var(--secondary); } .col-sat .dbar>span{ background:var(--secondary); }
   .col-sun{ background:#F8F5F1; border-color:#E9E1D6; } .col-sun .col-head{ background:var(--weekend-bg); border-top-color:#5C4033; } .col-sun .dtitle{ color:#5C4033; } .col-sun .dbar>span{ background:#5C4033; }
 
-  /* Dark mode — dark-toned column variants so they read well against the dark theme */
   body.theme-dark .col-mon{ background:#2A3752; border-color:#5A8FD6; }
   body.theme-dark .col-mon .col-head{ background:#2C3B57; border-top-color:#5A8FD6; }
   body.theme-dark .col-mon .dtitle{ color:#8FB4E8; }
@@ -551,7 +601,17 @@
   .kanban-column.today .col-head{ box-shadow:0 0 0 2.5px var(--primary); }
   .kanban-column.today .col-head .dtitle::after{ content:' · TODAY'; color:var(--primary-dark); }
 
-  .kanban-cards{ display:flex; flex-direction:column; gap:6px; }
+  .kanban-cards{
+    display:flex; flex-direction:column; gap:6px;
+    flex:1 1 auto; min-height:0;
+    overflow-y:auto; overflow-x:hidden;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    padding-bottom:2px;
+  }
+  .kanban-cards::-webkit-scrollbar{ display:none; }
+  .kanban-column > .col-head{ flex-shrink:0; }
+  .kanban-column > .inline-add-wrap{ flex-shrink:0; }
 
   .kcard{
     background:var(--surface); border:1px solid var(--line); border-radius:8px;
@@ -736,10 +796,8 @@
     .sidebar{width:260px;}
   }
 
-  /* ---- Sidebar toggle (hamburger) — shown on tablet & mobile ---- */
   .sidebar-toggle{ display:none; }
 
-  /* ---- Bottom nav + quick-add FAB — mobile only ---- */
   .bottom-nav{ display:none; }
   .fab-add{ display:none; }
   .fab-notif{ display:none; }
@@ -1092,6 +1150,7 @@
   <div class="form-modal-body">
     <div id="dayModalInlineAddWrap"></div>
     <div class="day-tasks" id="dayModalTaskList" data-date="" style="margin-top:10px; margin-bottom:18px;"></div>
+    <button class="btn-ai-wide" id="copyDayTasksBtn" style="margin-top:6px;">📄 Copy all tasks to another day</button>
     <button class="btn-danger-outline" id="deleteAllDayTasksBtn" style="margin-top:6px;">Delete all tasks for this day</button>
 
     <label style="margin-top:14px;">Backlog — tap or drag to add to this day</label>
@@ -1292,12 +1351,28 @@
   </div>
 </div>
 
+<div class="form-modal" id="copyModal">
+  <div class="form-modal-head"><h2 id="copyModalTitle">Copy task</h2><button id="closeCopyModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <p id="copyModalDesc" style="font-size:12.5px;color:var(--muted);margin:0 0 8px;"></p>
+    <div id="copyDestSelectRow">
+      <label for="copyDestSelect">Copy to</label>
+      <select id="copyDestSelect">
+        <option value="backlog" id="copyOptBacklog">Backlog (no date)</option>
+        <option value="sameday" id="copyOptSameDay">Same day</option>
+        <option value="pick">Pick a date…</option>
+      </select>
+    </div>
+    <div id="copyDateRow" style="display:none;">
+      <label for="copyDateInput">Target date</label>
+      <input type="date" id="copyDateInput">
+    </div>
+    <button class="btn-app" id="confirmCopyBtn" style="margin-top:10px;">Copy</button>
+  </div>
+</div>
+
 <script>
 (function(){
-  // ---- Cloud sync via a Cloudflare Worker proxy (optional) ----
-  // The GitHub token lives only on the Worker (server-side secret) — it never
-  // touches this file or any browser. The repo is hardcoded below since it's
-  // not sensitive; each person only needs to enter their own farm name.
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
   const HARDCODED_REPO = 'vonrmangaron/farmdata';
   let ghPath = null, ghSha = null, ghFarmName = null;
@@ -1333,7 +1408,6 @@
   let tasks = [];
   let orderCounter = Date.now();
   function nextOrder(){ return orderCounter++; }
-  // Open tasks always sort above done ones; within each group, manual drag-order is preserved.
   function taskSortCompare(a, b){
     const aDone = a.status==='done' ? 1 : 0;
     const bDone = b.status==='done' ? 1 : 0;
@@ -1463,7 +1537,6 @@
     showToast._t = setTimeout(()=>t.classList.remove('show'), 2600);
   }
 
-  // ---------- settings ----------
   const THEME_CLASSES = ['theme-dark'];
   function applySettings(){
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
@@ -1490,7 +1563,6 @@
     if(note) note.style.display = disabled ? 'block' : 'none';
   }
 
-  // ---------- persistence ----------
   async function persist(){
     showSyncPending();
     schedulePush();
@@ -1510,7 +1582,6 @@
     el.classList.add('show', 'sync-error');
   }
 
-  // ---------- debounced GitHub sync ----------
   let pushDebounceTimer = null;
   let pushMaxWaitTimer = null;
   let pushInFlight = false;
@@ -1597,7 +1668,6 @@
     flashSaved._t = setTimeout(()=>el.classList.remove('show'), 1200);
   }
 
-  // ---------- Cloud sync via the GitHub Contents API (optional) ----------
   function sanitizeFarmFileName(name){
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     return (slug || 'farm') + '.json';
@@ -1721,7 +1791,6 @@
     addHistory('Frequent Task Checklist added', `${PREP_CHECKLIST.length} tasks added to Backlog for ${contextLabel}`);
   }
 
-  // ---------- batches ----------
   function upsertBatch(number, startStr, endStr, colorStr){
     let b = batches.find(x=>x.number===number);
     let start = startStr || (b ? b.start : dateKey(new Date()));
@@ -1806,7 +1875,6 @@
     return count;
   }
 
-  // ---------- tasks ----------
   function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };
     if(meta) Object.assign(t, meta);
@@ -1815,7 +1883,6 @@
     return t;
   }
 
-  // ---------- inline task add ----------
   let activeInlineAddKey = null;
   function buildInlineAddRow(key, dateVal){
     const wrap = document.createElement('div');
@@ -1872,7 +1939,7 @@
     persist(); renderAll();
   }
   function deleteTask(id){
-    const t = tasks.find(t=>t.id===id);
+    const t = tasks.find(x=>x.id===id);
     if(!t) return;
     tasks = tasks.filter(x=>x.id!==id);
     addHistory('Removed', `${taskLabel(t)} deleted`);
@@ -1901,7 +1968,6 @@
     persist(); renderAll();
   }
 
-  // ---------- edit task + recurrence ----------
   const REPEAT_LABELS = {
     daily:'Every day', weekdays:'Every weekday', every2days:'Every 2 days',
     weekly:'Every week', biweekly:'Every 2 weeks', monthly:'Every month'
@@ -1958,7 +2024,6 @@
     return count;
   }
 
-  // ---------- events ----------
   function addEvent(name, dateVal, withChecklist, color, batchNumber){
     const ev = {id:uid(), name, date:dateVal, checklist: !!withChecklist, color: color || DEFAULT_EVENT_COLOR, batchNumber: batchNumber || null};
     events.push(ev);
@@ -1988,7 +2053,6 @@
     persist(); renderAll();
   }
 
-  // ---------- frequent task templates ----------
   function addFrequentTemplate(name, icon){
     const exists = frequentTemplates.find(f=> f.name.trim().toLowerCase()===name.trim().toLowerCase());
     if(exists){ showToast('Already in your frequent tasks.', true); return; }
@@ -2003,7 +2067,6 @@
     persist(); renderAll();
   }
 
-  // ---------- report (client-side PDF via jsPDF) ----------
   function generateReport(opts){
     opts = opts || {type:'all'};
     try{
@@ -2263,7 +2326,6 @@
     showToast(`CSV exported — ${scopedTasks.length} task(s).`);
   }
 
-  // ---------- overdue task notification ----------
   function refreshOverdueList(){
     const todayKey = dateKey(new Date());
     const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
@@ -2318,7 +2380,6 @@
     openOverdueModal();
   }
 
-  // ---------- rendering ----------
   const ASSIGNEE_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   function colorForAssignee(name){
     if(!name) return '#999';
@@ -2412,6 +2473,7 @@
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
         <div class="task-menu-sep"></div>
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
@@ -3060,7 +3122,6 @@
     });
   }
 
-  // ---------- dedicated Backlog view ----------
   let backlogSelectedIds = new Set();
   let backlogScheduleOpenFor = null;
   function openBacklogModal(){
@@ -3204,6 +3265,7 @@
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
         <div class="task-menu-sep"></div>
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
@@ -3308,7 +3370,10 @@
     const wrapStyle = getComputedStyle(wrap);
     const wrapPadding = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
     const availableHeight = wrap.clientHeight - wrapPadding;
-    if(availableHeight > 0) board.style.minHeight = availableHeight + 'px';
+    if(availableHeight > 0){
+      board.style.height = availableHeight + 'px';
+      board.style.minHeight = availableHeight + 'px';
+    }
 
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
@@ -3329,70 +3394,18 @@
       }, 80);
     });
 
-    let isPanning = false, panStartX = 0, panScrollLeft = 0, didPan = false;
-    let velocityX = 0, lastMoveX = 0, lastMoveTime = 0, momentumFrame = null;
-
-    function cancelMomentum(){ if(momentumFrame){ cancelAnimationFrame(momentumFrame); momentumFrame = null; } }
-    function startMomentum(){
-      let vx = velocityX * 16;
-      const decay = 0.94;
-      function step(){
-        if(Math.abs(vx) < 0.5){ momentumFrame = null; return; }
-        board.scrollLeft -= vx;
-        vx *= decay;
-        momentumFrame = requestAnimationFrame(step);
-      }
-      momentumFrame = requestAnimationFrame(step);
-    }
-    function panEligible(target){ return !target.closest('.kcard') && !target.closest('button'); }
-    function panStart(clientX, target){
-      if(!panEligible(target)) return false;
-      cancelMomentum();
-      isPanning = true; didPan = false;
-      board.classList.add('panning');
-      panStartX = clientX; panScrollLeft = board.scrollLeft;
-      lastMoveX = clientX; lastMoveTime = performance.now();
-      velocityX = 0;
-      return true;
-    }
-    function panMove(clientX){
-      if(!isPanning) return;
-      const dx = clientX - panStartX;
-      if(Math.abs(dx) > 3) didPan = true;
-      board.scrollLeft = panScrollLeft - dx;
-      const now = performance.now();
-      const dt = now - lastMoveTime;
-      if(dt > 0) velocityX = (clientX - lastMoveX) / dt;
-      lastMoveX = clientX; lastMoveTime = now;
-    }
-    function panEnd(){
-      if(!isPanning) return;
-      isPanning = false;
-      board.classList.remove('panning');
-      if(didPan){
-        suppressNextClick = true; setTimeout(()=>{ suppressNextClick = false; }, 80);
-        startMomentum();
-      }
-    }
-
-    board.addEventListener('mousedown', (e)=> panStart(e.pageX, e.target));
-    window.addEventListener('mousemove', (e)=> panMove(e.pageX));
-    window.addEventListener('mouseup', panEnd);
-    board.addEventListener('mouseleave', ()=>{ if(isPanning){ isPanning=false; board.classList.remove('panning'); } });
-
-    board.addEventListener('touchstart', (e)=>{
-      if(window.innerWidth<=760) return;
-      panStart(e.touches[0].clientX, e.target);
-    }, {passive:true});
-    board.addEventListener('touchmove', (e)=>{
-      if(!isPanning) return;
-      panMove(e.touches[0].clientX);
-    }, {passive:true});
-    board.addEventListener('touchend', panEnd);
-    board.addEventListener('touchcancel', panEnd);
-
+    // Native trackpad / touch / scrollbar driven. Mouse wheel without a horizontal
+    // axis is the only JS-driven fallback, and only when not over a scrollable column.
+    // No click-drag-to-pan — drag on a trackpad is always native, and any JS panning
+    // here previously bled into vertical scrolling inside full columns.
     board.addEventListener('wheel', (e)=>{
-      if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){
+      // Trackpad horizontal gesture → native board scroll handles it.
+      if(Math.abs(e.deltaX) > 1) return;
+      // Vertical scroll inside a scrollable column → let the column handle it natively.
+      const cardsEl = e.target.closest && e.target.closest('.kanban-cards');
+      if(cardsEl && cardsEl.scrollHeight > cardsEl.clientHeight + 1) return;
+      // Mouse wheel fallback (discrete, no horizontal axis) → pan the board horizontally.
+      if(Math.abs(e.deltaY) >= 50){
         e.preventDefault();
         board.scrollLeft += e.deltaY;
       }
@@ -3541,7 +3554,6 @@
     updateOverdueBadge();
   }
 
-  // ---------- day modal ----------
   let editingAssignees = [];
   let detailTaskId = null;
   function openTaskDetailModal(id){
@@ -3696,7 +3708,6 @@
     initSortables();
   }
 
-  // ---------- event delegation ----------
   function taskIdFromEl(el){
     const card = el.closest('.task-card');
     if(card && card.dataset.id) return card.dataset.id;
@@ -3706,6 +3717,7 @@
   let pendingSeriesDeleteId = null;
   document.addEventListener('click', (e)=>{
     const editBtn = e.target.closest('.btn-edit');
+    const copyBtn = e.target.closest('.btn-copy');
     const doneBtn = e.target.closest('.btn-done');
     const delBtn = e.target.closest('.btn-delete');
     if(editBtn){
@@ -3713,9 +3725,16 @@
       if(id) openEditTaskModal(id);
       return;
     }
+    if(copyBtn){
+      const id = taskIdFromEl(copyBtn);
+      closeAllTaskMenus();
+      if(id) openCopyTaskModal(id);
+      return;
+    }
     if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
       const id = taskIdFromEl(delBtn);
+      if(!id) return;
       const target = tasks.find(x=>x.id===id);
       if(target && target.seriesId && !pendingDeletes.has(id)){
         pendingSeriesDeleteId = id;
@@ -3724,10 +3743,18 @@
         return;
       }
       if(pendingDeletes.has(id)){
-        clearTimeout(pendingDeletes.get(id)); pendingDeletes.delete(id); deleteTask(id);
+        clearTimeout(pendingDeletes.get(id));
+        pendingDeletes.delete(id);
+        deleteTask(id);
       } else {
-        delBtn.classList.add('confirm'); delBtn.textContent='⚠'; delBtn.title='Click again to confirm delete';
-        const t = setTimeout(()=>{ pendingDeletes.delete(id); delBtn.classList.remove('confirm'); delBtn.textContent='🗑️'; delBtn.title='Delete'; }, 2500);
+        if(!delBtn._origHtml) delBtn._origHtml = delBtn.innerHTML;
+        delBtn.classList.add('confirm');
+        delBtn.innerHTML = '<span class="tmi-ic">⚠️</span>Confirm delete';
+        const t = setTimeout(()=>{
+          pendingDeletes.delete(id);
+          delBtn.classList.remove('confirm');
+          delBtn.innerHTML = delBtn._origHtml || '<span class="tmi-ic">🗑️</span>Delete';
+        }, 2500);
         pendingDeletes.set(id, t);
       }
       return;
@@ -3812,6 +3839,13 @@
       this.classList.remove('confirm');
       this.textContent = 'Delete all tasks for this day';
     }
+  });
+
+  $('#copyDayTasksBtn').addEventListener('click', ()=>{
+    const key = dayModalOpenKey;
+    if(!key) return;
+    $('#dayModal').classList.remove('open');
+    openCopyDayModal(key);
   });
 
 
@@ -4019,6 +4053,7 @@
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
     $('#seriesDeleteModal').classList.remove('open');
+    $('#copyModal').classList.remove('open');
     document.querySelector('.sidebar').classList.remove('open');
     $('#quickAddSheet').classList.add('hidden');
     $('#moreSheet').classList.add('hidden');
@@ -4028,6 +4063,9 @@
     deleteAllPending = false;
     overdueModalOpen = false;
     pendingSeriesDeleteId = null;
+    copySourceMode = null;
+    copySourceTaskId = null;
+    copySourceDayKey = null;
   }
   function toggleSidebar(){
     const sb = document.querySelector('.sidebar');
@@ -4236,6 +4274,94 @@
     overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
   });
 
+  // ---------- Copy task / Copy day ----------
+  let copySourceMode = null;
+  let copySourceTaskId = null;
+  let copySourceDayKey = null;
+
+  function openCopyTaskModal(taskId){
+    const t = tasks.find(x=>x.id===taskId);
+    if(!t) return;
+    copySourceMode = 'task';
+    copySourceTaskId = taskId;
+    copySourceDayKey = null;
+    $('#copyModalTitle').textContent = 'Copy task';
+    $('#copyModalDesc').textContent = `"${t.name}" will be duplicated as a new open task.`;
+    $('#copyDestSelectRow').style.display = 'block';
+    $('#copyOptBacklog').style.display = '';
+    if(t.date){
+      $('#copyOptSameDay').style.display = '';
+      $('#copyOptSameDay').textContent = `Same day (${formatFull(t.date)})`;
+    } else {
+      $('#copyOptSameDay').style.display = 'none';
+    }
+    $('#copyDestSelect').value = 'backlog';
+    $('#copyDateRow').style.display = 'none';
+    $('#copyDateInput').value = '';
+    openDrawer('#copyModal');
+  }
+  function openCopyDayModal(dayKey){
+    copySourceMode = 'day';
+    copySourceTaskId = null;
+    copySourceDayKey = dayKey;
+    const count = tasks.filter(t=>t.date===dayKey && t.status!=='done').length;
+    $('#copyModalTitle').textContent = 'Copy all tasks';
+    $('#copyModalDesc').textContent = `${count} open task(s) from ${formatFull(dayKey)} will be duplicated to a new date.`;
+    $('#copyDestSelectRow').style.display = 'none';
+    $('#copyDateRow').style.display = 'block';
+    $('#copyDateInput').value = '';
+    openDrawer('#copyModal');
+  }
+  function buildCopiedTask(src, dateVal){
+    return {
+      id: uid(),
+      name: src.name,
+      icon: src.icon,
+      date: dateVal || null,
+      status: 'open',
+      createdAt: Date.now(),
+      order: nextOrder(),
+      assignees: (src.assignees || []).slice(),
+      notes: src.notes || '',
+      priority: src.priority || null
+    };
+  }
+  $('#copyDestSelect').addEventListener('change', (e)=>{
+    $('#copyDateRow').style.display = e.target.value === 'pick' ? 'block' : 'none';
+  });
+  $('#closeCopyModal').addEventListener('click', closeOverlays);
+  $('#confirmCopyBtn').addEventListener('click', ()=>{
+    if(copySourceMode === 'task'){
+      const t = tasks.find(x=>x.id===copySourceTaskId);
+      if(!t){ closeOverlays(); return; }
+      const choice = $('#copyDestSelect').value;
+      let destKey = null;
+      if(choice === 'sameday'){
+        destKey = t.date;
+      } else if(choice === 'pick'){
+        const val = $('#copyDateInput').value;
+        if(!val){ showToast('Pick a date first.', true); return; }
+        destKey = val;
+      }
+      tasks.push(buildCopiedTask(t, destKey));
+      addHistory('Copied', `"${t.name}" copied to ${destKey ? formatFull(destKey) : 'Backlog'}`);
+      persist(); renderAll();
+      closeOverlays();
+      showToast(`Copied to ${destKey ? formatFull(destKey) : 'Backlog'}.`);
+    } else if(copySourceMode === 'day'){
+      const toKey = $('#copyDateInput').value;
+      if(!toKey){ showToast('Pick a target date.', true); return; }
+      const src = tasks.filter(t=>t.date===copySourceDayKey && t.status!=='done');
+      if(src.length === 0){ showToast('Nothing to copy.', true); closeOverlays(); return; }
+      const copies = src.map(t=> buildCopiedTask(t, toKey));
+      copies.forEach(c=> tasks.push(c));
+      addHistory('Copied', `${copies.length} task(s) copied from ${formatFull(copySourceDayKey)} to ${formatFull(toKey)}`);
+      persist(); renderAll();
+      closeOverlays();
+      showToast(`${copies.length} task(s) copied to ${formatFull(toKey)}.`);
+    }
+  });
+
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
   $('#themeToggleBtn').addEventListener('click', ()=>{ settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
@@ -4363,7 +4489,6 @@
   });
   window.addEventListener('pagehide', flushPendingPush);
 
-  // ---------- pull-to-refresh ----------
   function initPullToRefresh(containerEl, indicatorEl, onRefresh){
     if(!containerEl || !indicatorEl) return;
     const spinnerEl = indicatorEl.querySelector('.pr-spinner');
