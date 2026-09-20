@@ -32,6 +32,7 @@
   --pickup-final-row: #F8ECD0;
   --weekend-tint: rgba(249,115,22,0.22);
   --weekend-border: #EA580C;
+  --sticky-header-h: 130px;
   --shadow-sm:0 1px 2px rgba(43,33,22,0.06);
   --shadow-md:0 8px 22px rgba(43,33,22,0.09);
   --shadow-lg:0 16px 40px rgba(43,33,22,0.16);
@@ -336,6 +337,17 @@ main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 .shed-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:16px;
   padding:10px;box-shadow:var(--shadow-sm);}
+/* Sticky variant for the Predictions page */
+.shed-tabs.pred-sticky-tabs{
+  position:sticky;
+  top:var(--sticky-header-h, 130px);
+  z-index:90;
+  box-shadow:0 6px 14px rgba(43,33,22,0.10);
+  transition:box-shadow .2s ease;
+}
+body.theme-dark .shed-tabs.pred-sticky-tabs{
+  box-shadow:0 6px 14px rgba(0,0,0,0.45);
+}
 .stab{border:1px solid var(--line);background:var(--surface-soft);color:var(--muted);
   font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;
   padding:11px 22px;border-radius:999px;cursor:pointer;
@@ -412,6 +424,10 @@ body.theme-dark .fpill.active{color:#1A2438;}
 body.theme-dark .tag.manual-source{background:#1A2C3E;color:#8FC7EA;border-color:#2E4C6B;}
 .tag.official-source{background:#E4EFDD;color:#36602A;border:1px solid #B7D3A8;}
 body.theme-dark .tag.official-source{background:#24382A;color:#9DD48C;border-color:#3E6B34;}
+.tag.predicted-source{background:#EDE7F6;color:#6A4FA3;border:1px solid #C7BCE0;}
+body.theme-dark .tag.predicted-source{background:#2A2440;color:#B6A6D9;border-color:#4A3F6B;}
+.tag.final-source{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;border:none;}
+body.theme-dark .tag.final-source{color:#1A2438;}
 
 .shed-body{padding:16px 20px 20px;}
 .sheds-grid.compare .shed-body{padding:14px 16px 18px;}
@@ -523,6 +539,182 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 .pickup-actions-menu button:hover{background:var(--primary-soft);color:var(--primary-dark);}
 .pickup-actions-menu button.danger:hover{background:var(--danger-soft);color:var(--danger);}
 
+/* ============================================================
+   PREDICTED PICKUPS (Pickup Plan)
+   ============================================================ */
+.pickup-plan-block{margin-top:16px;padding:12px 14px;
+  background:linear-gradient(135deg,rgba(176,132,99,0.06),rgba(224,163,57,0.06));
+  border:1.5px dashed var(--secondary);border-radius:12px;}
+.pickup-plan-block > h4{margin:0 0 10px;font-size:11.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.08em;color:var(--secondary);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.pp-empty{padding:10px 12px;background:var(--surface);border:1px dashed var(--line);
+  border-radius:10px;color:var(--muted);font-size:12.5px;line-height:1.5;}
+.pp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.pp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;font-size:12.5px;flex-wrap:wrap;}
+.pp-row.pp-superseded{opacity:0.6;border-style:dashed;}
+.pp-row.pp-superseded .pp-date{text-decoration:line-through;color:var(--muted);}
+.pp-row.pp-final{
+  background:linear-gradient(135deg,rgba(224,163,57,0.18),rgba(168,114,31,0.14));
+  border:1.5px solid var(--primary-dark);
+}
+.pp-row.pp-final .pp-date{color:var(--primary-dark);}
+.pp-info{flex:1 1 220px;min-width:0;}
+.pp-date{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pp-meta{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.pp-meta strong{color:var(--primary-dark);font-family:'Sora',sans-serif;font-weight:800;}
+.pp-badge{font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;
+  letter-spacing:0.05em;text-transform:uppercase;background:var(--danger-soft);
+  color:var(--danger);font-family:'Sora',sans-serif;}
+.pp-badge.final{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;}
+body.theme-dark .pp-badge.final{color:#1A2438;}
+.pp-actions{display:flex;gap:4px;flex-shrink:0;}
+.pp-actions button{border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);border-radius:6px;cursor:pointer;
+  font-size:12px;padding:4px 10px;line-height:1;font-weight:700;
+  transition:background .12s ease,color .12s ease,border-color .12s ease;}
+.pp-actions button:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.pp-actions button.danger:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
+.pp-summary{padding:10px 12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;font-size:12px;display:flex;flex-direction:column;gap:4px;}
+.pp-summary .lbl{color:var(--muted);font-weight:600;}
+.pp-summary strong{color:var(--ink);font-family:'Sora',sans-serif;font-weight:800;}
+.pp-summary .progress-ok{color:var(--success);font-weight:800;}
+.pp-summary .progress-short{color:var(--primary-dark);font-weight:800;}
+.pp-summary .progress-done{color:var(--success);font-weight:800;}
+.btn-pp-add{border:1px solid var(--secondary);background:var(--secondary-soft);
+  color:var(--secondary);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  text-transform:none;letter-spacing:0;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;}
+.btn-pp-add:hover{background:var(--secondary);color:#fff;}
+body.theme-dark .btn-pp-add:hover{color:#1A2438;}
+.btn-pp-autofill{border:1px solid var(--success);background:var(--success-soft);
+  color:var(--success);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  text-transform:none;letter-spacing:0;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;}
+.btn-pp-autofill:hover{background:var(--success);color:#fff;}
+body.theme-dark .btn-pp-autofill:hover{color:#1A2438;}
+.btn-pp-clear{border:1px solid var(--danger);background:var(--danger-soft);
+  color:var(--danger);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  text-transform:none;letter-spacing:0;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;}
+.btn-pp-clear:hover{background:var(--danger);color:#fff;}
+body.theme-dark .btn-pp-clear:hover{color:#1A2438;}
+
+/* Small auto-fill / clear buttons for all sheds (live in the density title row) */
+.btn-global-autofill-sm{
+  border:1px solid var(--success);
+  background:var(--success-soft);
+  color:var(--success);
+  font-family:'Sora',sans-serif;
+  font-weight:700;
+  font-size:10.5px;
+  padding:4px 11px;
+  border-radius:999px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+  text-transform:none;
+  letter-spacing:0;
+  transition:background .15s ease,color .15s ease,transform .1s ease;
+}
+.btn-global-autofill-sm:hover{
+  background:var(--success);
+  color:#fff;
+  transform:translateY(-1px);
+}
+body.theme-dark .btn-global-autofill-sm:hover{color:#1A2438;}
+.btn-global-clear-sm{
+  border:1px solid var(--danger);
+  background:var(--danger-soft);
+  color:var(--danger);
+  font-family:'Sora',sans-serif;
+  font-weight:700;
+  font-size:10.5px;
+  padding:4px 11px;
+  border-radius:999px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+  text-transform:none;
+  letter-spacing:0;
+  transition:background .15s ease,color .15s ease,transform .1s ease;
+}
+.btn-global-clear-sm:hover{
+  background:var(--danger);
+  color:#fff;
+  transform:translateY(-1px);
+}
+body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
+
+/* Per-shed target pickups row */
+.pp-target-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:10px;padding:8px 12px;
+  background:var(--surface);border:1px dashed var(--line);border-radius:10px;
+  font-size:12px;}
+.pp-target-label{font-family:'Sora',sans-serif;font-weight:800;
+  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--muted);}
+.pp-target-input{width:60px;padding:4px 8px;
+  border:1px solid var(--line);border-radius:6px;
+  background:var(--surface-soft);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.pp-target-input::-webkit-outer-spin-button,
+.pp-target-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.pp-target-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.pp-target-hint{color:var(--muted);font-size:11px;font-weight:500;}
+
+.pp-density-preview{padding:10px 12px;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:10px;font-size:12px;
+  display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.pp-density-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.pp-density-row .lbl{color:var(--muted);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:0.05em;}
+.pp-density-row .val{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);}
+.pp-density-row .val.safe{color:var(--success);}
+.pp-density-row .val.warn{color:var(--primary-dark);}
+.pp-density-row .val.danger{color:var(--danger);}
+
+.density-settings-title{font-family:'Sora',sans-serif;font-weight:800;font-size:11.5px;
+  text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+  margin:14px 0 8px;padding-top:14px;border-top:1px dashed var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.density-settings-title .sub{font-family:'Inter',sans-serif;font-weight:500;
+  font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;}
+.shed-density-override{margin-top:10px;padding:10px 12px;background:var(--surface);
+  border:1px dashed var(--line);border-radius:10px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px;}
+.shed-density-override label{color:var(--muted);font-weight:700;text-transform:uppercase;
+  font-size:10px;letter-spacing:0.05em;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.shed-density-override input[type="checkbox"]{width:14px;height:14px;accent-color:var(--primary-dark);cursor:pointer;}
+.shed-density-override .ovr-inputs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.shed-density-override .ovr-inputs input{width:56px;padding:4px 8px;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:12px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.shed-density-override .ovr-inputs input::-webkit-outer-spin-button,
+.shed-density-override .ovr-inputs input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.shed-density-override .ovr-inputs input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.shed-density-override .ovr-inputs span{font-size:10.5px;color:var(--muted);font-weight:600;}
+
+/* ============================================================
+   END PREDICTED PICKUPS
+   ============================================================ */
+
 .custom-day-list{
   margin-top:12px;padding-top:12px;
   border-top:1px dashed var(--line);
@@ -573,6 +765,7 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 .mp-field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .mp-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .mp-field input.auto-calc{background:var(--primary-soft);border-color:var(--primary);}
+.mp-field input:disabled{background:var(--surface);color:var(--muted);cursor:not-allowed;opacity:0.75;}
 .mp-field .auto-chip{display:inline-block;font-size:9px;font-weight:800;
   padding:1px 6px;border-radius:999px;
   background:var(--primary);color:#fff;
@@ -583,6 +776,8 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
   border-radius:10px;font-size:13px;cursor:pointer;
   font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink);}
 .mp-checkbox-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary-dark);cursor:pointer;flex-shrink:0;}
+.mp-checkbox-row.emphasis{background:linear-gradient(135deg,rgba(224,163,57,0.14),rgba(168,114,31,0.06));
+  border:1.5px dashed var(--primary-dark);font-weight:600;}
 .mp-hint{font-size:11.5px;color:var(--muted);line-height:1.5;
   padding:10px 12px;background:var(--surface-soft);
   border-radius:8px;border:1px dashed var(--line);}
@@ -659,6 +854,8 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
 .forecast-table tr.pickup-day.is-final td{background:var(--pickup-final-row);}
 .forecast-table tr.pickup-day td:first-child{border-left:4px solid var(--primary);}
 .forecast-table tr.pickup-day.is-weekend td:first-child{border-left:6px solid var(--weekend-border);}
+.forecast-table tr.predicted-pickup-day td{background:rgba(176,132,99,0.14);}
+.forecast-table tr.predicted-pickup-day td:first-child{border-left:4px dashed var(--secondary);}
 
 .weekend-pill{display:inline-block;background:var(--weekend-border);color:#fff;
   font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;
@@ -671,6 +868,8 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
   color:var(--primary-dark);font-weight:700;font-size:11px;padding:2px 8px;
   border-radius:999px;margin-right:6px;}
 .forecast-table .pickup-pill.final{background:var(--primary-dark);color:#1A2438;}
+.forecast-table .pickup-pill.predicted{background:var(--secondary-soft);color:var(--secondary);
+  border:1px dashed var(--secondary);}
 .forecast-table .live-after{font-weight:700;color:var(--primary-dark);}
 .forecast-table .live-after.zero{color:var(--danger);}
 .forecast-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
@@ -944,6 +1143,67 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .farm-feed-override::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
 .farm-kpi-empty{padding:24px 20px;text-align:center;color:var(--muted);font-size:13px;font-style:italic;}
 
+.adj-collapse{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  margin-bottom:16px;box-shadow:var(--shadow-sm);overflow:hidden;
+  transition:box-shadow .2s ease,border-color .2s ease;}
+/* Highlighted variant so the adjustment panel stands out */
+.adj-collapse.adj-collapse-highlight{
+  border:1.5px solid var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft), var(--shadow-sm);
+}
+body.theme-dark .adj-collapse.adj-collapse-highlight{
+  box-shadow:0 0 0 3px rgba(240,168,64,0.28), var(--shadow-sm);
+}
+.adj-collapse.adj-collapse-highlight .adj-collapse-title{
+  color:var(--primary-dark);
+}
+.adj-collapse.adj-collapse-highlight .adj-collapse-caret{
+  background:var(--primary);
+  color:#fff;
+}
+body.theme-dark .adj-collapse.adj-collapse-highlight .adj-collapse-caret{color:#1A2438;}
+.adj-collapse-head{width:100%;background:transparent;border:none;
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;
+  transition:background .15s ease;}
+.adj-collapse-head:hover{background:var(--surface-soft);}
+.adj-collapse-head:focus{outline:none;}
+.adj-collapse-head:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
+.adj-collapse-title{font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+  color:var(--ink);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.adj-collapse-summary{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}
+.adj-chip{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:999px;
+  padding:3px 10px;color:var(--muted);white-space:nowrap;}
+.adj-chip strong{color:var(--ink);font-weight:800;font-family:'Sora',sans-serif;margin-left:4px;}
+.adj-collapse-caret{font-size:18px;font-weight:800;color:var(--primary-dark);
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:8px;background:var(--primary-soft);
+  transition:transform .22s ease,background .15s ease,color .15s ease;flex-shrink:0;}
+.adj-collapse-head:hover .adj-collapse-caret{background:var(--primary);color:#fff;}
+body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
+.adj-collapse.open .adj-collapse-caret{transform:rotate(180deg);}
+.adj-collapse-body{padding:0 18px 16px;display:none;
+  border-top:1px dashed var(--line);margin-top:0;padding-top:14px;}
+.adj-collapse.open .adj-collapse-body{display:block;}
+.adj-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12.5px;margin-bottom:10px;}
+.adj-row:last-child{margin-bottom:0;}
+.adj-row > label{font-weight:700;text-transform:uppercase;
+  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);min-width:150px;}
+.adj-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--primary);}
+.adj-row input[type="number"]{width:72px;padding:5px 8px;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.adj-row input[type="number"]::-webkit-outer-spin-button,
+.adj-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.adj-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.adj-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
+.adj-hint{flex-basis:100%;width:100%;font-size:11px;color:var(--muted);
+  font-weight:500;line-height:1.4;margin-top:-2px;}
+
 .pred-grid{display:grid;grid-template-columns:1fr;gap:18px;}
 .pred-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
 @media(max-width:1000px){.pred-grid.compare{grid-template-columns:1fr;}}
@@ -1006,22 +1266,6 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
 .ptc-status .pill.gompertz{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;}
 
-.scale-corr{margin-top:12px;padding:10px 12px;
-  background:var(--surface);border:1px dashed var(--line);border-radius:10px;}
-.scale-corr-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
-.scale-corr-title{font-family:'Sora',sans-serif;font-weight:800;font-size:12px;color:var(--ink);}
-.scale-corr-help{font-size:11px;color:var(--muted);line-height:1.4;}
-.scale-corr-controls{display:flex;align-items:center;gap:8px;}
-.scale-corr-controls input[type="range"]{flex:1;min-width:100px;accent-color:var(--secondary);}
-.scale-corr-controls input[type="number"]{width:64px;padding:4px 8px;
-  border:1px solid var(--line);border-radius:7px;background:var(--surface);
-  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
-  text-align:center;-moz-appearance:textfield;appearance:textfield;}
-.scale-corr-controls input[type="number"]::-webkit-outer-spin-button,
-.scale-corr-controls input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.scale-corr-controls input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.scale-corr-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
-
 .pred-estimates-head{margin-top:14px;
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   font-size:11px;font-weight:700;text-transform:uppercase;
@@ -1068,20 +1312,6 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 
 .pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);
   text-align:right;font-variant-numeric:tabular-nums;}
-
-.pred-beta-row{display:flex;align-items:center;gap:10px;margin-top:14px;
-  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:12.5px;flex-wrap:wrap;}
-.pred-beta-row label{font-weight:700;text-transform:uppercase;
-  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
-.pred-beta-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--primary);}
-.pred-beta-row input[type="number"]{width:70px;padding:5px 8px;
-  border:1px solid var(--line);border-radius:7px;background:var(--surface);
-  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
-  text-align:center;-moz-appearance:textfield;appearance:textfield;}
-.pred-beta-row input[type="number"]::-webkit-outer-spin-button,
-.pred-beta-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.pred-beta-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 
 .pred-daily-range-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;
@@ -1132,6 +1362,7 @@ body.theme-dark .pdrb-apply:hover{color:#1A2438;}
 .pred-daily-table tr.is-today.is-weekend td:first-child{border-left:3px solid var(--weekend-border);}
 .pred-daily-table tr.is-forecast-row td{background:rgba(176,132,99,0.08);}
 .pred-daily-table tr.is-forecast-row.is-weekend td{background:var(--weekend-tint);}
+.pred-daily-table tr.predicted-pickup-row td{background:rgba(176,132,99,0.14);}
 .pred-daily-table .w-actual{font-weight:800;color:var(--success);}
 .pred-daily-table .w-forecast{font-weight:800;color:var(--primary-dark);font-style:italic;}
 .pred-daily-table .w-sample{font-weight:800;color:var(--secondary);}
@@ -1309,6 +1540,14 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
   <div class="sync-modal-body" id="sampleModalBody"></div>
 </div>
 
+<div class="sync-modal" id="predictedPickupModal">
+  <div class="sync-modal-head">
+    <h3 id="predictedPickupModalTitle"><span>🎯</span> Predicted Pickup</h3>
+    <button type="button" id="predictedPickupClose" aria-label="Close">✕</button>
+  </div>
+  <div class="sync-modal-body" id="predictedPickupModalBody"></div>
+</div>
+
 <div class="sync-modal" id="importConflictModal">
   <div class="sync-modal-head">
     <h3><span>⚠️</span> Existing Pickup Data</h3>
@@ -1327,27 +1566,19 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 
 <script>
 /* =========================================================
-   ProdWise.VM
-   - Ross 308 as-hatched curve (Aviagen 2022 combined M/F)
-   - AI growth curve (Gompertz S-curve fit, all anchors)
-   - Unified In-Yard Growth Curve panel (Day 7/14/21/28 grid
-     + extra reading days)
-   - Scale correction (formerly "sampling bias factor") now
-     lives inside the In-Yard panel; saves on input & flushes
-     before page unload so it survives reloads
-   - Per-shed "Daily mortality rate" slider kept below the
-     Snapshot on the Predictions page (separate control from
-     the editable mortality number)
-   - Group-level combined result (2 sheds sharing a silo)
-   - Whole Farm KPI card (all 8 sheds) — Total Mortality tile
-     shows total count + rate
-   - Per-shed Snapshot Mortality is editable (both group view
-     and Predictions page)
-   - Manual pickup entry + import conflict prompt
-   - Sticky top navigation + fixed-position actions menu
-   - Forecast-day bar: today-relative presets + cycle-day inputs
-   - Chick weight default 0.044 kg
-   - Scale correction default 90%
+   ProdWise.VM — Patch notes for this release
+   - Final (cleanout) pickup model:
+     * The Nth pickup per shed is the FINAL cleanout pickup.
+     * It sits exactly on the shed's cleanout date.
+     * It removes ALL remaining birds (depopulation).
+     * N is 4 or 5 (per-shed field, default 5, floor 4).
+   - Auto-fill now generates N − R predicted pickups where the
+     last one is anchored on the cleanout date.
+   - Real final pickup → target reached → all predicted
+     pickups for that shed removed automatically.
+   - Per-shed "Target pickups" field added.
+   - Predicted-pickup modal gets a "final cleanout" checkbox
+     that locks the date and auto-computes remaining birds.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1362,6 +1593,8 @@ const SHED_COUNT  = 8;
 const FEED_BLOCK_T = 60;
 const FIXED_FLOOR_AREA_M2 = 3162;
 const MAX_PICKUPS_PER_SHED = 5;
+const MIN_PICKUPS_PER_SHED = 4;
+const MAX_PREDICTED_PICKUPS = 6;
 const DEFAULT_MORT_RATE_PCT = 0.1;
 const MAX_MORT_RATE_PCT = 5;
 
@@ -1376,11 +1609,19 @@ const GOMPERTZ_K_MAX = 0.12;
 const GOMPERTZ_A_MAX = 30;
 const MAX_UNCERTAINTY = 0.35;
 
+const DEFAULT_DENSITY_GLOBAL = {
+  maxDensity: 32,
+  triggerDensity: 31,
+  targetDensity: 25.5,
+  targetPickups: 5
+};
+
 const CLUCKWISE_URL = './cluckwise/';
 const SYNC_WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
 const SYNC_REPO = 'vonrmangaron/farmdata';
 const SYNC_SUFFIX = '-feed';
 const SYNC_APP_TAG = 'prodwise';
+const SYNC_SCHEMA_VERSION = 10;
 const MAX_EXCEL_WARN_BYTES = 2 * 1024 * 1024;
 
 const DEFAULT_VIEWS = { 1:'planner', 2:'planner', 3:'planner', 4:'planner' };
@@ -1455,7 +1696,9 @@ let predState = {
   predView: 'both',
   farmFeedOverride: null,
   deliveriesOpen: true,
-  batchNumber: ''
+  batchNumber: '',
+  adjOpen: false,
+  densityGlobal: { ...DEFAULT_DENSITY_GLOBAL }
 };
 
 const DEFAULT_DAILY_RANGE = { mode: 'today', start: 0, end: 7 };
@@ -1481,10 +1724,21 @@ let pushInFlight = false;
 
 let manualPickupState = null;
 let sampleState = null;
+let predictedPickupState = null;
 let pendingImport = null;
 let reviewChoices = {};
 
 let gompertzCache = new Map();
+
+/* ---------- Sticky header height (for sticky prediction tabs) ---------- */
+function updateStickyHeaderHeight(){
+  const header = document.querySelector('.sticky-header');
+  if (!header) return;
+  const h = header.offsetHeight;
+  if (h > 0){
+    document.documentElement.style.setProperty('--sticky-header-h', h + 'px');
+  }
+}
 
 /* ---------- Date helpers ---------- */
 function dateOnly(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
@@ -1526,6 +1780,9 @@ function fmtBytes(n){
   if (n < 1024) return `${n} B`;
   if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
   return `${(n/1024/1024).toFixed(2)} MB`;
+}
+function uid(prefix){
+  return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
 function parseExcelDate(v){
@@ -1643,10 +1900,7 @@ function currentBiasFactor(){
   return DEFAULT_BIAS_FACTOR;
 }
 
-/* ---------- Mortality rate helpers ----------
-   The per-shed "Daily mortality rate" slider controls the forward-
-   looking mortality projection. It is a SEPARATE control from the
-   editable mortality count in the Snapshot panel. */
+/* ---------- Mortality rate helpers ---------- */
 function shedMortRate(shed){
   if (!shed) return DEFAULT_MORT_RATE_PCT;
   const v = Number(shed.mortalityRatePercent);
@@ -1696,8 +1950,206 @@ function estimateShedFinalMortality(shed, finalAge, currentAge){
 }
 
 /* =========================================================
-   AI GROWTH CURVE FITTING
+   DENSITY SETTINGS + PREDICTED PICKUPS
 ========================================================= */
+function getShedDensitySettings(shed){
+  const g = predState.densityGlobal || { ...DEFAULT_DENSITY_GLOBAL };
+  const o = (shed && shed.densitySettings) || {};
+  const useGlobal = (o.useGlobal === false) ? false : true;
+
+  // Resolve target pickups (4–5). Priority: shed override → global → legacy key → default.
+  let targetPickups = DEFAULT_DENSITY_GLOBAL.targetPickups;
+  if (shed && shed.targetPickups != null && Number.isFinite(Number(shed.targetPickups))){
+    targetPickups = Math.floor(Number(shed.targetPickups));
+  } else if (Number.isFinite(Number(g.targetPickups))){
+    targetPickups = Math.floor(Number(g.targetPickups));
+  } else if (Number.isFinite(Number(g.minPickupsBeforeCleanout))){
+    targetPickups = Math.floor(Number(g.minPickupsBeforeCleanout));
+  }
+  targetPickups = Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, targetPickups));
+
+  if (useGlobal){
+    return {
+      maxDensity: Number.isFinite(Number(g.maxDensity)) ? Number(g.maxDensity) : DEFAULT_DENSITY_GLOBAL.maxDensity,
+      triggerDensity: Number.isFinite(Number(g.triggerDensity)) ? Number(g.triggerDensity) : DEFAULT_DENSITY_GLOBAL.triggerDensity,
+      targetDensity: Number.isFinite(Number(g.targetDensity)) ? Number(g.targetDensity) : DEFAULT_DENSITY_GLOBAL.targetDensity,
+      targetPickups,
+      useGlobal: true
+    };
+  }
+  return {
+    maxDensity: Number.isFinite(Number(o.maxDensity)) ? Number(o.maxDensity) : g.maxDensity,
+    triggerDensity: Number.isFinite(Number(o.triggerDensity)) ? Number(o.triggerDensity) : g.triggerDensity,
+    targetDensity: Number.isFinite(Number(o.targetDensity)) ? Number(o.targetDensity) : g.targetDensity,
+    targetPickups,
+    useGlobal: false
+  };
+}
+
+function computeEffectivePickups(shed){
+  if (!shed) return [];
+  const real = (shed.pickups || []).map(p => ({ ...p, __source: 'real' }));
+  const realDates = new Set(real.map(p => iso(p.date)));
+  const predicted = (shed.predictedPickups || [])
+    .filter(pp => !realDates.has(iso(pp.date)))
+    .map(pp => ({
+      date: pp.date,
+      birds: Number(pp.birds) || 0,
+      isFinal: !!pp.isFinal,
+      variance: null,
+      totalWeightKg: null,
+      totalWeightKgFromExcel: null,
+      totalWeightKgManual: false,
+      source: 'predicted',
+      ageOverride: null,
+      __source: 'predicted',
+      __id: pp.id
+    }));
+  const all = [...real, ...predicted].sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  return all;
+}
+
+function densityOnDate(shed, D, extraPredicted, excludePredictedId){
+  const d = dateOnly(D);
+  if (!shed.placementDate) return { live: 0, weight: 0, density: 0, age: 0 };
+  const age = ageInDays(shed, d);
+  const weight = (forecastWeightModeAware(shed, d).kg) || 0;
+  const real = (shed.pickups || []);
+  const realDates = new Set(real.map(p => iso(p.date)));
+  const predicted = (shed.predictedPickups || [])
+    .filter(pp => pp.id !== excludePredictedId)
+    .filter(pp => !realDates.has(iso(pp.date)))
+    .map(pp => ({ date: pp.date, birds: Number(pp.birds) || 0 }));
+  const extra = (extraPredicted || []).map(pp => ({ date: pp.date, birds: Number(pp.birds) || 0 }));
+  const allPickups = [...real, ...predicted, ...extra].sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  const beforeD = allPickups
+    .filter(p => dateOnly(p.date) < d)
+    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
+  const live = Math.max(0, (shed.initialPopulation || 0) - Number(shed.mortality || 0) - beforeD);
+  const density = (live * weight) / FIXED_FLOOR_AREA_M2;
+  return { live, weight, density, age };
+}
+
+function recommendPickupForDate(shed, dateIso, opts){
+  opts = opts || {};
+  const ds = getShedDensitySettings(shed);
+  const d = parseExcelDate(dateIso);
+  if (!d) return null;
+  const info = densityOnDate(shed, d, opts.extraPredicted || null, opts.excludePredictedId);
+  const targetDensity = ds.targetDensity;
+  const targetBirds = Math.floor((targetDensity * FIXED_FLOOR_AREA_M2) / Math.max(0.0001, info.weight));
+  let remove = info.live - targetBirds;
+  if (remove > 0) remove = Math.floor(remove / 50) * 50;
+  else remove = 0;
+  const afterBirds = Math.max(0, info.live - remove);
+  const afterDensity = (afterBirds * info.weight) / FIXED_FLOOR_AREA_M2;
+  return {
+    age: info.age,
+    live: info.live,
+    weight: info.weight,
+    densityBefore: info.density,
+    targetDensity,
+    recommendedRemove: Math.max(0, remove),
+    densityAfter: afterDensity,
+    maxDensity: ds.maxDensity,
+    triggerDensity: ds.triggerDensity
+  };
+}
+
+/* Compute live birds just before a given date, accounting for real + extra predicted pickups. */
+function computeLiveBirdsBefore(shed, dateObj, extraPredicted){
+  const d = dateOnly(dateObj);
+  if (!shed || !shed.placementDate) return 0;
+  if (d < dateOnly(shed.placementDate)) return 0;
+  const realBefore = (shed.pickups || [])
+    .filter(p => dateOnly(p.date) < d)
+    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
+  const extraBefore = (extraPredicted || [])
+    .filter(p => dateOnly(p.date) < d)
+    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
+  return Math.max(0, (shed.initialPopulation || 0) - Number(shed.mortality || 0) - realBefore - extraBefore);
+}
+
+function autoFillPredictedPickups(shed){
+  if (!shed || !shed.placementDate) return [];
+  const ds = getShedDensitySettings(shed);
+  const trigger = ds.triggerDensity;
+  const targetN = ds.targetPickups;
+
+  const realPickups = shed.pickups || [];
+  const hasRealFinal = realPickups.some(p => p.isFinal);
+  if (hasRealFinal) return []; // target reached — cleanout already recorded
+
+  const realCount = realPickups.length;
+  const needed = targetN - realCount;
+  if (needed <= 0) return [];
+
+  const regularNeeded = Math.max(0, needed - 1);
+
+  const result = [];
+  const tempShed = { ...shed, predictedPickups: [] };
+  const today = dateOnly(new Date());
+  const cleanout = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : addDays(today, 50);
+  if (cleanout <= today) return [];
+
+  // Regular density-driven predicted pickups
+  if (regularNeeded > 0){
+    let searchStart = addDays(today, 1);
+    let safety = 0;
+    const maxDay = addDays(cleanout, -2); // leave at least 2 days before cleanout
+    while (result.length < regularNeeded && safety < 30){
+      safety++;
+      let foundDate = null;
+      let cursor = searchStart;
+      while (cursor <= maxDay){
+        const info = densityOnDate(tempShed, cursor, result);
+        if (info.density >= trigger){ foundDate = cursor; break; }
+        cursor = addDays(cursor, 1);
+      }
+      if (!foundDate) break;
+      const rec = recommendPickupForDate(tempShed, iso(foundDate), { extraPredicted: result });
+      if (!rec || rec.recommendedRemove < 500) break;
+      result.push({ id: uid('pp'), date: foundDate, birds: rec.recommendedRemove, isFinal: false });
+      searchStart = addDays(foundDate, 3);
+    }
+  }
+
+  // Final cleanout predicted pickup — removes all remaining birds
+  const finalBirds = computeLiveBirdsBefore(shed, cleanout, result);
+  if (finalBirds > 0){
+    result.push({
+      id: uid('pp'),
+      date: cleanout,
+      birds: finalBirds,
+      isFinal: true
+    });
+  }
+
+  return result;
+}
+
+/* Reconcile predicted pickups after a real pickup is added/edited.
+   - If a real final exists → remove all predicted.
+   - Otherwise drop predicted whose date collides with a real pickup.
+   - Keep final predicted's date in sync with the cleanout date. */
+function reconcilePredictedPickups(shed){
+  if (!shed) return;
+  const real = shed.pickups || [];
+  if (real.some(p => p.isFinal)){
+    shed.predictedPickups = [];
+    return;
+  }
+  const realDates = new Set(real.map(p => iso(p.date)));
+  shed.predictedPickups = (shed.predictedPickups || []).filter(pp => !realDates.has(iso(pp.date)));
+  if (shed.cleanoutDate){
+    (shed.predictedPickups || []).forEach(pp => {
+      if (pp.isFinal) pp.date = dateOnly(shed.cleanoutDate);
+    });
+    shed.predictedPickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  }
+}
+
+/* ---------- AI GROWTH CURVE FITTING ---------- */
 function collectShedWeightAnchors(shed){
   const anchors = [];
   const bias = currentBiasFactor();
@@ -1846,7 +2298,10 @@ function parseShedsFromWorkbook(workbook){
     targetCurve: { 7: null, 14: null, 21: null, 28: null },
     mortalityRatePercent: DEFAULT_MORT_RATE_PCT,
     chickWeightKg: DEFAULT_CHICK_WEIGHT_KG,
-    inYardSamples: []
+    inYardSamples: [],
+    predictedPickups: [],
+    targetPickups: null,
+    densitySettings: { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null }
   }));
 
   let batchNumber = '', matched = 0, skipped = 0;
@@ -1961,6 +2416,21 @@ function loadState(){
         avgWeightKg: Number(x.avgWeightKg) || 0,
         isOfficial: !!x.isOfficial
       })).filter(x => x.date && x.avgWeightKg > 0);
+      s.predictedPickups = (s.predictedPickups || []).map(pp => ({
+        id: pp.id || uid('pp'),
+        date: pp.date ? dateOnly(pp.date) : null,
+        birds: Number(pp.birds) || 0,
+        isFinal: !!pp.isFinal
+      })).filter(pp => pp.date && pp.birds >= 0);
+      s.targetPickups = (s.targetPickups != null && Number.isFinite(Number(s.targetPickups)))
+        ? Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(Number(s.targetPickups))))
+        : null;
+      s.densitySettings = {
+        useGlobal: (s.densitySettings && s.densitySettings.useGlobal === false) ? false : true,
+        maxDensity: (s.densitySettings && Number.isFinite(Number(s.densitySettings.maxDensity))) ? Number(s.densitySettings.maxDensity) : null,
+        triggerDensity: (s.densitySettings && Number.isFinite(Number(s.densitySettings.triggerDensity))) ? Number(s.densitySettings.triggerDensity) : null,
+        targetDensity: (s.densitySettings && Number.isFinite(Number(s.densitySettings.targetDensity))) ? Number(s.densitySettings.targetDensity) : null
+      };
       const cw = Number(s.chickWeightKg);
       s.chickWeightKg = (Number.isFinite(cw) && cw > 0)
         ? Math.max(MIN_CHICK_WEIGHT_KG, Math.min(MAX_CHICK_WEIGHT_KG, cw))
@@ -2127,6 +2597,20 @@ function loadPredState(){
     }
     if (typeof v.deliveriesOpen === 'boolean'){ predState.deliveriesOpen = v.deliveriesOpen; }
     if (typeof v.batchNumber === 'string'){ predState.batchNumber = v.batchNumber.trim(); }
+    if (typeof v.adjOpen === 'boolean'){ predState.adjOpen = v.adjOpen; }
+    if (v.densityGlobal && typeof v.densityGlobal === 'object'){
+      const dg = v.densityGlobal;
+      let tp = DEFAULT_DENSITY_GLOBAL.targetPickups;
+      if (Number.isFinite(Number(dg.targetPickups))) tp = Number(dg.targetPickups);
+      else if (Number.isFinite(Number(dg.minPickupsBeforeCleanout))) tp = Number(dg.minPickupsBeforeCleanout);
+      tp = Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(tp)));
+      predState.densityGlobal = {
+        maxDensity: Number.isFinite(Number(dg.maxDensity)) ? Number(dg.maxDensity) : DEFAULT_DENSITY_GLOBAL.maxDensity,
+        triggerDensity: Number.isFinite(Number(dg.triggerDensity)) ? Number(dg.triggerDensity) : DEFAULT_DENSITY_GLOBAL.triggerDensity,
+        targetDensity: Number.isFinite(Number(dg.targetDensity)) ? Number(dg.targetDensity) : DEFAULT_DENSITY_GLOBAL.targetDensity,
+        targetPickups: tp
+      };
+    }
   } catch(e){}
 }
 
@@ -2364,7 +2848,7 @@ function base64ToBlob(base64, mime){
 function buildCloudPayload(){
   return {
     app: SYNC_APP_TAG,
-    schemaVersion: 9,
+    schemaVersion: SYNC_SCHEMA_VERSION,
     lastUpdated: new Date().toISOString(),
     farmName: syncFarmName,
     batchNumber: predState.batchNumber || (farmData && farmData.batchNumber) || '',
@@ -2374,7 +2858,8 @@ function buildCloudPayload(){
     predictions: {
       beta: predState.beta,
       targetHarvestWeightKg: predState.targetHarvestWeightKg,
-      farmFeedOverride: predState.farmFeedOverride
+      farmFeedOverride: predState.farmFeedOverride,
+      densityGlobal: predState.densityGlobal
     },
     preferences: {
       shedViewByGroup, shedRange, siloRange, theme: loadTheme(),
@@ -2428,6 +2913,10 @@ function applyCloudPayload(payload, options){
         const tc = s.targetCurve || {};
         const mr = Number(s.mortalityRatePercent);
         const cw = Number(s.chickWeightKg);
+        const dSettings = s.densitySettings || {};
+        const tp = (s.targetPickups != null && Number.isFinite(Number(s.targetPickups)))
+          ? Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(Number(s.targetPickups))))
+          : null;
         return {
           id: Number(s.id) || 0,
           placementDate: s.placementDate ? dateOnly(s.placementDate) : null,
@@ -2455,6 +2944,19 @@ function applyCloudPayload(payload, options){
             source: (p.source === 'manual') ? 'manual' : 'excel',
             ageOverride: (p.ageOverride != null && Number.isFinite(Number(p.ageOverride))) ? Number(p.ageOverride) : null
           })).filter(p => p.date),
+          predictedPickups: (s.predictedPickups || []).map(pp => ({
+            id: pp.id || uid('pp'),
+            date: pp.date ? dateOnly(pp.date) : null,
+            birds: Number(pp.birds) || 0,
+            isFinal: !!pp.isFinal
+          })).filter(pp => pp.date && pp.birds >= 0),
+          targetPickups: tp,
+          densitySettings: {
+            useGlobal: dSettings.useGlobal === false ? false : true,
+            maxDensity: Number.isFinite(Number(dSettings.maxDensity)) ? Number(dSettings.maxDensity) : null,
+            triggerDensity: Number.isFinite(Number(dSettings.triggerDensity)) ? Number(dSettings.triggerDensity) : null,
+            targetDensity: Number.isFinite(Number(dSettings.targetDensity)) ? Number(dSettings.targetDensity) : null
+          },
           targetCurve: {
             7: (tc[7] != null && Number.isFinite(Number(tc[7])) && Number(tc[7]) > 0) ? Number(tc[7]) : null,
             14: (tc[14] != null && Number.isFinite(Number(tc[14])) && Number(tc[14]) > 0) ? Number(tc[14]) : null,
@@ -2503,6 +3005,19 @@ function applyCloudPayload(payload, options){
     if (p.farmFeedOverride != null && Number.isFinite(Number(p.farmFeedOverride)) && Number(p.farmFeedOverride) > 0){
       predState.farmFeedOverride = Number(p.farmFeedOverride);
     } else if (p.farmFeedOverride === null){ predState.farmFeedOverride = null; }
+    if (p.densityGlobal && typeof p.densityGlobal === 'object'){
+      const dg = p.densityGlobal;
+      let tp = DEFAULT_DENSITY_GLOBAL.targetPickups;
+      if (Number.isFinite(Number(dg.targetPickups))) tp = Number(dg.targetPickups);
+      else if (Number.isFinite(Number(dg.minPickupsBeforeCleanout))) tp = Number(dg.minPickupsBeforeCleanout);
+      tp = Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(tp)));
+      predState.densityGlobal = {
+        maxDensity: Number.isFinite(Number(dg.maxDensity)) ? Number(dg.maxDensity) : DEFAULT_DENSITY_GLOBAL.maxDensity,
+        triggerDensity: Number.isFinite(Number(dg.triggerDensity)) ? Number(dg.triggerDensity) : DEFAULT_DENSITY_GLOBAL.triggerDensity,
+        targetDensity: Number.isFinite(Number(dg.targetDensity)) ? Number(dg.targetDensity) : DEFAULT_DENSITY_GLOBAL.targetDensity,
+        targetPickups: tp
+      };
+    }
     savePredState();
   }
 
@@ -2795,7 +3310,7 @@ function closeFarmFoundModal(){
 
 function updateScrimVisibility(){
   const anyOpen = ['syncModal','farmFoundModal','newBatchModal','batchHistoryModal',
-                   'manualPickupModal','sampleModal','importConflictModal','importReviewModal']
+                   'manualPickupModal','sampleModal','predictedPickupModal','importConflictModal','importReviewModal']
     .some(id => document.getElementById(id).classList.contains('open'));
   document.getElementById('syncScrim').classList.toggle('open', anyOpen);
 }
@@ -3247,14 +3762,16 @@ function shedsForGroup(g){
   const b = farmData.sheds[(g-1)*2 + 1];
   return [a, b].filter(Boolean);
 }
+
 function liveAtStartOfDay(shed, D){
   const d = dateOnly(D);
   if (!shed.placementDate) return 0;
   if (d < dateOnly(shed.placementDate)) return 0;
   if (shed.cleanoutDate && d > dateOnly(shed.cleanoutDate)) return 0;
-  const beforeD = (shed.pickups || [])
+  const effective = computeEffectivePickups(shed);
+  const beforeD = effective
     .filter(p => dateOnly(p.date) < d)
-    .reduce((s,p) => s + p.birds, 0);
+    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
   return Math.max(0, shed.initialPopulation - Number(shed.mortality || 0) - beforeD);
 }
 function feedPerBirdKg(shed, ageDays){
@@ -3297,7 +3814,7 @@ function computePredictions(shed, group){
   const currentMort = Number(shed.mortality) || 0;
   const currentAge = ageInDays(shed, today);
   const liveNow = liveAtStartOfDay(shed, today);
-  const pickups = (shed.pickups || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  const pickups = computeEffectivePickups(shed);
   const finalAge = shed.cleanoutDate ? Math.max(currentAge, ageInDays(shed, shed.cleanoutDate)) : currentAge + 30;
   const targetALW = Number(predState.targetHarvestWeightKg[group]) || 2.65;
   const beta = Number(predState.beta) || 0.27;
@@ -3355,7 +3872,9 @@ function computePredictions(shed, group){
       birds: Number(p.birds || 0),
       avgWeightKg: avgUsed,
       totalWeightKg: Number(p.birds || 0) * avgUsed,
-      isFinal: !!p.isFinal, cumBirds,
+      isFinal: !!p.isFinal,
+      isPredicted: p.__source === 'predicted',
+      cumBirds,
       isEstWeight: !(avgFromExcel && avgFromExcel > 0)
     });
   }
@@ -3494,7 +4013,7 @@ function computeFarmTotals(){
       fcr: 0, cfcr: 0, pif: 0, avgWeight: 0, livability: 0,
       weightedAge: 0, placed: 0, mortality: 0, birdsAtHarvest: 0,
       usingManualFeed: false,
-      totalCurrentMortality: 0, currentMortRate: 0
+      totalCurrentMortality: 0, currentMortRate: 0, estMortRate: 0
     };
   }
   const avgWeight = totalBirdsAtHarvest > 0 ? totalLiveWeight / totalBirdsAtHarvest : 0;
@@ -3514,7 +4033,8 @@ function computeFarmTotals(){
     birdsAtHarvest: totalBirdsAtHarvest,
     usingManualFeed,
     totalCurrentMortality: totalCurrentMort,
-    currentMortRate: totalPlaced > 0 ? (totalCurrentMort / totalPlaced) * 100 : 0
+    currentMortRate: totalPlaced > 0 ? (totalCurrentMort / totalPlaced) * 100 : 0,
+    estMortRate: totalPlaced > 0 ? (totalMortalityEst / totalPlaced) * 100 : 0
   };
 }
 
@@ -3524,6 +4044,7 @@ function computeForecast(shed, range){
   const rows = [];
   let totalFeed = 0;
   if (!shed.placementDate) return { rows: [], totalFeed: 0, notStarted: true };
+  const effective = computeEffectivePickups(shed);
   for (let off = range.start; off <= range.end; off++){
     const d = addDays(today, off);
     const isPast = off < 0;
@@ -3535,7 +4056,7 @@ function computeForecast(shed, range){
       continue;
     }
     if (shed.cleanoutDate && dateOnly(d) > dateOnly(shed.cleanoutDate)){
-      const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+      const pickupsToday = effective.filter(p => iso(p.date) === iso(d));
       rows.push({ date: d, age: ageInDays(shed, d), liveStart: 0, perBird: 0, dailyFeed: 0,
         pickups: pickupsToday,
         pickupsBirds: pickupsToday.reduce((s,p) => s + p.birds, 0),
@@ -3544,16 +4065,17 @@ function computeForecast(shed, range){
     }
     const age = ageInDays(shed, d);
     const live = liveAtStartOfDay(shed, d);
-    const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+    const pickupsToday = effective.filter(p => iso(p.date) === iso(d));
     const pickupsBirds = pickupsToday.reduce((s,p) => s + p.birds, 0);
     const isFinalDay = pickupsToday.some(p => p.isFinal);
+    const hasPredicted = pickupsToday.some(p => p.__source === 'predicted');
     const perBird = feedPerBirdKg(shed, age);
     const dailyFeed = live * perBird;
     const liveAfter = Math.max(0, live - pickupsBirds);
     totalFeed += dailyFeed;
     rows.push({ date: d, age, liveStart: live, perBird, dailyFeed,
       pickups: pickupsToday, pickupsBirds, liveAfter,
-      isFinalDay, isToday, isPast });
+      isFinalDay, hasPredicted, isToday, isPast });
   }
   return { rows, totalFeed };
 }
@@ -4007,6 +4529,7 @@ function saveManualPickup(){
     shed.pickups[idx] = newPickup;
   }
   reflowShedPickups(shed);
+  reconcilePredictedPickups(shed);
   saveState(); schedulePush();
   closeManualPickupModal();
   render();
@@ -4037,8 +4560,409 @@ function deleteManualPickup(shedId, dateIso){
   if (!confirm(`Delete this ${label} pickup from ${fmtShort(p.date)}?`)) return;
   shed.pickups = (shed.pickups || []).filter(x => iso(x.date) !== dateIso);
   reflowShedPickups(shed);
+  reconcilePredictedPickups(shed);
   saveState(); schedulePush(); render();
   showToast('Pickup deleted.');
+}
+
+/* =========================================================
+   PREDICTED PICKUP MODAL
+========================================================= */
+function openPredictedPickupModal(shedId, editId){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const ds = getShedDensitySettings(shed);
+  const today = todayIso();
+  const cleanout = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : null;
+  if (editId){
+    const pp = (shed.predictedPickups || []).find(x => x.id === editId);
+    if (!pp) return;
+    predictedPickupState = {
+      shedId, mode: 'edit', editId,
+      dateIso: iso(pp.date),
+      birds: pp.birds,
+      isFinal: !!pp.isFinal,
+      userEditedBirds: true
+    };
+  } else {
+    if ((shed.predictedPickups || []).length >= MAX_PREDICTED_PICKUPS){
+      showToast(`Maximum ${MAX_PREDICTED_PICKUPS} predicted pickups per shed.`, true);
+      return;
+    }
+    let defaultDate = addDays(new Date(), 7);
+    if (shed.placementDate){
+      let cursor = addDays(new Date(), 1);
+      const maxDate = cleanout || addDays(new Date(), 40);
+      while (cursor <= maxDate){
+        const info = densityOnDate(shed, cursor);
+        if (info.density >= ds.triggerDensity){ defaultDate = cursor; break; }
+        cursor = addDays(cursor, 1);
+      }
+    }
+    predictedPickupState = {
+      shedId, mode: 'add', editId: null,
+      dateIso: iso(defaultDate),
+      birds: null,
+      isFinal: false,
+      userEditedBirds: false
+    };
+  }
+  renderPredictedPickupModal();
+  const modal = document.getElementById('predictedPickupModal');
+  const scrim = document.getElementById('syncScrim');
+  modal.classList.add('open'); scrim.classList.add('open');
+}
+function closePredictedPickupModal(){
+  document.getElementById('predictedPickupModal').classList.remove('open');
+  predictedPickupState = null;
+  updateScrimVisibility();
+}
+function renderPredictedPickupModal(){
+  const body = document.getElementById('predictedPickupModalBody');
+  const titleEl = document.getElementById('predictedPickupModalTitle');
+  const s = predictedPickupState;
+  if (!s || !body) return;
+  const shed = farmData.sheds[s.shedId - 1];
+  const ds = getShedDensitySettings(shed);
+  const cleanout = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : null;
+  if (titleEl){
+    titleEl.innerHTML = s.mode === 'add'
+      ? `<span>🎯</span> New Predicted Pickup — Shed ${s.shedId}`
+      : `<span>✎</span> Edit Predicted Pickup — Shed ${s.shedId}`;
+  }
+  const dateLocked = !!s.isFinal && !!cleanout;
+  const dateValue = dateLocked ? iso(cleanout) : s.dateIso;
+  body.innerHTML = `
+    <div class="sync-status-card">
+      <div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div>
+      <div class="sync-status-row"><span class="lbl">Floor area</span><span class="val">${FIXED_FLOOR_AREA_M2.toLocaleString()} m²</span></div>
+      <div class="sync-status-row"><span class="lbl">Trigger / Target</span><span class="val">${ds.triggerDensity} / ${ds.targetDensity} kg/m²</span></div>
+      ${cleanout ? `<div class="sync-status-row"><span class="lbl">Cleanout date</span><span class="val">${fmtShort(cleanout)}</span></div>` : ''}
+    </div>
+    <label class="mp-checkbox-row ${s.isFinal ? 'emphasis' : ''}" id="ppFinalLabel">
+      <input type="checkbox" id="ppFinal" ${s.isFinal ? 'checked' : ''} />
+      <span>This is the final <strong>cleanout</strong> pickup — removes all remaining birds on the cleanout date</span>
+    </label>
+    <div class="mp-field">
+      <label>Pickup date ${dateLocked ? '<span style="color:var(--primary-dark);text-transform:none;font-weight:600;">· 🔒 locked to cleanout</span>' : ''}</label>
+      <input type="date" id="ppDate" value="${dateValue}" ${dateLocked ? 'disabled' : ''} />
+    </div>
+    <div class="pp-density-preview" id="ppPreview"></div>
+    <div class="mp-field">
+      <label>Birds to remove</label>
+      <input type="number" id="ppBirds" min="0" step="50" value="${s.birds == null ? '' : s.birds}" placeholder="auto-suggested" />
+    </div>
+    <div class="mp-hint" id="ppHint"></div>
+    <div class="sync-actions">
+      <button class="btn-sync-primary" id="ppSaveBtn">
+        ${s.mode === 'add' ? '＋ Save Predicted Pickup' : '✓ Save Changes'}
+      </button>
+      <button class="btn-sync-primary ghost" id="ppCancelBtn">Cancel</button>
+    </div>`;
+
+  const dateEl  = document.getElementById('ppDate');
+  const birdsEl = document.getElementById('ppBirds');
+  const finalEl = document.getElementById('ppFinal');
+  const hintEl  = document.getElementById('ppHint');
+  const labelEl = document.getElementById('ppFinalLabel');
+
+  const refreshHint = () => {
+    if (hintEl){
+      hintEl.innerHTML = s.isFinal
+        ? `The <strong>cleanout pickup</strong> removes every remaining bird on the shed's cleanout date (${cleanout ? fmtShort(cleanout) : 'not set'}). This is the Nth pickup (N = target).`
+        : `The recommendation brings density back to <strong>${ds.targetDensity} kg/m²</strong>. The <strong>Birds to remove</strong> input mirrors the recommendation — edit it any time to override.`;
+    }
+    if (labelEl) labelEl.classList.toggle('emphasis', s.isFinal);
+  };
+
+  const autoFillBirds = () => {
+    // Compute auto value for the current mode.
+    if (s.isFinal){
+      if (!cleanout) return;
+      const priorPredicted = (shed.predictedPickups || []).filter(x => x.id !== s.editId);
+      const liveAtCleanout = computeLiveBirdsBefore(shed, cleanout, priorPredicted.map(pp => ({ date: pp.date, birds: pp.birds })));
+      s.birds = Math.floor(liveAtCleanout / 50) * 50;
+      if (birdsEl) birdsEl.value = s.birds;
+    } else {
+      const rec = recommendPickupForDate(shed, s.dateIso, { excludePredictedId: s.editId });
+      if (rec){
+        s.birds = rec.recommendedRemove;
+        if (birdsEl) birdsEl.value = rec.recommendedRemove;
+      }
+    }
+  };
+
+  const onDateChange = () => {
+    s.dateIso = dateEl.value;
+    if (!s.userEditedBirds){
+      autoFillBirds();
+    }
+    refreshPredictedPickupPreview();
+  };
+  const onBirdsChange = () => {
+    const v = birdsEl.value;
+    if (v === ''){
+      s.birds = null;
+      s.userEditedBirds = false;
+      autoFillBirds();
+    } else {
+      s.birds = Number(v);
+      s.userEditedBirds = true;
+    }
+    refreshPredictedPickupPreview();
+  };
+  const onFinalToggle = () => {
+    s.isFinal = !!finalEl.checked;
+    // When switching to final, lock date to cleanout and reset birds to remaining.
+    // When switching off final, unlock date and reset birds to recommendation.
+    s.userEditedBirds = false;
+    if (s.isFinal && cleanout){
+      s.dateIso = iso(cleanout);
+      if (dateEl) dateEl.value = s.dateIso;
+      if (dateEl) dateEl.disabled = true;
+    } else {
+      if (dateEl) dateEl.disabled = false;
+    }
+    autoFillBirds();
+    refreshHint();
+    refreshPredictedPickupPreview();
+  };
+
+  dateEl.addEventListener('input', onDateChange);
+  dateEl.addEventListener('change', onDateChange);
+  birdsEl.addEventListener('input', onBirdsChange);
+  if (finalEl) finalEl.addEventListener('change', onFinalToggle);
+
+  // Initial auto-fill for add mode
+  if (s.mode === 'add' && (s.birds == null || s.birds === '')){
+    autoFillBirds();
+  }
+  refreshHint();
+  refreshPredictedPickupPreview();
+  document.getElementById('ppSaveBtn').addEventListener('click', savePredictedPickup);
+  document.getElementById('ppCancelBtn').addEventListener('click', closePredictedPickupModal);
+}
+function refreshPredictedPickupPreview(){
+  const s = predictedPickupState;
+  if (!s) return;
+  const shed = farmData.sheds[s.shedId - 1];
+  if (!shed) return;
+  const el = document.getElementById('ppPreview');
+  if (!el) return;
+  const ds = getShedDensitySettings(shed);
+  const cleanout = shed.cleanoutDate ? dateOnly(shed.cleanoutDate) : null;
+  const effectiveDate = s.isFinal && cleanout ? cleanout : parseExcelDate(s.dateIso);
+  if (!effectiveDate){
+    el.innerHTML = '<div style="color:var(--danger);font-weight:600;">Pick a valid date.</div>';
+    return;
+  }
+  const info = densityOnDate(shed, effectiveDate, null, s.editId);
+  const age = info.age;
+  const weight = info.weight;
+  const liveBefore = info.live;
+  const densityBefore = info.density;
+  const rec = s.isFinal ? null : recommendPickupForDate(shed, s.dateIso, { excludePredictedId: s.editId });
+  const birdsToRemove = (s.birds == null || s.birds === '') ? (rec ? rec.recommendedRemove : 0) : Math.max(0, Math.floor(Number(s.birds)));
+  const liveAfter = Math.max(0, liveBefore - birdsToRemove);
+  const densityAfter = (liveAfter * weight) / FIXED_FLOOR_AREA_M2;
+  const colorFor = (d) => {
+    if (d > ds.maxDensity) return 'danger';
+    if (d > ds.triggerDensity) return 'warn';
+    return 'safe';
+  };
+  const recStr = s.isFinal
+    ? `All ${liveBefore.toLocaleString()} remaining birds`
+    : (rec ? rec.recommendedRemove.toLocaleString() + ' birds' : '—');
+  const note = (!s.isFinal && densityBefore < ds.targetDensity)
+    ? '<div style="margin-top:6px;font-size:11.5px;color:var(--muted);line-height:1.4;">ℹ️ Density is already under target on this date — a pickup is not strictly needed. You can still plan one if you want to.</div>'
+    : (s.isFinal && !cleanout)
+      ? '<div style="margin-top:6px;font-size:11.5px;color:var(--danger);line-height:1.4;">⚠️ This shed has no cleanout date set. Set one in the group view first.</div>'
+      : '';
+  el.innerHTML = `
+    <div class="pp-density-row">
+      <span class="lbl">Age at pickup</span>
+      <span class="val">Day ${age}</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">Forecast weight</span>
+      <span class="val">${weight.toFixed(3)} kg</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">Live birds before</span>
+      <span class="val">${liveBefore.toLocaleString()}</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">Density before</span>
+      <span class="val ${colorFor(densityBefore)}">${densityBefore.toFixed(1)} kg/m²</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">${s.isFinal ? 'Cleanout removal' : 'Recommended removal'}</span>
+      <span class="val">${recStr}</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">Live birds after</span>
+      <span class="val">${liveAfter.toLocaleString()}</span>
+    </div>
+    <div class="pp-density-row">
+      <span class="lbl">Density after</span>
+      <span class="val ${colorFor(densityAfter)}">${densityAfter.toFixed(1)} kg/m²</span>
+    </div>
+    ${note}
+  `;
+}
+function savePredictedPickup(){
+  const s = predictedPickupState;
+  if (!s) return;
+  const shed = farmData.sheds[s.shedId - 1];
+  if (!shed) return;
+  const dateStr = document.getElementById('ppDate').value;
+  const birdsStr = document.getElementById('ppBirds').value;
+  let dateObj;
+  if (s.isFinal){
+    if (!shed.cleanoutDate){
+      showToast('Set the shed\'s cleanout date first.', true);
+      return;
+    }
+    dateObj = dateOnly(shed.cleanoutDate);
+  } else {
+    dateObj = parseExcelDate(dateStr);
+  }
+  if (!dateObj){ showToast('Pick a valid date.', true); return; }
+  let birds = Number(birdsStr);
+  if (!Number.isFinite(birds) || birds < 0) birds = 0;
+  const realMatch = (shed.pickups || []).some(rp => iso(rp.date) === iso(dateObj));
+  if (realMatch){
+    showToast('A real pickup already exists on this date — predicted pickup not saved.', true);
+    return;
+  }
+  if (!shed.predictedPickups) shed.predictedPickups = [];
+  if (s.mode === 'add'){
+    shed.predictedPickups.push({
+      id: uid('pp'),
+      date: dateObj,
+      birds: Math.floor(birds),
+      isFinal: !!s.isFinal
+    });
+    showToast(s.isFinal ? '✅ Cleanout predicted pickup added.' : '✅ Predicted pickup added.');
+  } else {
+    const idx = shed.predictedPickups.findIndex(x => x.id === s.editId);
+    if (idx < 0){ showToast('Predicted pickup not found.', true); return; }
+    shed.predictedPickups[idx] = {
+      ...shed.predictedPickups[idx],
+      date: dateObj,
+      birds: Math.floor(birds),
+      isFinal: !!s.isFinal
+    };
+    showToast('✅ Predicted pickup updated.');
+  }
+  shed.predictedPickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  saveState(); schedulePush();
+  closePredictedPickupModal();
+  render();
+}
+function deletePredictedPickup(shedId, ppId){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const pp = (shed.predictedPickups || []).find(x => x.id === ppId);
+  if (!pp) return;
+  const label = pp.isFinal ? 'cleanout predicted pickup' : 'predicted pickup';
+  if (!confirm(`Delete the ${label} on ${fmtShort(pp.date)}?`)) return;
+  shed.predictedPickups = shed.predictedPickups.filter(x => x.id !== ppId);
+  saveState(); schedulePush(); render();
+  showToast('Predicted pickup removed.');
+}
+function autoFillPredictedPickupsForShed(shedId){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed || !shed.placementDate){
+    showToast('Set a placement date first.', true);
+    return;
+  }
+  const realFinal = (shed.pickups || []).some(p => p.isFinal);
+  if (realFinal){
+    showToast('Target reached — a cleanout pickup is already recorded for this shed.', true);
+    return;
+  }
+  if ((shed.predictedPickups || []).length > 0){
+    if (!confirm('This will replace your existing predicted pickups with an auto-generated plan. Continue?')) return;
+  }
+  const generated = autoFillPredictedPickups(shed);
+  if (generated.length === 0){
+    showToast('Could not auto-generate a plan — check placement/cleanout dates and target pickups.', true);
+    return;
+  }
+  shed.predictedPickups = generated;
+  saveState(); schedulePush(); render();
+  const finals = generated.filter(g => g.isFinal).length;
+  const regulars = generated.length - finals;
+  showToast(`✨ Auto-filled ${regulars} regular + ${finals} cleanout pickup${generated.length === 1 ? '' : 's'}.`);
+}
+function autoFillAllSheds(){
+  if (!farmData){
+    showToast('Import Excel first.', true);
+    return;
+  }
+  const placed = farmData.sheds.filter(s => s.placementDate && s.initialPopulation > 0);
+  if (placed.length === 0){
+    showToast('No sheds are placed yet.', true);
+    return;
+  }
+  const eligible = placed.filter(s => !(s.pickups || []).some(p => p.isFinal));
+  const skipped = placed.length - eligible.length;
+  if (eligible.length === 0){
+    showToast('All sheds already have their cleanout pickup recorded.', true);
+    return;
+  }
+  if (!confirm(`Auto-fill predicted pickups for ${eligible.length} placed shed${eligible.length === 1 ? '' : 's'}?\n\nExisting predicted pickups will be replaced.${skipped > 0 ? `\n\n(${skipped} shed${skipped === 1 ? '' : 's'} skipped — cleanout already recorded.)` : ''}`)) return;
+  let totalRegular = 0, totalFinal = 0, shedsTouched = 0;
+  for (const shed of eligible){
+    const generated = autoFillPredictedPickups(shed);
+    shed.predictedPickups = generated;
+    totalRegular += generated.filter(g => !g.isFinal).length;
+    totalFinal += generated.filter(g => g.isFinal).length;
+    if (generated.length > 0) shedsTouched++;
+  }
+  saveState(); schedulePush(); render();
+  const total = totalRegular + totalFinal;
+  if (total === 0){
+    showToast('Auto-fill produced no pickups — check placement dates and density settings.', true);
+  } else {
+    showToast(`✨ Auto-filled ${totalRegular} regular + ${totalFinal} cleanout pickup${total === 1 ? '' : 's'} across ${shedsTouched} shed${shedsTouched === 1 ? '' : 's'}.`);
+  }
+}
+/* ---- Clear predicted pickups ---- */
+function clearAllPredictedPickups(){
+  if (!farmData){
+    showToast('Nothing to clear.', true);
+    return;
+  }
+  const withAny = farmData.sheds.filter(s => (s.predictedPickups || []).length > 0);
+  if (withAny.length === 0){
+    showToast('No predicted pickups to clear.', true);
+    return;
+  }
+  let total = 0;
+  for (const shed of withAny) total += (shed.predictedPickups || []).length;
+  if (!confirm(`Clear all predicted pickups?\n\nThis will remove ${total} predicted pickup${total === 1 ? '' : 's'} across ${withAny.length} shed${withAny.length === 1 ? '' : 's'}.\n\nActual pickups are not affected.`)) return;
+  for (const shed of withAny) shed.predictedPickups = [];
+  saveState(); schedulePush(); render();
+  showToast(`🗑️ Cleared ${total} predicted pickup${total === 1 ? '' : 's'}.`);
+}
+function clearPredictedPickupsForShed(shedId){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const count = (shed.predictedPickups || []).length;
+  if (count === 0){
+    showToast('No predicted pickups to clear.', true);
+    return;
+  }
+  if (!confirm(`Clear all ${count} predicted pickup${count === 1 ? '' : 's'} from Shed ${shedId}?\n\nActual pickups are not affected.`)) return;
+  shed.predictedPickups = [];
+  saveState(); schedulePush(); render();
+  showToast(`🗑️ Cleared ${count} predicted pickup${count === 1 ? '' : 's'} from Shed ${shedId}.`);
 }
 
 /* =========================================================
@@ -4062,7 +4986,7 @@ function openSampleModal(shedId, editIdx){
     };
   } else {
     const today = todayIso();
-    const computedAge = shed.placementDate ? Math.max(0, daysBetween(shed.placementDate, dateOnly(today))) : 0;
+    const computedAge = shed.placementDate ? Math.max(0, daysBetween(shed.placementDate, today)) : 0;
     sampleState = {
       shedId, mode: 'add', editIdx: null,
       dateIso: today, ageValue: computedAge, ageTouched: false,
@@ -4382,10 +5306,12 @@ function renderImportReviewBody(){
 }
 function finalizeImport(mode){
   if (!pendingImport) return;
-  const { file, result, manualTargets, shedRates, shedSamples, shedChickWeights } = pendingImport;
+  const { file, result, manualTargets, shedRates, shedSamples, shedChickWeights, shedPredictedPickups, shedTargetPickups } = pendingImport;
   const reviewMap = mode === 'review' ? { ...reviewChoices } : null;
   pendingImport = null;
   reviewChoices = {};
+
+  let removedPredictedCount = 0;
 
   const finalSheds = result.sheds.map(inc => {
     const cur = farmData ? farmData.sheds[inc.id - 1] : null;
@@ -4432,6 +5358,16 @@ function finalizeImport(mode){
       ? shedChickWeights[inc.id]
       : (inc.chickWeightKg != null ? inc.chickWeightKg : DEFAULT_CHICK_WEIGHT_KG);
     const samples = (shedSamples && shedSamples[inc.id]) ? shedSamples[inc.id] : [];
+    const tpPrev = (cur && cur.targetPickups != null) ? cur.targetPickups
+                : (shedTargetPickups && shedTargetPickups[inc.id] != null) ? shedTargetPickups[inc.id]
+                : null;
+    const tp = (tpPrev != null && Number.isFinite(Number(tpPrev)))
+      ? Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(Number(tpPrev))))
+      : null;
+
+    let predicted = (shedPredictedPickups && shedPredictedPickups[inc.id])
+      ? shedPredictedPickups[inc.id].map(x => ({ ...x }))
+      : ((cur && cur.predictedPickups) ? cur.predictedPickups.map(x => ({ ...x })) : []);
 
     let cleanoutDate = inc.cleanoutDate;
     let mortality = inc.mortality;
@@ -4441,9 +5377,31 @@ function finalizeImport(mode){
       const totalPicked = finalPickups.reduce((sum,p) => sum + (Number(p.birds) || 0), 0);
       mortality = Math.max(0, (inc.initialPopulation || 0) - totalPicked);
     }
+
+    // Reconcile predicted pickups against the new real pickups + cleanout.
+    const realDates = new Set(finalPickups.map(p => iso(p.date)));
+    const hasRealFinal = finalPickups.some(p => p.isFinal);
+    if (hasRealFinal){
+      removedPredictedCount += predicted.length;
+      predicted = [];
+    } else {
+      const before = predicted.length;
+      predicted = predicted.filter(pp => !realDates.has(iso(pp.date)));
+      removedPredictedCount += (before - predicted.length);
+      // Sync final predicted date to the shed's cleanout date
+      if (cleanoutDate){
+        predicted.forEach(pp => { if (pp.isFinal) pp.date = dateOnly(cleanoutDate); });
+        predicted.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+      }
+    }
+
+    const densitySettings = (cur && cur.densitySettings) ? { ...cur.densitySettings } : { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null };
     return {
       ...inc,
       pickups: finalPickups,
+      predictedPickups: predicted,
+      targetPickups: tp,
+      densitySettings,
       targetCurve: tc,
       cleanoutDate, mortality,
       mortalityRatePercent: rate,
@@ -4476,6 +5434,7 @@ function finalizeImport(mode){
       (result.skipped ? ` · ${result.skipped} row(s) skipped` : '') +
       ` · pickups ${modeLabel}` +
       (manualTargetCount > 0 ? ` · kept ${manualTargetCount} in-yard curve${manualTargetCount === 1 ? '' : 's'}` : '') +
+      (removedPredictedCount > 0 ? ` · removed ${removedPredictedCount} predicted pickup${removedPredictedCount === 1 ? '' : 's'}` : '') +
       (farmData.batchNumber ? ` · Batch ${farmData.batchNumber}` : '')
     );
   })();
@@ -4496,7 +5455,7 @@ async function handleFile(file){
   if (willReplaceLocal || willReplaceCloudExcel){
     let msg = '';
     if (willReplaceLocal){
-      msg += 'This will update your current shed data with the new file.\n\nIn-yard readings, extra reading days, mortality rates, and chick weights are preserved.';
+      msg += 'This will update your current shed data with the new file.\n\nIn-yard readings, extra reading days, mortality rates, chick weights, and target-pickup settings are preserved.';
     }
     if (willReplaceCloudExcel){
       if (msg) msg += '\n\n';
@@ -4507,7 +5466,7 @@ async function handleFile(file){
     if (!confirm(msg)) return;
   }
   try {
-    const manualTargets = {}, shedRates = {}, shedSamples = {}, shedChickWeights = {};
+    const manualTargets = {}, shedRates = {}, shedSamples = {}, shedChickWeights = {}, shedPredictedPickups = {}, shedTargetPickups = {};
     if (farmData && Array.isArray(farmData.sheds)){
       farmData.sheds.forEach(s => {
         const tc = s.targetCurve || {};
@@ -4521,6 +5480,12 @@ async function handleFile(file){
         if (Array.isArray(s.inYardSamples) && s.inYardSamples.length > 0){
           shedSamples[s.id] = s.inYardSamples.map(x => ({ ...x }));
         }
+        if (Array.isArray(s.predictedPickups) && s.predictedPickups.length > 0){
+          shedPredictedPickups[s.id] = s.predictedPickups.map(x => ({ ...x }));
+        }
+        if (s.targetPickups != null && Number.isFinite(Number(s.targetPickups))){
+          shedTargetPickups[s.id] = Number(s.targetPickups);
+        }
       });
     }
     const buf = await file.arrayBuffer();
@@ -4528,11 +5493,11 @@ async function handleFile(file){
     const result = parseShedsFromWorkbook(wb);
     const collisions = detectPickupCollisions(farmData, result.sheds);
     if (collisions.hasAny){
-      pendingImport = { file, result, manualTargets, shedRates, shedSamples, shedChickWeights, collisions };
+      pendingImport = { file, result, manualTargets, shedRates, shedSamples, shedChickWeights, shedPredictedPickups, shedTargetPickups, collisions };
       openImportConflictModal();
       return;
     }
-    pendingImport = { file, result, manualTargets, shedRates, shedSamples, shedChickWeights, collisions: { hasAny: false, byShed: {} } };
+    pendingImport = { file, result, manualTargets, shedRates, shedSamples, shedChickWeights, shedPredictedPickups, shedTargetPickups, collisions: { hasAny: false, byShed: {} } };
     finalizeImport('replace');
   } catch (err){
     console.error(err);
@@ -4549,6 +5514,8 @@ function updateShedField(shedIdx, key, rawValue){
     if (key === 'cleanoutDate'){
       const fp = finalPickupOf(shed);
       if (fp) shed.cleanoutDate = dateOnly(fp.date);
+      // Sync any final predicted pickup's date to the new cleanout
+      reconcilePredictedPickups(shed);
     }
   } else if (key === 'initialPopulation'){
     const n = Number(rawValue);
@@ -4591,6 +5558,20 @@ function setShedView(group, view){
   shedViewByGroup[group] = view;
   saveShedViews(); schedulePush(); render();
 }
+function setShedTargetPickups(shedId, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1];
+  if (!shed) return;
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)){
+    shed.targetPickups = null;
+  } else {
+    // Strict minimum 4, max 5.
+    shed.targetPickups = Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, n));
+  }
+  saveState(); schedulePush();
+  render();
+}
 
 /* ---------- Predictions interactions ---------- */
 function setPickupTotalWeight(shedId, pickupDateIso, value){
@@ -4629,7 +5610,7 @@ function setPredBeta(v){
   let n = Number(v); if (!Number.isFinite(n)) n = 0.27;
   n = Math.max(0, Math.min(0.6, n));
   predState.beta = n;
-  savePredState(); schedulePush(); render();
+  savePredState(); schedulePush();
 }
 function setTargetHarvestWeight(group, v){
   let n = Number(v); if (!Number.isFinite(n) || n <= 0) n = 2.65;
@@ -4665,7 +5646,6 @@ function setFarmFeedOverride(rawVal){
   }
   savePredState(); schedulePush();
 }
-/* Scale correction: save on every input; caller decides when to re-render. */
 function setBiasFactor(value){
   if (!farmData) return;
   const n = Number(value);
@@ -4674,7 +5654,6 @@ function setBiasFactor(value){
   farmData.biasFactor = v;
   saveState(); schedulePush();
 }
-/* Daily mortality rate: save on change and re-render (forward projection changes). */
 function setShedMortRate(shedId, value){
   if (!farmData) return;
   const shed = farmData.sheds[shedId - 1];
@@ -4684,7 +5663,6 @@ function setShedMortRate(shedId, value){
   shed.mortalityRatePercent = Math.max(0, Math.min(MAX_MORT_RATE_PCT, n));
   saveState(); schedulePush(); scheduleRender(30);
 }
-/* Live-editing helper: update one shed's mortality count without a full re-render */
 function liveUpdateShedMortality(shedIdx, rawValue){
   if (!farmData) return;
   const shed = farmData.sheds[shedIdx];
@@ -4693,6 +5671,35 @@ function liveUpdateShedMortality(shedIdx, rawValue){
   shed.mortality = (Number.isFinite(n) && n >= 0) ? Math.floor(n) : 0;
   saveState(); schedulePush();
   if (activeTab === 'predictions') updateFarmKpiValues();
+}
+function toggleAdjCollapse(){
+  predState.adjOpen = !(predState.adjOpen === true);
+  savePredState();
+  render();
+}
+function setDensityGlobal(field, value){
+  const dg = predState.densityGlobal || { ...DEFAULT_DENSITY_GLOBAL };
+  const n = Number(value);
+  if (!Number.isFinite(n)) return;
+  if (field === 'maxDensity') dg.maxDensity = Math.max(28, Math.min(45, n));
+  else if (field === 'triggerDensity') dg.triggerDensity = Math.max(20, Math.min(45, n));
+  else if (field === 'targetDensity') dg.targetDensity = Math.max(15, Math.min(35, n));
+  else if (field === 'targetPickups') dg.targetPickups = Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(n)));
+  predState.densityGlobal = dg;
+  savePredState(); schedulePush();
+}
+function setShedDensityOverride(shedId, field, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  if (!shed.densitySettings) shed.densitySettings = { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null };
+  if (field === 'useGlobal'){
+    shed.densitySettings.useGlobal = !!value;
+  } else {
+    const n = Number(value);
+    if (Number.isFinite(n)) shed.densitySettings[field] = n;
+  }
+  saveState(); schedulePush();
+  render();
 }
 
 /* ---------- Sync UI ---------- */
@@ -4862,31 +5869,35 @@ function scheduleRender(delay = 50){
   }, delay);
 }
 function render(){
-  gompertzCache = new Map();
-  const batchEl = document.getElementById('batchNumber');
-  if (batchEl){
-    const want = predState.batchNumber || (farmData ? farmData.batchNumber : '') || '';
-    if (batchEl.value !== want) batchEl.value = want;
-    batchEl.readOnly = !!want;
-    batchEl.title = want
-      ? 'Batch number is locked. Use "New Batch" to change it.'
-      : 'Enter or import a batch number';
+  try {
+    gompertzCache = new Map();
+    const batchEl = document.getElementById('batchNumber');
+    if (batchEl){
+      const want = predState.batchNumber || (farmData ? farmData.batchNumber : '') || '';
+      if (batchEl.value !== want) batchEl.value = want;
+      batchEl.readOnly = !!want;
+      batchEl.title = want
+        ? 'Batch number is locked. Use "New Batch" to change it.'
+        : 'Enter or import a batch number';
+    }
+    const label = document.getElementById('importBtnLabel');
+    if (label) label.textContent = farmData ? 'Re-import Excel' : 'Import Excel';
+    const tabsWrap = document.getElementById('tabsWrap');
+    const app = document.getElementById('app');
+    if (!farmData){
+      tabsWrap.style.display = 'none';
+      app.innerHTML = emptyStateHtml();
+      return;
+    }
+    tabsWrap.style.display = 'block';
+    document.getElementById('tabs').innerHTML = tabsHtml();
+    if (activeTab === 'predictions'){ app.innerHTML = renderPredictionsView(); return; }
+    if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
+    const g = Number(activeTab.replace('g', ''));
+    app.innerHTML = groupViewHtml(g);
+  } finally {
+    requestAnimationFrame(updateStickyHeaderHeight);
   }
-  const label = document.getElementById('importBtnLabel');
-  if (label) label.textContent = farmData ? 'Re-import Excel' : 'Import Excel';
-  const tabsWrap = document.getElementById('tabsWrap');
-  const app = document.getElementById('app');
-  if (!farmData){
-    tabsWrap.style.display = 'none';
-    app.innerHTML = emptyStateHtml();
-    return;
-  }
-  tabsWrap.style.display = 'block';
-  document.getElementById('tabs').innerHTML = tabsHtml();
-  if (activeTab === 'predictions'){ app.innerHTML = renderPredictionsView(); return; }
-  if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
-  const g = Number(activeTab.replace('g', ''));
-  app.innerHTML = groupViewHtml(g);
 }
 function emptyStateHtml(){
   const isConnected = !!(syncFarmName && syncConnectedAt);
@@ -5043,6 +6054,8 @@ function shedCardHtml(shed, today){
   const canAddPickup = (shed.pickups || []).length < MAX_PICKUPS_PER_SHED;
   const chickW = shedChickWeight(shed);
   const fit = getShedGompertzFit(shed);
+  const predictedCount = (shed.predictedPickups || []).length;
+  const ds = getShedDensitySettings(shed);
   const pills = [
     `<span class="tag muted">Age ${age}d</span>`,
     `<span class="tag amber">Live ${live.toLocaleString()}</span>`,
@@ -5050,7 +6063,8 @@ function shedCardHtml(shed, today){
     shed.mortality > 0 ? `<span class="tag red">Mort ${shed.mortality.toLocaleString()} (${mRate.toFixed(2)}%)</span>` : '',
     fit ? `<span class="tag green">AI Curve</span>` : '',
     chickW ? `<span class="tag muted">Chick ${Math.round(chickW*1000)}g</span>` : '',
-    `<span class="tag muted">${shed.pickups.length}/5 pickups</span>`,
+    `<span class="tag muted">${shed.pickups.length}/${ds.targetPickups} pickups</span>`,
+    predictedCount > 0 ? `<span class="tag predicted-source">${predictedCount} planned</span>` : '',
     fp ? `<span class="tag amber">FINAL</span>` : ''
   ].filter(Boolean).join('');
   const pickupsHtml = shed.pickups.length === 0
@@ -5131,13 +6145,7 @@ function shedCardHtml(shed, today){
             <div class="snapshot-row"><span class="lbl">Live birds</span><span class="val big">${live.toLocaleString()}</span></div>
             <div class="snapshot-row">
               <span class="lbl">Mortality</span>
-              <span class="val">
-                <input type="number" class="snapshot-mort-input" min="0" step="1"
-                  value="${Math.max(0, Number(shed.mortality) || 0)}"
-                  data-shed="${idx}" data-field="mortality"
-                  id="snapshotMortG_${shed.id}" />
-                <span class="mort-pct">(${mRate.toFixed(2)}%)</span>
-              </span>
+              <span class="val">${shed.mortality.toLocaleString()} <span class="mort-pct">(${mRate.toFixed(2)}%)</span></span>
             </div>
             <div class="snapshot-row"><span class="lbl">Total picked</span><span class="val">${picked.toLocaleString()}</span></div>
             <div class="snapshot-row"><span class="lbl">Cleanout</span><span class="val">${shed.cleanoutDate ? fmtShort(shed.cleanoutDate) : '—'}</span></div>
@@ -5145,7 +6153,7 @@ function shedCardHtml(shed, today){
         </div>
         <div class="pickups-block">
           <h4 class="pickup-header">
-            <span>Pickups (${shed.pickups.length}/${MAX_PICKUPS_PER_SHED})</span>
+            <span>Pickups (${shed.pickups.length}/${ds.targetPickups})</span>
             <button class="btn-pickup-add"
               data-goto-predpickup="${shed.id}"
               type="button"
@@ -5185,13 +6193,15 @@ function renderShedForecastTable(shed, forecast){
       weekend ? 'is-weekend' : '',
       r.isPast ? 'is-past' : '',
       r.isToday ? 'is-today' : '',
-      r.pickupsBirds > 0 ? 'pickup-day' : '',
+      r.pickupsBirds > 0 && !r.hasPredicted ? 'pickup-day' : '',
+      r.hasPredicted ? 'predicted-pickup-day' : '',
       r.isFinalDay ? 'is-final' : ''
     ].filter(Boolean).join(' ');
     let pickupCell = '—';
     if (r.pickupsBirds > 0){
       const finalTag = r.isFinalDay ? `<span class="pickup-pill final">FINAL</span>` : '';
-      pickupCell = `${finalTag}<span class="pickup-pill">−${r.pickupsBirds.toLocaleString()}</span>`;
+      const predictedTag = r.hasPredicted ? `<span class="pickup-pill predicted">PLANNED</span>` : '';
+      pickupCell = `${finalTag}${predictedTag}<span class="pickup-pill">−${r.pickupsBirds.toLocaleString()}</span>`;
     }
     const liveAfterCls = r.liveAfter === 0 ? 'live-after zero' : 'live-after';
     const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
@@ -5515,11 +6525,11 @@ function renderFarmKpiCard(){
     return `
       <div class="farm-kpi-card">
         <div class="farm-kpi-head">
-          <h2>🏭 Whole Farm KPIs</h2>
-          <span class="sub">Sum across all 8 sheds</span>
+          <h2>🏭 Whole Farm KPIs · Estimates</h2>
+          <span class="sub">Projected end-of-batch totals across all 8 sheds</span>
         </div>
         <div class="farm-kpi-empty">
-          No sheds placed yet — import Excel or add a placement date to see farm totals.
+          No sheds placed yet — import Excel or add a placement date to see farm estimates.
         </div>
       </div>`;
   }
@@ -5527,21 +6537,21 @@ function renderFarmKpiCard(){
   const overrideCls = t.usingManualFeed ? 'manual' : '';
   const feedSub = t.usingManualFeed
     ? `Manual override · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`
-    : `Auto-calculated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
+    : `Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
   return `
     <div class="farm-kpi-card">
       <div class="farm-kpi-head">
-        <h2>🏭 Whole Farm KPIs</h2>
-        <span class="sub">Sum across ${t.shedsWithData} placed shed${t.shedsWithData === 1 ? '' : 's'} of ${SHED_COUNT}</span>
+        <h2>🏭 Whole Farm KPIs · Estimates</h2>
+        <span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData === 1 ? '' : 's'} of ${SHED_COUNT}</span>
       </div>
       <div class="farm-kpi-grid">
         <div class="farm-kpi-tile amber">
-          <div class="fkt-lbl">Total Live Weight</div>
+          <div class="fkt-lbl">Est. Total Live Weight</div>
           <div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div>
           <div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div>
         </div>
         <div class="farm-kpi-tile">
-          <div class="fkt-lbl">Total Feed Consumption</div>
+          <div class="fkt-lbl">Est. Total Feed Consumption</div>
           <div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div>
           <div class="fkt-sub" id="kpiFeedSub">${feedSub}</div>
           <input id="farmFeedOverride" class="farm-feed-override ${overrideCls}"
@@ -5550,34 +6560,34 @@ function renderFarmKpiCard(){
             value="${overrideVal}" />
         </div>
         <div class="farm-kpi-tile green">
-          <div class="fkt-lbl">FCR</div>
+          <div class="fkt-lbl">Est. FCR</div>
           <div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div>
           <div class="fkt-sub">Feed ÷ weight gained</div>
         </div>
         <div class="farm-kpi-tile green">
-          <div class="fkt-lbl">cFCR</div>
+          <div class="fkt-lbl">Est. cFCR</div>
           <div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div>
           <div class="fkt-sub">FCR adjusted for final weight (${t.avgWeight.toFixed(2)} kg)</div>
         </div>
         <div class="farm-kpi-tile blue">
-          <div class="fkt-lbl">PIF</div>
+          <div class="fkt-lbl">Est. PIF</div>
           <div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div>
           <div class="fkt-sub">Overall score: weight × survival ÷ (age × FCR)</div>
         </div>
         <div class="farm-kpi-tile">
-          <div class="fkt-lbl">Total Average Weight</div>
+          <div class="fkt-lbl">Est. Total Average Weight</div>
           <div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div>
           <div class="fkt-sub">Weighted across ${t.birdsAtHarvest.toLocaleString()} birds</div>
         </div>
         <div class="farm-kpi-tile">
-          <div class="fkt-lbl">Livability</div>
+          <div class="fkt-lbl">Est. Livability</div>
           <div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div>
           <div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div>
         </div>
         <div class="farm-kpi-tile red">
-          <div class="fkt-lbl">Total Mortality</div>
-          <div class="fkt-val" id="kpiMortality">${t.totalCurrentMortality.toLocaleString()}</div>
-          <div class="fkt-sub" id="kpiMortalitySub">${t.currentMortRate.toFixed(2)}% of ${t.placed.toLocaleString()} placed</div>
+          <div class="fkt-lbl">Est. Total Mortality</div>
+          <div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div>
+          <div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div>
         </div>
       </div>
     </div>`;
@@ -5594,16 +6604,104 @@ function updateFarmKpiValues(){
   if (sub){
     sub.textContent = t.usingManualFeed
       ? `Manual override · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`
-      : `Auto-calculated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
+      : `Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
   }
   set('kpiFCR', t.fcr.toFixed(3));
   set('kpiCFCR', t.cfcr.toFixed(3));
   set('kpiPIF', t.pif.toFixed(2));
   set('kpiAvgWeight', t.avgWeight.toFixed(3) + ' <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span>');
   set('kpiLivability', t.livability.toFixed(2) + '%');
-  set('kpiMortality', t.totalCurrentMortality.toLocaleString());
+  set('kpiMortality', t.mortality.toLocaleString());
   const msub = el('kpiMortalitySub');
-  if (msub) msub.textContent = `${t.currentMortRate.toFixed(2)}% of ${t.placed.toLocaleString()} placed`;
+  if (msub) msub.textContent = `${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed`;
+}
+
+/* ---------- Collapsible prediction adjustments ---------- */
+function renderAdjustmentCollapse(group){
+  const isOpen = predState.adjOpen === true;
+  const biasPct = Math.round(currentBiasFactor() * 100);
+  const betaVal = predState.beta;
+  const targetKg = predState.targetHarvestWeightKg[group];
+  const dg = predState.densityGlobal || { ...DEFAULT_DENSITY_GLOBAL };
+  const tp = Number.isFinite(Number(dg.targetPickups)) ? Number(dg.targetPickups) : DEFAULT_DENSITY_GLOBAL.targetPickups;
+  return `
+    <div class="adj-collapse adj-collapse-highlight ${isOpen ? 'open' : ''}">
+      <button type="button" class="adj-collapse-head" data-toggle-adjustments="1"
+        aria-expanded="${isOpen ? 'true' : 'false'}">
+        <span class="adj-collapse-title">⚙️ Prediction adjustments</span>
+        <span class="adj-collapse-summary">
+          <span class="adj-chip" id="adjChipBeta">cFCR β <strong>${betaVal.toFixed(3)}</strong></span>
+          <span class="adj-chip" id="adjChipScale">Scale <strong>${biasPct}%</strong></span>
+          <span class="adj-chip" id="adjChipTarget">Target <strong>${targetKg.toFixed(2)} kg</strong></span>
+          <span class="adj-chip" id="adjChipDensity">Density <strong>${dg.triggerDensity}/${dg.targetDensity}</strong></span>
+          <span class="adj-chip" id="adjChipPickups">Pickups <strong>${tp}</strong></span>
+        </span>
+        <span class="adj-collapse-caret">▾</span>
+      </button>
+      <div class="adj-collapse-body">
+        <div class="adj-row">
+          <label>📊 cFCR β factor</label>
+          <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002"
+            value="${betaVal}" />
+          <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002"
+            value="${betaVal.toFixed(3)}" />
+          <span class="adj-hint">How strongly cFCR is adjusted for final weight. Higher = more adjustment for heavy birds.</span>
+        </div>
+        <div class="adj-row">
+          <label>📐 Scale correction</label>
+          <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
+            value="${biasPct}" />
+          <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
+            value="${biasPct}" />
+          <span class="adj-unit">%</span>
+          <span class="adj-hint">How much your shed scale reads heavier than the plant weight. Adjusts all in-yard readings before forecasting.</span>
+        </div>
+        <div class="adj-row">
+          <label>🎯 Target weight at harvest</label>
+          <input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01"
+            value="${targetKg.toFixed(2)}" />
+          <span class="adj-unit">kg</span>
+          <span class="adj-hint">The weight you're aiming to send birds to the plant. Used for the current group's combined result.</span>
+        </div>
+        <div class="density-settings-title">
+          <span>🎯 Pickup density (global defaults)</span>
+          <span style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-global-autofill-sm" data-global-autofill="1"
+              title="Auto-generate predicted pickups for every placed shed">
+              ✨ Auto-fill all sheds
+            </button>
+            <button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1"
+              title="Remove all predicted pickups from every shed">
+              🗑️ Clear all
+            </button>
+          </span>
+        </div>
+        <div class="adj-row">
+          <label>Trigger density</label>
+          <input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" />
+          <span class="adj-unit">kg/m²</span>
+          <span class="adj-hint">Schedule a pickup when density is forecast to reach this. Lower = more safety margin.</span>
+        </div>
+        <div class="adj-row">
+          <label>Target after pickup</label>
+          <input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" />
+          <span class="adj-unit">kg/m²</span>
+          <span class="adj-hint">What density to aim for after each pickup.</span>
+        </div>
+        <div class="adj-row">
+          <label>Hard maximum</label>
+          <input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" />
+          <span class="adj-unit">kg/m²</span>
+          <span class="adj-hint">Welfare ceiling. Density should never exceed this.</span>
+        </div>
+        <div class="adj-row">
+          <label>Target pickups per shed</label>
+          <input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" />
+          <span class="adj-unit">pickups</span>
+          <span class="adj-hint">Total pickups per shed you want (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}). The last pickup is the final cleanout, on the shed's cleanout date. Auto-fill plans up to this many per shed.</span>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderPredictionsView(){
@@ -5619,10 +6717,10 @@ function renderPredictionsView(){
   return `
     <div class="predictions-head">
       <h1>📊 Results Predictions</h1>
-      <span class="head-note">Whole-farm KPIs · group result · per-shed detail below</span>
+      <span class="head-note">Whole-farm estimates · group result · per-shed detail below</span>
     </div>
     ${renderFarmKpiCard()}
-    <div class="shed-tabs" style="margin-bottom:14px;">
+    <div class="shed-tabs pred-sticky-tabs" style="margin-bottom:14px;">
       ${[1,2,3,4].map(gi => `
         <button class="stab ${predState.predGroup === gi ? 'active' : ''}"
           data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}
@@ -5631,28 +6729,13 @@ function renderPredictionsView(){
       <button class="stab ${view==='shed1'?'active':''}" data-predview="shed1" style="margin-left:${view==='both'?'12px':'0'};">🏠 Shed ${sheds[0]?.id || ''}</button>
       ${sheds[1] ? `<button class="stab ${view==='shed2'?'active':''}" data-predview="shed2">🏠 Shed ${sheds[1].id}</button>` : ''}
     </div>
-    <div class="pred-beta-row">
-      <label>⚙️ cFCR adjustment factor:</label>
-      <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002"
-        value="${predState.beta}" />
-      <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002"
-        value="${predState.beta.toFixed(3)}" />
-      <span style="font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-        Target weight at harvest:
-        <input type="number" id="predTargetWeight_${g}" min="0.5" max="5" step="0.01"
-          value="${predState.targetHarvestWeightKg[g].toFixed(2)}"
-          style="width:70px;padding:4px 6px;border-radius:6px;border:1px solid var(--line);
-            background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;
-            font-weight:700;font-size:12px;text-align:center;" />
-        kg
-      </span>
-    </div>
+    ${renderAdjustmentCollapse(g)}
     <div class="${gridClass}" style="margin-top:14px;">
       ${visibleSheds.map(s => renderPredictionsShedCard(s, g)).join('')}
     </div>`;
 }
 
-/* ---------- In-Yard Growth Curve panel (with scale correction inside) ---------- */
+/* ---------- In-Yard Growth Curve panel ---------- */
 function renderInYardCurvePanel(shed){
   const tc = shed.targetCurve || {};
   const fit = getShedGompertzFit(shed);
@@ -5753,19 +6836,6 @@ function renderInYardCurvePanel(shed){
       </div>
       <div class="ptc-inputs">${inputs}</div>
       ${customRows}
-      <div class="scale-corr">
-        <div class="scale-corr-head">
-          <span class="scale-corr-title">📐 Scale correction</span>
-          <span class="scale-corr-help">How much your shed scale reads heavier than the plant weight.</span>
-        </div>
-        <div class="scale-corr-controls">
-          <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-            value="${biasPct}" />
-          <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-            value="${biasPct}" />
-          <span class="scale-corr-unit">%</span>
-        </div>
-      </div>
       <div class="ptc-status">
         Using: ${sourcePill} · ${sourceText}
       </div>
@@ -5827,6 +6897,7 @@ function renderDailyPerformance(shed){
   const last     = lastWeightedPickup(shed);
   const currentAge = ageInDays(shed, today);
   const fit = getShedGompertzFit(shed);
+  const effective = computeEffectivePickups(shed);
 
   let startDay, endDay;
   if (dailyRangeState.mode === 'cycle'){
@@ -5842,8 +6913,9 @@ function renderDailyPerformance(shed){
     const d        = addDays(shed.placementDate, day);
     const age      = day;
     const live     = liveAtStartOfDay(shed, d);
-    const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+    const pickupsToday = effective.filter(p => iso(p.date) === iso(d));
     const pickupsBirds = pickupsToday.reduce((s,p) => s + p.birds, 0);
+    const hasPredicted = pickupsToday.some(p => p.__source === 'predicted');
     const isToday  = iso(d) === iso(today);
     const isPast   = d < today;
     const wknd     = isWeekend(d);
@@ -5874,7 +6946,7 @@ function renderDailyPerformance(shed){
     if (weight != null && age > 0){ daysVar = daysVsTarget(age, weight); }
 
     rows.push({
-      date: d, day, age, live, pickupsBirds,
+      date: d, day, age, live, pickupsBirds, hasPredicted,
       standard, weight, weightType, daysVar, band,
       isToday, isPast, isWeekend: wknd, isMilestone,
       gridVal, customOn
@@ -5902,6 +6974,11 @@ function renderDailyPerformance(shed){
     sourceNote = `No readings yet — showing the standard growth curve.`;
   }
 
+  const hasAnyPredicted = effective.some(p => p.__source === 'predicted');
+  if (hasAnyPredicted){
+    sourceNote += ` <strong style="color:var(--secondary);">Planned pickups are included in this forecast.</strong>`;
+  }
+
   return `
     <div class="pickups-block" style="margin-top:14px;">
       <h4>📅 Daily Performance — Actual + AI Forecast
@@ -5926,12 +7003,13 @@ function renderDailyPerformance(shed){
               const cls = [
                 r.isToday ? 'is-today' : '',
                 r.isWeekend ? 'is-weekend' : '',
+                r.hasPredicted ? 'predicted-pickup-row' : '',
                 (r.weightType === 'gompertz' || r.weightType === 'ai-pickup' || r.weightType === 'ai-target' || r.weightType === 'ross-scaled') ? 'is-forecast-row' : ''
               ].filter(Boolean).join(' ');
               const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
               const wkndTag  = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
               const pickupNote = r.pickupsBirds > 0
-                ? ` <span style="font-size:10px;color:var(--primary-dark);font-weight:700;">−${r.pickupsBirds.toLocaleString()}</span>`
+                ? ` <span style="font-size:10px;color:${r.hasPredicted ? 'var(--secondary)' : 'var(--primary-dark)'};font-weight:700;">−${r.pickupsBirds.toLocaleString()}${r.hasPredicted ? ' (plan)' : ''}</span>`
                 : '';
               const milestoneBadge = r.isMilestone ? `<span class="milestone-pill" title="Check day">★ Day ${r.age}</span>` : '';
 
@@ -6012,6 +7090,180 @@ function renderDaysBehind(shed){
     </div>`;
 }
 
+/* ---------- Predicted Pickups block ---------- */
+function renderPickupPlanBlock(shed){
+  const pps = (shed.predictedPickups || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  const realDates = new Set((shed.pickups || []).map(p => iso(p.date)));
+  const realPickups = (shed.pickups || []);
+  const hasRealFinal = realPickups.some(p => p.isFinal);
+  const ds = getShedDensitySettings(shed);
+  const useGlobalDensity = ds.useGlobal !== false;
+  const targetN = ds.targetPickups;
+  const realCount = realPickups.length;
+
+  const activePps = pps.filter(pp => !realDates.has(iso(pp.date)));
+
+  let simList = [...realPickups.map(p => ({ date: p.date, birds: Number(p.birds) || 0 }))];
+  const rows = [];
+  for (const pp of pps){
+    const isSuperseded = realDates.has(iso(pp.date));
+    const dateObj = pp.date;
+    const age = ageInDays(shed, dateObj);
+    const weight = (forecastWeightModeAware(shed, dateObj).kg) || 0;
+    const beforeBirds = Math.max(0,
+      (shed.initialPopulation || 0) - Number(shed.mortality || 0) -
+      simList.filter(x => dateOnly(x.date) < dateOnly(dateObj)).reduce((s,x) => s + (Number(x.birds) || 0), 0)
+    );
+    const densityBefore = (beforeBirds * weight) / FIXED_FLOOR_AREA_M2;
+    const afterBirds = Math.max(0, beforeBirds - (Number(pp.birds) || 0));
+    const densityAfter = (afterBirds * weight) / FIXED_FLOOR_AREA_M2;
+    rows.push({
+      pp, age, weight, beforeBirds, afterBirds, densityBefore, densityAfter,
+      isSuperseded
+    });
+    if (!isSuperseded){ simList.push({ date: pp.date, birds: Number(pp.birds) || 0 }); }
+  }
+  simList.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+
+  const predictedCount = pps.length;
+  const totalPlannedCount = realCount + predictedCount;
+
+  // Progress string
+  let progressHtml = '';
+  if (hasRealFinal){
+    progressHtml = `<span class="progress-done">✅ Batch complete — cleanout recorded</span>`;
+  } else if (totalPlannedCount >= targetN && predictedCount > 0){
+    progressHtml = `<span class="progress-ok">✅ Plan complete — ${realCount} real + ${predictedCount} planned = ${totalPlannedCount}/${targetN}</span>`;
+  } else if (totalPlannedCount >= targetN){
+    progressHtml = `<span class="progress-ok">✅ Target reached — ${realCount} real pickups</span>`;
+  } else {
+    progressHtml = `<span class="progress-short">⚠️ ${realCount} real + ${predictedCount} planned = ${totalPlannedCount}/${targetN} — ${targetN - totalPlannedCount} more needed</span>`;
+  }
+
+  const targetInputHtml = `
+    <div class="pp-target-row">
+      <span class="pp-target-label">🎯 Target pickups for this shed</span>
+      <input type="number" class="pp-target-input"
+        min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1"
+        value="${targetN}"
+        data-shed-target-pickups="${shed.id}"
+        title="Total pickups including the final cleanout (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED})" />
+      <span class="pp-target-hint">${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED} (includes the final cleanout)</span>
+    </div>`;
+
+  const densityOverrideHtml = `
+    <div class="shed-density-override">
+      <label>
+        <input type="checkbox" data-density-use-global="${shed.id}" ${useGlobalDensity ? 'checked' : ''} />
+        Use global density settings
+      </label>
+      ${!useGlobalDensity ? `
+        <span class="ovr-inputs">
+          <span>Trigger</span>
+          <input type="number" min="20" max="45" step="0.5" value="${ds.triggerDensity}" data-density-override="${shed.id}|triggerDensity" />
+          <span>Target</span>
+          <input type="number" min="15" max="35" step="0.5" value="${ds.targetDensity}" data-density-override="${shed.id}|targetDensity" />
+          <span>Max</span>
+          <input type="number" min="28" max="45" step="0.5" value="${ds.maxDensity}" data-density-override="${shed.id}|maxDensity" />
+        </span>
+      ` : ''}
+    </div>`;
+
+  // If real final exists: show "batch complete" and no list/add buttons, but keep target input + density override.
+  if (hasRealFinal){
+    return `
+      <div class="pickup-plan-block">
+        <h4>
+          <span>🎯 Predicted Pickups</span>
+          <span style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-pp-clear" data-pp-clear="${shed.id}" type="button" title="Remove any leftover predicted pickups">🗑️ Clear</button>
+          </span>
+        </h4>
+        <div class="pp-empty" style="background:linear-gradient(135deg,rgba(76,122,59,0.10),rgba(76,122,59,0.04));border-color:var(--success);color:var(--success);font-weight:600;">
+          ✅ Target reached — a cleanout pickup is already recorded for this shed.<br>
+          No predicted pickups needed.
+        </div>
+        <div class="pp-summary" style="margin-top:10px;">
+          <div>${progressHtml}</div>
+          <div><span class="lbl">Real pickups on record:</span> <strong>${realCount}</strong></div>
+        </div>
+        ${targetInputHtml}
+        ${densityOverrideHtml}
+      </div>`;
+  }
+
+  // If no predicted pickups at all
+  if (pps.length === 0){
+    return `
+      <div class="pickup-plan-block">
+        <h4>
+          <span>🎯 Predicted Pickups</span>
+        </h4>
+        <div class="pp-empty">
+          Plan hypothetical pickups to see how the whole-batch forecast changes.
+          The last pickup is the <strong>final cleanout</strong> and sits on the shed's cleanout date.
+          Regular predicted pickups trigger when density reaches <strong>${ds.triggerDensity} kg/m²</strong> and bring it back to <strong>${ds.targetDensity} kg/m²</strong>.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn-pp-add" data-pp-add="${shed.id}" type="button">＋ Add Predicted Pickup</button>
+          <button class="btn-pp-autofill" data-pp-autofill="${shed.id}" type="button" title="Auto-generate the optimal pickup plan">✨ Auto-fill Plan</button>
+        </div>
+        <div class="pp-summary" style="margin-top:10px;">
+          <div>${progressHtml}</div>
+        </div>
+        ${targetInputHtml}
+        ${densityOverrideHtml}
+      </div>`;
+  }
+
+  // Has predicted pickups — show the list
+  const totalActiveRemoval = activePps.reduce((s, pp) => s + (Number(pp.birds) || 0), 0);
+
+  return `
+    <div class="pickup-plan-block">
+      <h4>
+        <span>🎯 Predicted Pickups (${predictedCount})</span>
+        <span style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-pp-autofill" data-pp-autofill="${shed.id}" type="button" title="Auto-generate the optimal pickup plan">✨ Auto-fill</button>
+          <button class="btn-pp-add" data-pp-add="${shed.id}" type="button">＋ Add</button>
+          <button class="btn-pp-clear" data-pp-clear="${shed.id}" type="button" title="Remove all predicted pickups for this shed">🗑️ Clear</button>
+        </span>
+      </h4>
+      <div class="pp-list">
+        ${rows.map(r => {
+          const classes = ['pp-row'];
+          if (r.isSuperseded) classes.push('pp-superseded');
+          if (r.pp.isFinal) classes.push('pp-final');
+          const badges = [];
+          if (r.isSuperseded) badges.push('<span class="pp-badge">Replaced by actual</span>');
+          if (r.pp.isFinal) badges.push('<span class="pp-badge final">FINAL CLEANOUT</span>');
+          const badgeHtml = badges.join('');
+          return `
+            <div class="${classes.join(' ')}">
+              <div class="pp-info">
+                <div class="pp-date">${fmtShort(r.pp.date)} · Day ${r.age} ${badgeHtml}</div>
+                <div class="pp-meta">
+                  Remove <strong>${(Number(r.pp.birds) || 0).toLocaleString()}</strong> birds
+                  · Density ${r.densityBefore.toFixed(1)} → ${r.densityAfter.toFixed(1)} kg/m²
+                </div>
+              </div>
+              <div class="pp-actions">
+                <button type="button" data-pp-edit="${shed.id}|${r.pp.id}" title="Edit">✎</button>
+                <button type="button" class="danger" data-pp-delete="${shed.id}|${r.pp.id}" title="Delete">✕</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="pp-summary">
+        <div>${progressHtml}</div>
+        <div><span class="lbl">Total planned removal:</span> <strong>${totalActiveRemoval.toLocaleString()}</strong> birds</div>
+      </div>
+      ${targetInputHtml}
+      ${densityOverrideHtml}
+    </div>`;
+}
+
 function renderPredictionsShedCard(shed, group){
   const pred = computePredictions(shed, group);
   const grp = computeGroupPredictions(group);
@@ -6028,6 +7280,11 @@ function renderPredictionsShedCard(shed, group){
   const densityKg = pred.liveNow * forecastKg;
   const densityVal = densityKg / FIXED_FLOOR_AREA_M2;
   const densityDisplay = pred.liveNow === 0 ? '0.0' : densityVal.toFixed(1);
+  const dsCurrent = getShedDensitySettings(shed);
+  const densityTone = densityVal > dsCurrent.maxDensity ? 'red' : (densityVal > dsCurrent.triggerDensity ? 'amber' : '');
+  const densityStyle = densityTone === 'red'
+    ? 'color:var(--danger);'
+    : (densityTone === 'amber' ? 'color:var(--primary-dark);' : '');
 
   const currentMortRate = pred.initialPop > 0 ? ((pred.currentMort / pred.initialPop) * 100).toFixed(2) : '0.00';
 
@@ -6047,10 +7304,10 @@ function renderPredictionsShedCard(shed, group){
         <div class="sub">${currentMortRate}% of placed</div>
       </div>
       <div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div>
-      <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${pred.pickupsCompleted} of ${MAX_PICKUPS_PER_SHED}</div></div>
+      <div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${(shed.pickups || []).length} of ${dsCurrent.targetPickups}</div></div>
       <div class="pred-snap-item">
-        <div class="lbl">📐 Density</div>
-        <div class="val">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div>
+        <div class="lbl">📐 Density today</div>
+        <div class="val" style="${densityStyle}">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div>
         <div class="sub">${pred.liveNow.toLocaleString()} × ${forecastKg.toFixed(3)} kg ÷ 3,162 m²</div>
       </div>
     </div>`;
@@ -6067,8 +7324,9 @@ function renderPredictionsShedCard(shed, group){
     </div>`;
 
   const curvePanelHtml = renderInYardCurvePanel(shed);
+  const planBlockHtml = renderPickupPlanBlock(shed);
 
-  const pickupRows = pickups.map(p => {
+  const pickupRows = pickups.filter(p => !p.isPredicted).map(p => {
     const stored = (shed.pickups || []).find(x => iso(x.date) === iso(p.date)) || {};
     const isManualWeight = !!stored.totalWeightKgManual;
     const hasExcelFrom = stored.totalWeightKgFromExcel != null;
@@ -6109,7 +7367,8 @@ function renderPredictionsShedCard(shed, group){
       </tr>`;
   }).join('');
 
-  const pickupTableHtml = pickups.length === 0
+  const realPickupCount = (shed.pickups || []).length;
+  const pickupTableHtml = realPickupCount === 0
     ? `<div class="forecast-empty">No pickups yet — estimates unlock after the first pickup.</div>`
     : `
       <div class="pickups-scroll">
@@ -6123,7 +7382,7 @@ function renderPredictionsShedCard(shed, group){
         </table>
       </div>`;
 
-  const canAdd = pickups.length < MAX_PICKUPS_PER_SHED;
+  const canAdd = realPickupCount < MAX_PICKUPS_PER_SHED;
   const pickupHeaderHtml = `
     <h4 class="pickup-header">
       <span>Pickup History — average weight computed from total ÷ birds</span>
@@ -6132,7 +7391,7 @@ function renderPredictionsShedCard(shed, group){
         type="button"
         ${canAdd ? '' : 'disabled'}
         title="${canAdd ? 'Add a pickup manually' : 'Maximum 5 pickups reached'}">
-        ＋ Add Pickup
+        ＋ Add Actual Pickup
       </button>
     </h4>`;
 
@@ -6187,7 +7446,9 @@ function renderPredictionsShedCard(shed, group){
           <span class="tag muted">Age ${pred.currentAge}d</span>
           <span class="tag amber">Live ${pred.liveNow.toLocaleString()}</span>
           ${pred.gompertzFit ? `<span class="tag green">AI curve</span>` : ''}
-          ${pred.pickupsCompleted > 0 ? `<span class="tag green">${pred.pickupsCompleted} pickup${pred.pickupsCompleted === 1 ? '' : 's'}</span>` : ''}
+          ${realPickupCount > 0 ? `<span class="tag green">${realPickupCount} pickup${realPickupCount === 1 ? '' : 's'}</span>` : ''}
+          ${(shed.predictedPickups || []).length > 0 ? `<span class="tag predicted-source">${(shed.predictedPickups || []).length} planned</span>` : ''}
+          ${(shed.pickups || []).some(p => p.isFinal) ? `<span class="tag final-source">FINAL</span>` : ''}
         </div>
       </div>
       <div class="pred-shed-body">
@@ -6201,6 +7462,7 @@ function renderPredictionsShedCard(shed, group){
           ${pickupHeaderHtml}
           ${pickupTableHtml}
         </div>
+        ${planBlockHtml}
         ${estimatesHtml}
         ${confidenceHtml}
       </div>
@@ -6241,10 +7503,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('#farmFoundClose')){ closeFarmFoundModal(); return; }
     if (e.target.closest('#manualPickupClose')){ closeManualPickupModal(); return; }
     if (e.target.closest('#sampleClose')){ closeSampleModal(); return; }
+    if (e.target.closest('#predictedPickupClose')){ closePredictedPickupModal(); return; }
     if (e.target.closest('#importConflictClose')){ closeImportConflictModal(); pendingImport = null; return; }
     if (e.target.closest('#importReviewClose')){ closeImportReviewModal(); return; }
     if (e.target.closest('#importBtn') || e.target.closest('#emptyImportBtn')){ triggerImport(); return; }
     if (e.target.closest('#emptyConnectBtn')){ openSyncModal(); return; }
+
+    if (e.target.closest('[data-toggle-adjustments]')){
+      toggleAdjCollapse();
+      return;
+    }
+    if (e.target.closest('[data-global-autofill]')){
+      autoFillAllSheds();
+      return;
+    }
+    if (e.target.closest('[data-global-clear-pickups]')){
+      clearAllPredictedPickups();
+      return;
+    }
+
+    const ppAddBtn = e.target.closest('[data-pp-add]');
+    if (ppAddBtn){ openPredictedPickupModal(Number(ppAddBtn.dataset.ppAdd)); return; }
+    const ppAutofillBtn = e.target.closest('[data-pp-autofill]');
+    if (ppAutofillBtn){ autoFillPredictedPickupsForShed(Number(ppAutofillBtn.dataset.ppAutofill)); return; }
+    const ppClearBtn = e.target.closest('[data-pp-clear]');
+    if (ppClearBtn){ clearPredictedPickupsForShed(Number(ppClearBtn.dataset.ppClear)); return; }
+    const ppEditBtn = e.target.closest('[data-pp-edit]');
+    if (ppEditBtn){
+      const parts = ppEditBtn.dataset.ppEdit.split('|');
+      openPredictedPickupModal(Number(parts[0]), parts[1]);
+      return;
+    }
+    const ppDeleteBtn = e.target.closest('[data-pp-delete]');
+    if (ppDeleteBtn){
+      const parts = ppDeleteBtn.dataset.ppDelete.split('|');
+      deletePredictedPickup(Number(parts[0]), parts[1]);
+      return;
+    }
 
     const cycleApply = e.target.closest('[data-pred-cycle-apply]');
     if (cycleApply){
@@ -6420,6 +7715,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBatchHistoryModal();
     closeManualPickupModal();
     closeSampleModal();
+    closePredictedPickupModal();
     closeImportConflictModal();
     closeImportReviewModal();
   });
@@ -6437,7 +7733,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    /* Daily mortality rate: persist to the shed on change */
     if (t.dataset && t.dataset.mortrateShed !== undefined){
       const sid = Number(t.dataset.mortrateShed);
       const val = Number(t.value);
@@ -6446,6 +7741,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return;
     }
+
+    if (t.dataset && t.dataset.shedTargetPickups){
+      setShedTargetPickups(Number(t.dataset.shedTargetPickups), t.value);
+      return;
+    }
+    if (t.dataset && t.dataset.densityUseGlobal){
+      setShedDensityOverride(Number(t.dataset.densityUseGlobal), 'useGlobal', t.checked);
+      return;
+    }
+    if (t.dataset && t.dataset.densityOverride){
+      const parts = t.dataset.densityOverride.split('|');
+      setShedDensityOverride(Number(parts[0]), parts[1], t.value);
+      return;
+    }
+    if (t.id === 'densityTrigger'){ setDensityGlobal('triggerDensity', t.value); return; }
+    if (t.id === 'densityTarget'){ setDensityGlobal('targetDensity', t.value); return; }
+    if (t.id === 'densityMax'){ setDensityGlobal('maxDensity', t.value); return; }
+    if (t.id === 'targetPickupsGlobal'){ setDensityGlobal('targetPickups', t.value); return; }
 
     if (t.dataset && t.dataset.targetShed !== undefined && t.dataset.targetDay !== undefined){
       setTargetCurveValue(Number(t.dataset.targetShed), Number(t.dataset.targetDay), t.value);
@@ -6460,9 +7773,18 @@ document.addEventListener('DOMContentLoaded', () => {
       setTargetHarvestWeight(g, t.value);
       return;
     }
-    if (t.id === 'predBetaNumber'){ setPredBeta(t.value); return; }
 
-    /* Scale correction: on release, re-render so all dependent values update */
+    if (t.id === 'predBetaSlider'){
+      setPredBeta(t.value);
+      scheduleRender(60);
+      return;
+    }
+    if (t.id === 'predBetaNumber'){
+      setPredBeta(t.value);
+      scheduleRender(60);
+      return;
+    }
+
     if (t.id === 'biasSlider' || t.id === 'biasNumber'){
       scheduleRender(60);
       return;
@@ -6500,7 +7822,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('input', (e) => {
     const t = e.target;
 
-    /* Daily mortality rate: mirror slider <-> number box (no re-render here) */
     if (t.dataset && t.dataset.mortrateShed !== undefined){
       const sid = t.dataset.mortrateShed;
       const slider = document.getElementById(`mortRateSlider_${sid}`);
@@ -6510,7 +7831,23 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (t.id === 'predBetaSlider'){ setPredBeta(t.value); return; }
+    if (t.id === 'predBetaSlider'){
+      const num = document.getElementById('predBetaNumber');
+      if (num) num.value = Number(t.value).toFixed(3);
+      setPredBeta(t.value);
+      const chip = document.getElementById('adjChipBeta');
+      if (chip) chip.innerHTML = `cFCR β <strong>${Number(t.value).toFixed(3)}</strong>`;
+      return;
+    }
+    if (t.id === 'predBetaNumber'){
+      const slider = document.getElementById('predBetaSlider');
+      if (slider) slider.value = t.value;
+      setPredBeta(t.value);
+      const chip = document.getElementById('adjChipBeta');
+      if (chip) chip.innerHTML = `cFCR β <strong>${Number(t.value).toFixed(3)}</strong>`;
+      return;
+    }
+
     if (t.id === 'farmFeedOverride'){
       setFarmFeedOverride(t.value);
       t.classList.toggle('manual', predState.farmFeedOverride != null);
@@ -6518,15 +7855,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    /* Scale correction: save on every input (both slider and number box).
-       Value persists even if the tab closes mid-drag.
-       Re-render is skipped here so the slider drag stays smooth —
-       it's triggered on the change event instead. */
     if (t.id === 'biasSlider'){
       const num = document.getElementById('biasNumber');
       if (num) num.value = t.value;
       const v = Number(t.value);
       if (Number.isFinite(v)) setBiasFactor(v / 100);
+      const chip = document.getElementById('adjChipScale');
+      if (chip) chip.innerHTML = `Scale <strong>${t.value}%</strong>`;
       return;
     }
     if (t.id === 'biasNumber'){
@@ -6534,10 +7869,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (slider) slider.value = t.value;
       const v = Number(t.value);
       if (Number.isFinite(v)) setBiasFactor(v / 100);
+      const chip = document.getElementById('adjChipScale');
+      if (chip) chip.innerHTML = `Scale <strong>${t.value}%</strong>`;
+      return;
+    }
+    if (t.id === 'densityTrigger' || t.id === 'densityTarget'){
+      const chip = document.getElementById('adjChipDensity');
+      if (chip){
+        const dg = predState.densityGlobal || { ...DEFAULT_DENSITY_GLOBAL };
+        const trig = t.id === 'densityTrigger' ? t.value : dg.triggerDensity;
+        const targ = t.id === 'densityTarget' ? t.value : dg.targetDensity;
+        chip.innerHTML = `Density <strong>${trig}/${targ}</strong>`;
+      }
+      return;
+    }
+    if (t.id === 'targetPickupsGlobal'){
+      const chip = document.getElementById('adjChipPickups');
+      if (chip) chip.innerHTML = `Pickups <strong>${t.value}</strong>`;
       return;
     }
 
-    /* Live update of the Whole-Farm KPI tile when editing a shed's mortality */
     if (t.dataset && t.dataset.shed !== undefined && t.dataset.field === 'mortality'){
       liveUpdateShedMortality(Number(t.dataset.shed), t.value);
       return;
@@ -6549,6 +7900,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { capture: true, passive: true });
   window.addEventListener('resize', () => {
     closeAllPickupActionsMenus();
+    updateStickyHeaderHeight();
   });
 
   document.addEventListener('visibilitychange', async () => {
