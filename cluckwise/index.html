@@ -219,6 +219,18 @@
   .task-card.overdue{ border-color:var(--danger); border-left-width:4px; background:var(--danger-soft); }
   .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; }
+
+  /* ---------- Select mode (List view) ---------- */
+  .task-card.select-mode{ cursor:pointer; }
+  .task-card.select-mode.selected,
+  body.theme-dark .task-card.select-mode.selected{
+    border-color:var(--primary);
+    background:var(--primary-soft);
+    box-shadow:0 0 0 2px var(--primary-soft), var(--shadow-sm);
+  }
+  .task-card.select-mode.selected .task-name{ color:var(--primary-dark); font-weight:600; }
+  .task-card.select-mode.selected .task-icon{ filter:none; }
+
   .overdue-flag{ color:var(--danger); font-size:12.5px; font-weight:700; flex-shrink:0; }
   .priority-flag{ font-size:12.5px; font-weight:700; flex-shrink:0; }
   .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
@@ -255,9 +267,7 @@
     background:var(--secondary-soft);
     transform:scale(1.1);
   }
-  .task-complete-btn:hover svg{
-    opacity:1;
-  }
+  .task-complete-btn:hover svg{ opacity:1; }
   @media (hover:hover){
     .task-card:hover .task-complete-btn{ opacity:1; }
     .task-card:hover .task-icon-slot .task-icon{ opacity:0; }
@@ -266,25 +276,13 @@
   }
   @media (hover:none){
     .task-complete-btn{ opacity:1; }
-    .task-icon-slot{
-      width:auto; gap:6px;
-      flex-direction:row; justify-content:flex-start;
-    }
+    .task-icon-slot{ width:auto; gap:6px; flex-direction:row; justify-content:flex-start; }
     .task-icon-slot .task-icon,
-    .task-icon-slot .task-complete-btn{
-      position:static;
-      width:20px; height:20px;
-    }
-    .kicon-slot{
-      width:auto; gap:4px;
-      flex-direction:row; justify-content:flex-start;
-    }
+    .task-icon-slot .task-complete-btn{ position:static; width:20px; height:20px; }
+    .kicon-slot{ width:auto; gap:4px; flex-direction:row; justify-content:flex-start; }
     .kicon-slot .kicon,
-    .kicon-slot .task-complete-btn{
-      position:static;
-    }
+    .kicon-slot .task-complete-btn{ position:static; }
   }
-  /* Done state — always show filled circle (icon hidden on desktop, still shown on mobile) */
   .task-card.done .task-complete-btn,
   .kcard.done .task-complete-btn{
     opacity:1;
@@ -292,22 +290,14 @@
     border-color:var(--secondary);
   }
   .task-card.done .task-complete-btn svg,
-  .kcard.done .task-complete-btn svg{
-    opacity:1;
-    color:#fff;
-  }
+  .kcard.done .task-complete-btn svg{ opacity:1; color:#fff; }
   .task-card.done .task-icon-slot .task-icon,
-  .kcard.done .kicon-slot .kicon{
-    opacity:0;
-  }
+  .kcard.done .kicon-slot .kicon{ opacity:0; }
   @media (hover:none){
     .task-card.done .task-icon-slot .task-icon,
-    .kcard.done .kicon-slot .kicon{
-      opacity:1;
-    }
+    .kcard.done .kicon-slot .kicon{ opacity:1; }
   }
 
-  /* Kanban icon slot */
   .kicon-slot{
     position:relative; width:14px; height:14px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
@@ -317,13 +307,8 @@
     display:flex; align-items:center; justify-content:center;
     transition:opacity .15s ease;
   }
-  .kicon-slot .task-complete-btn{
-    width:16px; height:16px;
-    border-width:1.3px;
-  }
-  .kicon-slot .task-complete-btn svg{
-    width:9px; height:9px;
-  }
+  .kicon-slot .task-complete-btn{ width:16px; height:16px; border-width:1.3px; }
+  .kicon-slot .task-complete-btn svg{ width:9px; height:9px; }
 
   .task-menu-btn{ flex-shrink:0; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:auto; opacity:0; transition:opacity .12s ease, background .12s ease, color .12s ease; }
   .task-menu-btn:hover{ background:var(--ink); color:var(--surface); }
@@ -2106,26 +2091,43 @@
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
     const isHighPriority = task.priority === 'high' && task.status!=='done';
+
+    // Two flavours of selection:
+    //  - selectable === true            → List view "Select" mode (click-anywhere toggles; no checkbox)
+    //  - selectable is an object        → Backlog modal (checkbox + per-row Schedule)
+    const clickSelect = selectable === true;
+    const checkboxSelect = selectable !== null && typeof selectable === 'object';
+    const inAnySelectMode = clickSelect || checkboxSelect;
+
     card.className = 'task-card' + (task.status==='done' ? ' done' : '') + (isOverdue ? ' overdue' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
+    if(clickSelect) card.classList.add('select-mode');
     card.dataset.id = task.id;
 
-    const iconSlotHtml = !selectable
+    const selectedIds = inAnySelectMode ? (checkboxSelect ? selectable.ids : bulkSelectedIds) : null;
+    const onUpdate = inAnySelectMode ? (checkboxSelect ? selectable.onUpdate : updateBulkActionBar) : null;
+
+    if(clickSelect && selectedIds.has(task.id)) card.classList.add('selected');
+
+    const showCompleteCircle = !inAnySelectMode && !opts.disableTapExpand;
+    const iconSlotHtml = showCompleteCircle
       ? `<span class="task-icon-slot">
            <button class="task-complete-btn" type="button" aria-label="${task.status==='done'?'Reopen task':'Complete task'}" title="${task.status==='done'?'Reopen':'Mark done'}">${CHECK_ICON_SVG}</button>
            <span class="task-icon"></span>
          </span>`
       : `<span class="task-icon"></span>`;
 
+    const showMenu = !inAnySelectMode && !opts.disableTapExpand;
+
     card.innerHTML = `
       <div class="task-card-top">
-        ${selectable ? `<input type="checkbox" class="bulk-select-cb" ${bulkSelectedIds.has(task.id)?'checked':''}>` : ''}
+        ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
         <span class="task-body"><span class="task-name"></span></span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
-        ${!opts.disableTapExpand ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
+        ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
       </div>
-      ${!opts.disableTapExpand ? `<div class="task-menu-popup">
+      ${showMenu ? `<div class="task-menu-popup">
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
@@ -2140,18 +2142,12 @@
 
     const completeBtn = card.querySelector('.task-complete-btn');
     if(completeBtn){
-      completeBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        e.preventDefault();
-        toggleDone(task.id);
-      });
+      completeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); toggleDone(task.id); });
     }
 
     card.querySelector('.task-name').textContent = task.name;
 
-    if(selectable){
-      const selectedIds = selectable.ids || bulkSelectedIds;
-      const onUpdate = selectable.onUpdate || updateBulkActionBar;
+    if(checkboxSelect){
       const cb = card.querySelector('.bulk-select-cb');
       cb.checked = selectedIds.has(task.id);
       cb.addEventListener('click', (e)=>{
@@ -2161,7 +2157,8 @@
         onUpdate();
       });
     }
-    if(!opts.disableTapExpand){
+
+    if(showMenu){
       const menuBtn = card.querySelector('.task-menu-btn');
       const popup = card.querySelector('.task-menu-popup');
       popup.dataset.taskId = task.id;
@@ -2175,11 +2172,21 @@
         closeAllTaskMenus();
         openTaskDetailModal(task.id);
       });
-      card.querySelector('.task-card-top').addEventListener('click', (e)=>{
-        if(e.target.closest('.task-menu-btn') || e.target.closest('.task-complete-btn') || e.target.classList.contains('bulk-select-cb')) return;
-        openTaskDetailModal(task.id);
-      });
     }
+
+    card.querySelector('.task-card-top').addEventListener('click', (e)=>{
+      if(clickSelect){
+        if(selectedIds.has(task.id)) selectedIds.delete(task.id); else selectedIds.add(task.id);
+        card.classList.toggle('selected', selectedIds.has(task.id));
+        onUpdate();
+        return;
+      }
+      if(checkboxSelect) return;
+      if(e.target.closest('.task-menu-btn') || e.target.closest('.task-complete-btn')) return;
+      if(opts.disableTapExpand) return;
+      openTaskDetailModal(task.id);
+    });
+
     return card;
   }
 
@@ -2706,6 +2713,7 @@
       const listEl = document.createElement('div');
       listEl.className = 'day-tasks list-tasks';
       listEl.dataset.date = key;
+      listEl.dataset.selectMode = bulkSelectMode ? 'true' : 'false';
       groups[key].forEach(t=> listEl.appendChild(buildTaskCard(t, bulkSelectMode)));
       groupEl.appendChild(listEl);
       if(!bulkSelectMode) groupEl.appendChild(buildInlineAddRow('list-'+key, key));
@@ -2922,11 +2930,7 @@
     });
     const completeBtn = card.querySelector('.task-complete-btn');
     if(completeBtn){
-      completeBtn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        e.preventDefault();
-        toggleDone(task.id);
-      });
+      completeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); toggleDone(task.id); });
     }
     card.addEventListener('click', (e)=>{
       if(suppressNextClick) return;
@@ -3128,11 +3132,13 @@
       }));
     }
     document.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
+      const isSelectModeList = list.dataset.selectMode === 'true';
       const s = Sortable.create(list, {
         group:'tasks', animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         filter:'.day-count, .empty-note, .col-empty',
         preventOnFilter:false,
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        disabled: isSelectModeList,
         onUpdate:(evt)=>{ reorderTasksToMatchDom(evt.to); persist(); renderAll(); },
         onAdd:(evt)=>{
           suppressNextClick = true;
@@ -3289,7 +3295,7 @@
         const card = buildTaskCard(t, null, {disableTapExpand: true});
         card.title = 'Tap to add to this day, or drag';
         card.addEventListener('click', (e)=>{
-          if(e.target.closest('.btn-done') || e.target.closest('.btn-delete') || e.target.closest('.btn-edit') || e.target.closest('.task-complete-btn')) return;
+          if(e.target.closest('.task-complete-btn')) return;
           moveTask(t.id, key);
         });
         backlogBox.appendChild(card);
