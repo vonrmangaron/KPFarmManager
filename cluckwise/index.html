@@ -571,26 +571,17 @@
   .history-item .h-detail{font-size:13.5px;color:var(--ink);margin:3px 0;overflow-wrap:break-word;}
   .history-item .h-time{font-size:11.5px;color:var(--muted);}
 
-  /* ---------- Reports drawer ---------- */
   #reportsDrawer{ width:400px; }
   .reports-toolbar{ padding:12px 18px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
   .reports-filter-row{ display:flex; gap:6px; flex-wrap:wrap; }
-  .reports-filter-row button{
-    flex:1; min-width:0; padding:8px 10px; border-radius:999px; border:1px solid var(--line);
-    background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12px;
-    cursor:pointer; white-space:nowrap; font-family:'Sora',sans-serif;
-  }
+  .reports-filter-row button{ flex:1; min-width:0; padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; font-family:'Sora',sans-serif; }
   .reports-filter-row button.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
   .reports-search-row{ display:flex; gap:6px; }
   .reports-search-row input{ flex:1; min-width:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 10px; font-size:13px; color:var(--ink); }
   .reports-search-row select{ flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 8px; font-size:12.5px; color:var(--ink); max-width:120px; }
   .reports-list{ overflow-y:auto; padding:12px 18px; display:flex; flex-direction:column; gap:10px; flex:1; min-height:0; }
 
-  .report-card{
-    background:var(--surface-soft); border:1px solid var(--line); border-left:3px solid var(--muted);
-    border-radius:12px; padding:12px 14px; cursor:pointer; box-shadow:var(--shadow-sm);
-    transition:box-shadow .12s ease;
-  }
+  .report-card{ background:var(--surface-soft); border:1px solid var(--line); border-left:3px solid var(--muted); border-radius:12px; padding:12px 14px; cursor:pointer; box-shadow:var(--shadow-sm); transition:box-shadow .12s ease; }
   .report-card:hover{ box-shadow:var(--shadow-md); }
   .report-card.status-open{ border-left-color:var(--danger); }
   .report-card.status-progress{ border-left-color:var(--primary); }
@@ -605,18 +596,13 @@
   .report-card-note{ font-size:12.5px; color:var(--muted); margin-bottom:3px; overflow-wrap:break-word; }
   .report-card-meta{ font-size:11px; color:var(--muted); }
 
-  /* ---------- Report detail modal ---------- */
   #reportDetailModal{ width:480px; }
   .rd-code-wrap{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
   .rd-code{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--primary-dark); word-break:break-all; flex:1; min-width:0; }
   .rd-copy-btn{ flex-shrink:0; width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-size:14px; cursor:pointer; }
   .rd-copy-btn:hover{ background:var(--primary-soft); color:var(--primary-dark); }
   .rd-status-row{ display:flex; gap:6px; margin-bottom:14px; }
-  .rd-status-btn{
-    flex:1; padding:10px 8px; border-radius:10px; border:1.5px solid var(--line);
-    background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12.5px;
-    cursor:pointer; transition:all .12s ease; font-family:'Sora',sans-serif;
-  }
+  .rd-status-btn{ flex:1; padding:10px 8px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12.5px; cursor:pointer; transition:all .12s ease; font-family:'Sora',sans-serif; }
   .rd-status-btn:hover{ border-color:var(--primary); }
   .rd-status-btn.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
   .rd-info{ background:var(--surface-soft); border-radius:12px; padding:4px 14px; margin-bottom:12px; }
@@ -1219,7 +1205,6 @@
   </div>
 </div>
 
-<!-- Report Detail Modal -->
 <div class="form-modal" id="reportDetailModal">
   <div class="form-modal-head"><h2>Report Details</h2><button id="closeReportDetailModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
@@ -1304,7 +1289,7 @@
   let history = [];
   let batches = [];
   let events = [];
-  let reports = []; // ← NEW: reports from viewer land here
+  let reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
@@ -1321,7 +1306,6 @@
   let deleteAllPending = false;
   let overdueModalOpen = false;
 
-  // Reports module state
   let reportsFilterStatus = 'all';
   let reportsSortMode = 'newest';
   let reportsSearchQuery = '';
@@ -1560,7 +1544,6 @@
   async function pushToGithub(){
     if(!ghPath) return false;
     try{
-      // ↓↓ CRITICAL: reports must be in this payload or they'd be wiped
       const data = {tasks, history, batches, events, settings, frequentTemplates, reports};
       const body = { sha: ghSha, data };
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
@@ -1586,7 +1569,7 @@
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
-      reports = parsed.reports || []; // ← NEW
+      reports = parsed.reports || [];
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
       let sessionViewMode = null;
@@ -1870,7 +1853,7 @@
     persist(); renderAll();
   }
 
-  // ==================== REPORTS MODULE ====================
+  // ---------- REPORTS MODULE ----------
   function getOpenReportsCount(){
     return reports.filter(r => r.status === 'Open' || r.status === 'In Progress').length;
   }
@@ -1889,7 +1872,6 @@
     if(!list) return;
     list.innerHTML = '';
 
-    // Build shed dropdown
     const shedSelect = $('#reportsShedFilter');
     if(shedSelect){
       const currentVal = shedSelect.value;
@@ -1988,9 +1970,9 @@
       $('#rdResolutionNotes').style.display = 'none';
     }
 
-    // Reset delete button confirm state
     const delBtn = $('#rdDeleteBtn');
     delBtn.dataset.pending = '';
+    delBtn.dataset.warned = '';
     delBtn.textContent = 'Delete report';
     delBtn.classList.remove('confirm');
 
@@ -2035,7 +2017,6 @@
   }
   function closeReportDetailOnly(){
     $('#reportDetailModal').classList.remove('open');
-    // Keep scrim if reports drawer is still open
     if(!$('#reportsDrawer').classList.contains('open')){
       $('#scrim').classList.remove('show');
     }
@@ -2047,7 +2028,7 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
-  // ==================== END REPORTS MODULE ====================
+  // ---------- END REPORTS MODULE ----------
 
   function generateReport(opts){
     opts = opts || {type:'all'};
@@ -3628,6 +3609,93 @@
     const popup = el.closest('.task-menu-popup');
     return popup ? popup.dataset.taskId : null;
   }
+
+  // ---------- Copy task / Copy day ----------
+  let copySourceMode = null;
+  let copySourceTaskId = null;
+  let copySourceDayKey = null;
+  function openCopyTaskModal(taskId){
+    const t = tasks.find(x=>x.id===taskId);
+    if(!t) return;
+    copySourceMode = 'task';
+    copySourceTaskId = taskId;
+    copySourceDayKey = null;
+    $('#copyModalTitle').textContent = 'Copy task';
+    $('#copyModalDesc').textContent = `"${t.name}" will be duplicated as a new open task.`;
+    $('#copyDestSelectRow').style.display = 'block';
+    $('#copyOptBacklog').style.display = '';
+    if(t.date){
+      $('#copyOptSameDay').style.display = '';
+      $('#copyOptSameDay').textContent = `Same day (${formatFull(t.date)})`;
+    } else {
+      $('#copyOptSameDay').style.display = 'none';
+    }
+    $('#copyDestSelect').value = 'backlog';
+    $('#copyDateRow').style.display = 'none';
+    $('#copyDateInput').value = '';
+    openDrawer('#copyModal');
+  }
+  function openCopyDayModal(dayKey){
+    copySourceMode = 'day';
+    copySourceTaskId = null;
+    copySourceDayKey = dayKey;
+    const count = tasks.filter(t=>t.date===dayKey && t.status!=='done').length;
+    $('#copyModalTitle').textContent = 'Copy all tasks';
+    $('#copyModalDesc').textContent = `${count} open task(s) from ${formatFull(dayKey)} will be duplicated to a new date.`;
+    $('#copyDestSelectRow').style.display = 'none';
+    $('#copyDateRow').style.display = 'block';
+    $('#copyDateInput').value = '';
+    openDrawer('#copyModal');
+  }
+  function buildCopiedTask(src, dateVal){
+    return {
+      id: uid(),
+      name: src.name,
+      icon: src.icon,
+      date: dateVal || null,
+      status: 'open',
+      createdAt: Date.now(),
+      order: nextOrder(),
+      assignees: (src.assignees || []).slice(),
+      notes: src.notes || '',
+      priority: src.priority || null
+    };
+  }
+  $('#copyDestSelect').addEventListener('change', (e)=>{
+    $('#copyDateRow').style.display = e.target.value === 'pick' ? 'block' : 'none';
+  });
+  $('#closeCopyModal').addEventListener('click', closeOverlays);
+  $('#confirmCopyBtn').addEventListener('click', ()=>{
+    if(copySourceMode === 'task'){
+      const t = tasks.find(x=>x.id===copySourceTaskId);
+      if(!t){ closeOverlays(); return; }
+      const choice = $('#copyDestSelect').value;
+      let destKey = null;
+      if(choice === 'sameday'){ destKey = t.date; }
+      else if(choice === 'pick'){
+        const val = $('#copyDateInput').value;
+        if(!val){ showToast('Pick a date first.', true); return; }
+        destKey = val;
+      }
+      tasks.push(buildCopiedTask(t, destKey));
+      addHistory('Copied', `"${t.name}" copied to ${destKey ? formatFull(destKey) : 'Backlog'}`);
+      persist(); renderAll();
+      closeOverlays();
+      showToast(`Copied to ${destKey ? formatFull(destKey) : 'Backlog'}.`);
+    } else if(copySourceMode === 'day'){
+      const toKey = $('#copyDateInput').value;
+      if(!toKey){ showToast('Pick a target date.', true); return; }
+      const src = tasks.filter(t=>t.date===copySourceDayKey && t.status!=='done');
+      if(src.length === 0){ showToast('Nothing to copy.', true); closeOverlays(); return; }
+      const copies = src.map(t=> buildCopiedTask(t, toKey));
+      copies.forEach(c=> tasks.push(c));
+      addHistory('Copied', `${copies.length} task(s) copied from ${formatFull(copySourceDayKey)} to ${formatFull(toKey)}`);
+      persist(); renderAll();
+      closeOverlays();
+      showToast(`${copies.length} task(s) copied to ${formatFull(toKey)}.`);
+    }
+  });
+
   let pendingSeriesDeleteId = null;
   document.addEventListener('click', (e)=>{
     const editBtn = e.target.closest('.btn-edit');
@@ -4168,7 +4236,7 @@
     overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
   });
 
-  // ---------- Reports module event listeners ----------
+  // ---------- Reports module listeners ----------
   $('#reportsFilterRow').addEventListener('click', (e)=>{
     const btn = e.target.closest('button');
     if(!btn) return;
@@ -4209,7 +4277,6 @@
       await navigator.clipboard.writeText(code);
       showToast('Code copied.');
     }catch(e){
-      // Fallback
       const tmp = document.createElement('textarea');
       tmp.value = code;
       document.body.appendChild(tmp);
@@ -4223,7 +4290,6 @@
     if(!currentReportId) return;
     const r = reports.find(x => x.id === currentReportId);
     if(!r) return;
-    // Warning if not resolved
     if(r.status !== 'Resolved' && !this.dataset.warned){
       this.dataset.warned = 'true';
       const oldText = this.textContent;
@@ -4237,7 +4303,6 @@
       }, 3500);
       return;
     }
-    // Two-click confirm
     if(!this.dataset.pending){
       this.dataset.pending = 'true';
       this.classList.add('confirm');
@@ -4318,7 +4383,6 @@
   $('#moreViewerBtn').addEventListener('click', ()=>{ closeOverlays(); openViewerMode(); });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
-    // ↓↓ reports included in backup
     const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates, reports}, null, 2);
     const blob = new Blob([payload], {type:'application/json'});
     const url = URL.createObjectURL(blob);
@@ -4343,7 +4407,7 @@
         history = parsed.history || [];
         batches = parsed.batches || [];
         events = parsed.events || [];
-        reports = parsed.reports || []; // ↓↓ reports restored from backup
+        reports = parsed.reports || [];
         settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
         frequentTemplates = parsed.frequentTemplates || [];
         applySettings();
