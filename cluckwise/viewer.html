@@ -720,7 +720,8 @@
     try{
       const parsed = JSON.parse(rawText);
       tasks = parsed.tasks || [];
-      reports = parsed.reports || [];
+      // reports are no longer stored in the main file — they live in their own file.
+      // We keep whatever we already have locally (loaded separately if needed).
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
@@ -809,6 +810,9 @@
         if(idx!==-1) freshTasks[idx] = Object.assign({}, freshTasks[idx], { status:newStatus });
       });
       const merged = Object.assign({}, freshContent, { tasks:freshTasks });
+      // Belt & suspenders: reports are no longer in the main file, but if an old
+      // main file still carries a `reports` field, drop it so we don't push stale data.
+      delete merged.reports;
       const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
         method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ sha: freshSha, data: merged })
       });
@@ -829,6 +833,10 @@
   }
 
   // ---------- Reports: pending queue ----------
+  // Reports live in their own file on the worker, keyed by `<farm>-reports`.
+  // This means manager saves to the main file can never touch them.
+  function reportsFarmName(){ return ghFarmName ? (ghFarmName + '-reports') : null; }
+
   function loadPendingReports(){
     try{ return JSON.parse(localStorage.getItem('prodplan-viewer-pending-reports')||'[]'); }catch(e){ return []; }
   }
@@ -857,12 +865,26 @@
   }
   async function pushReportsToGithub(reportsToPush, attempt){
     if(!ghPath) return false;
+    const rn = reportsFarmName();
+    if(!rn) return false;
     try{
-      const getRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      if(!getRes.ok) throw new Error('GET failed: ' + getRes.status);
-      const fresh = await getRes.json();
-      const freshContent = fresh.data || {};
-      const freshReports = freshContent.reports || [];
+      const getRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      let freshReports = [];
+      let freshSha = null;
+      if(getRes.status === 404){
+        freshReports = [];
+      } else if(getRes.ok){
+        const fresh = await getRes.json();
+        if(fresh && fresh.notFound){
+          freshReports = [];
+        } else {
+          const d = fresh.data || {};
+          freshReports = Array.isArray(d) ? d : (d.reports || []);
+          freshSha = fresh.sha;
+        }
+      } else {
+        throw new Error('GET failed: ' + getRes.status);
+      }
       const existingIds = new Set(freshReports.map(r => r.id));
       reportsToPush.forEach(r => {
         if(!existingIds.has(r.id)){
@@ -870,19 +892,16 @@
           existingIds.add(r.id);
         }
       });
-      const merged = Object.assign({}, freshContent, { reports: freshReports });
-      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
+      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
         method:'PUT',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ sha: fresh.sha, data: merged })
+        body: JSON.stringify({ sha: freshSha, data: { reports: freshReports } })
       });
       if(putRes.status === 409){
         if(attempt < 4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushReportsToGithub(reportsToPush, attempt+1); }
         return false;
       }
       if(!putRes.ok) throw new Error('PUT failed: ' + putRes.status);
-      const putData = await putRes.json();
-      if(putData && putData.sha) ghSha = putData.sha;
       reports = freshReports;
       return true;
     }catch(e){
