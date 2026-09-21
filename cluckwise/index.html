@@ -34,6 +34,8 @@
     --secondary-soft:#F0E4D6;
     --danger:#C1502E;
     --danger-soft:#F5DDD2;
+    --success:#3F7D4A;
+    --success-soft:#E3F0E4;
     --weekend-bg:#F0E8DA;
     --task-font-size:13.5px;
     --shadow-sm:0 1px 2px rgba(43,33,22,0.06);
@@ -54,28 +56,30 @@
     --secondary-soft:#20304E;
     --danger:#F0685A;
     --danger-soft:#3A2321;
+    --success:#5FBE72;
+    --success-soft:#1E3524;
     --weekend-bg:#212C48;
     --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
     --shadow-md:0 8px 22px rgba(0,0,0,0.35);
     --shadow-lg:0 16px 40px rgba(0,0,0,0.45);
   }
 
-  .sidebar, .calendar-wrap, .form-modal-body, .history-list, .settings-body, .frequent-list { scrollbar-width: thin; }
+  .sidebar, .calendar-wrap, .form-modal-body, .history-list, .settings-body, .frequent-list, .reports-list { scrollbar-width: thin; }
   .sidebar::-webkit-scrollbar, .calendar-wrap::-webkit-scrollbar, .form-modal-body::-webkit-scrollbar,
-  .history-list::-webkit-scrollbar, .settings-body::-webkit-scrollbar, .frequent-list::-webkit-scrollbar {
+  .history-list::-webkit-scrollbar, .settings-body::-webkit-scrollbar, .frequent-list::-webkit-scrollbar, .reports-list::-webkit-scrollbar {
     width: 10px; height: 10px;
   }
   .sidebar::-webkit-scrollbar-track, .calendar-wrap::-webkit-scrollbar-track, .form-modal-body::-webkit-scrollbar-track,
-  .history-list::-webkit-scrollbar-track, .settings-body::-webkit-scrollbar-track, .frequent-list::-webkit-scrollbar-track {
+  .history-list::-webkit-scrollbar-track, .settings-body::-webkit-scrollbar-track, .frequent-list::-webkit-scrollbar-track, .reports-list::-webkit-scrollbar-track {
     background: transparent; border-radius: 999px;
   }
   .sidebar::-webkit-scrollbar-thumb, .calendar-wrap::-webkit-scrollbar-thumb, .form-modal-body::-webkit-scrollbar-thumb,
-  .history-list::-webkit-scrollbar-thumb, .settings-body::-webkit-scrollbar-thumb, .frequent-list::-webkit-scrollbar-thumb {
+  .history-list::-webkit-scrollbar-thumb, .settings-body::-webkit-scrollbar-thumb, .frequent-list::-webkit-scrollbar-thumb, .reports-list::-webkit-scrollbar-thumb {
     background: var(--line); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
     transition: background .15s ease;
   }
   .sidebar::-webkit-scrollbar-thumb:hover, .calendar-wrap::-webkit-scrollbar-thumb:hover, .form-modal-body::-webkit-scrollbar-thumb:hover,
-  .history-list::-webkit-scrollbar-thumb:hover, .settings-body::-webkit-scrollbar-thumb:hover, .frequent-list::-webkit-scrollbar-thumb:hover {
+  .history-list::-webkit-scrollbar-thumb:hover, .settings-body::-webkit-scrollbar-thumb:hover, .frequent-list::-webkit-scrollbar-thumb:hover, .reports-list::-webkit-scrollbar-thumb:hover {
     background: var(--muted); background-clip: padding-box;
   }
 
@@ -84,7 +88,7 @@
   html{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; text-size-adjust:100%; }
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; font-size:16px; }
 
-  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, #historyBtn, #reportBtn{ font-family:'Sora', sans-serif; }
+  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, #historyBtn, #exportBtn{ font-family:'Sora', sans-serif; }
 
   .shell{ display:flex; flex-direction:column; height:100vh; }
 
@@ -112,7 +116,7 @@
 
   .nav-group{display:flex;align-items:center;gap:6px;}
   .nav-group.hidden{visibility:hidden; pointer-events:none;}
-  .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;line-height:1;cursor:pointer; display:flex;align-items:center;justify-content:center;transition:background .15s ease; }
+  .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;line-height:1;cursor:pointer; display:flex;align-items:center;justify-content:center;transition:background .15s ease; position:relative; }
   .section-header-left{ display:flex; align-items:center; gap:6px; min-width:0; }
   .section-collapse-btn{ flex-shrink:0; width:20px; height:20px; border:none; background:transparent; color:var(--muted); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .18s ease; }
   .section-collapse-btn.collapsed{ transform:rotate(-90deg); }
@@ -131,8 +135,11 @@
   .btn-today:hover{ background:var(--primary); color:#fff; }
   #historyBtn{ border:1px solid var(--secondary); background:var(--secondary-soft); color:var(--secondary); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
   #historyBtn:hover{ background:var(--secondary); color:#fff; }
-  #reportBtn{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
-  #reportBtn:hover{ background:var(--primary); color:#fff; }
+  #exportBtn{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #exportBtn:hover{ background:var(--primary); color:#fff; }
+  #reportsBtn{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #reportsBtn:hover{ background:var(--danger); color:#fff; }
+  #reportsBtn .notif-badge{ top:-6px; right:-6px; border:2px solid var(--surface); }
   #overdueBtn{ border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
   #overdueBtn:hover{ background:var(--danger); color:#fff; }
   #settingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
@@ -220,7 +227,6 @@
   .task-card.high-priority{ border-color:#E0A339; border-left-width:4px; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; }
 
-  /* ---------- Select mode (List view) ---------- */
   .task-card.select-mode{ cursor:pointer; }
   .task-card.select-mode.selected,
   body.theme-dark .task-card.select-mode.selected{
@@ -235,7 +241,6 @@
   .priority-flag{ font-size:12.5px; font-weight:700; flex-shrink:0; }
   .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
 
-  /* ---------- Hover-complete circle (Trello-style) ---------- */
   .task-icon-slot{
     position:relative; width:20px; height:20px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
@@ -419,7 +424,6 @@
 
   .list-view{max-width:660px;margin:0 auto;}
 
-  /* ---------- Kanban ---------- */
   .kanban-canvas{ position:relative; }
   .kanban-board{ display:flex; gap:15px; align-items:flex-start; overflow-x:auto; padding-bottom:14px; will-change:scroll-position; transform:translateZ(0); -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:#4A90D9 rgba(0,0,0,0.08); }
   .kanban-board::-webkit-scrollbar{ height:12px; }
@@ -566,6 +570,68 @@
   .history-item .h-action{font-family:'Sora',sans-serif;font-size:12.5px;font-weight:700;color:var(--primary-dark);}
   .history-item .h-detail{font-size:13.5px;color:var(--ink);margin:3px 0;overflow-wrap:break-word;}
   .history-item .h-time{font-size:11.5px;color:var(--muted);}
+
+  /* ---------- Reports drawer ---------- */
+  #reportsDrawer{ width:400px; }
+  .reports-toolbar{ padding:12px 18px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+  .reports-filter-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .reports-filter-row button{
+    flex:1; min-width:0; padding:8px 10px; border-radius:999px; border:1px solid var(--line);
+    background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12px;
+    cursor:pointer; white-space:nowrap; font-family:'Sora',sans-serif;
+  }
+  .reports-filter-row button.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
+  .reports-search-row{ display:flex; gap:6px; }
+  .reports-search-row input{ flex:1; min-width:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 10px; font-size:13px; color:var(--ink); }
+  .reports-search-row select{ flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 8px; font-size:12.5px; color:var(--ink); max-width:120px; }
+  .reports-list{ overflow-y:auto; padding:12px 18px; display:flex; flex-direction:column; gap:10px; flex:1; min-height:0; }
+
+  .report-card{
+    background:var(--surface-soft); border:1px solid var(--line); border-left:3px solid var(--muted);
+    border-radius:12px; padding:12px 14px; cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:box-shadow .12s ease;
+  }
+  .report-card:hover{ box-shadow:var(--shadow-md); }
+  .report-card.status-open{ border-left-color:var(--danger); }
+  .report-card.status-progress{ border-left-color:var(--primary); }
+  .report-card.status-resolved{ border-left-color:var(--success); opacity:0.72; }
+  .report-card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+  .report-card-code{ font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; color:var(--primary-dark); word-break:break-all; }
+  .report-card-status{ font-size:10px; font-weight:800; padding:3px 9px; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; }
+  .report-card-status.open{ background:var(--danger-soft); color:var(--danger); }
+  .report-card-status.progress{ background:var(--primary-soft); color:var(--primary-dark); }
+  .report-card-status.resolved{ background:var(--success-soft); color:var(--success); }
+  .report-card-sub{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:3px; }
+  .report-card-note{ font-size:12.5px; color:var(--muted); margin-bottom:3px; overflow-wrap:break-word; }
+  .report-card-meta{ font-size:11px; color:var(--muted); }
+
+  /* ---------- Report detail modal ---------- */
+  #reportDetailModal{ width:480px; }
+  .rd-code-wrap{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .rd-code{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--primary-dark); word-break:break-all; flex:1; min-width:0; }
+  .rd-copy-btn{ flex-shrink:0; width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-size:14px; cursor:pointer; }
+  .rd-copy-btn:hover{ background:var(--primary-soft); color:var(--primary-dark); }
+  .rd-status-row{ display:flex; gap:6px; margin-bottom:14px; }
+  .rd-status-btn{
+    flex:1; padding:10px 8px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12.5px;
+    cursor:pointer; transition:all .12s ease; font-family:'Sora',sans-serif;
+  }
+  .rd-status-btn:hover{ border-color:var(--primary); }
+  .rd-status-btn.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
+  .rd-info{ background:var(--surface-soft); border-radius:12px; padding:4px 14px; margin-bottom:12px; }
+  .rd-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .rd-row:last-child{ border-bottom:none; }
+  .rd-label{ color:var(--muted); font-weight:700; flex-shrink:0; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px; }
+  .rd-value{ color:var(--ink); font-weight:600; text-align:right; word-break:break-word; min-width:0; }
+  .rd-note-section{ background:var(--primary-soft); border:1px solid var(--primary); border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+  body.theme-dark .rd-note-section{ background:#3D3320; border-color:#8A6A1F; }
+  .rd-note-label{ font-size:11px; font-weight:800; color:var(--primary-dark); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
+  .rd-note-text{ font-size:13.5px; color:var(--ink); white-space:pre-wrap; line-height:1.5; }
+  .rd-photo-note{ background:var(--surface-soft); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--muted); margin-bottom:12px; }
+  .rd-input-label{ font-size:12px; font-weight:600; color:var(--muted); display:block; margin:8px 0 4px; }
+  #rdManagerNotes, #rdResolutionNotes{ border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:14px;width:100%;color:var(--ink);font-family:inherit;resize:vertical; }
+
   .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:46;display:none;}
   .loading-overlay{ position:fixed; inset:0; z-index:100; background:var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
   .loading-overlay.show{ display:flex; }
@@ -633,6 +699,7 @@
     .nav-group .icon-btn{ width:24px; height:24px; font-size:12px; }
     .toolbar-label{ font-size:11.5px; min-width:auto; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
     .toolbar{ flex-wrap:wrap; justify-content:flex-end; row-gap:8px; }
+    #reportsDrawer{ width:340px; }
   }
 
   @media (max-width: 760px){
@@ -650,7 +717,7 @@
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn, .toolbar #reportBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn, .toolbar #exportBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
@@ -677,6 +744,7 @@
     .day-cell{ cursor:pointer; }
     .form-modal{ top:0; left:0; right:0; bottom:0; width:100%; height:100%; max-width:100%; max-height:100%; transform:none; border-radius:0; }
     .history-drawer{ width:100%; }
+    #reportsDrawer{ width:100%; }
   }
 
   @media (max-width: 480px){
@@ -735,7 +803,8 @@
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="btn-history" id="historyBtn">History</button>
-      <button class="btn-history" id="reportBtn">Report</button>
+      <button class="btn-history" id="exportBtn">Export</button>
+      <button class="btn-history notif-btn" id="reportsBtn" title="Reports">🚩 Reports<span class="notif-badge hidden" id="reportsBadge">0</span></button>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode">🌙</button>
       <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
@@ -818,7 +887,8 @@
     <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
     <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
-    <button class="sheet-option" id="moreReportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Report</button>
+    <button class="sheet-option" id="moreExportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Export</button>
+    <button class="sheet-option" id="moreReportsBtn"><span class="s-ic" style="background:var(--danger);">🚩</span>Reports <span id="moreReportsCount" style="margin-left:auto;font-weight:800;color:var(--danger);"></span></button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
     <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
     <button class="sheet-option" id="moreThemeToggleBtn"><span class="s-ic" style="background:var(--secondary);">🌙</span><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
@@ -837,6 +907,30 @@
     </div>
   </div>
   <div class="history-list" id="historyList"></div>
+</div>
+
+<div class="history-drawer" id="reportsDrawer">
+  <div class="history-head">
+    <h2>Reports</h2>
+    <button id="closeReports" aria-label="Close">✕</button>
+  </div>
+  <div class="reports-toolbar">
+    <div class="reports-filter-row" id="reportsFilterRow">
+      <button data-status="all" class="active">All</button>
+      <button data-status="Open">Open</button>
+      <button data-status="In Progress">In Progress</button>
+      <button data-status="Resolved">Resolved</button>
+    </div>
+    <div class="reports-search-row">
+      <input type="text" id="reportsSearchInput" placeholder="Search code, shed, name...">
+      <select id="reportsShedFilter"><option value="">All sheds</option></select>
+      <select id="reportsSortSelect">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+      </select>
+    </div>
+  </div>
+  <div class="reports-list" id="reportsList"></div>
 </div>
 
 <div class="history-drawer" id="settingsDrawer">
@@ -1064,9 +1158,9 @@
 </div>
 
 <div class="form-modal" id="reportModal">
-  <div class="form-modal-head"><h2>Generate report</h2><button id="closeReportModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-head"><h2>Export</h2><button id="closeReportModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <label for="reportScopeSelect">Report scope</label>
+    <label for="reportScopeSelect">Scope</label>
     <select id="reportScopeSelect">
       <option value="all">All data</option>
       <option value="batch">Specific batch</option>
@@ -1125,6 +1219,43 @@
   </div>
 </div>
 
+<!-- Report Detail Modal -->
+<div class="form-modal" id="reportDetailModal">
+  <div class="form-modal-head"><h2>Report Details</h2><button id="closeReportDetailModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <div class="rd-code-wrap">
+      <span class="rd-code" id="rdCode"></span>
+      <button class="rd-copy-btn" id="rdCopyBtn" type="button" title="Copy code">📋</button>
+    </div>
+    <div class="rd-status-row" id="rdStatusRow">
+      <button class="rd-status-btn" data-status="Open" type="button">Open</button>
+      <button class="rd-status-btn" data-status="In Progress" type="button">In Progress</button>
+      <button class="rd-status-btn" data-status="Resolved" type="button">Resolved</button>
+    </div>
+    <div class="rd-info">
+      <div class="rd-row"><span class="rd-label">Shed</span><span class="rd-value" id="rdShed"></span></div>
+      <div class="rd-row"><span class="rd-label">Type</span><span class="rd-value" id="rdType"></span></div>
+      <div class="rd-row"><span class="rd-label">Reported by</span><span class="rd-value" id="rdBy"></span></div>
+      <div class="rd-row"><span class="rd-label">Reported</span><span class="rd-value" id="rdAt"></span></div>
+    </div>
+    <div class="rd-note-section">
+      <div class="rd-note-label">Location note</div>
+      <div class="rd-note-text" id="rdNotes"></div>
+    </div>
+    <div class="rd-note-section" id="rdResolutionSection" style="display:none; background:var(--success-soft); border-color:var(--success);">
+      <div class="rd-note-label" style="color:var(--success);">Resolution</div>
+      <div class="rd-note-text" id="rdResolution"></div>
+    </div>
+    <div class="rd-photo-note">📷 Photo shared via WhatsApp — search the group for this code to view.</div>
+    <label class="rd-input-label" for="rdManagerNotes">Manager Notes (internal)</label>
+    <textarea id="rdManagerNotes" rows="2" maxlength="500" placeholder="Internal notes..."></textarea>
+    <label class="rd-input-label" id="rdResolutionLabel" for="rdResolutionNotes" style="display:none;">Resolution Notes (worker sees this)</label>
+    <textarea id="rdResolutionNotes" rows="2" maxlength="500" placeholder="What fixed it?" style="display:none;"></textarea>
+    <button class="btn-app" id="rdSaveBtn" style="margin-top:10px;">Save changes</button>
+    <button class="btn-danger-outline" id="rdDeleteBtn" style="margin-top:8px;">Delete report</button>
+  </div>
+</div>
+
 <script>
 (function(){
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
@@ -1173,6 +1304,7 @@
   let history = [];
   let batches = [];
   let events = [];
+  let reports = []; // ← NEW: reports from viewer land here
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
   let currentDate = new Date();
@@ -1188,6 +1320,13 @@
   let suppressNextClick = false;
   let deleteAllPending = false;
   let overdueModalOpen = false;
+
+  // Reports module state
+  let reportsFilterStatus = 'all';
+  let reportsSortMode = 'newest';
+  let reportsSearchQuery = '';
+  let reportsShedFilter = '';
+  let currentReportId = null;
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -1246,6 +1385,17 @@
   function batchesForDate(key){ return batches.filter(b => key>=b.start && key<=b.end); }
   function eventOnDate(key){ return events.find(e=>e.date===key); }
   function criticalEventForDate(key){ return events.find(e=>{ const cs=addDaysStr(e.date,-7), ce=addDaysStr(e.date,-1); return key>=cs && key<=ce; }); }
+  function formatTimeAgo(date){
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if(hours < 24) return hours + 'h ago';
+    const days = Math.floor(hours / 24);
+    if(days < 7) return days + 'd ago';
+    return date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  }
 
   function showToast(msg, isError){
     let t = $('#toast');
@@ -1329,7 +1479,7 @@
     pushToGithub();
   }
   async function load(){
-    tasks=[]; history=[]; batches=[]; events=[];
+    tasks=[]; history=[]; batches=[]; events=[]; reports=[];
     settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
     applySettings();
     try{
@@ -1410,7 +1560,8 @@
   async function pushToGithub(){
     if(!ghPath) return false;
     try{
-      const data = {tasks, history, batches, events, settings, frequentTemplates};
+      // ↓↓ CRITICAL: reports must be in this payload or they'd be wiped
+      const data = {tasks, history, batches, events, settings, frequentTemplates, reports};
       const body = { sha: ghSha, data };
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
         method:'PUT',
@@ -1435,6 +1586,7 @@
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
+      reports = parsed.reports || []; // ← NEW
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
       let sessionViewMode = null;
@@ -1717,6 +1869,185 @@
     addHistory('Frequent task removed', `"${t.name}" removed from Frequent tasks`);
     persist(); renderAll();
   }
+
+  // ==================== REPORTS MODULE ====================
+  function getOpenReportsCount(){
+    return reports.filter(r => r.status === 'Open' || r.status === 'In Progress').length;
+  }
+  function updateReportsBadge(){
+    const count = getOpenReportsCount();
+    const badge = $('#reportsBadge');
+    if(badge){
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.classList.toggle('hidden', count === 0);
+    }
+    const moreCount = $('#moreReportsCount');
+    if(moreCount){ moreCount.textContent = count > 0 ? `(${count})` : ''; }
+  }
+  function renderReportsList(){
+    const list = $('#reportsList');
+    if(!list) return;
+    list.innerHTML = '';
+
+    // Build shed dropdown
+    const shedSelect = $('#reportsShedFilter');
+    if(shedSelect){
+      const currentVal = shedSelect.value;
+      const sheds = [...new Set(reports.map(r => r.shed).filter(Boolean))]
+        .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+      shedSelect.innerHTML = '<option value="">All sheds</option>' +
+        sheds.map(s => `<option value="${escapeHtmlAttr(s)}">Shed ${escapeHtmlAttr(s)}</option>`).join('');
+      shedSelect.value = currentVal;
+    }
+
+    let filtered = reports.slice();
+
+    if(reportsFilterStatus !== 'all'){
+      filtered = filtered.filter(r => r.status === reportsFilterStatus);
+    }
+    if(reportsShedFilter){
+      filtered = filtered.filter(r => String(r.shed) === String(reportsShedFilter));
+    }
+    if(reportsSearchQuery){
+      const q = reportsSearchQuery.toLowerCase();
+      filtered = filtered.filter(r =>
+        (r.code || '').toLowerCase().includes(q) ||
+        (r.shed || '').toLowerCase().includes(q) ||
+        (r.problemType || '').toLowerCase().includes(q) ||
+        (r.notes || '').toLowerCase().includes(q) ||
+        (r.createdBy || '').toLowerCase().includes(q)
+      );
+    }
+
+    filtered.sort((a, b) => reportsSortMode === 'oldest'
+      ? (a.createdAt || '').localeCompare(b.createdAt || '')
+      : (b.createdAt || '').localeCompare(a.createdAt || '')
+    );
+
+    if(filtered.length === 0){
+      list.innerHTML = '<div class="empty-note">No reports match your filters.</div>';
+      return;
+    }
+
+    filtered.forEach(r => list.appendChild(buildReportCard(r)));
+  }
+  function buildReportCard(r){
+    const card = document.createElement('div');
+    const statusClass = r.status === 'Open' ? 'status-open' : r.status === 'In Progress' ? 'status-progress' : 'status-resolved';
+    card.className = 'report-card ' + statusClass;
+
+    const statusPillClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
+
+    card.innerHTML = `
+      <div class="report-card-head">
+        <span class="report-card-code"></span>
+        <span class="report-card-status ${statusPillClass}"></span>
+      </div>
+      <div class="report-card-sub"></div>
+      <div class="report-card-note"></div>
+      <div class="report-card-meta"></div>
+    `;
+    card.querySelector('.report-card-code').textContent = r.code || '';
+    card.querySelector('.report-card-status').textContent = r.status || 'Open';
+    card.querySelector('.report-card-sub').textContent = `Shed ${r.shed} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
+    card.querySelector('.report-card-note').textContent = r.notes || '';
+    card.querySelector('.report-card-meta').textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
+    card.addEventListener('click', () => openReportDetailModal(r.id));
+    return card;
+  }
+  function openReportsDrawer(){
+    renderReportsList();
+    openDrawer('#reportsDrawer');
+  }
+  function openReportDetailModal(id){
+    const r = reports.find(x => x.id === id);
+    if(!r) return;
+    currentReportId = id;
+
+    $('#rdCode').textContent = r.code || '';
+    $('#rdShed').textContent = r.shed || '';
+    $('#rdType').textContent = r.problemType || '';
+    $('#rdBy').textContent = r.createdBy || '';
+    $('#rdAt').textContent = r.createdAt ? new Date(r.createdAt).toLocaleString(undefined, {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+    $('#rdNotes').textContent = r.notes || '';
+    $('#rdManagerNotes').value = r.managerNotes || '';
+    $('#rdResolutionNotes').value = r.resolutionNotes || '';
+
+    document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.status === r.status);
+    });
+
+    if(r.status === 'Resolved'){
+      $('#rdResolutionSection').style.display = 'block';
+      $('#rdResolution').textContent = r.resolutionNotes || '(No resolution notes yet)';
+      $('#rdResolutionLabel').style.display = 'block';
+      $('#rdResolutionNotes').style.display = 'block';
+    } else {
+      $('#rdResolutionSection').style.display = 'none';
+      $('#rdResolutionLabel').style.display = 'none';
+      $('#rdResolutionNotes').style.display = 'none';
+    }
+
+    // Reset delete button confirm state
+    const delBtn = $('#rdDeleteBtn');
+    delBtn.dataset.pending = '';
+    delBtn.textContent = 'Delete report';
+    delBtn.classList.remove('confirm');
+
+    openDrawer('#reportDetailModal');
+  }
+  function saveReportChanges(){
+    const r = reports.find(x => x.id === currentReportId);
+    if(!r){ closeReportDetailOnly(); return; }
+
+    const oldStatus = r.status;
+    const activeStatus = document.querySelector('#rdStatusRow .rd-status-btn.active');
+    const newStatus = activeStatus ? activeStatus.dataset.status : r.status;
+
+    r.managerNotes = $('#rdManagerNotes').value.trim();
+    r.resolutionNotes = $('#rdResolutionNotes').value.trim();
+
+    if(newStatus !== r.status){
+      r.status = newStatus;
+      if(newStatus === 'Resolved'){
+        r.resolvedAt = new Date().toISOString();
+      } else {
+        r.resolvedAt = null;
+      }
+      addHistory('Report updated', `${r.code} status: ${oldStatus} → ${newStatus}`);
+    } else {
+      addHistory('Report updated', `${r.code} notes updated`);
+    }
+    r.updatedAt = new Date().toISOString();
+
+    persist(); renderAll();
+    closeReportDetailOnly();
+    showToast('Report saved.');
+  }
+  function deleteReportConfirmed(id){
+    const r = reports.find(x => x.id === id);
+    if(!r) return;
+    reports = reports.filter(x => x.id !== id);
+    addHistory('Report deleted', `${r.code} (Shed ${r.shed} · ${r.problemType}) deleted`);
+    persist(); renderAll();
+    closeReportDetailOnly();
+    showToast('Report deleted.');
+  }
+  function closeReportDetailOnly(){
+    $('#reportDetailModal').classList.remove('open');
+    // Keep scrim if reports drawer is still open
+    if(!$('#reportsDrawer').classList.contains('open')){
+      $('#scrim').classList.remove('show');
+    }
+    currentReportId = null;
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function escapeHtmlAttr(s){ return escapeHtml(s); }
+  // ==================== END REPORTS MODULE ====================
 
   function generateReport(opts){
     opts = opts || {type:'all'};
@@ -2091,23 +2422,15 @@
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
     const isHighPriority = task.priority === 'high' && task.status!=='done';
-
-    // Two flavours of selection:
-    //  - selectable === true            → List view "Select" mode (click-anywhere toggles; no checkbox)
-    //  - selectable is an object        → Backlog modal (checkbox + per-row Schedule)
     const clickSelect = selectable === true;
     const checkboxSelect = selectable !== null && typeof selectable === 'object';
     const inAnySelectMode = clickSelect || checkboxSelect;
-
     card.className = 'task-card' + (task.status==='done' ? ' done' : '') + (isOverdue ? ' overdue' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
     if(clickSelect) card.classList.add('select-mode');
     card.dataset.id = task.id;
-
     const selectedIds = inAnySelectMode ? (checkboxSelect ? selectable.ids : bulkSelectedIds) : null;
     const onUpdate = inAnySelectMode ? (checkboxSelect ? selectable.onUpdate : updateBulkActionBar) : null;
-
     if(clickSelect && selectedIds.has(task.id)) card.classList.add('selected');
-
     const showCompleteCircle = !inAnySelectMode && !opts.disableTapExpand;
     const iconSlotHtml = showCompleteCircle
       ? `<span class="task-icon-slot">
@@ -2115,9 +2438,7 @@
            <span class="task-icon"></span>
          </span>`
       : `<span class="task-icon"></span>`;
-
     const showMenu = !inAnySelectMode && !opts.disableTapExpand;
-
     card.innerHTML = `
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
@@ -2136,17 +2457,13 @@
         <div class="task-menu-sep"></div>
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
       </div>` : ''}`;
-
     card.querySelector('.task-icon').innerHTML = '';
     renderIconInto(card.querySelector('.task-icon'), task.icon);
-
     const completeBtn = card.querySelector('.task-complete-btn');
     if(completeBtn){
       completeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); toggleDone(task.id); });
     }
-
     card.querySelector('.task-name').textContent = task.name;
-
     if(checkboxSelect){
       const cb = card.querySelector('.bulk-select-cb');
       cb.checked = selectedIds.has(task.id);
@@ -2157,7 +2474,6 @@
         onUpdate();
       });
     }
-
     if(showMenu){
       const menuBtn = card.querySelector('.task-menu-btn');
       const popup = card.querySelector('.task-menu-popup');
@@ -2173,7 +2489,6 @@
         openTaskDetailModal(task.id);
       });
     }
-
     card.querySelector('.task-card-top').addEventListener('click', (e)=>{
       if(clickSelect){
         if(selectedIds.has(task.id)) selectedIds.delete(task.id); else selectedIds.add(task.id);
@@ -2186,7 +2501,6 @@
       if(opts.disableTapExpand) return;
       openTaskDetailModal(task.id);
     });
-
     return card;
   }
 
@@ -3171,6 +3485,8 @@
     if(dayModalOpenKey) renderDayModalTasks(dayModalOpenKey);
     if(overdueModalOpen) refreshOverdueList();
     updateOverdueBadge();
+    updateReportsBadge();
+    if($('#reportsDrawer').classList.contains('open')) renderReportsList();
   }
 
   let editingAssignees = [];
@@ -3510,7 +3826,7 @@
     showToast('Event added.');
   });
 
-  $('#reportBtn').addEventListener('click', ()=>{
+  $('#exportBtn').addEventListener('click', ()=>{
     const sel = $('#reportBatchSelect');
     sel.innerHTML = '<option value="all">All data</option>';
     batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
@@ -3626,6 +3942,7 @@
   function openDrawer(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
   function closeOverlays(){
     $('#historyDrawer').classList.remove('open');
+    $('#reportsDrawer').classList.remove('open');
     $('#settingsDrawer').classList.remove('open');
     $('#dayModal').classList.remove('open');
     $('#taskDetailModal').classList.remove('open');
@@ -3638,6 +3955,7 @@
     $('#backlogModal').classList.remove('open');
     $('#seriesDeleteModal').classList.remove('open');
     $('#copyModal').classList.remove('open');
+    $('#reportDetailModal').classList.remove('open');
     document.querySelector('.sidebar').classList.remove('open');
     $('#quickAddSheet').classList.add('hidden');
     $('#moreSheet').classList.add('hidden');
@@ -3650,6 +3968,7 @@
     copySourceMode = null;
     copySourceTaskId = null;
     copySourceDayKey = null;
+    currentReportId = null;
   }
   function toggleSidebar(){
     const sb = document.querySelector('.sidebar');
@@ -3680,7 +3999,8 @@
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
-  $('#moreReportBtn').addEventListener('click', ()=>{ closeOverlays(); $('#reportBtn').click(); });
+  $('#moreExportBtn').addEventListener('click', ()=>{ closeOverlays(); $('#exportBtn').click(); });
+  $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
   $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
   $('#moreThemeToggleBtn').addEventListener('click', ()=>{ closeOverlays(); settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
@@ -3688,6 +4008,8 @@
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
 
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
+  $('#reportsBtn').addEventListener('click', openReportsDrawer);
+  $('#closeReports').addEventListener('click', closeOverlays);
   $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
@@ -3846,78 +4168,91 @@
     overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
   });
 
-  let copySourceMode = null;
-  let copySourceTaskId = null;
-  let copySourceDayKey = null;
-  function openCopyTaskModal(taskId){
-    const t = tasks.find(x=>x.id===taskId);
-    if(!t) return;
-    copySourceMode = 'task';
-    copySourceTaskId = taskId;
-    copySourceDayKey = null;
-    $('#copyModalTitle').textContent = 'Copy task';
-    $('#copyModalDesc').textContent = `"${t.name}" will be duplicated as a new open task.`;
-    $('#copyDestSelectRow').style.display = 'block';
-    $('#copyOptBacklog').style.display = '';
-    if(t.date){ $('#copyOptSameDay').style.display = ''; $('#copyOptSameDay').textContent = `Same day (${formatFull(t.date)})`; }
-    else { $('#copyOptSameDay').style.display = 'none'; }
-    $('#copyDestSelect').value = 'backlog';
-    $('#copyDateRow').style.display = 'none';
-    $('#copyDateInput').value = '';
-    openDrawer('#copyModal');
-  }
-  function openCopyDayModal(dayKey){
-    copySourceMode = 'day';
-    copySourceTaskId = null;
-    copySourceDayKey = dayKey;
-    const count = tasks.filter(t=>t.date===dayKey && t.status!=='done').length;
-    $('#copyModalTitle').textContent = 'Copy all tasks';
-    $('#copyModalDesc').textContent = `${count} open task(s) from ${formatFull(dayKey)} will be duplicated to a new date.`;
-    $('#copyDestSelectRow').style.display = 'none';
-    $('#copyDateRow').style.display = 'block';
-    $('#copyDateInput').value = '';
-    openDrawer('#copyModal');
-  }
-  function buildCopiedTask(src, dateVal){
-    return {
-      id: uid(), name: src.name, icon: src.icon, date: dateVal || null, status: 'open',
-      createdAt: Date.now(), order: nextOrder(), assignees: (src.assignees || []).slice(),
-      notes: src.notes || '', priority: src.priority || null
-    };
-  }
-  $('#copyDestSelect').addEventListener('change', (e)=>{
-    $('#copyDateRow').style.display = e.target.value === 'pick' ? 'block' : 'none';
+  // ---------- Reports module event listeners ----------
+  $('#reportsFilterRow').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    reportsFilterStatus = btn.dataset.status;
+    document.querySelectorAll('#reportsFilterRow button').forEach(b => b.classList.toggle('active', b === btn));
+    renderReportsList();
   });
-  $('#closeCopyModal').addEventListener('click', closeOverlays);
-  $('#confirmCopyBtn').addEventListener('click', ()=>{
-    if(copySourceMode === 'task'){
-      const t = tasks.find(x=>x.id===copySourceTaskId);
-      if(!t){ closeOverlays(); return; }
-      const choice = $('#copyDestSelect').value;
-      let destKey = null;
-      if(choice === 'sameday'){ destKey = t.date; }
-      else if(choice === 'pick'){
-        const val = $('#copyDateInput').value;
-        if(!val){ showToast('Pick a date first.', true); return; }
-        destKey = val;
+  $('#reportsSearchInput').addEventListener('input', (e)=>{
+    reportsSearchQuery = e.target.value;
+    renderReportsList();
+  });
+  $('#reportsShedFilter').addEventListener('change', (e)=>{
+    reportsShedFilter = e.target.value;
+    renderReportsList();
+  });
+  $('#reportsSortSelect').addEventListener('change', (e)=>{
+    reportsSortMode = e.target.value;
+    renderReportsList();
+  });
+  $('#closeReportDetailModal').addEventListener('click', closeReportDetailOnly);
+  document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if(btn.dataset.status === 'Resolved'){
+        $('#rdResolutionLabel').style.display = 'block';
+        $('#rdResolutionNotes').style.display = 'block';
+      } else {
+        $('#rdResolutionLabel').style.display = 'none';
+        $('#rdResolutionNotes').style.display = 'none';
       }
-      tasks.push(buildCopiedTask(t, destKey));
-      addHistory('Copied', `"${t.name}" copied to ${destKey ? formatFull(destKey) : 'Backlog'}`);
-      persist(); renderAll();
-      closeOverlays();
-      showToast(`Copied to ${destKey ? formatFull(destKey) : 'Backlog'}.`);
-    } else if(copySourceMode === 'day'){
-      const toKey = $('#copyDateInput').value;
-      if(!toKey){ showToast('Pick a target date.', true); return; }
-      const src = tasks.filter(t=>t.date===copySourceDayKey && t.status!=='done');
-      if(src.length === 0){ showToast('Nothing to copy.', true); closeOverlays(); return; }
-      const copies = src.map(t=> buildCopiedTask(t, toKey));
-      copies.forEach(c=> tasks.push(c));
-      addHistory('Copied', `${copies.length} task(s) copied from ${formatFull(copySourceDayKey)} to ${formatFull(toKey)}`);
-      persist(); renderAll();
-      closeOverlays();
-      showToast(`${copies.length} task(s) copied to ${formatFull(toKey)}.`);
+    });
+  });
+  $('#rdSaveBtn').addEventListener('click', saveReportChanges);
+  $('#rdCopyBtn').addEventListener('click', async ()=>{
+    const code = $('#rdCode').textContent || '';
+    try{
+      await navigator.clipboard.writeText(code);
+      showToast('Code copied.');
+    }catch(e){
+      // Fallback
+      const tmp = document.createElement('textarea');
+      tmp.value = code;
+      document.body.appendChild(tmp);
+      tmp.select();
+      try{ document.execCommand('copy'); showToast('Code copied.'); }
+      catch(err){ showToast('Copy failed.', true); }
+      document.body.removeChild(tmp);
     }
+  });
+  $('#rdDeleteBtn').addEventListener('click', function(){
+    if(!currentReportId) return;
+    const r = reports.find(x => x.id === currentReportId);
+    if(!r) return;
+    // Warning if not resolved
+    if(r.status !== 'Resolved' && !this.dataset.warned){
+      this.dataset.warned = 'true';
+      const oldText = this.textContent;
+      this.textContent = 'Not resolved — click again to delete';
+      this.classList.add('confirm');
+      clearTimeout(this._t);
+      this._t = setTimeout(()=>{
+        this.dataset.warned = '';
+        this.textContent = oldText;
+        this.classList.remove('confirm');
+      }, 3500);
+      return;
+    }
+    // Two-click confirm
+    if(!this.dataset.pending){
+      this.dataset.pending = 'true';
+      this.classList.add('confirm');
+      this.textContent = 'Click again to confirm delete';
+      clearTimeout(this._t);
+      this._t = setTimeout(()=>{
+        this.dataset.pending = '';
+        this.classList.remove('confirm');
+        this.textContent = 'Delete report';
+        this.dataset.warned = '';
+      }, 3500);
+      return;
+    }
+    clearTimeout(this._t);
+    deleteReportConfirmed(currentReportId);
   });
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
@@ -3983,7 +4318,8 @@
   $('#moreViewerBtn').addEventListener('click', ()=>{ closeOverlays(); openViewerMode(); });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
-    const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates}, null, 2);
+    // ↓↓ reports included in backup
+    const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates, reports}, null, 2);
     const blob = new Blob([payload], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -4007,6 +4343,7 @@
         history = parsed.history || [];
         batches = parsed.batches || [];
         events = parsed.events || [];
+        reports = parsed.reports || []; // ↓↓ reports restored from backup
         settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
         frequentTemplates = parsed.frequentTemplates || [];
         applySettings();
@@ -4024,7 +4361,14 @@
   });
 
   document.addEventListener('keydown', (e)=>{
-    if(e.key==='Escape'){ closeAllTaskMenus(); closeOverlays(); }
+    if(e.key==='Escape'){
+      if($('#reportDetailModal').classList.contains('open')){
+        closeReportDetailOnly();
+        return;
+      }
+      closeAllTaskMenus();
+      closeOverlays();
+    }
   });
   window.addEventListener('resize', ()=>{
     closeAllTaskMenus();
@@ -4071,11 +4415,7 @@
         indicatorEl.classList.add('loading');
         indicatorEl.style.transform = 'translateY(0px)';
         Promise.resolve(onRefresh()).finally(()=>{
-          setTimeout(()=>{
-            refreshing = false;
-            indicatorEl.classList.remove('loading','ready');
-            indicatorEl.style.transform = 'translateY(-60px)';
-          }, 400);
+          setTimeout(()=>{ refreshing = false; indicatorEl.classList.remove('loading','ready'); indicatorEl.style.transform = 'translateY(-60px)'; }, 400);
         });
       } else { indicatorEl.style.transform = 'translateY(-60px)'; }
       currentDist = 0;
