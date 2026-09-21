@@ -73,7 +73,6 @@
   img{ max-width:100%; display:block; }
   body.hide-icons .task-icon, body.hide-icons .day-count-icons{display:none;}
 
-  /* ---------- header ---------- */
   .app-header{
     position:sticky; top:0; z-index:20;
     display:flex; align-items:center; justify-content:space-between;
@@ -103,14 +102,12 @@
   .sync-tag{ font-size:11px; font-weight:700; color:var(--success); opacity:0; transition:opacity .2s ease; }
   .sync-tag.show{ opacity:1; }
 
-  /* ---------- layout ---------- */
-  .dashboard{ max-width:720px; margin:0 auto; padding:20px 16px 48px; }
+  .dashboard{ max-width:720px; margin:0 auto; padding:20px 16px 96px; }
   @media (min-width:900px){
-    .dashboard{ max-width:920px; padding:32px 24px 56px; }
+    .dashboard{ max-width:920px; padding:32px 24px 96px; }
     .wide-grid{ display:grid; grid-template-columns:1.5fr 1fr; gap:24px; align-items:start; }
   }
 
-  /* ---------- today hero ---------- */
   .hero-card{
     background:linear-gradient(155deg, var(--primary), var(--secondary));
     border-radius:var(--radius-card); padding:22px 22px; color:#241A08; box-shadow:var(--shadow-md);
@@ -128,12 +125,10 @@
     font-size:12.5px; font-weight:700; color:inherit;
   }
 
-  /* ---------- section headers ---------- */
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:26px 0 12px; }
   .section-head:first-of-type{ margin-top:0; }
   .section-head h2{ font-size:15px; font-weight:800; letter-spacing:0.02em; text-transform:uppercase; color:var(--muted); }
 
-  /* ---------- filter tabs ---------- */
   .agenda-filter{ display:flex; gap:8px; margin-bottom:16px; }
   .agenda-filter button{
     flex:1; padding:12px 10px; border-radius:var(--radius-pill); border:none; cursor:pointer;
@@ -143,7 +138,6 @@
   .agenda-filter button.active{ background:var(--ink); color:var(--bg); }
   body.theme-dark .agenda-filter button.active{ background:var(--primary); color:#1A1300; }
 
-  /* ---------- task groups & cards ---------- */
   .list-group{ margin-bottom:18px; }
   .list-date{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; padding:0 2px; }
   .list-date-main{ font-family:'Sora',sans-serif; font-weight:700; font-size:15px; color:var(--ink); }
@@ -190,17 +184,6 @@
   .task-status-btn.done{ background:var(--secondary-soft); color:var(--secondary); }
   .task-status-btn:hover{ filter:brightness(0.94); }
   .task-status-btn:active{ transform:scale(0.9); }
-  .task-card.just-completed{ animation:task-complete-pulse 0.5s ease; }
-  .task-card.just-completed .task-status-btn{ animation:task-complete-pop 0.5s ease; }
-  @keyframes task-complete-pulse{
-    0%{ background:var(--success-soft, var(--secondary-soft)); }
-    100%{ background:var(--surface); }
-  }
-  @keyframes task-complete-pop{
-    0%{ transform:scale(1); }
-    35%{ transform:scale(1.25); }
-    100%{ transform:scale(1); }
-  }
   .task-status-btn svg{ width:22px; height:22px; }
 
   .empty-note{
@@ -208,7 +191,6 @@
     background:var(--surface-soft); border-radius:16px; border:1.5px dashed var(--line);
   }
 
-  /* ---------- audits section ---------- */
   .audit-card{
     background:var(--surface); border:1px solid var(--line); border-radius:16px;
     padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow-sm);
@@ -225,7 +207,6 @@
   }
   body.theme-dark .audit-today-badge{ color:#1A1300; }
 
-  /* ---------- settings sheet ---------- */
   .scrim{ position:fixed; inset:0; background:rgba(20,15,8,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity .18s ease; }
   .scrim.show{ opacity:1; pointer-events:auto; }
   .sheet{
@@ -235,7 +216,7 @@
   }
   .sheet.open{ transform:translateY(0); }
   @media (min-width:720px){
-    .sheet{ left:50%; right:auto; bottom:auto; top:50%; transform:translate(-50%,-46%); width:440px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; }
+    .sheet{ left:50%; right:auto; bottom:auto; top:50%; transform:translate(-50%,-46%); width:480px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; }
     .sheet.open{ transform:translate(-50%,-50%); opacity:1; pointer-events:auto; }
   }
   .sheet-handle{ width:40px; height:4px; border-radius:2px; background:var(--line); margin:10px auto 4px; }
@@ -246,10 +227,11 @@
   .sheet-body{ padding:18px 20px 24px; }
   .field-label{ font-size:12.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; display:block; margin:16px 0 6px; }
   .field-label:first-child{ margin-top:0; }
-  select, input[type="text"]{
+  select, input[type="text"], input[type="number"], textarea{
     width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
     background:var(--surface-soft); color:var(--ink); font-size:15px; font-family:inherit;
   }
+  textarea{ resize:vertical; min-height:56px; }
   .field-note{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
   .btn-primary, .btn-secondary{
     width:100%; padding:14px; border-radius:14px; border:none; cursor:pointer;
@@ -257,10 +239,10 @@
   }
   .btn-primary{ background:linear-gradient(135deg, var(--primary), var(--secondary)); color:#241A08; }
   body.theme-dark .btn-primary{ color:#1A1300; }
+  .btn-primary:disabled{ opacity:0.45; cursor:not-allowed; }
   .btn-secondary{ background:var(--surface-soft); color:var(--ink); border:1.5px solid var(--line); }
   .status-line{ font-size:13px; color:var(--muted); margin-bottom:4px; }
 
-  /* ---------- loading / error overlays ---------- */
   .loading-overlay{
     position:fixed; inset:0; background:var(--bg); z-index:100; display:none;
     flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;
@@ -271,7 +253,6 @@
   .loading-text{ font-size:14px; color:var(--muted); font-weight:600; }
   .error-icon{ font-size:40px; }
 
-  /* ---------- toast ---------- */
   .toast{
     position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px);
     background:var(--ink); color:var(--bg); padding:12px 20px; border-radius:12px; font-size:13.5px; font-weight:600;
@@ -281,7 +262,6 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast.error{ background:var(--danger); color:#fff; }
 
-  /* ---------- overdue modal ---------- */
   .modal{
     position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:460px; max-width:92vw; max-height:82vh;
     background:var(--surface); border-radius:20px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden;
@@ -292,12 +272,91 @@
   .modal-head button{ width:34px; height:34px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--muted); font-size:16px; cursor:pointer; }
   .modal-body{ padding:16px 20px; overflow-y:auto; }
 
-  /* ---------- pull to refresh ---------- */
   .pull-refresh-indicator{ position:fixed; top:0; left:0; right:0; display:flex; justify-content:center; padding-top:14px; transform:translateY(-60px); z-index:15; pointer-events:none; }
   .pr-spinner{ width:26px; height:26px; border-radius:50%; border:3px solid var(--surface-soft); border-top-color:var(--primary); background:var(--surface); box-shadow:var(--shadow-sm); }
   .pull-refresh-indicator.loading .pr-spinner{ animation:spin .7s linear infinite; }
 
   footer.app-footer{ text-align:center; font-size:11.5px; color:var(--muted); padding:8px 16px 4px; }
+
+  /* ---------- Report Problem FAB ---------- */
+  .report-fab{
+    position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom));
+    z-index:36; display:flex; align-items:center; gap:8px;
+    padding:14px 18px; border-radius:999px; border:none;
+    background:linear-gradient(135deg, #D9822B, #B85E1A); color:#fff;
+    font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px;
+    cursor:pointer; box-shadow:var(--shadow-lg);
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .report-fab:hover{ filter:brightness(1.08); }
+  .report-fab:active{ transform:scale(0.96); }
+  .report-fab-icon{ font-size:20px; line-height:1; }
+
+  /* ---------- Photo capture ---------- */
+  .photo-capture{
+    position:relative; width:100%; aspect-ratio:4/3; max-height:260px;
+    border-radius:16px; border:2px dashed var(--line);
+    background:var(--surface-soft);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden;
+    transition:border-color .15s ease;
+  }
+  .photo-capture:hover{ border-color:var(--primary); }
+  .photo-capture.has-photo{ border-style:solid; }
+  .photo-capture-empty{ text-align:center; color:var(--muted); padding:16px; }
+  .photo-capture-icon{ font-size:36px; margin-bottom:8px; }
+  .photo-capture-text{ font-size:13.5px; font-weight:600; }
+  .photo-preview{ width:100%; height:100%; object-fit:cover; }
+  .photo-retake{
+    position:absolute; bottom:10px; right:10px;
+    padding:8px 14px; border-radius:999px; border:none;
+    background:rgba(0,0,0,0.7); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+
+  /* ---------- Problem type grid ---------- */
+  .type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .type-btn{
+    display:flex; align-items:center; gap:8px;
+    padding:12px 12px; border-radius:12px;
+    border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600;
+    cursor:pointer; text-align:left;
+    transition:border-color .12s ease, background .12s ease, transform .1s ease;
+  }
+  .type-btn span{ font-size:18px; flex-shrink:0; }
+  .type-btn.selected{ border-color:var(--primary); background:var(--primary-soft); }
+  .type-btn:active{ transform:scale(0.98); }
+
+  /* ---------- My Reports list ---------- */
+  .report-card{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin-bottom:10px; cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:box-shadow .12s ease;
+  }
+  .report-card:hover{ box-shadow:var(--shadow-md); }
+  .report-card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .report-code{ font-family:'Sora',sans-serif; font-weight:700; font-size:13px; color:var(--primary-dark); word-break:break-all; }
+  .report-status{
+    font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:999px;
+    text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0;
+  }
+  .report-status.open{ background:var(--danger-soft); color:var(--danger); }
+  .report-status.progress{ background:var(--primary-soft); color:var(--primary-dark); }
+  .report-status.resolved{ background:var(--success-soft); color:var(--success); }
+  .report-subtitle{ font-size:13.5px; color:var(--ink); font-weight:600; margin-bottom:4px; }
+  .report-meta{ font-size:12px; color:var(--muted); word-break:break-word; }
+
+  /* ---------- Report detail ---------- */
+  .rd-code{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--primary-dark); word-break:break-all; margin-bottom:6px; }
+  .rd-row{ display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .rd-row:last-of-type{ border-bottom:none; }
+  .rd-label{ color:var(--muted); font-weight:600; flex-shrink:0; font-size:12.5px; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px; }
+  .rd-value{ color:var(--ink); font-weight:600; text-align:right; word-break:break-word; min-width:0; }
+  .rd-note{
+    background:var(--surface-soft); border-radius:12px; padding:12px 14px; margin-top:12px;
+    font-size:14px; color:var(--ink); white-space:pre-wrap; line-height:1.5;
+  }
+  .rd-note-label{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -322,6 +381,7 @@
   </div>
   <div class="header-actions">
     <span class="sync-tag" id="syncIndicator">Synced</span>
+    <button class="icon-btn" id="myReportsBtn" title="My Reports" aria-label="My Reports">🗂️<span class="notif-badge hidden" id="myReportsBadge">0</span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -350,8 +410,13 @@
     </div>
   </div>
 
-  <footer class="app-footer">CluckWise.vm Viewer — mark tasks done, everything else read only • Made by Von Mangaron</footer>
+  <footer class="app-footer">CluckWise.vm Viewer — mark tasks done, report problems • Made by Von Mangaron</footer>
 </main>
+
+<button class="report-fab" id="reportProblemBtn" title="Report a problem">
+  <span class="report-fab-icon">📸</span>
+  <span>Report Problem</span>
+</button>
 
 <div class="scrim" id="scrim"></div>
 
@@ -392,6 +457,65 @@
   </div>
 </div>
 
+<!-- Report Problem Sheet -->
+<div class="sheet" id="reportProblemSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 id="reportProblemTitle">Report Problem</h2><button id="closeReportProblem" aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <span class="field-label" id="photoLabel">Photo</span>
+    <div class="photo-capture" id="photoCapture">
+      <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
+      <div class="photo-capture-empty" id="photoCaptureEmpty">
+        <div class="photo-capture-icon">📷</div>
+        <div class="photo-capture-text" id="photoCaptureText">Tap to take photo</div>
+      </div>
+      <img class="photo-preview" id="photoPreview" alt="" hidden>
+      <button class="photo-retake" id="photoRetake" type="button" hidden>Retake</button>
+    </div>
+
+    <span class="field-label" id="problemTypeLabel">What's the problem?</span>
+    <div class="type-grid" id="typeGrid">
+      <button class="type-btn" type="button" data-type="Feed"><span>🌾</span>Feed</button>
+      <button class="type-btn" type="button" data-type="Water"><span>💧</span>Water</button>
+      <button class="type-btn" type="button" data-type="Fan"><span>🌬️</span>Fan</button>
+      <button class="type-btn" type="button" data-type="Cooling"><span>❄️</span>Cooling</button>
+      <button class="type-btn" type="button" data-type="Curtain"><span>🪟</span>Curtain</button>
+      <button class="type-btn" type="button" data-type="Lighting"><span>💡</span>Lighting</button>
+      <button class="type-btn" type="button" data-type="Equipment"><span>🔧</span>Equipment</button>
+      <button class="type-btn" type="button" data-type="Safety"><span>⚠️</span>Safety</button>
+      <button class="type-btn" type="button" data-type="Biosecurity"><span>🛡️</span>Biosecurity</button>
+      <button class="type-btn" type="button" data-type="Other"><span>❓</span>Other</button>
+    </div>
+
+    <span class="field-label" id="shedLabel">Shed Number</span>
+    <input type="number" id="shedInput" inputmode="numeric" min="1" max="99" placeholder="e.g. 3">
+
+    <span class="field-label" id="notesLabel">Where in the shed?</span>
+    <textarea id="notesInput" rows="2" maxlength="200" placeholder="e.g. Back left corner, near feeder line 2"></textarea>
+
+    <span class="field-label" id="nameLabel">Your Name</span>
+    <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
+
+    <button class="btn-primary" id="submitReportBtn" disabled>Submit Report</button>
+    <p class="field-note" id="submitHint" style="text-align:center;">Fill all fields to submit. Report will open WhatsApp so you can attach the photo.</p>
+  </div>
+</div>
+
+<!-- My Reports Sheet -->
+<div class="sheet" id="myReportsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 id="myReportsTitle">My Reports</h2><button id="closeMyReports" aria-label="Close">✕</button></div>
+  <div class="sheet-body">
+    <div id="myReportsList"></div>
+  </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal" id="reportDetailModal">
+  <div class="modal-head"><h2 id="reportDetailTitle">Report</h2><button id="closeReportDetail" aria-label="Close">✕</button></div>
+  <div class="modal-body" id="reportDetailBody"></div>
+</div>
+
 <script>
 (function(){
   const DEFAULT_SETTINGS = { fontSize:'medium', lang:'en' };
@@ -410,7 +534,19 @@
       language:'Language', farmConnection:'Farm connection', connect:'Connect', refreshNow:'Refresh now',
       farmNamePlaceholder:'e.g. Riverside Farm', farmNameNote:'⚠️ Enter the exact farm name your farm owner gave you.',
       overdueTasks:'Overdue tasks', gotIt:'Got it', synced:'Synced', loadingTasks:"Loading today's tasks…",
-      connectedFarm:'Connected — farm', enterFarmName:'Enter the farm name your farm owner gave you.'
+      connectedFarm:'Connected — farm', enterFarmName:'Enter the farm name your farm owner gave you.',
+      reportProblem:'Report Problem', myReports:'My Reports', photo:'Photo',
+      whatsTheProblem:"What's the problem?", shedNumber:'Shed Number',
+      whereInShed:'Where in the shed?', yourName:'Your Name', submitReport:'Submit Report',
+      tapToPhoto:'Tap to take photo', retake:'Retake', submitHint:'Fill all fields to submit. Report will open WhatsApp so you can attach the photo.',
+      noReportsYet:'No reports yet. Tap Report Problem to send one.',
+      reportSubmitted:'Report submitted', reportSavedOffline:'Report saved. Will sync when online.',
+      connectFirst:'Connect to your farm first (Settings).', fillAllFields:'Please fill in all fields.',
+      reportDetail:'Report Details', managerNotes:'Manager Notes', resolutionNotes:'Resolution',
+      noManagerUpdate:'No manager update yet.', reportedBy:'Reported by', reportedAt:'Reported',
+      resolvedOn:'Resolved on', reportCode:'Code', reportType:'Type', reportShed:'Shed',
+      yourNote:'Your note', photoViaWhatsApp:'Photo shared via WhatsApp',
+      shareNow:'Share to WhatsApp', notYetShared:'Not yet shared'
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -425,7 +561,19 @@
       language:'Idioma', farmConnection:'Conexión de granja', connect:'Conectar', refreshNow:'Actualizar ahora',
       farmNamePlaceholder:'ej. Granja Riverside', farmNameNote:'⚠️ Escribe el nombre exacto que te dio el dueño de la granja.',
       overdueTasks:'Tareas atrasadas', gotIt:'Entendido', synced:'Guardado', loadingTasks:'Cargando tareas de hoy…',
-      connectedFarm:'Conectado — granja', enterFarmName:'Escribe el nombre que te dio el dueño de la granja.'
+      connectedFarm:'Conectado — granja', enterFarmName:'Escribe el nombre que te dio el dueño de la granja.',
+      reportProblem:'Reportar Problema', myReports:'Mis Reportes', photo:'Foto',
+      whatsTheProblem:'¿Cuál es el problema?', shedNumber:'Número de Galpón',
+      whereInShed:'¿Dónde en el galpón?', yourName:'Tu Nombre', submitReport:'Enviar Reporte',
+      tapToPhoto:'Toca para tomar foto', retake:'Volver a tomar', submitHint:'Completa todos los campos. El reporte abrirá WhatsApp para adjuntar la foto.',
+      noReportsYet:'Aún no hay reportes. Toca Reportar Problema para enviar uno.',
+      reportSubmitted:'Reporte enviado', reportSavedOffline:'Reporte guardado. Se sincronizará cuando haya internet.',
+      connectFirst:'Conecta tu granja primero (Ajustes).', fillAllFields:'Por favor completa todos los campos.',
+      reportDetail:'Detalles del Reporte', managerNotes:'Notas del Gerente', resolutionNotes:'Resolución',
+      noManagerUpdate:'Sin actualización del gerente aún.', reportedBy:'Reportado por', reportedAt:'Reportado',
+      resolvedOn:'Resuelto el', reportCode:'Código', reportType:'Tipo', reportShed:'Galpón',
+      yourNote:'Tu nota', photoViaWhatsApp:'Foto enviada por WhatsApp',
+      shareNow:'Compartir por WhatsApp', notYetShared:'Aún no compartido'
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -440,7 +588,19 @@
       language:'Wika', farmConnection:'Koneksyon ng bukid', connect:'Kumonekta', refreshNow:'I-refresh ngayon',
       farmNamePlaceholder:'hal. Riverside Farm', farmNameNote:'⚠️ Ilagay ang eksaktong pangalan na ibinigay ng may-ari ng bukid.',
       overdueTasks:'Mga huling gawain', gotIt:'Sige', synced:'Na-save', loadingTasks:'Naglo-load ng mga gawain ngayon…',
-      connectedFarm:'Konektado — bukid', enterFarmName:'Ilagay ang pangalan na ibinigay ng may-ari ng bukid.'
+      connectedFarm:'Konektado — bukid', enterFarmName:'Ilagay ang pangalan na ibinigay ng may-ari ng bukid.',
+      reportProblem:'Mag-Report ng Problema', myReports:'Mga Report Ko', photo:'Litrato',
+      whatsTheProblem:'Ano ang problema?', shedNumber:'Numero ng Kulungan',
+      whereInShed:'Saan sa kulungan?', yourName:'Pangalan Mo', submitReport:'Isumite ang Report',
+      tapToPhoto:'I-tap para kumuha ng litrato', retake:'Kumuha muli', submitHint:'Punan lahat ng field. Bubuksan ang WhatsApp para maidagdag ang litrato.',
+      noReportsYet:'Wala pang report. I-tap ang Mag-Report ng Problema para magpadala.',
+      reportSubmitted:'Naisumite ang report', reportSavedOffline:'Nai-save ang report. I-sync kapag may internet.',
+      connectFirst:'Kumonekta muna sa bukid (Settings).', fillAllFields:'Punan lahat ng field.',
+      reportDetail:'Detalye ng Report', managerNotes:'Tala ng Manager', resolutionNotes:'Resolusyon',
+      noManagerUpdate:'Wala pang update mula sa manager.', reportedBy:'Nag-report', reportedAt:'Nai-report',
+      resolvedOn:'Naresolba noong', reportCode:'Code', reportType:'Uri', reportShed:'Kulungan',
+      yourNote:'Iyong nota', photoViaWhatsApp:'Litrato naipadala sa WhatsApp',
+      shareNow:'I-share sa WhatsApp', notYetShared:'Hindi pa nai-share'
     }
   };
   function t(key){
@@ -451,11 +611,13 @@
   const DEFAULT_EVENT_COLOR = '#000000';
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
   const HARDCODED_REPO = 'vonrmangaron/farmdata';
+  const REPORT_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I L O 0 1
 
-  let tasks = [], history = [], batches = [], events = [];
+  let tasks = [], history = [], batches = [], events = [], reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let agendaFilter = 'today';
   let ghPath=null, ghFarmName=null, ghSha=null;
+  let myReportIds = loadMyReportIds();
 
   const $ = (sel)=> document.querySelector(sel);
 
@@ -477,11 +639,24 @@
     else el.textContent = icon || '📋';
   }
   function showToast(msg,isError){
-    let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
-    t.textContent=msg; t.classList.toggle('error',!!isError); t.classList.add('show');
-    clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2600);
+    let tEl=$('#toast'); if(!tEl){ tEl=document.createElement('div'); tEl.id='toast'; tEl.className='toast'; document.body.appendChild(tEl); }
+    tEl.textContent=msg; tEl.classList.toggle('error',!!isError); tEl.classList.add('show');
+    clearTimeout(showToast._t); showToast._t=setTimeout(()=>tEl.classList.remove('show'),2600);
+  }
+  function formatTimeAgo(date){
+    const now = Date.now();
+    const diff = now - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if(hours < 24) return hours + 'h ago';
+    const days = Math.floor(hours / 24);
+    if(days < 7) return days + 'd ago';
+    return date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
   }
 
+  // ---------- Overdue (unchanged) ----------
   function getOverdueTasks(){
     const todayKey = dateKey(new Date());
     return tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).sort((a,b)=>a.date.localeCompare(b.date));
@@ -521,6 +696,7 @@
     openOverdueModal();
   }
 
+  // ---------- Settings ----------
   const THEME_CLASSES = ['theme-dark'];
   let syncedDisplay = { theme:'light', batchBadgeStyle:'bottom-left', showIcons:true };
   function applySettings(){
@@ -550,15 +726,40 @@
     $('#upcomingAuditsTitle').textContent = t('upcomingAudits');
     $('#overdueModalTitle').textContent = t('overdueTasks');
     $('#dismissOverdueTransfer').textContent = t('gotIt');
+    // Report Problem
+    $('#reportProblemTitle').textContent = t('reportProblem');
+    $('#myReportsTitle').textContent = t('myReports');
+    $('#photoLabel').textContent = t('photo');
+    $('#problemTypeLabel').textContent = t('whatsTheProblem');
+    $('#shedLabel').textContent = t('shedNumber');
+    $('#notesLabel').textContent = t('whereInShed');
+    $('#nameLabel').textContent = t('yourName');
+    $('#submitReportBtn').textContent = t('submitReport');
+    $('#photoCaptureText').textContent = t('tapToPhoto');
+    $('#photoRetake').textContent = t('retake');
+    $('#submitHint').textContent = t('submitHint');
+    $('#reportDetailTitle').textContent = t('reportDetail');
   }
   function loadLocalPrefs(){
     try{ settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('prodplan-viewer-prefs')||'{}')); }catch(e){}
   }
   function saveLocalPrefs(){ try{ localStorage.setItem('prodplan-viewer-prefs', JSON.stringify(settings)); }catch(e){} }
 
+  function loadMyReportIds(){
+    try{ return new Set(JSON.parse(localStorage.getItem('prodplan-viewer-my-reports')||'[]')); }catch(e){ return new Set(); }
+  }
+  function saveMyReportIds(){
+    try{ localStorage.setItem('prodplan-viewer-my-reports', JSON.stringify([...myReportIds])); }catch(e){}
+  }
+
+  // ---------- GitHub sync ----------
   function sanitizeFarmFileName(name){
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
     return (slug||'farm') + '.json';
+  }
+  function getFarmSlug(){
+    if(!ghFarmName) return 'farm';
+    return sanitizeFarmFileName(ghFarmName).replace('.json','');
   }
   function updateGithubStatusUI(){
     const el=$('#githubStatus'); if(!el) return;
@@ -606,7 +807,11 @@
   function applyData(rawText, silent){
     try{
       const parsed = JSON.parse(rawText);
-      tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || [];
+      tasks = parsed.tasks || [];
+      reports = parsed.reports || [];
+      history = parsed.history || [];
+      batches = parsed.batches || [];
+      events = parsed.events || [];
       tasks.forEach(t=>{ if(!Array.isArray(t.assignees)) t.assignees = t.assignee ? [t.assignee] : []; });
       if(parsed.settings){
         syncedDisplay = {
@@ -622,7 +827,8 @@
     }catch(e){ if(!silent) showToast('Could not read that data.', true); }
   }
   function flashSynced(){
-    const el=$('#syncIndicator'); el.classList.add('show');
+    const el=$('#syncIndicator'); if(!el) return;
+    el.classList.add('show');
     clearTimeout(flashSynced._t); flashSynced._t=setTimeout(()=>el.classList.remove('show'),1500);
   }
   async function pullFromGithub(silent){
@@ -634,6 +840,8 @@
       if(res.status===404 || result.notFound){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
       ghSha = result.sha;
       applyData(JSON.stringify(result.data), silent);
+      // Trigger pending report flush on successful pull
+      setTimeout(flushPendingReports, 100);
       if(!silent) showToast('Refreshed from the latest data.');
       return true;
     }catch(e){
@@ -643,23 +851,21 @@
     }
   }
 
+  // ---------- Task status toggle (unchanged) ----------
   let pendingStatusChanges = new Map();
   let statusPushTimer = null;
   let statusPushInFlight = false;
 
-  let justCompletedId = null;
   function toggleTaskDoneInViewer(id){
     const localTask = tasks.find(t=>t.id===id);
     if(!localTask) return;
     const newStatus = localTask.status==='done' ? 'open' : 'done';
     localTask.status = newStatus;
-    if(newStatus==='done') justCompletedId = id;
     pendingStatusChanges.set(id, newStatus);
     renderAll();
     clearTimeout(statusPushTimer);
     statusPushTimer = setTimeout(flushStatusChanges, 900);
   }
-
   async function flushStatusChanges(){
     if(pendingStatusChanges.size===0) return;
     if(statusPushInFlight){ statusPushTimer = setTimeout(flushStatusChanges, 400); return; }
@@ -670,15 +876,14 @@
     statusPushInFlight = false;
     if(!ok){
       batch.forEach((newStatus, id)=>{
-        const t = tasks.find(x=>x.id===id);
-        if(t) t.status = newStatus==='done' ? 'open' : 'done';
+        const tk = tasks.find(x=>x.id===id);
+        if(tk) tk.status = newStatus==='done' ? 'open' : 'done';
       });
       renderAll();
       showToast('Could not save — check your connection and try again.', true);
     }
     if(pendingStatusChanges.size>0){ statusPushTimer = setTimeout(flushStatusChanges, 300); }
   }
-
   async function pushStatusChangesWithRetry(batch, attempt){
     if(!ghPath) return false;
     try{
@@ -712,6 +917,287 @@
     }
   }
 
+  // ---------- Reports: pending queue ----------
+  function loadPendingReports(){
+    try{ return JSON.parse(localStorage.getItem('prodplan-viewer-pending-reports')||'[]'); }catch(e){ return []; }
+  }
+  function savePendingReports(arr){
+    try{ localStorage.setItem('prodplan-viewer-pending-reports', JSON.stringify(arr)); }catch(e){}
+  }
+  function addPendingReport(report){
+    const pending = loadPendingReports();
+    if(!pending.find(r => r.id === report.id)){
+      pending.push(report);
+      savePendingReports(pending);
+    }
+  }
+  function removePendingReport(id){
+    const pending = loadPendingReports().filter(r => r.id !== id);
+    savePendingReports(pending);
+  }
+  async function flushPendingReports(){
+    if(!ghPath) return;
+    const pending = loadPendingReports();
+    if(pending.length === 0) return;
+    const success = await pushReportsToGithub(pending, 1);
+    if(success){
+      pending.forEach(r => removePendingReport(r.id));
+      renderMyReportsBadge();
+    }
+  }
+  async function pushReportsToGithub(reportsToPush, attempt){
+    if(!ghPath) return false;
+    try{
+      const getRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      if(!getRes.ok) throw new Error('GET failed: ' + getRes.status);
+      const fresh = await getRes.json();
+      const freshContent = fresh.data || {};
+      const freshReports = freshContent.reports || [];
+      const existingIds = new Set(freshReports.map(r => r.id));
+      reportsToPush.forEach(r => {
+        if(!existingIds.has(r.id)){
+          freshReports.push(r);
+          existingIds.add(r.id);
+        }
+      });
+      const merged = Object.assign({}, freshContent, { reports: freshReports });
+      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ sha: fresh.sha, data: merged })
+      });
+      if(putRes.status === 409){
+        if(attempt < 4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushReportsToGithub(reportsToPush, attempt+1); }
+        return false;
+      }
+      if(!putRes.ok) throw new Error('PUT failed: ' + putRes.status);
+      const putData = await putRes.json();
+      if(putData && putData.sha) ghSha = putData.sha;
+      reports = freshReports;
+      renderMyReports();
+      return true;
+    }catch(e){
+      console.error('Report push failed', e);
+      if(attempt < 4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushReportsToGithub(reportsToPush, attempt+1); }
+      return false;
+    }
+  }
+
+  // ---------- Report Problem form ----------
+  let pendingPhotoFile = null;
+  let selectedType = null;
+
+  function generateReportCode(){
+    let code = '';
+    for(let i=0;i<4;i++){
+      code += REPORT_CODE_CHARS.charAt(Math.floor(Math.random() * REPORT_CODE_CHARS.length));
+    }
+    return `${getFarmSlug()}-rpt-${code.toLowerCase()}`;
+  }
+  function buildWhatsAppMessage(report){
+    return [
+      `🚩 ${report.code}`,
+      `Shed ${report.shed} · ${report.problemType}`,
+      report.notes,
+      '',
+      `— ${report.createdBy}`
+    ].join('\n');
+  }
+  function updateSubmitState(){
+    const hasPhoto = !!pendingPhotoFile;
+    const hasType = !!selectedType;
+    const hasShed = ($('#shedInput').value || '').trim().length > 0;
+    const hasNotes = ($('#notesInput').value || '').trim().length > 0;
+    const hasName = ($('#nameInput').value || '').trim().length > 0;
+    const btn = $('#submitReportBtn');
+    if(btn) btn.disabled = !(hasPhoto && hasType && hasShed && hasNotes && hasName);
+  }
+  function resetReportForm(){
+    pendingPhotoFile = null;
+    selectedType = null;
+    const preview = $('#photoPreview');
+    if(preview){ preview.hidden = true; preview.removeAttribute('src'); }
+    $('#photoCaptureEmpty').hidden = false;
+    $('#photoRetake').hidden = true;
+    $('#photoCapture').classList.remove('has-photo');
+    $('#photoInput').value = '';
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    $('#shedInput').value = '';
+    $('#notesInput').value = '';
+    $('#nameInput').value = '';
+    updateSubmitState();
+  }
+  function openReportProblem(){
+    if(!ghPath){
+      showToast(t('connectFirst'), true);
+      return;
+    }
+    resetReportForm();
+    openSheet('#reportProblemSheet');
+  }
+  function handlePhotoSelected(file){
+    if(!file) return;
+    pendingPhotoFile = file;
+    const url = URL.createObjectURL(file);
+    const preview = $('#photoPreview');
+    preview.src = url;
+    preview.hidden = false;
+    $('#photoCaptureEmpty').hidden = true;
+    $('#photoRetake').hidden = false;
+    $('#photoCapture').classList.add('has-photo');
+    updateSubmitState();
+  }
+  async function shareReportViaWhatsApp(report, photoFile){
+    const message = buildWhatsAppMessage(report);
+    // Try native share with photo (works in WhatsApp groups)
+    if(photoFile && navigator.canShare && navigator.canShare({ files: [photoFile] })){
+      try{
+        await navigator.share({ files: [photoFile], text: message });
+        return 'shared';
+      }catch(err){
+        if(err && err.name === 'AbortError') return 'cancelled';
+        // fall through to text-only
+      }
+    }
+    // Fallback: text-only WhatsApp link
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+    return 'text-only';
+  }
+  async function submitReportProblem(){
+    if(!ghPath){ showToast(t('connectFirst'), true); return; }
+    const shed = ($('#shedInput').value || '').trim();
+    const notes = ($('#notesInput').value || '').trim();
+    const createdBy = ($('#nameInput').value || '').trim();
+    const problemType = selectedType;
+    const photoFile = pendingPhotoFile;
+
+    if(!shed || !notes || !createdBy || !problemType || !photoFile){
+      showToast(t('fillAllFields'), true);
+      return;
+    }
+
+    const report = {
+      id: 'rpt-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(16).slice(2))),
+      code: generateReportCode(),
+      createdAt: new Date().toISOString(),
+      createdBy: createdBy,
+      shed: shed,
+      problemType: problemType,
+      notes: notes,
+      photoUrls: [],
+      status: 'Open',
+      updatedAt: new Date().toISOString(),
+      resolvedAt: null,
+      managerNotes: '',
+      resolutionNotes: '',
+      sharedViaWhatsApp: false
+    };
+
+    // Persist locally first
+    reports.unshift(report);
+    myReportIds.add(report.id);
+    saveMyReportIds();
+    addPendingReport(report);
+
+    // Close the form and update badge optimistically
+    closeOverlays();
+    renderMyReportsBadge();
+
+    // Trigger share sheet immediately (before any await) to preserve user gesture
+    const sharePromise = shareReportViaWhatsApp(report, photoFile);
+
+    // Fire-and-forget the GitHub push
+    flushPendingReports();
+
+    // Await the share result for the toast
+    const shareResult = await sharePromise;
+    if(shareResult === 'shared' || shareResult === 'text-only'){
+      report.sharedViaWhatsApp = true;
+    }
+
+    if(navigator.onLine){
+      showToast(t('reportSubmitted'));
+    } else {
+      showToast(t('reportSavedOffline'));
+    }
+  }
+
+  // ---------- My Reports ----------
+  function renderMyReportsBadge(){
+    const myReports = reports.filter(r => myReportIds.has(r.id));
+    const withUpdates = myReports.filter(r => r.status !== 'Open').length;
+    const badge = $('#myReportsBadge');
+    if(badge){
+      badge.textContent = withUpdates > 99 ? '99+' : withUpdates;
+      badge.classList.toggle('hidden', withUpdates === 0);
+    }
+  }
+  function renderMyReports(){
+    const list = $('#myReportsList');
+    if(!list) return;
+    list.innerHTML = '';
+    const mine = reports.filter(r => myReportIds.has(r.id)).sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+    if(mine.length === 0){
+      list.innerHTML = `<div class="empty-note">${t('noReportsYet')}</div>`;
+      renderMyReportsBadge();
+      return;
+    }
+    mine.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'report-card';
+      const statusLabel = r.status === 'Open' ? 'Open' : r.status === 'In Progress' ? 'In Progress' : 'Resolved';
+      const statusClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
+      card.innerHTML = `
+        <div class="report-card-head">
+          <span class="report-code"></span>
+          <span class="report-status ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="report-subtitle"></div>
+        <div class="report-meta"></div>
+      `;
+      card.querySelector('.report-code').textContent = r.code;
+      card.querySelector('.report-subtitle').textContent = `Shed ${r.shed} · ${r.problemType}`;
+      card.querySelector('.report-meta').textContent = `${r.notes} · ${formatTimeAgo(new Date(r.createdAt))}`;
+      card.addEventListener('click', () => openReportDetail(r.id));
+      list.appendChild(card);
+    });
+    renderMyReportsBadge();
+  }
+  function openReportDetail(reportId){
+    const r = reports.find(x => x.id === reportId);
+    if(!r) return;
+    const body = $('#reportDetailBody');
+    const statusLabel = r.status === 'Open' ? 'Open' : r.status === 'In Progress' ? 'In Progress' : 'Resolved';
+    const statusClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
+    let html = `<div class="rd-code">${escapeHtml(r.code)}</div>`;
+    html += `<div style="margin-bottom:10px;"><span class="report-status ${statusClass}">${statusLabel}</span></div>`;
+    html += `<div class="rd-row"><span class="rd-label">${t('reportShed')}</span><span class="rd-value">${escapeHtml(r.shed)}</span></div>`;
+    html += `<div class="rd-row"><span class="rd-label">${t('reportType')}</span><span class="rd-value">${escapeHtml(r.problemType)}</span></div>`;
+    html += `<div class="rd-row"><span class="rd-label">${t('reportedBy')}</span><span class="rd-value">${escapeHtml(r.createdBy)}</span></div>`;
+    html += `<div class="rd-row"><span class="rd-label">${t('reportedAt')}</span><span class="rd-value">${formatTimeAgo(new Date(r.createdAt))}</span></div>`;
+    if(r.resolvedAt){
+      html += `<div class="rd-row"><span class="rd-label">${t('resolvedOn')}</span><span class="rd-value">${new Date(r.resolvedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</span></div>`;
+    }
+    html += `<div class="rd-note"><div class="rd-note-label">${t('yourNote')}</div>${escapeHtml(r.notes)}</div>`;
+    if(r.resolutionNotes){
+      html += `<div class="rd-note" style="background:var(--success-soft);"><div class="rd-note-label" style="color:var(--success);">${t('resolutionNotes')}</div>${escapeHtml(r.resolutionNotes)}</div>`;
+    } else {
+      html += `<div class="rd-note" style="border:1px dashed var(--line);background:transparent;color:var(--muted);">${t('noManagerUpdate')}</div>`;
+    }
+    const shareStatus = r.sharedViaWhatsApp ? t('photoViaWhatsApp') : t('notYetShared');
+    html += `<p class="field-note" style="text-align:center;margin-top:14px;">${shareStatus}</p>`;
+    body.innerHTML = html;
+    $('#reportDetailModal').classList.add('open');
+    $('#scrim').classList.add('show');
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ---------- Task rendering (unchanged) ----------
   const ASSIGNEE_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   function colorForAssignee(name){
     if(!name) return '#999';
@@ -731,29 +1217,23 @@
   }
   const CHECK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  function buildReadOnlyTaskCard(t){
+  function buildReadOnlyTaskCard(tk){
     const card=document.createElement('div');
-    const wasJustCompleted = t.id===justCompletedId;
-    const isHighPriority = t.priority === 'high' && t.status!=='done';
-    card.className='task-card'+(t.status==='done'?' done':'')+(wasJustCompleted?' just-completed':'')+(isHighPriority?' high-priority':'');
-    card.dataset.id = t.id;
-    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(t.assignees)}<button class="task-status-btn ${t.status==='done'?'done':'open'}" type="button" title="${t.status==='done'?'Reopen':'Mark done'}" aria-label="${t.status==='done'?'Reopen task':'Mark task done'}">${t.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${t.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
-    renderIconInto(card.querySelector('.task-icon'), t.icon);
-    card.querySelector('.task-name').textContent = t.name;
-    if(t.notes) card.querySelector('.tnc-text').textContent = t.notes;
+    const isHighPriority = tk.priority === 'high' && tk.status!=='done';
+    card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'');
+    card.dataset.id = tk.id;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(tk.assignees)}<button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
+    renderIconInto(card.querySelector('.task-icon'), tk.icon);
+    card.querySelector('.task-name').textContent = tk.name;
+    if(tk.notes) card.querySelector('.tnc-text').textContent = tk.notes;
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(!ghPath){ showToast('Connect in Settings to save changes.', true); return; }
-      toggleTaskDoneInViewer(t.id);
+      toggleTaskDoneInViewer(tk.id);
     });
-    if(wasJustCompleted){
-      justCompletedId = null;
-      setTimeout(()=> card.classList.remove('just-completed'), 700);
-    }
     return card;
   }
-
   function getAgendaTasks(){
     const todayKey=dateKey(new Date());
     let filtered;
@@ -812,7 +1292,7 @@
       const note=document.createElement('div'); note.className='empty-note'; note.textContent=emptyMsg;
       wrap.appendChild(note); return;
     }
-    const groups={}; dated.forEach(t=>{ (groups[t.date]=groups[t.date]||[]).push(t); });
+    const groups={}; dated.forEach(tk=>{ (groups[tk.date]=groups[tk.date]||[]).push(tk); });
     Object.keys(groups).sort().forEach(key=>{
       const groupEl=document.createElement('div'); groupEl.className='list-group';
       const doneCount=groups[key].filter(t=>t.status==='done').length;
@@ -820,7 +1300,7 @@
       groupEl.querySelector('.list-date-main').textContent=formatFullWithWeekday(key);
       groupEl.querySelector('.list-date-sub').textContent=`${doneCount}/${groups[key].length} done`;
       const listEl=document.createElement('div'); listEl.className='list-tasks';
-      groups[key].forEach(t=> listEl.appendChild(buildReadOnlyTaskCard(t)));
+      groups[key].forEach(tk=> listEl.appendChild(buildReadOnlyTaskCard(tk)));
       groupEl.appendChild(listEl); wrap.appendChild(groupEl);
     });
   }
@@ -847,12 +1327,17 @@
     renderList();
     renderAudits();
     updateOverdueBadge();
+    renderMyReportsBadge();
     if($('#overdueTransferModal').classList.contains('open')) renderOverdueList();
+    if($('#myReportsSheet').classList.contains('open')) renderMyReports();
   }
 
+  // ---------- Overlays / sheets ----------
   function openSheet(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
   function closeOverlays(){
-    ['#settingsSheet','#overdueTransferModal'].forEach(sel=> $(sel).classList.remove('open'));
+    ['#settingsSheet','#overdueTransferModal','#reportProblemSheet','#myReportsSheet','#reportDetailModal'].forEach(sel=>{
+      const el = $(sel); if(el) el.classList.remove('open');
+    });
     $('#scrim').classList.remove('show');
   }
   $('#scrim').addEventListener('click', closeOverlays);
@@ -862,12 +1347,57 @@
   $('#settingsBtn').addEventListener('click', ()=> openSheet('#settingsSheet'));
   $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#closeSettings').addEventListener('click', closeOverlays);
+  $('#myReportsBtn').addEventListener('click', ()=>{ renderMyReports(); openSheet('#myReportsSheet'); });
+  $('#closeMyReports').addEventListener('click', closeOverlays);
+  $('#closeReportDetail').addEventListener('click', closeOverlays);
 
+  // ---------- Report Problem wiring ----------
+  $('#reportProblemBtn').addEventListener('click', openReportProblem);
+  $('#closeReportProblem').addEventListener('click', closeOverlays);
+  $('#photoCapture').addEventListener('click', (e)=>{
+    if(e.target.closest('#photoRetake')) return;
+    if(pendingPhotoFile) return; // already has photo; use Retake
+    $('#photoInput').click();
+  });
+  $('#photoInput').addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(file) handlePhotoSelected(file);
+  });
+  $('#photoRetake').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    pendingPhotoFile = null;
+    const preview = $('#photoPreview');
+    preview.hidden = true; preview.removeAttribute('src');
+    $('#photoCaptureEmpty').hidden = false;
+    $('#photoRetake').hidden = true;
+    $('#photoCapture').classList.remove('has-photo');
+    $('#photoInput').value = '';
+    updateSubmitState();
+  });
+  $('#typeGrid').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.type-btn');
+    if(!btn) return;
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    if(selectedType === btn.dataset.type){
+      selectedType = null;
+    } else {
+      selectedType = btn.dataset.type;
+      btn.classList.add('selected');
+    }
+    updateSubmitState();
+  });
+  $('#shedInput').addEventListener('input', updateSubmitState);
+  $('#notesInput').addEventListener('input', updateSubmitState);
+  $('#nameInput').addEventListener('input', updateSubmitState);
+  $('#submitReportBtn').addEventListener('click', submitReportProblem);
+
+  // ---------- Settings wiring (unchanged) ----------
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
   $('#setLanguage').addEventListener('change', (e)=>{ settings.lang=e.target.value; applySettings(); saveLocalPrefs(); updateGithubStatusUI(); renderAll(); });
   $('#connectGithubBtn').addEventListener('click', connectGithub);
   $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
 
+  // ---------- Pull-to-refresh (unchanged) ----------
   function initPullToRefresh(containerEl, indicatorEl, onRefresh){
     if(!containerEl || !indicatorEl) return;
     const spinnerEl = indicatorEl.querySelector('.pr-spinner');
@@ -909,8 +1439,13 @@
   });
 
   document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'visible' && ghPath){ pullFromGithub(true); }
+    if(document.visibilityState === 'visible' && ghPath){
+      pullFromGithub(true);
+      flushPendingReports();
+    }
   });
+  window.addEventListener('online', ()=>{ flushPendingReports(); });
+  window.addEventListener('focus', ()=>{ flushPendingReports(); });
 
   $('#retryLoadBtn').addEventListener('click', async ()=>{
     hideLoadErrorOverlay();
@@ -927,6 +1462,8 @@
   (async ()=>{
     const ok = await initGithub();
     if(ok) renderAll();
+    // After init, attempt to flush any pending reports
+    flushPendingReports();
   })();
 })();
 </script>
