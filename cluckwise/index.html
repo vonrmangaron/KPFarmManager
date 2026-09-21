@@ -240,6 +240,8 @@
   .overdue-flag{ color:var(--danger); font-size:12.5px; font-weight:700; flex-shrink:0; }
   .priority-flag{ font-size:12.5px; font-weight:700; flex-shrink:0; }
   .task-note-dot{ width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
+  .recur-pill{ display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px; font-size:9.5px; font-weight:800; line-height:1.5; font-family:'Sora',sans-serif; letter-spacing:0.02em; background:var(--secondary-soft); color:var(--secondary); vertical-align:middle; white-space:nowrap; }
+  .task-card.done .recur-pill{ opacity:0.5; }
 
   .task-icon-slot{
     position:relative; width:20px; height:20px; flex-shrink:0;
@@ -351,6 +353,11 @@
   .bulk-btn.bulk-done{ background:var(--primary); color:#241A08; }
   .bulk-btn.bulk-delete{ background:var(--danger-soft); color:var(--danger); }
   .bulk-btn.bulk-delete.confirm{ background:var(--danger); color:#fff; }
+  .bulk-mode-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .bulk-mode-tabs button{ flex:1; padding:9px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer; transition:background .12s ease, color .12s ease; }
+  .bulk-mode-tabs button.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
+  .bulk-preview{ font-size:12.5px; color:var(--muted); margin-top:10px; padding:9px 11px; border-radius:9px; background:var(--surface-soft); border:1px dashed var(--line); line-height:1.5; }
+  .bulk-preview.has-matches{ color:var(--ink); font-weight:600; border-style:solid; }
   .task-card:hover{box-shadow:var(--shadow-md);}
   .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
@@ -1134,11 +1141,28 @@
 <div class="form-modal" id="bulkDeleteModal">
   <div class="form-modal-head"><h2>🗑️ Bulk delete tasks</h2><button id="closeBulkDeleteModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <label for="bulkDeleteStart">From date</label>
-    <input type="date" id="bulkDeleteStart">
-    <label for="bulkDeleteEnd">To date</label>
-    <input type="date" id="bulkDeleteEnd">
-    <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">This deletes every task scheduled on any day within this range, across the whole calendar. This can't be undone.</p>
+    <div class="bulk-mode-tabs" id="bulkModeTabs">
+      <button type="button" class="active" data-mode="range">Date range</button>
+      <button type="button" data-mode="name">Task name</button>
+    </div>
+
+    <div id="bulkRangeFields">
+      <label for="bulkDeleteStart">From date</label>
+      <input type="date" id="bulkDeleteStart">
+      <label for="bulkDeleteEnd">To date</label>
+      <input type="date" id="bulkDeleteEnd">
+      <p style="font-size:11.5px;color:var(--muted);margin:6px 0 0;">This deletes every task scheduled on any day within this range, across the whole calendar. This can't be undone.</p>
+    </div>
+
+    <div id="bulkNameFields" style="display:none;">
+      <label for="bulkDeleteName">Task name</label>
+      <input type="text" id="bulkDeleteName" list="bulkDeleteNameList" placeholder="Type or pick a task name" autocomplete="off">
+      <datalist id="bulkDeleteNameList"></datalist>
+      <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="bulkDeleteNameExact"> Match exact name only (otherwise: contains)</label>
+      <label class="checkbox-row"><input type="checkbox" id="bulkDeleteNameIncludeBacklog" checked> Include Backlog (undated) tasks</label>
+      <div class="bulk-preview" id="bulkDeleteNamePreview">Type a name to see how many tasks match.</div>
+    </div>
+
     <button class="btn-danger-outline" id="confirmBulkDeleteBtn" style="margin-top:12px;">Delete tasks in range</button>
   </div>
 </div>
@@ -1311,6 +1335,7 @@
   let reportsSearchQuery = '';
   let reportsShedFilter = '';
   let currentReportId = null;
+  let reportsSha = null;
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -1417,6 +1442,11 @@
     if(note) note.style.display = disabled ? 'block' : 'none';
   }
 
+  // ==================== SYNC: MAIN FILE ====================
+  // Main file holds tasks/history/batches/events/settings/frequentTemplates.
+  // Reports are intentionally NOT in the main file. They live in their own
+  // file (see REPORTS FILE SYNC section below), so a task save can never
+  // wipe a worker-submitted report.
   async function persist(){ showSyncPending(); schedulePush(); }
   function showSyncPending(){
     const el = $('#saveIndicator');
@@ -1462,6 +1492,7 @@
     pushPending = false;
     pushToGithub();
   }
+
   async function load(){
     tasks=[]; history=[]; batches=[]; events=[]; reports=[];
     settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
@@ -1503,6 +1534,10 @@
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     return (slug || 'farm') + '.json';
   }
+  // Reports are stored on the worker under a derived farm name so they get
+  // their own file. `<farm> + "-reports"` → worker writes `<farm-slug>-reports.json`.
+  function reportsFarmName(){ return ghFarmName ? (ghFarmName + '-reports') : null; }
+
   function updateGithubStatusUI(){
     const el = $('#githubStatus');
     if(!el) return;
@@ -1519,6 +1554,7 @@
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
     ghSha = null;
+    reportsSha = null;
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
     await pullFromGithub();
     updateGithubStatusUI();
@@ -1527,12 +1563,14 @@
     if(!ghPath) return false;
     try{
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      if(res.status===404){ await pushToGithub(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
+      if(res.status===404){ await pushToGithub(); await pullReportsFromGithub(silent); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
       if(!res.ok) throw new Error('Sync server responded ' + res.status);
       const result = await res.json();
-      if(result.notFound){ await pushToGithub(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
+      if(result.notFound){ await pushToGithub(); await pullReportsFromGithub(silent); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
       ghSha = result.sha;
       applyImportedData(JSON.stringify(result.data));
+      // Reports now live in their own file.
+      await pullReportsFromGithub(silent);
       if(!silent) showToast('Synced.');
       return true;
     }catch(e){
@@ -1544,7 +1582,8 @@
   async function pushToGithub(){
     if(!ghPath) return false;
     try{
-      const data = {tasks, history, batches, events, settings, frequentTemplates, reports};
+      // Reports field deliberately excluded — see REPORTS FILE SYNC.
+      const data = {tasks, history, batches, events, settings, frequentTemplates};
       const body = { sha: ghSha, data };
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
         method:'PUT',
@@ -1562,6 +1601,124 @@
       return false;
     }
   }
+
+  // ==================== REPORTS FILE SYNC ====================
+  // Reports use their own debounced push timer so a report edit can't be
+  // silently bundled into a task push. Merges locally-edited reports over
+  // whatever the server currently has.
+  let reportsPushDebounceTimer = null;
+  let reportsPushInFlight = false;
+  let reportsPushPending = false;
+
+  function scheduleReportsPush(){
+    reportsPushPending = true;
+    clearTimeout(reportsPushDebounceTimer);
+    reportsPushDebounceTimer = setTimeout(runScheduledReportsPush, 1500);
+  }
+  async function runScheduledReportsPush(retryCount){
+    retryCount = retryCount || 0;
+    clearTimeout(reportsPushDebounceTimer); reportsPushDebounceTimer = null;
+    if(!reportsPushPending && retryCount===0) return;
+    if(reportsPushInFlight){ reportsPushDebounceTimer = setTimeout(()=>runScheduledReportsPush(retryCount), 1500); return; }
+    reportsPushPending = false;
+    reportsPushInFlight = true;
+    let ok = false;
+    try{ ok = await pushReportsToGithub(); } finally { reportsPushInFlight = false; }
+    if(!ok && retryCount < 4){ reportsPushDebounceTimer = setTimeout(()=>runScheduledReportsPush(retryCount+1), 4000 * (retryCount+1)); }
+  }
+  function flushPendingReportsPush(){
+    if(!reportsPushPending) return;
+    clearTimeout(reportsPushDebounceTimer); reportsPushDebounceTimer = null;
+    reportsPushPending = false;
+    pushReportsToGithub();
+  }
+
+  async function pullReportsFromGithub(silent){
+    const rn = reportsFarmName();
+    if(!rn) return;
+    try{
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      if(res.status === 404){
+        // No reports file yet. If we carry legacy reports from the main file,
+        // migrate them by pushing them to the new file.
+        if(reports.length > 0) await pushReportsToGithub();
+        return;
+      }
+      if(!res.ok) throw new Error('Reports sync server responded ' + res.status);
+      const result = await res.json();
+      if(result && result.notFound){
+        if(reports.length > 0) await pushReportsToGithub();
+        return;
+      }
+      reportsSha = result.sha;
+      const d = result.data || {};
+      const serverReports = Array.isArray(d) ? d : (d.reports || []);
+      // Union: server list + any local reports not yet pushed.
+      const serverIds = new Set(serverReports.map(r => r.id));
+      const localOnly = reports.filter(r => !serverIds.has(r.id));
+      reports = serverReports.concat(localOnly);
+      updateReportsBadge();
+      if($('#reportsDrawer').classList.contains('open')) renderReportsList();
+    }catch(e){
+      console.error('Reports pull failed', e);
+      if(!silent) showToast('Could not refresh reports.', true);
+    }
+  }
+
+  async function pushReportsToGithub(retryCount){
+    retryCount = retryCount || 0;
+    if(!ghPath) return false;
+    const rn = reportsFarmName();
+    if(!rn) return false;
+    try{
+      const getRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      let serverReports = [];
+      let freshSha = null;
+      if(getRes.status === 404){
+        serverReports = [];
+      } else if(getRes.ok){
+        const fresh = await getRes.json();
+        if(fresh && fresh.notFound){
+          serverReports = [];
+        } else {
+          const d = fresh.data || {};
+          serverReports = Array.isArray(d) ? d : (d.reports || []);
+          freshSha = fresh.sha;
+        }
+      } else {
+        throw new Error('GET reports failed: ' + getRes.status);
+      }
+      // Manager merge: our local `reports` array is authoritative for any id
+      // it holds. Server-only ids are preserved (e.g. from a viewer push).
+      const merged = serverReports.slice();
+      const mergedIdx = new Map(merged.map((r, i) => [r.id, i]));
+      reports.forEach(r => {
+        if(mergedIdx.has(r.id)) merged[mergedIdx.get(r.id)] = r;
+        else { merged.push(r); mergedIdx.set(r.id, merged.length - 1); }
+      });
+      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ sha: freshSha, data: { reports: merged } })
+      });
+      if(putRes.status === 409){
+        if(retryCount < 4){ await new Promise(r=>setTimeout(r, 300*(retryCount+1))); return pushReportsToGithub(retryCount+1); }
+        return false;
+      }
+      if(!putRes.ok) throw new Error('PUT reports failed: ' + putRes.status);
+      const putData = await putRes.json();
+      if(putData && putData.sha) reportsSha = putData.sha;
+      reports = merged;
+      flashSaved();
+      return true;
+    }catch(e){
+      console.error('Reports push failed', e);
+      if(retryCount < 4){ await new Promise(r=>setTimeout(r, 300*(retryCount+1))); return pushReportsToGithub(retryCount+1); }
+      return false;
+    }
+  }
+  // ==================== END REPORTS FILE SYNC ====================
+
   function applyImportedData(rawText){
     try{
       const parsed = JSON.parse(rawText);
@@ -1569,7 +1726,13 @@
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
-      reports = parsed.reports || [];
+      // Legacy migration: if an old main file still has `reports`, adopt them.
+      // They'll be pushed to the reports file on the next pull/push cycle
+      // and the main file will be written clean on the next persist().
+      if(Array.isArray(parsed.reports) && parsed.reports.length){
+        const haveIds = new Set(reports.map(r => r.id));
+        parsed.reports.forEach(r => { if(!haveIds.has(r.id)){ reports.push(r); haveIds.add(r.id); } });
+      }
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       frequentTemplates = parsed.frequentTemplates || [];
       let sessionViewMode = null;
@@ -2002,7 +2165,9 @@
     }
     r.updatedAt = new Date().toISOString();
 
-    persist(); renderAll();
+    // Reports live in their own file now — use the dedicated push.
+    scheduleReportsPush();
+    renderAll();
     closeReportDetailOnly();
     showToast('Report saved.');
   }
@@ -2011,7 +2176,8 @@
     if(!r) return;
     reports = reports.filter(x => x.id !== id);
     addHistory('Report deleted', `${r.code} (Shed ${r.shed} · ${r.problemType}) deleted`);
-    persist(); renderAll();
+    scheduleReportsPush();
+    renderAll();
     closeReportDetailOnly();
     showToast('Report deleted.');
   }
@@ -2424,7 +2590,7 @@
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
-        <span class="task-body"><span class="task-name"></span></span>
+        <span class="task-body"><span class="task-name"></span>${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
@@ -3209,7 +3375,7 @@
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
       </div>`;
     renderIconInto(card.querySelector('.kicon'), task.icon);
-    card.querySelector('.kname').textContent = (task.priority==='high' && task.status!=='done' ? '🔥 ' : '') + task.name;
+    card.querySelector('.kname').textContent = (task.priority==='high' && task.status!=='done' ? '🔥 ' : '') + (task.seriesId ? '🔁 ' : '') + task.name;
     const menuBtn = card.querySelector('.task-menu-btn');
     const popup = card.querySelector('.task-menu-popup');
     popup.dataset.taskId = task.id;
@@ -4327,22 +4493,90 @@
   $('#setDefaultView').addEventListener('change', (e)=>{ settings.defaultView = e.target.value; persist(); });
   $('#resetSettingsBtn').addEventListener('click', ()=>{ settings = Object.assign({}, DEFAULT_SETTINGS); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
 
-  $('#bulkDeleteModalBtn').addEventListener('click', ()=>{
-    $('#bulkDeleteStart').value = '';
-    $('#bulkDeleteEnd').value = '';
+  // ---------- Bulk delete modal (mode tabs: range / name) ----------
+  let bulkDeleteMode = 'range';
+  function populateBulkDeleteNameList(){
+    const dl = $('#bulkDeleteNameList');
+    if(!dl) return;
+    const names = Array.from(new Set(tasks.map(t=> t.name).filter(Boolean)))
+      .sort((a,b)=> a.localeCompare(b));
+    dl.innerHTML = names.map(n=> `<option value="${escapeHtmlAttr(n)}"></option>`).join('');
+  }
+  function getBulkDeleteMatches(){
+    if(bulkDeleteMode === 'range'){
+      const start = $('#bulkDeleteStart').value;
+      const end = $('#bulkDeleteEnd').value;
+      if(!start || !end || end < start) return null;
+      return tasks.filter(t=> t.date && t.date>=start && t.date<=end);
+    }
+    const q = ($('#bulkDeleteName').value || '').trim().toLowerCase();
+    if(!q) return null;
+    const exact = $('#bulkDeleteNameExact').checked;
+    const includeBacklog = $('#bulkDeleteNameIncludeBacklog').checked;
+    return tasks.filter(t=>{
+      if(!includeBacklog && !t.date) return false;
+      const n = (t.name || '').toLowerCase();
+      return exact ? n === q : n.includes(q);
+    });
+  }
+  function updateBulkDeletePreview(){
+    const box = $('#bulkDeleteNamePreview');
+    if(!box || bulkDeleteMode !== 'name') return;
+    const matches = getBulkDeleteMatches();
+    if(matches === null){
+      box.textContent = 'Type a name to see how many tasks match.';
+      box.classList.remove('has-matches');
+      return;
+    }
+    if(matches.length === 0){
+      box.textContent = 'No tasks match that name.';
+      box.classList.remove('has-matches');
+      return;
+    }
+    const dated = matches.filter(t=> t.date).length;
+    const backlog = matches.length - dated;
+    const done = matches.filter(t=> t.status==='done').length;
+    box.textContent = `${matches.length} task(s) match — ${dated} scheduled, ${backlog} in Backlog, ${done} already done.`;
+    box.classList.add('has-matches');
+  }
+  function setBulkDeleteMode(mode){
+    bulkDeleteMode = mode;
+    document.querySelectorAll('#bulkModeTabs button').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
+    $('#bulkRangeFields').style.display = mode==='range' ? 'block' : 'none';
+    $('#bulkNameFields').style.display = mode==='name' ? 'block' : 'none';
     const btn = $('#confirmBulkDeleteBtn');
     btn.dataset.pending = '';
     btn.classList.remove('confirm');
-    btn.textContent = 'Delete tasks in range';
+    btn.textContent = mode==='range' ? 'Delete tasks in range' : 'Delete matching tasks';
+    updateBulkDeletePreview();
+  }
+  $('#bulkModeTabs').addEventListener('click', (e)=>{
+    const b = e.target.closest('button');
+    if(b) setBulkDeleteMode(b.dataset.mode);
+  });
+  $('#bulkDeleteName').addEventListener('input', updateBulkDeletePreview);
+  $('#bulkDeleteNameExact').addEventListener('change', updateBulkDeletePreview);
+  $('#bulkDeleteNameIncludeBacklog').addEventListener('change', updateBulkDeletePreview);
+
+  $('#bulkDeleteModalBtn').addEventListener('click', ()=>{
+    $('#bulkDeleteStart').value = '';
+    $('#bulkDeleteEnd').value = '';
+    $('#bulkDeleteName').value = '';
+    $('#bulkDeleteNameExact').checked = false;
+    $('#bulkDeleteNameIncludeBacklog').checked = true;
+    populateBulkDeleteNameList();
+    setBulkDeleteMode('range');
     openDrawer('#bulkDeleteModal');
   });
   $('#confirmBulkDeleteBtn').addEventListener('click', function(){
-    const start = $('#bulkDeleteStart').value;
-    const end = $('#bulkDeleteEnd').value;
-    if(!start || !end){ showToast('Choose both a start and end date.', true); return; }
-    if(end < start){ showToast('End date must be after the start date.', true); return; }
-    const count = tasks.filter(t=> t.date && t.date>=start && t.date<=end).length;
-    if(count===0){ showToast('No tasks found in that date range.', true); return; }
+    const matches = getBulkDeleteMatches();
+    if(matches === null){
+      showToast(bulkDeleteMode==='range' ? 'Choose both a start and end date.' : 'Type a task name to match.', true);
+      return;
+    }
+    if(matches.length === 0){ showToast('No tasks matched.', true); return; }
+    const count = matches.length;
+    const resetLabel = bulkDeleteMode==='range' ? 'Delete tasks in range' : 'Delete matching tasks';
     if(!this.dataset.pending){
       this.dataset.pending = 'true';
       this.classList.add('confirm');
@@ -4351,17 +4585,21 @@
       this._t = setTimeout(()=>{
         this.dataset.pending = '';
         this.classList.remove('confirm');
-        this.textContent = 'Delete tasks in range';
+        this.textContent = resetLabel;
       }, 3000);
       return;
     }
     clearTimeout(this._t);
-    tasks = tasks.filter(t=> !(t.date && t.date>=start && t.date<=end));
-    addHistory('Bulk delete', `${count} task(s) deleted from ${formatFull(start)} to ${formatFull(end)}`);
+    const toDelete = new Set(matches.map(t=> t.id));
+    tasks = tasks.filter(t=> !toDelete.has(t.id));
+    const desc = bulkDeleteMode==='range'
+      ? `from ${formatFull($('#bulkDeleteStart').value)} to ${formatFull($('#bulkDeleteEnd').value)}`
+      : `matching name "${$('#bulkDeleteName').value.trim()}"`;
+    addHistory('Bulk delete', `${count} task(s) deleted ${desc}`);
     persist(); renderAll();
     this.dataset.pending = '';
     this.classList.remove('confirm');
-    this.textContent = 'Delete tasks in range';
+    this.textContent = resetLabel;
     closeOverlays();
     showToast(`${count} task(s) deleted.`);
   });
@@ -4375,6 +4613,7 @@
   $('#syncGithubBtn').addEventListener('click', async ()=>{
     if(!ghPath){ showToast('Connect first.', true); return; }
     if(pushPending){ await runScheduledPush(); }
+    if(reportsPushPending){ await runScheduledReportsPush(); }
     pullFromGithub();
   });
 
@@ -4414,6 +4653,7 @@
         updateBatchColorDefault();
         updateEventColorDefault();
         persist();
+        scheduleReportsPush();
         renderAll();
         showToast('Data imported successfully.');
       }catch(err){
@@ -4441,15 +4681,16 @@
     if(viewMode==='month') renderMonth();
   });
   document.addEventListener('visibilitychange', async ()=>{
-    if(document.visibilityState === 'hidden'){ flushPendingPush(); }
+    if(document.visibilityState === 'hidden'){ flushPendingPush(); flushPendingReportsPush(); }
     else if(document.visibilityState === 'visible'){
       if(ghPath){
         if(pushPending){ await runScheduledPush(); }
+        if(reportsPushPending){ await runScheduledReportsPush(); }
         pullFromGithub(true);
       }
     }
   });
-  window.addEventListener('pagehide', flushPendingPush);
+  window.addEventListener('pagehide', ()=>{ flushPendingPush(); flushPendingReportsPush(); });
 
   function initPullToRefresh(containerEl, indicatorEl, onRefresh){
     if(!containerEl || !indicatorEl) return;
@@ -4488,6 +4729,7 @@
   async function performManualRefresh(){
     if(ghPath){
       if(pushPending){ await runScheduledPush(); }
+      if(reportsPushPending){ await runScheduledReportsPush(); }
       await pullFromGithub();
     } else { showToast('Connect to GitHub in Settings to enable syncing.', true); }
   }
