@@ -114,6 +114,37 @@
   .segmented button{ border:none;background:transparent;color:var(--muted); font-weight:600;font-size:13px;padding:6px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; }
   .segmented button.active{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; box-shadow:var(--shadow-sm); }
 
+  /* ---- Calendar density dropdown ---- */
+  .calendar-density-wrap{ position: relative; display: inline-block; }
+  .calendar-density-btn{
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--surface); color: var(--ink);
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 13px;
+    cursor: pointer; transition: background .12s ease, border-color .12s ease;
+    white-space: nowrap; line-height: 1.2;
+  }
+  .calendar-density-btn:hover{ background: var(--surface-soft); border-color: var(--muted); }
+  .cd-chevron{ font-size: 10px; color: var(--muted); transition: transform .15s ease; }
+  .calendar-density-wrap.open .cd-chevron{ transform: rotate(180deg); }
+  .calendar-density-pop{
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    z-index: 60; min-width: 120px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; box-shadow: var(--shadow-lg);
+    padding: 4px; flex-direction: column; gap: 2px;
+  }
+  .calendar-density-wrap.open .calendar-density-pop{ display: flex; }
+  .calendar-density-pop button{
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    width: 100%; padding: 8px 12px; border: none; background: transparent;
+    color: var(--ink); font-family: 'Sora', sans-serif; font-size: 13px;
+    font-weight: 600; border-radius: 7px; cursor: pointer; text-align: left;
+  }
+  .calendar-density-pop button:hover{ background: var(--surface-soft); }
+  .calendar-density-pop button.active{ background: var(--primary-soft); color: var(--primary-dark); }
+  .calendar-density-pop button.active::after{ content: '✓'; font-size: 12px; font-weight: 800; }
+
   .nav-group{display:flex;align-items:center;gap:6px;}
   .nav-group.hidden{visibility:hidden; pointer-events:none;}
   .icon-btn{ width:30px;height:30px;border-radius:999px;border:1px solid var(--line); background:var(--surface);color:var(--ink);font-size:15px;line-height:1;cursor:pointer; display:flex;align-items:center;justify-content:center;transition:background .15s ease; position:relative; }
@@ -388,38 +419,248 @@
   .pull-refresh-indicator.loading .pr-spinner{ animation:pr-spin 0.7s linear infinite; }
   @keyframes pr-spin{ to{ transform:rotate(360deg); } }
 
-  .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:8px;}
-  .weekday-row span{ font-family:'Sora',sans-serif;font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:0.3px; text-align:center;padding:9px 0;background:var(--primary-soft);border:1px solid var(--primary);border-radius:9px; box-shadow:var(--shadow-sm); }
-  .weekday-row span:nth-child(6), .weekday-row span:nth-child(7){color:#fff;background:var(--secondary);border-color:var(--secondary);}
+  /* ============================================================
+     MONTH VIEW
+     ============================================================ */
+  .weekday-row{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+    margin-bottom:8px; padding-bottom:8px;
+    border-bottom:1px solid var(--line);
+  }
+  .weekday-row span{
+    font-family:'Sora',sans-serif; font-size:11.5px; font-weight:700;
+    color:var(--muted); letter-spacing:0.06em; text-align:center;
+    padding:4px 0; background:none; border:none; box-shadow:none;
+  }
+  .weekday-row span:nth-child(6), .weekday-row span:nth-child(7){ color:var(--secondary); }
 
-  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:136px;gap:10px;}
+  .month-grid{ display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:180px; gap:6px; }
 
-  .day-cell{ position:relative; background:var(--surface);border:1px solid var(--line);border-radius:14px; padding:7px;padding-bottom:22px;display:flex;flex-direction:column;gap:4px;min-width:0; cursor:pointer; overflow:hidden; box-shadow:var(--shadow-sm); transition:box-shadow .15s ease; }
-  .day-cell:hover{box-shadow:var(--shadow-md);}
+  .day-cell{
+    position:relative; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:6px;
+    min-width:0; cursor:pointer; overflow:hidden; box-shadow:var(--shadow-sm);
+    transition:box-shadow .15s ease;
+  }
+  .day-cell:hover{ box-shadow:var(--shadow-md); }
   .day-cell:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   button:focus-visible, .icon-btn:focus-visible, .task-card:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
-  .day-cell.weekend{background:var(--weekend-bg); border-top:3px solid var(--secondary);}
-  .day-cell.muted{background:var(--surface-soft); opacity:0.5;}
+  .day-cell.weekend{ background:var(--weekend-bg); border-top:3px solid var(--secondary); }
+  .day-cell.muted{ background:var(--surface-soft); opacity:0.5; }
   .day-cell.past{ opacity:0.55; filter:grayscale(45%); }
-  .day-cell.today{border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);}
-  .day-num{ font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--ink); align-self:flex-start; width:28px; height:28px; border-radius:50%; background:var(--surface-soft); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; position:relative; z-index:1; }
+  .day-cell.today{ border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
+  .day-cell.has-overdue{ border-left:3px solid var(--danger); }
+
+  .day-cell-header{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:6px; min-height:34px; flex-shrink:0;
+  }
+
+  .day-num{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:19px;
+    color:var(--ink); width:34px; height:34px; border-radius:10px;
+    background:var(--surface-soft); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    letter-spacing:-0.02em; line-height:1;
+  }
   .day-cell.today .day-num{ background:var(--primary); color:#fff; border-color:var(--primary); }
-  .day-cell .day-tasks{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;min-height:0;overflow:hidden;}
-  .day-count{text-align:center;color:var(--muted);font-size:11px;line-height:1.3;}
+  .day-cell.past .day-num{ color:var(--muted); background:transparent; border-color:transparent; }
+  .day-cell.muted .day-num{ opacity:0.4; }
+
+  .day-cell .event-ribbon{
+    font-size:10px; font-weight:700; color:#fff; letter-spacing:0.01em;
+    padding:3px 7px; border-radius:6px;
+    max-width:62%; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; flex-shrink:1; min-width:0;
+  }
+
+  .batch-pill-row{
+    display:flex; gap:4px; flex-shrink:0; flex-wrap:wrap;
+    margin-top:-2px;
+  }
+  .batch-pill{
+    display:inline-block; font-family:'Sora',sans-serif; font-weight:700;
+    font-size:9.5px; color:#fff; padding:2px 7px; border-radius:6px;
+    letter-spacing:0.02em; white-space:nowrap;
+  }
+
+  .day-cell .day-tasks{
+    flex:1; display:flex; flex-direction:column; gap:5px;
+    align-items:stretch; justify-content:flex-start;
+    min-height:0; overflow:hidden; position:relative; z-index:1;
+  }
+
+  .day-cell .task-card{
+    padding:6px 9px; border-radius:8px; cursor:grab; box-shadow:none;
+  }
+  .day-cell .task-card:hover{ box-shadow:none; }
+  .day-cell .task-card .task-card-top{ gap:6px; }
+  .day-cell .task-card .task-icon-slot{ width:16px; height:16px; }
+  .day-cell .task-card .task-icon,
+  .day-cell .task-card .task-icon-slot .task-icon{ font-size:13px; }
+  .day-cell .task-card .task-name{
+    font-size:11.5px; line-height:1.3; font-weight:500;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    word-break:normal; overflow-wrap:normal;
+  }
+  .day-cell .task-card .task-avatars{ display:none; }
+  .day-cell .task-card .task-note-dot{ display:none; }
+  .day-cell .task-card .task-menu-btn{ display:none; }
+  .day-cell .task-card .task-complete-btn{ display:none; }
+  .day-cell .task-card:hover .task-icon-slot .task-icon{ opacity:1; }
+
+  .day-more{
+    font-size:10.5px; color:var(--muted); font-style:italic;
+    padding:1px 3px; flex-shrink:0;
+  }
+
+  .day-count{ text-align:center; color:var(--muted); font-size:11px; line-height:1.3; margin:auto; }
   .day-count-label{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-  .day-count strong{display:block;font-size:17px;color:var(--ink);font-family:'Sora',sans-serif;line-height:1.25;}
-  .day-count-icons{font-size:14px;line-height:1.2;margin-bottom:4px;letter-spacing:1px;}
-  body.hide-icons .day-count-icons{display:none;}
+  .day-count strong{ display:block; font-size:17px; color:var(--ink); font-family:'Sora',sans-serif; line-height:1.25; }
+  .day-count-icons{ font-size:14px; line-height:1.2; margin-bottom:4px; letter-spacing:1px; }
+  body.hide-icons .day-count-icons{ display:none; }
   .task-icon img, .day-count-icons img, .icon-preview img{ width:16px; height:16px; vertical-align:middle; object-fit:contain; }
   .day-count-icons span{ display:inline-block; margin-right:2px; }
-  .event-ribbon{ color:#fff; font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:6px; align-self:flex-start; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; position:relative; z-index:1; }
-  .batch-badges{ position:absolute; display:flex; flex-direction:column; gap:2px; z-index:2; }
-  .batch-badges-centered{ display:flex; gap:3px; justify-content:center; margin-top:2px; position:relative; z-index:2; }
-  .batch-badges.pos-bottom-left{ left:6px; bottom:6px; }
-  .batch-badges.pos-bottom-right{ right:6px; bottom:6px; }
-  .batch-badges.pos-top-right{ right:6px; top:6px; }
-  .batch-badge{ font-size:9.5px; font-weight:700; color:#fff; padding:1px 6px; border-radius:6px; white-space:nowrap; }
-  .batch-watermark{ position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:24px; color:var(--ink); opacity:0.14; pointer-events:none; overflow:hidden; white-space:nowrap; }
+
+  .batch-watermark{ position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:24px; color:var(--ink); opacity:0.08; pointer-events:none; overflow:hidden; white-space:nowrap; }
+
+  .month-grid .day-tasks.drop-target{
+    background:var(--primary-soft);
+    border-radius:8px;
+    outline:2px dashed var(--primary);
+    outline-offset:-2px;
+  }
+
+  /* ============================================================
+     DAY VIEW
+     ============================================================ */
+  .day-view-layout{
+    display:grid; grid-template-columns:260px 1fr; gap:24px;
+    min-height:100%;
+  }
+  .day-view-layout.phone{
+    grid-template-columns:1fr; gap:12px;
+  }
+
+  .day-view-left{ display:flex; flex-direction:column; gap:14px; }
+
+  .mini-month{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:12px;
+  }
+  .mini-month-title{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px;
+    margin-bottom:10px; color:var(--ink);
+  }
+  .mini-month-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .mini-month-wd{
+    font-size:10px; font-weight:700; text-align:center;
+    color:var(--muted); padding:2px 0 6px;
+    font-family:'Sora',sans-serif; letter-spacing:0.05em;
+  }
+  .mini-month-day{
+    aspect-ratio:1; border:none; background:transparent; color:var(--ink);
+    font-size:11.5px; font-weight:500; border-radius:7px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; padding:0; font-family:'Inter',sans-serif;
+  }
+  .mini-month-day:hover{ background:var(--surface-soft); }
+  .mini-month-day.muted{ color:var(--muted); opacity:0.4; }
+  .mini-month-day.today{
+    background:var(--primary-soft); color:var(--primary-dark);
+    font-weight:700; box-shadow:0 0 0 1.5px var(--primary);
+  }
+  .mini-month-day.selected{
+    background:var(--primary); color:#fff; font-weight:700; box-shadow:none;
+  }
+  .mini-month-day.has-tasks::after{
+    content:''; position:absolute; bottom:2px; left:50%;
+    transform:translateX(-50%); width:3px; height:3px;
+    border-radius:50%; background:var(--secondary);
+  }
+  .mini-month-day.selected.has-tasks::after{ background:#fff; }
+  .mini-month-day.today.has-tasks::after{ background:var(--primary-dark); }
+
+  .day-context{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:10px 12px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .day-context-event{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:11.5px;
+    color:#fff; padding:5px 9px; border-radius:7px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .day-context-event.prep{
+    background:transparent !important;
+    border:1.5px dashed currentColor;
+  }
+  .day-context-batch{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:10.5px;
+    color:#fff; padding:3px 8px; border-radius:6px;
+    align-self:flex-start;
+  }
+  .day-context-empty{
+    font-size:11.5px; color:var(--muted);
+    text-align:center; padding:4px 0;
+  }
+
+  .day-view-right{
+    display:flex; flex-direction:column; gap:14px; min-width:0;
+  }
+  .day-view-header{
+    display:flex; align-items:baseline; gap:14px;
+    padding-bottom:12px; border-bottom:1px solid var(--line);
+  }
+  .dvh-weekday{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:20px;
+    color:var(--ink); letter-spacing:-0.01em;
+  }
+  .dvh-date{
+    font-family:'Sora',sans-serif; font-weight:800; font-size:36px;
+    color:var(--primary); line-height:1;
+  }
+  .day-view-tasks{ display:flex; flex-direction:column; gap:10px; min-height:40px; }
+  .day-view-tasks .task-card{ padding:14px 16px; }
+  .day-view-tasks.drop-target{
+    background:var(--primary-soft);
+    border-radius:12px;
+    outline:2px dashed var(--primary);
+    outline-offset:2px;
+  }
+
+  .week-strip{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:4px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; padding:8px;
+  }
+  .week-strip-cell{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:8px 2px; border:none; background:transparent; color:var(--ink);
+    border-radius:8px; cursor:pointer; font-family:inherit; position:relative;
+  }
+  .week-strip-cell:hover{ background:var(--surface-soft); }
+  .week-strip-cell.today{
+    background:var(--primary-soft); box-shadow:0 0 0 1.5px var(--primary);
+  }
+  .week-strip-cell.selected{
+    background:var(--primary); color:#fff; box-shadow:none;
+  }
+  .wsc-wd{
+    font-size:10px; font-weight:700; color:var(--muted);
+    letter-spacing:0.05em; font-family:'Sora',sans-serif;
+  }
+  .week-strip-cell.selected .wsc-wd{ color:rgba(255,255,255,0.85); }
+  .week-strip-cell.today .wsc-wd{ color:var(--primary-dark); }
+  .wsc-num{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:15px;
+  }
+  .week-strip-cell.has-tasks::after{
+    content:''; position:absolute; bottom:3px; left:50%;
+    transform:translateX(-50%); width:4px; height:4px;
+    border-radius:50%; background:var(--secondary);
+  }
+  .week-strip-cell.selected.has-tasks::after{ background:#fff; }
 
   .year-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
   .year-month-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;}
@@ -680,6 +921,33 @@
   .fab-notif{ display:none; }
   .sheet-overlay{ display:none; }
 
+  @media (max-width: 1199px){
+    .month-grid{ grid-auto-rows:168px; }
+  }
+  @media (max-width: 1023px){
+    .month-grid{ grid-auto-rows:156px; }
+  }
+  @media (max-width: 759px){
+    .month-grid{ grid-auto-rows:140px; }
+    .day-cell .task-card{ padding:5px 7px; }
+    .day-cell .task-card .task-name{ font-size:11px; }
+    .calendar-density-wrap{ display:none; }
+    .day-view-layout{ grid-template-columns:1fr; gap:12px; }
+  }
+  @media (max-width: 480px){
+    .month-grid{ grid-auto-rows:96px; gap:5px; }
+    .day-cell{ padding:6px; gap:4px; align-items:stretch; }
+    .day-cell-header{ min-height:24px; }
+    .day-num{ font-size:15px; width:24px; height:24px; border-radius:7px; }
+    .day-cell .task-card{ display:none; }
+    .day-more{ display:none; }
+    .weekday-row{ gap:4px; }
+    .weekday-row span{ font-size:9.5px; padding:3px 0; letter-spacing:0.04em; }
+    .calendar-wrap{ padding:12px; }
+    .dvh-weekday{ font-size:17px; }
+    .dvh-date{ font-size:30px; }
+  }
+
   @media (max-width: 1024px){
     .sidebar-toggle{ display:flex; width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:16px; cursor:pointer; align-items:center; justify-content:center; flex-shrink:0; }
     .sidebar{ position:fixed; top:0; left:0; height:100%; width:300px; max-width:82vw; z-index:48; transform:translateX(-100%); transition:transform .25s ease; box-shadow:var(--shadow-lg); }
@@ -698,7 +966,6 @@
   @media (max-width: 760px){
     .sidebar-toggle{ display:none; }
     .main{flex-direction:column;}
-    .month-grid{grid-auto-rows:118px;}
     .toolbar{justify-content:flex-end; flex-wrap:nowrap;}
     .topbar{justify-content:space-between;}
     .brand small{display:none;}
@@ -747,15 +1014,9 @@
     .brand .brand-icon{ width:22px; height:22px; border-radius:6px; }
     .toolbar-label{min-width:84px; font-size:12.5px;}
     .quick-actions{flex-direction:column;}
-    .month-grid{grid-auto-rows:106px; gap:6px;}
     .day-count-icons{display:none;}
     .day-count strong{font-size:16px;}
     .day-count-label{font-size:9.5px;}
-    .weekday-row{gap:4px;}
-    .weekday-row span{font-size:10px; padding:5px 0;}
-    .calendar-wrap{padding:12px;}
-    .day-cell{ align-items:center; padding-bottom:7px; }
-    .day-num{ align-self:center; }
   }
 </style>
 </head>
@@ -793,6 +1054,16 @@
         <button id="viewCalendarBtn" class="active">📅 Calendar</button>
         <button id="viewListBtn">📋 List</button>
         <button id="viewKanbanBtn">🗂️ Board</button>
+      </div>
+      <div class="calendar-density-wrap" id="calendarDensityWrap">
+        <button class="calendar-density-btn" id="calendarDensityBtn" aria-haspopup="true" aria-expanded="false">
+          <span id="calendarDensityLabel">Month</span>
+          <span class="cd-chevron">▾</span>
+        </button>
+        <div class="calendar-density-pop" id="calendarDensityPop">
+          <button type="button" data-density="month">Month</button>
+          <button type="button" data-density="day">Day</button>
+        </div>
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="btn-history" id="historyBtn">History</button>
@@ -938,20 +1209,16 @@
 
     <label for="setBatchStyle">Batch label style on calendar</label>
     <select id="setBatchStyle">
-      <option value="bottom-left">Bottom left</option>
-      <option value="bottom-right">Bottom right</option>
-      <option value="top-right">Top right</option>
-      <option value="background">Watermark only</option>
-      <option value="watermark-bottom-left">Watermark + Left</option>
-      <option value="watermark-bottom-right">Watermark + Right</option>
+      <option value="pill">Inline pill</option>
+      <option value="watermark">Watermark only</option>
     </select>
-    <p id="batchStyleNote" style="font-size:10.5px;color:var(--muted);margin:2px 0 0;display:none;">On small screens, batch labels are automatically centered for readability — this choice only applies on larger screens.</p>
 
     <label for="setDefaultView">Default view when opening the app</label>
     <select id="setDefaultView">
       <option value="auto">Auto (Month on desktop, Agenda on phone)</option>
       <option value="auto-board">Auto (Board on desktop, Agenda on phone)</option>
       <option value="month">Month</option>
+      <option value="day">Day</option>
       <option value="list">Agenda / List</option>
       <option value="kanban">Board</option>
     </select>
@@ -1273,7 +1540,7 @@
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
-  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'bottom-left', defaultView:'auto' };
+  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month' };
   const DEFAULT_EVENT_COLOR = '#000000';
   const ICON_RULES = [
     [/feed|grain|corn/i,'🌾'],[/water|drink|hydrat/i,'💧'],[/vaccin|inject|dose/i,'💉'],
@@ -1336,6 +1603,13 @@
   let reportsShedFilter = '';
   let currentReportId = null;
   let reportsSha = null;
+  let deletedReportIds = loadDeletedReportIds();
+  function loadDeletedReportIds(){
+    try{ return new Set(JSON.parse(localStorage.getItem('prodplan-deleted-report-ids') || '[]')); }catch(e){ return new Set(); }
+  }
+  function saveDeletedReportIds(){
+    try{ localStorage.setItem('prodplan-deleted-report-ids', JSON.stringify([...deletedReportIds])); }catch(e){}
+  }
 
   const $ = (sel) => document.querySelector(sel);
 
@@ -1417,7 +1691,14 @@
   }
 
   const THEME_CLASSES = ['theme-dark'];
+  function normalizeBatchStyle(v){
+    if(v === 'watermark' || v === 'background' || v === 'watermark-bottom-left' || v === 'watermark-bottom-right') return 'watermark';
+    return 'pill';
+  }
+  function normalizeDensity(v){ return v === 'day' ? 'day' : 'month'; }
   function applySettings(){
+    settings.batchBadgeStyle = normalizeBatchStyle(settings.batchBadgeStyle);
+    settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
     document.body.classList.remove(...THEME_CLASSES);
     if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
@@ -1431,22 +1712,14 @@
     if(tb) tb.title = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
     const mtl = $('#moreThemeToggleLabel');
     if(mtl) mtl.textContent = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
-    updateBatchStyleAvailability();
-  }
-  function updateBatchStyleAvailability(){
-    const bs = $('#setBatchStyle'), note = $('#batchStyleNote');
-    if(!bs) return;
-    const disabled = isSmallCardScreen();
-    bs.disabled = disabled;
-    bs.style.opacity = disabled ? '0.5' : '1';
-    if(note) note.style.display = disabled ? 'block' : 'none';
+    const dl = $('#calendarDensityLabel');
+    if(dl) dl.textContent = settings.calendarDensity === 'day' ? 'Day' : 'Month';
+    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.density === settings.calendarDensity);
+    });
   }
 
   // ==================== SYNC: MAIN FILE ====================
-  // Main file holds tasks/history/batches/events/settings/frequentTemplates.
-  // Reports are intentionally NOT in the main file. They live in their own
-  // file (see REPORTS FILE SYNC section below), so a task save can never
-  // wipe a worker-submitted report.
   async function persist(){ showSyncPending(); schedulePush(); }
   function showSyncPending(){
     const el = $('#saveIndicator');
@@ -1534,8 +1807,6 @@
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     return (slug || 'farm') + '.json';
   }
-  // Reports are stored on the worker under a derived farm name so they get
-  // their own file. `<farm> + "-reports"` → worker writes `<farm-slug>-reports.json`.
   function reportsFarmName(){ return ghFarmName ? (ghFarmName + '-reports') : null; }
 
   function updateGithubStatusUI(){
@@ -1569,7 +1840,6 @@
       if(result.notFound){ await pushToGithub(); await pullReportsFromGithub(silent); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
       ghSha = result.sha;
       applyImportedData(JSON.stringify(result.data));
-      // Reports now live in their own file.
       await pullReportsFromGithub(silent);
       if(!silent) showToast('Synced.');
       return true;
@@ -1582,7 +1852,6 @@
   async function pushToGithub(){
     if(!ghPath) return false;
     try{
-      // Reports field deliberately excluded — see REPORTS FILE SYNC.
       const data = {tasks, history, batches, events, settings, frequentTemplates};
       const body = { sha: ghSha, data };
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
@@ -1603,9 +1872,6 @@
   }
 
   // ==================== REPORTS FILE SYNC ====================
-  // Reports use their own debounced push timer so a report edit can't be
-  // silently bundled into a task push. Merges locally-edited reports over
-  // whatever the server currently has.
   let reportsPushDebounceTimer = null;
   let reportsPushInFlight = false;
   let reportsPushPending = false;
@@ -1639,8 +1905,6 @@
     try{
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
       if(res.status === 404){
-        // No reports file yet. If we carry legacy reports from the main file,
-        // migrate them by pushing them to the new file.
         if(reports.length > 0) await pushReportsToGithub();
         return;
       }
@@ -1652,8 +1916,8 @@
       }
       reportsSha = result.sha;
       const d = result.data || {};
-      const serverReports = Array.isArray(d) ? d : (d.reports || []);
-      // Union: server list + any local reports not yet pushed.
+      const rawServer = Array.isArray(d) ? d : (d.reports || []);
+      const serverReports = rawServer.filter(r => !deletedReportIds.has(r.id));
       const serverIds = new Set(serverReports.map(r => r.id));
       const localOnly = reports.filter(r => !serverIds.has(r.id));
       reports = serverReports.concat(localOnly);
@@ -1688,9 +1952,7 @@
       } else {
         throw new Error('GET reports failed: ' + getRes.status);
       }
-      // Manager merge: our local `reports` array is authoritative for any id
-      // it holds. Server-only ids are preserved (e.g. from a viewer push).
-      const merged = serverReports.slice();
+      const merged = serverReports.filter(r => !deletedReportIds.has(r.id));
       const mergedIdx = new Map(merged.map((r, i) => [r.id, i]));
       reports.forEach(r => {
         if(mergedIdx.has(r.id)) merged[mergedIdx.get(r.id)] = r;
@@ -1709,6 +1971,10 @@
       const putData = await putRes.json();
       if(putData && putData.sha) reportsSha = putData.sha;
       reports = merged;
+      if(deletedReportIds.size){
+        deletedReportIds.clear();
+        saveDeletedReportIds();
+      }
       flashSaved();
       return true;
     }catch(e){
@@ -1726,18 +1992,21 @@
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
-      // Legacy migration: if an old main file still has `reports`, adopt them.
-      // They'll be pushed to the reports file on the next pull/push cycle
-      // and the main file will be written clean on the next persist().
       if(Array.isArray(parsed.reports) && parsed.reports.length){
         const haveIds = new Set(reports.map(r => r.id));
-        parsed.reports.forEach(r => { if(!haveIds.has(r.id)){ reports.push(r); haveIds.add(r.id); } });
+        parsed.reports.forEach(r => {
+          if(!haveIds.has(r.id) && !deletedReportIds.has(r.id)){
+            reports.push(r);
+            haveIds.add(r.id);
+          }
+        });
       }
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
+      settings.calendarDensity = normalizeDensity(settings.calendarDensity);
       frequentTemplates = parsed.frequentTemplates || [];
       let sessionViewMode = null;
       try{ sessionViewMode = sessionStorage.getItem('prodplan-session-viewmode'); }catch(e){}
-      if(sessionViewMode && ['month','year','list','kanban'].includes(sessionViewMode)){ viewMode = sessionViewMode; }
+      if(sessionViewMode && ['month','year','list','kanban','day'].includes(sessionViewMode)){ viewMode = sessionViewMode; }
       else if(settings.defaultView==='auto-board'){ viewMode = window.innerWidth <= 1024 ? 'list' : 'kanban'; }
       else if(settings.defaultView && settings.defaultView!=='auto'){ viewMode = settings.defaultView; }
       else { viewMode = window.innerWidth <= 1024 ? 'list' : 'month'; }
@@ -2165,7 +2434,6 @@
     }
     r.updatedAt = new Date().toISOString();
 
-    // Reports live in their own file now — use the dedicated push.
     scheduleReportsPush();
     renderAll();
     closeReportDetailOnly();
@@ -2175,6 +2443,8 @@
     const r = reports.find(x => x.id === id);
     if(!r) return;
     reports = reports.filter(x => x.id !== id);
+    deletedReportIds.add(id);
+    saveDeletedReportIds();
     addHistory('Report deleted', `${r.code} (Shed ${r.shed} · ${r.problemType}) deleted`);
     scheduleReportsPush();
     renderAll();
@@ -2557,6 +2827,10 @@
   }
   document.addEventListener('click', (e)=>{
     if(!e.target.closest('.task-menu-btn') && !e.target.closest('.task-menu-popup')) closeAllTaskMenus();
+    if(!e.target.closest('#calendarDensityWrap')){
+      const wrap = $('#calendarDensityWrap');
+      if(wrap) wrap.classList.remove('open');
+    }
   });
   window.addEventListener('scroll', ()=>{
     if(Date.now() - lastMenuOpenAt < 250) return;
@@ -2905,75 +3179,6 @@
     return null;
   }
 
-  function addEventFlags(cell, key){
-    const exact = eventOnDate(key);
-    if(exact){
-      const c = exact.color || DEFAULT_EVENT_COLOR;
-      const rb = document.createElement('div');
-      rb.className = 'event-ribbon';
-      rb.style.background = c;
-      rb.textContent = '🔺 ' + exact.name;
-      rb.title = `Audit day: ${exact.name}${exact.batchNumber ? ` (Batch #${exact.batchNumber})` : ''}`;
-      cell.appendChild(rb);
-      cell.style.background = hexToRgba(c, 0.18);
-      cell.style.border = `2px solid ${c}`;
-      return;
-    }
-    const crit = criticalEventForDate(key);
-    if(crit){
-      const c = crit.color || DEFAULT_EVENT_COLOR;
-      cell.style.background = hexToRgba(c, 0.08);
-      cell.style.border = `1.5px dashed ${hexToRgba(c, 0.7)}`;
-      cell.title = `Prep week for ${crit.name}`;
-    }
-  }
-
-  function isSmallCardScreen(){ return window.innerWidth <= 480; }
-  function addBatchBadges(cell, key){
-    const active = batchesForDate(key);
-    if(!active.length) return;
-    const forceCentered = isSmallCardScreen();
-    const style = forceCentered ? 'centered' : (settings.batchBadgeStyle || 'bottom-left');
-    const showWatermark = !forceCentered && (style === 'background' || style === 'watermark-bottom-left' || style === 'watermark-bottom-right');
-    const cornerStyle = style === 'watermark-bottom-left' ? 'bottom-left' : style === 'watermark-bottom-right' ? 'bottom-right' : style;
-    if(showWatermark){
-      const wm = document.createElement('div');
-      wm.className = 'batch-watermark';
-      wm.textContent = '#' + active[0].number;
-      cell.insertBefore(wm, cell.firstChild);
-    }
-    if(style === 'centered'){
-      const wrap = document.createElement('div');
-      wrap.className = 'batch-badges-centered';
-      active.slice(0,3).forEach(b=>{
-        const badge = document.createElement('span');
-        badge.className = 'batch-badge';
-        badge.style.background = colorForBatchNumber(b.number);
-        badge.textContent = '#' + b.number;
-        badge.title = `Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`;
-        wrap.appendChild(badge);
-      });
-      cell.appendChild(wrap);
-    } else if(style !== 'background'){
-      const wrap = document.createElement('div');
-      wrap.className = 'batch-badges pos-' + cornerStyle;
-      active.slice(0,3).forEach(b=>{
-        const badge = document.createElement('span');
-        badge.className = 'batch-badge';
-        badge.style.background = colorForBatchNumber(b.number);
-        badge.textContent = '#' + b.number;
-        badge.title = `Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`;
-        wrap.appendChild(badge);
-      });
-      cell.appendChild(wrap);
-    }
-    if(!cell.style.background){
-      const c = colorForBatchNumber(active[0].number);
-      cell.style.background = hexToRgba(c, 0.14);
-      cell.style.border = `1.5px solid ${c}`;
-    }
-  }
-
   function buildDayCount(key){
     const wrap = document.createElement('div');
     wrap.className = 'day-count';
@@ -3008,40 +3213,305 @@
     wrap.innerHTML = '';
     const weekdayRow = document.createElement('div');
     weekdayRow.className = 'weekday-row';
-    ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d=>{ const s=document.createElement('span'); s.textContent=d; weekdayRow.appendChild(s); });
+    ['MON','TUE','WED','THU','FRI','SAT','SUN'].forEach(label=>{
+      const s = document.createElement('span');
+      s.textContent = label;
+      weekdayRow.appendChild(s);
+    });
     wrap.appendChild(weekdayRow);
+
     const grid = document.createElement('div');
     grid.className = 'month-grid';
     const days = monthMatrix(currentDate);
     const today = new Date();
     const todayKey = dateKey(today);
+    const isPhone = window.innerWidth < 480;
+    const maxCards = window.innerWidth < 760 ? 1 : 2;
+
     days.forEach(d=>{
       const key = dateKey(d);
       const cell = document.createElement('div');
       cell.className = 'day-cell';
-      if(d.getMonth()!==currentDate.getMonth()) cell.classList.add('muted');
+      if(d.getMonth() !== currentDate.getMonth()) cell.classList.add('muted');
       if(sameDay(d, today)) cell.classList.add('today');
       if(key < todayKey) cell.classList.add('past');
       const dow = d.getDay();
-      if(dow===0 || dow===6) cell.classList.add('weekend');
-      addEventFlags(cell, key);
+      if(dow === 0 || dow === 6) cell.classList.add('weekend');
+
+      const dayTasks = tasks.filter(t=> t.date === key).sort(taskSortCompare);
+      const hasOverdue = dayTasks.some(t=> t.status !== 'done' && key < todayKey);
+      if(hasOverdue) cell.classList.add('has-overdue');
+
+      const exactEvent = eventOnDate(key);
+      const critEvent = !exactEvent ? criticalEventForDate(key) : null;
+      const activeBatches = batchesForDate(key);
+      if(exactEvent){
+        const c = exactEvent.color || DEFAULT_EVENT_COLOR;
+        cell.style.background = hexToRgba(c, 0.18);
+        cell.style.border = `2px solid ${c}`;
+      } else if(critEvent){
+        const c = critEvent.color || DEFAULT_EVENT_COLOR;
+        cell.style.background = hexToRgba(c, 0.08);
+        cell.style.border = `1.5px dashed ${hexToRgba(c, 0.7)}`;
+        cell.title = `Prep week for ${critEvent.name}`;
+      } else if(activeBatches.length){
+        const c = colorForBatchNumber(activeBatches[0].number);
+        cell.style.background = hexToRgba(c, 0.14);
+        cell.style.border = `1.5px solid ${c}`;
+      }
+
+      if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
+        const wm = document.createElement('div');
+        wm.className = 'batch-watermark';
+        wm.textContent = '#' + activeBatches[0].number;
+        cell.appendChild(wm);
+      }
+
+      const header = document.createElement('div');
+      header.className = 'day-cell-header';
+
       const num = document.createElement('span');
       num.className = 'day-num';
       num.textContent = d.getDate();
-      cell.appendChild(num);
+      header.appendChild(num);
+
+      if(exactEvent){
+        const rb = document.createElement('div');
+        rb.className = 'event-ribbon';
+        rb.style.background = exactEvent.color || DEFAULT_EVENT_COLOR;
+        rb.textContent = '🚩 ' + exactEvent.name;
+        rb.title = `Audit day: ${exactEvent.name}${exactEvent.batchNumber ? ` (Batch #${exactEvent.batchNumber})` : ''}`;
+        header.appendChild(rb);
+      }
+
+      cell.appendChild(header);
+
+      if(activeBatches.length && settings.batchBadgeStyle === 'pill'){
+        const pillRow = document.createElement('div');
+        pillRow.className = 'batch-pill-row';
+        activeBatches.slice(0, 2).forEach(b=>{
+          const pill = document.createElement('span');
+          pill.className = 'batch-pill';
+          pill.style.background = colorForBatchNumber(b.number);
+          pill.textContent = '#' + b.number;
+          pill.title = `Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`;
+          pillRow.appendChild(pill);
+        });
+        cell.appendChild(pillRow);
+      }
+
       const list = document.createElement('div');
       list.className = 'day-tasks';
       list.dataset.date = key;
-      list.appendChild(buildDayCount(key));
+
+      if(isPhone){
+        list.appendChild(buildDayCount(key));
+      } else {
+        dayTasks.slice(0, maxCards).forEach(t=> list.appendChild(buildTaskCard(t)));
+        const overflow = dayTasks.length - maxCards;
+        if(overflow > 0){
+          const more = document.createElement('div');
+          more.className = 'day-more';
+          more.textContent = `+ ${overflow} more`;
+          list.appendChild(more);
+        }
+      }
       cell.appendChild(list);
-      addBatchBadges(cell, key);
+
       cell.tabIndex = 0;
       cell.setAttribute('role', 'button');
-      cell.addEventListener('click', ()=>{ if(suppressNextClick) return; openDayModal(key); });
-      cell.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openDayModal(key); } });
+      const ariaParts = [formatFullWithWeekday(key)];
+      if(dayTasks.length){
+        const done = dayTasks.filter(t=> t.status === 'done').length;
+        ariaParts.push(`${done} of ${dayTasks.length} done`);
+      }
+      if(exactEvent) ariaParts.push(`audit: ${exactEvent.name}`);
+      cell.setAttribute('aria-label', ariaParts.join(', '));
+
+      cell.addEventListener('click', (e)=>{
+        if(suppressNextClick) return;
+        if(e.target.closest('.task-card')) return;
+        openDayModal(key);
+      });
+      cell.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          openDayModal(key);
+        }
+      });
+
       grid.appendChild(cell);
     });
     wrap.appendChild(grid);
+  }
+
+  // ============================================================
+  // DAY VIEW
+  // ============================================================
+  function buildMiniMonth(date, selectedKey){
+    const todayKey = dateKey(new Date());
+    const container = document.createElement('div');
+    container.className = 'mini-month';
+
+    const title = document.createElement('div');
+    title.className = 'mini-month-title';
+    title.textContent = date.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'mini-month-grid';
+
+    ['M','T','W','T','F','S','S'].forEach(d => {
+      const h = document.createElement('div');
+      h.className = 'mini-month-wd';
+      h.textContent = d;
+      grid.appendChild(h);
+    });
+
+    monthMatrix(date).forEach(d => {
+      const key = dateKey(d);
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'mini-month-day';
+      if(d.getMonth() !== date.getMonth()) cell.classList.add('muted');
+      if(key === todayKey) cell.classList.add('today');
+      if(key === selectedKey) cell.classList.add('selected');
+      cell.textContent = d.getDate();
+      const hasTasks = tasks.some(t => t.date === key);
+      if(hasTasks) cell.classList.add('has-tasks');
+      cell.addEventListener('click', () => {
+        currentDate = new Date(d);
+        renderAll();
+      });
+      grid.appendChild(cell);
+    });
+
+    container.appendChild(grid);
+    return container;
+  }
+
+  function buildDayContextBlock(key){
+    const container = document.createElement('div');
+    container.className = 'day-context';
+
+    const activeBatches = batchesForDate(key);
+    const event = eventOnDate(key);
+    const critEvent = !event ? criticalEventForDate(key) : null;
+
+    if(event){
+      const pill = document.createElement('div');
+      pill.className = 'day-context-event';
+      pill.style.background = event.color || DEFAULT_EVENT_COLOR;
+      pill.textContent = '🚩 ' + event.name;
+      container.appendChild(pill);
+    } else if(critEvent){
+      const pill = document.createElement('div');
+      pill.className = 'day-context-event prep';
+      pill.style.color = critEvent.color || DEFAULT_EVENT_COLOR;
+      pill.textContent = '⏳ Prep: ' + critEvent.name;
+      container.appendChild(pill);
+    }
+
+    activeBatches.forEach(b => {
+      const pill = document.createElement('div');
+      pill.className = 'day-context-batch';
+      pill.style.background = colorForBatchNumber(b.number);
+      pill.textContent = '#' + b.number;
+      container.appendChild(pill);
+    });
+
+    if(!event && !critEvent && activeBatches.length === 0){
+      container.innerHTML = '<div class="day-context-empty">No batch or event</div>';
+    }
+
+    return container;
+  }
+
+  function buildHorizontalWeekStrip(date, selectedKey){
+    const todayKey = dateKey(new Date());
+    const container = document.createElement('div');
+    container.className = 'week-strip';
+    const monday = getMonday(date);
+    const wdLabels = ['M','T','W','T','F','S','S'];
+    for(let i = 0; i < 7; i++){
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const key = dateKey(d);
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'week-strip-cell';
+      if(key === todayKey) cell.classList.add('today');
+      if(key === selectedKey) cell.classList.add('selected');
+      const wd = document.createElement('span');
+      wd.className = 'wsc-wd';
+      wd.textContent = wdLabels[i];
+      const num = document.createElement('span');
+      num.className = 'wsc-num';
+      num.textContent = d.getDate();
+      cell.appendChild(wd);
+      cell.appendChild(num);
+      const hasTasks = tasks.some(t => t.date === key);
+      if(hasTasks) cell.classList.add('has-tasks');
+      cell.addEventListener('click', () => {
+        currentDate = new Date(d);
+        renderAll();
+      });
+      container.appendChild(cell);
+    }
+    return container;
+  }
+
+  function renderDay(){
+    const wrap = $('#calendarWrap');
+    wrap.innerHTML = '';
+
+    const isPhone = window.innerWidth < 760;
+    const selectedKey = dateKey(currentDate);
+    const selectedDate = toDateObj(selectedKey);
+
+    const layout = document.createElement('div');
+    layout.className = 'day-view-layout' + (isPhone ? ' phone' : '');
+
+    if(!isPhone){
+      const left = document.createElement('div');
+      left.className = 'day-view-left';
+      left.appendChild(buildMiniMonth(selectedDate, selectedKey));
+      left.appendChild(buildDayContextBlock(selectedKey));
+      layout.appendChild(left);
+    } else {
+      layout.appendChild(buildHorizontalWeekStrip(selectedDate, selectedKey));
+    }
+
+    const right = document.createElement('div');
+    right.className = 'day-view-right';
+
+    const header = document.createElement('div');
+    header.className = 'day-view-header';
+    const wd = document.createElement('div');
+    wd.className = 'dvh-weekday';
+    wd.textContent = selectedDate.toLocaleDateString(undefined, {weekday:'long'});
+    const dt = document.createElement('div');
+    dt.className = 'dvh-date';
+    dt.textContent = selectedDate.getDate();
+    header.appendChild(wd);
+    header.appendChild(dt);
+    right.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'day-view-tasks day-tasks';
+    list.dataset.date = selectedKey;
+    const dayTasks = tasks.filter(t => t.date === selectedKey).sort(taskSortCompare);
+    if(dayTasks.length === 0){
+      list.innerHTML = '<div class="empty-note">No tasks scheduled for this day.</div>';
+    } else {
+      dayTasks.forEach(t => list.appendChild(buildTaskCard(t)));
+    }
+    right.appendChild(list);
+
+    right.appendChild(buildInlineAddRow('day-view-' + selectedKey, selectedKey));
+
+    layout.appendChild(right);
+    wrap.appendChild(layout);
   }
 
   function renderYear(){
@@ -3544,20 +4014,30 @@
       label.textContent = `${startStr} – ${endStr}`;
       return;
     }
+    if(viewMode==='day'){
+      const isNarrow = window.innerWidth <= 1024;
+      label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', day:'numeric'} : {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+      return;
+    }
     const isNarrow = window.innerWidth <= 1024;
     label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', year:'numeric'} : {month:'long', year:'numeric'});
   }
   function syncViewButtons(){
-    const isCalendar = viewMode==='month' || viewMode==='year';
+    const isCalendar = viewMode==='month' || viewMode==='year' || viewMode==='day';
     $('#viewCalendarBtn').classList.toggle('active', isCalendar);
     $('#viewListBtn').classList.toggle('active', viewMode==='list');
     $('#viewKanbanBtn').classList.toggle('active', viewMode==='kanban');
     const label = $('#periodLabel');
-    label.classList.toggle('clickable-label', isCalendar);
-    label.title = isCalendar ? (viewMode==='month' ? 'Click to switch to Year view' : 'Click to switch to Month view') : '';
+    label.classList.toggle('clickable-label', viewMode==='month' || viewMode==='year');
+    label.title = viewMode==='month' ? 'Click to switch to Year view' : viewMode==='year' ? 'Click to switch to Month view' : '';
     $('#navGroup').classList.toggle('hidden', viewMode==='list');
     $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
     $('#navMonthBtn').classList.toggle('active', isCalendar);
+    const dl = $('#calendarDensityLabel');
+    if(dl) dl.textContent = settings.calendarDensity === 'day' ? 'Day' : 'Month';
+    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.density === settings.calendarDensity);
+    });
     try{ sessionStorage.setItem('prodplan-session-viewmode', viewMode); }catch(e){}
   }
 
@@ -3596,9 +4076,11 @@
       const isSelectModeList = list.dataset.selectMode === 'true';
       const s = Sortable.create(list, {
         group:'tasks', animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-        filter:'.day-count, .empty-note, .col-empty',
+        filter:'.day-count, .empty-note, .col-empty, .day-more',
         preventOnFilter:false,
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        forceFallback: true,
+        fallbackOnBody: true,
         disabled: isSelectModeList,
         onUpdate:(evt)=>{ reorderTasksToMatchDom(evt.to); persist(); renderAll(); },
         onAdd:(evt)=>{
@@ -3608,6 +4090,15 @@
           const toDate = evt.to.dataset.date;
           if(item.dataset.template==='true'){ instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate); }
           else { const id = item.dataset.id; if(id) moveTask(id, toDate); }
+        },
+        onDragEnter:(evt)=>{
+          if(evt.to && (evt.to.classList.contains('day-tasks') || evt.to.classList.contains('backlog-list'))) evt.to.classList.add('drop-target');
+        },
+        onDragLeave:(evt)=>{
+          if(evt.to) evt.to.classList.remove('drop-target');
+        },
+        onEnd:()=>{
+          document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
         }
       });
       sortables.push(s);
@@ -3621,6 +4112,7 @@
     renderBatches();
     renderEvents();
     if(viewMode==='month') renderMonth();
+    else if(viewMode==='day') renderDay();
     else if(viewMode==='year') renderYear();
     else if(viewMode==='kanban') renderKanban();
     else renderList();
@@ -3868,7 +4360,7 @@
     const copyBtn = e.target.closest('.btn-copy');
     const doneBtn = e.target.closest('.btn-done');
     const delBtn = e.target.closest('.btn-delete');
-    if(editBtn){ const id = taskIdFromEl(editBtn); if(id) openEditTaskModal(id); return; }
+    if(editBtn){ const id = taskIdFromEl(editBtn); closeAllTaskMenus(); if(id) openEditTaskModal(id); return; }
     if(copyBtn){ const id = taskIdFromEl(copyBtn); closeAllTaskMenus(); if(id) openCopyTaskModal(id); return; }
     if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
@@ -4147,7 +4639,9 @@
   $('#openEventModalBtn').addEventListener('click', ()=>{ populateEventBatchSelect(); openDrawer('#eventModal'); });
 
   $('#viewCalendarBtn').addEventListener('click', ()=>{
-    if(viewMode!=='month' && viewMode!=='year') viewMode='month';
+    if(viewMode === 'month' || viewMode === 'day' || viewMode === 'year') return;
+    const isPhone = window.innerWidth < 760;
+    viewMode = isPhone ? 'day' : (settings.calendarDensity === 'day' ? 'day' : 'month');
     syncViewButtons(); renderAll();
   });
   $('#periodLabel').addEventListener('click', ()=>{
@@ -4159,21 +4653,49 @@
   $('#viewListBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
   $('#viewKanbanBtn').addEventListener('click', ()=>{ viewMode='kanban'; syncViewButtons(); renderAll(); });
 
+  // ---- Calendar density dropdown ----
+  $('#calendarDensityBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const wrap = $('#calendarDensityWrap');
+    const willOpen = !wrap.classList.contains('open');
+    wrap.classList.toggle('open', willOpen);
+    $('#calendarDensityBtn').setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  });
+  document.querySelectorAll('#calendarDensityPop button').forEach(btn => {
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const density = btn.dataset.density;
+      settings.calendarDensity = density;
+      viewMode = density;
+      $('#calendarDensityWrap').classList.remove('open');
+      $('#calendarDensityBtn').setAttribute('aria-expanded', 'false');
+      persist();
+      syncViewButtons();
+      renderAll();
+    });
+  });
+
   $('#prevBtn').addEventListener('click', ()=>{
     if(viewMode==='year') currentDate.setFullYear(currentDate.getFullYear()-1);
     else if(viewMode==='kanban') currentDate.setDate(currentDate.getDate()-7);
+    else if(viewMode==='day') currentDate.setDate(currentDate.getDate()-1);
     else currentDate.setMonth(currentDate.getMonth()-1);
     renderAll();
   });
   $('#nextBtn').addEventListener('click', ()=>{
     if(viewMode==='year') currentDate.setFullYear(currentDate.getFullYear()+1);
     else if(viewMode==='kanban') currentDate.setDate(currentDate.getDate()+7);
+    else if(viewMode==='day') currentDate.setDate(currentDate.getDate()+1);
     else currentDate.setMonth(currentDate.getMonth()+1);
     renderAll();
   });
   $('#todayBtn').addEventListener('click', ()=>{ currentDate = new Date(); renderAll(); });
 
-  function openDrawer(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
+  function openDrawer(sel){
+    closeAllTaskMenus();
+    $(sel).classList.add('open');
+    $('#scrim').classList.add('show');
+  }
   function closeOverlays(){
     $('#historyDrawer').classList.remove('open');
     $('#reportsDrawer').classList.remove('open');
@@ -4214,7 +4736,12 @@
   $('#navManageBtn').addEventListener('click', toggleSidebar);
 
   $('#navAgendaBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
-  $('#navMonthBtn').addEventListener('click', ()=>{ if(viewMode!=='month' && viewMode!=='year') viewMode='month'; syncViewButtons(); renderAll(); });
+  $('#navMonthBtn').addEventListener('click', ()=>{
+    if(viewMode!=='month' && viewMode!=='year' && viewMode!=='day'){
+      viewMode = window.innerWidth < 760 ? 'day' : (settings.calendarDensity === 'day' ? 'day' : 'month');
+    }
+    syncViewButtons(); renderAll();
+  });
   $('#navMoreBtn').addEventListener('click', ()=>{
     closeOverlays();
     $('#moreSheet').classList.remove('hidden');
@@ -4671,14 +5198,15 @@
         return;
       }
       closeAllTaskMenus();
+      $('#calendarDensityWrap').classList.remove('open');
       closeOverlays();
     }
   });
   window.addEventListener('resize', ()=>{
     closeAllTaskMenus();
-    updateBatchStyleAvailability();
     updatePeriodLabel();
     if(viewMode==='month') renderMonth();
+    else if(viewMode==='day') renderDay();
   });
   document.addEventListener('visibilitychange', async ()=>{
     if(document.visibilityState === 'hidden'){ flushPendingPush(); flushPendingReportsPush(); }
