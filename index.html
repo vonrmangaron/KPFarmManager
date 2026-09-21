@@ -1034,6 +1034,53 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
 .forecast-empty.completed{background:var(--secondary-soft);color:var(--secondary);
   font-style:normal;font-weight:600;border-color:var(--secondary);}
 
+/* ===== Reading badge (inline in forecast date cell) ===== */
+.reading-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--secondary);
+  background: var(--secondary-soft);
+  color: var(--secondary);
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, transform .1s ease;
+  vertical-align: middle;
+  line-height: 1;
+}
+.reading-badge:hover{
+  background: var(--secondary);
+  color: #fff;
+  transform: translateY(-1px);
+}
+body.theme-dark .reading-badge:hover{ color: #1A2438; }
+
+/* ===== Reading history delete button ===== */
+.reading-history .reading-delete-btn{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 8px;
+  line-height: 1;
+  font-weight: 700;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.reading-history .reading-delete-btn:hover{
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft);
+}
+
 .sheds-grid.compare .forecast-table{min-width:540px;font-size:12.5px;}
 .sheds-grid.compare .forecast-table th,
 .sheds-grid.compare .forecast-table td{padding:7px 9px;}
@@ -1825,18 +1872,17 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - FIX: new-farm connect flow now sets syncConnectedAt and
-     pushes an initial empty file so the farm exists in GitHub.
-   - FIX: New Batch modal no longer shows "Not connected" right
-     after connecting to a brand-new farm (opens directly at the
-     batch-number phase).
-   - FIX: Batch History "Currently open" now uses currentBatchKey()
-     so it matches the CURRENT badge when predState.batchNumber
-     and farmData.batchNumber get out of sync.
-   - Also: applyCloudPayload syncs predState.batchNumber from
-     farmData.batchNumber when only the latter is set.
-   - Previous fixes retained: updateScrimVisibility(),
-     closeFarmFoundModal(), and the inline-delivery form layout.
+   - NEW: Reading badge (📖 Reading) inline in the Feed Balance
+     Forecast date cell for any day that has a silo reading.
+     Hover reveals the full ring breakdown + total. Clicking
+     confirms delete of that reading.
+   - NEW: Readings can now be deleted from either the forecast
+     row badge OR the Reading history list. Both paths confirm
+     and both show a toast indicating the new balance anchor.
+   - Reading history now shows up to 30 entries (was 10) and
+     has a per-row ✕ delete button.
+   - Retained: repo-root connect fixes, updateScrimVisibility(),
+     inline-delivery layout fix.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -3204,7 +3250,6 @@ function applyCloudPayload(payload, options){
       })
     };
     saveState();
-    // Keep predState.batchNumber in sync with farmData.batchNumber
     if (!predState.batchNumber && farmData.batchNumber){
       predState.batchNumber = sanitizeBatchNumber(farmData.batchNumber);
       savePredState();
@@ -3674,7 +3719,6 @@ async function handleConnectFarm(farmName){
 
     if (listing.files.length === 0){
       if (!confirm(`Farm "${clean}" not found in the cloud.\n\nCreate a new farm?`)) return;
-      // Mark as connected (this is a real connection to a brand-new farm).
       syncFarmName = clean;
       syncSha = null;
       syncExcelSha = null;
@@ -3682,11 +3726,9 @@ async function handleConnectFarm(farmName){
       syncConnectedAt = Date.now();
       syncLastSyncAt = null;
       saveSyncState();
-      // Create the initial (empty) file in the cloud so the farm exists in GitHub.
       try { await pushToCloud(); } catch(e){}
       closeSyncModal();
       closeSettingsDrawer();
-      // Go straight to the batch-number phase instead of the farm-choice phase.
       openNewBatchModal('batchNumber');
       return;
     }
@@ -4627,6 +4669,10 @@ function readingsSorted(group){
 }
 function latestReading(group){ const arr = readingsSorted(group); return arr.length ? arr[arr.length - 1] : null; }
 function readingTotalKg(reading){ if (!reading) return 0; return ringsToKg(reading.silo1Rings) + ringsToKg(reading.silo2Rings) + ringsToKg(reading.silo3Rings); }
+function readingOnDate(group, dateIso){
+  const arr = readingsSorted(group);
+  return arr.find(r => r.date === dateIso) || null;
+}
 
 function deliveriesForGroup(group){
   const s = siloData[group] || { deliveries: [] };
@@ -4835,6 +4881,24 @@ function setSiloRingsForToday(group, siloNum, rings){
   reading[key] = (rings === null) ? null : normalizeRing(rings);
   saveSiloData(); schedulePush(); render();
 }
+
+function deleteSiloReading(group, dateIso){
+  const s = siloData[group];
+  if (!s || !Array.isArray(s.readings)) return;
+  const idx = s.readings.findIndex(r => r.date === dateIso);
+  if (idx < 0) return;
+  const d = parseExcelDate(dateIso);
+  if (!confirm(`Delete the silo reading from ${fmtShort(d)}?\n\nThe balance projection for this group will change if this was the most recent reading.`)) return;
+  s.readings.splice(idx, 1);
+  saveSiloData(); schedulePush(); render();
+  const newLatest = s.readings.length ? s.readings[s.readings.length - 1] : null;
+  if (newLatest){
+    showToast(`🗑️ Reading deleted — balance now anchored on ${fmtShort(dateOnly(newLatest.date))}.`);
+  } else {
+    showToast('🗑️ Reading deleted — no silo readings left. Tap ring levels to record a new one.');
+  }
+}
+
 function addSiloDelivery(group, dateStr, amountT, feedType, note){
   const d = parseExcelDate(dateStr);
   if (!d){ showToast('Pick a valid date.', true); return; }
@@ -7120,6 +7184,7 @@ function renderFeedPlanner(group, sheds, today){
         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">
           💡 Click any future weekday row to plan a delivery — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Actual</strong> (recorded in Scheduled Deliveries).
           Rows with an official delivery already scheduled are locked — edit that delivery in Scheduled Deliveries first.
+          Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.
         </div>
       </div>
       <div class="planner-card">
@@ -7168,7 +7233,9 @@ function renderSiloInput(group, siloNum, rings){
     </div>`;
 }
 function renderReadingHistory(group){
-  const arr = readingsSorted(group).slice().reverse().slice(0, 10);
+  const all = readingsSorted(group);
+  const limit = all.length <= 30 ? all.length : 30;
+  const arr = all.slice().reverse().slice(0, limit);
   if (!arr.length){
     return `
       <details class="reading-history">
@@ -7181,9 +7248,9 @@ function renderReadingHistory(group){
   const todayIso = iso(new Date());
   return `
     <details class="reading-history">
-      <summary>🕘 Reading history (last ${arr.length})</summary>
+      <summary>🕘 Reading history (${all.length === arr.length ? arr.length : `last ${arr.length} of ${all.length}`})</summary>
       <table>
-        <thead><tr><th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th></tr></thead>
+        <thead><tr><th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead>
         <tbody>
           ${arr.map(r => {
             const total = readingTotalKg(r);
@@ -7195,6 +7262,11 @@ function renderReadingHistory(group){
                 <td>${r.silo2Rings === null ? '—' : r.silo2Rings + 'r'}</td>
                 <td>${r.silo3Rings === null ? '—' : r.silo3Rings + 'r'}</td>
                 <td class="num">${(total/1000).toFixed(2)} t</td>
+                <td style="text-align:right;">
+                  <button class="reading-delete-btn" type="button"
+                    data-delete-reading="${group}|${r.date}"
+                    title="Delete this reading">✕</button>
+                </td>
               </tr>`;
           }).join('')}
         </tbody>
@@ -7306,9 +7378,21 @@ function renderSiloForecastTable(forecast, group){
     const ages = shedAgesAtDateForGroup(group, r.date);
     const agesStr = formatAgesPair(ages);
 
+    // Reading badge (if a silo reading exists on this exact date)
+    const reading = readingOnDate(group, iso(r.date));
+    let readingBadge = '';
+    if (reading){
+      const s1 = reading.silo1Rings === null || reading.silo1Rings === undefined ? 'off' : reading.silo1Rings + 'r';
+      const s2 = reading.silo2Rings === null || reading.silo2Rings === undefined ? 'off' : reading.silo2Rings + 'r';
+      const s3 = reading.silo3Rings === null || reading.silo3Rings === undefined ? 'off' : reading.silo3Rings + 'r';
+      const totalT = (readingTotalKg(reading) / 1000).toFixed(2);
+      const tip = `Silo 1: ${s1} · Silo 2: ${s2} · Silo 3: ${s3} · Total ${totalT} t — click to delete this reading`;
+      readingBadge = `<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖 Reading</button>`;
+    }
+
     return `
       <tr class="${rowClasses}"${clickAttrs}>
-        <td>${fmtShort(r.date)}${todayTag}${weekendTag}</td>
+        <td>${fmtShort(r.date)}${todayTag}${weekendTag}${readingBadge}</td>
         <td class="num">${agesStr}</td>
         <td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>
         <td>${deliveryCell}</td>
@@ -8355,6 +8439,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (e.target.closest('[data-global-clear-pickups]')){
       clearAllPredictedPickups();
+      return;
+    }
+
+    // Reading badge delete (from forecast row) — must stopPropagation so the row's inline-del doesn't fire
+    const deleteReadingBtn = e.target.closest('[data-delete-reading]');
+    if (deleteReadingBtn){
+      e.stopPropagation();
+      const parts = deleteReadingBtn.dataset.deleteReading.split('|');
+      deleteSiloReading(Number(parts[0]), parts[1]);
       return;
     }
 
