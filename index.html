@@ -1029,6 +1029,7 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
   border:1px dashed var(--secondary);}
 .forecast-table .live-after{font-weight:700;color:var(--primary-dark);}
 .forecast-table .live-after.zero{color:var(--danger);}
+.forecast-table .pred-catch-cell{color:var(--secondary);font-weight:800;font-family:'Sora',sans-serif;}
 .forecast-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
   background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;font-size:13px;}
 .forecast-empty.completed{background:var(--secondary-soft);color:var(--secondary);
@@ -1595,6 +1596,7 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 .pred-pickup-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .pred-pickup-input.manual{border-color:var(--primary);background:var(--primary-soft);}
 .pred-pickup-input.warn{border-color:var(--danger);background:var(--danger-soft);}
+.pred-pickup-input.avg-input{width:100px;text-align:right;}
 
 .pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);
   text-align:right;font-variant-numeric:tabular-nums;}
@@ -1872,17 +1874,45 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - NEW: Reading badge (📖 Reading) inline in the Feed Balance
-     Forecast date cell for any day that has a silo reading.
-     Hover reveals the full ring breakdown + total. Clicking
-     confirms delete of that reading.
-   - NEW: Readings can now be deleted from either the forecast
-     row badge OR the Reading history list. Both paths confirm
-     and both show a toast indicating the new balance anchor.
-   - Reading history now shows up to 30 entries (was 10) and
-     has a per-row ✕ delete button.
-   - Retained: repo-root connect fixes, updateScrimVisibility(),
-     inline-delivery layout fix.
+   - CHANGE: Pickups now deduct from the START of their sheet
+     date (previously deducted from the next day). Fixes: on
+     catch day, birds = 0 for the whole day, feed = 0 for the
+     whole day, "Live birds" / "Current birds" columns match
+     reality.
+   - CHANGE: Daily mortality rate now fills the gap between
+     manual mortality entries. A new `mortalityUpdatedAt`
+     anchor is stamped whenever the user types a mortality
+     count. Days on/before the anchor use the recorded count
+     as-is. Days after the anchor project the daily rate
+     forward. This makes "Live birds" decline day-by-day
+     between manual counts.
+   - CHANGE: Shed Forecast table simplified — dropped the
+     "Live (after)" column. Row is now:
+     Date | Age | Live birds | Daily Feed | Pickup
+     The Pickup cell content is hidden (row background still
+     highlights pickup days).
+   - CHANGE: Excel import now stamps the `mortalityUpdatedAt`
+     anchor (today) for any shed with mortality > 0, so the
+     daily rate kicks in immediately after a fresh import.
+     Existing data (anchor null, mortality > 0) is migrated
+     to today on first load.
+   - CHANGE: New "Predicted Catch" column in the Feed Balance
+     Forecast, between "Current birds" and "Daily Feed".
+     Shows the total predicted pickup birds (summed across
+     both sheds) on each future day, e.g. "−5,000".
+   - FIX: "Current birds" column was showing fractional birds
+     because the daily mortality rate was applied as a
+     multiplicative decay and the float was never rounded.
+     The projection loops in `liveAtStartOfDay` and
+     `computeLiveBirdsBefore` now round to the nearest whole
+     bird after each daily step.
+   - FIX: The Predictions pickup history now lets you edit
+     EITHER the "Total wt (kg)" cell OR the "Avg wt (kg/bird)"
+     cell — the other is computed from birds. Previously only
+     the total was editable.
+   - Retained: reading badge + reading deletion, repo-root
+     connect fixes, updateScrimVisibility(), inline-delivery
+     layout fix, "Current birds" column in Feed Balance Forecast.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -2375,17 +2405,100 @@ function recommendPickupForDate(shed, dateIso, opts){
   };
 }
 
+/* ---------- Live birds at start of day (with anchor-based mortality) ---------- */
+function liveAtStartOfDay(shed, D){
+  const d = dateOnly(D);
+  if (!shed.placementDate) return 0;
+  if (d < dateOnly(shed.placementDate)) return 0;
+  if (shed.cleanoutDate && d > dateOnly(shed.cleanoutDate)) return 0;
+
+  const effective = computeEffectivePickups(shed);
+  const sumPickupsOnOrBefore = (date) => {
+    const target = dateOnly(date);
+    let total = 0;
+    for (const p of effective){
+      if (dateOnly(p.date) <= target) total += Number(p.birds) || 0;
+    }
+    return total;
+  };
+  const sumPickupsOn = (date) => {
+    const targetIso = iso(date);
+    let total = 0;
+    for (const p of effective){
+      if (iso(p.date) === targetIso) total += Number(p.birds) || 0;
+    }
+    return total;
+  };
+
+  const anchor = shed.mortalityUpdatedAt ? dateOnly(shed.mortalityUpdatedAt) : null;
+  const recordedMort = Number(shed.mortality || 0);
+  const initPop = Number(shed.initialPopulation) || 0;
+
+  if (!anchor || d <= anchor){
+    return Math.max(0, initPop - recordedMort - sumPickupsOnOrBefore(d));
+  }
+
+  let live = Math.max(0, initPop - recordedMort - sumPickupsOnOrBefore(anchor));
+  const rate = shedMortRate(shed) / 100;
+  let cursor = addDays(anchor, 1);
+  while (cursor <= d){
+    live = live * (1 - rate);
+    live = Math.max(0, live - sumPickupsOn(cursor));
+    live = Math.round(live);
+    cursor = addDays(cursor, 1);
+  }
+  return Math.max(0, live);
+}
+
+/* ---------- Live birds strictly before a date (for auto-fill) ---------- */
 function computeLiveBirdsBefore(shed, dateObj, extraPredicted){
   const d = dateOnly(dateObj);
   if (!shed || !shed.placementDate) return 0;
   if (d < dateOnly(shed.placementDate)) return 0;
-  const realBefore = (shed.pickups || [])
-    .filter(p => dateOnly(p.date) < d)
-    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
-  const extraBefore = (extraPredicted || [])
-    .filter(p => dateOnly(p.date) < d)
-    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
-  return Math.max(0, (shed.initialPopulation || 0) - Number(shed.mortality || 0) - realBefore - extraBefore);
+
+  const realPickups = shed.pickups || [];
+  const extras = extraPredicted || [];
+  const sumPickupsBeforeExclusive = (date) => {
+    const target = dateOnly(date);
+    let total = 0;
+    for (const p of realPickups){ if (dateOnly(p.date) < target) total += Number(p.birds) || 0; }
+    for (const p of extras){ if (dateOnly(p.date) < target) total += Number(p.birds) || 0; }
+    return total;
+  };
+  const sumPickupsOnOrBefore = (date) => {
+    const target = dateOnly(date);
+    let total = 0;
+    for (const p of realPickups){ if (dateOnly(p.date) <= target) total += Number(p.birds) || 0; }
+    for (const p of extras){ if (dateOnly(p.date) <= target) total += Number(p.birds) || 0; }
+    return total;
+  };
+  const sumPickupsOn = (date) => {
+    const targetIso = iso(date);
+    let total = 0;
+    for (const p of realPickups){ if (iso(p.date) === targetIso) total += Number(p.birds) || 0; }
+    for (const p of extras){ if (iso(p.date) === targetIso) total += Number(p.birds) || 0; }
+    return total;
+  };
+
+  const anchor = shed.mortalityUpdatedAt ? dateOnly(shed.mortalityUpdatedAt) : null;
+  const recordedMort = Number(shed.mortality || 0);
+  const initPop = Number(shed.initialPopulation) || 0;
+
+  if (!anchor || d <= anchor){
+    return Math.max(0, initPop - recordedMort - sumPickupsBeforeExclusive(d));
+  }
+
+  let live = Math.max(0, initPop - recordedMort - sumPickupsOnOrBefore(anchor));
+  const rate = shedMortRate(shed) / 100;
+  const lastWalkDay = addDays(d, -1);
+  let cursor = addDays(anchor, 1);
+  while (cursor <= lastWalkDay){
+    live = live * (1 - rate);
+    live = Math.max(0, live - sumPickupsOn(cursor));
+    live = Math.round(live);
+    cursor = addDays(cursor, 1);
+  }
+  return Math.max(0, live);
 }
 
 function autoFillPredictedPickups(shed){
@@ -2606,7 +2719,7 @@ function parseShedsFromWorkbook(workbook){
 
   const sheds = Array.from({length: SHED_COUNT}, (_, i) => ({
     id: i + 1, placementDate: null, initialPopulation: 0, cleanoutDate: null,
-    mortality: 0, customFeedKg: null, pickups: [],
+    mortality: 0, mortalityUpdatedAt: null, customFeedKg: null, pickups: [],
     targetCurve: { 7: null, 14: null, 21: null, 28: null },
     mortalityRatePercent: DEFAULT_MORT_RATE_PCT,
     chickWeightKg: DEFAULT_CHICK_WEIGHT_KG,
@@ -2710,6 +2823,7 @@ function loadState(){
     parsed.sheds.forEach(s => {
       s.placementDate = s.placementDate ? dateOnly(s.placementDate) : null;
       s.cleanoutDate  = s.cleanoutDate  ? dateOnly(s.cleanoutDate)  : null;
+      s.mortalityUpdatedAt = s.mortalityUpdatedAt ? dateOnly(s.mortalityUpdatedAt) : null;
       s.pickups = (s.pickups || []).map(p => ({
         date: dateOnly(p.date),
         birds: Number(p.birds) || 0,
@@ -2763,6 +2877,20 @@ function loadState(){
       : DEFAULT_BIAS_FACTOR;
     return parsed;
   } catch(e){ return null; }
+}
+/* ---------- Mortality anchor migration ---------- */
+function migrateMortalityAnchors(){
+  if (!farmData || !Array.isArray(farmData.sheds)) return false;
+  const today = dateOnly(new Date());
+  let changed = false;
+  farmData.sheds.forEach(s => {
+    if (!s.mortalityUpdatedAt && Number(s.mortality) > 0){
+      s.mortalityUpdatedAt = today;
+      changed = true;
+    }
+  });
+  if (changed) saveState();
+  return changed;
 }
 function saveShedViews(){
   try { localStorage.setItem(VIEW_KEY, JSON.stringify(shedViewByGroup)); } catch(e){}
@@ -3206,6 +3334,7 @@ function applyCloudPayload(payload, options){
           initialPopulation: Number(s.initialPopulation) || 0,
           cleanoutDate: s.cleanoutDate ? dateOnly(s.cleanoutDate) : null,
           mortality: Number(s.mortality) || 0,
+          mortalityUpdatedAt: s.mortalityUpdatedAt ? dateOnly(s.mortalityUpdatedAt) : null,
           customFeedKg: (s.customFeedKg != null && Number(s.customFeedKg) > 0) ? Number(s.customFeedKg) : null,
           mortalityRatePercent: (Number.isFinite(mr) && mr >= 0) ? Math.max(0, Math.min(MAX_MORT_RATE_PCT, mr)) : DEFAULT_MORT_RATE_PCT,
           chickWeightKg: (Number.isFinite(cw) && cw > 0) ? Math.max(MIN_CHICK_WEIGHT_KG, Math.min(MAX_CHICK_WEIGHT_KG, cw)) : DEFAULT_CHICK_WEIGHT_KG,
@@ -3250,6 +3379,7 @@ function applyCloudPayload(payload, options){
       })
     };
     saveState();
+    migrateMortalityAnchors();
     if (!predState.batchNumber && farmData.batchNumber){
       predState.batchNumber = sanitizeBatchNumber(farmData.batchNumber);
       savePredState();
@@ -3497,6 +3627,7 @@ function buildDefaultShed(id){
     initialPopulation: DEFAULT_SHED_POPULATION,
     cleanoutDate: null,
     mortality: 0,
+    mortalityUpdatedAt: null,
     customFeedKg: null,
     pickups: [],
     targetCurve: { 7: null, 14: null, 21: null, 28: null },
@@ -4321,17 +4452,6 @@ function shedsForGroup(g){
   return [a, b].filter(Boolean);
 }
 
-function liveAtStartOfDay(shed, D){
-  const d = dateOnly(D);
-  if (!shed.placementDate) return 0;
-  if (d < dateOnly(shed.placementDate)) return 0;
-  if (shed.cleanoutDate && d > dateOnly(shed.cleanoutDate)) return 0;
-  const effective = computeEffectivePickups(shed);
-  const beforeD = effective
-    .filter(p => dateOnly(p.date) < d)
-    .reduce((s,p) => s + (Number(p.birds) || 0), 0);
-  return Math.max(0, shed.initialPopulation - Number(shed.mortality || 0) - beforeD);
-}
 function feedPerBirdKg(shed, ageDays){
   if (shed.customFeedKg != null && shed.customFeedKg > 0) return shed.customFeedKg;
   if (ageDays <= 0) return 0;
@@ -4737,7 +4857,20 @@ function computeSiloForecast(group, range){
   const sheds = shedsForGroup(group);
   const today = dateOnly(new Date());
   const rows = [];
-  let totalConsumption = 0, totalDelivered = 0;
+  let totalConsumption = 0, totalDelivered = 0, totalPredictedCatch = 0;
+
+  // Pre-compute predicted pickup birds per day across both sheds in the group.
+  const predictedByDay = {};
+  sheds.forEach(s => {
+    const eff = computeEffectivePickups(s);
+    eff.forEach(p => {
+      if (p.__source === 'predicted'){
+        const k = iso(p.date);
+        predictedByDay[k] = (predictedByDay[k] || 0) + (Number(p.birds) || 0);
+      }
+    });
+  });
+
   for (let off = range.start; off <= range.end; off++){
     const d = addDays(today, off);
     const isPast = off < 0;
@@ -4746,10 +4879,13 @@ function computeSiloForecast(group, range){
     const del  = deliveriesKgOnAll(group, d);
     const deliveriesOnDay = allDeliveriesForGroup(group).filter(x => iso(x.date) === iso(d));
     const bal = balanceOnEndOfDay(group, d);
+    const liveBirds = sheds.reduce((sum, s) => sum + liveAtStartOfDay(s, d), 0);
+    const predictedCatch = isPast ? null : (predictedByDay[iso(d)] || 0);
+    if (predictedCatch) totalPredictedCatch += predictedCatch;
     totalConsumption += cons;
     totalDelivered += del;
     rows.push({ date: d, consumption: cons, delivery: del,
-      deliveries: deliveriesOnDay, balance: bal,
+      deliveries: deliveriesOnDay, balance: bal, liveBirds, predictedCatch,
       isToday, isPast, isFuture: !isPast && !isToday, isWeekend: isWeekend(d) });
   }
   let depletedDate = null;
@@ -4759,7 +4895,7 @@ function computeSiloForecast(group, range){
   const endBalance = rows.length ? rows[rows.length - 1].balance : null;
   const totalStock = balanceOnEndOfDay(group, today);
   const shortfall = Math.max(0, totalConsumption - (totalStock || 0) - totalDelivered);
-  return { rows, totalStock, totalConsumption, totalDelivered, depletedDate, endBalance, shortfall };
+  return { rows, totalStock, totalConsumption, totalDelivered, totalPredictedCatch, depletedDate, endBalance, shortfall };
 }
 
 function shedAgesAtDateForGroup(group, date){
@@ -5366,6 +5502,7 @@ function reflowShedPickups(shed){
     shed.cleanoutDate = dateOnly(fp.date);
     const totalPicked = shed.pickups.reduce((sum,p) => sum + (Number(p.birds) || 0), 0);
     shed.mortality = Math.max(0, (shed.initialPopulation || 0) - totalPicked);
+    shed.mortalityUpdatedAt = dateOnly(new Date());
   }
 }
 function deleteManualPickup(shedId, dateIso){
@@ -6206,6 +6343,12 @@ function finalizeImport(mode){
     }
 
     const densitySettings = (cur && cur.densitySettings) ? { ...cur.densitySettings } : { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null };
+    // An Excel import counts as a fresh official mortality count.
+    // Any shed with mortality > 0 gets the anchor stamped to today.
+    let mortalityUpdatedAt = (cur && cur.mortalityUpdatedAt) ? cur.mortalityUpdatedAt : null;
+    if (mortality > 0){
+      mortalityUpdatedAt = dateOnly(new Date());
+    }
     return {
       ...inc,
       pickups: finalPickups,
@@ -6214,6 +6357,7 @@ function finalizeImport(mode){
       densitySettings,
       targetCurve: tc,
       cleanoutDate, mortality,
+      mortalityUpdatedAt,
       mortalityRatePercent: rate,
       chickWeightKg: cw,
       inYardSamples: samples
@@ -6317,6 +6461,7 @@ function updateShedField(shedIdx, key, rawValue){
   } else if (key === 'mortality'){
     const n = Number(rawValue);
     shed.mortality = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    shed.mortalityUpdatedAt = dateOnly(new Date());
   } else if (key === 'customFeedKg'){
     const s = String(rawValue ?? '').trim();
     if (s === '') shed.customFeedKg = null;
@@ -6379,6 +6524,24 @@ function setPickupTotalWeight(shedId, pickupDateIso, value){
     pickup.totalWeightKg = n;
     pickup.totalWeightKgManual = true;
     if (pickup.totalWeightKgFromExcel == null) pickup.totalWeightKgFromExcel = n;
+  }
+  saveState(); schedulePush(); render();
+}
+/* NEW: symmetric to setPickupTotalWeight — user types avg/kg and total is computed. */
+function setPickupAvgWeight(shedId, pickupDateIso, value){
+  if (!farmData) return;
+  const shed = farmData.sheds[shedId - 1]; if (!shed) return;
+  const pickup = (shed.pickups || []).find(p => iso(p.date) === pickupDateIso); if (!pickup) return;
+  const v = String(value).trim();
+  if (v === ''){ pickup.totalWeightKg = null; pickup.totalWeightKgManual = false; }
+  else {
+    const n = Number(v); if (!Number.isFinite(n) || n <= 0) return;
+    const birds = Number(pickup.birds) || 0;
+    if (birds <= 0) return;
+    const total = n * birds;
+    pickup.totalWeightKg = total;
+    pickup.totalWeightKgManual = true;
+    if (pickup.totalWeightKgFromExcel == null) pickup.totalWeightKgFromExcel = total;
   }
   saveState(); schedulePush(); render();
 }
@@ -6472,6 +6635,7 @@ function liveUpdateShedMortality(shedIdx, rawValue){
   if (!shed) return;
   const n = Number(rawValue);
   shed.mortality = (Number.isFinite(n) && n >= 0) ? Math.floor(n) : 0;
+  shed.mortalityUpdatedAt = dateOnly(new Date());
   saveState(); schedulePush();
   if (activeTab === 'predictions') updateFarmKpiValues();
 }
@@ -6579,7 +6743,7 @@ function closeSyncModal(){
   updateScrimVisibility();
 }
 
-/* ---------- Scrim visibility (restored) ---------- */
+/* ---------- Scrim visibility ---------- */
 function updateScrimVisibility(){
   const scrim = document.getElementById('syncScrim');
   if (!scrim) return;
@@ -7013,13 +7177,6 @@ function renderShedForecastTable(shed, forecast){
       r.hasPredicted ? 'predicted-pickup-day' : '',
       r.isFinalDay ? 'is-final' : ''
     ].filter(Boolean).join(' ');
-    let pickupCell = '—';
-    if (r.pickupsBirds > 0){
-      const finalTag = r.isFinalDay ? `<span class="pickup-pill final">FINAL</span>` : '';
-      const predictedTag = r.hasPredicted ? `<span class="pickup-pill predicted">PLANNED</span>` : '';
-      pickupCell = `${finalTag}${predictedTag}<span class="pickup-pill">−${r.pickupsBirds.toLocaleString()}</span>`;
-    }
-    const liveAfterCls = r.liveAfter === 0 ? 'live-after zero' : 'live-after';
     const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
     const weekendTag = weekend ? ' <span class="weekend-pill">Weekend</span>' : '';
     return `
@@ -7028,8 +7185,7 @@ function renderShedForecastTable(shed, forecast){
         <td class="num">${r.age}d</td>
         <td class="num">${r.liveStart.toLocaleString()}</td>
         <td class="num">${r.dailyFeed.toFixed(1)} kg</td>
-        <td>${pickupCell}</td>
-        <td class="num ${liveAfterCls}">${r.liveAfter.toLocaleString()}</td>
+        <td>—</td>
       </tr>`;
   }).join('');
   return `
@@ -7037,14 +7193,14 @@ function renderShedForecastTable(shed, forecast){
       <h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4>
       <div class="forecast-table-wrap">
         <table class="forecast-table">
-          <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live (start)</th>
-            <th class="num">Daily Feed</th><th>Pickup</th><th class="num">Live (after)</th></tr></thead>
+          <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th>
+            <th class="num">Daily Feed</th><th>Pickup</th></tr></thead>
           <tbody>
             ${rows}
             <tr class="total-row">
               <td colspan="3">Total over range</td>
               <td class="num">${forecast.totalFeed.toFixed(1)} kg</td>
-              <td colspan="2" style="font-size:12px;font-weight:600;color:var(--muted);">
+              <td style="font-size:12px;font-weight:600;color:var(--muted);">
                 ${(forecast.totalFeed / 1000).toFixed(2)} tonnes
               </td>
             </tr>
@@ -7378,7 +7534,16 @@ function renderSiloForecastTable(forecast, group){
     const ages = shedAgesAtDateForGroup(group, r.date);
     const agesStr = formatAgesPair(ages);
 
-    // Reading badge (if a silo reading exists on this exact date)
+    const currentBirds = r.liveBirds || 0;
+
+    // Predicted Catch cell — sum of active predicted pickups on this day, both sheds
+    let predCatchCell = '—';
+    let predCatchCls = '';
+    if (r.predictedCatch && r.predictedCatch > 0){
+      predCatchCell = '−' + r.predictedCatch.toLocaleString();
+      predCatchCls = 'pred-catch-cell';
+    }
+
     const reading = readingOnDate(group, iso(r.date));
     let readingBadge = '';
     if (reading){
@@ -7394,21 +7559,28 @@ function renderSiloForecastTable(forecast, group){
       <tr class="${rowClasses}"${clickAttrs}>
         <td>${fmtShort(r.date)}${todayTag}${weekendTag}${readingBadge}</td>
         <td class="num">${agesStr}</td>
+        <td class="num">${currentBirds.toLocaleString()}</td>
+        <td class="num ${predCatchCls}">${predCatchCell}</td>
         <td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>
         <td>${deliveryCell}</td>
         <td class="num ${balCls}">${balCell}</td>
         <td>${statusCell}</td>
       </tr>`;
   }).join('');
+  const predCatchTotalCell = forecast.totalPredictedCatch > 0
+    ? '−' + forecast.totalPredictedCatch.toLocaleString()
+    : '—';
   return `
     <div class="forecast-table-wrap">
-      <table class="forecast-table" style="min-width:700px;">
-        <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Daily Feed</th><th>Delivery</th>
+      <table class="forecast-table" style="min-width:940px;">
+        <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Current birds</th>
+          <th class="num">Predicted Catch</th><th class="num">Daily Feed</th><th>Delivery</th>
           <th class="num">End Balance</th><th>Status</th></tr></thead>
         <tbody>
           ${rows}
           <tr class="total-row">
-            <td colspan="2">Totals</td>
+            <td colspan="3">Totals</td>
+            <td class="num pred-catch-cell">${predCatchTotalCell}</td>
             <td class="num">${fmtFeed(forecast.totalConsumption)}</td>
             <td>${forecast.totalDelivered > 0 ? '+' + fmtFeed(forecast.totalDelivered) : '—'}</td>
             <td class="num ${(forecast.endBalance || 0) > 0 ? 'balance-pos' : 'balance-neg'}">${forecast.endBalance !== null ? fmtFeed(forecast.endBalance) : '—'}</td>
@@ -8230,8 +8402,13 @@ function renderPredictionsShedCard(shed, group){
     const isManualSource = stored.source === 'manual';
     const totalValue = (stored.totalWeightKg != null) ? stored.totalWeightKg : '';
     const warn = totalValue && (totalValue < 100 || totalValue > 40000);
-    const avgValue = p.avgWeightKg ? p.avgWeightKg.toFixed(3) : '—';
-    const avgWarn = p.avgWeightKg && (p.avgWeightKg < 0.3 || p.avgWeightKg > 5);
+    // NEW: avg is also editable. Show stored avg if total is stored, else empty.
+    const avgRaw = (stored.totalWeightKg != null && stored.birds > 0)
+      ? (stored.totalWeightKg / stored.birds) : null;
+    const avgInputVal = (avgRaw != null) ? Number(avgRaw.toFixed(5)) : '';
+    const avgWarn = (avgRaw != null) && (avgRaw < 0.3 || avgRaw > 5);
+    const estAvg = p.avgWeightKg ? p.avgWeightKg.toFixed(3) : '';
+    const avgPlaceholder = (avgRaw == null && estAvg) ? estAvg : 'kg/bird';
     const ageBadge = stored.ageOverride != null ? ' *' : '';
     const sourceBadge = isManualSource ? `<span class="tag manual-source" style="font-size:9px;padding:1px 6px;margin-left:6px;">Manual</span>` : '';
     const showRevert = isManualWeight && hasExcelFrom;
@@ -8246,9 +8423,18 @@ function renderPredictionsShedCard(shed, group){
             value="${totalValue}"
             placeholder="${p.isEstWeight ? 'Standard est.' : 'total kg'}"
             data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
+            data-pickup-field="total"
             title="${isManualWeight ? 'Manually edited' : (p.isEstWeight ? 'No Excel weight — using standard curve estimate' : 'From Excel')}" />
         </td>
-        <td class="pred-avg-cell" style="${avgWarn?'color:var(--danger);':''}">${avgValue}</td>
+        <td class="num">
+          <input class="pred-pickup-input avg-input ${isManualWeight?'manual':''} ${avgWarn?'warn':''}"
+            type="number" step="0.001" min="0"
+            value="${avgInputVal}"
+            placeholder="${avgPlaceholder}"
+            data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
+            data-pickup-field="avg"
+            title="Average weight (kg/bird) — edit either this or Total wt and the other recomputes from birds" />
+        </td>
         <td style="text-align:right;">
           <div class="pickup-actions">
             <button class="pickup-actions-btn" type="button"
@@ -8284,7 +8470,7 @@ function renderPredictionsShedCard(shed, group){
   const pickupHeaderHtml = `
     <h4 class="pickup-header">
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span>Pickup History — average weight computed from total ÷ birds</span>
+        <span>Pickup History — edit total or avg, both auto-compute</span>
         ${pill}
       </span>
       <button class="btn-pickup-add"
@@ -8376,6 +8562,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const saved = loadState();
   if (saved) farmData = saved;
+  migrateMortalityAnchors();
   initShedViews();
   const savedSilo = loadSiloData();
   if (savedSilo) siloData = savedSilo;
@@ -8442,7 +8629,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Reading badge delete (from forecast row) — must stopPropagation so the row's inline-del doesn't fire
     const deleteReadingBtn = e.target.closest('[data-delete-reading]');
     if (deleteReadingBtn){
       e.stopPropagation();
@@ -8800,7 +8986,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     if (t.dataset && t.dataset.pickupShed !== undefined && t.dataset.pickupDate){
-      setPickupTotalWeight(Number(t.dataset.pickupShed), t.dataset.pickupDate, t.value);
+      if (t.dataset.pickupField === 'avg'){
+        setPickupAvgWeight(Number(t.dataset.pickupShed), t.dataset.pickupDate, t.value);
+      } else {
+        setPickupTotalWeight(Number(t.dataset.pickupShed), t.dataset.pickupDate, t.value);
+      }
       return;
     }
     if (t.id && t.id.startsWith('predTargetWeight_')){
