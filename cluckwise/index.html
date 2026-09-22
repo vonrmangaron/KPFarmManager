@@ -394,6 +394,8 @@
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
   .task-card.sortable-ghost{opacity:0.35;}
   .task-card.sortable-drag{cursor:grabbing; box-shadow:var(--shadow-lg);}
+  .kcard.sortable-ghost{opacity:0.35;}
+  .kcard.sortable-drag{cursor:grabbing; box-shadow:var(--shadow-lg);}
   body.hide-icons .task-icon{display:none;}
 
   .task-body{flex:1; min-width:0;}
@@ -627,6 +629,12 @@
     border-radius:12px;
     outline:2px dashed var(--primary);
     outline-offset:2px;
+  }
+  .kanban-cards.drop-target{
+    background:var(--primary-soft);
+    border-radius:8px;
+    outline:2px dashed var(--primary);
+    outline-offset:-2px;
   }
 
   .week-strip{
@@ -2175,7 +2183,8 @@
     addHistory('Removed', `${count} task${count>1?'s':''} deleted from ${formatFull(key)}`);
     persist(); renderAll();
   }
-  function moveTask(id, newDateKey){
+  function moveTask(id, newDateKey, opts){
+    opts = opts || {};
     const t = tasks.find(t=>t.id===id);
     if(!t) return;
     const newDate = newDateKey==='backlog' ? null : newDateKey;
@@ -2183,12 +2192,17 @@
     const from = formatShort(t.date), to = formatShort(newDate);
     addHistory('Scheduled', `${taskLabel(t)} moved from ${from} to ${to}`);
     t.date = newDate;
-    persist(); renderAll();
+    persist();
+    if(opts.deferRender) requestAnimationFrame(renderAll);
+    else renderAll();
   }
-  function instantiateFrequentTask(name, icon, toDateKey){
+  function instantiateFrequentTask(name, icon, toDateKey, opts){
+    opts = opts || {};
     const dateVal = toDateKey==='backlog' ? null : toDateKey;
     addTask(name, icon, dateVal);
-    persist(); renderAll();
+    persist();
+    if(opts.deferRender) requestAnimationFrame(renderAll);
+    else renderAll();
   }
 
   const REPEAT_LABELS = { daily:'Every day', weekdays:'Every weekday', every2days:'Every 2 days', weekly:'Every week', biweekly:'Every 2 weeks', monthly:'Every month' };
@@ -4058,7 +4072,8 @@
           const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
           ids.forEach((id,i)=>{ const f = frequentTemplates.find(x=>x.id===id); if(f) f._order = i; });
           frequentTemplates.sort((a,b)=>(a._order||0)-(b._order||0));
-          persist(); renderAll();
+          persist();
+          requestAnimationFrame(renderAll);
         },
         onAdd:(evt)=>{
           const item = evt.item;
@@ -4068,28 +4083,40 @@
           if(!t) return;
           addFrequentTemplate(t.name, t.icon);
           tasks = tasks.filter(x=>x.id!==id);
-          persist(); renderAll();
+          persist();
+          requestAnimationFrame(renderAll);
         }
       }));
     }
     document.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
       const isSelectModeList = list.dataset.selectMode === 'true';
       const s = Sortable.create(list, {
-        group:'tasks', animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-        filter:'.day-count, .empty-note, .col-empty, .day-more',
+        group: { name: 'tasks', pull: true, put: true },
+        animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+        filter:'.day-count, .empty-note, .col-empty, .day-more, .task-menu-btn, .task-complete-btn, .bulk-select-cb',
         preventOnFilter:false,
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
         forceFallback: true,
         fallbackOnBody: true,
         disabled: isSelectModeList,
-        onUpdate:(evt)=>{ reorderTasksToMatchDom(evt.to); persist(); renderAll(); },
+        onUpdate:(evt)=>{
+          const listEl = evt.to;
+          const ids = Array.from(listEl.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
+          ids.forEach((id, i)=>{ const t = tasks.find(x=>x.id===id); if(t) t.order = i; });
+          persist();
+          requestAnimationFrame(renderAll);
+        },
         onAdd:(evt)=>{
           suppressNextClick = true;
           setTimeout(()=>{ suppressNextClick = false; }, 80);
           const item = evt.item;
           const toDate = evt.to.dataset.date;
-          if(item.dataset.template==='true'){ instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate); }
-          else { const id = item.dataset.id; if(id) moveTask(id, toDate); }
+          if(item.dataset.template==='true'){
+            instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true });
+          } else {
+            const id = item.dataset.id;
+            if(id) moveTask(id, toDate, { deferRender: true });
+          }
         },
         onDragEnter:(evt)=>{
           if(evt.to && (evt.to.classList.contains('day-tasks') || evt.to.classList.contains('backlog-list'))) evt.to.classList.add('drop-target');
