@@ -32,6 +32,7 @@
   --pickup-final-row: #F8ECD0;
   --weekend-tint: rgba(249,115,22,0.22);
   --weekend-border: #EA580C;
+  --fb-today-blue: #2563EB;
   --sticky-header-h: 130px;
   --shadow-sm:0 1px 2px rgba(43,33,22,0.06);
   --shadow-md:0 8px 22px rgba(43,33,22,0.09);
@@ -49,6 +50,7 @@ body.theme-dark{
   --pickup-final-row: rgba(240,168,64,0.26);
   --weekend-tint: rgba(240,168,64,0.24);
   --weekend-border: #F97316;
+  --fb-today-blue: #6FA8E8;
   --shadow-sm:0 1px 2px rgba(0,0,0,0.30);
   --shadow-md:0 8px 22px rgba(0,0,0,0.35);
   --shadow-lg:0 16px 40px rgba(0,0,0,0.45);
@@ -99,56 +101,31 @@ h1,h2,h3,h4,.brand,.btn-primary,.tab-btn,.fpill,.stab{font-family:'Sora',sans-se
 body.theme-dark .new-batch-btn{border-color:var(--primary-dark);background:var(--primary-soft);color:var(--primary-dark);}
 body.theme-dark .new-batch-btn:hover{background:var(--primary-dark);color:#1A2438;}
 
-/* ============ SETTINGS DRAWER ============ */
-.settings-scrim{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,0.55);
-  z-index:9990;
-  display:none; opacity:0;
-  transition:opacity .22s ease;
-}
+.settings-scrim{position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9990;
+  display:none; opacity:0; transition:opacity .22s ease;}
 body.theme-dark .settings-scrim{background:rgba(0,0,0,0.68);}
 .settings-scrim.open{display:block; opacity:1;}
 
-.settings-drawer{
-  position:fixed;
-  top:0; right:0; bottom:0;
-  width:460px;
-  max-width:calc(100vw - 24px);
-  background:var(--surface);
-  border-left:1px solid var(--line);
-  box-shadow:-8px 0 32px rgba(0,0,0,0.20);
-  z-index:9991;
-  display:flex; flex-direction:column;
-  transform:translateX(100%);
-  transition:transform .22s ease;
-  overflow:hidden;
-}
+.settings-drawer{position:fixed; top:0; right:0; bottom:0; width:460px;
+  max-width:calc(100vw - 24px); background:var(--surface);
+  border-left:1px solid var(--line); box-shadow:-8px 0 32px rgba(0,0,0,0.20);
+  z-index:9991; display:flex; flex-direction:column;
+  transform:translateX(100%); transition:transform .22s ease; overflow:hidden;}
 body.theme-dark .settings-drawer{box-shadow:-8px 0 32px rgba(0,0,0,0.55);}
 .settings-drawer.open{transform:translateX(0);}
-.settings-drawer-head{
-  display:flex; align-items:center; justify-content:space-between;
+.settings-drawer-head{display:flex; align-items:center; justify-content:space-between;
   padding:16px 20px; border-bottom:1px solid var(--line);
-  background:var(--surface-soft); flex-shrink:0;
-}
-.settings-drawer-head h3{
-  margin:0; font-family:'Sora',sans-serif; font-weight:800; font-size:16px;
-  color:var(--ink); display:flex; align-items:center; gap:8px;
-}
-.settings-drawer-close{
-  border:none; background:transparent; color:var(--muted);
-  cursor:pointer; font-size:20px; line-height:1;
-  width:32px; height:32px; border-radius:8px;
+  background:var(--surface-soft); flex-shrink:0;}
+.settings-drawer-head h3{margin:0; font-family:'Sora',sans-serif; font-weight:800; font-size:16px;
+  color:var(--ink); display:flex; align-items:center; gap:8px;}
+.settings-drawer-close{border:none; background:transparent; color:var(--muted);
+  cursor:pointer; font-size:20px; line-height:1; width:32px; height:32px; border-radius:8px;
   display:inline-flex; align-items:center; justify-content:center;
-  transition:background .15s ease,color .15s ease;
-}
+  transition:background .15s ease,color .15s ease;}
 .settings-drawer-close:hover{background:var(--danger-soft); color:var(--danger);}
-.settings-drawer-body{
-  flex:1; overflow-y:auto; padding:16px 20px 24px;
-  display:flex; flex-direction:column; gap:14px;
-}
+.settings-drawer-body{flex:1; overflow-y:auto; padding:16px 20px 24px;
+  display:flex; flex-direction:column; gap:14px;}
 
-/* ============ SETTINGS CARDS ============ */
 .settings-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
   padding:16px 18px;box-shadow:var(--shadow-sm);}
 .settings-card h3{margin:0 0 12px;font-size:14.5px;font-weight:800;
@@ -157,23 +134,11 @@ body.theme-dark .settings-drawer{box-shadow:-8px 0 32px rgba(0,0,0,0.55);}
 .settings-desc{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 12px;}
 
 .settings-btn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
-.settings-action-btn{
-  border:1px solid var(--line);
-  background:var(--surface-soft);
-  color:var(--ink);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:13.5px;
-  padding:14px 18px;
-  border-radius:12px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
+.settings-action-btn{border:1px solid var(--line);background:var(--surface-soft);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;padding:14px 18px;border-radius:12px;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   transition:background .15s ease, transform .1s ease, border-color .15s ease, color .15s ease;
-  min-height:52px;
-}
+  min-height:52px;}
 .settings-action-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);transform:translateY(-1px);}
 .settings-action-btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;}
 .settings-action-btn.primary:hover{filter:brightness(1.06);color:#fff;transform:translateY(-1px);}
@@ -201,8 +166,7 @@ body.theme-dark .settings-action-btn.primary:hover{color:#1A2438;}
 .sync-modal-body input[type="text"]{width:100%;border:1px solid var(--line);border-radius:10px;
   background:var(--surface-soft);color:var(--ink);padding:11px 13px;
   font-family:'Sora',sans-serif;font-weight:700;font-size:15px;}
-.sync-modal-body input[type="text"]:focus{outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);}
+.sync-modal-body input[type="text"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .sync-hint{font-size:11.5px;color:var(--muted);line-height:1.5;}
 .sync-hint strong{color:var(--danger);font-weight:700;}
 .sync-status-card{background:var(--surface-soft);border:1px solid var(--line);
@@ -261,8 +225,7 @@ body.theme-dark .btn-sync-primary.ghost{color:var(--ink);}
   padding:7px 14px;cursor:pointer;transition:filter .12s ease,transform .1s ease;}
 .batch-open-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
 body.theme-dark .batch-open-btn{color:#1A2438;}
-.batch-list-status{text-align:center;padding:24px 20px;color:var(--muted);
-  font-size:13px;font-style:italic;}
+.batch-list-status{text-align:center;padding:24px 20px;color:var(--muted);font-size:13px;font-style:italic;}
 .batch-list-status.error{color:var(--danger);font-style:normal;}
 
 .farm-found-body{padding:20px 22px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
@@ -270,19 +233,16 @@ body.theme-dark .batch-open-btn{color:#1A2438;}
 .farm-found-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;
   text-align:center;color:var(--ink);margin-bottom:2px;}
 .farm-found-title strong{color:var(--primary-dark);}
-.farm-found-sub{font-size:12.5px;color:var(--muted);text-align:center;
-  line-height:1.5;margin-bottom:4px;}
+.farm-found-sub{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:4px;}
 .farm-found-meta{background:var(--surface-soft);border:1px solid var(--line);
   border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
 .ff-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;}
 .ff-row .lbl{color:var(--muted);font-weight:600;}
-.ff-row .val{color:var(--ink);font-weight:700;font-family:'Sora',sans-serif;
-  text-align:right;word-break:break-word;max-width:60%;}
+.ff-row .val{color:var(--ink);font-weight:700;font-family:'Sora',sans-serif;text-align:right;word-break:break-word;max-width:60%;}
 .ff-choices{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
-.ff-choice{border:1px solid var(--line);background:var(--surface-soft);
-  border-radius:12px;padding:12px 14px;cursor:pointer;
-  display:flex;align-items:center;gap:12px;text-align:left;
-  font-family:'Inter',sans-serif;transition:background .15s ease,transform .1s ease,border-color .15s ease;}
+.ff-choice{border:1px solid var(--line);background:var(--surface-soft);border-radius:12px;padding:12px 14px;cursor:pointer;
+  display:flex;align-items:center;gap:12px;text-align:left;font-family:'Inter',sans-serif;
+  transition:background .15s ease,transform .1s ease,border-color .15s ease;}
 .ff-choice:hover{transform:translateY(-1px);}
 .ff-choice .ff-icon{font-size:22px;line-height:1;flex-shrink:0;width:28px;text-align:center;}
 .ff-choice .ff-choice-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--ink);}
@@ -335,8 +295,7 @@ body.theme-dark .btn-primary{color:#1A2438;}
   font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .tab-btn:hover{background:var(--surface-soft);color:var(--ink);}
-.tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;box-shadow:var(--shadow-sm);}
+.tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:var(--shadow-sm);}
 .tab-btn.tab-predictions{background:linear-gradient(135deg,rgba(76,122,59,0.14),rgba(76,122,59,0.06));
   color:var(--success);border:1px dashed var(--success);}
 .tab-btn.tab-predictions:hover{background:var(--success-soft);}
@@ -374,48 +333,36 @@ main{flex:1;max-width:1280px;width:100%;margin:0 auto;padding:24px;}
 .group-view-head h1{margin:0;font-size:22px;font-weight:800;display:flex;align-items:baseline;gap:10px;}
 .group-view-head h1 span{font-size:13px;font-weight:500;opacity:0.85;}
 .group-view-head .pills{display:flex;flex-wrap:wrap;gap:6px;}
-.group-view-head .pills span{background:rgba(255,255,255,0.16);padding:5px 12px;
-  border-radius:999px;font-size:12px;font-weight:600;}
+.group-view-head .pills span{background:rgba(255,255,255,0.16);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;}
 .group-view-head .pills span strong{font-weight:800;}
-.group-view-head .pills span.feed-pill{background:rgba(255,255,255,0.28);
-  border:1px solid rgba(255,255,255,0.35);}
+.group-view-head .pills span.feed-pill{background:rgba(255,255,255,0.28);border:1px solid rgba(255,255,255,0.35);}
 
 .shed-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:16px;
   padding:10px;box-shadow:var(--shadow-sm);}
-.shed-tabs.pred-sticky-tabs{
-  position:sticky;
-  top:var(--sticky-header-h, 130px);
-  z-index:90;
-  box-shadow:0 6px 14px rgba(43,33,22,0.10);
-  transition:box-shadow .2s ease;
-}
-body.theme-dark .shed-tabs.pred-sticky-tabs{
-  box-shadow:0 6px 14px rgba(0,0,0,0.45);
-}
+.shed-tabs.pred-sticky-tabs{position:sticky;top:var(--sticky-header-h, 130px);z-index:90;
+  box-shadow:0 6px 14px rgba(43,33,22,0.10);transition:box-shadow .2s ease;}
+body.theme-dark .shed-tabs.pred-sticky-tabs{box-shadow:0 6px 14px rgba(0,0,0,0.45);}
 .stab{border:1px solid var(--line);background:var(--surface-soft);color:var(--muted);
   font-family:'Sora',sans-serif;font-weight:700;font-size:14.5px;
   padding:11px 22px;border-radius:999px;cursor:pointer;
   transition:background .15s ease,color .15s ease,transform .12s ease;
   display:inline-flex;align-items:center;gap:8px;line-height:1;}
 .stab:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
-.stab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
+.stab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
 body.theme-dark .stab.active{color:#1A2438;}
 .stab .stab-icon{font-size:16px;line-height:1;}
 .stab.both-btn{font-size:16px;font-weight:800;padding:13px 30px;
   background:linear-gradient(135deg,rgba(224,163,57,0.12),rgba(176,132,99,0.12));
   border:1.5px dashed var(--secondary);color:var(--secondary);}
 .stab.both-btn:hover{background:linear-gradient(135deg,var(--primary-soft),var(--secondary-soft));color:var(--primary-dark);}
-.stab.both-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border:1.5px solid transparent;}
+.stab.both-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:1.5px solid transparent;}
 body.theme-dark .stab.both-btn.active{color:#1A2438;}
 .stab.planner-btn{font-size:16px;font-weight:800;padding:13px 30px;
   background:linear-gradient(135deg,rgba(76,122,59,0.12),rgba(76,122,59,0.06));
   border:1.5px dashed var(--success);color:var(--success);margin-left:auto;}
 .stab.planner-btn:hover{background:var(--success-soft);color:var(--success);}
-.stab.planner-btn.active{background:linear-gradient(135deg,var(--success),#36602A);
-  color:#fff;border:1.5px solid transparent;}
+.stab.planner-btn.active{background:linear-gradient(135deg,var(--success),#36602A);color:#fff;border:1.5px solid transparent;}
 body.theme-dark .stab.planner-btn.active{color:#1A2438;}
 @media(max-width:640px){
   .stab{font-size:13.5px;padding:10px 16px;}
@@ -431,8 +378,7 @@ body.theme-dark .stab.planner-btn.active{color:#1A2438;}
   font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;padding:5px 12px;
   border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease;}
 .fpill:hover{background:var(--primary-soft);color:var(--primary-dark);}
-.fpill.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border-color:transparent;}
+.fpill.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;}
 body.theme-dark .fpill.active{color:#1A2438;}
 .custom-range{display:flex;align-items:center;gap:5px;margin-left:auto;}
 .custom-range input{width:52px;text-align:center;border:1px solid var(--line);
@@ -498,25 +444,21 @@ body.theme-dark .tag.final-source{color:#1A2438;}
 .snapshot-row .val{font-weight:700;color:var(--ink);display:inline-flex;align-items:center;gap:6px;}
 .snapshot-row .val.big{font-family:'Sora',sans-serif;font-size:15px;}
 
-.snapshot-mort-input{
-  width:82px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;
+.snapshot-mort-input{width:82px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;
   background:var(--surface);color:var(--ink);
   font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
   text-align:right;-moz-appearance:textfield;appearance:textfield;
-  transition:border-color .15s ease,box-shadow .15s ease;
-}
+  transition:border-color .15s ease,box-shadow .15s ease;}
 .snapshot-mort-input::-webkit-outer-spin-button,
 .snapshot-mort-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .snapshot-mort-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .mort-pct{font-size:11px;color:var(--muted);font-weight:600;}
 
 .mort-rate-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  margin-top:14px;padding:9px 12px;
-  background:var(--surface-soft);border:1px dashed var(--line);
-  border-radius:10px;font-size:12px;}
+  margin-top:14px;padding:9px 12px;background:var(--surface-soft);
+  border:1px dashed var(--line);border-radius:10px;font-size:12px;}
 .mort-rate-bar .mr-label{font-family:'Sora',sans-serif;font-weight:700;
-  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
-  color:var(--muted);white-space:nowrap;}
+  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
 .mort-rate-bar input[type="range"]{flex:1 1 120px;min-width:100px;accent-color:var(--primary);}
 .mort-rate-bar input[type="number"]{width:66px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface);color:var(--ink);
@@ -547,55 +489,26 @@ body.theme-dark .tag.final-source{color:#1A2438;}
   background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;}
 
 .btn-pickup-add{border:1px solid var(--primary);background:var(--primary-soft);
-  color:var(--primary-dark);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:5px 12px;border-radius:999px;cursor:pointer;
-  text-transform:none;letter-spacing:0;
+  color:var(--primary-dark);font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-pickup-add:hover:not(:disabled){background:var(--primary);color:#fff;}
 .btn-pickup-add:disabled{opacity:0.4;cursor:not-allowed;}
 body.theme-dark .btn-pickup-add:hover:not(:disabled){color:#1A2438;}
 
-.pickup-plan-pill{
-  border:1px solid var(--primary);
-  background:var(--primary-soft);
-  color:var(--primary-dark);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:10.5px;
-  padding:4px 10px;
-  border-radius:999px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  white-space:nowrap;
-  text-transform:none;
-  letter-spacing:0;
-  transition:background .15s ease,color .15s ease,transform .1s ease;
-}
-.pickup-plan-pill:hover{
-  background:var(--primary);
-  color:#fff;
-  transform:translateY(-1px);
-}
+.pickup-plan-pill{border:1px solid var(--primary);background:var(--primary-soft);color:var(--primary-dark);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;padding:4px 10px;border-radius:999px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  text-transform:none;letter-spacing:0;transition:background .15s ease,color .15s ease,transform .1s ease;}
+.pickup-plan-pill:hover{background:var(--primary);color:#fff;transform:translateY(-1px);}
 body.theme-dark .pickup-plan-pill:hover{color:#1A2438;}
-.pickup-plan-pill.complete{
-  border-color:var(--success);
-  background:var(--success-soft);
-  color:var(--success);
-}
-.pickup-plan-pill.complete:hover{
-  background:var(--success);
-  color:#fff;
-}
+.pickup-plan-pill.complete{border-color:var(--success);background:var(--success-soft);color:var(--success);}
+.pickup-plan-pill.complete:hover{background:var(--success);color:#fff;}
 body.theme-dark .pickup-plan-pill.complete:hover{color:#1A2438;}
 
 .btn-sample-add{border:1px solid var(--secondary);background:var(--secondary-soft);
-  color:var(--secondary);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:5px 12px;border-radius:999px;cursor:pointer;
-  text-transform:none;letter-spacing:0;
+  color:var(--secondary);font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-sample-add:hover:not(:disabled){background:var(--secondary);color:#fff;}
 body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
@@ -633,10 +546,8 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
   border-radius:10px;font-size:12.5px;flex-wrap:wrap;}
 .pp-row.pp-superseded{opacity:0.6;border-style:dashed;}
 .pp-row.pp-superseded .pp-date{text-decoration:line-through;color:var(--muted);}
-.pp-row.pp-final{
-  background:linear-gradient(135deg,rgba(224,163,57,0.18),rgba(168,114,31,0.14));
-  border:1.5px solid var(--primary-dark);
-}
+.pp-row.pp-final{background:linear-gradient(135deg,rgba(224,163,57,0.18),rgba(168,114,31,0.14));
+  border:1.5px solid var(--primary-dark);}
 .pp-row.pp-final .pp-date{color:var(--primary-dark);}
 .pp-info{flex:1 1 220px;min-width:0;}
 .pp-date{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
@@ -650,8 +561,7 @@ body.theme-dark .btn-sample-add:hover:not(:disabled){color:#1A2438;}
 body.theme-dark .pp-badge.final{color:#1A2438;}
 .pp-actions{display:flex;gap:4px;flex-shrink:0;}
 .pp-actions button{border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);border-radius:6px;cursor:pointer;
-  font-size:12px;padding:4px 10px;line-height:1;font-weight:700;
+  color:var(--muted);border-radius:6px;cursor:pointer;font-size:12px;padding:4px 10px;line-height:1;font-weight:700;
   transition:background .12s ease,color .12s ease,border-color .12s ease;}
 .pp-actions button:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
 .pp-actions button.danger:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
@@ -663,88 +573,42 @@ body.theme-dark .pp-badge.final{color:#1A2438;}
 .pp-summary .progress-short{color:var(--primary-dark);font-weight:800;}
 .pp-summary .progress-done{color:var(--success);font-weight:800;}
 .btn-pp-add{border:1px solid var(--secondary);background:var(--secondary-soft);
-  color:var(--secondary);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:5px 12px;border-radius:999px;cursor:pointer;
-  text-transform:none;letter-spacing:0;
+  color:var(--secondary);font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-pp-add:hover{background:var(--secondary);color:#fff;}
 body.theme-dark .btn-pp-add:hover{color:#1A2438;}
 .btn-pp-autofill{border:1px solid var(--success);background:var(--success-soft);
-  color:var(--success);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:5px 12px;border-radius:999px;cursor:pointer;
-  text-transform:none;letter-spacing:0;
+  color:var(--success);font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-pp-autofill:hover{background:var(--success);color:#fff;}
 body.theme-dark .btn-pp-autofill:hover{color:#1A2438;}
 .btn-pp-clear{border:1px solid var(--danger);background:var(--danger-soft);
-  color:var(--danger);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:5px 12px;border-radius:999px;cursor:pointer;
-  text-transform:none;letter-spacing:0;
+  color:var(--danger);font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:5px 12px;border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;
   transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-pp-clear:hover{background:var(--danger);color:#fff;}
 body.theme-dark .btn-pp-clear:hover{color:#1A2438;}
 
-.btn-global-autofill-sm{
-  border:1px solid var(--success);
-  background:var(--success-soft);
-  color:var(--success);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:10.5px;
-  padding:4px 11px;
-  border-radius:999px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  white-space:nowrap;
-  text-transform:none;
-  letter-spacing:0;
-  transition:background .15s ease,color .15s ease,transform .1s ease;
-}
-.btn-global-autofill-sm:hover{
-  background:var(--success);
-  color:#fff;
-  transform:translateY(-1px);
-}
+.btn-global-autofill-sm{border:1px solid var(--success);background:var(--success-soft);color:var(--success);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;padding:4px 11px;border-radius:999px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  text-transform:none;letter-spacing:0;transition:background .15s ease,color .15s ease,transform .1s ease;}
+.btn-global-autofill-sm:hover{background:var(--success);color:#fff;transform:translateY(-1px);}
 body.theme-dark .btn-global-autofill-sm:hover{color:#1A2438;}
-.btn-global-clear-sm{
-  border:1px solid var(--danger);
-  background:var(--danger-soft);
-  color:var(--danger);
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:10.5px;
-  padding:4px 11px;
-  border-radius:999px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  white-space:nowrap;
-  text-transform:none;
-  letter-spacing:0;
-  transition:background .15s ease,color .15s ease,transform .1s ease;
-}
-.btn-global-clear-sm:hover{
-  background:var(--danger);
-  color:#fff;
-  transform:translateY(-1px);
-}
+.btn-global-clear-sm{border:1px solid var(--danger);background:var(--danger-soft);color:var(--danger);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;padding:4px 11px;border-radius:999px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  text-transform:none;letter-spacing:0;transition:background .15s ease,color .15s ease,transform .1s ease;}
+.btn-global-clear-sm:hover{background:var(--danger);color:#fff;transform:translateY(-1px);}
 body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
 
-.pp-target-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  margin-top:10px;padding:8px 12px;
-  background:var(--surface);border:1px dashed var(--line);border-radius:10px;
-  font-size:12px;}
-.pp-target-label{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
-  color:var(--muted);}
-.pp-target-input{width:60px;padding:4px 8px;
-  border:1px solid var(--line);border-radius:6px;
+.pp-target-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:8px 12px;
+  background:var(--surface);border:1px dashed var(--line);border-radius:10px;font-size:12px;}
+.pp-target-label{font-family:'Sora',sans-serif;font-weight:800;font-size:10.5px;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+.pp-target-input{width:60px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;
   background:var(--surface-soft);color:var(--ink);
   font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
   text-align:center;-moz-appearance:textfield;appearance:textfield;}
@@ -753,9 +617,8 @@ body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
 .pp-target-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .pp-target-hint{color:var(--muted);font-size:11px;font-weight:500;}
 
-.pp-density-preview{padding:10px 12px;background:var(--surface-soft);
-  border:1px solid var(--line);border-radius:10px;font-size:12px;
-  display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.pp-density-preview{padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;margin-top:8px;}
 .pp-density-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
 .pp-density-row .lbl{color:var(--muted);font-weight:600;font-size:11px;
   text-transform:uppercase;letter-spacing:0.05em;}
@@ -768,8 +631,7 @@ body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
   text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
   margin:14px 0 8px;padding-top:14px;border-top:1px dashed var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
-.density-settings-title .sub{font-family:'Inter',sans-serif;font-weight:500;
-  font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;}
+.density-settings-title .sub{font-family:'Inter',sans-serif;font-weight:500;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;}
 .shed-density-override{margin-top:10px;padding:10px 12px;background:var(--surface);
   border:1px dashed var(--line);border-radius:10px;
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px;}
@@ -777,51 +639,29 @@ body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
   font-size:10px;letter-spacing:0.05em;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .shed-density-override input[type="checkbox"]{width:14px;height:14px;accent-color:var(--primary-dark);cursor:pointer;}
 .shed-density-override .ovr-inputs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-.shed-density-override .ovr-inputs input{width:56px;padding:4px 8px;
-  border:1px solid var(--line);border-radius:6px;background:var(--surface);
-  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:12px;
-  text-align:center;-moz-appearance:textfield;appearance:textfield;}
+.shed-density-override .ovr-inputs input{width:56px;padding:4px 8px;border:1px solid var(--line);
+  border-radius:6px;background:var(--surface);color:var(--ink);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:12px;text-align:center;
+  -moz-appearance:textfield;appearance:textfield;}
 .shed-density-override .ovr-inputs input::-webkit-outer-spin-button,
 .shed-density-override .ovr-inputs input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .shed-density-override .ovr-inputs input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .shed-density-override .ovr-inputs span{font-size:10.5px;color:var(--muted);font-weight:600;}
 
-.custom-day-list{
-  margin-top:12px;padding-top:12px;
-  border-top:1px dashed var(--line);
-  display:flex;flex-direction:column;gap:6px;
-}
-.custom-day-list-title{
-  font-size:10px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;
-}
-.custom-day-row{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:8px 12px;background:var(--surface);
-  border:1px solid var(--line);border-radius:8px;
-  font-size:12.5px;
-}
-.custom-day-row .cd-day{
-  font-family:'Sora',sans-serif;font-weight:700;
-  color:var(--ink);min-width:52px;
-}
+.custom-day-list{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);
+  display:flex;flex-direction:column;gap:6px;}
+.custom-day-list-title{font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;}
+.custom-day-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;font-size:12.5px;}
+.custom-day-row .cd-day{font-family:'Sora',sans-serif;font-weight:700;color:var(--ink);min-width:52px;}
 .custom-day-row .cd-date{color:var(--muted);font-size:11.5px;}
-.custom-day-row .cd-weight{
-  font-family:'Sora',sans-serif;font-weight:800;
-  color:var(--secondary);font-size:14px;margin-left:auto;
-}
+.custom-day-row .cd-weight{font-family:'Sora',sans-serif;font-weight:800;color:var(--secondary);font-size:14px;margin-left:auto;}
 .custom-day-row .cd-actions{display:flex;gap:4px;}
-.custom-day-row .cd-actions button{
-  border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);border-radius:6px;cursor:pointer;
-  font-size:11px;padding:3px 8px;line-height:1;font-weight:700;
-}
-.custom-day-row .cd-actions button.edit:hover{
-  background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);
-}
-.custom-day-row .cd-actions button.del:hover{
-  background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);
-}
+.custom-day-row .cd-actions button{border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);border-radius:6px;cursor:pointer;font-size:11px;padding:3px 8px;line-height:1;font-weight:700;}
+.custom-day-row .cd-actions button.edit:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.custom-day-row .cd-actions button.del:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
 
 .mp-field{display:flex;flex-direction:column;gap:6px;}
 .mp-field > label{font-size:11.5px;font-weight:700;color:var(--muted);
@@ -837,31 +677,24 @@ body.theme-dark .btn-global-clear-sm:hover{color:#1A2438;}
 .mp-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .mp-field input.auto-calc{background:var(--primary-soft);border-color:var(--primary);}
 .mp-field input:disabled{background:var(--surface);color:var(--muted);cursor:not-allowed;opacity:0.75;}
-.mp-field select{width:100%;border:1px solid var(--line);border-radius:9px;
-  background:var(--surface-soft);color:var(--ink);
-  padding:10px 12px;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;
-  cursor:pointer;}
+.mp-field select{width:100%;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft);
+  color:var(--ink);padding:10px 12px;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;cursor:pointer;}
 .mp-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.mp-field .auto-chip{display:inline-block;font-size:9px;font-weight:800;
-  padding:1px 6px;border-radius:999px;
-  background:var(--primary);color:#fff;
-  letter-spacing:0.06em;text-transform:uppercase;font-family:'Sora',sans-serif;}
+.mp-field .auto-chip{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;
+  background:var(--primary);color:#fff;letter-spacing:0.06em;text-transform:uppercase;font-family:'Sora',sans-serif;}
 body.theme-dark .mp-field .auto-chip{color:#1A2438;}
 .mp-checkbox-row{display:flex;align-items:center;gap:10px;padding:10px 12px;
-  background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:13px;cursor:pointer;
-  font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink);}
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;font-size:13px;
+  cursor:pointer;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink);}
 .mp-checkbox-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary-dark);cursor:pointer;flex-shrink:0;}
 .mp-checkbox-row.emphasis{background:linear-gradient(135deg,rgba(224,163,57,0.14),rgba(168,114,31,0.06));
   border:1.5px dashed var(--primary-dark);font-weight:600;}
-.mp-hint{font-size:11.5px;color:var(--muted);line-height:1.5;
-  padding:10px 12px;background:var(--surface-soft);
-  border-radius:8px;border:1px dashed var(--line);}
+.mp-hint{font-size:11.5px;color:var(--muted);line-height:1.5;padding:10px 12px;
+  background:var(--surface-soft);border-radius:8px;border:1px dashed var(--line);}
 .mp-hint strong{color:var(--ink);}
 
-.dv-preview{padding:10px 12px;background:var(--surface-soft);
-  border:1px solid var(--line);border-radius:10px;font-size:12px;
-  display:flex;flex-direction:column;gap:6px;}
+.dv-preview{padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:10px;font-size:12px;display:flex;flex-direction:column;gap:6px;}
 .dv-preview-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
 .dv-preview-row .lbl{color:var(--muted);font-weight:600;font-size:11px;
   text-transform:uppercase;letter-spacing:0.05em;}
@@ -875,11 +708,9 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
 .conflict-shed-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
   margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
-.conflict-shed-title .count{font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;color:var(--muted);
-  text-transform:none;letter-spacing:0;}
+.conflict-shed-title .count{font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;}
 .conflict-row{display:flex;gap:12px;padding:10px 12px;background:var(--surface-soft);
-  border:1px solid var(--line);border-radius:10px;margin-bottom:6px;
-  align-items:flex-start;flex-wrap:wrap;}
+  border:1px solid var(--line);border-radius:10px;margin-bottom:6px;align-items:flex-start;flex-wrap:wrap;}
 .conflict-row-info{flex:1 1 260px;min-width:0;font-size:12.5px;line-height:1.5;}
 .conflict-row-date{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);margin-bottom:4px;}
 .conflict-row-info .side{display:flex;gap:8px;align-items:baseline;margin-bottom:2px;flex-wrap:wrap;}
@@ -890,25 +721,21 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
 .conflict-radio{display:flex;gap:6px;flex-shrink:0;align-items:center;}
 .conflict-radio label{display:flex;align-items:center;gap:6px;padding:6px 10px;
   border:1px solid var(--line);border-radius:8px;background:var(--surface);
-  cursor:pointer;font-size:12px;font-weight:700;
-  text-transform:none;letter-spacing:0;
+  cursor:pointer;font-size:12px;font-weight:700;text-transform:none;letter-spacing:0;
   transition:background .12s ease,border-color .12s ease;}
 .conflict-radio label:hover{background:var(--primary-soft);border-color:var(--primary-soft);}
 .conflict-radio label input{accent-color:var(--primary-dark);cursor:pointer;margin:0;}
 .conflict-radio label:has(input:checked){background:var(--primary-soft);border-color:var(--primary);color:var(--primary-dark);}
-.conflict-new{padding:8px 12px;background:var(--success-soft);
-  border-radius:8px;margin-bottom:6px;
+.conflict-new{padding:8px 12px;background:var(--success-soft);border-radius:8px;margin-bottom:6px;
   font-size:12px;color:var(--success);font-weight:600;}
 .conflict-existing-only{padding:8px 12px;background:var(--surface-soft);
   border:1px dashed var(--line);border-radius:8px;margin-bottom:6px;
   font-size:12px;color:var(--muted);font-weight:600;}
 .conflict-bulk{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;
-  background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;margin-bottom:12px;}
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;}
 .conflict-bulk button{border:1px solid var(--line);background:var(--surface);color:var(--ink);
-  padding:6px 12px;border-radius:8px;cursor:pointer;
-  font-size:12px;font-weight:700;font-family:'Sora',sans-serif;
-  transition:background .12s ease,color .12s ease,border-color .12s ease;}
+  padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;
+  font-family:'Sora',sans-serif;transition:background .12s ease,color .12s ease,border-color .12s ease;}
 .conflict-bulk button:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
 
 .forecast-section{margin-top:16px;}
@@ -919,8 +746,7 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
 .forecast-block h4 .window-label{font-family:'Inter',sans-serif;font-weight:500;
   text-transform:none;letter-spacing:0;color:var(--muted);font-size:12px;}
 .forecast-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);}
-.forecast-table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;
-  background:var(--surface);}
+.forecast-table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px;background:var(--surface);}
 .forecast-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
   font-weight:700;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;
   color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);}
@@ -936,59 +762,24 @@ body.theme-dark .mp-field .auto-chip{color:#1A2438;}
 .forecast-table tr.fdr-blocked:hover td{background:inherit;}
 .forecast-table tr.fdr-blocked td{opacity:0.95;}
 
-.inline-del{
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0;
-  padding: 4px 6px;
-  background: var(--surface);
-  border: 1.5px solid var(--primary);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  box-shadow: var(--shadow-md);
-  z-index: 50;
-  white-space: nowrap;
-  min-width: 320px;
-}
-.inline-del-input{
-  flex: 1 1 90px;
-  min-width: 70px;
-  width: 90px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface-soft);
-  color: var(--ink);
-  padding: 4px 8px;
-  font-family: 'Sora', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  text-align: center;
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
+.inline-del{position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  margin: 0; padding: 4px 6px; background: var(--surface);
+  border: 1.5px solid var(--primary); border-radius: 8px;
+  display: flex; flex-direction: row; align-items: center; gap: 6px; flex-wrap: nowrap;
+  box-shadow: var(--shadow-md); z-index: 50; white-space: nowrap; min-width: 320px;}
+.inline-del-input{flex: 1 1 90px; min-width: 70px; width: 90px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface-soft);
+  color: var(--ink); padding: 4px 8px;
+  font-family: 'Sora', sans-serif; font-weight: 700; font-size: 13px;
+  text-align: center; -moz-appearance: textfield; appearance: textfield;}
 .inline-del-input::-webkit-outer-spin-button,
 .inline-del-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .inline-del-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.inline-del-btn{
-  flex: 0 0 auto;
-  border: 1px solid var(--line);
-  background: var(--surface-soft);
-  color: var(--ink);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 5px 8px;
-  font-weight: 700;
-  font-family: 'Sora', sans-serif;
-  white-space: nowrap;
-  transition: background .12s ease, color .12s ease, border-color .12s ease;
-}
+.inline-del-btn{flex: 0 0 auto; border: 1px solid var(--line);
+  background: var(--surface-soft); color: var(--ink); border-radius: 6px;
+  cursor: pointer; font-size: 11px; padding: 5px 8px; font-weight: 700;
+  font-family: 'Sora', sans-serif; white-space: nowrap;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;}
 .inline-del-btn.test{border-color:var(--secondary);background:var(--secondary-soft);color:var(--secondary);}
 .inline-del-btn.test:hover{background:var(--secondary);color:#fff;}
 .inline-del-btn.actual{border-color:var(--success);background:var(--success-soft);color:var(--success);}
@@ -999,11 +790,9 @@ body.theme-dark .inline-del-btn.test:hover,
 body.theme-dark .inline-del-btn.actual:hover{color:#1A2438;}
 
 .forecast-table tr.is-weekend td{background:var(--weekend-tint);border-bottom-color:var(--weekend-border);}
-.forecast-table tr.is-weekend td:first-child{border-left:6px solid var(--weekend-border);
-  color:var(--weekend-border);font-weight:800;}
-body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
+.forecast-table tr.is-weekend td:first-child{border-left:6px solid var(--weekend-border);font-weight:800;}
 .forecast-table tr.is-past.is-weekend td{background:var(--weekend-tint);color:var(--muted);}
-.forecast-table tr.is-past.is-weekend td:first-child{border-left:6px solid var(--weekend-border);color:var(--weekend-border);}
+.forecast-table tr.is-past.is-weekend td:first-child{border-left:6px solid var(--weekend-border);}
 .forecast-table tr.is-today td{font-weight:700;}
 .forecast-table tr.is-today td:first-child{border-left:4px solid var(--secondary);}
 .forecast-table tr.is-today.is-weekend td:first-child{border-left:6px solid var(--weekend-border);}
@@ -1014,10 +803,96 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
 .forecast-table tr.predicted-pickup-day td{background:rgba(176,132,99,0.14);}
 .forecast-table tr.predicted-pickup-day td:first-child{border-left:4px dashed var(--secondary);}
 
-.weekend-pill{display:inline-block;background:var(--weekend-border);color:#fff;
-  font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;
-  letter-spacing:0.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle;
-  font-family:'Sora',sans-serif;box-shadow:0 1px 2px rgba(0,0,0,0.12);}
+.forecast-table td.fb-date-today{color:var(--fb-today-blue); font-weight:800;}
+.forecast-table td.fb-date-weekend{color:var(--weekend-border); font-weight:800;}
+.forecast-table td.fb-date-today.fb-date-weekend{color:var(--fb-today-blue);}
+.forecast-table .fb-pickup-predicted{color:var(--fb-today-blue); font-weight:800; font-family:'Sora', sans-serif;}
+.forecast-table .fb-pickup-actual{color:var(--weekend-border); font-weight:800; font-family:'Sora', sans-serif;}
+.forecast-table td.fb-balance-ok{color:var(--success); font-weight:800;}
+.forecast-table td.fb-balance-low{color:var(--primary-dark); font-weight:800;}
+.forecast-table td.fb-balance-empty{color:var(--danger); font-weight:800;}
+.forecast-table td.fb-balance-past{color:var(--muted); font-weight:700;}
+
+.compare-modal{position:fixed; inset:0; background:rgba(0,0,0,0.55);
+  z-index:9996; display:none; opacity:0; transition:opacity .22s ease;}
+body.theme-dark .compare-modal{background:rgba(0,0,0,0.72);}
+.compare-modal.open{display:flex; align-items:center; justify-content:center; opacity:1;}
+.compare-modal-panel{background:var(--surface); width:calc(100% - 24px); height:calc(100% - 24px);
+  border-radius:16px; border:1px solid var(--line); box-shadow:var(--shadow-lg);
+  display:flex; flex-direction:column; overflow:hidden;}
+@media(max-width:640px){
+  .compare-modal-panel{width:100%; height:100%; border-radius:0; border:none;}
+}
+.compare-modal-head{display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-bottom:1px solid var(--line); background:var(--surface-soft); flex-shrink:0;}
+.compare-modal-head h3{margin:0; font-family:'Sora', sans-serif; font-weight:800; font-size:16px;
+  color:var(--ink); display:flex; align-items:center; gap:8px;}
+.compare-modal-close{border:none; background:transparent; color:var(--muted); font-size:20px;
+  width:32px; height:32px; border-radius:8px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; line-height:1;
+  transition:background .15s ease, color .15s ease;}
+.compare-modal-close:hover{background:var(--danger-soft); color:var(--danger);}
+.compare-modal-body{flex:1; overflow-y:auto; padding:16px 20px 24px;
+  display:flex; flex-direction:column; gap:12px;}
+
+.compare-layout-toggle{display:flex; align-items:center; gap:6px; padding:6px 12px;
+  background:var(--surface-soft); border:1px solid var(--line); border-radius:10px;
+  align-self:flex-start; flex-wrap:wrap;}
+.compare-layout-toggle .clt-label{font-family:'Sora', sans-serif; font-weight:700; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-right:4px;}
+.compare-layout-toggle button{border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  font-family:'Sora', sans-serif; font-weight:700; font-size:11.5px;
+  padding:5px 12px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  transition:background .12s ease, color .12s ease, border-color .12s ease;}
+.compare-layout-toggle button:hover{background:var(--primary-soft); color:var(--primary-dark); border-color:var(--primary-soft);}
+.compare-layout-toggle button.active{background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color:#fff; border-color:transparent;}
+body.theme-dark .compare-layout-toggle button.active{color:#1A2438;}
+
+.compare-tables{display:grid; gap:16px; align-items:start;}
+.compare-tables.stacked{grid-template-columns:1fr;}
+.compare-tables.side-by-side{grid-template-columns:1fr 1fr;}
+@media(max-width:900px){
+  .compare-tables.side-by-side{grid-template-columns:1fr;}
+}
+.compare-col{min-width:0; display:flex; flex-direction:column; gap:8px;}
+.compare-col-head{display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:10px 14px; background:var(--surface-soft); border:1px solid var(--line); border-radius:10px;
+  font-family:'Sora', sans-serif; font-weight:800; font-size:13px; color:var(--ink);}
+.compare-col-head .cth-tag{font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:999px;
+  letter-spacing:0.06em; text-transform:uppercase;}
+.compare-col-head.current .cth-tag{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;}
+body.theme-dark .compare-col-head.current .cth-tag{color:#1A2438;}
+.compare-col-head.comparing .cth-tag{background:linear-gradient(135deg, var(--secondary), #5E2E22); color:#fff;}
+body.theme-dark .compare-col-head.comparing .cth-tag{color:#1A2438;}
+
+.btn-compare-toggle{border:1.5px dashed var(--secondary); background:var(--secondary-soft); color:var(--secondary);
+  font-family:'Sora', sans-serif; font-weight:700; font-size:11.5px; padding:6px 14px; border-radius:999px;
+  cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+  transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease; margin-left:8px;}
+.btn-compare-toggle:hover{background:var(--secondary); color:#fff; transform:translateY(-1px);}
+.compare-strip{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 12px;
+  background:var(--surface-soft); border:1px dashed var(--line); border-radius:10px;}
+.compare-strip-label{font-family:'Sora', sans-serif; font-weight:800; font-size:10.5px;
+  letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-right:4px;}
+.compare-partner-card{border:1px solid var(--line); background:var(--surface); border-radius:10px;
+  padding:8px 14px; cursor:pointer; display:flex; flex-direction:column; gap:2px;
+  min-width:130px; text-align:left; font-family:'Inter', sans-serif;
+  transition:background .15s ease, border-color .15s ease, transform .1s ease;}
+.compare-partner-card:hover{background:var(--primary-soft); border-color:var(--primary); transform:translateY(-1px);}
+.compare-partner-card .cpc-title{font-family:'Sora', sans-serif; font-weight:800; font-size:11.5px; color:var(--ink);}
+.compare-partner-card .cpc-bal{font-family:'Sora', sans-serif; font-weight:800; font-size:14px; color:var(--primary-dark);}
+.compare-partner-card .cpc-status{font-size:11px; font-weight:600; color:var(--muted);}
+
+.delivery-edit-btn{border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  border-radius:5px; cursor:pointer; font-size:10px; padding:1px 6px; line-height:1.4;
+  font-weight:700; margin-left:3px; transition:background .12s ease, color .12s ease, border-color .12s ease;}
+.delivery-edit-btn:hover{background:var(--primary-soft); color:var(--primary-dark); border-color:var(--primary-soft);}
+
+.weekend-pill{display:inline-block; background:var(--weekend-border); color:#fff; font-size:9.5px;
+  font-weight:800; padding:2px 7px; border-radius:999px;
+  letter-spacing:0.06em; text-transform:uppercase; margin-left:6px; vertical-align:middle;
+  font-family:'Sora', sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.12);}
 
 .forecast-table tr.total-row td{background:var(--surface-soft);font-weight:800;
   font-family:'Sora',sans-serif;border-top:2px solid var(--line);}
@@ -1027,60 +902,26 @@ body.theme-dark .forecast-table tr.is-weekend td:first-child{color:#FFD9A8;}
 .forecast-table .pickup-pill.final{background:var(--primary-dark);color:#1A2438;}
 .forecast-table .pickup-pill.predicted{background:var(--secondary-soft);color:var(--secondary);
   border:1px dashed var(--secondary);}
-.forecast-table .live-after{font-weight:700;color:var(--primary-dark);}
-.forecast-table .live-after.zero{color:var(--danger);}
 .forecast-table .pred-catch-cell{color:var(--secondary);font-weight:800;font-family:'Sora',sans-serif;}
 .forecast-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
   background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;font-size:13px;}
 .forecast-empty.completed{background:var(--secondary-soft);color:var(--secondary);
   font-style:normal;font-weight:600;border-color:var(--secondary);}
 
-/* ===== Reading badge (inline in forecast date cell) ===== */
-.reading-badge{
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--secondary);
-  background: var(--secondary-soft);
-  color: var(--secondary);
-  font-family: 'Sora', sans-serif;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background .12s ease, color .12s ease, transform .1s ease;
-  vertical-align: middle;
-  line-height: 1;
-}
-.reading-badge:hover{
-  background: var(--secondary);
-  color: #fff;
-  transform: translateY(-1px);
-}
-body.theme-dark .reading-badge:hover{ color: #1A2438; }
+.reading-badge{display:inline-flex;align-items:center;gap:4px;margin-left:6px;
+  padding:2px 8px;border-radius:999px;border:1px solid var(--secondary);
+  background:var(--secondary-soft);color:var(--secondary);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:10px;
+  letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;
+  transition:background .12s ease, color .12s ease, transform .1s ease;
+  vertical-align:middle;line-height:1;}
+.reading-badge:hover{background:var(--secondary);color:#fff;transform:translateY(-1px);}
+body.theme-dark .reading-badge:hover{color:#1A2438;}
 
-/* ===== Reading history delete button ===== */
-.reading-history .reading-delete-btn{
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--muted);
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 2px 8px;
-  line-height: 1;
-  font-weight: 700;
-  transition: background .12s ease, color .12s ease, border-color .12s ease;
-}
-.reading-history .reading-delete-btn:hover{
-  background: var(--danger-soft);
-  color: var(--danger);
-  border-color: var(--danger-soft);
-}
+.reading-history .reading-delete-btn{border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);border-radius:5px;cursor:pointer;font-size:11px;padding:2px 8px;
+  line-height:1;font-weight:700;transition:background .12s ease, color .12s ease, border-color .12s ease;}
+.reading-history .reading-delete-btn:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
 
 .sheds-grid.compare .forecast-table{min-width:540px;font-size:12.5px;}
 .sheds-grid.compare .forecast-table th,
@@ -1092,8 +933,7 @@ body.theme-dark .reading-badge:hover{ color: #1A2438; }
   padding:14px 18px;box-shadow:var(--shadow-sm);}
 .summary-card .sc-label{font-size:11px;font-weight:700;letter-spacing:0.08em;
   text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
-.summary-card .sc-value{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:22px;line-height:1.15;color:var(--ink);}
+.summary-card .sc-value{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;line-height:1.15;color:var(--ink);}
 .summary-card .sc-value.green{color:var(--success);}
 .summary-card .sc-value.amber{color:var(--primary-dark);}
 .summary-card .sc-value.red{color:var(--danger);}
@@ -1106,8 +946,7 @@ body.theme-dark .reading-badge:hover{ color: #1A2438; }
 .planner-card h3 .count{font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;color:var(--muted);}
 .planner-card-toggle{width:100%;background:transparent;border:none;padding:0;margin:0 0 14px;
   display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-  cursor:pointer;color:inherit;font-family:inherit;text-align:left;
-  transition:opacity .15s ease;}
+  cursor:pointer;color:inherit;font-family:inherit;text-align:left;transition:opacity .15s ease;}
 .planner-card-toggle:hover{opacity:0.85;}
 .planner-card-toggle:focus{outline:none;}
 .planner-card-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:6px;}
@@ -1134,132 +973,94 @@ body.theme-dark .planner-card-toggle:hover .collapse-caret{color:#1A2438;}
 .delivery-type-chips .chip.withdrawal{background:var(--danger-soft);border-color:transparent;color:var(--danger);}
 .delivery-type-chips .chip.unspecified{background:var(--surface-soft);border-color:var(--line);color:var(--muted);}
 
-.btn-clear-tests{
-  border:1px solid var(--secondary);background:var(--secondary-soft);
-  color:var(--secondary);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;
+.btn-clear-tests{border:1px solid var(--secondary);background:var(--secondary-soft);
+  color:var(--secondary);font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;
   padding:4px 11px;border-radius:999px;cursor:pointer;
-  transition:background .15s ease,color .15s ease;
-  white-space:nowrap;
-}
+  transition:background .15s ease,color .15s ease;white-space:nowrap;}
 .btn-clear-tests:hover{background:var(--secondary);color:#fff;}
 body.theme-dark .btn-clear-tests:hover{color:#1A2438;}
 
-.forecast-leftover-chip{
-  font-family:'Sora',sans-serif;
-  font-weight:800;
-  font-size:11.5px;
-  padding:4px 11px;
-  border-radius:999px;
+.forecast-leftover-chip{font-family:'Sora',sans-serif;font-weight:800;font-size:11.5px;
+  padding:4px 11px;border-radius:999px;
   background:linear-gradient(135deg, rgba(224,163,57,0.22), rgba(168,114,31,0.14));
-  color:var(--primary-dark);
-  border:1px solid var(--primary);
-  white-space:nowrap;
-  letter-spacing:0.01em;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-}
-.forecast-leftover-chip.muted{
-  background:var(--surface-soft);
-  color:var(--muted);
-  border-color:var(--line);
-  font-weight:600;
-}
+  color:var(--primary-dark);border:1px solid var(--primary);
+  white-space:nowrap;letter-spacing:0.01em;display:inline-flex;align-items:center;gap:5px;}
+.forecast-leftover-chip.muted{background:var(--surface-soft);color:var(--muted);border-color:var(--line);font-weight:600;}
 
 .delivery-pill.test{background:linear-gradient(135deg,rgba(176,132,99,0.22),rgba(94,46,34,0.16));
   color:var(--secondary);border:1px dashed var(--secondary);}
-.test-x{
-  border:1px solid var(--line);background:var(--surface);
-  color:var(--muted);border-radius:5px;cursor:pointer;
-  font-size:10px;padding:1px 6px;line-height:1.4;font-weight:700;
-  margin-left:3px;margin-right:6px;
-  transition:background .12s ease,color .12s ease,border-color .12s ease;
-}
+.test-x{border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  border-radius:5px;cursor:pointer;font-size:10px;padding:1px 6px;line-height:1.4;font-weight:700;
+  margin-left:3px;margin-right:6px;transition:background .12s ease,color .12s ease,border-color .12s ease;}
 .test-x:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
 
 .reading-info{background:var(--surface-soft);border:1px solid var(--line);
   border-radius:10px;padding:10px 14px;margin-bottom:14px;
   display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;}
 .reading-info .ri-item{display:flex;align-items:center;gap:6px;}
-.reading-info .ri-label{font-weight:700;text-transform:uppercase;
-  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
+.reading-info .ri-label{font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
 .reading-info .ri-value{font-family:'Sora',sans-serif;font-weight:700;color:var(--ink);}
 .reading-info .ri-value.amber{color:var(--primary-dark);}
 .reading-info .ri-value.red{color:var(--danger);}
 
 .silo-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 @media(max-width:800px){.silo-inputs{grid-template-columns:1fr;}}
-.silo-input{background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:12px;padding:12px 14px;}
+.silo-input{background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
 .silo-input.off{opacity:0.55;}
 .silo-input .silo-title{font-size:12px;font-weight:700;text-transform:uppercase;
   letter-spacing:0.06em;color:var(--muted);margin-bottom:10px;
   display:flex;align-items:center;justify-content:space-between;gap:6px;}
-.silo-input .silo-title .cap{font-size:10.5px;color:var(--muted);font-weight:600;
-  text-transform:none;letter-spacing:0;}
+.silo-input .silo-title .cap{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;}
 .silo-input .silo-title .off-badge{background:var(--muted);color:var(--surface);
-  font-size:10px;padding:1px 7px;border-radius:999px;font-weight:800;
-  text-transform:uppercase;letter-spacing:0.06em;}
+  font-size:10px;padding:1px 7px;border-radius:999px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;}
 
 .ring-picker{display:grid;grid-template-columns:auto repeat(6,1fr);gap:5px;}
 .ring-off{border:1.5px dashed var(--line);background:var(--surface);color:var(--muted);
-  font-family:'Sora',sans-serif;font-weight:800;font-size:10px;
-  border-radius:8px;cursor:pointer;padding:0 8px;line-height:1;
-  display:flex;align-items:center;justify-content:center;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:10px;border-radius:8px;cursor:pointer;
+  padding:0 8px;line-height:1;display:flex;align-items:center;justify-content:center;
   transition:background .12s ease,color .12s ease,border-color .12s ease;
   text-transform:uppercase;letter-spacing:0.04em;}
 .ring-off:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger-soft);}
 .ring-off.active{background:var(--muted);color:var(--surface);border-color:var(--muted);border-style:solid;}
 .ring-slot{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.ring-btn{width:100%;aspect-ratio:1;border-radius:50%;
-  border:1.5px solid var(--line);background:var(--surface);color:var(--muted);
-  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+.ring-btn{width:100%;aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--muted);font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
   cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;
   transition:background .12s ease,color .12s ease,border-color .12s ease;line-height:1;}
 .ring-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
-.ring-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
+.ring-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;box-shadow:var(--shadow-sm);}
 body.theme-dark .ring-btn.active{color:#1A2438;}
 .ring-slot .ring-t{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap;}
 .ring-slot.active .ring-t{color:var(--primary-dark);font-weight:800;}
 
 .silo-total{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:6px;}
-.silo-total .lbl{font-size:11px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
+.silo-total .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
 .silo-total .val{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:var(--primary-dark);}
 .silo-total .kg{font-size:11px;color:var(--muted);}
 
 .silo-grand-total{margin-top:14px;padding-top:14px;border-top:1.5px solid var(--line);
   display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-.silo-grand-total .lbl{font-size:13px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
-.silo-grand-total .val{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:22px;color:var(--primary-dark);}
+.silo-grand-total .lbl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.silo-grand-total .val{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;color:var(--primary-dark);}
 
 .reading-history{margin-top:14px;}
-.reading-history summary{cursor:pointer;font-size:12.5px;font-weight:700;
-  color:var(--muted);padding:6px 0;user-select:none;}
+.reading-history summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted);padding:6px 0;user-select:none;}
 .reading-history summary:hover{color:var(--primary-dark);}
 .reading-history table{width:100%;border-collapse:collapse;font-size:12.5px;
-  margin-top:6px;background:var(--surface);border:1px solid var(--line);
-  border-radius:10px;overflow:hidden;}
-.reading-history th{background:var(--surface-soft);font-weight:700;
-  text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;
-  color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);}
+  margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.reading-history th{background:var(--surface-soft);font-weight:700;text-transform:uppercase;
+  font-size:10.5px;letter-spacing:0.05em;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);}
 .reading-history td{padding:6px 10px;border-bottom:1px solid var(--line);}
 .reading-history tr:last-child td{border-bottom:none;}
 .reading-history tr.today td{background:var(--primary-soft);font-weight:700;}
 .reading-history .num{text-align:right;font-variant-numeric:tabular-nums;}
 
 .deliveries-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
-.delivery-row{display:grid;grid-template-columns:130px 90px 130px 1fr 36px;
-  gap:8px;align-items:center;background:var(--surface-soft);
-  border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
+.delivery-row{display:grid;grid-template-columns:130px 90px 130px 1fr 36px;gap:8px;align-items:center;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
 @media(max-width:800px){
-  .delivery-row{grid-template-columns:1fr 1fr;grid-template-areas:
-    "date amount" "type type" "note delete";}
+  .delivery-row{grid-template-columns:1fr 1fr;grid-template-areas:"date amount" "type type" "note delete";}
   .delivery-row .d-date{grid-area:date;}
   .delivery-row .d-amount{grid-area:amount;}
   .delivery-row .d-type{grid-area:type;}
@@ -1268,22 +1069,19 @@ body.theme-dark .ring-btn.active{color:#1A2438;}
 }
 .delivery-row input,
 .delivery-row select{border:1px solid var(--line);border-radius:8px;background:var(--surface);
-  color:var(--ink);padding:6px 9px;font-size:13px;font-weight:600;
-  font-family:'Inter',sans-serif;width:100%;min-width:0;}
+  color:var(--ink);padding:6px 9px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;width:100%;min-width:0;}
 .delivery-row input:focus,
 .delivery-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .delivery-row select{font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;}
 .delivery-row .d-del{border:1px solid var(--danger-soft);background:var(--danger-soft);
-  color:var(--danger);border-radius:8px;cursor:pointer;font-size:14px;
-  width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
-  padding:0;line-height:1;transition:background .15s ease,color .15s ease;}
+  color:var(--danger);border-radius:8px;cursor:pointer;font-size:14px;width:36px;height:36px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;
+  transition:background .15s ease,color .15s ease;}
 .delivery-row .d-del:hover{background:var(--danger);color:#fff;}
 
-.add-delivery{display:grid;grid-template-columns:130px 90px 130px 1fr auto;
-  gap:8px;align-items:end;margin-top:6px;}
+.add-delivery{display:grid;grid-template-columns:130px 90px 130px 1fr auto;gap:8px;align-items:end;margin-top:6px;}
 @media(max-width:800px){
-  .add-delivery{grid-template-columns:1fr 1fr;grid-template-areas:
-    "date amount" "type type" "note note" "btn btn";}
+  .add-delivery{grid-template-columns:1fr 1fr;grid-template-areas:"date amount" "type type" "note note" "btn btn";}
   .add-delivery .fld-date{grid-area:date;}
   .add-delivery .fld-amount{grid-area:amount;}
   .add-delivery .fld-type{grid-area:type;}
@@ -1291,20 +1089,16 @@ body.theme-dark .ring-btn.active{color:#1A2438;}
   .add-delivery .fld-btn{grid-area:btn;}
 }
 .add-delivery .fld{display:flex;flex-direction:column;gap:4px;}
-.add-delivery label{font-size:11px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
+.add-delivery label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
 .add-delivery input,
 .add-delivery select{border:1px solid var(--line);border-radius:9px;background:var(--surface);
-  color:var(--ink);padding:9px 11px;font-family:'Inter',sans-serif;font-size:13.5px;
-  font-weight:600;width:100%;min-width:0;}
+  color:var(--ink);padding:9px 11px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;width:100%;min-width:0;}
 .add-delivery select{font-family:'Sora',sans-serif;font-weight:700;cursor:pointer;}
 .add-delivery input:focus,
 .add-delivery select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.add-delivery button{border:none;border-radius:9px;
-  background:linear-gradient(135deg,var(--success),#36602A);
-  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;
-  padding:10px 20px;cursor:pointer;height:38px;
-  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.add-delivery button{border:none;border-radius:9px;background:linear-gradient(135deg,var(--success),#36602A);
+  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;padding:10px 20px;cursor:pointer;
+  height:38px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
 .add-delivery button:hover{filter:brightness(1.08);}
 body.theme-dark .add-delivery button{color:#1A2438;}
 
@@ -1312,10 +1106,9 @@ body.theme-dark .add-delivery button{color:#1A2438;}
   background:var(--surface-soft);border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 
 .feed-summary{margin-top:20px;padding-top:18px;border-top:2px solid var(--line);}
-.feed-summary-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;
-  color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.feed-summary-title .sub{font-family:'Inter',sans-serif;font-weight:500;
-  font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;}
+.feed-summary-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.feed-summary-title .sub{font-family:'Inter',sans-serif;font-weight:500;font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:0;}
 .feed-summary-table{width:100%;border-collapse:collapse;font-size:13px;
   background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
 .feed-summary-table th{background:var(--surface-soft);font-family:'Sora',sans-serif;
@@ -1332,13 +1125,11 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 .feed-summary-empty{padding:12px;text-align:center;color:var(--muted);font-style:italic;
   background:var(--surface-soft);border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 
-.delivery-pill{display:inline-block;background:var(--success-soft);
-  color:var(--success);font-weight:700;font-size:11px;padding:2px 8px;
-  border-radius:999px;margin-right:6px;}
+.delivery-pill{display:inline-block;background:var(--success-soft);color:var(--success);
+  font-weight:700;font-size:11px;padding:2px 8px;border-radius:999px;margin-right:6px;}
 
-.feed-tag{display:inline-block;font-size:10.5px;font-weight:700;
-  padding:1px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:0.04em;
-  margin-left:4px;}
+.feed-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;
+  text-transform:uppercase;letter-spacing:0.04em;margin-left:4px;}
 .feed-tag.starter{background:var(--success-soft);color:var(--success);}
 .feed-tag.grower{background:var(--primary-soft);color:var(--primary-dark);}
 .feed-tag.finisher{background:var(--secondary-soft);color:var(--secondary);}
@@ -1356,140 +1147,85 @@ body.theme-dark .feed-summary-table tr.has-blocks td{background:rgba(111,184,92,
 
 .farm-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
   padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
-.farm-kpi-head{display:flex;align-items:baseline;justify-content:space-between;
-  gap:10px;flex-wrap:wrap;margin-bottom:16px;}
-.farm-kpi-head h2{margin:0;font-family:'Sora',sans-serif;font-weight:800;font-size:17px;
-  color:var(--ink);display:flex;align-items:center;gap:8px;}
+.farm-kpi-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.farm-kpi-head h2{margin:0;font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:var(--ink);display:flex;align-items:center;gap:8px;}
 .farm-kpi-head .sub{font-size:11.5px;color:var(--muted);font-weight:500;}
 .farm-kpi-grid{display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:12px;align-items:stretch;}
 @media(max-width:1100px){.farm-kpi-grid{grid-template-columns:repeat(3, minmax(0, 1fr));}}
 @media(max-width:760px){.farm-kpi-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}}
 @media(max-width:480px){.farm-kpi-grid{grid-template-columns:1fr;}}
-.farm-kpi-tile{background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:12px;padding:14px 16px;
-  display:flex;flex-direction:column;gap:4px;min-width:0;min-height:110px;
+.farm-kpi-tile{background:var(--surface-soft);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0;min-height:110px;
   transition:box-shadow .12s ease,border-color .12s ease;}
 .farm-kpi-tile:hover{box-shadow:var(--shadow-sm);}
 .farm-kpi-tile .fkt-lbl{font-size:10.5px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.farm-kpi-tile .fkt-val{font-family:'Sora',sans-serif;font-weight:800;font-size:20px;
-  color:var(--ink);line-height:1.15;word-break:break-word;margin-top:2px;}
+  text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.farm-kpi-tile .fkt-val{font-family:'Sora',sans-serif;font-weight:800;font-size:20px;color:var(--ink);line-height:1.15;word-break:break-word;margin-top:2px;}
 .farm-kpi-tile.amber .fkt-val{color:var(--primary-dark);}
 .farm-kpi-tile.green .fkt-val{color:var(--success);}
 .farm-kpi-tile.blue .fkt-val{color:var(--secondary);}
 .farm-kpi-tile.red .fkt-val{color:var(--danger);}
 .farm-kpi-tile .fkt-sub{font-size:11px;color:var(--muted);margin-top:auto;padding-top:6px;line-height:1.35;}
-.farm-feed-override{width:100%;border:1px solid var(--line);border-radius:7px;
-  background:var(--surface);color:var(--ink);padding:4px 8px;
-  font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
-  text-align:right;margin-top:8px;
-  -moz-appearance:textfield;appearance:textfield;}
+.farm-feed-override{width:100%;border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:4px 8px;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  text-align:right;margin-top:8px;-moz-appearance:textfield;appearance:textfield;}
 .farm-feed-override::-webkit-outer-spin-button,
 .farm-feed-override::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .farm-feed-override:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .farm-feed-override.manual{border-color:var(--primary);background:var(--primary-soft);}
 .farm-feed-override::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
-.farm-leftover-label{
-  display:block;
-  margin-top:8px;
-  font-size:10px;
-  font-weight:700;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:0.05em;
-}
-.farm-leftover-input{
-  width:100%;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--surface);
-  color:var(--ink);
-  padding:4px 8px;
-  font-family:'Sora',sans-serif;
-  font-weight:700;
-  font-size:12.5px;
-  text-align:right;
-  margin-top:2px;
-  -moz-appearance:textfield;
-  appearance:textfield;
-}
+.farm-leftover-label{display:block;margin-top:8px;font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.05em;}
+.farm-leftover-input{width:100%;border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:4px 8px;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+  text-align:right;margin-top:2px;-moz-appearance:textfield;appearance:textfield;}
 .farm-leftover-input::-webkit-outer-spin-button,
 .farm-leftover-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .farm-leftover-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
-.farm-leftover-input.manual{
-  border-color:var(--primary);
-  background:var(--primary-soft);
-  color:var(--primary-dark);
-}
-.farm-leftover-input::placeholder{
-  color:var(--muted);
-  font-weight:500;
-  font-size:11px;
-  font-style:italic;
-  opacity:0.7;
-}
+.farm-leftover-input.manual{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-dark);}
+.farm-leftover-input::placeholder{color:var(--muted);font-weight:500;font-size:11px;font-style:italic;opacity:0.7;}
 .farm-kpi-empty{padding:24px 20px;text-align:center;color:var(--muted);font-size:13px;font-style:italic;}
 
 .adj-collapse{background:var(--surface);border:1px solid var(--line);border-radius:14px;
   margin-bottom:16px;box-shadow:var(--shadow-sm);overflow:hidden;
   transition:box-shadow .2s ease,border-color .2s ease;}
-.adj-collapse.adj-collapse-highlight{
-  border:1.5px solid var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft), var(--shadow-sm);
-}
-body.theme-dark .adj-collapse.adj-collapse-highlight{
-  box-shadow:0 0 0 3px rgba(240,168,64,0.28), var(--shadow-sm);
-}
-.adj-collapse.adj-collapse-highlight .adj-collapse-title{
-  color:var(--primary-dark);
-}
-.adj-collapse.adj-collapse-highlight .adj-collapse-caret{
-  background:var(--primary);
-  color:#fff;
-}
+.adj-collapse.adj-collapse-highlight{border:1.5px solid var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft), var(--shadow-sm);}
+body.theme-dark .adj-collapse.adj-collapse-highlight{box-shadow:0 0 0 3px rgba(240,168,64,0.28), var(--shadow-sm);}
+.adj-collapse.adj-collapse-highlight .adj-collapse-title{color:var(--primary-dark);}
+.adj-collapse.adj-collapse-highlight .adj-collapse-caret{background:var(--primary);color:#fff;}
 body.theme-dark .adj-collapse.adj-collapse-highlight .adj-collapse-caret{color:#1A2438;}
-.adj-collapse-head{width:100%;background:transparent;border:none;
-  display:flex;align-items:center;gap:12px;
-  padding:14px 18px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;
-  transition:background .15s ease;}
+.adj-collapse-head{width:100%;background:transparent;border:none;display:flex;align-items:center;gap:12px;
+  padding:14px 18px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;transition:background .15s ease;}
 .adj-collapse-head:hover{background:var(--surface-soft);}
 .adj-collapse-head:focus{outline:none;}
 .adj-collapse-head:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
-.adj-collapse-title{font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
-  color:var(--ink);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.adj-collapse-title{font-family:'Sora',sans-serif;font-weight:800;font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .adj-collapse-summary{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}
-.adj-chip{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
-  background:var(--surface-soft);border:1px solid var(--line);border-radius:999px;
-  padding:3px 10px;color:var(--muted);white-space:nowrap;}
+.adj-chip{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:var(--surface-soft);
+  border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted);white-space:nowrap;}
 .adj-chip strong{color:var(--ink);font-weight:800;font-family:'Sora',sans-serif;margin-left:4px;}
 .adj-collapse-caret{font-size:18px;font-weight:800;color:var(--primary-dark);
-  display:inline-flex;align-items:center;justify-content:center;
-  width:28px;height:28px;border-radius:8px;background:var(--primary-soft);
-  transition:transform .22s ease,background .15s ease,color .15s ease;flex-shrink:0;}
+  display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;
+  background:var(--primary-soft);transition:transform .22s ease,background .15s ease,color .15s ease;flex-shrink:0;}
 .adj-collapse-head:hover .adj-collapse-caret{background:var(--primary);color:#fff;}
 body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 .adj-collapse.open .adj-collapse-caret{transform:rotate(180deg);}
-.adj-collapse-body{padding:0 18px 16px;display:none;
-  border-top:1px dashed var(--line);margin-top:0;padding-top:14px;}
+.adj-collapse-body{padding:0 18px 16px;display:none;border-top:1px dashed var(--line);margin-top:0;padding-top:14px;}
 .adj-collapse.open .adj-collapse-body{display:block;}
-.adj-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:12.5px;margin-bottom:10px;}
+.adj-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;font-size:12.5px;margin-bottom:10px;}
 .adj-row:last-child{margin-bottom:0;}
-.adj-row > label{font-weight:700;text-transform:uppercase;
-  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);min-width:150px;}
+.adj-row > label{font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:0.06em;color:var(--muted);min-width:150px;}
 .adj-row input[type="range"]{flex:1;min-width:120px;accent-color:var(--primary);}
-.adj-row input[type="number"]{width:72px;padding:5px 8px;
-  border:1px solid var(--line);border-radius:7px;background:var(--surface);
-  color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
+.adj-row input[type="number"]{width:72px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;font-weight:700;font-size:13px;
   text-align:center;-moz-appearance:textfield;appearance:textfield;}
 .adj-row input[type="number"]::-webkit-outer-spin-button,
 .adj-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .adj-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .adj-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
-.adj-hint{flex-basis:100%;width:100%;font-size:11px;color:var(--muted);
-  font-weight:500;line-height:1.4;margin-top:-2px;}
+.adj-hint{flex-basis:100%;width:100%;font-size:11px;color:var(--muted);font-weight:500;line-height:1.4;margin-top:-2px;}
 
 .pred-grid{display:grid;grid-template-columns:1fr;gap:18px;}
 .pred-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
@@ -1497,86 +1233,67 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 
 .pred-shed-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
   overflow:hidden;box-shadow:var(--shadow-sm);min-width:0;}
-.pred-shed-head{padding:14px 18px;border-bottom:1px solid var(--line);
-  background:var(--surface-soft);display:flex;align-items:center;
-  justify-content:space-between;gap:10px;flex-wrap:wrap;}
-.pred-shed-head h3{margin:0;font-size:16px;font-weight:800;
-  display:flex;align-items:center;gap:8px;color:var(--ink);}
+.pred-shed-head{padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-soft);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.pred-shed-head h3{margin:0;font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--ink);}
 .pred-shed-body{padding:14px 18px 18px;}
 
 .pred-snapshot{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
-.pred-snap-item{background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;padding:8px 10px;}
-.pred-snap-item .lbl{font-size:10px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
-.pred-snap-item .val{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:16px;color:var(--ink);margin-top:2px;}
+.pred-snap-item{background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
+.pred-snap-item .lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.pred-snap-item .val{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:var(--ink);margin-top:2px;}
 .pred-snap-item .sub{font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
 
 .pred-target-curve{margin-top:14px;padding:12px 14px;background:var(--surface-soft);
   border:1px solid var(--line);border-radius:12px;}
-.ptc-head{display:flex;align-items:baseline;justify-content:space-between;
-  gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.ptc-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 .ptc-title{font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--ink);}
 .ptc-sub{font-size:11px;color:var(--muted);}
 .ptc-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 @media(max-width:640px){.ptc-inputs{grid-template-columns:repeat(2,1fr);}}
-.ptc-input{background:var(--surface);border:1px solid var(--line);
-  border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-width:0;}
-.ptc-input label{font-size:10px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
+.ptc-input{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.ptc-input label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
 .ptc-input .ptc-field{display:flex;align-items:center;gap:8px;min-width:0;}
-.ptc-input input{flex:1 1 auto;min-width:0;width:100%;
-  border:1px solid var(--line);border-radius:7px;
-  background:var(--surface-soft);color:var(--ink);
-  padding:6px 10px;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
-  text-align:right;transition:border-color .15s ease,box-shadow .15s ease;
-  -moz-appearance:textfield;appearance:textfield;}
+.ptc-input input{flex:1 1 auto;min-width:0;width:100%;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-soft);color:var(--ink);padding:6px 10px;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:14px;text-align:right;
+  transition:border-color .15s ease,box-shadow .15s ease;-moz-appearance:textfield;appearance:textfield;}
 .ptc-input input::-webkit-outer-spin-button,
 .ptc-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .ptc-input input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .ptc-input input.warn{border-color:var(--danger);background:var(--danger-soft);}
 .ptc-input input.filled{border-color:var(--primary);background:var(--primary-soft);}
-.ptc-input input::placeholder{color:var(--muted);opacity:0.55;font-weight:600;font-style:italic;
-  font-size:12.5px;letter-spacing:0;}
+.ptc-input input::placeholder{color:var(--muted);opacity:0.55;font-weight:600;font-style:italic;font-size:12.5px;letter-spacing:0;}
 .ptc-input .unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
 .ptc-input .ref{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-.ptc-status{margin-top:10px;padding:8px 10px;background:var(--surface);
-  border:1px dashed var(--line);border-radius:8px;font-size:11.5px;
-  color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ptc-status{margin-top:10px;padding:8px 10px;background:var(--surface);border:1px dashed var(--line);
+  border-radius:8px;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .ptc-status strong{color:var(--ink);}
-.ptc-status .pill{display:inline-block;font-size:9.5px;font-weight:800;
-  padding:2px 7px;border-radius:999px;letter-spacing:0.05em;text-transform:uppercase;}
+.ptc-status .pill{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;
+  letter-spacing:0.05em;text-transform:uppercase;}
 .ptc-status .pill.pickup{background:var(--success-soft);color:var(--success);}
 .ptc-status .pill.target{background:var(--primary-soft);color:var(--primary-dark);}
 .ptc-status .pill.standard{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line);}
 .ptc-status .pill.gompertz{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;}
 
-.pred-estimates-head{margin-top:14px;
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.06em;color:var(--muted);}
+.pred-estimates-head{margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);}
 .pred-estimates-head .sub{font-weight:500;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted);}
 .pred-estimates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;}
-.pred-est-tile{background:var(--surface);border:1px solid var(--line);
-  border-radius:12px;padding:10px 12px;
-  display:flex;flex-direction:column;gap:2px;
-  transition:box-shadow .12s ease,border-color .12s ease;}
+.pred-est-tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+  display:flex;flex-direction:column;gap:2px;transition:box-shadow .12s ease,border-color .12s ease;}
 .pred-est-tile:hover{box-shadow:var(--shadow-sm);}
-.pred-est-tile .lbl{font-size:10.5px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:0.06em;}
-.pred-est-tile .val{font-family:'Sora',sans-serif;font-weight:800;
-  font-size:19px;color:var(--ink);line-height:1.15;}
+.pred-est-tile .lbl{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.pred-est-tile .val{font-family:'Sora',sans-serif;font-weight:800;font-size:19px;color:var(--ink);line-height:1.15;}
 .pred-est-tile.amber .val{color:var(--primary-dark);}
 .pred-est-tile.green .val{color:var(--success);}
 .pred-est-tile.red .val{color:var(--danger);}
 
-.pred-confidence{display:flex;align-items:center;gap:8px;margin-top:14px;
-  padding:10px 12px;background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:12.5px;}
-.pred-confidence .bar{flex:1;height:6px;background:var(--line);
-  border-radius:999px;overflow:hidden;position:relative;}
+.pred-confidence{display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 12px;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;font-size:12.5px;}
+.pred-confidence .bar{flex:1;height:6px;background:var(--line);border-radius:999px;overflow:hidden;position:relative;}
 .pred-confidence .bar-fill{height:100%;border-radius:999px;transition:width .3s ease;}
 .pred-confidence .bar-fill.low{background:#C1502E;}
 .pred-confidence .bar-fill.medium{background:#E0A339;}
@@ -1587,9 +1304,8 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
   border:1px dashed var(--line);border-radius:16px;color:var(--muted);font-size:14px;}
 .pred-empty strong{color:var(--ink);}
 
-.pred-pickup-input{width:90px;padding:5px 8px;border:1px solid var(--line);
-  border-radius:7px;background:var(--surface);color:var(--ink);
-  font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;
+.pred-pickup-input{width:90px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:var(--ink);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;
   text-align:right;-moz-appearance:textfield;appearance:textfield;}
 .pred-pickup-input::-webkit-outer-spin-button,
 .pred-pickup-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -1598,35 +1314,29 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 .pred-pickup-input.warn{border-color:var(--danger);background:var(--danger-soft);}
 .pred-pickup-input.avg-input{width:100px;text-align:right;}
 
-.pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);
-  text-align:right;font-variant-numeric:tabular-nums;}
+.pred-avg-cell{font-family:'Sora',sans-serif;font-weight:800;color:var(--primary-dark);text-align:right;font-variant-numeric:tabular-nums;}
 
 .pred-daily-range-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  padding:10px 14px;margin:14px 0;box-shadow:var(--shadow-sm);}
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0;
+  box-shadow:var(--shadow-sm);}
 .pred-daily-range-bar > label{font-family:'Sora',sans-serif;font-weight:700;font-size:12px;
   color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;}
-.pred-daily-range-bar .pdrb-sep{font-size:11px;color:var(--muted);font-weight:600;
-  text-transform:none;letter-spacing:0;margin:0 2px;}
+.pred-daily-range-bar .pdrb-sep{font-size:11px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;margin:0 2px;}
 .pdrb-cycle-inputs{display:inline-flex;align-items:center;gap:5px;
   background:var(--surface-soft);border:1px solid var(--line);border-radius:9px;padding:3px 8px;}
 .pdrb-cycle-inputs span{font-size:11.5px;color:var(--muted);font-weight:700;font-family:'Sora',sans-serif;}
 .pdrb-cycle-inputs input[type="number"]{width:56px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;
-  background:var(--surface);color:var(--ink);
-  font-family:'Sora',sans-serif;font-weight:800;font-size:12.5px;text-align:center;
-  -moz-appearance:textfield;appearance:textfield;}
+  background:var(--surface);color:var(--ink);font-family:'Sora',sans-serif;font-weight:800;font-size:12.5px;
+  text-align:center;-moz-appearance:textfield;appearance:textfield;}
 .pdrb-cycle-inputs input[type="number"]::-webkit-outer-spin-button,
 .pdrb-cycle-inputs input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .pdrb-cycle-inputs input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
 .pdrb-apply{border:1px solid var(--primary);background:var(--primary-soft);color:var(--primary-dark);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11px;
-  padding:5px 11px;border-radius:7px;cursor:pointer;
-  transition:background .15s ease,color .15s ease;white-space:nowrap;
-  text-transform:uppercase;letter-spacing:0.05em;}
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11px;padding:5px 11px;border-radius:7px;cursor:pointer;
+  transition:background .15s ease,color .15s ease;white-space:nowrap;text-transform:uppercase;letter-spacing:0.05em;}
 .pdrb-apply:hover{background:var(--primary);color:#fff;}
 body.theme-dark .pdrb-apply:hover{color:#1A2438;}
-.pdrb-resolved{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600;
-  text-transform:none;letter-spacing:0;}
+.pdrb-resolved{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;}
 @media(max-width:900px){.pdrb-resolved{margin-left:0;}}
 @media(max-width:640px){
   .pdrb-cycle-inputs{padding:3px 6px;}
@@ -1644,8 +1354,7 @@ body.theme-dark .pdrb-apply:hover{color:#1A2438;}
 .pred-daily-table tr.is-today td{background:var(--primary-soft);font-weight:700;}
 .pred-daily-table tr.is-today td:first-child{border-left:3px solid var(--primary);}
 .pred-daily-table tr.is-weekend td{background:var(--weekend-tint);}
-.pred-daily-table tr.is-weekend td:first-child{border-left:3px solid var(--weekend-border);
-  color:var(--weekend-border);font-weight:800;}
+.pred-daily-table tr.is-weekend td:first-child{border-left:3px solid var(--weekend-border);color:var(--weekend-border);font-weight:800;}
 .pred-daily-table tr.is-today.is-weekend td{background:var(--weekend-tint);}
 .pred-daily-table tr.is-today.is-weekend td:first-child{border-left:3px solid var(--weekend-border);}
 .pred-daily-table tr.is-forecast-row td{background:rgba(176,132,99,0.08);}
@@ -1662,24 +1371,19 @@ body.theme-dark .pdrb-apply:hover{color:#1A2438;}
 .pred-daily-table .days-neu{color:var(--muted);font-weight:800;}
 .pred-daily-table .conf-band{font-size:10px;color:var(--muted);font-weight:600;margin-left:3px;}
 
-.milestone-pill{display:inline-block;font-size:9px;font-weight:800;
-  padding:1px 6px;border-radius:999px;margin-left:5px;
-  letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;font-family:'Sora',sans-serif;
+.milestone-pill{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;
+  margin-left:5px;letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-family:'Sora',sans-serif;
   box-shadow:0 1px 3px rgba(168,114,31,0.30);}
 body.theme-dark .milestone-pill{color:#1A2438;}
 
-.sample-pill{display:inline-block;font-size:9px;font-weight:800;
-  padding:1px 6px;border-radius:999px;margin-left:5px;
-  letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;
-  background:linear-gradient(135deg,#B08463,#5E2E22);
-  color:#fff;font-family:'Sora',sans-serif;}
+.sample-pill{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;
+  margin-left:5px;letter-spacing:0.05em;text-transform:uppercase;vertical-align:middle;
+  background:linear-gradient(135deg,#B08463,#5E2E22);color:#fff;font-family:'Sora',sans-serif;}
 body.theme-dark .sample-pill{color:#1A2438;}
 
-.w-pill{display:inline-block;font-size:9px;font-weight:800;
-  padding:1px 6px;border-radius:999px;margin-left:4px;
-  letter-spacing:0.06em;text-transform:uppercase;vertical-align:middle;}
+.w-pill{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;
+  margin-left:4px;letter-spacing:0.06em;text-transform:uppercase;vertical-align:middle;}
 .w-pill.actual{background:var(--success-soft);color:var(--success);}
 .w-pill.forecast{background:var(--secondary-soft);color:var(--secondary);}
 .w-pill.ai-target{background:var(--primary-soft);color:var(--primary-dark);}
@@ -1687,11 +1391,9 @@ body.theme-dark .sample-pill{color:#1A2438;}
 .w-pill.gompertz{background:linear-gradient(135deg,#E0A339,#A8721F);color:#fff;}
 .w-pill.sample{background:linear-gradient(135deg,#B08463,#5E2E22);color:#fff;}
 
-.pred-days-behind{display:flex;align-items:center;gap:10px;margin-top:14px;
-  padding:10px 14px;background:var(--surface-soft);border:1px solid var(--line);
-  border-radius:10px;font-size:13px;flex-wrap:wrap;}
-.pred-days-behind .dbi-lbl{font-weight:700;text-transform:uppercase;
-  font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
+.pred-days-behind{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 14px;
+  background:var(--surface-soft);border:1px solid var(--line);border-radius:10px;font-size:13px;flex-wrap:wrap;}
+.pred-days-behind .dbi-lbl{font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:0.06em;color:var(--muted);}
 .pred-days-behind .dbi-val{font-family:'Sora',sans-serif;font-weight:800;font-size:16px;}
 .pred-days-behind.ahead .dbi-val{color:var(--success);}
 .pred-days-behind.on-track .dbi-val{color:var(--success);}
@@ -1748,30 +1450,23 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
           <label for="batchNumber">Batch</label>
           <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
         </div>
-        <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">
-          🔄 New Batch
-        </button>
-        <button class="settings-btn" id="settingsBtn" type="button" title="Open Settings" aria-label="Open Settings">
-          ⚙️
-        </button>
+        <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">🔄 New Batch</button>
+        <button class="settings-btn" id="settingsBtn" type="button" title="Open Settings" aria-label="Open Settings">⚙️</button>
       </div>
     </header>
     <div class="barn-stripe"></div>
-
     <div class="tabs-wrap" id="tabsWrap" style="display:none;">
       <nav class="tabs" id="tabs"></nav>
     </div>
   </div>
 
   <main id="app"></main>
-
   <footer>Made by Von Mangaron • Personal use only • not for commercial use</footer>
 </div>
 
 <input type="file" id="excelFile" accept=".xlsx,.xls" hidden />
 <div class="toast" id="toast"></div>
 
-<!-- Settings slide-in drawer -->
 <div class="settings-scrim" id="settingsScrim"></div>
 <aside class="settings-drawer" id="settingsDrawer" aria-hidden="true" aria-label="Settings">
   <div class="settings-drawer-head">
@@ -1871,48 +1566,35 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
   <div class="sync-modal-body" id="importReviewBody"></div>
 </div>
 
+<!-- Full-screen Compare Feed Balance modal -->
+<div class="compare-modal" id="compareFeedModal" aria-hidden="true">
+  <div class="compare-modal-panel">
+    <div class="compare-modal-head">
+      <h3><span>⇄</span> Compare Feed Balance</h3>
+      <button type="button" class="compare-modal-close" id="compareFeedClose" aria-label="Close">✕</button>
+    </div>
+    <div class="compare-modal-body" id="compareFeedBody"></div>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - CHANGE: Pickups now deduct from the START of their sheet
-     date (previously deducted from the next day). Fixes: on
-     catch day, birds = 0 for the whole day, feed = 0 for the
-     whole day, "Live birds" / "Current birds" columns match
-     reality.
-   - CHANGE: Daily mortality rate now fills the gap between
-     manual mortality entries. A new `mortalityUpdatedAt`
-     anchor is stamped whenever the user types a mortality
-     count. Days on/before the anchor use the recorded count
-     as-is. Days after the anchor project the daily rate
-     forward. This makes "Live birds" decline day-by-day
-     between manual counts.
-   - CHANGE: Shed Forecast table simplified — dropped the
-     "Live (after)" column. Row is now:
-     Date | Age | Live birds | Daily Feed | Pickup
-     The Pickup cell content is hidden (row background still
-     highlights pickup days).
-   - CHANGE: Excel import now stamps the `mortalityUpdatedAt`
-     anchor (today) for any shed with mortality > 0, so the
-     daily rate kicks in immediately after a fresh import.
-     Existing data (anchor null, mortality > 0) is migrated
-     to today on first load.
-   - CHANGE: New "Predicted Catch" column in the Feed Balance
-     Forecast, between "Current birds" and "Daily Feed".
-     Shows the total predicted pickup birds (summed across
-     both sheds) on each future day, e.g. "−5,000".
-   - FIX: "Current birds" column was showing fractional birds
-     because the daily mortality rate was applied as a
-     multiplicative decay and the float was never rounded.
-     The projection loops in `liveAtStartOfDay` and
-     `computeLiveBirdsBefore` now round to the nearest whole
-     bird after each daily step.
-   - FIX: The Predictions pickup history now lets you edit
-     EITHER the "Total wt (kg)" cell OR the "Avg wt (kg/bird)"
-     cell — the other is computed from birds. Previously only
-     the total was editable.
-   - Retained: reading badge + reading deletion, repo-root
-     connect fixes, updateScrimVisibility(), inline-delivery
-     layout fix, "Current birds" column in Feed Balance Forecast.
+   - FIX: Creating a new farm no longer leaks the previous
+     farm's batch number. When the user connects to a farm
+     that doesn't exist yet, the app no longer pushes a file
+     with the old batch number. `predState.batchNumber` and
+     the local `farmData` are cleared, and the new-farm flow
+     simply opens the New Batch modal. Nothing is written to
+     the cloud until the user picks a batch number, at which
+     point `startNewBatch` pushes with the correct file name.
+   - Retained from previous release: feed balance forecast
+     column restructure (colored date, inline pickup indicator
+     on Live birds, colored End Balance), full-screen Compare
+     Feed Balance modal, pencil edit on locked delivery rows,
+     mortality anchor stamping on import, whole-bird rounding
+     in projection loops, symmetric total/avg pickup weight
+     editing.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1964,6 +1646,7 @@ const DEFAULT_VIEWS = { 1:'planner', 2:'planner', 3:'planner', 4:'planner' };
 const CONE_KG   = 10000;
 const RING_KG   = 8000;
 const MAX_RINGS = 5;
+const COMPARE_MIN_WIDTH = 768;
 
 const ROSS_308_WEIGHTS_KG = {
   0: 0.044, 7: 0.2135, 14: 0.533, 21: 1.012, 28: 1.6165,
@@ -2045,6 +1728,13 @@ let predState = {
 const DEFAULT_DAILY_RANGE = { mode: 'today', start: 0, end: 7 };
 let dailyRangeState = { ...DEFAULT_DAILY_RANGE };
 
+/* Compare modal state — session only, not persisted */
+let feedCompareState = {
+  modalOpen: false,
+  partnerGroup: null,
+  layoutMode: 'auto'
+};
+
 let newBatchModalPhase = 'choice';
 let batchHistoryCache = null;
 let batchHistoryPage = 0;
@@ -2075,6 +1765,20 @@ let settingsDrawerOpen = false;
 
 let pendingNewBatchClean = '';
 let pendingNewBatchDownload = true;
+
+/* ---------- Compare helpers ---------- */
+function isCompareAvailable(){
+  try {
+    return window.matchMedia(`(min-width: ${COMPARE_MIN_WIDTH}px)`).matches;
+  } catch(e){ return true; }
+}
+function effectiveCompareLayout(){
+  if (feedCompareState.layoutMode === 'stacked') return 'stacked';
+  if (feedCompareState.layoutMode === 'side-by-side') return 'side-by-side';
+  try {
+    return window.matchMedia('(min-width: 1500px)').matches ? 'side-by-side' : 'stacked';
+  } catch(e){ return 'stacked'; }
+}
 
 /* ---------- Sticky header height ---------- */
 function updateStickyHeaderHeight(){
@@ -2405,7 +2109,7 @@ function recommendPickupForDate(shed, dateIso, opts){
   };
 }
 
-/* ---------- Live birds at start of day (with anchor-based mortality) ---------- */
+/* ---------- Live birds at start of day ---------- */
 function liveAtStartOfDay(shed, D){
   const d = dateOnly(D);
   if (!shed.placementDate) return 0;
@@ -2450,7 +2154,6 @@ function liveAtStartOfDay(shed, D){
   return Math.max(0, live);
 }
 
-/* ---------- Live birds strictly before a date (for auto-fill) ---------- */
 function computeLiveBirdsBefore(shed, dateObj, extraPredicted){
   const d = dateOnly(dateObj);
   if (!shed || !shed.placementDate) return 0;
@@ -2878,7 +2581,6 @@ function loadState(){
     return parsed;
   } catch(e){ return null; }
 }
-/* ---------- Mortality anchor migration ---------- */
 function migrateMortalityAnchors(){
   if (!farmData || !Array.isArray(farmData.sheds)) return false;
   const today = dateOnly(new Date());
@@ -3093,7 +2795,6 @@ function observedDailyGain(shed){
   if (a1 <= a0 || w0 == null || w1 == null) return null;
   return (w1 - w0) / (a1 - a0);
 }
-
 function forecastFromPickups(shed, date){
   const last = lastWeightedPickup(shed);
   if (!last) return null;
@@ -3104,7 +2805,6 @@ function forecastFromPickups(shed, date){
   const g = observedDailyGain(shed) || 0;
   return lastW + (targetAge - lastAge) * g;
 }
-
 function getTargetCurve(shed){
   const t = shed.targetCurve || {};
   const pts = [];
@@ -3114,9 +2814,7 @@ function getTargetCurve(shed){
   });
   return pts.sort((a,b) => a.day - b.day);
 }
-function hasTargetCurve(shed){
-  return getTargetCurve(shed).length > 0;
-}
+function hasTargetCurve(shed){ return getTargetCurve(shed).length > 0; }
 function forecastFromTargetCurve(shed, date){
   const pts = getTargetCurve(shed);
   if (pts.length === 0) return null;
@@ -3139,7 +2837,6 @@ function forecastFromTargetCurve(shed, date){
   }
   return null;
 }
-
 function forecastWeightModeAware(shed, date){
   const age = ageInDays(shed, date);
   const fit = getShedGompertzFit(shed);
@@ -3168,7 +2865,6 @@ function forecastWeightModeAware(shed, date){
   }
   return { kg: rossWeightKg(age), mode: 'standard', band: 0.15 };
 }
-
 function daysVsTarget(currentAge, currentWeightKg){
   if (!Number.isFinite(currentAge) || !Number.isFinite(currentWeightKg) || currentWeightKg <= 0) return null;
   const rossAge = findRossAgeForWeight(currentWeightKg);
@@ -3674,6 +3370,9 @@ function resetAllToDefaults(batchNumber){
   inlineDeliveryState = null;
   activeTab = 'g1';
   dailyRangeState = { ...DEFAULT_DAILY_RANGE };
+  feedCompareState = { modalOpen: false, partnerGroup: null, layoutMode: 'auto' };
+  const cm = document.getElementById('compareFeedModal');
+  if (cm) cm.classList.remove('open');
 
   saveState(); saveSiloData(); savePredState(); saveShedViews();
 }
@@ -3856,8 +3555,15 @@ async function handleConnectFarm(farmName){
       syncExcelMeta = null;
       syncConnectedAt = Date.now();
       syncLastSyncAt = null;
+      // Clear the batch number and local shed data — these belonged to the
+      // previous farm. The new farm starts clean; nothing is written to the
+      // cloud until the user picks a batch number in the New Batch modal,
+      // at which point startNewBatch pushes with the correct file name.
+      predState.batchNumber = '';
+      savePredState();
+      farmData = null;
+      saveState();
       saveSyncState();
-      try { await pushToCloud(); } catch(e){}
       closeSyncModal();
       closeSettingsDrawer();
       openNewBatchModal('batchNumber');
@@ -4451,7 +4157,6 @@ function shedsForGroup(g){
   const b = farmData.sheds[(g-1)*2 + 1];
   return [a, b].filter(Boolean);
 }
-
 function feedPerBirdKg(shed, ageDays){
   if (shed.customFeedKg != null && shed.customFeedKg > 0) return shed.customFeedKg;
   if (ageDays <= 0) return 0;
@@ -4466,7 +4171,6 @@ function shedFeedOn(shed, D){
 }
 function groupDailyFeedOn(sheds, D){ return sheds.reduce((sum, s) => sum + shedFeedOn(s, D), 0); }
 function groupFeedToday(sheds, today = new Date()){ return groupDailyFeedOn(sheds, today); }
-
 function fmtFeed(kg){
   if (!Number.isFinite(kg) || kg === 0) return '0 kg';
   const abs = Math.abs(kg);
@@ -4740,7 +4444,7 @@ function farmFeedSubText(t){
   return `Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData === 1 ? '' : 's'}`;
 }
 
-/* ---------- Shed forecast ---------- */
+/* ---------- Shed forecast (Date | Age | Live birds | Daily Feed | Pickup) ---------- */
 function computeForecast(shed, range){
   const today = dateOnly(new Date());
   const rows = [];
@@ -4793,7 +4497,6 @@ function readingOnDate(group, dateIso){
   const arr = readingsSorted(group);
   return arr.find(r => r.date === dateIso) || null;
 }
-
 function deliveriesForGroup(group){
   const s = siloData[group] || { deliveries: [] };
   return (s.deliveries || []).slice().sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
@@ -4857,16 +4560,18 @@ function computeSiloForecast(group, range){
   const sheds = shedsForGroup(group);
   const today = dateOnly(new Date());
   const rows = [];
-  let totalConsumption = 0, totalDelivered = 0, totalPredictedCatch = 0;
+  let totalConsumption = 0, totalDelivered = 0;
 
-  // Pre-compute predicted pickup birds per day across both sheds in the group.
-  const predictedByDay = {};
+  const realPickupsByDay = {};
+  const predictedPickupsByDay = {};
   sheds.forEach(s => {
     const eff = computeEffectivePickups(s);
     eff.forEach(p => {
+      const k = iso(p.date);
       if (p.__source === 'predicted'){
-        const k = iso(p.date);
-        predictedByDay[k] = (predictedByDay[k] || 0) + (Number(p.birds) || 0);
+        predictedPickupsByDay[k] = (predictedPickupsByDay[k] || 0) + (Number(p.birds) || 0);
+      } else {
+        realPickupsByDay[k] = (realPickupsByDay[k] || 0) + (Number(p.birds) || 0);
       }
     });
   });
@@ -4880,13 +4585,19 @@ function computeSiloForecast(group, range){
     const deliveriesOnDay = allDeliveriesForGroup(group).filter(x => iso(x.date) === iso(d));
     const bal = balanceOnEndOfDay(group, d);
     const liveBirds = sheds.reduce((sum, s) => sum + liveAtStartOfDay(s, d), 0);
-    const predictedCatch = isPast ? null : (predictedByDay[iso(d)] || 0);
-    if (predictedCatch) totalPredictedCatch += predictedCatch;
+    const key = iso(d);
+    const realPickups = realPickupsByDay[key] || 0;
+    const predPickups = predictedPickupsByDay[key] || 0;
+    const pickupsBirds = realPickups + predPickups;
+    const hasPredicted = predPickups > 0;
     totalConsumption += cons;
     totalDelivered += del;
-    rows.push({ date: d, consumption: cons, delivery: del,
-      deliveries: deliveriesOnDay, balance: bal, liveBirds, predictedCatch,
-      isToday, isPast, isFuture: !isPast && !isToday, isWeekend: isWeekend(d) });
+    rows.push({
+      date: d, consumption: cons, delivery: del,
+      deliveries: deliveriesOnDay, balance: bal, liveBirds,
+      pickupsBirds, hasPredicted,
+      isToday, isPast, isFuture: !isPast && !isToday, isWeekend: isWeekend(d)
+    });
   }
   let depletedDate = null;
   for (const r of rows){
@@ -4895,7 +4606,7 @@ function computeSiloForecast(group, range){
   const endBalance = rows.length ? rows[rows.length - 1].balance : null;
   const totalStock = balanceOnEndOfDay(group, today);
   const shortfall = Math.max(0, totalConsumption - (totalStock || 0) - totalDelivered);
-  return { rows, totalStock, totalConsumption, totalDelivered, totalPredictedCatch, depletedDate, endBalance, shortfall };
+  return { rows, totalStock, totalConsumption, totalDelivered, depletedDate, endBalance, shortfall };
 }
 
 function shedAgesAtDateForGroup(group, date){
@@ -4914,7 +4625,6 @@ function formatAgesPair(ages){
   if (valid.every(a => a === valid[0])) return valid[0] + 'd';
   return ages.map(a => a === null ? '—' : a + 'd').join(' / ');
 }
-
 function projectedLeftoverForGroup(group){
   const sheds = shedsForGroup(group);
   const cleanouts = sheds.map(s => s.cleanoutDate).filter(Boolean);
@@ -4932,7 +4642,15 @@ function totalFarmLeftover(){
   });
   return any ? sum : null;
 }
-
+function groupStatusSummary(g){
+  const latest = latestReading(g);
+  if (!latest) return { hasReading: false, balance: null, daysUntil: null };
+  const bal = balanceOnEndOfDay(g, new Date());
+  const forecast = computeSiloForecast(g, siloRange);
+  const depletedDate = forecast.depletedDate;
+  const daysUntil = depletedDate ? Math.max(0, daysBetween(new Date(), depletedDate)) : null;
+  return { hasReading: true, balance: bal, daysUntil };
+}
 function computeFeedSummary(group){
   const deliveries = deliveriesForGroup(group);
   const buckets = {
@@ -5017,7 +4735,6 @@ function setSiloRingsForToday(group, siloNum, rings){
   reading[key] = (rings === null) ? null : normalizeRing(rings);
   saveSiloData(); schedulePush(); render();
 }
-
 function deleteSiloReading(group, dateIso){
   const s = siloData[group];
   if (!s || !Array.isArray(s.readings)) return;
@@ -5034,7 +4751,6 @@ function deleteSiloReading(group, dateIso){
     showToast('🗑️ Reading deleted — no silo readings left. Tap ring levels to record a new one.');
   }
 }
-
 function addSiloDelivery(group, dateStr, amountT, feedType, note){
   const d = parseExcelDate(dateStr);
   if (!d){ showToast('Pick a valid date.', true); return; }
@@ -5060,7 +4776,6 @@ function addSiloDelivery(group, dateStr, amountT, feedType, note){
       inlineDeliveryState = null;
     }
   }
-
   saveSiloData(); schedulePush(); render();
   if (replacedTestCount > 0){
     showToast(`Delivery of ${amountT} t added on ${fmtShort(d)} — replaced ${replacedTestCount} test deliver${replacedTestCount === 1 ? 'y' : 'ies'}.`);
@@ -5100,7 +4815,6 @@ function removeSiloDelivery(group, id){
   s.deliveries = s.deliveries.filter(d => d.id !== id);
   saveSiloData(); schedulePush(); render();
 }
-
 function addTestDelivery(group, dateStr, amountT){
   const d = parseExcelDate(dateStr);
   if (!d){ showToast('Pick a valid date.', true); return false; }
@@ -5137,12 +4851,24 @@ function clearTestDeliveries(group){
   showToast(`🧹 Cleared ${count} test deliver${count === 1 ? 'y' : 'ies'}.`);
 }
 
-/* ---------- Delivery modal ---------- */
-function openDeliveryModal(group, dateIso, prefillAmount){
+/* ---------- Delivery modal (add OR edit) ---------- */
+function openDeliveryModal(group, dateIso, prefillAmount, editId){
   if (!farmData) return;
   const d = parseExcelDate(dateIso);
   if (!d) return;
-  deliveryState = { group, dateIso: iso(d), prefillAmount: (prefillAmount != null && Number.isFinite(Number(prefillAmount)) && Number(prefillAmount) > 0) ? Number(prefillAmount) : null };
+  let editDelivery = null;
+  if (editId){
+    const s = siloData[group] || { deliveries: [] };
+    editDelivery = (s.deliveries || []).find(x => x.id === editId);
+    if (!editDelivery){ showToast('Delivery not found.', true); return; }
+  }
+  deliveryState = {
+    group,
+    dateIso: iso(d),
+    prefillAmount: (prefillAmount != null && Number.isFinite(Number(prefillAmount)) && Number(prefillAmount) > 0) ? Number(prefillAmount) : null,
+    editId: editId || null,
+    editDelivery
+  };
   renderDeliveryModal();
   const modal = document.getElementById('deliveryModal');
   const scrim = document.getElementById('syncScrim');
@@ -5161,15 +4887,23 @@ function renderDeliveryModal(){
   const group = s.group;
   const d = parseExcelDate(s.dateIso);
   if (!d) return;
+  const isEdit = !!s.editId;
   const sheds = shedsForGroup(group);
   const balBefore = balanceOnEndOfDay(group, addDays(d, -1));
   const consumption = groupDailyFeedOn(sheds, d);
-  const existingDels = allDeliveriesForGroup(group).filter(x => iso(x.date) === iso(d));
+  const existingDels = allDeliveriesForGroup(group)
+    .filter(x => iso(x.date) === iso(d) && x.id !== s.editId);
   const existingKg = existingDels.reduce((sum, x) => sum + (Number(x.amountKg) || 0), 0);
-
   if (titleEl){
-    titleEl.innerHTML = `<span>✅</span> Add Actual Delivery — Group ${group}`;
+    titleEl.innerHTML = isEdit
+      ? `<span>✎</span> Edit Delivery — Group ${group}`
+      : `<span>✅</span> Add Actual Delivery — Group ${group}`;
   }
+  const initialAmount = isEdit
+    ? (Number(s.editDelivery.amountKg) / 1000).toFixed(2)
+    : (s.prefillAmount != null ? s.prefillAmount : '');
+  const initialType = isEdit ? (s.editDelivery.feedType || '') : '';
+  const initialNote = isEdit ? (s.editDelivery.note || '') : '';
   body.innerHTML = `
     <div class="sync-status-card">
       <div class="sync-status-row"><span class="lbl">Group</span><span class="val">Group ${group}</span></div>
@@ -5179,36 +4913,37 @@ function renderDeliveryModal(){
       <div class="sync-status-row"><span class="lbl">Feed used that day</span>
         <span class="val">−${Math.round(consumption).toLocaleString()} kg</span></div>
       ${existingKg > 0 ? `
-        <div class="sync-status-row"><span class="lbl">Existing deliveries</span>
+        <div class="sync-status-row"><span class="lbl">Other deliveries that day</span>
           <span class="val">+${(existingKg/1000).toFixed(2)} t</span></div>` : ''}
     </div>
     <div class="mp-field">
       <label>Amount (tonnes)</label>
-      <input type="number" id="dvAmount" step="0.1" min="0.1" placeholder="e.g. 10" value="${s.prefillAmount != null ? s.prefillAmount : ''}" />
+      <input type="number" id="dvAmount" step="0.1" min="0.1" placeholder="e.g. 10" value="${initialAmount}" />
     </div>
     <div class="mp-field">
       <label>Feed type</label>
       <select id="dvType">
         <option value="">— Unspecified —</option>
-        ${FEED_TYPES.map(f => `<option value="${f.id}">${f.label}</option>`).join('')}
+        ${FEED_TYPES.map(f => `<option value="${f.id}" ${initialType===f.id?'selected':''}>${f.label}</option>`).join('')}
       </select>
     </div>
     <div class="mp-field">
       <label>Note (optional)</label>
-      <input type="text" id="dvNote" maxlength="60" placeholder="e.g. Order #1234" />
+      <input type="text" id="dvNote" maxlength="60" placeholder="e.g. Order #1234" value="${escapeAttr(initialNote)}" />
     </div>
     <div class="dv-preview" id="dvPreview"></div>
     <div class="mp-hint">
-      This will be recorded permanently in <strong>Scheduled Deliveries</strong> and synced to the cloud.
+      ${isEdit
+        ? 'Saving updates this delivery in place. Deleting removes it permanently.'
+        : 'This will be recorded permanently in <strong>Scheduled Deliveries</strong> and synced to the cloud.'}
     </div>
     <div class="sync-actions">
-      <button class="btn-sync-primary" id="dvSaveActualBtn" type="button">✅ Save Actual Delivery</button>
+      <button class="btn-sync-primary" id="dvSaveActualBtn" type="button">${isEdit ? '✓ Save Changes' : '✅ Save Actual Delivery'}</button>
+      ${isEdit ? `<button class="btn-sync-primary danger" id="dvDeleteBtn" type="button">🗑️ Delete delivery</button>` : ''}
       <button class="btn-sync-primary ghost" id="dvCancelBtn" type="button">Cancel</button>
     </div>`;
-
   const amountEl = document.getElementById('dvAmount');
   const previewEl = document.getElementById('dvPreview');
-
   const refreshPreview = () => {
     const amtVal = amountEl.value === '' ? null : Number(amountEl.value);
     const amtKg = (amtVal != null && Number.isFinite(amtVal) && amtVal > 0) ? amtVal * 1000 : 0;
@@ -5218,11 +4953,7 @@ function renderDeliveryModal(){
     }
     const endNoNew = balBefore - consumption + existingKg;
     const endWithNew = endNoNew + amtKg;
-    const toneFor = (v) => {
-      if (v < 0) return 'danger';
-      if (v < 5000) return 'warn';
-      return 'ok';
-    };
+    const toneFor = (v) => { if (v < 0) return 'danger'; if (v < 5000) return 'warn'; return 'ok'; };
     const fmtVal = (v) => Math.round(v).toLocaleString() + ' kg';
     previewEl.innerHTML = `
       <div class="dv-preview-row"><span class="lbl">Balance start of day</span>
@@ -5230,27 +4961,48 @@ function renderDeliveryModal(){
       <div class="dv-preview-row"><span class="lbl">Feed consumed</span>
         <span class="val">−${Math.round(consumption).toLocaleString()} kg</span></div>
       ${existingKg > 0 ? `
-        <div class="dv-preview-row"><span class="lbl">Existing deliveries</span>
+        <div class="dv-preview-row"><span class="lbl">Other deliveries</span>
           <span class="val">+${Math.round(existingKg).toLocaleString()} kg</span></div>` : ''}
       ${amtKg > 0 ? `
         <div class="dv-preview-row"><span class="lbl">This delivery</span>
           <span class="val">+${Math.round(amtKg).toLocaleString()} kg</span></div>` : ''}
       <div class="dv-preview-row total"><span class="lbl">Balance end of day</span>
-        <span class="val ${toneFor(endWithNew)}">${fmtVal(endWithNew)}</span></div>
-    `;
+        <span class="val ${toneFor(endWithNew)}">${fmtVal(endWithNew)}</span></div>`;
   };
   refreshPreview();
   amountEl.addEventListener('input', refreshPreview);
   amountEl.focus();
-
   document.getElementById('dvSaveActualBtn').addEventListener('click', () => {
     const amt = Number(amountEl.value);
     if (!Number.isFinite(amt) || amt <= 0){ showToast('Enter a positive amount in tonnes.', true); return; }
     const type = document.getElementById('dvType').value;
     const note = String(document.getElementById('dvNote').value || '').trim();
-    addSiloDelivery(group, s.dateIso, amt, type, note);
-    closeDeliveryModal();
+    if (isEdit){
+      const s2 = siloData[group];
+      const del = s2 && (s2.deliveries || []).find(x => x.id === s.editId);
+      if (!del){ showToast('Delivery not found.', true); closeDeliveryModal(); return; }
+      del.amountKg = amt * 1000;
+      del.feedType = FEED_TYPES.some(f => f.id === type) ? type : '';
+      del.note = note;
+      saveSiloData(); schedulePush(); render();
+      showToast(`✅ Delivery updated to ${amt} t.`);
+      closeDeliveryModal();
+    } else {
+      addSiloDelivery(group, s.dateIso, amt, type, note);
+      closeDeliveryModal();
+    }
   });
+  if (isEdit){
+    const delBtn = document.getElementById('dvDeleteBtn');
+    if (delBtn){
+      delBtn.addEventListener('click', () => {
+        if (!confirm('Delete this delivery permanently?')) return;
+        removeSiloDelivery(group, s.editId);
+        closeDeliveryModal();
+        showToast('🗑️ Delivery deleted.');
+      });
+    }
+  }
   document.getElementById('dvCancelBtn').addEventListener('click', closeDeliveryModal);
 }
 
@@ -5278,16 +5030,13 @@ function openManualPickupModal(shedId, editDateIso){
     if (!p) return;
     const avg = (p.totalWeightKg && p.birds) ? (p.totalWeightKg / p.birds) : null;
     manualPickupState = {
-      shedId, mode: 'edit',
-      originalDateIso: editDateIso,
-      dateIso: iso(p.date),
-      ageValue: pickupAge(shed, p),
+      shedId, mode: 'edit', originalDateIso: editDateIso,
+      dateIso: iso(p.date), ageValue: pickupAge(shed, p),
       ageTouched: (p.ageOverride != null),
       birds: p.birds || '',
       avgWeight: avg != null ? Number(avg.toFixed(3)) : '',
       totalWeight: p.totalWeightKg != null ? Number(p.totalWeightKg.toFixed(2)) : '',
-      lastEdited: 'avg',
-      isFinal: !!p.isFinal
+      lastEdited: 'avg', isFinal: !!p.isFinal
     };
   } else {
     if (pickups.length >= MAX_PICKUPS_PER_SHED){
@@ -5614,13 +5363,11 @@ function renderPredictedPickupModal(){
       </button>
       <button class="btn-sync-primary ghost" id="ppCancelBtn">Cancel</button>
     </div>`;
-
   const dateEl  = document.getElementById('ppDate');
   const birdsEl = document.getElementById('ppBirds');
   const finalEl = document.getElementById('ppFinal');
   const hintEl  = document.getElementById('ppHint');
   const labelEl = document.getElementById('ppFinalLabel');
-
   const refreshHint = () => {
     if (hintEl){
       hintEl.innerHTML = s.isFinal
@@ -5629,7 +5376,6 @@ function renderPredictedPickupModal(){
     }
     if (labelEl) labelEl.classList.toggle('emphasis', s.isFinal);
   };
-
   const autoFillBirds = () => {
     if (s.isFinal){
       if (!cleanout) return;
@@ -5645,24 +5391,15 @@ function renderPredictedPickupModal(){
       }
     }
   };
-
   const onDateChange = () => {
     s.dateIso = dateEl.value;
-    if (!s.userEditedBirds){
-      autoFillBirds();
-    }
+    if (!s.userEditedBirds){ autoFillBirds(); }
     refreshPredictedPickupPreview();
   };
   const onBirdsChange = () => {
     const v = birdsEl.value;
-    if (v === ''){
-      s.birds = null;
-      s.userEditedBirds = false;
-      autoFillBirds();
-    } else {
-      s.birds = Number(v);
-      s.userEditedBirds = true;
-    }
+    if (v === ''){ s.birds = null; s.userEditedBirds = false; autoFillBirds(); }
+    else { s.birds = Number(v); s.userEditedBirds = true; }
     refreshPredictedPickupPreview();
   };
   const onFinalToggle = () => {
@@ -5679,15 +5416,11 @@ function renderPredictedPickupModal(){
     refreshHint();
     refreshPredictedPickupPreview();
   };
-
   dateEl.addEventListener('input', onDateChange);
   dateEl.addEventListener('change', onDateChange);
   birdsEl.addEventListener('input', onBirdsChange);
   if (finalEl) finalEl.addEventListener('change', onFinalToggle);
-
-  if (s.mode === 'add' && (s.birds == null || s.birds === '')){
-    autoFillBirds();
-  }
+  if (s.mode === 'add' && (s.birds == null || s.birds === '')){ autoFillBirds(); }
   refreshHint();
   refreshPredictedPickupPreview();
   document.getElementById('ppSaveBtn').addEventListener('click', savePredictedPickup);
@@ -5716,11 +5449,7 @@ function refreshPredictedPickupPreview(){
   const birdsToRemove = (s.birds == null || s.birds === '') ? (rec ? rec.recommendedRemove : 0) : Math.max(0, Math.floor(Number(s.birds)));
   const liveAfter = Math.max(0, liveBefore - birdsToRemove);
   const densityAfter = (liveAfter * weight) / FIXED_FLOOR_AREA_M2;
-  const colorFor = (d) => {
-    if (d > ds.maxDensity) return 'danger';
-    if (d > ds.triggerDensity) return 'warn';
-    return 'safe';
-  };
+  const colorFor = (d) => { if (d > ds.maxDensity) return 'danger'; if (d > ds.triggerDensity) return 'warn'; return 'safe'; };
   const recStr = s.isFinal
     ? `All ${liveBefore.toLocaleString()} remaining birds`
     : (rec ? rec.recommendedRemove.toLocaleString() + ' birds' : '—');
@@ -5730,36 +5459,14 @@ function refreshPredictedPickupPreview(){
       ? '<div style="margin-top:6px;font-size:11.5px;color:var(--danger);line-height:1.4;">⚠️ This shed has no cleanout date set. Set one in the group view first.</div>'
       : '';
   el.innerHTML = `
-    <div class="pp-density-row">
-      <span class="lbl">Age at pickup</span>
-      <span class="val">Day ${age}</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">Forecast weight</span>
-      <span class="val">${weight.toFixed(3)} kg</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">Live birds before</span>
-      <span class="val">${liveBefore.toLocaleString()}</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">Density before</span>
-      <span class="val ${colorFor(densityBefore)}">${densityBefore.toFixed(1)} kg/m²</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">${s.isFinal ? 'Cleanout removal' : 'Recommended removal'}</span>
-      <span class="val">${recStr}</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">Live birds after</span>
-      <span class="val">${liveAfter.toLocaleString()}</span>
-    </div>
-    <div class="pp-density-row">
-      <span class="lbl">Density after</span>
-      <span class="val ${colorFor(densityAfter)}">${densityAfter.toFixed(1)} kg/m²</span>
-    </div>
-    ${note}
-  `;
+    <div class="pp-density-row"><span class="lbl">Age at pickup</span><span class="val">Day ${age}</span></div>
+    <div class="pp-density-row"><span class="lbl">Forecast weight</span><span class="val">${weight.toFixed(3)} kg</span></div>
+    <div class="pp-density-row"><span class="lbl">Live birds before</span><span class="val">${liveBefore.toLocaleString()}</span></div>
+    <div class="pp-density-row"><span class="lbl">Density before</span><span class="val ${colorFor(densityBefore)}">${densityBefore.toFixed(1)} kg/m²</span></div>
+    <div class="pp-density-row"><span class="lbl">${s.isFinal ? 'Cleanout removal' : 'Recommended removal'}</span><span class="val">${recStr}</span></div>
+    <div class="pp-density-row"><span class="lbl">Live birds after</span><span class="val">${liveAfter.toLocaleString()}</span></div>
+    <div class="pp-density-row"><span class="lbl">Density after</span><span class="val ${colorFor(densityAfter)}">${densityAfter.toFixed(1)} kg/m²</span></div>
+    ${note}`;
 }
 function savePredictedPickup(){
   const s = predictedPickupState;
@@ -5770,10 +5477,7 @@ function savePredictedPickup(){
   const birdsStr = document.getElementById('ppBirds').value;
   let dateObj;
   if (s.isFinal){
-    if (!shed.cleanoutDate){
-      showToast('Set the shed\'s cleanout date first.', true);
-      return;
-    }
+    if (!shed.cleanoutDate){ showToast('Set the shed\'s cleanout date first.', true); return; }
     dateObj = dateOnly(shed.cleanoutDate);
   } else {
     dateObj = parseExcelDate(dateStr);
@@ -5782,28 +5486,15 @@ function savePredictedPickup(){
   let birds = Number(birdsStr);
   if (!Number.isFinite(birds) || birds < 0) birds = 0;
   const realMatch = (shed.pickups || []).some(rp => iso(rp.date) === iso(dateObj));
-  if (realMatch){
-    showToast('A real pickup already exists on this date — predicted pickup not saved.', true);
-    return;
-  }
+  if (realMatch){ showToast('A real pickup already exists on this date — predicted pickup not saved.', true); return; }
   if (!shed.predictedPickups) shed.predictedPickups = [];
   if (s.mode === 'add'){
-    shed.predictedPickups.push({
-      id: uid('pp'),
-      date: dateObj,
-      birds: Math.floor(birds),
-      isFinal: !!s.isFinal
-    });
+    shed.predictedPickups.push({ id: uid('pp'), date: dateObj, birds: Math.floor(birds), isFinal: !!s.isFinal });
     showToast(s.isFinal ? '✅ Cleanout predicted pickup added.' : '✅ Predicted pickup added.');
   } else {
     const idx = shed.predictedPickups.findIndex(x => x.id === s.editId);
     if (idx < 0){ showToast('Predicted pickup not found.', true); return; }
-    shed.predictedPickups[idx] = {
-      ...shed.predictedPickups[idx],
-      date: dateObj,
-      birds: Math.floor(birds),
-      isFinal: !!s.isFinal
-    };
+    shed.predictedPickups[idx] = { ...shed.predictedPickups[idx], date: dateObj, birds: Math.floor(birds), isFinal: !!s.isFinal };
     showToast('✅ Predicted pickup updated.');
   }
   shed.predictedPickups.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
@@ -5826,23 +5517,14 @@ function deletePredictedPickup(shedId, ppId){
 function autoFillPredictedPickupsForShed(shedId){
   if (!farmData) return;
   const shed = farmData.sheds[shedId - 1];
-  if (!shed || !shed.placementDate){
-    showToast('Set a placement date first.', true);
-    return;
-  }
+  if (!shed || !shed.placementDate){ showToast('Set a placement date first.', true); return; }
   const realFinal = (shed.pickups || []).some(p => p.isFinal);
-  if (realFinal){
-    showToast('Target reached — a cleanout pickup is already recorded for this shed.', true);
-    return;
-  }
+  if (realFinal){ showToast('Target reached — a cleanout pickup is already recorded for this shed.', true); return; }
   if ((shed.predictedPickups || []).length > 0){
     if (!confirm('This will replace your existing predicted pickups with an auto-generated plan. Continue?')) return;
   }
   const generated = autoFillPredictedPickups(shed);
-  if (generated.length === 0){
-    showToast('Could not auto-generate a plan — check placement/cleanout dates and target pickups.', true);
-    return;
-  }
+  if (generated.length === 0){ showToast('Could not auto-generate a plan — check placement/cleanout dates and target pickups.', true); return; }
   shed.predictedPickups = generated;
   saveState(); schedulePush(); render();
   const finals = generated.filter(g => g.isFinal).length;
@@ -5850,21 +5532,12 @@ function autoFillPredictedPickupsForShed(shedId){
   showToast(`✨ Auto-filled ${regulars} regular + ${finals} cleanout pickup${generated.length === 1 ? '' : 's'}.`);
 }
 function autoFillAllSheds(){
-  if (!farmData){
-    showToast('Import Excel first.', true);
-    return;
-  }
+  if (!farmData){ showToast('Import Excel first.', true); return; }
   const placed = farmData.sheds.filter(s => s.placementDate && s.initialPopulation > 0);
-  if (placed.length === 0){
-    showToast('No sheds are placed yet.', true);
-    return;
-  }
+  if (placed.length === 0){ showToast('No sheds are placed yet.', true); return; }
   const eligible = placed.filter(s => !(s.pickups || []).some(p => p.isFinal));
   const skipped = placed.length - eligible.length;
-  if (eligible.length === 0){
-    showToast('All sheds already have their cleanout pickup recorded.', true);
-    return;
-  }
+  if (eligible.length === 0){ showToast('All sheds already have their cleanout pickup recorded.', true); return; }
   if (!confirm(`Auto-fill predicted pickups for ${eligible.length} placed shed${eligible.length === 1 ? '' : 's'}?\n\nExisting predicted pickups will be replaced.${skipped > 0 ? `\n\n(${skipped} shed${skipped === 1 ? '' : 's'} skipped — cleanout already recorded.)` : ''}`)) return;
   let totalRegular = 0, totalFinal = 0, shedsTouched = 0;
   for (const shed of eligible){
@@ -5876,22 +5549,13 @@ function autoFillAllSheds(){
   }
   saveState(); schedulePush(); render();
   const total = totalRegular + totalFinal;
-  if (total === 0){
-    showToast('Auto-fill produced no pickups — check placement dates and density settings.', true);
-  } else {
-    showToast(`✨ Auto-filled ${totalRegular} regular + ${totalFinal} cleanout pickup${total === 1 ? '' : 's'} across ${shedsTouched} shed${shedsTouched === 1 ? '' : 's'}.`);
-  }
+  if (total === 0){ showToast('Auto-fill produced no pickups — check placement dates and density settings.', true); }
+  else { showToast(`✨ Auto-filled ${totalRegular} regular + ${totalFinal} cleanout pickup${total === 1 ? '' : 's'} across ${shedsTouched} shed${shedsTouched === 1 ? '' : 's'}.`); }
 }
 function clearAllPredictedPickups(){
-  if (!farmData){
-    showToast('Nothing to clear.', true);
-    return;
-  }
+  if (!farmData){ showToast('Nothing to clear.', true); return; }
   const withAny = farmData.sheds.filter(s => (s.predictedPickups || []).length > 0);
-  if (withAny.length === 0){
-    showToast('No predicted pickups to clear.', true);
-    return;
-  }
+  if (withAny.length === 0){ showToast('No predicted pickups to clear.', true); return; }
   let total = 0;
   for (const shed of withAny) total += (shed.predictedPickups || []).length;
   if (!confirm(`Clear all predicted pickups?\n\nThis will remove ${total} predicted pickup${total === 1 ? '' : 's'} across ${withAny.length} shed${withAny.length === 1 ? '' : 's'}.\n\nActual pickups are not affected.`)) return;
@@ -5904,10 +5568,7 @@ function clearPredictedPickupsForShed(shedId){
   const shed = farmData.sheds[shedId - 1];
   if (!shed) return;
   const count = (shed.predictedPickups || []).length;
-  if (count === 0){
-    showToast('No predicted pickups to clear.', true);
-    return;
-  }
+  if (count === 0){ showToast('No predicted pickups to clear.', true); return; }
   if (!confirm(`Clear all ${count} predicted pickup${count === 1 ? '' : 's'} from Shed ${shedId}?\n\nActual pickups are not affected.`)) return;
   shed.predictedPickups = [];
   saveState(); schedulePush(); render();
@@ -5927,8 +5588,7 @@ function openSampleModal(shedId, editIdx){
     const x = samples[editIdx];
     sampleState = {
       shedId, mode: 'edit', editIdx,
-      dateIso: iso(x.date),
-      ageValue: sampleAge(shed, x),
+      dateIso: iso(x.date), ageValue: sampleAge(shed, x),
       ageTouched: (x.ageOverride != null),
       avgWeight: x.avgWeightKg != null ? Number(x.avgWeightKg.toFixed(3)) : '',
       isOfficial: !!x.isOfficial
@@ -6037,12 +5697,7 @@ function saveSample(){
   if (!Number.isFinite(avgVal) || avgVal <= 0){ showToast('Enter a valid average weight.', true); return; }
   const age = (Number.isFinite(ageVal) && ageVal >= 0) ? Math.floor(ageVal) : 0;
   const ageOverride = s.ageTouched ? age : null;
-  const sampleObj = {
-    date: dateObj, ageOverride,
-    birds: 0,
-    avgWeightKg: avgVal,
-    isOfficial
-  };
+  const sampleObj = { date: dateObj, ageOverride, birds: 0, avgWeightKg: avgVal, isOfficial };
   if (!shed.inYardSamples) shed.inYardSamples = [];
   if (s.mode === 'add'){ shed.inYardSamples.push(sampleObj); }
   else { shed.inYardSamples[s.editIdx] = sampleObj; }
@@ -6259,21 +5914,16 @@ function finalizeImport(mode){
   const reviewMap = mode === 'review' ? { ...reviewChoices } : null;
   pendingImport = null;
   reviewChoices = {};
-
   let removedPredictedCount = 0;
-
   const finalSheds = result.sheds.map(inc => {
     const cur = farmData ? farmData.sheds[inc.id - 1] : null;
     const curPickups = (cur && cur.pickups) ? cur.pickups : [];
     const incPickups = inc.pickups || [];
     let finalPickups;
-    if (!cur || curPickups.length === 0){
-      finalPickups = incPickups.map(p => ({ ...p }));
-    } else if (mode === 'replace'){
-      finalPickups = incPickups.map(p => ({ ...p }));
-    } else if (mode === 'skip'){
-      finalPickups = curPickups.map(p => ({ ...p }));
-    } else {
+    if (!cur || curPickups.length === 0){ finalPickups = incPickups.map(p => ({ ...p })); }
+    else if (mode === 'replace'){ finalPickups = incPickups.map(p => ({ ...p })); }
+    else if (mode === 'skip'){ finalPickups = curPickups.map(p => ({ ...p })); }
+    else {
       const incMap = new Map();
       incPickups.forEach(p => incMap.set(iso(p.date), p));
       const curMap = new Map();
@@ -6298,7 +5948,6 @@ function finalizeImport(mode){
       else if (p.isFinal && finalSeen) p.isFinal = false;
     }
     if (finalPickups.length === 5 && !finalPickups.some(p => p.isFinal)) finalPickups[4].isFinal = true;
-
     const tc = manualTargets[inc.id] ? { ...manualTargets[inc.id] } : inc.targetCurve;
     const rate = (shedRates && shedRates[inc.id] != null)
       ? shedRates[inc.id]
@@ -6313,11 +5962,9 @@ function finalizeImport(mode){
     const tp = (tpPrev != null && Number.isFinite(Number(tpPrev)))
       ? Math.max(MIN_PICKUPS_PER_SHED, Math.min(MAX_PICKUPS_PER_SHED, Math.floor(Number(tpPrev))))
       : null;
-
     let predicted = (shedPredictedPickups && shedPredictedPickups[inc.id])
       ? shedPredictedPickups[inc.id].map(x => ({ ...x }))
       : ((cur && cur.predictedPickups) ? cur.predictedPickups.map(x => ({ ...x })) : []);
-
     let cleanoutDate = inc.cleanoutDate;
     let mortality = inc.mortality;
     const fp = finalPickups.find(p => p.isFinal);
@@ -6326,13 +5973,10 @@ function finalizeImport(mode){
       const totalPicked = finalPickups.reduce((sum,p) => sum + (Number(p.birds) || 0), 0);
       mortality = Math.max(0, (inc.initialPopulation || 0) - totalPicked);
     }
-
     const realDates = new Set(finalPickups.map(p => iso(p.date)));
     const hasRealFinal = finalPickups.some(p => p.isFinal);
-    if (hasRealFinal){
-      removedPredictedCount += predicted.length;
-      predicted = [];
-    } else {
+    if (hasRealFinal){ removedPredictedCount += predicted.length; predicted = []; }
+    else {
       const before = predicted.length;
       predicted = predicted.filter(pp => !realDates.has(iso(pp.date)));
       removedPredictedCount += (before - predicted.length);
@@ -6341,14 +5985,9 @@ function finalizeImport(mode){
         predicted.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
       }
     }
-
     const densitySettings = (cur && cur.densitySettings) ? { ...cur.densitySettings } : { useGlobal: true, maxDensity: null, triggerDensity: null, targetDensity: null };
-    // An Excel import counts as a fresh official mortality count.
-    // Any shed with mortality > 0 gets the anchor stamped to today.
     let mortalityUpdatedAt = (cur && cur.mortalityUpdatedAt) ? cur.mortalityUpdatedAt : null;
-    if (mortality > 0){
-      mortalityUpdatedAt = dateOnly(new Date());
-    }
+    if (mortality > 0){ mortalityUpdatedAt = dateOnly(new Date()); }
     return {
       ...inc,
       pickups: finalPickups,
@@ -6363,7 +6002,6 @@ function finalizeImport(mode){
       inYardSamples: samples
     };
   });
-
   if (!predState.batchNumber && result.batchNumber){
     predState.batchNumber = sanitizeBatchNumber(result.batchNumber);
     savePredState();
@@ -6527,7 +6165,6 @@ function setPickupTotalWeight(shedId, pickupDateIso, value){
   }
   saveState(); schedulePush(); render();
 }
-/* NEW: symmetric to setPickupTotalWeight — user types avg/kg and total is computed. */
 function setPickupAvgWeight(shedId, pickupDateIso, value){
   if (!farmData) return;
   const shed = farmData.sheds[shedId - 1]; if (!shed) return;
@@ -6717,8 +6354,7 @@ function showConnectForm(hint){
   const body = document.getElementById('syncModalBody');
   body.innerHTML = `
     <label for="syncFarmInput">Farm name</label>
-    <input id="syncFarmInput" type="text" placeholder="e.g. kiripark1"
-      autocomplete="off" spellcheck="false" maxlength="40" />
+    <input id="syncFarmInput" type="text" placeholder="e.g. kiripark1" autocomplete="off" spellcheck="false" maxlength="40" />
     <div class="sync-hint">
       ${hint ? escapeHtml(hint) : 'Use the same name on every device to sync the same data.'}
       ${hint ? '<br><br>' : ''}
@@ -6742,22 +6378,17 @@ function closeSyncModal(){
   document.getElementById('syncModal').classList.remove('open');
   updateScrimVisibility();
 }
-
-/* ---------- Scrim visibility ---------- */
 function updateScrimVisibility(){
   const scrim = document.getElementById('syncScrim');
   if (!scrim) return;
   const anyOpen = document.querySelector('.sync-modal.open');
   scrim.classList.toggle('open', !!anyOpen);
 }
-
-/* ---------- Farm-found modal (legacy, safe closer) ---------- */
 function closeFarmFoundModal(){
   const m = document.getElementById('farmFoundModal');
   if (m) m.classList.remove('open');
   updateScrimVisibility();
 }
-
 function disconnectSync(){
   if (!syncFarmName) return;
   if (!confirm('Disconnect cloud sync?\n\nYour data stays on this device and in the cloud. You can reconnect with the same farm name any time.')) return;
@@ -6801,7 +6432,6 @@ function openPickupActionsMenu(wrap){
   menu.style.top = top + 'px';
   menu.style.left = left + 'px';
 }
-
 function pickupPlanPillHtml(shed){
   if (!shed) return '';
   const hasRealFinal = (shed.pickups || []).some(p => p.isFinal);
@@ -6814,6 +6444,135 @@ function pickupPlanPillHtml(shed){
     return `<button class="pickup-plan-pill planned" data-goto-predcard="${shed.id}" type="button" title="Jump to Predictions for Shed ${shed.id}">🎯 ${activePredicted.length} planned</button>`;
   }
   return '';
+}
+
+/* ============ COMPARE MODAL: OPEN / CLOSE / RENDER ============ */
+function openCompareModal(){
+  if (!isCompareAvailable()){
+    showToast('📱 Comparison is only available on tablet and desktop screens.', true);
+    return;
+  }
+  if (activeTab === 'predictions'){
+    showToast('Open compare from a group tab (Feed & Silo view).', true);
+    return;
+  }
+  closeSettingsDrawer();
+  inlineDeliveryState = null;
+  feedCompareState.modalOpen = true;
+  const m = document.getElementById('compareFeedModal');
+  if (m){
+    m.classList.add('open');
+    m.setAttribute('aria-hidden', 'false');
+  }
+  renderCompareModalBody();
+}
+function closeCompareModal(){
+  feedCompareState.modalOpen = false;
+  inlineDeliveryState = null;
+  const m = document.getElementById('compareFeedModal');
+  if (m){
+    m.classList.remove('open');
+    m.setAttribute('aria-hidden', 'true');
+  }
+}
+function renderCompareStrip(currentGroup, partnerGroup){
+  const others = [1,2,3,4].filter(g => g !== currentGroup && g !== partnerGroup);
+  if (others.length === 0) return '';
+  const cards = others.map(g => {
+    const info = groupStatusSummary(g);
+    let balText = '—', statusText = '', statusEmoji = '';
+    if (info.hasReading){
+      balText = fmtFeed(info.balance);
+      if (info.daysUntil != null){
+        statusEmoji = info.daysUntil <= 2 ? '🔴' : (info.daysUntil <= 7 ? '🟡' : '🟢');
+        statusText = `Runs out in ${info.daysUntil}d`;
+      } else {
+        statusEmoji = '🟢';
+        statusText = `Lasts > ${siloRange.end}d`;
+      }
+    } else {
+      balText = 'No reading';
+      statusEmoji = '⚪';
+      statusText = 'Tap rings to record';
+    }
+    return `
+      <button class="compare-partner-card" data-compare-partner="${g}" type="button">
+        <div class="cpc-title">Group ${g}</div>
+        <div class="cpc-bal">${escapeHtml(balText)}</div>
+        <div class="cpc-status">${statusEmoji} ${escapeHtml(statusText)}</div>
+      </button>`;
+  }).join('');
+  return `
+    <div class="compare-strip">
+      <span class="compare-strip-label">Compare with:</span>
+      ${cards}
+    </div>`;
+}
+function renderCompareModalBody(){
+  const body = document.getElementById('compareFeedBody');
+  if (!body) return;
+  const currentGroup = Number(activeTab.replace('g',''));
+  if (![1,2,3,4].includes(currentGroup)){
+    closeCompareModal();
+    return;
+  }
+  let partner = feedCompareState.partnerGroup;
+  if (!partner || partner === currentGroup || partner < 1 || partner > 4){
+    partner = [1,2,3,4].find(g => g !== currentGroup) || null;
+    feedCompareState.partnerGroup = partner;
+  }
+  if (!partner){
+    body.innerHTML = '<div class="forecast-empty">No other groups available to compare.</div>';
+    return;
+  }
+  const layout = effectiveCompareLayout();
+  const forecastCur = computeSiloForecast(currentGroup, siloRange);
+  const forecastPar = computeSiloForecast(partner, siloRange);
+  const active = document.activeElement;
+  const activeIsInBody = active && body.contains(active);
+  let focusMarker = null;
+  if (activeIsInBody && active.tagName === 'INPUT'){
+    focusMarker = { idx: Array.from(body.querySelectorAll('input')).indexOf(active) };
+  }
+  body.innerHTML = `
+    ${rangeBarHtml(siloRange, 'compare')}
+    ${renderCompareStrip(currentGroup, partner)}
+    <div class="compare-layout-toggle">
+      <span class="clt-label">Layout:</span>
+      <button type="button" data-compare-layout="stacked" class="${layout === 'stacked' ? 'active' : ''}">☰ Stacked</button>
+      <button type="button" data-compare-layout="side-by-side" class="${layout === 'side-by-side' ? 'active' : ''}">▥ Side by side</button>
+    </div>
+    <div class="compare-tables ${layout}">
+      <div class="compare-col">
+        <div class="compare-col-head current">
+          <span>Group ${currentGroup}</span>
+          <span class="cth-tag">Current</span>
+        </div>
+        ${renderSiloForecastTable(forecastCur, currentGroup, { inModal: true })}
+      </div>
+      <div class="compare-col">
+        <div class="compare-col-head comparing">
+          <span>Group ${partner}</span>
+          <span class="cth-tag">Comparing</span>
+        </div>
+        ${renderSiloForecastTable(forecastPar, partner, { inModal: true })}
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">
+      💡 Click any future weekday row in <strong>either</strong> table to plan a delivery for that group.
+      Rows with an official delivery already scheduled show a small <strong>✎</strong> button to edit or delete it.
+      Range, weekends, and silo readings are shared with the Feed &amp; Silo view.
+    </div>`;
+  if (focusMarker){
+    const inputs = body.querySelectorAll('input');
+    const target = inputs[focusMarker.idx];
+    if (target && target.classList.contains('inline-del-input')){
+      try { target.focus(); } catch(e){}
+    }
+  } else if (inlineDeliveryState){
+    const inp = body.querySelector('.inline-del-input');
+    if (inp) requestAnimationFrame(() => { try { inp.focus(); } catch(e){} });
+  }
 }
 
 /* ---------- Main Rendering ---------- */
@@ -6857,17 +6616,33 @@ function render(){
     if (!farmData){
       tabsWrap.style.display = 'none';
       app.innerHTML = emptyStateHtml();
+      if (feedCompareState.modalOpen){
+        feedCompareState.modalOpen = false;
+        const cm = document.getElementById('compareFeedModal');
+        if (cm) cm.classList.remove('open');
+      }
       return;
     }
     tabsWrap.style.display = 'block';
     document.getElementById('tabs').innerHTML = tabsHtml();
-    if (activeTab === 'predictions'){ app.innerHTML = renderPredictionsView(); return; }
+    if (activeTab === 'predictions'){
+      app.innerHTML = renderPredictionsView();
+      if (feedCompareState.modalOpen){
+        feedCompareState.modalOpen = false;
+        const cm = document.getElementById('compareFeedModal');
+        if (cm) cm.classList.remove('open');
+      }
+      return;
+    }
     if (!['g1','g2','g3','g4'].includes(activeTab)) activeTab = 'g1';
     const g = Number(activeTab.replace('g', ''));
     app.innerHTML = groupViewHtml(g);
-    if (inlineDeliveryState){
+    if (feedCompareState.modalOpen){
+      renderCompareModalBody();
+    }
+    if (inlineDeliveryState && !feedCompareState.modalOpen){
       requestAnimationFrame(() => {
-        const input = document.querySelector('.inline-del-input');
+        const input = app.querySelector('.inline-del-input');
         if (input) input.focus();
       });
     }
@@ -6980,7 +6755,7 @@ function shedTabsHtml(g, view, sheds){
         <span class="stab-icon">🌾</span> Feed &amp; Silo</button>
     </div>`;
 }
-function rangeBarHtml(range, ctx){
+function rangeBarHtml(range, ctx, extraHtml){
   const presets = [
     { label: 'Last 7',  start: -7, end: 0 },
     { label: 'Today',   start: 0,  end: 0 },
@@ -6988,9 +6763,14 @@ function rangeBarHtml(range, ctx){
     { label: 'Next 14', start: 0,  end: 14 },
     { label: 'Next 21', start: 0,  end: 21 }
   ];
-  const attr = ctx === 'shed' ? 'data-days' : 'data-silodays';
+  const isShed = ctx === 'shed';
+  const isCompare = ctx === 'compare';
+  const attr = isShed ? 'data-days' : 'data-silodays';
+  const barCls = isShed ? 'range-bar' : 'planner-range-bar';
+  const startId = isShed ? 'shedCustomStart' : (isCompare ? 'compareCustomStart' : 'siloCustomStart');
+  const endId = isShed ? 'shedCustomEnd' : (isCompare ? 'compareCustomEnd' : 'siloCustomEnd');
   return `
-    <div class="${ctx === 'shed' ? 'range-bar' : 'planner-range-bar'}">
+    <div class="${barCls}">
       <span class="forecast-label">Range:</span>
       ${presets.map(p => {
         const active = (p.start === range.start && p.end === range.end);
@@ -6998,16 +6778,15 @@ function rangeBarHtml(range, ctx){
       }).join('')}
       <div class="custom-range">
         <input type="number" min="-90" max="90"
-          id="${ctx === 'shed' ? 'shedCustomStart' : 'siloCustomStart'}"
-          value="${range.start}"
+          id="${startId}" value="${range.start}"
           data-customrange-ctx="${ctx}" data-customrange-bound="start" />
         <span>to</span>
         <input type="number" min="-90" max="90"
-          id="${ctx === 'shed' ? 'shedCustomEnd' : 'siloCustomEnd'}"
-          value="${range.end}"
+          id="${endId}" value="${range.end}"
           data-customrange-ctx="${ctx}" data-customrange-bound="end" />
         <span>days</span>
       </div>
+      ${extraHtml || ''}
     </div>`;
 }
 function rangeLabel(range){
@@ -7254,11 +7033,23 @@ function renderFeedPlanner(group, sheds, today){
   const deliveriesOpen = predState.deliveriesOpen !== false;
   const hasTests = (testDeliveries[group] || []).length > 0;
   const testCount = (testDeliveries[group] || []).length;
-
   const leftover = projectedLeftoverForGroup(group);
   const leftoverOk = leftover && leftover.balance !== null;
   const leftoverStr = leftoverOk ? `${(leftover.balance/1000).toFixed(2)} t at cleanout` : '—';
-
+  const compareBtnHtml = `
+    <button class="btn-compare-toggle" id="compareFeedBtn" type="button"
+      title="Compare with another group">
+      ⇄ Compare groups
+    </button>`;
+  const headerActionsHtml = `
+    <span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      ${hasTests ? `<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">
+        🧹 Clear test deliver${testCount === 1 ? 'y' : 'ies'} (${testCount})
+      </button>` : ''}
+      <span class="forecast-leftover-chip${leftoverOk ? '' : ' muted'}" title="Projected silo balance at this group's latest cleanout">
+        🧺 ${leftoverStr}
+      </span>
+    </span>`;
   return `
     <div class="planner-wrap">
       <div class="planner-summary">
@@ -7322,24 +7113,17 @@ function renderFeedPlanner(group, sheds, today){
           ${renderFeedSummary(group)}
         </div>
       </div>
-      ${rangeBarHtml(siloRange, 'silo')}
+      ${rangeBarHtml(siloRange, 'silo', compareBtnHtml)}
       <div class="planner-card">
         <h3>
           📈 Feed Balance Forecast
           <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>
-          <span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            ${hasTests ? `<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">
-              🧹 Clear test deliver${testCount === 1 ? 'y' : 'ies'} (${testCount})
-            </button>` : ''}
-            <span class="forecast-leftover-chip${leftoverOk ? '' : ' muted'}" title="Projected silo balance at this group's latest cleanout">
-              🧺 ${leftoverStr}
-            </span>
-          </span>
+          ${headerActionsHtml}
         </h3>
         ${renderSiloForecastTable(forecast, group)}
         <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">
           💡 Click any future weekday row to plan a delivery — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Actual</strong> (recorded in Scheduled Deliveries).
-          Rows with an official delivery already scheduled are locked — edit that delivery in Scheduled Deliveries first.
+          Rows with an official delivery already scheduled are locked — click the small <strong>✎</strong> next to the pill to edit or delete it.
           Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.
         </div>
       </div>
@@ -7464,18 +7248,24 @@ function renderDeliveriesList(group, deliveries, latestReadingDate){
       }).join('')}
     </div>`;
 }
-function renderSiloForecastTable(forecast, group){
+
+/* ============ FEED BALANCE FORECAST TABLE ============ */
+function renderSiloForecastTable(forecast, group, opts){
+  opts = opts || {};
+  const inModal = !!opts.inModal;
   if (forecast.rows.length === 0) return `<div class="forecast-empty">No forecast available.</div>`;
-  const hasReading = forecast.rows.some(r => r.balance !== null);
+  const todayIso = iso(new Date());
+
   const rows = forecast.rows.map(r => {
     const baseClickable = !r.isPast && !r.isWeekend;
     const hasRealDelivery = (r.deliveries || []).some(d => !d.isTest);
     const isBlocked = baseClickable && hasRealDelivery;
     const isClickable = baseClickable && !hasRealDelivery;
-    const isInlineOpen = inlineDeliveryState &&
+    const isInlineOpen = !!(inlineDeliveryState) &&
       inlineDeliveryState.group === group &&
       inlineDeliveryState.dateIso === iso(r.date) &&
-      isClickable;
+      isClickable &&
+      (inModal === !!feedCompareState.modalOpen);
     const rowClasses = [
       r.isWeekend ? 'is-weekend' : '',
       r.isPast ? 'is-past' : '',
@@ -7494,19 +7284,20 @@ function renderSiloForecastTable(forecast, group){
       const realDels = r.deliveries.filter(d => !d.isTest);
       const testDels = r.deliveries.filter(d => d.isTest);
       const chunks = [];
-      if (realDels.length){
-        const realKg = realDels.reduce((s,x) => s + (Number(x.amountKg) || 0), 0);
-        const types = Array.from(new Set(realDels.map(d => d.feedType).filter(Boolean)));
-        const typeTags = types.map(t => feedTypeTagHtml(t)).join('');
-        chunks.push(`<span class="delivery-pill">+${(realKg / 1000).toFixed(1)} t</span>${typeTags ? ' ' + typeTags : ''}`);
-      }
+      realDels.forEach(rd => {
+        const kg = Number(rd.amountKg) || 0;
+        const typeTag = rd.feedType ? feedTypeTagHtml(rd.feedType) : '';
+        chunks.push(
+          `<span class="delivery-pill">+${(kg/1000).toFixed(1)} t</span>${typeTag}` +
+          `<button class="delivery-edit-btn" type="button" data-edit-delivery="${group}|${rd.id}" title="Edit this delivery">✎</button>`
+        );
+      });
       testDels.forEach(td => {
         const kg = Number(td.amountKg) || 0;
         chunks.push(`<span class="delivery-pill test">🚜 +${(kg/1000).toFixed(1)} t</span><button class="test-x" type="button" data-remove-test="${group}|${td.id}" title="Remove this test delivery">✕</button>`);
       });
       deliveryCell = chunks.join(' ');
     }
-
     if (isInlineOpen){
       deliveryCell += `
         <div class="inline-del">
@@ -7517,33 +7308,9 @@ function renderSiloForecastTable(forecast, group){
         </div>`;
     }
 
-    let balCell = '—';
-    let balCls = '';
-    let statusCell = '';
-    if (r.balance !== null){
-      const bal = r.balance;
-      balCls = bal > 0 ? 'balance-pos' : 'balance-neg';
-      balCell = Math.round(bal).toLocaleString() + ' kg';
-      if (r.isPast) statusCell = '<span class="tag muted">Actual</span>';
-      else if (bal <= 0 && r.consumption > 0) statusCell = '<span class="tag red">Empty</span>';
-      else if (bal < 5000) statusCell = '<span class="tag amber">Low</span>';
-    }
-    const todayTag = r.isToday ? ' · <span style="color:var(--secondary);font-weight:700;">Today</span>' : '';
-    const weekendTag = r.isWeekend ? ' <span class="weekend-pill">Weekend</span>' : '';
-
-    const ages = shedAgesAtDateForGroup(group, r.date);
-    const agesStr = formatAgesPair(ages);
-
-    const currentBirds = r.liveBirds || 0;
-
-    // Predicted Catch cell — sum of active predicted pickups on this day, both sheds
-    let predCatchCell = '—';
-    let predCatchCls = '';
-    if (r.predictedCatch && r.predictedCatch > 0){
-      predCatchCell = '−' + r.predictedCatch.toLocaleString();
-      predCatchCls = 'pred-catch-cell';
-    }
-
+    let dateCls = '';
+    if (r.isToday) dateCls = 'fb-date-today';
+    else if (r.isWeekend) dateCls = 'fb-date-weekend';
     const reading = readingOnDate(group, iso(r.date));
     let readingBadge = '';
     if (reading){
@@ -7552,39 +7319,67 @@ function renderSiloForecastTable(forecast, group){
       const s3 = reading.silo3Rings === null || reading.silo3Rings === undefined ? 'off' : reading.silo3Rings + 'r';
       const totalT = (readingTotalKg(reading) / 1000).toFixed(2);
       const tip = `Silo 1: ${s1} · Silo 2: ${s2} · Silo 3: ${s3} · Total ${totalT} t — click to delete this reading`;
-      readingBadge = `<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖 Reading</button>`;
+      readingBadge = `<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖</button>`;
+    }
+
+    const ages = shedAgesAtDateForGroup(group, r.date);
+    const agesStr = formatAgesPair(ages);
+
+    const liveBirds = r.liveBirds || 0;
+    let pickupIndicator = '';
+    if (r.pickupsBirds > 0){
+      const pickCls = r.hasPredicted ? 'fb-pickup-predicted' : 'fb-pickup-actual';
+      pickupIndicator = ` <span class="${pickCls}">−${r.pickupsBirds.toLocaleString()}</span>`;
+    }
+
+    let balanceCls = '';
+    let balanceText = '—';
+    if (r.balance !== null){
+      balanceText = Math.round(r.balance).toLocaleString() + ' kg';
+      if (r.isPast) balanceCls = 'fb-balance-past';
+      else if (r.balance <= 0) balanceCls = 'fb-balance-empty';
+      else if (r.balance < 5000) balanceCls = 'fb-balance-low';
+      else balanceCls = 'fb-balance-ok';
     }
 
     return `
       <tr class="${rowClasses}"${clickAttrs}>
-        <td>${fmtShort(r.date)}${todayTag}${weekendTag}${readingBadge}</td>
+        <td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>
         <td class="num">${agesStr}</td>
-        <td class="num">${currentBirds.toLocaleString()}</td>
-        <td class="num ${predCatchCls}">${predCatchCell}</td>
+        <td class="num">${liveBirds.toLocaleString()}${pickupIndicator}</td>
         <td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>
         <td>${deliveryCell}</td>
-        <td class="num ${balCls}">${balCell}</td>
-        <td>${statusCell}</td>
+        <td class="num ${balanceCls}">${balanceText}</td>
       </tr>`;
   }).join('');
-  const predCatchTotalCell = forecast.totalPredictedCatch > 0
-    ? '−' + forecast.totalPredictedCatch.toLocaleString()
-    : '—';
+
+  let totalBalanceCls = '';
+  let totalBalanceText = '—';
+  if (forecast.endBalance !== null){
+    totalBalanceText = fmtFeed(forecast.endBalance);
+    if (forecast.endBalance <= 0) totalBalanceCls = 'fb-balance-empty';
+    else if (forecast.endBalance < 5000) totalBalanceCls = 'fb-balance-low';
+    else totalBalanceCls = 'fb-balance-ok';
+  }
+
   return `
     <div class="forecast-table-wrap">
-      <table class="forecast-table" style="min-width:940px;">
-        <thead><tr><th>Date</th><th class="num">Age</th><th class="num">Current birds</th>
-          <th class="num">Predicted Catch</th><th class="num">Daily Feed</th><th>Delivery</th>
-          <th class="num">End Balance</th><th>Status</th></tr></thead>
+      <table class="forecast-table" style="min-width:780px;">
+        <thead><tr>
+          <th>Date</th>
+          <th class="num">Age</th>
+          <th class="num">Live birds</th>
+          <th class="num">Daily Feed</th>
+          <th>Delivery</th>
+          <th class="num">End Balance</th>
+        </tr></thead>
         <tbody>
           ${rows}
           <tr class="total-row">
             <td colspan="3">Totals</td>
-            <td class="num pred-catch-cell">${predCatchTotalCell}</td>
             <td class="num">${fmtFeed(forecast.totalConsumption)}</td>
             <td>${forecast.totalDelivered > 0 ? '+' + fmtFeed(forecast.totalDelivered) : '—'}</td>
-            <td class="num ${(forecast.endBalance || 0) > 0 ? 'balance-pos' : 'balance-neg'}">${forecast.endBalance !== null ? fmtFeed(forecast.endBalance) : '—'}</td>
-            <td>${hasReading ? (forecast.shortfall > 0 ? '<span class="tag red">Shortfall</span>' : '<span class="tag green">OK</span>') : '<span class="tag muted">—</span>'}</td>
+            <td class="num ${totalBalanceCls}">${totalBalanceText}</td>
           </tr>
         </tbody>
       </table>
@@ -7726,39 +7521,28 @@ function renderAdjustmentCollapse(group){
       <div class="adj-collapse-body">
         <div class="adj-row">
           <label>📊 cFCR β factor</label>
-          <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002"
-            value="${betaVal}" />
-          <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002"
-            value="${betaVal.toFixed(3)}" />
+          <input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" />
+          <input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" />
           <span class="adj-hint">How strongly cFCR is adjusted for final weight. Higher = more adjustment for heavy birds.</span>
         </div>
         <div class="adj-row">
           <label>📐 Scale correction</label>
-          <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-            value="${biasPct}" />
-          <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1"
-            value="${biasPct}" />
+          <input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" />
+          <input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" />
           <span class="adj-unit">%</span>
           <span class="adj-hint">How much your shed scale reads heavier than the plant weight. Adjusts all in-yard readings before forecasting.</span>
         </div>
         <div class="adj-row">
           <label>🎯 Target weight at harvest</label>
-          <input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01"
-            value="${targetKg.toFixed(2)}" />
+          <input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" />
           <span class="adj-unit">kg</span>
           <span class="adj-hint">The weight you're aiming to send birds to the plant. Used for the current group's combined result.</span>
         </div>
         <div class="density-settings-title">
           <span>🎯 Pickup density (global defaults)</span>
           <span style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="btn-global-autofill-sm" data-global-autofill="1"
-              title="Auto-generate predicted pickups for every placed shed">
-              ✨ Auto-fill all sheds
-            </button>
-            <button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1"
-              title="Remove all predicted pickups from every shed">
-              🗑️ Clear all
-            </button>
+            <button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button>
+            <button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button>
           </span>
         </div>
         <div class="adj-row">
@@ -7824,7 +7608,6 @@ function renderInYardCurvePanel(shed){
   const hasFit = !!fit;
   const samples = shed.inYardSamples || [];
   const biasPct = (currentBiasFactor() * 100).toFixed(0);
-
   const inputs = TARGET_DAYS.map(day => {
     const v = tc[day];
     const filled = v != null && Number.isFinite(Number(v)) && Number(v) > 0;
@@ -7845,16 +7628,13 @@ function renderInYardCurvePanel(shed){
         <label>Day ${day}</label>
         <div class="ptc-field">
           <input type="number" step="0.001" min="0" placeholder="${ref}"
-            value="${filled ? Number(v).toFixed(3) : ''}"
-            class="${cls}"
-            data-target-shed="${shed.id}" data-target-day="${day}"
-            title="Standard: ${ref} kg" />
+            value="${filled ? Number(v).toFixed(3) : ''}" class="${cls}"
+            data-target-shed="${shed.id}" data-target-day="${day}" title="Standard: ${ref} kg" />
           <span class="unit">kg</span>
         </div>
         <span class="ref">Standard: ${ref} kg</span>
       </div>`;
   }).join('');
-
   let customRows = '';
   if (samples.length > 0){
     customRows = `
@@ -7877,7 +7657,6 @@ function renderInYardCurvePanel(shed){
         }).join('')}
       </div>`;
   }
-
   let sourcePill, sourceText;
   if (hasFit){
     sourcePill = '<span class="pill gompertz">AI curve</span>';
@@ -7902,7 +7681,6 @@ function renderInYardCurvePanel(shed){
       sourceText = 'Not enough readings for the AI curve — using the adjusted standard curve';
     }
   }
-
   return `
     <div class="pred-target-curve">
       <div class="ptc-head">
@@ -7918,9 +7696,7 @@ function renderInYardCurvePanel(shed){
       </div>
       <div class="ptc-inputs">${inputs}</div>
       ${customRows}
-      <div class="ptc-status">
-        Using: ${sourcePill} · ${sourceText}
-      </div>
+      <div class="ptc-status">Using: ${sourcePill} · ${sourceText}</div>
     </div>`;
 }
 function forecastDayBarHtml(){
@@ -7951,12 +7727,10 @@ function forecastDayBarHtml(){
       <span class="pdrb-sep">· or ·</span>
       <span class="pdrb-cycle-inputs">
         <span>Day</span>
-        <input type="number" min="0" max="200" step="1"
-               data-pred-cycle="start" value="${s.start}" />
+        <input type="number" min="0" max="200" step="1" data-pred-cycle="start" value="${s.start}" />
         <span>to</span>
         <span>Day</span>
-        <input type="number" min="0" max="200" step="1"
-               data-pred-cycle="end" value="${s.end}" />
+        <input type="number" min="0" max="200" step="1" data-pred-cycle="end" value="${s.end}" />
         <button class="pdrb-apply" type="button" data-pred-cycle-apply="1">Go</button>
       </span>
       <span class="pdrb-resolved">${resolvedLabel}</span>
@@ -7970,13 +7744,11 @@ function renderDailyPerformance(shed){
         <div class="forecast-empty">No placement date set — forecast unavailable.</div>
       </div>`;
   }
-
   const today    = dateOnly(new Date());
   const last     = lastWeightedPickup(shed);
   const currentAge = ageInDays(shed, today);
   const fit = getShedGompertzFit(shed);
   const effective = computeEffectivePickups(shed);
-
   let startDay, endDay;
   if (dailyRangeState.mode === 'cycle'){
     startDay = Math.max(0, Math.floor(dailyRangeState.start));
@@ -7985,7 +7757,6 @@ function renderDailyPerformance(shed){
     startDay = Math.max(0, currentAge + Math.floor(dailyRangeState.start));
     endDay   = Math.max(startDay, currentAge + Math.floor(dailyRangeState.end));
   }
-
   const rows = [];
   for (let day = startDay; day <= endDay; day++){
     const d        = addDays(shed.placementDate, day);
@@ -8000,10 +7771,8 @@ function renderDailyPerformance(shed){
     const standard = age > 0 ? rossWeightKg(age) : 0;
     const isMilestone = isMilestoneDay(age);
     const gridVal = (shed.targetCurve && shed.targetCurve[age] != null && Number(shed.targetCurve[age]) > 0)
-      ? Number(shed.targetCurve[age])
-      : null;
+      ? Number(shed.targetCurve[age]) : null;
     const customOn = (shed.inYardSamples || []).find(x => sampleAge(shed, x) === age);
-
     let weight = null;
     let weightType = null;
     let band = null;
@@ -8019,10 +7788,8 @@ function renderDailyPerformance(shed){
         else weightType = 'standard';
       }
     }
-
     let daysVar = null;
     if (weight != null && age > 0){ daysVar = daysVsTarget(age, weight); }
-
     rows.push({
       date: d, day, age, live, pickupsBirds, hasPredicted,
       standard, weight, weightType, daysVar, band,
@@ -8030,7 +7797,6 @@ function renderDailyPerformance(shed){
       gridVal, customOn
     });
   }
-
   let sourceNote = '';
   if (fit){
     const nGrid = TARGET_DAYS.filter(d => shed.targetCurve && shed.targetCurve[d] > 0).length;
@@ -8051,12 +7817,10 @@ function renderDailyPerformance(shed){
   } else {
     sourceNote = `No readings yet — showing the standard growth curve.`;
   }
-
   const hasAnyPredicted = effective.some(p => p.__source === 'predicted');
   if (hasAnyPredicted){
     sourceNote += ` <strong style="color:var(--secondary);">Planned pickups are included in this forecast.</strong>`;
   }
-
   return `
     <div class="pickups-block" style="margin-top:14px;">
       <h4>📅 Daily Performance — Actual + AI Forecast
@@ -8090,14 +7854,12 @@ function renderDailyPerformance(shed){
                 ? ` <span style="font-size:10px;color:${r.hasPredicted ? 'var(--secondary)' : 'var(--primary-dark)'};font-weight:700;">−${r.pickupsBirds.toLocaleString()}${r.hasPredicted ? ' (plan)' : ''}</span>`
                 : '';
               const milestoneBadge = r.isMilestone ? `<span class="milestone-pill" title="Check day">★ Day ${r.age}</span>` : '';
-
               let readingBadge = '';
               if (r.gridVal != null){
                 readingBadge = `<span class="sample-pill" title="Shed scale reading: ${r.gridVal.toFixed(3)} kg">📏</span>`;
               } else if (r.customOn){
                 readingBadge = `<span class="sample-pill" title="${r.customOn.isOfficial ? 'Plant weight' : 'Shed scale'}: ${r.customOn.avgWeightKg.toFixed(3)} kg">📏</span>`;
               }
-
               let weightCell = '—';
               if (r.weight != null){
                 const bandStr = (r.band != null && r.weightType === 'gompertz') ? `<span class="conf-band">±${(r.band*100).toFixed(0)}%</span>` : '';
@@ -8107,7 +7869,6 @@ function renderDailyPerformance(shed){
                 else if (r.weightType === 'ai-target')  weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill ai-target">From targets</span>`;
                 else if (r.weightType === 'standard')   weightCell = `<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill standard">Standard</span>`;
               }
-
               let daysCell = '—';
               let daysCls  = '';
               if (r.daysVar != null){
@@ -8115,9 +7876,7 @@ function renderDailyPerformance(shed){
                 else if (r.daysVar > 0){ daysCell = `${r.daysVar.toFixed(1)}d ahead`; daysCls = 'days-pos'; }
                 else { daysCell = `${Math.abs(r.daysVar).toFixed(1)}d behind`; daysCls = 'days-neg'; }
               }
-
               const stdCell = r.age > 0 ? r.standard.toFixed(3) : '—';
-
               return `
                 <tr class="${cls}">
                   <td>${fmtShort(r.date)}${todayTag}${wkndTag}${readingBadge}</td>
@@ -8174,9 +7933,7 @@ function renderPickupPlanBlock(shed){
   const useGlobalDensity = ds.useGlobal !== false;
   const targetN = ds.targetPickups;
   const realCount = realPickups.length;
-
   const activePps = pps.filter(pp => !realDates.has(iso(pp.date)));
-
   let simList = [...realPickups.map(p => ({ date: p.date, birds: Number(p.birds) || 0 }))];
   const rows = [];
   for (const pp of pps){
@@ -8191,17 +7948,12 @@ function renderPickupPlanBlock(shed){
     const densityBefore = (beforeBirds * weight) / FIXED_FLOOR_AREA_M2;
     const afterBirds = Math.max(0, beforeBirds - (Number(pp.birds) || 0));
     const densityAfter = (afterBirds * weight) / FIXED_FLOOR_AREA_M2;
-    rows.push({
-      pp, age, weight, beforeBirds, afterBirds, densityBefore, densityAfter,
-      isSuperseded
-    });
+    rows.push({ pp, age, weight, beforeBirds, afterBirds, densityBefore, densityAfter, isSuperseded });
     if (!isSuperseded){ simList.push({ date: pp.date, birds: Number(pp.birds) || 0 }); }
   }
   simList.sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
-
   const predictedCount = pps.length;
   const totalPlannedCount = realCount + predictedCount;
-
   let progressHtml = '';
   if (hasRealFinal){
     progressHtml = `<span class="progress-done">✅ Batch complete — cleanout recorded</span>`;
@@ -8212,18 +7964,15 @@ function renderPickupPlanBlock(shed){
   } else {
     progressHtml = `<span class="progress-short">⚠️ ${realCount} real + ${predictedCount} planned = ${totalPlannedCount}/${targetN} — ${targetN - totalPlannedCount} more needed</span>`;
   }
-
   const targetInputHtml = `
     <div class="pp-target-row">
       <span class="pp-target-label">🎯 Target pickups for this shed</span>
       <input type="number" class="pp-target-input"
         min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1"
-        value="${targetN}"
-        data-shed-target-pickups="${shed.id}"
+        value="${targetN}" data-shed-target-pickups="${shed.id}"
         title="Total pickups including the final cleanout (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED})" />
       <span class="pp-target-hint">${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED} (includes the final cleanout)</span>
     </div>`;
-
   const densityOverrideHtml = `
     <div class="shed-density-override">
       <label>
@@ -8241,7 +7990,6 @@ function renderPickupPlanBlock(shed){
         </span>
       ` : ''}
     </div>`;
-
   if (hasRealFinal){
     return `
       <div class="pickup-plan-block">
@@ -8263,13 +8011,10 @@ function renderPickupPlanBlock(shed){
         ${densityOverrideHtml}
       </div>`;
   }
-
   if (pps.length === 0){
     return `
       <div class="pickup-plan-block">
-        <h4>
-          <span>🎯 Predicted Pickups</span>
-        </h4>
+        <h4><span>🎯 Predicted Pickups</span></h4>
         <div class="pp-empty">
           Plan hypothetical pickups to see how the whole-batch forecast changes.
           The last pickup is the <strong>final cleanout</strong> and sits on the shed's cleanout date.
@@ -8286,9 +8031,7 @@ function renderPickupPlanBlock(shed){
         ${densityOverrideHtml}
       </div>`;
   }
-
   const totalActiveRemoval = activePps.reduce((s, pp) => s + (Number(pp.birds) || 0), 0);
-
   return `
     <div class="pickup-plan-block">
       <h4>
@@ -8321,8 +8064,7 @@ function renderPickupPlanBlock(shed){
                 <button type="button" data-pp-edit="${shed.id}|${r.pp.id}" title="Edit">✎</button>
                 <button type="button" class="danger" data-pp-delete="${shed.id}|${r.pp.id}" title="Delete">✕</button>
               </div>
-            </div>
-          `;
+            </div>`;
         }).join('')}
       </div>
       <div class="pp-summary">
@@ -8342,7 +8084,6 @@ function renderPredictionsShedCard(shed, group){
     || groupSheds.some(s => TARGET_DAYS.some(d => s.targetCurve && s.targetCurve[d] > 0));
   const groupConf = confidenceLabel(grp && grp.hasData ? grp.confidence : pred.confidence);
   const pickups = pred.pickupDetails;
-
   const today = dateOnly(new Date());
   const fToday = forecastWeightModeAware(shed, today);
   const forecastKg = fToday && fToday.kg ? fToday.kg : 0;
@@ -8354,9 +8095,7 @@ function renderPredictionsShedCard(shed, group){
   const densityStyle = densityTone === 'red'
     ? 'color:var(--danger);'
     : (densityTone === 'amber' ? 'color:var(--primary-dark);' : '');
-
   const currentMortRate = pred.initialPop > 0 ? ((pred.currentMort / pred.initialPop) * 100).toFixed(2) : '0.00';
-
   const snapshotHtml = `
     <div class="pred-snapshot">
       <div class="pred-snap-item"><div class="lbl">🐥 Birds placed</div><div class="val">${pred.initialPop.toLocaleString()}</div></div>
@@ -8380,7 +8119,6 @@ function renderPredictionsShedCard(shed, group){
         <div class="sub">${pred.liveNow.toLocaleString()} × ${forecastKg.toFixed(3)} kg ÷ 3,162 m²</div>
       </div>
     </div>`;
-
   const ratePct = shedMortRate(shed);
   const rateBarHtml = `
     <div class="mort-rate-bar">
@@ -8391,10 +8129,8 @@ function renderPredictionsShedCard(shed, group){
         value="${ratePct.toFixed(2)}" data-mortrate-shed="${shed.id}" />
       <span class="mr-unit">% of live birds / day</span>
     </div>`;
-
   const curvePanelHtml = renderInYardCurvePanel(shed);
   const planBlockHtml = renderPickupPlanBlock(shed);
-
   const pickupRows = pickups.filter(p => !p.isPredicted).map(p => {
     const stored = (shed.pickups || []).find(x => iso(x.date) === iso(p.date)) || {};
     const isManualWeight = !!stored.totalWeightKgManual;
@@ -8402,7 +8138,6 @@ function renderPredictionsShedCard(shed, group){
     const isManualSource = stored.source === 'manual';
     const totalValue = (stored.totalWeightKg != null) ? stored.totalWeightKg : '';
     const warn = totalValue && (totalValue < 100 || totalValue > 40000);
-    // NEW: avg is also editable. Show stored avg if total is stored, else empty.
     const avgRaw = (stored.totalWeightKg != null && stored.birds > 0)
       ? (stored.totalWeightKg / stored.birds) : null;
     const avgInputVal = (avgRaw != null) ? Number(avgRaw.toFixed(5)) : '';
@@ -8419,8 +8154,7 @@ function renderPredictionsShedCard(shed, group){
         <td class="num">${p.birds.toLocaleString()}</td>
         <td class="num">
           <input class="pred-pickup-input ${isManualWeight?'manual':''} ${warn?'warn':''}"
-            type="number" step="1" min="0"
-            value="${totalValue}"
+            type="number" step="1" min="0" value="${totalValue}"
             placeholder="${p.isEstWeight ? 'Standard est.' : 'total kg'}"
             data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
             data-pickup-field="total"
@@ -8428,8 +8162,7 @@ function renderPredictionsShedCard(shed, group){
         </td>
         <td class="num">
           <input class="pred-pickup-input avg-input ${isManualWeight?'manual':''} ${avgWarn?'warn':''}"
-            type="number" step="0.001" min="0"
-            value="${avgInputVal}"
+            type="number" step="0.001" min="0" value="${avgInputVal}"
             placeholder="${avgPlaceholder}"
             data-pickup-shed="${shed.id}" data-pickup-date="${iso(p.date)}"
             data-pickup-field="avg"
@@ -8449,7 +8182,6 @@ function renderPredictionsShedCard(shed, group){
         </td>
       </tr>`;
   }).join('');
-
   const realPickupCount = (shed.pickups || []).length;
   const pickupTableHtml = realPickupCount === 0
     ? `<div class="forecast-empty">No pickups yet — estimates unlock after the first pickup.</div>`
@@ -8464,7 +8196,6 @@ function renderPredictionsShedCard(shed, group){
           <tbody>${pickupRows}</tbody>
         </table>
       </div>`;
-
   const canAdd = realPickupCount < MAX_PICKUPS_PER_SHED;
   const pill = pickupPlanPillHtml(shed);
   const pickupHeaderHtml = `
@@ -8474,17 +8205,14 @@ function renderPredictionsShedCard(shed, group){
         ${pill}
       </span>
       <button class="btn-pickup-add"
-        data-pickup-add="${shed.id}"
-        type="button"
+        data-pickup-add="${shed.id}" type="button"
         ${canAdd ? '' : 'disabled'}
         title="${canAdd ? 'Add a pickup manually' : 'Maximum 5 pickups reached'}">
         ＋ Add Actual Pickup
       </button>
     </h4>`;
-
   const groupLabel = grp && grp.hasData ? `Group ${group} Combined Result` : `Group ${group} Result`;
   const groupShedsLabel = groupSheds.map(s => `Shed ${s.id}`).join(' + ');
-
   const estimatesHtml = (groupHasData && grp && grp.hasData) ? `
     <div class="pred-estimates-head">
       <span>📊 ${groupLabel}</span>
@@ -8510,7 +8238,6 @@ function renderPredictionsShedCard(shed, group){
       <strong>Group estimates unlock after the first reading or pickup.</strong><br>
       Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.
     </div>`;
-
   const confidenceHtml = (groupHasData && grp && grp.hasData) ? `
     <div class="pred-confidence">
       <span style="font-weight:700;font-size:11px;text-transform:uppercase;
@@ -8521,10 +8248,8 @@ function renderPredictionsShedCard(shed, group){
       </span>
       <span style="font-size:11px;color:var(--muted);">${groupConf.label}</span>
     </div>` : '';
-
   const daysBehindHtml = renderDaysBehind(shed);
   const dailyPerfHtml = renderDailyPerformance(shed);
-
   return `
     <article class="pred-shed-card" id="pred-shed-card-${shed.id}">
       <div class="pred-shed-head">
@@ -8616,18 +8341,61 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('#settingsDisconnectBtn')){ disconnectSync(); return; }
     if (e.target.closest('#settingsBatchHistoryBtn')){ openBatchHistoryModal(); return; }
 
-    if (e.target.closest('[data-toggle-adjustments]')){
-      toggleAdjCollapse();
+    /* ---- Compare modal scrim + close button ---- */
+    if (feedCompareState.modalOpen && e.target.id === 'compareFeedModal'){
+      closeCompareModal();
       return;
     }
-    if (e.target.closest('[data-global-autofill]')){
-      autoFillAllSheds();
+    if (e.target.closest('#compareFeedClose')){
+      closeCompareModal();
       return;
     }
-    if (e.target.closest('[data-global-clear-pickups]')){
-      clearAllPredictedPickups();
+
+    /* ---- Compare open button ---- */
+    if (e.target.closest('#compareFeedBtn')){
+      openCompareModal();
       return;
     }
+
+    /* ---- Compare partner swap ---- */
+    const partnerBtn = e.target.closest('[data-compare-partner]');
+    if (partnerBtn){
+      const g = Number(partnerBtn.dataset.comparePartner);
+      if (Number.isFinite(g) && g >= 1 && g <= 4){
+        feedCompareState.partnerGroup = g;
+        renderCompareModalBody();
+      }
+      return;
+    }
+
+    /* ---- Compare layout toggle ---- */
+    const layoutBtn = e.target.closest('[data-compare-layout]');
+    if (layoutBtn){
+      const mode = layoutBtn.dataset.compareLayout;
+      if (['stacked','side-by-side'].includes(mode)){
+        feedCompareState.layoutMode = mode;
+        renderCompareModalBody();
+      }
+      return;
+    }
+
+    /* ---- Edit delivery (pencil on locked rows) ---- */
+    const editDelBtn = e.target.closest('[data-edit-delivery]');
+    if (editDelBtn){
+      e.stopPropagation();
+      const parts = editDelBtn.dataset.editDelivery.split('|');
+      const g = Number(parts[0]);
+      const id = parts[1];
+      const s = siloData[g];
+      const del = s && (s.deliveries || []).find(x => x.id === id);
+      if (!del){ showToast('Delivery not found.', true); return; }
+      openDeliveryModal(g, iso(del.date), null, id);
+      return;
+    }
+
+    if (e.target.closest('[data-toggle-adjustments]')){ toggleAdjCollapse(); return; }
+    if (e.target.closest('[data-global-autofill]')){ autoFillAllSheds(); return; }
+    if (e.target.closest('[data-global-clear-pickups]')){ clearAllPredictedPickups(); return; }
 
     const deleteReadingBtn = e.target.closest('[data-delete-reading]');
     if (deleteReadingBtn){
@@ -8680,10 +8448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const clearTestsBtn = e.target.closest('[data-clear-tests]');
-    if (clearTestsBtn){
-      clearTestDeliveries(Number(clearTestsBtn.dataset.clearTests));
-      return;
-    }
+    if (clearTestsBtn){ clearTestDeliveries(Number(clearTestsBtn.dataset.clearTests)); return; }
 
     const forecastRow = e.target.closest('[data-forecast-date]');
     if (forecastRow && !e.target.closest('.inline-del')){
@@ -8691,7 +8456,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dIso = forecastRow.dataset.forecastDate;
       if (Number.isFinite(g) && dIso){
         if (forecastRow.dataset.blocked === '1'){
-          showToast('⚠️ Official delivery already scheduled on this day — delete it in Scheduled Deliveries to unlock this row.', true);
+          showToast('⚠️ Official delivery already scheduled on this day — click the ✎ next to the pill to edit or delete it.', true);
           return;
         }
         if (inlineDeliveryState && inlineDeliveryState.group === g && inlineDeliveryState.dateIso === dIso){
@@ -8714,6 +8479,7 @@ document.addEventListener('DOMContentLoaded', () => {
       predState.predGroup = group;
       predState.predView = isFirstOfGroup ? 'shed1' : 'shed2';
       savePredState();
+      closeCompareModal();
       render();
       const card = document.getElementById(`pred-shed-card-${shedId}`);
       if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -8727,17 +8493,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ppClearBtn = e.target.closest('[data-pp-clear]');
     if (ppClearBtn){ clearPredictedPickupsForShed(Number(ppClearBtn.dataset.ppClear)); return; }
     const ppEditBtn = e.target.closest('[data-pp-edit]');
-    if (ppEditBtn){
-      const parts = ppEditBtn.dataset.ppEdit.split('|');
-      openPredictedPickupModal(Number(parts[0]), parts[1]);
-      return;
-    }
+    if (ppEditBtn){ const parts = ppEditBtn.dataset.ppEdit.split('|'); openPredictedPickupModal(Number(parts[0]), parts[1]); return; }
     const ppDeleteBtn = e.target.closest('[data-pp-delete]');
-    if (ppDeleteBtn){
-      const parts = ppDeleteBtn.dataset.ppDelete.split('|');
-      deletePredictedPickup(Number(parts[0]), parts[1]);
-      return;
-    }
+    if (ppDeleteBtn){ const parts = ppDeleteBtn.dataset.ppDelete.split('|'); deletePredictedPickup(Number(parts[0]), parts[1]); return; }
 
     const cycleApply = e.target.closest('[data-pred-cycle-apply]');
     if (cycleApply){
@@ -8760,6 +8518,7 @@ document.addEventListener('DOMContentLoaded', () => {
       predState.predGroup = group;
       predState.predView = isFirstOfGroup ? 'shed1' : 'shed2';
       savePredState();
+      closeCompareModal();
       render();
       const card = document.getElementById(`pred-shed-card-${shedId}`);
       if (card) card.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -8770,17 +8529,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sampleAddBtn = e.target.closest('[data-sample-add]');
     if (sampleAddBtn){ openSampleModal(Number(sampleAddBtn.dataset.sampleAdd)); return; }
     const sampleEditBtn = e.target.closest('[data-sample-edit]');
-    if (sampleEditBtn){
-      const parts = sampleEditBtn.dataset.sampleEdit.split('|');
-      openSampleModal(Number(parts[0]), Number(parts[1]));
-      return;
-    }
+    if (sampleEditBtn){ const parts = sampleEditBtn.dataset.sampleEdit.split('|'); openSampleModal(Number(parts[0]), Number(parts[1])); return; }
     const sampleDelBtn = e.target.closest('[data-sample-delete]');
-    if (sampleDelBtn){
-      const parts = sampleDelBtn.dataset.sampleDelete.split('|');
-      deleteSample(Number(parts[0]), Number(parts[1]));
-      return;
-    }
+    if (sampleDelBtn){ const parts = sampleDelBtn.dataset.sampleDelete.split('|'); deleteSample(Number(parts[0]), Number(parts[1])); return; }
 
     const addPickupBtn = e.target.closest('[data-pickup-add]');
     if (addPickupBtn){ openManualPickupModal(Number(addPickupBtn.dataset.pickupAdd)); return; }
@@ -8794,26 +8545,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const editBtn = e.target.closest('[data-pickup-edit]');
-    if (editBtn){
-      closeAllPickupActionsMenus();
-      const parts = editBtn.dataset.pickupEdit.split('|');
-      openManualPickupModal(Number(parts[0]), parts[1]);
-      return;
-    }
+    if (editBtn){ closeAllPickupActionsMenus(); const parts = editBtn.dataset.pickupEdit.split('|'); openManualPickupModal(Number(parts[0]), parts[1]); return; }
     const revertBtn = e.target.closest('[data-pickup-revert]');
-    if (revertBtn){
-      closeAllPickupActionsMenus();
-      const parts = revertBtn.dataset.pickupRevert.split('|');
-      revertPickupTotalWeight(Number(parts[0]), parts[1]);
-      return;
-    }
+    if (revertBtn){ closeAllPickupActionsMenus(); const parts = revertBtn.dataset.pickupRevert.split('|'); revertPickupTotalWeight(Number(parts[0]), parts[1]); return; }
     const deleteBtn = e.target.closest('[data-pickup-delete]');
-    if (deleteBtn){
-      closeAllPickupActionsMenus();
-      const parts = deleteBtn.dataset.pickupDelete.split('|');
-      deleteManualPickup(Number(parts[0]), parts[1]);
-      return;
-    }
+    if (deleteBtn){ closeAllPickupActionsMenus(); const parts = deleteBtn.dataset.pickupDelete.split('|'); deleteManualPickup(Number(parts[0]), parts[1]); return; }
     closeAllPickupActionsMenus();
 
     const pg = e.target.closest('[data-predgroup]');
@@ -8892,13 +8628,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabBtn = e.target.closest('[data-tab]');
     if (tabBtn){
       const t = tabBtn.dataset.tab;
-      if (t){ activeTab = t; inlineDeliveryState = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (t){
+        activeTab = t;
+        inlineDeliveryState = null;
+        if (feedCompareState.modalOpen) closeCompareModal();
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape'){
+      if (inlineDeliveryState){
+        inlineDeliveryState = null;
+        render();
+        return;
+      }
+      if (feedCompareState.modalOpen){
+        closeCompareModal();
+        return;
+      }
       if (settingsDrawerOpen){
         closeSettingsDrawer();
         return;
@@ -8911,10 +8662,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const testBtn = form.querySelector('[data-inline-test]');
         if (testBtn) testBtn.click();
       }
-    }
-    if (e.key === 'Escape' && e.target.classList && e.target.classList.contains('inline-del-input')){
-      inlineDeliveryState = null;
-      render();
     }
   });
 
@@ -8963,19 +8710,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (t.dataset && t.dataset.shedTargetPickups){
-      setShedTargetPickups(Number(t.dataset.shedTargetPickups), t.value);
-      return;
-    }
-    if (t.dataset && t.dataset.densityUseGlobal){
-      setShedDensityOverride(Number(t.dataset.densityUseGlobal), 'useGlobal', t.checked);
-      return;
-    }
-    if (t.dataset && t.dataset.densityOverride){
-      const parts = t.dataset.densityOverride.split('|');
-      setShedDensityOverride(Number(parts[0]), parts[1], t.value);
-      return;
-    }
+    if (t.dataset && t.dataset.shedTargetPickups){ setShedTargetPickups(Number(t.dataset.shedTargetPickups), t.value); return; }
+    if (t.dataset && t.dataset.densityUseGlobal){ setShedDensityOverride(Number(t.dataset.densityUseGlobal), 'useGlobal', t.checked); return; }
+    if (t.dataset && t.dataset.densityOverride){ const parts = t.dataset.densityOverride.split('|'); setShedDensityOverride(Number(parts[0]), parts[1], t.value); return; }
     if (t.id === 'densityTrigger'){ setDensityGlobal('triggerDensity', t.value); return; }
     if (t.id === 'densityTarget'){ setDensityGlobal('targetDensity', t.value); return; }
     if (t.id === 'densityMax'){ setDensityGlobal('maxDensity', t.value); return; }
@@ -8998,22 +8735,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setTargetHarvestWeight(g, t.value);
       return;
     }
-
-    if (t.id === 'predBetaSlider'){
-      setPredBeta(t.value);
-      scheduleRender(60);
-      return;
-    }
-    if (t.id === 'predBetaNumber'){
-      setPredBeta(t.value);
-      scheduleRender(60);
-      return;
-    }
-
-    if (t.id === 'biasSlider' || t.id === 'biasNumber'){
-      scheduleRender(60);
-      return;
-    }
+    if (t.id === 'predBetaSlider'){ setPredBeta(t.value); scheduleRender(60); return; }
+    if (t.id === 'predBetaNumber'){ setPredBeta(t.value); scheduleRender(60); return; }
+    if (t.id === 'biasSlider' || t.id === 'biasNumber'){ scheduleRender(60); return; }
 
     if (t.dataset && t.dataset.customrangeCtx && t.dataset.customrangeBound){
       const ctx = t.dataset.customrangeCtx;
@@ -9127,9 +8851,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.addEventListener('scroll', () => {
-    closeAllPickupActionsMenus();
-  }, { capture: true, passive: true });
+  document.addEventListener('scroll', () => { closeAllPickupActionsMenus(); }, { capture: true, passive: true });
   window.addEventListener('resize', () => {
     closeAllPickupActionsMenus();
     updateStickyHeaderHeight();
