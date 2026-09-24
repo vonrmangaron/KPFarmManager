@@ -99,8 +99,39 @@
     display:flex; align-items:center; justify-content:center; border:2px solid var(--surface);
   }
   .notif-badge.hidden{ display:none; }
-  .sync-tag{ font-size:11px; font-weight:700; color:var(--success); opacity:0; transition:opacity .2s ease; }
-  .sync-tag.show{ opacity:1; }
+  /* ---------- Sync status dot ---------- */
+  .sync-status{
+    display:flex; align-items:center; gap:6px; height:42px; min-width:42px; justify-content:center;
+    padding:0 12px; border-radius:999px; border:none; background:var(--surface-soft);
+    color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sync-status .sync-dot{ width:10px; height:10px; border-radius:50%; background:var(--success); flex-shrink:0; }
+  .sync-status.syncing .sync-dot{ background:var(--primary); animation:dotpulse 1.2s ease-in-out infinite; }
+  .sync-status.offline .sync-dot{ background:var(--muted); }
+  .sync-status.error .sync-dot{ background:var(--danger); }
+  .sync-status.local .sync-dot{ background:var(--line); }
+  .sync-count{ font-family:'Sora',sans-serif; font-weight:800; font-size:12.5px; color:var(--ink); }
+  .sync-count:empty{ display:none; }
+  .sync-label{ display:none; white-space:nowrap; }
+  @media (min-width:720px){ .sync-label{ display:inline; } }
+  @keyframes dotpulse{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
+
+  /* ---------- Undo toast ---------- */
+  .undo-toast{
+    position:fixed; left:50%; bottom:calc(88px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(16px);
+    display:flex; align-items:center; gap:12px; max-width:92vw;
+    background:var(--ink); color:var(--bg); padding:8px 8px 8px 16px; border-radius:999px;
+    font-size:13.5px; font-weight:600; box-shadow:var(--shadow-lg); z-index:91;
+    opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+  }
+  .undo-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  .undo-toast .undo-msg{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .undo-toast button{
+    flex-shrink:0; min-height:40px; border:none; border-radius:999px; padding:10px 18px;
+    background:var(--primary); color:#241A08; font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px; cursor:pointer;
+  }
 
   .dashboard{ max-width:720px; margin:0 auto; padding:20px 16px 96px; }
   @media (min-width:900px){
@@ -116,6 +147,12 @@
   body.theme-dark .hero-card{ color:#1A1300; }
   .hero-date{ font-family:'Sora',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.02em; opacity:0.75; margin-bottom:4px; }
   .hero-title{ font-family:'Sora',sans-serif; font-weight:800; font-size:24px; margin-bottom:14px; }
+  .hero-batches{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 10px; }
+  .hero-batch-chip{
+    display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
+    background:rgba(255,255,255,0.4); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px;
+  }
+  .hero-batch-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .hero-stats{ display:flex; align-items:center; gap:14px; }
   .hero-ring{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.35); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; }
   .hero-progress-text{ font-size:13.5px; font-weight:600; opacity:0.85; }
@@ -382,7 +419,7 @@
     <div class="brand-text"><span class="name">CluckWise</span><span class="accent">.vm</span></div>
   </div>
   <div class="header-actions">
-    <span class="sync-tag" id="syncIndicator">Synced</span>
+    <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -393,6 +430,7 @@
 <main class="dashboard" id="dashboardWrap">
   <div class="hero-card">
     <div class="hero-date" id="heroDate">Today</div>
+    <div class="hero-batches" id="heroBatches" style="display:none;"></div>
     <div class="hero-title" id="heroTitle">Let's see what's on.</div>
     <div class="hero-stats">
       <div class="hero-ring" id="heroRing">0/0</div>
@@ -531,7 +569,14 @@
       connectFirst:'Connect to your farm first (Settings).', fillAllFields:'Please fill in all fields.',
       abToday:'Today', abTomorrow:'Tomorrow', abDays:'days', abPrepDone:'prep done',
       abAllDone:'All prep tasks done 🎉', abNoTasks:'No prep tasks scheduled yet.',
-      abMore:'more — see This Week', abOverdue:'Overdue'
+      abMore:'more — see This Week', abOverdue:'Overdue',
+      markedDone:'Marked done', reopenedTask:'Reopened', undo:'Undo',
+      justNow:'just now', agoMin:'{n}m ago', agoHour:'{n}h ago',
+      saving:'Saving…', offline:'Offline', offlineWaiting:'Offline — {n} waiting to sync',
+      notSavedRetry:'Not saved yet — retrying', connecting:'Connecting…', notConnected:'Not connected',
+      savedOnPhone:'No signal — saved on this phone. It will sync when you are back online.',
+      showingSaved:'No connection — showing the last saved data.',
+      batch:'Batch', day:'Day'
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -555,7 +600,14 @@
       connectFirst:'Conecta tu granja primero (Ajustes).', fillAllFields:'Por favor completa todos los campos.',
       abToday:'Hoy', abTomorrow:'Mañana', abDays:'días', abPrepDone:'preparación lista',
       abAllDone:'Toda la preparación está lista 🎉', abNoTasks:'Aún no hay tareas de preparación.',
-      abMore:'más — ver Esta semana', abOverdue:'Atrasada'
+      abMore:'más — ver Esta semana', abOverdue:'Atrasada',
+      markedDone:'Hecha', reopenedTask:'Reabierta', undo:'Deshacer',
+      justNow:'justo ahora', agoMin:'hace {n} min', agoHour:'hace {n} h',
+      saving:'Guardando…', offline:'Sin conexión', offlineWaiting:'Sin conexión — {n} por sincronizar',
+      notSavedRetry:'Aún no guardado — reintentando', connecting:'Conectando…', notConnected:'Sin conectar',
+      savedOnPhone:'Sin señal — guardado en este teléfono. Se sincronizará cuando vuelva la conexión.',
+      showingSaved:'Sin conexión — mostrando los últimos datos guardados.',
+      batch:'Lote', day:'Día'
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -579,7 +631,14 @@
       connectFirst:'Kumonekta muna sa bukid (Settings).', fillAllFields:'Punan lahat ng field.',
       abToday:'Ngayon', abTomorrow:'Bukas', abDays:'araw', abPrepDone:'handa na',
       abAllDone:'Tapos na lahat ng paghahanda 🎉', abNoTasks:'Wala pang naka-schedule na paghahanda.',
-      abMore:'pa — tingnan sa Ngayong Linggo', abOverdue:'Huli na'
+      abMore:'pa — tingnan sa Ngayong Linggo', abOverdue:'Huli na',
+      markedDone:'Tapos na', reopenedTask:'Binuksan muli', undo:'Ibalik',
+      justNow:'ngayon lang', agoMin:'{n} min ang nakalipas', agoHour:'{n} oras ang nakalipas',
+      saving:'Sine-save…', offline:'Offline', offlineWaiting:'Offline — {n} naghihintay i-sync',
+      notSavedRetry:'Hindi pa na-save — sinusubukan ulit', connecting:'Kumokonekta…', notConnected:'Hindi konektado',
+      savedOnPhone:'Walang signal — naka-save sa phone na ito. Magsi-sync kapag may internet na.',
+      showingSaved:'Walang koneksyon — ipinapakita ang huling na-save na data.',
+      batch:'Batch', day:'Araw'
     }
   };
   function t(key){
@@ -730,17 +789,37 @@
       ghPath = ghFarmName ? sanitizeFarmFileName(ghFarmName) : null;
     }catch(e){}
     updateGithubStatusUI();
+    renderSyncStatus();
     if(ghPath){
+      loadPendingTicks();
       showLoadingOverlay();
       let ok = false;
+      const pullPromise = pullFromGithub(true);
       try{
         ok = await Promise.race([
-          pullFromGithub(true),
+          pullPromise,
           new Promise(resolve=> setTimeout(()=>resolve(false), 6000))
         ]);
       }catch(e){ ok = false; }
       hideLoadingOverlay();
-      if(!ok){ showLoadErrorOverlay(); return false; }
+      if(!ok){
+        // No signal (common in the sheds): fall back to the last data this phone saw,
+        // so workers can still see and tick their tasks. Ticks queue up and sync later.
+        const cached = loadCachedData();
+        if(cached){
+          applyData(JSON.stringify(cached), true);
+          renderSyncStatus();
+          offlineNoticeShown = true;
+          showToast(t('showingSaved'));
+          return true;
+        }
+        showLoadErrorOverlay();
+        // A slow connection can still finish after the 6s timeout — if so, drop the error screen.
+        pullPromise.then(lateOk=>{
+          if(lateOk && $('#loadErrorOverlay').classList.contains('show')){ hideLoadErrorOverlay(); renderAll(); }
+        }).catch(()=>{});
+        return false;
+      }
       return true;
     } else {
       hideLoadingOverlay();
@@ -757,8 +836,10 @@
     if(!name){ showToast('Enter the farm name.', true); return; }
     ghFarmName=name; ghPath=sanitizeFarmFileName(name);
     try{ localStorage.setItem('prodplan-viewer-gh-farmname', ghFarmName); }catch(e){}
+    loadPendingTicks();
     await pullFromGithub();
     updateGithubStatusUI();
+    renderSyncStatus();
   }
   function applyData(rawText, silent){
     try{
@@ -770,6 +851,7 @@
       batches = parsed.batches || [];
       events = parsed.events || [];
       tasks.forEach(tk=>{ if(!Array.isArray(tk.assignees)) tk.assignees = tk.assignee ? [tk.assignee] : []; });
+      applyPendingTicksOverlay();
       if(parsed.settings){
         syncedDisplay = {
           theme: parsed.settings.theme || 'light',
@@ -779,15 +861,44 @@
       }
       applySettings();
       renderAll();
-      if(!silent) flashSynced();
       checkOverdueOnLoad();
     }catch(e){ if(!silent) showToast('Could not read that data.', true); }
   }
-  function flashSynced(){
-    const el=$('#syncIndicator'); if(!el) return;
-    el.classList.add('show');
-    clearTimeout(flashSynced._t); flashSynced._t=setTimeout(()=>el.classList.remove('show'),1500);
+  // ---------- Sync status dot ----------
+  let syncState = 'idle';
+  let lastSyncAt = null;
+  function timeAgo(ts){
+    const m = Math.floor((Date.now() - ts) / 60000);
+    if(m < 1) return t('justNow');
+    if(m < 60) return t('agoMin').replace('{n}', m);
+    const h = Math.floor(m / 60);
+    if(h < 24) return t('agoHour').replace('{n}', h);
+    return new Date(ts).toLocaleDateString(undefined,{month:'short', day:'numeric'});
   }
+  function renderSyncStatus(){
+    const el = $('#syncIndicator');
+    if(!el) return;
+    const waiting = pendingTicks.size + loadPendingReports().length;
+    let cls, text;
+    if(!ghPath){ cls = 'local'; text = t('notConnected'); }
+    else if(!navigator.onLine){ cls = 'offline'; text = waiting ? t('offlineWaiting').replace('{n}', waiting) : t('offline'); }
+    else if(syncState === 'syncing' || tickFlushInFlight){ cls = 'syncing'; text = t('saving'); }
+    else if(syncState === 'error'){ cls = 'error'; text = t('notSavedRetry'); }
+    else if(waiting){ cls = 'syncing'; text = t('saving'); }
+    else if(lastSyncAt){ cls = 'ok'; text = `${t('synced')} · ${timeAgo(lastSyncAt)}`; }
+    else { cls = 'syncing'; text = t('connecting'); }
+    el.className = 'sync-status ' + cls;
+    $('#syncCount').textContent = waiting ? String(waiting) : '';
+    $('#syncLabel').textContent = text;
+    el.title = text;
+    el.setAttribute('aria-label', text);
+  }
+  function markSynced(){ syncState = 'idle'; lastSyncAt = Date.now(); renderSyncStatus(); }
+
+  // ---------- Last-known data (for opening the app with no signal) ----------
+  function cacheKey(){ return 'prodplan-viewer-last-data-' + (ghPath || 'none'); }
+  function cacheData(d){ try{ localStorage.setItem(cacheKey(), JSON.stringify(d)); }catch(e){} }
+  function loadCachedData(){ try{ const raw = localStorage.getItem(cacheKey()); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
   async function pullFromGithub(silent){
     if(!ghPath) return false;
     try{
@@ -796,52 +907,135 @@
       const result = await res.json();
       if(res.status===404 || result.notFound){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
       ghSha = result.sha;
+      cacheData(result.data);
       applyData(JSON.stringify(result.data), silent);
+      markSynced();
+      if(pendingTicks.size) scheduleTickFlush(200);
       setTimeout(flushPendingReports, 100);
       if(!silent) showToast('Refreshed from the latest data.');
       return true;
     }catch(e){
       console.error(e);
+      renderSyncStatus();
       if(!silent) showToast('Could not refresh — check your connection.', true);
       return false;
     }
   }
 
-  // ---------- Task status toggle ----------
-  let pendingStatusChanges = new Map();
-  let statusPushTimer = null;
-  let statusPushInFlight = false;
-
-  function toggleTaskDoneInViewer(id){
-    const localTask = tasks.find(tk=>tk.id===id);
-    if(!localTask) return;
-    const newStatus = localTask.status==='done' ? 'open' : 'done';
-    localTask.status = newStatus;
-    pendingStatusChanges.set(id, newStatus);
+  // ---------- Task ticks: offline-safe queue ----------
+  // Every tick is saved on the phone first (localStorage) and sent in the
+  // background. With no signal it just waits; nothing is rolled back. Ticks
+  // are only removed from the queue once the server has them, and they stay
+  // applied on top of any refresh until then.
+  let pendingTicks = new Map();
+  let tickFlushTimer = null;
+  let tickFlushInFlight = false;
+  let tickRetryDelay = 0;
+  let offlineNoticeShown = false;
+  function ticksStorageKey(){ return 'prodplan-viewer-pending-ticks-' + (ghPath || 'none'); }
+  function loadPendingTicks(){
+    try{ pendingTicks = new Map(Object.entries(JSON.parse(localStorage.getItem(ticksStorageKey()) || '{}'))); }
+    catch(e){ pendingTicks = new Map(); }
+  }
+  function savePendingTicks(){
+    try{
+      if(pendingTicks.size) localStorage.setItem(ticksStorageKey(), JSON.stringify(Object.fromEntries(pendingTicks)));
+      else localStorage.removeItem(ticksStorageKey());
+    }catch(e){}
+  }
+  function applyPendingTicksOverlay(){
+    pendingTicks.forEach((status, id)=>{
+      const tk = tasks.find(x=> x.id === id);
+      if(tk) tk.status = status;
+    });
+  }
+  function setTaskStatusLocal(id, status){
+    const tk = tasks.find(x=> x.id === id);
+    if(!tk) return null;
+    tk.status = status;
+    pendingTicks.set(id, status);
+    savePendingTicks();
     renderAll();
-    clearTimeout(statusPushTimer);
-    statusPushTimer = setTimeout(flushStatusChanges, 900);
+    scheduleTickFlush(900);
+    return tk;
   }
-  async function flushStatusChanges(){
-    if(pendingStatusChanges.size===0) return;
-    if(statusPushInFlight){ statusPushTimer = setTimeout(flushStatusChanges, 400); return; }
-    statusPushInFlight = true;
-    const batch = new Map(pendingStatusChanges);
-    pendingStatusChanges.clear();
-    const ok = await pushStatusChangesWithRetry(batch, 1);
-    statusPushInFlight = false;
-    if(!ok){
-      batch.forEach((newStatus, id)=>{
-        const tk = tasks.find(x=>x.id===id);
-        if(tk) tk.status = newStatus==='done' ? 'open' : 'done';
-      });
-      renderAll();
-      showToast('Could not save — check your connection and try again.', true);
+  function toggleTaskDoneInViewer(id){
+    const tk = tasks.find(x=> x.id === id);
+    if(!tk) return;
+    const prev = tk.status === 'done' ? 'done' : 'open';
+    const next = prev === 'done' ? 'open' : 'done';
+    setTaskStatusLocal(id, next);
+    offerUndo(`${next === 'done' ? t('markedDone') : t('reopenedTask')}: ${tk.name}`, ()=> setTaskStatusLocal(id, prev));
+  }
+  function scheduleTickFlush(delay){
+    clearTimeout(tickFlushTimer);
+    tickFlushTimer = setTimeout(flushTicks, delay);
+  }
+  function noteOffline(){
+    if(offlineNoticeShown) return;
+    offlineNoticeShown = true;
+    showToast(t('savedOnPhone'));
+  }
+  async function flushTicks(){
+    if(!ghPath || pendingTicks.size === 0){ renderSyncStatus(); return; }
+    if(tickFlushInFlight){ scheduleTickFlush(500); return; }
+    if(!navigator.onLine){ noteOffline(); renderSyncStatus(); return; }
+    tickFlushInFlight = true;
+    syncState = 'syncing';
+    renderSyncStatus();
+    const batch = new Map(pendingTicks);
+    let merged = null;
+    try{ merged = await pushStatusChangesWithRetry(batch, 1); }
+    finally{ tickFlushInFlight = false; }
+    if(merged){
+      // Only clear ticks that haven't been changed again since this batch was sent.
+      batch.forEach((status, id)=>{ if(pendingTicks.get(id) === status) pendingTicks.delete(id); });
+      savePendingTicks();
+      tickRetryDelay = 0;
+      offlineNoticeShown = false;
+      cacheData(merged);
+      applyData(JSON.stringify(merged), true);
+      markSynced();
+      if(pendingTicks.size) scheduleTickFlush(300);
+    } else {
+      syncState = navigator.onLine ? 'error' : 'idle';
+      if(!navigator.onLine) noteOffline();
+      renderSyncStatus();
+      tickRetryDelay = Math.min(tickRetryDelay ? tickRetryDelay * 2 : 5000, 60000);
+      scheduleTickFlush(tickRetryDelay);
     }
-    if(pendingStatusChanges.size>0){ statusPushTimer = setTimeout(flushStatusChanges, 300); }
   }
+
+  // ---------- Undo toast ----------
+  let undoAction = null, undoTimer = null;
+  function offerUndo(label, fn){
+    undoAction = fn;
+    let el = $('#undoToast');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'undoToast';
+      el.className = 'undo-toast';
+      el.innerHTML = '<span class="undo-msg"></span><button type="button"></button>';
+      document.body.appendChild(el);
+      el.querySelector('button').addEventListener('click', performUndo);
+    }
+    el.querySelector('.undo-msg').textContent = label;
+    el.querySelector('button').textContent = t('undo');
+    el.classList.add('show');
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(()=>{ el.classList.remove('show'); undoAction = null; }, 6000);
+  }
+  function performUndo(){
+    const fn = undoAction;
+    undoAction = null;
+    clearTimeout(undoTimer);
+    const el = $('#undoToast');
+    if(el) el.classList.remove('show');
+    if(fn) fn();
+  }
+
   async function pushStatusChangesWithRetry(batch, attempt){
-    if(!ghPath) return false;
+    if(!ghPath) return null;
     try{
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
       if(!res.ok) throw new Error('Sync server responded '+res.status);
@@ -862,17 +1056,16 @@
       });
       if(putRes.status===409){
         if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangesWithRetry(batch, attempt+1); }
-        return false;
+        return null;
       }
       if(!putRes.ok) throw new Error('Sync server responded '+putRes.status);
       const putData = await putRes.json();
       if(putData && putData.sha) ghSha = putData.sha;
-      applyData(JSON.stringify(merged), true);
-      return true;
+      return merged;
     }catch(e){
       console.error('Viewer status push failed', e);
-      if(attempt<4){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangesWithRetry(batch, attempt+1); }
-      return false;
+      if(attempt<4 && navigator.onLine){ await new Promise(r=>setTimeout(r, 300*attempt)); return pushStatusChangesWithRetry(batch, attempt+1); }
+      return null;
     }
   }
 
@@ -906,6 +1099,7 @@
     if(success){
       pending.forEach(r => removePendingReport(r.id));
     }
+    renderSyncStatus();
   }
   async function pushReportsToGithub(reportsToPush, attempt){
     if(!ghPath) return false;
@@ -1092,12 +1286,17 @@
     return ASSIGNEE_PALETTE[Math.abs(hash) % ASSIGNEE_PALETTE.length];
   }
   function initialsForAssignee(name){ return name.trim().charAt(0).toUpperCase(); }
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
   function buildAssigneeAvatarsHtml(assignees){
     if(!assignees || assignees.length===0) return '';
     const shown = assignees.slice(0,3);
     let html = '<span class="task-avatars">';
-    shown.forEach(name=>{ html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${name}">${initialsForAssignee(name)}</span>`; });
-    if(assignees.length>3) html += `<span class="task-avatar more-avatar" title="${assignees.slice(3).join(', ')}">+${assignees.length-3}</span>`;
+    shown.forEach(name=>{ html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${escapeHtml(name)}">${escapeHtml(initialsForAssignee(name))}</span>`; });
+    if(assignees.length>3) html += `<span class="task-avatar more-avatar" title="${escapeHtml(assignees.slice(3).join(', '))}">+${assignees.length-3}</span>`;
     html += '</span>';
     return html;
   }
@@ -1154,6 +1353,27 @@
       $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> ${t('tasksComplete')}`;
     }
     $('#heroRing').textContent = `${done}/${total}`;
+
+    const hb = $('#heroBatches');
+    if(hb){
+      hb.innerHTML = '';
+      batches
+        .filter(b=> b.start && b.end && todayKey >= b.start && todayKey <= b.end)
+        .sort((a,b)=> a.start.localeCompare(b.start))
+        .forEach(b=>{
+          const age = Math.round((toDateObj(todayKey) - toDateObj(b.start)) / 86400000);
+          const chip = document.createElement('span');
+          chip.className = 'hero-batch-chip';
+          const dot = document.createElement('span');
+          dot.className = 'hero-batch-dot';
+          dot.style.background = colorForBatchNumber(b.number);
+          const txt = document.createElement('span');
+          txt.textContent = `${t('batch')} #${b.number} · ${t('day')} ${age}`;
+          chip.append(dot, txt);
+          hb.appendChild(chip);
+        });
+      hb.style.display = hb.children.length ? 'flex' : 'none';
+    }
 
     const todaysAudits = events.filter(e=> e.date===todayKey);
     let banner = document.getElementById('heroAuditBanner');
@@ -1313,6 +1533,7 @@
     renderList();
     renderAudits();
     updateOverdueBadge();
+    renderSyncStatus();
     if($('#overdueTransferModal').classList.contains('open')) renderOverdueList();
   }
 
@@ -1420,13 +1641,32 @@
   });
 
   document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'visible' && ghPath){
+    if(!ghPath) return;
+    if(document.visibilityState === 'visible'){
       pullFromGithub(true);
       flushPendingReports();
+      if(pendingTicks.size) flushTicks();
+    } else if(pendingTicks.size){
+      flushTicks();
     }
   });
-  window.addEventListener('online', ()=>{ flushPendingReports(); });
-  window.addEventListener('focus', ()=>{ flushPendingReports(); });
+  window.addEventListener('online', ()=>{
+    offlineNoticeShown = false;
+    renderSyncStatus();
+    flushPendingReports();
+    if(pendingTicks.size) flushTicks();
+  });
+  window.addEventListener('offline', renderSyncStatus);
+  window.addEventListener('focus', ()=>{ flushPendingReports(); if(pendingTicks.size) flushTicks(); });
+  setInterval(()=>{
+    renderSyncStatus();
+    if(ghPath && pendingTicks.size && !tickFlushInFlight && navigator.onLine) flushTicks();
+  }, 30000);
+  $('#syncIndicator').addEventListener('click', ()=>{
+    renderSyncStatus();
+    showToast($('#syncLabel').textContent);
+    if(pendingTicks.size) flushTicks();
+  });
 
   $('#retryLoadBtn').addEventListener('click', async ()=>{
     hideLoadErrorOverlay();
