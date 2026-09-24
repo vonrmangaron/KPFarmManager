@@ -201,6 +201,7 @@
 
   .btn-app{ border:none;background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;font-weight:700;font-size:14.5px;padding:11px 16px;border-radius:10px;cursor:pointer; box-shadow:var(--shadow-sm); }
   .btn-app:hover{filter:brightness(1.05);}
+  .btn-app.secondary-action{ background:linear-gradient(135deg, var(--secondary), #5E2E22); }
   .btn-danger-outline{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); font-weight:600; font-size:12.5px; padding:7px 12px; border-radius:9px; cursor:pointer; }
   .btn-danger-outline.confirm{ background:var(--danger); color:#fff; }
   .btn-danger-outline:hover{ background:var(--danger); color:#fff; }
@@ -786,6 +787,17 @@
   .dnc-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#966E00; }
   body.theme-dark .dnc-label{ color:#E0B84D; }
   .dnc-text{ font-size:14px; color:var(--ink); white-space:pre-wrap; line-height:1.45; }
+  .detail-report-callout{
+    display:flex; gap:10px; align-items:center; padding:12px 14px;
+    border-radius:12px; background:var(--danger-soft); border:1.5px solid var(--danger);
+    cursor:pointer; transition:filter .12s ease;
+  }
+  .detail-report-callout:hover{ filter:brightness(0.97); }
+  .drc-icon{ font-size:18px; flex-shrink:0; line-height:1.3; }
+  .drc-body{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+  .drc-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:var(--danger); }
+  .drc-text{ font-size:13.5px; color:var(--ink); line-height:1.4; word-break:break-all; font-weight:600; }
+  .drc-arrow{ font-size:16px; color:var(--danger); flex-shrink:0; }
   .dlabel{ font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding-top:2px; flex-shrink:0; }
   .dvalue{ font-size:13px; text-align:right; }
   .status-pill-lg{ font-size:11.5px; font-weight:700; padding:4px 12px; border-radius:999px; }
@@ -850,7 +862,8 @@
   .report-card-status.resolved{ background:var(--success-soft); color:var(--success); }
   .report-card-sub{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:3px; }
   .report-card-note{ font-size:12.5px; color:var(--muted); margin-bottom:3px; overflow-wrap:break-word; }
-  .report-card-meta{ font-size:11px; color:var(--muted); }
+  .report-card-meta{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .report-card-linked{ font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; background:var(--secondary-soft); color:var(--secondary); text-transform:uppercase; letter-spacing:0.03em; }
 
   #reportDetailModal{ width:480px; }
   .rd-code-wrap{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
@@ -1285,6 +1298,11 @@
       <span class="dnc-icon">📝</span>
       <div class="dnc-body"><span class="dnc-label">Notes</span><span class="dnc-text" id="detailNotes"></span></div>
     </div>
+    <div class="detail-report-callout" id="detailReportRow" style="display:none;">
+      <span class="drc-icon">🚩</span>
+      <div class="drc-body"><span class="drc-label">From report</span><span class="drc-text" id="detailReportCode"></span></div>
+      <span class="drc-arrow">›</span>
+    </div>
     <div class="drow">
       <span class="dlabel">Status</span>
       <span class="status-pill-lg" id="detailStatusPill"></span>
@@ -1536,6 +1554,8 @@
     <label class="rd-input-label" id="rdResolutionLabel" for="rdResolutionNotes" style="display:none;">Resolution Notes (worker sees this)</label>
     <textarea id="rdResolutionNotes" rows="2" maxlength="500" placeholder="What fixed it?" style="display:none;"></textarea>
     <button class="btn-app" id="rdSaveBtn" style="margin-top:10px;">Save changes</button>
+    <button class="btn-app secondary-action" id="rdConvertBtn" style="margin-top:8px;">➕ Convert to task</button>
+    <button class="btn-app secondary-action" id="rdViewTaskBtn" style="margin-top:8px; display:none;">📋 View linked task</button>
     <button class="btn-danger-outline" id="rdDeleteBtn" style="margin-top:8px;">Delete report</button>
   </div>
 </div>
@@ -1945,7 +1965,7 @@
     if(!ghPath) return false;
     try{
       const server = await fetchMainFile();
-      if(!server.data){ await pushToGithub(); await pullReportsFromGithub(silent); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
+      if(!server.data){ await pushToGithub(); await pullReportsFromGithub(silent); reconcileReportTaskLinks(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
       ghSha = server.sha;
       const merged = lastSyncedSnapshot
         ? mergeSnapshots(lastSyncedSnapshot, snapshotLocal(), server.data)
@@ -1955,6 +1975,7 @@
       // Local edits survived the merge -> push them back up.
       if(stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
       await pullReportsFromGithub(silent);
+      reconcileReportTaskLinks();
       if(!silent) showToast('Synced.');
       return true;
     }catch(e){
@@ -2114,6 +2135,56 @@
     }
   }
   // ==================== END REPORTS FILE SYNC ====================
+
+  // ==================== REPORT <-> TASK LINK RECONCILE ====================
+  // Runs after every pull. Enforces the invariant: if a linked task is done,
+  // its report is Resolved (auto-managed). If a linked task is reopened and
+  // the report was auto-resolved, revert to In Progress. Never overwrites
+  // manual resolutions.
+  function reconcileReportTaskLinks(){
+    let reportsChanged = false;
+    let tasksChanged = false;
+
+    tasks.forEach(t => {
+      if(!t.linkedReportId) return;
+      const r = reports.find(x => x.id === t.linkedReportId);
+      if(!r){
+        t.linkedReportId = null;
+        tasksChanged = true;
+        return;
+      }
+      if(t.status === 'done' && r.status !== 'Resolved'){
+        r.status = 'Resolved';
+        r.autoResolved = true;
+        r.resolvedAt = r.resolvedAt || new Date().toISOString();
+        r.updatedAt = new Date().toISOString();
+        reportsChanged = true;
+        addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
+      } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
+        r.status = 'In Progress';
+        r.resolvedAt = null;
+        r.autoResolved = false;
+        r.updatedAt = new Date().toISOString();
+        reportsChanged = true;
+        addHistory('Report reopened', `${r.code} reopened via linked task`);
+      }
+    });
+
+    reports.forEach(r => {
+      if(!r.linkedTaskId) return;
+      const t = tasks.find(x => x.id === r.linkedTaskId);
+      if(!t){
+        r.linkedTaskId = null;
+        r.updatedAt = new Date().toISOString();
+        reportsChanged = true;
+      }
+    });
+
+    if(reportsChanged) scheduleReportsPush();
+    if(tasksChanged) persist();
+    if(reportsChanged || tasksChanged) renderAll();
+  }
+  // ==================== END RECONCILE ====================
 
   function applyImportedData(rawText){
     try{
@@ -2289,11 +2360,39 @@
     if(!t) return;
     t.status = t.status==='done' ? 'open' : 'done';
     addHistory(t.status==='done' ? 'Completed' : 'Reopened', taskLabel(t));
+    if(t.linkedReportId){
+      const r = reports.find(x => x.id === t.linkedReportId);
+      if(r){
+        if(t.status === 'done' && r.status !== 'Resolved'){
+          r.status = 'Resolved';
+          r.autoResolved = true;
+          r.resolvedAt = new Date().toISOString();
+          r.updatedAt = new Date().toISOString();
+          addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
+          scheduleReportsPush();
+        } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
+          r.status = 'In Progress';
+          r.resolvedAt = null;
+          r.autoResolved = false;
+          r.updatedAt = new Date().toISOString();
+          addHistory('Report reopened', `${r.code} reopened via linked task`);
+          scheduleReportsPush();
+        }
+      }
+    }
     persist(); renderAll();
   }
   function deleteTask(id){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
+    if(t.linkedReportId){
+      const r = reports.find(x => x.id === t.linkedReportId);
+      if(r){
+        r.linkedTaskId = null;
+        r.updatedAt = new Date().toISOString();
+        scheduleReportsPush();
+      }
+    }
     tasks = tasks.filter(x=>x.id!==id);
     addHistory('Removed', `${taskLabel(t)} deleted`);
     persist(); renderAll();
@@ -2487,6 +2586,7 @@
     card.className = 'report-card ' + statusClass;
 
     const statusPillClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
+    const linkedBadge = r.linkedTaskId ? '<span class="report-card-linked">📋 Task linked</span>' : '';
 
     card.innerHTML = `
       <div class="report-card-head">
@@ -2495,13 +2595,16 @@
       </div>
       <div class="report-card-sub"></div>
       <div class="report-card-note"></div>
-      <div class="report-card-meta"></div>
+      <div class="report-card-meta">${linkedBadge}</div>
     `;
     card.querySelector('.report-card-code').textContent = r.code || '';
     card.querySelector('.report-card-status').textContent = r.status || 'Open';
     card.querySelector('.report-card-sub').textContent = `Shed ${r.shed} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
     card.querySelector('.report-card-note').textContent = r.notes || '';
-    card.querySelector('.report-card-meta').textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
+    const meta = card.querySelector('.report-card-meta');
+    const metaText = document.createElement('span');
+    metaText.textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
+    meta.insertBefore(metaText, meta.firstChild);
     card.addEventListener('click', () => openReportDetailModal(r.id));
     return card;
   }
@@ -2536,6 +2639,16 @@
       $('#rdResolutionSection').style.display = 'none';
       $('#rdResolutionLabel').style.display = 'none';
       $('#rdResolutionNotes').style.display = 'none';
+    }
+
+    const convertBtn = $('#rdConvertBtn');
+    const viewTaskBtn = $('#rdViewTaskBtn');
+    if(r.linkedTaskId){
+      convertBtn.style.display = 'none';
+      viewTaskBtn.style.display = 'block';
+    } else {
+      convertBtn.style.display = 'block';
+      viewTaskBtn.style.display = 'none';
     }
 
     const delBtn = $('#rdDeleteBtn');
@@ -2578,6 +2691,13 @@
   function deleteReportConfirmed(id){
     const r = reports.find(x => x.id === id);
     if(!r) return;
+    if(r.linkedTaskId){
+      const t = tasks.find(x => x.id === r.linkedTaskId);
+      if(t){
+        t.linkedReportId = null;
+        persist();
+      }
+    }
     reports = reports.filter(x => x.id !== id);
     deletedReportIds.add(id);
     saveDeletedReportIds();
@@ -2600,6 +2720,33 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
+
+  function convertReportToTask(reportId){
+    const r = reports.find(x => x.id === reportId);
+    if(!r) return;
+    if(r.linkedTaskId){
+      showToast('This report already has a linked task.');
+      return;
+    }
+    const taskName = `Fix ${r.problemType} — Shed ${r.shed}`;
+    const today = dateKey(new Date());
+    const noteText = `Report ${r.code}\n${r.notes || ''}`.trim();
+    const t = addTask(taskName, guessIcon(taskName), today, {
+      priority: 'high',
+      linkedReportId: r.id,
+      notes: noteText
+    });
+    r.linkedTaskId = t.id;
+    r.status = 'In Progress';
+    r.autoResolved = false;
+    r.updatedAt = new Date().toISOString();
+    addHistory('Report converted', `${r.code} → task "${taskName}"`);
+    persist();
+    scheduleReportsPush();
+    renderAll();
+    openReportDetailModal(reportId);
+    showToast('Task created. Report set to In Progress.');
+  }
   // ---------- END REPORTS MODULE ----------
 
   function generateReport(opts){
@@ -4079,7 +4226,7 @@
         e.stopPropagation();
         if(isCollapsed) collapsedKanbanCols.delete(key); else collapsedKanbanCols.add(key);
         saveCollapsedKanbanCols();
-        renderKanban();
+        renderAll();
       });
       if(!isCollapsed){
         const body = document.createElement('div');
@@ -4341,6 +4488,18 @@
     const notesRow = $('#detailNotesRow');
     if(t.notes){ notesRow.style.display = 'flex'; $('#detailNotes').textContent = t.notes; }
     else { notesRow.style.display = 'none'; }
+    const reportRow = $('#detailReportRow');
+    if(t.linkedReportId){
+      const r = reports.find(x => x.id === t.linkedReportId);
+      if(r){
+        reportRow.style.display = 'flex';
+        $('#detailReportCode').textContent = r.code;
+      } else {
+        reportRow.style.display = 'none';
+      }
+    } else {
+      reportRow.style.display = 'none';
+    }
     const seriesNote = $('#detailSeriesNote');
     if(t.seriesId){
       const siblings = tasks.filter(x=>x.seriesId===t.seriesId);
@@ -4988,6 +5147,15 @@
     toggleDone(detailTaskId);
     openTaskDetailModal(detailTaskId);
   });
+  $('#detailReportRow').addEventListener('click', ()=>{
+    if(!detailTaskId) return;
+    const t = tasks.find(x => x.id === detailTaskId);
+    if(!t || !t.linkedReportId) return;
+    const reportId = t.linkedReportId;
+    closeOverlays();
+    openReportsDrawer();
+    openReportDetailModal(reportId);
+  });
   $('#closeEditTaskModal').addEventListener('click', closeOverlays);
   $('#editTaskRepeatSelect').addEventListener('change', (e)=>{
     $('#editTaskUntilRow').style.display = e.target.value==='none' ? 'none' : 'block';
@@ -5145,6 +5313,18 @@
     });
   });
   $('#rdSaveBtn').addEventListener('click', saveReportChanges);
+  $('#rdConvertBtn').addEventListener('click', ()=>{
+    if(!currentReportId) return;
+    convertReportToTask(currentReportId);
+  });
+  $('#rdViewTaskBtn').addEventListener('click', ()=>{
+    const r = reports.find(x => x.id === currentReportId);
+    if(!r || !r.linkedTaskId) return;
+    const taskId = r.linkedTaskId;
+    closeReportDetailOnly();
+    closeOverlays();
+    openTaskDetailModal(taskId);
+  });
   $('#rdCopyBtn').addEventListener('click', async ()=>{
     const code = $('#rdCode').textContent || '';
     try{
