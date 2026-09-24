@@ -914,6 +914,18 @@ body.theme-dark .compare-col-head .cth-tag{color:#1A2438;}
 .compare-col-head .cch-status{font-family:'Inter', sans-serif; font-weight:600;
   font-size:11.5px; color:var(--muted); margin-left:auto;}
 
+/* NEW: per-group delivery chips line inside the compare column header */
+.compare-col-head .cch-deliveries{flex-basis:100%; width:100%;
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  padding-top:6px; margin-top:2px;
+  border-top:1px dashed var(--line);}
+.compare-col-head .cch-deliveries .count{font-family:'Inter', sans-serif;
+  font-weight:600; font-size:11px; color:var(--muted);}
+.compare-col-head .cch-deliveries .delivery-type-chips{margin-left:0; gap:4px;}
+.compare-col-head .cch-deliveries .delivery-type-chips .chip{font-size:10px; padding:1px 7px; gap:3px;}
+.compare-col-head .cch-deliveries .delivery-type-chips .chip .num{font-size:10px;}
+.cch-deliveries-empty{font-style:italic; color:var(--muted); font-weight:500; font-size:11px;}
+
 .btn-compare-toggle{border:1.5px dashed var(--secondary); background:var(--secondary-soft); color:var(--secondary);
   font-family:'Sora', sans-serif; font-weight:700; font-size:11.5px; padding:6px 14px; border-radius:999px;
   cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
@@ -1616,21 +1628,18 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - NEW: Compare Feed Balance modal has been reworked:
-     · Group picker is now clickable cards (highlighted when
-       selected). User can pick 1 to 4 groups freely.
-     · Column picker lets the user hide/show individual
-       columns (Date is locked on). Unchecked columns vanish
-       from every shown table so 3–4 groups stay readable.
-     · Layout toggle is now Stacked / Grid (auto-fit).
-     · Selected groups insert in numeric order.
-     · Group status chip moved into each column header.
-   - Retained: green/amber/red colour-coding on End Balance,
-     blue/orange pickup indicator on Live birds, blue/orange
-     date colouring, whole-bird rounding in projection loops,
-     mortality anchor stamping, symmetric total/avg pickup
-     weight editing, edit-delivery pencil on locked rows, and
-     the new-farm batch-number leak fix.
+   - NEW: Compare Feed Balance modal group headers now show
+     the same per-feed-type order count + 60 T block chips
+     that appear in the Feed & Silo view's Scheduled
+     Deliveries header, styled compact for the modal and
+     always visible regardless of the column picker.
+   - Retained from previous session: group picker cards,
+     column picker, stacked/grid layout toggle, green/amber/
+     red End Balance colour-coding, blue/orange pickup
+     indicator on Live birds, blue/orange date colouring,
+     whole-bird rounding, mortality anchor stamping,
+     symmetric total/avg pickup weight editing, edit-delivery
+     pencil on locked rows, new-farm batch-number leak fix.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -6660,6 +6669,7 @@ function renderCompareModalBody(){
         <div class="compare-col-head ${isCurrent ? 'current' : ''}">
           <span class="cch-name">Group ${g}${isCurrent ? ' <span class="cth-tag">Current</span>' : ''}</span>
           <span class="cch-status">${escapeHtml(statusChip)}</span>
+          <div class="cch-deliveries">${renderDeliveriesSummary(g)}</div>
         </div>
         ${renderSiloForecastTable(forecast, g, { inModal: true, columns: cols })}
       </div>`;
