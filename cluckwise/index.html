@@ -201,7 +201,6 @@
 
   .btn-app{ border:none;background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;font-weight:700;font-size:14.5px;padding:11px 16px;border-radius:10px;cursor:pointer; box-shadow:var(--shadow-sm); }
   .btn-app:hover{filter:brightness(1.05);}
-  .btn-app.secondary-action{ background:linear-gradient(135deg, var(--secondary), #5E2E22); }
   .btn-danger-outline{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); font-weight:600; font-size:12.5px; padding:7px 12px; border-radius:9px; cursor:pointer; }
   .btn-danger-outline.confirm{ background:var(--danger); color:#fff; }
   .btn-danger-outline:hover{ background:var(--danger); color:#fff; }
@@ -787,17 +786,6 @@
   .dnc-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#966E00; }
   body.theme-dark .dnc-label{ color:#E0B84D; }
   .dnc-text{ font-size:14px; color:var(--ink); white-space:pre-wrap; line-height:1.45; }
-  .detail-report-callout{
-    display:flex; gap:10px; align-items:center; padding:12px 14px;
-    border-radius:12px; background:var(--danger-soft); border:1.5px solid var(--danger);
-    cursor:pointer; transition:filter .12s ease;
-  }
-  .detail-report-callout:hover{ filter:brightness(0.97); }
-  .drc-icon{ font-size:18px; flex-shrink:0; line-height:1.3; }
-  .drc-body{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
-  .drc-label{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:var(--danger); }
-  .drc-text{ font-size:13.5px; color:var(--ink); line-height:1.4; word-break:break-all; font-weight:600; }
-  .drc-arrow{ font-size:16px; color:var(--danger); flex-shrink:0; }
   .dlabel{ font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding-top:2px; flex-shrink:0; }
   .dvalue{ font-size:13px; text-align:right; }
   .status-pill-lg{ font-size:11.5px; font-weight:700; padding:4px 12px; border-radius:999px; }
@@ -862,8 +850,7 @@
   .report-card-status.resolved{ background:var(--success-soft); color:var(--success); }
   .report-card-sub{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:3px; }
   .report-card-note{ font-size:12.5px; color:var(--muted); margin-bottom:3px; overflow-wrap:break-word; }
-  .report-card-meta{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .report-card-linked{ font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; background:var(--secondary-soft); color:var(--secondary); text-transform:uppercase; letter-spacing:0.03em; }
+  .report-card-meta{ font-size:11px; color:var(--muted); }
 
   #reportDetailModal{ width:480px; }
   .rd-code-wrap{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
@@ -1298,11 +1285,6 @@
       <span class="dnc-icon">📝</span>
       <div class="dnc-body"><span class="dnc-label">Notes</span><span class="dnc-text" id="detailNotes"></span></div>
     </div>
-    <div class="detail-report-callout" id="detailReportRow" style="display:none;">
-      <span class="drc-icon">🚩</span>
-      <div class="drc-body"><span class="drc-label">From report</span><span class="drc-text" id="detailReportCode"></span></div>
-      <span class="drc-arrow">›</span>
-    </div>
     <div class="drow">
       <span class="dlabel">Status</span>
       <span class="status-pill-lg" id="detailStatusPill"></span>
@@ -1554,8 +1536,6 @@
     <label class="rd-input-label" id="rdResolutionLabel" for="rdResolutionNotes" style="display:none;">Resolution Notes (worker sees this)</label>
     <textarea id="rdResolutionNotes" rows="2" maxlength="500" placeholder="What fixed it?" style="display:none;"></textarea>
     <button class="btn-app" id="rdSaveBtn" style="margin-top:10px;">Save changes</button>
-    <button class="btn-app secondary-action" id="rdConvertBtn" style="margin-top:8px;">➕ Convert to task</button>
-    <button class="btn-app secondary-action" id="rdViewTaskBtn" style="margin-top:8px; display:none;">📋 View linked task</button>
     <button class="btn-danger-outline" id="rdDeleteBtn" style="margin-top:8px;">Delete report</button>
   </div>
 </div>
@@ -1748,6 +1728,92 @@
   }
 
   // ==================== SYNC: MAIN FILE ====================
+  // lastSyncedSnapshot = the main file as it last existed on the server (after our
+  // last successful pull or push). It's the common ancestor for a 3-way merge, so
+  // viewer edits (e.g. tasks marked done) survive a manager push, and unsynced
+  // manager edits survive a pull.
+  let lastSyncedSnapshot = null;
+  const EMPTY_SNAPSHOT = { tasks:[], history:[], batches:[], events:[], settings:{}, frequentTemplates:[] };
+
+  function stableStr(v){
+    if(v === undefined) return 'undefined';
+    if(v === null || typeof v !== 'object') return JSON.stringify(v);
+    if(Array.isArray(v)) return '[' + v.map(stableStr).join(',') + ']';
+    return '{' + Object.keys(v).filter(k=> v[k] !== undefined).sort().map(k=> JSON.stringify(k)+':'+stableStr(v[k])).join(',') + '}';
+  }
+  function cloneData(v){ return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+  function snapshotLocal(){ return cloneData({tasks, history, batches, events, settings, frequentTemplates}); }
+  function normalizeSnapshot(d){
+    d = d || {};
+    return {
+      tasks: Array.isArray(d.tasks) ? d.tasks : [],
+      history: Array.isArray(d.history) ? d.history : [],
+      batches: Array.isArray(d.batches) ? d.batches : [],
+      events: Array.isArray(d.events) ? d.events : [],
+      settings: (d.settings && typeof d.settings === 'object') ? d.settings : {},
+      frequentTemplates: Array.isArray(d.frequentTemplates) ? d.frequentTemplates : []
+    };
+  }
+  // Field-level: a field we changed since base wins; otherwise take the server's value.
+  function mergeRecord(b, l, s){
+    b = b || {}; s = s || {};
+    const out = {};
+    const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(s)]);
+    keys.forEach(k=>{
+      const val = stableStr(l[k]) !== stableStr(b[k]) ? l[k] : s[k];
+      if(val !== undefined) out[k] = cloneData(val);
+    });
+    return out;
+  }
+  function mergeCollection(baseArr, localArr, serverArr, keyFn){
+    const bMap = new Map(baseArr.map(x=> [keyFn(x), x]));
+    const lKeys = new Set(localArr.map(keyFn));
+    const sMap = new Map(serverArr.map(x=> [keyFn(x), x]));
+    const out = [];
+    localArr.forEach(l=>{
+      const k = keyFn(l), b = bMap.get(k), s = sMap.get(k);
+      if(s === undefined){
+        // Not on server: new here -> keep. Deleted elsewhere -> keep only if we edited it since.
+        if(b === undefined || stableStr(l) !== stableStr(b)) out.push(cloneData(l));
+        return;
+      }
+      out.push(mergeRecord(b, l, s));
+    });
+    serverArr.forEach(s=>{
+      const k = keyFn(s);
+      if(lKeys.has(k)) return;
+      // On server only: new elsewhere -> take it. Deleted here -> stays deleted.
+      if(!bMap.has(k)) out.push(cloneData(s));
+    });
+    return out;
+  }
+  function mergeSnapshots(base, local, server){
+    base = normalizeSnapshot(base); local = normalizeSnapshot(local); server = normalizeSnapshot(server);
+    const byId = x=> x.id;
+    const histKey = h=> h.id || `${h.ts}|${h.action}|${h.detail}`;
+    return {
+      tasks: mergeCollection(base.tasks, local.tasks, server.tasks, byId),
+      history: mergeCollection(base.history, local.history, server.history, histKey)
+        .sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, 200),
+      batches: mergeCollection(base.batches, local.batches, server.batches, b=> b.number),
+      events: mergeCollection(base.events, local.events, server.events, byId),
+      settings: mergeRecord(base.settings, local.settings, server.settings),
+      frequentTemplates: mergeCollection(base.frequentTemplates, local.frequentTemplates, server.frequentTemplates, byId)
+    };
+  }
+  function applyMergedState(d){
+    tasks = d.tasks; history = d.history; batches = d.batches; events = d.events;
+    settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
+    frequentTemplates = d.frequentTemplates;
+    migrateTaskOrder();
+    applySettings();
+    // Don't wipe what the user is typing into an inline "+ Add task" box;
+    // the data is already updated and the next render will show it.
+    const ae = document.activeElement;
+    if(ae && ae.closest && ae.closest('.inline-add-form')) return;
+    renderAll();
+  }
+
   async function persist(){ showSyncPending(); schedulePush(); }
   function showSyncPending(){
     const el = $('#saveIndicator');
@@ -1784,17 +1850,33 @@
     pushInFlight = true;
     let ok = false;
     try{ ok = await pushToGithub(); } finally { pushInFlight = false; }
-    if(!ok && retryCount < 4){ pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount+1), 4000 * (retryCount+1)); }
+    if(!ok){
+      // Keep the changes marked unsynced so refocus / manual refresh retries them
+      // instead of a pull overwriting them.
+      pushPending = true;
+      if(retryCount < 4){ pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount+1), 4000 * (retryCount+1)); }
+    }
   }
   function flushPendingPush(){
     if(!pushPending) return;
     clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
     clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
     pushPending = false;
-    pushToGithub();
+    pushToGithub().then(ok=>{ if(!ok) pushPending = true; });
+  }
+
+  function mainFileUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  async function fetchMainFile(){
+    const res = await fetch(mainFileUrl(), { cache:'no-store' });
+    if(res.status === 404) return { data:null, sha:null };
+    if(!res.ok) throw new Error('Sync server responded ' + res.status);
+    const result = await res.json();
+    if(result && result.notFound) return { data:null, sha:null };
+    return { data: normalizeSnapshot(result.data), sha: result.sha };
   }
 
   async function load(){
+    lastSyncedSnapshot = null;
     tasks=[]; history=[]; batches=[]; events=[]; reports=[];
     settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
     applySettings();
@@ -1853,6 +1935,7 @@
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
     ghSha = null;
+    lastSyncedSnapshot = null;
     reportsSha = null;
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
     await pullFromGithub();
@@ -1861,15 +1944,17 @@
   async function pullFromGithub(silent){
     if(!ghPath) return false;
     try{
-      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      if(res.status===404){ await pushToGithub(); await pullReportsFromGithub(silent); reconcileReportTaskLinks(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
-      if(!res.ok) throw new Error('Sync server responded ' + res.status);
-      const result = await res.json();
-      if(result.notFound){ await pushToGithub(); await pullReportsFromGithub(silent); reconcileReportTaskLinks(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
-      ghSha = result.sha;
-      applyImportedData(JSON.stringify(result.data));
+      const server = await fetchMainFile();
+      if(!server.data){ await pushToGithub(); await pullReportsFromGithub(silent); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
+      ghSha = server.sha;
+      const merged = lastSyncedSnapshot
+        ? mergeSnapshots(lastSyncedSnapshot, snapshotLocal(), server.data)
+        : server.data;
+      lastSyncedSnapshot = cloneData(server.data);
+      applyImportedData(JSON.stringify(merged));
+      // Local edits survived the merge -> push them back up.
+      if(stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
       await pullReportsFromGithub(silent);
-      reconcileReportTaskLinks();
       if(!silent) showToast('Synced.');
       return true;
     }catch(e){
@@ -1878,20 +1963,36 @@
       return false;
     }
   }
-  async function pushToGithub(){
+  async function pushToGithub(retryCount){
+    retryCount = retryCount || 0;
     if(!ghPath) return false;
     try{
-      const data = {tasks, history, batches, events, settings, frequentTemplates};
-      const body = { sha: ghSha, data };
-      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
+      // Always merge against the latest server copy so the viewer's writes aren't clobbered.
+      const server = await fetchMainFile();
+      const localAtStart = snapshotLocal();
+      const merged = server.data
+        ? mergeSnapshots(lastSyncedSnapshot || EMPTY_SNAPSHOT, localAtStart, server.data)
+        : localAtStart;
+      const res = await fetch(mainFileUrl(), {
         method:'PUT',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ sha: server.sha, data: merged })
       });
+      if(res.status === 409 || res.status === 422){
+        // Someone wrote between our GET and PUT — re-fetch, re-merge, retry.
+        if(retryCount < 4){ await new Promise(r=>setTimeout(r, 400*(retryCount+1))); return pushToGithub(retryCount+1); }
+        throw new Error('Sync conflict persisted after retries');
+      }
       if(!res.ok) throw new Error('Sync server responded '+res.status);
       const result = await res.json();
       if(result && result.sha) ghSha = result.sha;
-      flashSaved();
+      lastSyncedSnapshot = cloneData(merged);
+      // Keep any edits made while the request was in flight, layered on what we just saved.
+      const current = snapshotLocal();
+      const next = stableStr(current) === stableStr(localAtStart) ? merged : mergeSnapshots(localAtStart, current, merged);
+      if(stableStr(next) !== stableStr(current)) applyMergedState(next);
+      if(stableStr(next) !== stableStr(merged)) schedulePush();
+      else flashSaved();
       return true;
     }catch(e){
       console.error('Push failed', e);
@@ -2013,56 +2114,6 @@
     }
   }
   // ==================== END REPORTS FILE SYNC ====================
-
-  // ==================== REPORT <-> TASK LINK RECONCILE ====================
-  // Runs after every pull. Enforces the invariant: if a linked task is done,
-  // its report is Resolved (auto-managed). If a linked task is reopened and
-  // the report was auto-resolved, revert to In Progress. Never overwrites
-  // manual resolutions.
-  function reconcileReportTaskLinks(){
-    let reportsChanged = false;
-    let tasksChanged = false;
-
-    tasks.forEach(t => {
-      if(!t.linkedReportId) return;
-      const r = reports.find(x => x.id === t.linkedReportId);
-      if(!r){
-        t.linkedReportId = null;
-        tasksChanged = true;
-        return;
-      }
-      if(t.status === 'done' && r.status !== 'Resolved'){
-        r.status = 'Resolved';
-        r.autoResolved = true;
-        r.resolvedAt = r.resolvedAt || new Date().toISOString();
-        r.updatedAt = new Date().toISOString();
-        reportsChanged = true;
-        addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
-      } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
-        r.status = 'In Progress';
-        r.resolvedAt = null;
-        r.autoResolved = false;
-        r.updatedAt = new Date().toISOString();
-        reportsChanged = true;
-        addHistory('Report reopened', `${r.code} reopened via linked task`);
-      }
-    });
-
-    reports.forEach(r => {
-      if(!r.linkedTaskId) return;
-      const t = tasks.find(x => x.id === r.linkedTaskId);
-      if(!t){
-        r.linkedTaskId = null;
-        r.updatedAt = new Date().toISOString();
-        reportsChanged = true;
-      }
-    });
-
-    if(reportsChanged) scheduleReportsPush();
-    if(tasksChanged) persist();
-    if(reportsChanged || tasksChanged) renderAll();
-  }
-  // ==================== END RECONCILE ====================
 
   function applyImportedData(rawText){
     try{
@@ -2238,39 +2289,11 @@
     if(!t) return;
     t.status = t.status==='done' ? 'open' : 'done';
     addHistory(t.status==='done' ? 'Completed' : 'Reopened', taskLabel(t));
-    if(t.linkedReportId){
-      const r = reports.find(x => x.id === t.linkedReportId);
-      if(r){
-        if(t.status === 'done' && r.status !== 'Resolved'){
-          r.status = 'Resolved';
-          r.autoResolved = true;
-          r.resolvedAt = new Date().toISOString();
-          r.updatedAt = new Date().toISOString();
-          addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
-          scheduleReportsPush();
-        } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
-          r.status = 'In Progress';
-          r.resolvedAt = null;
-          r.autoResolved = false;
-          r.updatedAt = new Date().toISOString();
-          addHistory('Report reopened', `${r.code} reopened via linked task`);
-          scheduleReportsPush();
-        }
-      }
-    }
     persist(); renderAll();
   }
   function deleteTask(id){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
-    if(t.linkedReportId){
-      const r = reports.find(x => x.id === t.linkedReportId);
-      if(r){
-        r.linkedTaskId = null;
-        r.updatedAt = new Date().toISOString();
-        scheduleReportsPush();
-      }
-    }
     tasks = tasks.filter(x=>x.id!==id);
     addHistory('Removed', `${taskLabel(t)} deleted`);
     persist(); renderAll();
@@ -2464,7 +2487,6 @@
     card.className = 'report-card ' + statusClass;
 
     const statusPillClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
-    const linkedBadge = r.linkedTaskId ? '<span class="report-card-linked">📋 Task linked</span>' : '';
 
     card.innerHTML = `
       <div class="report-card-head">
@@ -2473,16 +2495,13 @@
       </div>
       <div class="report-card-sub"></div>
       <div class="report-card-note"></div>
-      <div class="report-card-meta">${linkedBadge}</div>
+      <div class="report-card-meta"></div>
     `;
     card.querySelector('.report-card-code').textContent = r.code || '';
     card.querySelector('.report-card-status').textContent = r.status || 'Open';
     card.querySelector('.report-card-sub').textContent = `Shed ${r.shed} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
     card.querySelector('.report-card-note').textContent = r.notes || '';
-    const meta = card.querySelector('.report-card-meta');
-    const metaText = document.createElement('span');
-    metaText.textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
-    meta.insertBefore(metaText, meta.firstChild);
+    card.querySelector('.report-card-meta').textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
     card.addEventListener('click', () => openReportDetailModal(r.id));
     return card;
   }
@@ -2517,16 +2536,6 @@
       $('#rdResolutionSection').style.display = 'none';
       $('#rdResolutionLabel').style.display = 'none';
       $('#rdResolutionNotes').style.display = 'none';
-    }
-
-    const convertBtn = $('#rdConvertBtn');
-    const viewTaskBtn = $('#rdViewTaskBtn');
-    if(r.linkedTaskId){
-      convertBtn.style.display = 'none';
-      viewTaskBtn.style.display = 'block';
-    } else {
-      convertBtn.style.display = 'block';
-      viewTaskBtn.style.display = 'none';
     }
 
     const delBtn = $('#rdDeleteBtn');
@@ -2569,13 +2578,6 @@
   function deleteReportConfirmed(id){
     const r = reports.find(x => x.id === id);
     if(!r) return;
-    if(r.linkedTaskId){
-      const t = tasks.find(x => x.id === r.linkedTaskId);
-      if(t){
-        t.linkedReportId = null;
-        persist();
-      }
-    }
     reports = reports.filter(x => x.id !== id);
     deletedReportIds.add(id);
     saveDeletedReportIds();
@@ -2598,33 +2600,6 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
-
-  function convertReportToTask(reportId){
-    const r = reports.find(x => x.id === reportId);
-    if(!r) return;
-    if(r.linkedTaskId){
-      showToast('This report already has a linked task.');
-      return;
-    }
-    const taskName = `Fix ${r.problemType} — Shed ${r.shed}`;
-    const today = dateKey(new Date());
-    const noteText = `Report ${r.code}\n${r.notes || ''}`.trim();
-    const t = addTask(taskName, guessIcon(taskName), today, {
-      priority: 'high',
-      linkedReportId: r.id,
-      notes: noteText
-    });
-    r.linkedTaskId = t.id;
-    r.status = 'In Progress';
-    r.autoResolved = false;
-    r.updatedAt = new Date().toISOString();
-    addHistory('Report converted', `${r.code} → task "${taskName}"`);
-    persist();
-    scheduleReportsPush();
-    renderAll();
-    openReportDetailModal(reportId);
-    showToast('Task created. Report set to In Progress.');
-  }
   // ---------- END REPORTS MODULE ----------
 
   function generateReport(opts){
@@ -4104,7 +4079,7 @@
         e.stopPropagation();
         if(isCollapsed) collapsedKanbanCols.delete(key); else collapsedKanbanCols.add(key);
         saveCollapsedKanbanCols();
-        renderAll();
+        renderKanban();
       });
       if(!isCollapsed){
         const body = document.createElement('div');
@@ -4242,7 +4217,11 @@
       sortables.push(Sortable.create(freqList, {
         group:{name:'tasks', pull:'clone', put:true}, sort:true, animation:150,
         ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+        filter:'.empty-note, .task-menu-btn, .freq-edit-row',
+        preventOnFilter:false,
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        forceFallback: true,
+        fallbackOnBody: true,
         onUpdate:(evt)=>{
           const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
           ids.forEach((id,i)=>{ const f = frequentTemplates.find(x=>x.id===id); if(f) f._order = i; });
@@ -4362,18 +4341,6 @@
     const notesRow = $('#detailNotesRow');
     if(t.notes){ notesRow.style.display = 'flex'; $('#detailNotes').textContent = t.notes; }
     else { notesRow.style.display = 'none'; }
-    const reportRow = $('#detailReportRow');
-    if(t.linkedReportId){
-      const r = reports.find(x => x.id === t.linkedReportId);
-      if(r){
-        reportRow.style.display = 'flex';
-        $('#detailReportCode').textContent = r.code;
-      } else {
-        reportRow.style.display = 'none';
-      }
-    } else {
-      reportRow.style.display = 'none';
-    }
     const seriesNote = $('#detailSeriesNote');
     if(t.seriesId){
       const siblings = tasks.filter(x=>x.seriesId===t.seriesId);
@@ -5021,15 +4988,6 @@
     toggleDone(detailTaskId);
     openTaskDetailModal(detailTaskId);
   });
-  $('#detailReportRow').addEventListener('click', ()=>{
-    if(!detailTaskId) return;
-    const t = tasks.find(x => x.id === detailTaskId);
-    if(!t || !t.linkedReportId) return;
-    const reportId = t.linkedReportId;
-    closeOverlays();
-    openReportsDrawer();
-    openReportDetailModal(reportId);
-  });
   $('#closeEditTaskModal').addEventListener('click', closeOverlays);
   $('#editTaskRepeatSelect').addEventListener('change', (e)=>{
     $('#editTaskUntilRow').style.display = e.target.value==='none' ? 'none' : 'block';
@@ -5187,18 +5145,6 @@
     });
   });
   $('#rdSaveBtn').addEventListener('click', saveReportChanges);
-  $('#rdConvertBtn').addEventListener('click', ()=>{
-    if(!currentReportId) return;
-    convertReportToTask(currentReportId);
-  });
-  $('#rdViewTaskBtn').addEventListener('click', ()=>{
-    const r = reports.find(x => x.id === currentReportId);
-    if(!r || !r.linkedTaskId) return;
-    const taskId = r.linkedTaskId;
-    closeReportDetailOnly();
-    closeOverlays();
-    openTaskDetailModal(taskId);
-  });
   $('#rdCopyBtn').addEventListener('click', async ()=>{
     const code = $('#rdCode').textContent || '';
     try{
