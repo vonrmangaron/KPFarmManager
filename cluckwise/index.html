@@ -391,6 +391,9 @@
   .bulk-preview{ font-size:12.5px; color:var(--muted); margin-top:10px; padding:9px 11px; border-radius:9px; background:var(--surface-soft); border:1px dashed var(--line); line-height:1.5; }
   .bulk-preview.has-matches{ color:var(--ink); font-weight:600; border-style:solid; }
   .task-card:hover{box-shadow:var(--shadow-md);}
+  .task-card, .kcard{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .task-card input, .task-card textarea{ -webkit-user-select:text; user-select:text; }
+  body.is-dragging, body.is-dragging *{ -webkit-user-select:none !important; user-select:none !important; cursor:grabbing !important; }
   .task-icon{font-size:16px;line-height:1;flex-shrink:0;}
   .task-card.done .task-icon{filter:grayscale(1); opacity:0.6;}
   .task-card.sortable-ghost{opacity:0.35;}
@@ -4352,6 +4355,14 @@
     try{ sessionStorage.setItem('prodplan-session-viewmode', viewMode); }catch(e){}
   }
 
+  function beginDragNoSelect(){
+    document.body.classList.add('is-dragging');
+    try{ const sel = window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
+  }
+  function endDragNoSelect(){
+    document.body.classList.remove('is-dragging');
+    try{ const sel = window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
+  }
   function initSortables(){
     if(typeof Sortable === 'undefined'){
       console.warn('SortableJS did not load — drag-and-drop is unavailable, but the rest of the app continues normally.');
@@ -4369,6 +4380,8 @@
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
         forceFallback: true,
         fallbackOnBody: true,
+        onChoose: beginDragNoSelect,
+        onUnchoose: endDragNoSelect,
         onUpdate:(evt)=>{
           const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
           ids.forEach((id,i)=>{ const f = frequentTemplates.find(x=>x.id===id); if(f) f._order = i; });
@@ -4399,6 +4412,8 @@
         delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
         forceFallback: true,
         fallbackOnBody: true,
+        onChoose: beginDragNoSelect,
+        onUnchoose: endDragNoSelect,
         disabled: isSelectModeList,
         onUpdate:(evt)=>{
           const listEl = evt.to;
@@ -4426,6 +4441,7 @@
           if(evt.to) evt.to.classList.remove('drop-target');
         },
         onEnd:()=>{
+          endDragNoSelect();
           document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
         }
       });
