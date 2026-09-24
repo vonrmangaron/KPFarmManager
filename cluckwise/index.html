@@ -1177,6 +1177,93 @@
   .wx-modal{ font-size:13px; font-weight:600; padding:8px 12px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); margin-bottom:10px; white-space:normal; flex-wrap:wrap; }
   .wx-modal .wx-ic{ font-size:18px; }
   .wsc-wx{ font-size:12px; line-height:1; margin-top:2px; }
+  .wx-setup{
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap; cursor:pointer;
+    border:1px dashed var(--primary-dark); background:var(--primary-soft); color:var(--primary-dark);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px;
+  }
+  .wx-setup:hover{ background:var(--primary); color:#241A08; }
+  .wx-setup.wx-setup-cell{ margin-right:auto; margin-left:6px; padding:2px 6px; font-size:10.5px; }
+  .wx-setup.wx-setup-line{ margin-top:6px; }
+  .wx-setup.wx-setup-big{ margin-left:auto; font-size:12.5px; padding:6px 12px; }
+  .wx-setup.wx-setup-list{ margin-right:10px; }
+  .wx-setup.wx-setup-modal{ margin-bottom:10px; }
+  .col-wx-mini{ writing-mode:horizontal-tb; font-size:12.5px; font-weight:800; display:flex; flex-direction:column; align-items:center; gap:3px; line-height:1.1; padding:6px 4px; border-radius:10px; border:1px solid transparent; }
+  .col-wx-mini .wx-ic{ font-size:22px; }
+  .col-wx-mini.wx-has-alert{ box-shadow:0 0 0 2px var(--danger); }
+
+  /* ---- Weather card (Board columns, Day view, day popup) ---- */
+  .wx-card{
+    margin-top:10px; padding:10px 12px; border-radius:12px; border:1.5px solid transparent;
+    display:flex; flex-direction:column; gap:6px; color:#2B2116; font-family:'Inter',sans-serif;
+  }
+  .wxc-main{ display:flex; align-items:center; gap:10px; }
+  .wxc-ic{ font-size:34px; line-height:1; flex-shrink:0; }
+  .wxc-temps{ display:flex; align-items:baseline; gap:2px; font-family:'Sora',sans-serif; }
+  .wxc-hi{ font-size:26px; font-weight:800; line-height:1; }
+  .wxc-lo{ font-size:15px; font-weight:700; opacity:0.6; }
+  .wxc-now{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; padding:4px 8px; border-radius:9px; background:rgba(255,255,255,0.55); }
+  .wxc-now-label{ font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; opacity:0.7; }
+  .wxc-now-temp{ font-family:'Sora',sans-serif; font-size:14px; font-weight:800; white-space:nowrap; }
+  .wxc-info{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; font-size:12px; font-weight:700; }
+  .wxc-label{ font-weight:800; }
+  .wxc-meta{ opacity:0.85; white-space:nowrap; }
+  .wxc-meta.strong{ opacity:1; color:#1E4E86; }
+  .wxc-alerts{ display:flex; flex-wrap:wrap; gap:5px; }
+  .wxa{ font-size:11px; font-weight:800; padding:3px 8px; border-radius:999px; white-space:nowrap; color:#fff; }
+  .wxa-heat{ background:#D9480F; }
+  .wxa-frost{ background:#1C7ED6; }
+  .wxa-rain{ background:#1864AB; }
+  .wxa-wind{ background:#5F6B7A; }
+  .wxa-storm{ background:#6741D9; }
+  .wx-card-col .wxc-ic{ font-size:32px; }
+  .wx-card-wide{ margin-top:0; margin-left:auto; min-width:260px; max-width:420px; }
+  .wx-card-wide .wxc-ic{ font-size:40px; }
+  .wx-card-wide .wxc-hi{ font-size:30px; }
+  .wx-card-modal{ margin:0 0 12px; max-width:none; min-width:0; }
+
+  /* tones (light) */
+  .wx-tone-sun.wx-card, .col-wx-mini.wx-tone-sun{ background:linear-gradient(135deg,#FFF4C7,#FFE08A); border-color:#F2C14E; }
+  .wx-tone-partly.wx-card, .col-wx-mini.wx-tone-partly{ background:linear-gradient(135deg,#FFF6DA,#E6ECF4); border-color:#D8CFA6; }
+  .wx-tone-cloud.wx-card, .col-wx-mini.wx-tone-cloud{ background:linear-gradient(135deg,#F0F2F5,#DCE2EA); border-color:#C3CCD7; }
+  .wx-tone-rain.wx-card, .col-wx-mini.wx-tone-rain{ background:linear-gradient(135deg,#E4F0FF,#C6DDF8); border-color:#8DB5E6; }
+  .wx-tone-snow.wx-card, .col-wx-mini.wx-tone-snow{ background:linear-gradient(135deg,#F4F9FF,#DFECFA); border-color:#B9D2EE; }
+  .wx-tone-storm.wx-card, .col-wx-mini.wx-tone-storm{ background:linear-gradient(135deg,#EFE6FB,#D7C6F2); border-color:#A487D9; }
+  .wx-card.wx-hot{ border-color:#D9480F; box-shadow:0 0 0 1px #D9480F inset; }
+  /* tones (dark) */
+  body.theme-dark .wx-card, body.theme-dark .col-wx-mini{ color:var(--ink); }
+  body.theme-dark .wx-tone-sun.wx-card, body.theme-dark .col-wx-mini.wx-tone-sun{ background:linear-gradient(135deg,rgba(255,200,18,0.22),rgba(255,160,40,0.14)); border-color:rgba(255,200,18,0.55); }
+  body.theme-dark .wx-tone-partly.wx-card, body.theme-dark .col-wx-mini.wx-tone-partly{ background:linear-gradient(135deg,rgba(255,220,120,0.14),rgba(150,170,200,0.16)); border-color:rgba(200,190,150,0.45); }
+  body.theme-dark .wx-tone-cloud.wx-card, body.theme-dark .col-wx-mini.wx-tone-cloud{ background:rgba(160,175,195,0.16); border-color:rgba(160,175,195,0.45); }
+  body.theme-dark .wx-tone-rain.wx-card, body.theme-dark .col-wx-mini.wx-tone-rain{ background:rgba(90,150,230,0.2); border-color:rgba(110,165,235,0.6); }
+  body.theme-dark .wx-tone-snow.wx-card, body.theme-dark .col-wx-mini.wx-tone-snow{ background:rgba(200,225,255,0.14); border-color:rgba(200,225,255,0.45); }
+  body.theme-dark .wx-tone-storm.wx-card, body.theme-dark .col-wx-mini.wx-tone-storm{ background:rgba(150,110,230,0.22); border-color:rgba(170,135,235,0.6); }
+  body.theme-dark .wxc-now{ background:rgba(0,0,0,0.25); }
+  body.theme-dark .wxc-meta.strong{ color:#8FC1FF; }
+
+  /* bigger, more noticeable chips (Month cells + List headers) */
+  .wx-cell{ font-size:13px !important; font-weight:800 !important; padding:2px 7px; border-radius:8px; min-width:0; overflow:hidden; }
+  .wx-cell .wx-t{ overflow:hidden; text-overflow:ellipsis; }
+  .wx-cell .wx-ic{ font-size:18px !important; }
+  .wx-cell .wx-rain{ font-size:11.5px; font-weight:800; color:#1864AB; }
+  .wx-cell{ gap:3px !important; }
+  .wx-cell.wx-has-alert{ box-shadow:0 0 0 1.5px #D9480F; }
+  .wx-cell.wx-tone-sun{ background:rgba(255,200,18,0.22); }
+  .wx-cell.wx-tone-rain, .wx-cell.wx-tone-storm{ background:rgba(90,150,230,0.18); }
+  .wx-cell.wx-tone-cloud, .wx-cell.wx-tone-partly{ background:rgba(160,175,195,0.16); }
+  .wx-list{ font-size:13.5px !important; gap:6px !important; }
+  .wx-list .wx-ic{ font-size:19px !important; }
+  .wx-list .wx-rain{ color:#1864AB; font-weight:800; }
+  body.theme-dark .wx-cell .wx-rain, body.theme-dark .wx-list .wx-rain{ color:#8FC1FF; }
+  .wx-list .wxa{ font-size:10.5px; padding:2px 7px; }
+  @media (max-width: 1023px){ .wx-cell .wx-rain{ display:none; } .wx-cell .wx-lo{ display:none; } }
+  @media (max-width: 760px){ .wx-card-wide{ margin-left:0; min-width:0; max-width:none; width:100%; } .day-view-header{ flex-wrap:wrap; } }
+  .year-mini-day{ position:relative; }
+  .ymd-wx{ position:absolute; top:-3px; right:-2px; font-size:8px; line-height:1; pointer-events:none; }
+  .wx-diag{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+  .wx-diag.error{ color:var(--danger); font-weight:600; }
+  .app-version{ font-size:11px; color:var(--muted); margin-top:14px; text-align:center; }
+  @media (max-width: 480px){ .wx-setup.wx-setup-cell span:last-child{ display:none; } }
   .week-strip-cell.selected .wsc-wx{ filter:drop-shadow(0 0 1px rgba(0,0,0,0.3)); }
   .settings-body input[type="text"]{ border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:9px 10px; font-size:15px; color:var(--ink); width:100%; min-width:0; }
   @media (max-width: 1023px){ .wx-cell .wx-lo{ display:none; } }
@@ -1417,6 +1504,8 @@
     </select>
     <label class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="setShowWeather"> Show weather on the calendar</label>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Forecast from Open-Meteo (free, no account): last 7 days + next 16 days. The location is shared with the viewer app.</p>
+    <div class="wx-diag" id="weatherDiag"></div>
+    <button class="btn-ai-wide" id="weatherRefreshBtn" type="button" style="margin-top:6px;">🔄 Refresh weather now</button>
 
     <label style="margin-top:16px;">Cloud sync</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
@@ -1437,6 +1526,7 @@
     <input type="file" id="importDataInput" accept="application/json" style="display:none;">
 
     <button class="btn-app" id="resetSettingsBtn" style="margin-top:16px;">Reset to defaults</button>
+    <div class="app-version" id="appVersion"></div>
   </div>
 </div>
 
@@ -1946,6 +2036,7 @@
     if(wu) wu.value = settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
     if(sw) sw.checked = settings.showWeather !== false;
     if(wls) wls.textContent = settings.weatherLocation ? `📍 ${settings.weatherLocation.name}` : 'No farm location set yet — search for the nearest town below.';
+    if(typeof renderWeatherDiag === 'function') renderWeatherDiag();
     setTimeout(()=> refreshWeather(false), 0);
   }
 
@@ -3582,14 +3673,72 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
+  const APP_VERSION = '2026.09.25-wx3';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
+  let weatherLastError = null;
+  function wxNeedsSetup(){ return settings.showWeather !== false && !(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
+  function openWeatherSettings(){
+    openDrawer('#settingsDrawer');
+    setTimeout(()=>{
+      const inp = $('#weatherSearchInput');
+      if(inp){ inp.scrollIntoView({ block:'center', behavior:'smooth' }); inp.focus(); }
+    }, 250);
+  }
+  // A small "Set weather location" chip, shown in every view until a location is chosen.
+  function buildWxSetupChip(size){
+    if(!wxNeedsSetup()) return null;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'wx-setup wx-setup-' + size;
+    b.title = 'Choose the farm location to show the weather';
+    const ic = document.createElement('span'); ic.textContent = '🌤️';
+    const tx = document.createElement('span'); tx.textContent = size === 'cell' ? 'Weather' : 'Set weather location';
+    b.append(ic, tx);
+    b.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); openWeatherSettings(); });
+    b.addEventListener('mousedown', e=> e.stopPropagation());
+    b.addEventListener('touchstart', e=> e.stopPropagation(), { passive:true });
+    return b;
+  }
+  function renderWeatherDiag(){
+    const el = $('#weatherDiag');
+    if(!el) return;
+    el.classList.remove('error');
+    if(settings.showWeather === false){ el.textContent = 'Weather is switched off.'; return; }
+    if(wxNeedsSetup()){ el.textContent = 'Status: waiting for a farm location.'; return; }
+    if(weatherLastError){ el.classList.add('error'); el.textContent = 'Status: could not load weather — ' + weatherLastError; return; }
+    if(weatherFetchInFlight && !weatherData){ el.textContent = 'Status: loading weather…'; return; }
+    if(weatherData && weatherData.key === wxKey()){
+      const n = Object.keys(weatherData.days || {}).length;
+      const mins = Math.max(0, Math.round((Date.now() - weatherData.fetchedAt) / 60000));
+      el.textContent = `Status: OK — ${n} days of weather, updated ${mins < 1 ? 'just now' : mins + ' min ago'}.`;
+      return;
+    }
+    el.textContent = 'Status: not loaded yet.';
+  }
+  // If this device has ALREADY allowed location access, use it without asking.
+  let wxAutoLocateTried = false;
+  function tryAutoWeatherLocation(){
+    if(wxAutoLocateTried || !wxNeedsSetup() || !navigator.geolocation || !navigator.permissions || !navigator.permissions.query) return;
+    wxAutoLocateTried = true;
+    navigator.permissions.query({ name:'geolocation' }).then(p=>{
+      if(p.state !== 'granted') return;
+      navigator.geolocation.getCurrentPosition(pos=>{
+        if(!wxNeedsSetup()) return;
+        const lat = +pos.coords.latitude.toFixed(4), lon = +pos.coords.longitude.toFixed(4);
+        settings.weatherLocation = { name:`Device location (${lat.toFixed(2)}, ${lon.toFixed(2)})`, lat, lon };
+        weatherData = null;
+        applySettings(); persist(); renderAll();
+        refreshWeather(true);
+      }, ()=>{}, { enableHighAccuracy:false, timeout:10000, maximumAge:3600000 });
+    }).catch(()=>{});
+  }
   function weatherEnabled(){ return settings.showWeather !== false && !!(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
   function wxKey(){
     const l = settings.weatherLocation;
     if(!l) return null;
-    return `${(+l.lat).toFixed(3)},${(+l.lon).toFixed(3)},${settings.weatherUnit === 'fahrenheit' ? 'F' : 'C'}`;
+    return `v2:${(+l.lat).toFixed(3)},${(+l.lon).toFixed(3)},${settings.weatherUnit === 'fahrenheit' ? 'F' : 'C'}`;
   }
   function loadWeatherCache(){
     try{
@@ -3599,23 +3748,32 @@
   }
   async function refreshWeather(force){
     const key = wxKey();
-    if(!weatherEnabled() || !key) return;
+    if(!weatherEnabled() || !key){ tryAutoWeatherLocation(); renderWeatherDiag(); return; }
     if(!weatherData || weatherData.key !== key){ weatherData = null; loadWeatherCache(); if(weatherData) renderAll(); }
-    if(!force && weatherData && weatherData.key === key && Date.now() - weatherData.fetchedAt < WX_TTL) return;
-    if(weatherFetchInFlight || !navigator.onLine) return;
+    if(!force && weatherData && weatherData.key === key && Date.now() - weatherData.fetchedAt < WX_TTL){ renderWeatherDiag(); return; }
+    if(weatherFetchInFlight) return;
+    if(!navigator.onLine){ weatherLastError = 'this device is offline'; renderWeatherDiag(); return; }
     weatherFetchInFlight = true;
+    renderWeatherDiag();
     try{
       const l = settings.weatherLocation;
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
-        + `&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min`
-        + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`;
+        + `&current=temperature_2m,weather_code,is_day`
+        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max`
+        + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`
+        + `&wind_speed_unit=${settings.weatherUnit === 'fahrenheit' ? 'mph' : 'kmh'}`
+        + `&cb=${Math.floor(Date.now() / WX_TTL)}`;   // new URL every 30 min so an app cache can't serve stale weather
       const res = await fetch(url, { cache:'no-store' });
       if(!res.ok) throw new Error('Weather ' + res.status);
       const j = await res.json();
       const days = {};
       const d = j.daily || {};
       (d.time || []).forEach((dk, i)=>{
-        days[dk] = { max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i] };
+        days[dk] = {
+          max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i],
+          rain: d.precipitation_probability_max ? d.precipitation_probability_max[i] : null,
+          wind: d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null
+        };
       });
       const cur = j.current || null;
       weatherData = {
@@ -3625,9 +3783,13 @@
         days
       };
       try{ localStorage.setItem('cw-weather-cache', JSON.stringify(weatherData)); }catch(e){}
+      weatherLastError = null;
       renderAll();
-    }catch(e){ console.warn('Weather unavailable', e); }
-    finally{ weatherFetchInFlight = false; }
+    }catch(e){
+      console.warn('Weather unavailable', e);
+      weatherLastError = (e && e.message) ? e.message : 'network error';
+    }
+    finally{ weatherFetchInFlight = false; renderWeatherDiag(); }
   }
   function wxForDate(key){
     if(!weatherEnabled() || !weatherData || weatherData.key !== wxKey()) return null;
@@ -3638,13 +3800,79 @@
   }
   function wxT(v){ return (v == null || isNaN(v)) ? '–' : Math.round(v) + '°'; }
   // size: 'cell' (month), 'line' (board), 'big' (day view), 'list' (agenda), 'modal' (day popup)
+  // ---- Planning helpers: tone, warnings, rich weather card ----
+  function wxTone(code){
+    const k = wxKindForCode(code);
+    if(k === 'clear' || k === 'mostlyClear') return 'sun';
+    if(k === 'partlyCloudy') return 'partly';
+    if(k === 'overcast' || k === 'fog') return 'cloud';
+    if(k === 'snow') return 'snow';
+    if(k === 'thunderstorm') return 'storm';
+    return 'rain';
+  }
+  function wxWindUnit(){ return settings.weatherUnit === 'fahrenheit' ? 'mph' : 'km/h'; }
+  // Warnings that matter for farm work (heat stress, frost, wet days, wind, storms).
+  function wxAlerts(w){
+    const F = settings.weatherUnit === 'fahrenheit';
+    const a = [];
+    if(w.max != null && w.max >= (F ? 95 : 35)) a.push(['heat', '🔥 Heat']);
+    if(w.min != null && w.min <= (F ? 36 : 2)) a.push(['frost', '🥶 Frost']);
+    if(wxKindForCode(w.code) === 'thunderstorm') a.push(['storm', '⛈️ Storm']);
+    else if(w.rain != null && w.rain >= 60) a.push(['rain', '☔ Rain likely']);
+    if(w.wind != null && w.wind >= (F ? 25 : 40)) a.push(['wind', '💨 Windy']);
+    return a;
+  }
+  // variant: 'col' (Board column) | 'wide' (Day view / day popup)
+  function buildWxCard(key, variant){
+    const w = wxForDate(key);
+    if(!w) return null;
+    const [dayIcon, dayLabel] = wxIconLabel(w.code);
+    const alerts = wxAlerts(w);
+    const card = document.createElement('div');
+    card.className = `wx-card wx-card-${variant} wx-tone-${wxTone(w.code)}` + (alerts.some(x=> x[0] === 'heat') ? ' wx-hot' : '') + (w.current ? ' wx-card-today' : '');
+    const mk = (tag, cls, text)=>{ const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; };
+
+    const main = mk('div', 'wxc-main');
+    main.appendChild(mk('span', 'wxc-ic', dayIcon));
+    const temps = mk('span', 'wxc-temps');
+    temps.appendChild(mk('span', 'wxc-hi', wxT(w.max)));
+    temps.appendChild(mk('span', 'wxc-lo', '/' + wxT(w.min)));
+    main.appendChild(temps);
+    if(w.current){
+      const [nowIc] = wxIconLabel(w.current.code, w.current.isDay);
+      const now = mk('span', 'wxc-now');
+      now.appendChild(mk('span', 'wxc-now-label', 'Now'));
+      now.appendChild(mk('span', 'wxc-now-temp', nowIc + ' ' + wxT(w.current.temp)));
+      main.appendChild(now);
+    }
+    card.appendChild(main);
+
+    const info = mk('div', 'wxc-info');
+    info.appendChild(mk('span', 'wxc-label', dayLabel));
+    if(w.rain != null) info.appendChild(mk('span', 'wxc-meta' + (w.rain >= 60 ? ' strong' : ''), `💧 ${Math.round(w.rain)}%`));
+    if(w.wind != null) info.appendChild(mk('span', 'wxc-meta', `💨 ${Math.round(w.wind)} ${wxWindUnit()}`));
+    card.appendChild(info);
+
+    if(alerts.length){
+      const al = mk('div', 'wxc-alerts');
+      alerts.forEach(([k, text])=> al.appendChild(mk('span', 'wxa wxa-' + k, text)));
+      card.appendChild(al);
+    }
+    card.title = `${dayLabel} · High ${wxT(w.max)} · Low ${wxT(w.min)}`
+      + (w.rain != null ? ` · Rain ${Math.round(w.rain)}%` : '')
+      + (w.wind != null ? ` · Wind ${Math.round(w.wind)} ${wxWindUnit()}` : '')
+      + (w.current ? ` · Now ${wxT(w.current.temp)}` : '');
+    return card;
+  }
+
   function buildWxChip(key, size){
     const w = wxForDate(key);
     if(!w) return null;
     const [dayIcon, dayLabel] = wxIconLabel(w.code);
     const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : [dayIcon, dayLabel];
     const el = document.createElement('span');
-    el.className = 'wx wx-' + size + (w.current ? ' wx-today' : '');
+    const chipAlerts = wxAlerts(w);
+    el.className = 'wx wx-' + size + (w.current ? ' wx-today' : '') + (chipAlerts.length ? ' wx-has-alert' : '') + ' wx-tone-' + wxTone(w.code);
     el.title = `${w.current ? 'Now ' + wxT(w.current.temp) + ' · ' + label + ' · ' : ''}High ${wxT(w.max)} · Low ${wxT(w.min)} · ${dayLabel}`;
     const add = (cls, text)=>{ const s2 = document.createElement('span'); s2.className = cls; s2.textContent = text; el.appendChild(s2); return s2; };
     add('wx-ic', icon);
@@ -3656,9 +3884,16 @@
         t2.append(now, hi);
       } else {
         t2.appendChild(document.createTextNode(wxT(w.max)));
-        const lo = document.createElement('span'); lo.className = 'wx-lo'; lo.textContent = '/' + wxT(w.min);
-        t2.appendChild(lo);
+        // Rain likely? show the chance instead of the low temp (keeps the chip narrow).
+        if(w.rain != null && w.rain >= 60){
+          const rn = document.createElement('span'); rn.className = 'wx-rain'; rn.textContent = ' ' + Math.round(w.rain) + '%'; rn.title = 'Chance of rain';
+          t2.appendChild(rn);
+        } else {
+          const lo = document.createElement('span'); lo.className = 'wx-lo'; lo.textContent = '/' + wxT(w.min);
+          t2.appendChild(lo);
+        }
       }
+      if(chipAlerts.length) el.title = chipAlerts.map(x=> x[1]).join(' · ') + ' — ' + el.title;
     } else if(size === 'big'){
       if(w.current) add('wx-now', wxT(w.current.temp));
       add('wx-sub', `${w.current ? label + ' · ' : ''}H ${wxT(w.max)} · L ${wxT(w.min)}${w.current ? '' : ' · ' + dayLabel}`);
@@ -3669,6 +3904,8 @@
     } else {
       add('wx-hl', `${wxT(w.max)} / ${wxT(w.min)}`);
       add('wx-sub', w.current ? `· now ${wxT(w.current.temp)}` : `· ${dayLabel}`);
+      if(w.rain != null && w.rain >= 30) add('wx-rain', `💧${Math.round(w.rain)}%`);
+      chipAlerts.forEach(([k, text])=> add('wxa wxa-' + k, text));
     }
     return el;
   }
@@ -3956,7 +4193,7 @@
       num.className = 'day-num';
       num.textContent = d.getDate();
       header.appendChild(num);
-      const wxCell = buildWxChip(key, 'cell');
+      const wxCell = buildWxChip(key, 'cell') || (key === todayKey ? buildWxSetupChip('cell') : null);
       if(wxCell) header.appendChild(wxCell);
 
       if(exactEvent){
@@ -4220,7 +4457,7 @@
       renderAll();
     });
     header.appendChild(nextDayBtn);
-    const wxBig = buildWxChip(selectedKey, 'big');
+    const wxBig = buildWxCard(selectedKey, 'wide') || buildWxSetupChip('big');
     if(wxBig) header.appendChild(wxBig);
 
     right.appendChild(header);
@@ -4265,6 +4502,16 @@
         cell.className = 'year-mini-day';
         if(d.getMonth()!==monthDate.getMonth()) cell.classList.add('muted');
         cell.textContent = d.getDate();
+        if(d.getMonth()===monthDate.getMonth()){
+          const yw = wxForDate(key);
+          if(yw){
+            const yi = document.createElement('span');
+            yi.className = 'ymd-wx';
+            yi.textContent = (yw.current ? wxIconLabel(yw.current.code, yw.current.isDay) : wxIconLabel(yw.code))[0];
+            cell.appendChild(yi);
+            cell.title = `High ${wxT(yw.max)} · Low ${wxT(yw.min)}`;
+          }
+        }
         const h = dayHighlightColor(key);
         if(h) cell.style.background = hexToRgba(h.color, Math.max(h.alpha, 0.28));
         cell.addEventListener('click', ()=>{
@@ -4370,7 +4617,7 @@
       groupEl.querySelector('.list-date-main').textContent = (isPastGroup ? '⚠ Overdue — ' : '') + formatFullWithWeekday(key);
       if(isPastGroup) groupEl.querySelector('.list-date-main').style.color = 'var(--danger)';
       groupEl.querySelector('.list-date-sub').textContent = `${doneCount}/${groups[key].length} done`;
-      const wxList = buildWxChip(key, 'list');
+      const wxList = buildWxChip(key, 'list') || (!box.querySelector('.wx-setup') ? buildWxSetupChip('list') : null);
       if(wxList) groupEl.querySelector('.list-date-sub').prepend(wxList);
       const listEl = document.createElement('div');
       listEl.className = 'day-tasks list-tasks';
@@ -4648,8 +4895,20 @@
           ${batchesForDate(key).length ? `<div class="col-batch-age">${batchesForDate(key).map(b=>`<span style="background:${colorForBatchNumber(b.number)}">#${escapeHtml(b.number)} · Day ${batchAgeOn(b, key)}</span>`).join('')}</div>` : ''}`;
       }
       if(!isCollapsed){
-        const wxLine = buildWxChip(key, 'line');
+        const wxLine = buildWxCard(key, 'col') || buildWxSetupChip('line');
         if(wxLine) head.appendChild(wxLine);
+      } else {
+        const w = wxForDate(key);
+        if(w){
+          const [ic] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
+          const mini = document.createElement('span');
+          mini.className = 'col-wx-mini wx-tone-' + wxTone(w.code) + (wxAlerts(w).length ? ' wx-has-alert' : '');
+          mini.title = `High ${wxT(w.max)} · Low ${wxT(w.min)}${w.current ? ' · now ' + wxT(w.current.temp) : ''}`;
+          const i1 = document.createElement('span'); i1.className = 'wx-ic'; i1.textContent = ic;
+          const t1 = document.createElement('span'); t1.textContent = w.current ? wxT(w.current.temp) : wxT(w.max);
+          mini.append(i1, t1);
+          head.insertBefore(mini, head.querySelector('.dtitle-vertical'));
+        }
       }
       col.appendChild(head);
       head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
@@ -5412,8 +5671,9 @@
     $('#dayModalTitle').textContent = toDateObj(key).toLocaleDateString(undefined,{day:'numeric', month:'long', year:'numeric', weekday:'long'});
     const wxBox = $('#dayModalWeather');
     wxBox.innerHTML = '';
-    const wxm = buildWxChip(key, 'modal');
-    if(wxm){ wxm.style.display = 'flex'; wxBox.appendChild(wxm); }
+    const wxm = buildWxCard(key, 'wide');
+    if(wxm){ wxm.classList.add('wx-card-modal'); wxBox.appendChild(wxm); }
+    else { const setup = buildWxSetupChip('modal'); if(setup) wxBox.appendChild(setup); }
     const inlineWrap = $('#dayModalInlineAddWrap');
     inlineWrap.innerHTML = '';
     inlineWrap.appendChild(buildInlineAddRow('daymodal-'+key, key));
@@ -5955,7 +6215,7 @@
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#reportsBtn').addEventListener('click', openReportsDrawer);
   $('#closeReports').addEventListener('click', closeOverlays);
-  $('#settingsBtn').addEventListener('click', ()=> openDrawer('#settingsDrawer'));
+  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); openDrawer('#settingsDrawer'); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){
@@ -6260,6 +6520,8 @@
     }
   }
   $('#weatherSearchBtn').addEventListener('click', searchWeatherLocation);
+  $('#weatherRefreshBtn').addEventListener('click', ()=>{ weatherLastError = null; refreshWeather(true); });
+  $('#appVersion').textContent = 'CluckWise.vm manager · version ' + APP_VERSION;
   $('#weatherSearchInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); searchWeatherLocation(); } });
   $('#weatherUseMyLocationBtn').addEventListener('click', ()=>{
     if(!navigator.geolocation){ showToast('This device cannot share its location.', true); return; }
@@ -6581,7 +6843,9 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => { try{ reg.update(); }catch(e){} })
+        .catch(() => {});
     });
   }
 </script>
