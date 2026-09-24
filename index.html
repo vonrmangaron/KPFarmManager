@@ -813,6 +813,7 @@ body.theme-dark .inline-del-btn.actual:hover{color:#1A2438;}
 .forecast-table td.fb-balance-empty{color:var(--danger); font-weight:800;}
 .forecast-table td.fb-balance-past{color:var(--muted); font-weight:700;}
 
+/* ============ COMPARE MODAL ============ */
 .compare-modal{position:fixed; inset:0; background:rgba(0,0,0,0.55);
   z-index:9996; display:none; opacity:0; transition:opacity .22s ease;}
 body.theme-dark .compare-modal{background:rgba(0,0,0,0.72);}
@@ -835,6 +836,53 @@ body.theme-dark .compare-modal{background:rgba(0,0,0,0.72);}
 .compare-modal-body{flex:1; overflow-y:auto; padding:16px 20px 24px;
   display:flex; flex-direction:column; gap:12px;}
 
+/* Group picker (clickable cards) */
+.compare-picker{display:flex; flex-direction:column; gap:8px; padding:12px 14px;
+  background:var(--surface-soft); border:1px solid var(--line); border-radius:12px;}
+.compare-picker-label{font-family:'Sora', sans-serif; font-weight:800; font-size:10.5px;
+  letter-spacing:0.06em; text-transform:uppercase; color:var(--muted);}
+.compare-picker-cards{display:flex; flex-wrap:wrap; gap:8px;}
+.cmp-group-card{border:1.5px solid var(--line); background:var(--surface); border-radius:10px;
+  padding:8px 14px 10px; cursor:pointer; display:flex; flex-direction:column; gap:3px;
+  min-width:150px; text-align:left; font-family:'Inter', sans-serif;
+  transition:background .15s ease, border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+  position:relative; flex:0 0 auto;}
+.cmp-group-card:hover{background:var(--primary-soft); border-color:var(--primary); transform:translateY(-1px);}
+.cmp-group-card.selected{
+  background:linear-gradient(135deg, rgba(224,163,57,0.18), rgba(168,114,31,0.10));
+  border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft);
+}
+.cmp-group-top{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.cmp-group-name{font-family:'Sora', sans-serif; font-weight:800; font-size:12.5px; color:var(--ink);}
+.cmp-group-current{font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:999px;
+  background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;
+  letter-spacing:0.06em; font-family:'Sora', sans-serif;}
+body.theme-dark .cmp-group-current{color:#1A2438;}
+.cmp-group-check{margin-left:auto; font-size:15px; font-weight:800; color:var(--success); line-height:1;}
+.cmp-group-bal{font-family:'Sora', sans-serif; font-weight:800; font-size:14px; color:var(--primary-dark);}
+.cmp-group-status{font-size:11px; font-weight:600; color:var(--muted);}
+
+/* Column picker */
+.compare-col-picker{display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 14px;
+  background:var(--surface-soft); border:1px solid var(--line); border-radius:12px;}
+.cmp-col-list{display:flex; flex-wrap:wrap; gap:8px;}
+.cmp-col-toggle{display:inline-flex; align-items:center; gap:6px; padding:5px 12px;
+  border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer;
+  font-family:'Sora', sans-serif; font-weight:700; font-size:11.5px; color:var(--ink);
+  transition:background .12s ease, border-color .12s ease, color .12s ease;}
+.cmp-col-toggle:hover{background:var(--primary-soft); border-color:var(--primary-soft); color:var(--primary-dark);}
+.cmp-col-toggle input[type="checkbox"]{width:14px; height:14px; accent-color:var(--primary-dark);
+  cursor:pointer; margin:0;}
+.cmp-col-toggle:has(input:checked){
+  background:linear-gradient(135deg, rgba(224,163,57,0.15), rgba(168,114,31,0.08));
+  border-color:var(--primary); color:var(--primary-dark);
+}
+.cmp-col-toggle.locked{cursor:default; opacity:0.9;}
+.cmp-col-toggle.locked:hover{background:linear-gradient(135deg, rgba(224,163,57,0.15), rgba(168,114,31,0.08));
+  border-color:var(--primary); color:var(--primary-dark); transform:none;}
+.cmp-col-toggle.locked input{cursor:default;}
+
+/* Layout toggle */
 .compare-layout-toggle{display:flex; align-items:center; gap:6px; padding:6px 12px;
   background:var(--surface-soft); border:1px solid var(--line); border-radius:10px;
   align-self:flex-start; flex-wrap:wrap;}
@@ -849,40 +897,28 @@ body.theme-dark .compare-modal{background:rgba(0,0,0,0.72);}
   color:#fff; border-color:transparent;}
 body.theme-dark .compare-layout-toggle button.active{color:#1A2438;}
 
+/* Compare tables */
 .compare-tables{display:grid; gap:16px; align-items:start;}
 .compare-tables.stacked{grid-template-columns:1fr;}
-.compare-tables.side-by-side{grid-template-columns:1fr 1fr;}
-@media(max-width:900px){
-  .compare-tables.side-by-side{grid-template-columns:1fr;}
-}
+.compare-tables.grid{grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));}
 .compare-col{min-width:0; display:flex; flex-direction:column; gap:8px;}
-.compare-col-head{display:flex; align-items:center; justify-content:space-between; gap:6px;
+.compare-col-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap;
   padding:10px 14px; background:var(--surface-soft); border:1px solid var(--line); border-radius:10px;
   font-family:'Sora', sans-serif; font-weight:800; font-size:13px; color:var(--ink);}
+.compare-col-head.current{border-color:var(--primary);}
+.compare-col-head .cch-name{display:flex; align-items:center; gap:6px;}
 .compare-col-head .cth-tag{font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:999px;
-  letter-spacing:0.06em; text-transform:uppercase;}
-.compare-col-head.current .cth-tag{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;}
-body.theme-dark .compare-col-head.current .cth-tag{color:#1A2438;}
-.compare-col-head.comparing .cth-tag{background:linear-gradient(135deg, var(--secondary), #5E2E22); color:#fff;}
-body.theme-dark .compare-col-head.comparing .cth-tag{color:#1A2438;}
+  letter-spacing:0.06em; text-transform:uppercase;
+  background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff;}
+body.theme-dark .compare-col-head .cth-tag{color:#1A2438;}
+.compare-col-head .cch-status{font-family:'Inter', sans-serif; font-weight:600;
+  font-size:11.5px; color:var(--muted); margin-left:auto;}
 
 .btn-compare-toggle{border:1.5px dashed var(--secondary); background:var(--secondary-soft); color:var(--secondary);
   font-family:'Sora', sans-serif; font-weight:700; font-size:11.5px; padding:6px 14px; border-radius:999px;
   cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
   transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease; margin-left:8px;}
 .btn-compare-toggle:hover{background:var(--secondary); color:#fff; transform:translateY(-1px);}
-.compare-strip{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 12px;
-  background:var(--surface-soft); border:1px dashed var(--line); border-radius:10px;}
-.compare-strip-label{font-family:'Sora', sans-serif; font-weight:800; font-size:10.5px;
-  letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-right:4px;}
-.compare-partner-card{border:1px solid var(--line); background:var(--surface); border-radius:10px;
-  padding:8px 14px; cursor:pointer; display:flex; flex-direction:column; gap:2px;
-  min-width:130px; text-align:left; font-family:'Inter', sans-serif;
-  transition:background .15s ease, border-color .15s ease, transform .1s ease;}
-.compare-partner-card:hover{background:var(--primary-soft); border-color:var(--primary); transform:translateY(-1px);}
-.compare-partner-card .cpc-title{font-family:'Sora', sans-serif; font-weight:800; font-size:11.5px; color:var(--ink);}
-.compare-partner-card .cpc-bal{font-family:'Sora', sans-serif; font-weight:800; font-size:14px; color:var(--primary-dark);}
-.compare-partner-card .cpc-status{font-size:11px; font-weight:600; color:var(--muted);}
 
 .delivery-edit-btn{border:1px solid var(--line); background:var(--surface); color:var(--muted);
   border-radius:5px; cursor:pointer; font-size:10px; padding:1px 6px; line-height:1.4;
@@ -1580,21 +1616,21 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:16px 12px;
 <script>
 /* =========================================================
    ProdWise.VM — Patch notes for this release
-   - FIX: Creating a new farm no longer leaks the previous
-     farm's batch number. When the user connects to a farm
-     that doesn't exist yet, the app no longer pushes a file
-     with the old batch number. `predState.batchNumber` and
-     the local `farmData` are cleared, and the new-farm flow
-     simply opens the New Batch modal. Nothing is written to
-     the cloud until the user picks a batch number, at which
-     point `startNewBatch` pushes with the correct file name.
-   - Retained from previous release: feed balance forecast
-     column restructure (colored date, inline pickup indicator
-     on Live birds, colored End Balance), full-screen Compare
-     Feed Balance modal, pencil edit on locked delivery rows,
-     mortality anchor stamping on import, whole-bird rounding
-     in projection loops, symmetric total/avg pickup weight
-     editing.
+   - NEW: Compare Feed Balance modal has been reworked:
+     · Group picker is now clickable cards (highlighted when
+       selected). User can pick 1 to 4 groups freely.
+     · Column picker lets the user hide/show individual
+       columns (Date is locked on). Unchecked columns vanish
+       from every shown table so 3–4 groups stay readable.
+     · Layout toggle is now Stacked / Grid (auto-fit).
+     · Selected groups insert in numeric order.
+     · Group status chip moved into each column header.
+   - Retained: green/amber/red colour-coding on End Balance,
+     blue/orange pickup indicator on Live birds, blue/orange
+     date colouring, whole-bird rounding in projection loops,
+     mortality anchor stamping, symmetric total/avg pickup
+     weight editing, edit-delivery pencil on locked rows, and
+     the new-farm batch-number leak fix.
 ========================================================= */
 
 const STORAGE_KEY = 'prodwise_vm_phase2_v1';
@@ -1731,8 +1767,16 @@ let dailyRangeState = { ...DEFAULT_DAILY_RANGE };
 /* Compare modal state — session only, not persisted */
 let feedCompareState = {
   modalOpen: false,
-  partnerGroup: null,
-  layoutMode: 'auto'
+  selectedGroups: [],
+  layoutMode: 'auto',
+  visibleColumns: {
+    date: true,
+    age: true,
+    liveBirds: true,
+    dailyFeed: true,
+    delivery: true,
+    endBalance: true
+  }
 };
 
 let newBatchModalPhase = 'choice';
@@ -1774,11 +1818,38 @@ function isCompareAvailable(){
 }
 function effectiveCompareLayout(){
   if (feedCompareState.layoutMode === 'stacked') return 'stacked';
-  if (feedCompareState.layoutMode === 'side-by-side') return 'side-by-side';
-  try {
-    return window.matchMedia('(min-width: 1500px)').matches ? 'side-by-side' : 'stacked';
-  } catch(e){ return 'stacked'; }
+  if (feedCompareState.layoutMode === 'grid') return 'grid';
+  return 'grid';
 }
+function getDefaultSelectedGroups(currentGroup){
+  const partner = [1,2,3,4].find(g => g !== currentGroup) || currentGroup;
+  const set = new Set([currentGroup, partner]);
+  return [1,2,3,4].filter(g => set.has(g));
+}
+function toggleCompareGroup(g){
+  const cur = feedCompareState.selectedGroups.slice();
+  const idx = cur.indexOf(g);
+  if (idx >= 0){
+    if (cur.length === 1){
+      showToast('At least one group must be shown.', true);
+      return;
+    }
+    cur.splice(idx, 1);
+  } else {
+    cur.push(g);
+    cur.sort((a,b) => a-b);
+  }
+  feedCompareState.selectedGroups = cur;
+  renderCompareModalBody();
+}
+function toggleCompareColumn(col){
+  if (col === 'date') return; // locked on
+  const cols = { ...feedCompareState.visibleColumns };
+  cols[col] = !cols[col];
+  feedCompareState.visibleColumns = cols;
+  renderCompareModalBody();
+}
+const ALL_COMPARE_COLUMNS = ['date','age','liveBirds','dailyFeed','delivery','endBalance'];
 
 /* ---------- Sticky header height ---------- */
 function updateStickyHeaderHeight(){
@@ -3370,7 +3441,12 @@ function resetAllToDefaults(batchNumber){
   inlineDeliveryState = null;
   activeTab = 'g1';
   dailyRangeState = { ...DEFAULT_DAILY_RANGE };
-  feedCompareState = { modalOpen: false, partnerGroup: null, layoutMode: 'auto' };
+  feedCompareState = {
+    modalOpen: false,
+    selectedGroups: [],
+    layoutMode: 'auto',
+    visibleColumns: { date:true, age:true, liveBirds:true, dailyFeed:true, delivery:true, endBalance:true }
+  };
   const cm = document.getElementById('compareFeedModal');
   if (cm) cm.classList.remove('open');
 
@@ -6446,7 +6522,7 @@ function pickupPlanPillHtml(shed){
   return '';
 }
 
-/* ============ COMPARE MODAL: OPEN / CLOSE / RENDER ============ */
+/* ============ COMPARE MODAL ============ */
 function openCompareModal(){
   if (!isCompareAvailable()){
     showToast('📱 Comparison is only available on tablet and desktop screens.', true);
@@ -6459,6 +6535,10 @@ function openCompareModal(){
   closeSettingsDrawer();
   inlineDeliveryState = null;
   feedCompareState.modalOpen = true;
+  const currentGroup = Number(activeTab.replace('g',''));
+  feedCompareState.selectedGroups = getDefaultSelectedGroups(currentGroup);
+  feedCompareState.layoutMode = 'auto';
+  feedCompareState.visibleColumns = { date:true, age:true, liveBirds:true, dailyFeed:true, delivery:true, endBalance:true };
   const m = document.getElementById('compareFeedModal');
   if (m){
     m.classList.add('open');
@@ -6475,10 +6555,11 @@ function closeCompareModal(){
     m.setAttribute('aria-hidden', 'true');
   }
 }
-function renderCompareStrip(currentGroup, partnerGroup){
-  const others = [1,2,3,4].filter(g => g !== currentGroup && g !== partnerGroup);
-  if (others.length === 0) return '';
-  const cards = others.map(g => {
+function renderCompareGroupPicker(currentGroup){
+  const groups = [1,2,3,4];
+  const cards = groups.map(g => {
+    const isSelected = feedCompareState.selectedGroups.includes(g);
+    const isCurrent = g === currentGroup;
     const info = groupStatusSummary(g);
     let balText = '—', statusText = '', statusEmoji = '';
     if (info.hasReading){
@@ -6495,17 +6576,52 @@ function renderCompareStrip(currentGroup, partnerGroup){
       statusEmoji = '⚪';
       statusText = 'Tap rings to record';
     }
+    const cls = 'cmp-group-card' + (isSelected ? ' selected' : '');
     return `
-      <button class="compare-partner-card" data-compare-partner="${g}" type="button">
-        <div class="cpc-title">Group ${g}</div>
-        <div class="cpc-bal">${escapeHtml(balText)}</div>
-        <div class="cpc-status">${statusEmoji} ${escapeHtml(statusText)}</div>
+      <button type="button" class="${cls}" data-compare-group="${g}" aria-pressed="${isSelected ? 'true' : 'false'}">
+        <div class="cmp-group-top">
+          <span class="cmp-group-name">Group ${g}</span>
+          ${isCurrent ? '<span class="cmp-group-current">Current</span>' : ''}
+          ${isSelected ? '<span class="cmp-group-check">✓</span>' : ''}
+        </div>
+        <div class="cmp-group-bal">${escapeHtml(balText)}</div>
+        <div class="cmp-group-status">${statusEmoji} ${escapeHtml(statusText)}</div>
       </button>`;
   }).join('');
+  const count = feedCompareState.selectedGroups.length;
+  const total = groups.length;
   return `
-    <div class="compare-strip">
-      <span class="compare-strip-label">Compare with:</span>
-      ${cards}
+    <div class="compare-picker">
+      <span class="compare-picker-label">Groups shown · click to toggle · ${count} of ${total} shown</span>
+      <div class="compare-picker-cards">
+        ${cards}
+      </div>
+    </div>`;
+}
+function renderCompareColumnPicker(){
+  const cols = feedCompareState.visibleColumns;
+  const items = [
+    { id:'date', label:'Date', locked:true },
+    { id:'age', label:'Age' },
+    { id:'liveBirds', label:'Live birds' },
+    { id:'dailyFeed', label:'Daily Feed' },
+    { id:'delivery', label:'Delivery' },
+    { id:'endBalance', label:'End Balance' }
+  ];
+  const list = items.map(item => {
+    const checked = cols[item.id] ? 'checked' : '';
+    const disabled = item.locked ? 'disabled' : '';
+    const cls = 'cmp-col-toggle' + (item.locked ? ' locked' : '');
+    return `
+      <label class="${cls}">
+        <input type="checkbox" data-compare-col="${item.id}" ${checked} ${disabled} />
+        <span>${item.label}</span>
+      </label>`;
+  }).join('');
+  return `
+    <div class="compare-col-picker">
+      <span class="compare-picker-label">Columns:</span>
+      <div class="cmp-col-list">${list}</div>
     </div>`;
 }
 function renderCompareModalBody(){
@@ -6516,60 +6632,58 @@ function renderCompareModalBody(){
     closeCompareModal();
     return;
   }
-  let partner = feedCompareState.partnerGroup;
-  if (!partner || partner === currentGroup || partner < 1 || partner > 4){
-    partner = [1,2,3,4].find(g => g !== currentGroup) || null;
-    feedCompareState.partnerGroup = partner;
+  let selected = (feedCompareState.selectedGroups || []).filter(g => [1,2,3,4].includes(g));
+  if (selected.length === 0){
+    selected = getDefaultSelectedGroups(currentGroup);
   }
-  if (!partner){
-    body.innerHTML = '<div class="forecast-empty">No other groups available to compare.</div>';
-    return;
-  }
+  selected = [...new Set(selected)].sort((a,b) => a-b);
+  feedCompareState.selectedGroups = selected;
+  const cols = feedCompareState.visibleColumns || { date:true, age:true, liveBirds:true, dailyFeed:true, delivery:true, endBalance:true };
+  cols.date = true; // locked
+  feedCompareState.visibleColumns = cols;
+
   const layout = effectiveCompareLayout();
-  const forecastCur = computeSiloForecast(currentGroup, siloRange);
-  const forecastPar = computeSiloForecast(partner, siloRange);
-  const active = document.activeElement;
-  const activeIsInBody = active && body.contains(active);
-  let focusMarker = null;
-  if (activeIsInBody && active.tagName === 'INPUT'){
-    focusMarker = { idx: Array.from(body.querySelectorAll('input')).indexOf(active) };
-  }
+  const tablesHtml = selected.map(g => {
+    const forecast = computeSiloForecast(g, siloRange);
+    const isCurrent = g === currentGroup;
+    const info = groupStatusSummary(g);
+    let statusChip = '';
+    if (info.hasReading){
+      const emoji = info.daysUntil != null ? (info.daysUntil <= 2 ? '🔴' : (info.daysUntil <= 7 ? '🟡' : '🟢')) : '🟢';
+      const daysStr = info.daysUntil != null ? `runs out in ${info.daysUntil}d` : `lasts > ${siloRange.end}d`;
+      statusChip = `${emoji} ${fmtFeed(info.balance)} · ${daysStr}`;
+    } else {
+      statusChip = '⚪ No reading';
+    }
+    return `
+      <div class="compare-col">
+        <div class="compare-col-head ${isCurrent ? 'current' : ''}">
+          <span class="cch-name">Group ${g}${isCurrent ? ' <span class="cth-tag">Current</span>' : ''}</span>
+          <span class="cch-status">${escapeHtml(statusChip)}</span>
+        </div>
+        ${renderSiloForecastTable(forecast, g, { inModal: true, columns: cols })}
+      </div>`;
+  }).join('');
+
   body.innerHTML = `
     ${rangeBarHtml(siloRange, 'compare')}
-    ${renderCompareStrip(currentGroup, partner)}
+    ${renderCompareGroupPicker(currentGroup)}
+    ${renderCompareColumnPicker()}
     <div class="compare-layout-toggle">
       <span class="clt-label">Layout:</span>
       <button type="button" data-compare-layout="stacked" class="${layout === 'stacked' ? 'active' : ''}">☰ Stacked</button>
-      <button type="button" data-compare-layout="side-by-side" class="${layout === 'side-by-side' ? 'active' : ''}">▥ Side by side</button>
+      <button type="button" data-compare-layout="grid" class="${layout === 'grid' ? 'active' : ''}">▦ Grid</button>
     </div>
     <div class="compare-tables ${layout}">
-      <div class="compare-col">
-        <div class="compare-col-head current">
-          <span>Group ${currentGroup}</span>
-          <span class="cth-tag">Current</span>
-        </div>
-        ${renderSiloForecastTable(forecastCur, currentGroup, { inModal: true })}
-      </div>
-      <div class="compare-col">
-        <div class="compare-col-head comparing">
-          <span>Group ${partner}</span>
-          <span class="cth-tag">Comparing</span>
-        </div>
-        ${renderSiloForecastTable(forecastPar, partner, { inModal: true })}
-      </div>
+      ${tablesHtml}
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">
-      💡 Click any future weekday row in <strong>either</strong> table to plan a delivery for that group.
+      💡 Click any future weekday row in <strong>any</strong> table to plan a delivery for that group.
       Rows with an official delivery already scheduled show a small <strong>✎</strong> button to edit or delete it.
-      Range, weekends, and silo readings are shared with the Feed &amp; Silo view.
+      Hide the Delivery column to disable row-click planning inside the modal — edit deliveries from the Feed &amp; Silo view instead.
     </div>`;
-  if (focusMarker){
-    const inputs = body.querySelectorAll('input');
-    const target = inputs[focusMarker.idx];
-    if (target && target.classList.contains('inline-del-input')){
-      try { target.focus(); } catch(e){}
-    }
-  } else if (inlineDeliveryState){
+
+  if (inlineDeliveryState){
     const inp = body.querySelector('.inline-del-input');
     if (inp) requestAnimationFrame(() => { try { inp.focus(); } catch(e){} });
   }
@@ -7038,7 +7152,7 @@ function renderFeedPlanner(group, sheds, today){
   const leftoverStr = leftoverOk ? `${(leftover.balance/1000).toFixed(2)} t at cleanout` : '—';
   const compareBtnHtml = `
     <button class="btn-compare-toggle" id="compareFeedBtn" type="button"
-      title="Compare with another group">
+      title="Compare with other groups">
       ⇄ Compare groups
     </button>`;
   const headerActionsHtml = `
@@ -7253,11 +7367,39 @@ function renderDeliveriesList(group, deliveries, latestReadingDate){
 function renderSiloForecastTable(forecast, group, opts){
   opts = opts || {};
   const inModal = !!opts.inModal;
+  const cols = opts.columns || {
+    date: true, age: true, liveBirds: true, dailyFeed: true, delivery: true, endBalance: true
+  };
+  // Date is always visible
+  const c = {
+    date: true,
+    age: !!cols.age,
+    liveBirds: !!cols.liveBirds,
+    dailyFeed: !!cols.dailyFeed,
+    delivery: !!cols.delivery,
+    endBalance: !!cols.endBalance
+  };
   if (forecast.rows.length === 0) return `<div class="forecast-empty">No forecast available.</div>`;
-  const todayIso = iso(new Date());
+
+  // Compute table min-width based on visible columns
+  let minW = 40;
+  if (c.date) minW += 160;
+  if (c.age) minW += 70;
+  if (c.liveBirds) minW += 140;
+  if (c.dailyFeed) minW += 115;
+  if (c.delivery) minW += 180;
+  if (c.endBalance) minW += 130;
+
+  const headerCells = [];
+  if (c.date) headerCells.push('<th>Date</th>');
+  if (c.age) headerCells.push('<th class="num">Age</th>');
+  if (c.liveBirds) headerCells.push('<th class="num">Live birds</th>');
+  if (c.dailyFeed) headerCells.push('<th class="num">Daily Feed</th>');
+  if (c.delivery) headerCells.push('<th>Delivery</th>');
+  if (c.endBalance) headerCells.push('<th class="num">End Balance</th>');
 
   const rows = forecast.rows.map(r => {
-    const baseClickable = !r.isPast && !r.isWeekend;
+    const baseClickable = !r.isPast && !r.isWeekend && c.delivery;
     const hasRealDelivery = (r.deliveries || []).some(d => !d.isTest);
     const isBlocked = baseClickable && hasRealDelivery;
     const isClickable = baseClickable && !hasRealDelivery;
@@ -7265,6 +7407,7 @@ function renderSiloForecastTable(forecast, group, opts){
       inlineDeliveryState.group === group &&
       inlineDeliveryState.dateIso === iso(r.date) &&
       isClickable &&
+      c.delivery &&
       (inModal === !!feedCompareState.modalOpen);
     const rowClasses = [
       r.isWeekend ? 'is-weekend' : '',
@@ -7308,6 +7451,7 @@ function renderSiloForecastTable(forecast, group, opts){
         </div>`;
     }
 
+    // Date cell
     let dateCls = '';
     if (r.isToday) dateCls = 'fb-date-today';
     else if (r.isWeekend) dateCls = 'fb-date-weekend';
@@ -7321,17 +7465,14 @@ function renderSiloForecastTable(forecast, group, opts){
       const tip = `Silo 1: ${s1} · Silo 2: ${s2} · Silo 3: ${s3} · Total ${totalT} t — click to delete this reading`;
       readingBadge = `<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖</button>`;
     }
-
     const ages = shedAgesAtDateForGroup(group, r.date);
     const agesStr = formatAgesPair(ages);
-
     const liveBirds = r.liveBirds || 0;
     let pickupIndicator = '';
     if (r.pickupsBirds > 0){
       const pickCls = r.hasPredicted ? 'fb-pickup-predicted' : 'fb-pickup-actual';
       pickupIndicator = ` <span class="${pickCls}">−${r.pickupsBirds.toLocaleString()}</span>`;
     }
-
     let balanceCls = '';
     let balanceText = '—';
     if (r.balance !== null){
@@ -7342,45 +7483,42 @@ function renderSiloForecastTable(forecast, group, opts){
       else balanceCls = 'fb-balance-ok';
     }
 
-    return `
-      <tr class="${rowClasses}"${clickAttrs}>
-        <td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>
-        <td class="num">${agesStr}</td>
-        <td class="num">${liveBirds.toLocaleString()}${pickupIndicator}</td>
-        <td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>
-        <td>${deliveryCell}</td>
-        <td class="num ${balanceCls}">${balanceText}</td>
-      </tr>`;
+    const cells = [];
+    if (c.date) cells.push(`<td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>`);
+    if (c.age) cells.push(`<td class="num">${agesStr}</td>`);
+    if (c.liveBirds) cells.push(`<td class="num">${liveBirds.toLocaleString()}${pickupIndicator}</td>`);
+    if (c.dailyFeed) cells.push(`<td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>`);
+    if (c.delivery) cells.push(`<td>${deliveryCell}</td>`);
+    if (c.endBalance) cells.push(`<td class="num ${balanceCls}">${balanceText}</td>`);
+
+    return `<tr class="${rowClasses}"${clickAttrs}>${cells.join('')}</tr>`;
   }).join('');
 
-  let totalBalanceCls = '';
-  let totalBalanceText = '—';
-  if (forecast.endBalance !== null){
-    totalBalanceText = fmtFeed(forecast.endBalance);
-    if (forecast.endBalance <= 0) totalBalanceCls = 'fb-balance-empty';
-    else if (forecast.endBalance < 5000) totalBalanceCls = 'fb-balance-low';
-    else totalBalanceCls = 'fb-balance-ok';
+  // Totals row
+  const leadingCols = (c.date ? 1 : 0) + (c.age ? 1 : 0) + (c.liveBirds ? 1 : 0);
+  const totalsCells = [];
+  totalsCells.push(`<td colspan="${Math.max(1, leadingCols)}">Totals</td>`);
+  if (c.dailyFeed) totalsCells.push(`<td class="num">${fmtFeed(forecast.totalConsumption)}</td>`);
+  if (c.delivery) totalsCells.push(`<td>${forecast.totalDelivered > 0 ? '+' + fmtFeed(forecast.totalDelivered) : '—'}</td>`);
+  if (c.endBalance){
+    let totalBalanceCls = '';
+    let totalBalanceText = '—';
+    if (forecast.endBalance !== null){
+      totalBalanceText = fmtFeed(forecast.endBalance);
+      if (forecast.endBalance <= 0) totalBalanceCls = 'fb-balance-empty';
+      else if (forecast.endBalance < 5000) totalBalanceCls = 'fb-balance-low';
+      else totalBalanceCls = 'fb-balance-ok';
+    }
+    totalsCells.push(`<td class="num ${totalBalanceCls}">${totalBalanceText}</td>`);
   }
 
   return `
     <div class="forecast-table-wrap">
-      <table class="forecast-table" style="min-width:780px;">
-        <thead><tr>
-          <th>Date</th>
-          <th class="num">Age</th>
-          <th class="num">Live birds</th>
-          <th class="num">Daily Feed</th>
-          <th>Delivery</th>
-          <th class="num">End Balance</th>
-        </tr></thead>
+      <table class="forecast-table" style="min-width:${minW}px;">
+        <thead><tr>${headerCells.join('')}</tr></thead>
         <tbody>
           ${rows}
-          <tr class="total-row">
-            <td colspan="3">Totals</td>
-            <td class="num">${fmtFeed(forecast.totalConsumption)}</td>
-            <td>${forecast.totalDelivered > 0 ? '+' + fmtFeed(forecast.totalDelivered) : '—'}</td>
-            <td class="num ${totalBalanceCls}">${totalBalanceText}</td>
-          </tr>
+          <tr class="total-row">${totalsCells.join('')}</tr>
         </tbody>
       </table>
     </div>`;
@@ -8357,13 +8495,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    /* ---- Compare partner swap ---- */
-    const partnerBtn = e.target.closest('[data-compare-partner]');
-    if (partnerBtn){
-      const g = Number(partnerBtn.dataset.comparePartner);
+    /* ---- Compare group toggle ---- */
+    const groupCard = e.target.closest('[data-compare-group]');
+    if (groupCard){
+      const g = Number(groupCard.dataset.compareGroup);
       if (Number.isFinite(g) && g >= 1 && g <= 4){
-        feedCompareState.partnerGroup = g;
-        renderCompareModalBody();
+        toggleCompareGroup(g);
       }
       return;
     }
@@ -8372,7 +8509,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const layoutBtn = e.target.closest('[data-compare-layout]');
     if (layoutBtn){
       const mode = layoutBtn.dataset.compareLayout;
-      if (['stacked','side-by-side'].includes(mode)){
+      if (['stacked','grid'].includes(mode)){
         feedCompareState.layoutMode = mode;
         renderCompareModalBody();
       }
@@ -8690,6 +8827,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('change', (e) => {
     const t = e.target;
+
+    /* Compare column checkbox */
+    if (t.dataset && t.dataset.compareCol){
+      toggleCompareColumn(t.dataset.compareCol);
+      return;
+    }
 
     if (t.dataset && t.dataset.predCycle){
       const bar = t.closest('.pred-daily-range-bar');
