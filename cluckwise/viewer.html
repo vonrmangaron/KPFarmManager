@@ -207,6 +207,39 @@
   }
   body.theme-dark .audit-today-badge{ color:#1A1300; }
 
+  /* ---------- Audit prep bar (compact, tap to expand) ---------- */
+  .audit-bar{
+    margin:-6px 0 18px; border-radius:14px; overflow:hidden;
+    background:var(--danger-soft); border:1.5px solid var(--danger);
+  }
+  .audit-bar + .audit-bar{ margin-top:-8px; }
+  .audit-bar-head{
+    width:100%; min-height:52px; display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:none; background:transparent; color:var(--ink);
+    cursor:pointer; text-align:left; font-family:inherit;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .ab-icon{ font-size:18px; flex-shrink:0; }
+  .ab-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .ab-title{ font-weight:800; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ab-bar{ height:5px; border-radius:99px; background:rgba(0,0,0,0.10); overflow:hidden; }
+  body.theme-dark .ab-bar{ background:rgba(255,255,255,0.12); }
+  .ab-bar > span{ display:block; height:100%; background:var(--success); border-radius:99px; transition:width .3s ease; }
+  .ab-right{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+  .ab-days{ font-family:'Sora',sans-serif; font-weight:800; font-size:11px; color:#fff; background:var(--danger); padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .ab-count{ font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .ab-chevron{ font-size:12px; color:var(--muted); flex-shrink:0; transition:transform .18s ease; }
+  .audit-bar.open .ab-chevron{ transform:rotate(180deg); }
+  .audit-bar-body{ display:none; flex-direction:column; gap:8px; padding:0 10px 12px; }
+  .audit-bar.open .audit-bar-body{ display:flex; }
+  .ab-task-date{ font-size:11px; font-weight:700; color:var(--muted); margin:2px 4px -4px; }
+  .ab-task-date.overdue{ color:var(--danger); }
+  .ab-empty{ font-size:13px; font-weight:600; color:var(--muted); padding:4px; }
+  .ab-more{
+    align-self:flex-start; border:none; background:transparent; padding:6px 4px;
+    color:var(--danger); font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit;
+  }
+
   .scrim{ position:fixed; inset:0; background:rgba(20,15,8,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity .18s ease; }
   .scrim.show{ opacity:1; pointer-events:auto; }
   .sheet{
@@ -367,6 +400,8 @@
     </div>
   </div>
 
+  <div id="auditBarSection"></div>
+
   <div class="wide-grid">
     <div>
       <div class="agenda-filter" id="agendaFilterBar"></div>
@@ -493,7 +528,10 @@
       whereInShed:'Where in the shed?', yourName:'Your Name', submitReport:'Submit Report',
       tapToPhoto:'Tap to take photo', retake:'Retake', submitHint:'Fill all fields to submit. Report will open WhatsApp so you can attach the photo.',
       reportSubmitted:'Report submitted', reportSavedOffline:'Report saved. Will sync when online.',
-      connectFirst:'Connect to your farm first (Settings).', fillAllFields:'Please fill in all fields.'
+      connectFirst:'Connect to your farm first (Settings).', fillAllFields:'Please fill in all fields.',
+      abToday:'Today', abTomorrow:'Tomorrow', abDays:'days', abPrepDone:'prep done',
+      abAllDone:'All prep tasks done 🎉', abNoTasks:'No prep tasks scheduled yet.',
+      abMore:'more — see This Week', abOverdue:'Overdue'
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -514,7 +552,10 @@
       whereInShed:'¿Dónde en el galpón?', yourName:'Tu Nombre', submitReport:'Enviar Reporte',
       tapToPhoto:'Toca para tomar foto', retake:'Volver a tomar', submitHint:'Completa todos los campos. El reporte abrirá WhatsApp para adjuntar la foto.',
       reportSubmitted:'Reporte enviado', reportSavedOffline:'Reporte guardado. Se sincronizará cuando haya internet.',
-      connectFirst:'Conecta tu granja primero (Ajustes).', fillAllFields:'Por favor completa todos los campos.'
+      connectFirst:'Conecta tu granja primero (Ajustes).', fillAllFields:'Por favor completa todos los campos.',
+      abToday:'Hoy', abTomorrow:'Mañana', abDays:'días', abPrepDone:'preparación lista',
+      abAllDone:'Toda la preparación está lista 🎉', abNoTasks:'Aún no hay tareas de preparación.',
+      abMore:'más — ver Esta semana', abOverdue:'Atrasada'
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -535,7 +576,10 @@
       whereInShed:'Saan sa kulungan?', yourName:'Pangalan Mo', submitReport:'Isumite ang Report',
       tapToPhoto:'I-tap para kumuha ng litrato', retake:'Kumuha muli', submitHint:'Punan lahat ng field. Bubuksan ang WhatsApp para maidagdag ang litrato.',
       reportSubmitted:'Naisumite ang report', reportSavedOffline:'Nai-save ang report. I-sync kapag may internet.',
-      connectFirst:'Kumonekta muna sa bukid (Settings).', fillAllFields:'Punan lahat ng field.'
+      connectFirst:'Kumonekta muna sa bukid (Settings).', fillAllFields:'Punan lahat ng field.',
+      abToday:'Ngayon', abTomorrow:'Bukas', abDays:'araw', abPrepDone:'handa na',
+      abAllDone:'Tapos na lahat ng paghahanda 🎉', abNoTasks:'Wala pang naka-schedule na paghahanda.',
+      abMore:'pa — tingnan sa Ngayong Linggo', abOverdue:'Huli na'
     }
   };
   function t(key){
@@ -1125,6 +1169,105 @@
       banner.remove();
     }
   }
+
+  // ---------- Audit prep bar ----------
+  // Shows only during an audit's 7-day prep window (prep week + audit day).
+  // Collapsed it's one slim row: name, days left, progress. Tap to expand the
+  // open prep tasks, which can be ticked off right there.
+  const AUDIT_BAR_MAX_TASKS = 6;
+  function loadOpenAuditBars(){
+    try{ return new Set(JSON.parse(sessionStorage.getItem('cw-viewer-open-audit-bars') || '[]')); }catch(e){ return new Set(); }
+  }
+  const openAuditBars = loadOpenAuditBars();
+  function saveOpenAuditBars(){
+    try{ sessionStorage.setItem('cw-viewer-open-audit-bars', JSON.stringify([...openAuditBars])); }catch(e){}
+  }
+  function activeAuditPrepEvents(){
+    const todayKey = dateKey(new Date());
+    return events
+      .filter(e=> e.date && todayKey >= addDaysStr(e.date, -7) && todayKey <= e.date)
+      .sort((a,b)=> a.date.localeCompare(b.date));
+  }
+  function renderAuditBars(){
+    const wrap = $('#auditBarSection');
+    if(!wrap) return;
+    wrap.innerHTML = '';
+    const todayKey = dateKey(new Date());
+    activeAuditPrepEvents().forEach(ev=>{
+      const cs = addDaysStr(ev.date, -7);
+      const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+      const windowTasks = tasks.filter(tk=> tk.date && tk.date >= cs && tk.date <= ev.date);
+      const doneCount = windowTasks.filter(tk=> tk.status==='done').length;
+      const openTasks = windowTasks.filter(tk=> tk.status!=='done')
+        .sort((a,b)=> a.date.localeCompare(b.date) || ((a.order||0)-(b.order||0)));
+      const pct = windowTasks.length ? Math.round((doneCount / windowTasks.length) * 100) : 0;
+      const isOpen = openAuditBars.has(ev.id);
+
+      const bar = document.createElement('div');
+      bar.className = 'audit-bar' + (isOpen ? ' open' : '');
+
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'audit-bar-head';
+      head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      head.innerHTML = `
+        <span class="ab-icon">📝</span>
+        <span class="ab-main">
+          <span class="ab-title"></span>
+          <span class="ab-bar"><span style="width:${pct}%"></span></span>
+        </span>
+        <span class="ab-right">
+          <span class="ab-days"></span>
+          <span class="ab-count"></span>
+        </span>
+        <span class="ab-chevron">▾</span>`;
+      head.querySelector('.ab-title').textContent = ev.batchNumber ? `${ev.name} · #${ev.batchNumber}` : ev.name;
+      head.querySelector('.ab-days').textContent = daysLeft <= 0 ? t('abToday') : daysLeft === 1 ? t('abTomorrow') : `${daysLeft} ${t('abDays')}`;
+      head.querySelector('.ab-count').textContent = `${doneCount}/${windowTasks.length} ${t('abPrepDone')}`;
+      head.addEventListener('click', ()=>{
+        const nowOpen = !bar.classList.contains('open');
+        bar.classList.toggle('open', nowOpen);
+        head.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+        if(nowOpen) openAuditBars.add(ev.id); else openAuditBars.delete(ev.id);
+        saveOpenAuditBars();
+      });
+      bar.appendChild(head);
+
+      const body = document.createElement('div');
+      body.className = 'audit-bar-body';
+      if(openTasks.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'ab-empty';
+        empty.textContent = windowTasks.length ? t('abAllDone') : t('abNoTasks');
+        body.appendChild(empty);
+      } else {
+        openTasks.slice(0, AUDIT_BAR_MAX_TASKS).forEach(tk=>{
+          const label = document.createElement('div');
+          const overdue = tk.date < todayKey;
+          label.className = 'ab-task-date' + (overdue ? ' overdue' : '');
+          label.textContent = (overdue ? `⚠ ${t('abOverdue')} · ` : '') + toDateObj(tk.date).toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+          body.appendChild(label);
+          body.appendChild(buildReadOnlyTaskCard(tk));
+        });
+        if(openTasks.length > AUDIT_BAR_MAX_TASKS){
+          const more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'ab-more';
+          more.textContent = `+ ${openTasks.length - AUDIT_BAR_MAX_TASKS} ${t('abMore')}`;
+          more.addEventListener('click', ()=>{
+            agendaFilter = 'week';
+            renderList();
+            const list = $('#agendaFilterBar');
+            if(list) list.scrollIntoView({ behavior:'smooth', block:'start' });
+          });
+          body.appendChild(more);
+        }
+      }
+      bar.appendChild(body);
+      wrap.appendChild(bar);
+    });
+  }
+
   function renderList(){
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
@@ -1166,6 +1309,7 @@
   }
   function renderAll(){
     renderHero();
+    renderAuditBars();
     renderList();
     renderAudits();
     updateOverdueBadge();
