@@ -1139,6 +1139,19 @@
     background:var(--primary-dark); transform:translateX(-50%);
   }
   .md-sep{ width:1px; align-self:stretch; margin:6px 4px; background:var(--line); }
+  /* view dropdown now sits beside the period label in the top bar */
+  .nav-group .calendar-density-wrap{ margin-left:6px; }
+  .nav-group .calendar-density-pop{ left:0; right:auto; top:calc(100% + 8px); }
+  .nav-group .calendar-density-btn{ padding:5px 11px; font-size:12.5px; }
+  .toolbar-label.clickable-label{ cursor:pointer; }
+  .nav-btn-hidden{ visibility:hidden; pointer-events:none; }
+  /* weather in the Day view's small calendar */
+  .mini-month-day{ flex-direction:column; gap:1px; line-height:1; }
+  .mini-month-day .mm-wx{ font-size:13px; line-height:1; }
+  .mini-month-day.muted .mm-wx{ opacity:0.5; }
+  .mini-month-day.wx-alert-day{ box-shadow:inset 0 0 0 1px rgba(217,72,15,0.55); }
+  .mini-month-day.selected.wx-alert-day, .mini-month-day.today.wx-alert-day{ box-shadow:0 0 0 1.5px rgba(217,72,15,0.8); }
+  .mini-month-day.has-tasks::after{ bottom:1px; }
   .mode-dock .calendar-density-btn{
     border:none; background:transparent; font-size:14px; padding:10px 14px; border-radius:11px; color:var(--ink);
   }
@@ -1305,6 +1318,17 @@
         <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
         <span class="toolbar-label" id="periodLabel"></span>
         <button class="icon-btn" id="nextBtn" aria-label="Next">›</button>
+        <div class="calendar-density-wrap" id="calendarDensityWrap">
+          <button class="calendar-density-btn" id="calendarDensityBtn" aria-haspopup="true" aria-expanded="false" title="Choose calendar view">
+            <span id="calendarDensityLabel">Month</span>
+            <span class="cd-chevron">▾</span>
+          </button>
+          <div class="calendar-density-pop" id="calendarDensityPop">
+            <button type="button" data-density="year">Year</button>
+            <button type="button" data-density="month">Month</button>
+            <button type="button" data-density="day">Day</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1371,17 +1395,6 @@
   <button type="button" class="md-btn active" id="viewCalendarBtn"><span class="md-ic">📅</span><span>Calendar</span></button>
   <button type="button" class="md-btn" id="viewListBtn"><span class="md-ic">📋</span><span>List</span></button>
   <button type="button" class="md-btn" id="viewKanbanBtn"><span class="md-ic">🗂️</span><span>Board</span></button>
-  <span class="md-sep" aria-hidden="true"></span>
-  <div class="calendar-density-wrap" id="calendarDensityWrap">
-    <button class="calendar-density-btn" id="calendarDensityBtn" aria-haspopup="true" aria-expanded="false">
-      <span id="calendarDensityLabel">Month</span>
-      <span class="cd-chevron">▾</span>
-    </button>
-    <div class="calendar-density-pop" id="calendarDensityPop">
-      <button type="button" data-density="month">Month</button>
-      <button type="button" data-density="day">Day</button>
-    </div>
-  </div>
 </nav>
 
 <nav class="bottom-nav" id="bottomNav">
@@ -2027,11 +2040,7 @@
     if(tb) tb.title = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
     const mtl = $('#moreThemeToggleLabel');
     if(mtl) mtl.textContent = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
-    const dl = $('#calendarDensityLabel');
-    if(dl) dl.textContent = settings.calendarDensity === 'day' ? 'Day' : 'Month';
-    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
-      b.classList.toggle('active', b.dataset.density === settings.calendarDensity);
-    });
+    updateViewDropdown();
     const wu = $('#setWeatherUnit'), sw = $('#setShowWeather'), wls = $('#weatherLocStatus');
     if(wu) wu.value = settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
     if(sw) sw.checked = settings.showWeather !== false;
@@ -3673,7 +3682,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-wx3';
+  const APP_VERSION = '2026.09.25-p1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -4303,6 +4312,18 @@
       if(key === todayKey) cell.classList.add('today');
       if(key === selectedKey) cell.classList.add('selected');
       cell.textContent = d.getDate();
+      const mw = wxForDate(key);
+      if(mw){
+        const mi = document.createElement('span');
+        mi.className = 'mm-wx';
+        mi.textContent = (mw.current ? wxIconLabel(mw.current.code, mw.current.isDay) : wxIconLabel(mw.code))[0];
+        cell.appendChild(mi);
+        const al = wxAlerts(mw);
+        if(al.length) cell.classList.add('wx-alert-day');
+        cell.title = `${wxIconLabel(mw.code)[1]} · High ${wxT(mw.max)} · Low ${wxT(mw.min)}`
+          + (mw.rain != null ? ` · Rain ${Math.round(mw.rain)}%` : '')
+          + (al.length ? ' · ' + al.map(x=> x[1]).join(', ') : '');
+      }
       const hasTasks = tasks.some(t => t.date === key);
       if(hasTasks) cell.classList.add('has-tasks');
       cell.addEventListener('click', () => {
@@ -5022,22 +5043,33 @@
     const isNarrow = window.innerWidth <= 1024;
     label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', year:'numeric'} : {month:'long', year:'numeric'});
   }
+  function updateViewDropdown(){
+    const names = { month:'Month', day:'Day', year:'Year' };
+    const isCal = viewMode==='month' || viewMode==='year' || viewMode==='day';
+    const shown = isCal ? viewMode : (settings.calendarDensity === 'day' ? 'day' : 'month');
+    const dl = $('#calendarDensityLabel');
+    if(dl) dl.textContent = names[shown];
+    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
+      b.classList.toggle('active', isCal && b.dataset.density === viewMode);
+    });
+  }
   function syncViewButtons(){
     const isCalendar = viewMode==='month' || viewMode==='year' || viewMode==='day';
     $('#viewCalendarBtn').classList.toggle('active', isCalendar);
     $('#viewListBtn').classList.toggle('active', viewMode==='list');
     $('#viewKanbanBtn').classList.toggle('active', viewMode==='kanban');
     const label = $('#periodLabel');
-    label.classList.toggle('clickable-label', viewMode==='month' || viewMode==='year');
-    label.title = viewMode==='month' ? 'Click to switch to Year view' : viewMode==='year' ? 'Click to switch to Month view' : '';
-    $('#navGroup').classList.toggle('hidden', viewMode==='list');
+    const VIEW_NAMES = { month:'Month', day:'Day', year:'Year' };
+    label.classList.add('clickable-label');
+    label.title = isCalendar
+      ? `Click to switch to ${VIEW_NAMES[{ month:'day', day:'year', year:'month' }[viewMode]]} view`
+      : 'Click to open the Calendar';
+    $('#navGroup').classList.remove('hidden');
+    $('#prevBtn').classList.toggle('nav-btn-hidden', viewMode==='list');
+    $('#nextBtn').classList.toggle('nav-btn-hidden', viewMode==='list');
     $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
     $('#navMonthBtn').classList.toggle('active', isCalendar);
-    const dl = $('#calendarDensityLabel');
-    if(dl) dl.textContent = settings.calendarDensity === 'day' ? 'Day' : 'Month';
-    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
-      b.classList.toggle('active', b.dataset.density === settings.calendarDensity);
-    });
+    updateViewDropdown();
     try{ sessionStorage.setItem('prodplan-session-viewmode', viewMode); }catch(e){}
   }
 
@@ -6086,11 +6118,15 @@
     viewMode = isPhone ? 'day' : (settings.calendarDensity === 'day' ? 'day' : 'month');
     syncViewButtons(); renderAll();
   });
-  $('#periodLabel').addEventListener('click', ()=>{
-    if(viewMode==='month'){ viewMode='year'; }
-    else if(viewMode==='year'){ viewMode='month'; }
-    else { return; }
+  const CALENDAR_CYCLE = { month:'day', day:'year', year:'month' };
+  function setCalendarView(v){
+    viewMode = v;
+    if((v === 'month' || v === 'day') && settings.calendarDensity !== v){ settings.calendarDensity = v; persist(); }
     syncViewButtons(); renderAll();
+  }
+  $('#periodLabel').addEventListener('click', ()=>{
+    // From List/Board: jump into the Calendar. In the Calendar: Month → Day → Year → Month.
+    setCalendarView(CALENDAR_CYCLE[viewMode] || 'month');
   });
   $('#viewListBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
   $('#viewKanbanBtn').addEventListener('click', ()=>{ viewMode='kanban'; syncViewButtons(); renderAll(); });
@@ -6107,13 +6143,9 @@
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
       const density = btn.dataset.density;
-      settings.calendarDensity = density;
-      viewMode = density;
       $('#calendarDensityWrap').classList.remove('open');
       $('#calendarDensityBtn').setAttribute('aria-expanded', 'false');
-      persist();
-      syncViewButtons();
-      renderAll();
+      setCalendarView(density);
     });
   });
 
