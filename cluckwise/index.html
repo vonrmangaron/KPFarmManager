@@ -2407,15 +2407,43 @@
     addHistory('Removed', `${count} task${count>1?'s':''} deleted from ${formatFull(key)}`);
     persist(); renderAll();
   }
+  // Re-number the target day's tasks so the dropped task sits exactly where it
+  // was released. Uses the nearest visible task cards around the drop point, so
+  // it also works in month cells that only show a few cards ("+N more").
+  function placeTaskAtDrop(taskId, dropEvt){
+    if(!dropEvt || !dropEvt.item || !dropEvt.to) return;
+    const t = tasks.find(x=>x.id===taskId);
+    if(!t) return;
+    const dateVal = t.date || null;
+    const item = dropEvt.item;
+    const isTaskEl = el => el && el !== item && el.dataset && el.dataset.id && el.dataset.template !== 'true';
+    let next = item.nextElementSibling;
+    while(next && !isTaskEl(next)) next = next.nextElementSibling;
+    let prev = item.previousElementSibling;
+    while(prev && !isTaskEl(prev)) prev = prev.previousElementSibling;
+    const ordered = tasks
+      .filter(x=> (x.date || null) === dateVal && x.id !== taskId)
+      .sort(taskSortCompare)
+      .map(x=> x.id);
+    let idx = ordered.length;
+    if(next){ const i = ordered.indexOf(next.dataset.id); if(i >= 0) idx = i; }
+    else if(prev){ const i = ordered.indexOf(prev.dataset.id); if(i >= 0) idx = i + 1; }
+    ordered.splice(idx, 0, taskId);
+    ordered.forEach((id, i)=>{ const x = tasks.find(y=>y.id===id); if(x) x.order = i; });
+  }
+
   function moveTask(id, newDateKey, opts){
     opts = opts || {};
     const t = tasks.find(t=>t.id===id);
     if(!t) return;
     const newDate = newDateKey==='backlog' ? null : newDateKey;
-    if(t.date===newDate) return;
-    const from = formatShort(t.date), to = formatShort(newDate);
-    addHistory('Scheduled', `${taskLabel(t)} moved from ${from} to ${to}`);
-    t.date = newDate;
+    if(t.date===newDate && !opts.dropEvt) return;
+    if(t.date!==newDate){
+      const from = formatShort(t.date), to = formatShort(newDate);
+      addHistory('Scheduled', `${taskLabel(t)} moved from ${from} to ${to}`);
+      t.date = newDate;
+    }
+    if(opts.dropEvt) placeTaskAtDrop(t.id, opts.dropEvt);
     persist();
     if(opts.deferRender) requestAnimationFrame(renderAll);
     else renderAll();
@@ -2432,7 +2460,8 @@
       showToast(`"${name}" is already on ${dateVal ? formatFull(dateVal) : 'the Backlog'}.`);
       return false;
     }
-    addTask(name, icon, dateVal);
+    const newTask = addTask(name, icon, dateVal);
+    if(opts.dropEvt) placeTaskAtDrop(newTask.id, opts.dropEvt);
     persist();
     if(opts.deferRender) requestAnimationFrame(renderAll);
     else renderAll();
@@ -4425,9 +4454,8 @@
         onUnchoose: endDragNoSelect,
         disabled: isSelectModeList,
         onUpdate:(evt)=>{
-          const listEl = evt.to;
-          const ids = Array.from(listEl.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
-          ids.forEach((id, i)=>{ const t = tasks.find(x=>x.id===id); if(t) t.order = i; });
+          const id = evt.item && evt.item.dataset ? evt.item.dataset.id : null;
+          if(id) placeTaskAtDrop(id, evt);
           persist();
           requestAnimationFrame(renderAll);
         },
@@ -4437,10 +4465,10 @@
           const item = evt.item;
           const toDate = evt.to.dataset.date;
           if(item.dataset.template==='true'){
-            instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true });
+            instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true, dropEvt: evt });
           } else {
             const id = item.dataset.id;
-            if(id) moveTask(id, toDate, { deferRender: true });
+            if(id) moveTask(id, toDate, { deferRender: true, dropEvt: evt });
           }
         },
         onDragEnter:(evt)=>{
