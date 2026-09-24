@@ -3,6 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Size lock: the viewer is drawn at its own CSS sizes, not the phone's settings.
+     1) text-scale "scale": Chrome/Android 146+ stops enlarging the page from the
+        phone's font-size setting and turns off "text autosizing". All viewer sizes
+        are fixed px, so nothing grows.
+     2) Width lock (script below): phones set to a bigger "Display size" / iOS
+        "Display Zoom" report a narrower screen, which makes everything look huge.
+        Below 390px we render the 390px design and scale it down to fit. -->
+<meta name="text-scale" content="scale">
+<script>
+  (function(){
+    var DESIGN_WIDTH = 390;
+    function lockViewport(){
+      var meta = document.querySelector('meta[name="viewport"]');
+      if(!meta) return;
+      var w = Math.round(Math.min(window.screen.width, window.screen.height));
+      var landscape = window.screen.width > window.screen.height;
+      if(!landscape && w > 0 && w < DESIGN_WIDTH){
+        var scale = (w / DESIGN_WIDTH).toFixed(4);
+        meta.setAttribute('content', 'width=' + DESIGN_WIDTH + ', initial-scale=' + scale + ', viewport-fit=cover');
+      } else {
+        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+      }
+    }
+    lockViewport();
+    window.addEventListener('orientationchange', function(){ setTimeout(lockViewport, 250); });
+  })();
+</script>
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <title>CluckWise.vm — Viewer</title>
 <link rel="manifest" href="manifest-viewer.json">
@@ -61,7 +88,7 @@
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
-  html{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; text-size-adjust:100%; }
+  html{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; text-size-adjust:100%; touch-action:manipulation; }
   body{
     margin:0; background:var(--bg); color:var(--ink);
     font-family:'Inter',sans-serif; font-size:16px; line-height:1.45;
@@ -299,7 +326,7 @@
   .field-label:first-child{ margin-top:0; }
   select, input[type="text"], input[type="number"], textarea{
     width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
-    background:var(--surface-soft); color:var(--ink); font-size:15px; font-family:inherit;
+    background:var(--surface-soft); color:var(--ink); font-size:16px; font-family:inherit;
   }
   textarea{ resize:vertical; min-height:56px; }
   .field-note{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
