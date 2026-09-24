@@ -1001,7 +1001,7 @@
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #historyBtn, .toolbar #exportBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #exportBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
@@ -1041,6 +1041,68 @@
     .day-count-icons{display:none;}
     .day-count strong{font-size:16px;}
     .day-count-label{font-size:9.5px;}
+  }
+
+  /* ---- Sync status ---- */
+  .sync-status{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; padding:4px 8px; border-radius:999px; cursor:default; }
+  .sync-status .sync-dot{ width:8px; height:8px; border-radius:50%; background:var(--success); flex-shrink:0; }
+  .sync-status.syncing .sync-dot{ background:var(--primary); animation:sync-pulse 1.2s ease-in-out infinite; }
+  .sync-status.error{ color:var(--danger); }
+  .sync-status.error .sync-dot{ background:var(--danger); }
+  .sync-status.offline .sync-dot{ background:var(--muted); }
+  .sync-status.local .sync-dot{ background:var(--line); }
+
+  /* ---- Undo toast ---- */
+  .undo-toast{ position:fixed; left:50%; bottom:88px; transform:translate(-50%,10px); display:flex; align-items:center; gap:14px; background:#1A1A1A; color:#fff; padding:8px 8px 8px 16px; border-radius:999px; font-size:13px; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:61; max-width:92vw; }
+  .undo-toast.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .undo-toast .undo-msg{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .undo-toast button{ border:none; background:var(--primary); color:#241A08; font-weight:800; font-size:12.5px; padding:7px 14px; border-radius:999px; cursor:pointer; font-family:'Sora',sans-serif; flex-shrink:0; }
+
+  /* ---- Batch age ---- */
+  .batch-age{ opacity:0.85; font-weight:600; margin-left:3px; }
+  .col-batch-age{ display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+  .col-batch-age span{ font-size:9.5px; font-weight:700; color:#fff; padding:2px 6px; border-radius:5px; }
+
+  /* ---- Audit prep panel ---- */
+  .audit-prep{ background:var(--danger-soft); border:1.5px solid var(--danger); border-radius:14px; padding:12px 14px; margin-bottom:18px; display:flex; flex-direction:column; gap:8px; }
+  .audit-prep-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .audit-prep-title{ font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px; color:var(--ink); min-width:0; overflow-wrap:break-word; }
+  .audit-prep-days{ font-family:'Sora',sans-serif; font-weight:800; font-size:11px; color:#fff; background:var(--danger); padding:3px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
+  .audit-prep-sub{ font-size:11.5px; color:var(--muted); }
+  .audit-prep-bar{ height:6px; border-radius:99px; background:rgba(0,0,0,0.08); overflow:hidden; }
+  .audit-prep-bar > span{ display:block; height:100%; background:var(--success); border-radius:99px; }
+  .audit-prep-stats{ font-size:12px; color:var(--ink); display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+  .audit-prep-link{ border:none; background:transparent; color:var(--danger); font-weight:700; font-size:12px; cursor:pointer; padding:0; text-align:left; font-family:inherit; }
+  .audit-prep-link:hover{ text-decoration:underline; }
+  .audit-prep-item{ display:flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 8px; border-radius:8px; background:var(--surface); border:1px solid var(--line); cursor:pointer; text-align:left; width:100%; color:var(--ink); font-family:inherit; }
+  .audit-prep-item:hover{ box-shadow:var(--shadow-sm); }
+  .audit-prep-item .api-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .audit-prep-item .api-date{ margin-left:auto; color:var(--muted); font-size:11px; flex-shrink:0; }
+
+  /* ---- Search ---- */
+  #searchModal{ width:560px; }
+  .search-input-wrap{ padding:12px 18px; border-bottom:1px solid var(--line); }
+  #searchInput{ width:100%; border:1.5px solid var(--primary); background:var(--surface); color:var(--ink); border-radius:10px; padding:10px 12px; font-size:16px; font-family:inherit; }
+  .search-group-title{ font-family:'Sora',sans-serif; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin:8px 0 2px; }
+  .search-result{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid var(--line); background:var(--surface-soft); border-radius:10px; padding:9px 12px; cursor:pointer; color:var(--ink); font-family:inherit; }
+  .search-result:hover{ background:var(--primary-soft); }
+  .search-result.active{ border-color:var(--primary); background:var(--primary-soft); box-shadow:0 0 0 2px var(--primary-soft); }
+  .sr-icon{ font-size:15px; flex-shrink:0; }
+  .sr-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .sr-title{ font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sr-sub{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sr-title mark, .sr-sub mark{ background:var(--primary-soft); color:inherit; padding:0 1px; border-radius:3px; font-weight:700; }
+
+  /* ---- Restore ---- */
+  .restore-list{ display:flex; flex-direction:column; gap:6px; }
+
+  @media (max-width: 760px){
+    .sync-status .sync-label{ display:none; }
+    .sync-status{ padding:10px 6px; cursor:pointer; position:absolute; right:12px; top:calc(max(14px, env(safe-area-inset-top)) + 4px); }
+    .undo-toast{ bottom:140px; }
+  }
+  @media (max-width: 480px){
+    .batch-pill .batch-age{ display:none; }
   }
 </style>
 </head>
@@ -1090,13 +1152,14 @@
         </div>
       </div>
       <button class="btn-today" id="todayBtn">Today</button>
+      <button class="icon-btn" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search">🔍</button>
       <button class="btn-history" id="historyBtn">History</button>
       <button class="btn-history" id="exportBtn">Export</button>
       <button class="btn-history notif-btn" id="reportsBtn" title="Reports">🚩 Reports<span class="notif-badge hidden" id="reportsBadge">0</span></button>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode">🌙</button>
       <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
-      <span class="save-indicator" id="saveIndicator">Saved</span>
+      <span class="sync-status local" id="saveIndicator" title="Sync status"><span class="sync-dot"></span><span class="sync-label">Local only</span></span>
     </div>
   </div>
   <div class="barn-stripe"></div>
@@ -1107,6 +1170,7 @@
         <button class="btn-create-wide batch" id="openBatchModalBtn">🐣 New Batch</button>
         <button class="btn-create-wide audit" id="openEventModalBtn">📝 New Audit</button>
       </div>
+      <div id="auditPrepSidebar"></div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
         <div class="section-header-left">
@@ -1172,6 +1236,7 @@
   <div class="sheet-panel">
     <div class="sheet-handle"></div>
     <div class="sheet-title">More</div>
+    <button class="sheet-option" id="moreSearchBtn"><span class="s-ic" style="background:#3E7CB1;">🔍</span>Search</button>
     <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
     <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
@@ -1257,6 +1322,10 @@
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Just type your farm's name — the file it creates is handled automatically.</p>
     <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
     <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
+
+    <label style="margin-top:16px;">Restore a previous version</label>
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">A restore point is saved automatically once a day and kept for 7 days.</p>
+    <button class="btn-ai-wide" id="openRestoreBtn" style="margin-top:6px;">🕓 Restore from a date…</button>
 
     <label style="margin-top:16px;">Backup &amp; transfer to another device</label>
     <button class="btn-app" id="exportDataBtn">Export data (.json)</button>
@@ -1347,6 +1416,7 @@
       <input type="text" id="editTaskAssigneeInput" placeholder="Type a name, press Enter" maxlength="40" list="assigneeList">
       <button class="btn-ghost-ai" id="editTaskAssigneeAddBtn" title="Add assignee" type="button">+</button>
     </div>
+    <datalist id="assigneeList"></datalist>
     <div class="assignee-chips" id="editTaskAssigneeChips"></div>
 
     <label for="editTaskDateInput">Date (leave blank for Backlog)</label>
@@ -1563,6 +1633,24 @@
   </div>
 </div>
 
+<div class="form-modal" id="searchModal">
+  <div class="form-modal-head"><h2>🔍 Search</h2><button id="closeSearchModal" aria-label="Close">✕</button></div>
+  <div class="search-input-wrap"><input type="text" id="searchInput" placeholder="Tasks, notes, people, reports, sheds, audits…" autocomplete="off"></div>
+  <div class="form-modal-body" id="searchResults"></div>
+</div>
+
+<div class="form-modal" id="restoreModal">
+  <div class="form-modal-head"><h2>🕓 Restore a previous version</h2><button id="closeRestoreModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <label for="restoreDateInput">Choose a date (last 7 days)</label>
+    <input type="date" id="restoreDateInput">
+    <div class="bulk-preview" id="restoreStatus">Loading restore points…</div>
+    <div class="restore-list" id="restoreList"></div>
+    <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Restoring replaces tasks, batches, events and frequent tasks with the chosen version. History and reports are kept. Your current data is saved as a "Before restore" point first, and you can Undo straight after.</p>
+    <button class="btn-danger-outline" id="confirmRestoreBtn" style="margin-top:8px;" disabled>Choose a restore point</button>
+  </div>
+</div>
+
 <script>
 (function(){
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
@@ -1696,6 +1784,7 @@
     const v = hex.replace('#','');
     return [parseInt(v.substring(0,2),16), parseInt(v.substring(2,4),16), parseInt(v.substring(4,6),16)];
   }
+  function batchAgeOn(b, key){ return Math.round((toDateObj(key) - toDateObj(b.start)) / 86400000); }
   function batchesForDate(key){ return batches.filter(b => key>=b.start && key<=b.end); }
   function eventOnDate(key){ return events.find(e=>e.date===key); }
   function criticalEventForDate(key){ return events.find(e=>{ const cs=addDaysStr(e.date,-7), ce=addDaysStr(e.date,-1); return key>=cs && key<=ce; }); }
@@ -1838,20 +1927,26 @@
   }
 
   async function persist(){ showSyncPending(); schedulePush(); }
-  function showSyncPending(){
+  let syncState = 'idle';
+  let lastSyncAt = null;
+  function renderSyncStatus(){
     const el = $('#saveIndicator');
-    clearTimeout(flashSaved._t);
-    el.textContent = 'Syncing…';
-    el.classList.remove('sync-error');
-    el.classList.add('show', 'syncing');
+    if(!el) return;
+    const label = el.querySelector('.sync-label');
+    const waiting = (typeof pushPending!=='undefined' && pushPending) || (typeof reportsPushPending!=='undefined' && reportsPushPending);
+    let cls, text;
+    if(!ghPath){ cls = 'local'; text = 'Local only'; }
+    else if(!navigator.onLine){ cls = 'offline'; text = (waiting || syncState==='error') ? 'Offline — changes waiting' : 'Offline'; }
+    else if(syncState==='syncing'){ cls = 'syncing'; text = 'Syncing…'; }
+    else if(syncState==='error'){ cls = 'error'; text = 'Sync failed — retrying'; }
+    else if(lastSyncAt){ cls = 'ok'; text = 'Synced ' + formatTimeAgo(new Date(lastSyncAt)); }
+    else { cls = 'syncing'; text = 'Connecting…'; }
+    el.className = 'sync-status ' + cls;
+    if(label) label.textContent = text;
+    el.title = text + (lastSyncAt ? ` · last sync ${new Date(lastSyncAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}` : '');
   }
-  function showSyncError(){
-    const el = $('#saveIndicator');
-    clearTimeout(flashSaved._t);
-    el.textContent = 'Sync failed — retrying';
-    el.classList.remove('syncing');
-    el.classList.add('show', 'sync-error');
-  }
+  function showSyncPending(){ syncState = 'syncing'; renderSyncStatus(); }
+  function showSyncError(){ syncState = 'error'; renderSyncStatus(); }
 
   let pushDebounceTimer = null;
   let pushMaxWaitTimer = null;
@@ -1908,14 +2003,29 @@
       ghPath = ghFarmName ? sanitizeFarmFileName(ghFarmName) : null;
     }catch(e){}
     updateGithubStatusUI();
+    renderSyncStatus();
     if(ghPath){
       showLoadingOverlay();
       let ok = false;
+      const pullPromise = pullFromGithub(true);
       try{
-        ok = await Promise.race([pullFromGithub(true), new Promise(resolve=> setTimeout(()=>resolve(false), 6000))]);
+        ok = await Promise.race([pullPromise, new Promise(resolve=> setTimeout(()=>resolve(false), 6000))]);
       }catch(e){ ok = false; }
       hideLoadingOverlay();
-      if(!ok){ showLoadErrorOverlay(); return; }
+      if(!ok){
+        showLoadErrorOverlay();
+        // A slow connection can still finish after the 6s timeout. If it does,
+        // drop the error screen instead of leaving fresh data hidden behind it.
+        pullPromise.then(lateOk=>{
+          if(lateOk && $('#loadErrorOverlay').classList.contains('show')){
+            hideLoadErrorOverlay();
+            checkOverdueTasksOnLoad();
+            updateOverdueBadge();
+            showToast('Loaded.');
+          }
+        }).catch(()=>{});
+        return;
+      }
     } else {
       migrateTaskOrder();
       updateBatchColorDefault();
@@ -1928,12 +2038,9 @@
   function showLoadErrorOverlay(){ const el = $('#loadErrorOverlay'); if(el) el.classList.add('show'); }
   function hideLoadErrorOverlay(){ const el = $('#loadErrorOverlay'); if(el) el.classList.remove('show'); }
   function flashSaved(){
-    const el = $('#saveIndicator');
-    el.textContent = 'Saved';
-    el.classList.remove('sync-error', 'syncing');
-    el.classList.add('show');
-    clearTimeout(flashSaved._t);
-    flashSaved._t = setTimeout(()=>el.classList.remove('show'), 1200);
+    syncState = 'idle';
+    lastSyncAt = Date.now();
+    renderSyncStatus();
   }
 
   function sanitizeFarmFileName(name){
@@ -1963,6 +2070,7 @@
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
     await pullFromGithub();
     updateGithubStatusUI();
+    renderSyncStatus();
   }
   async function pullFromGithub(silent){
     if(!ghPath) return false;
@@ -1974,11 +2082,13 @@
         ? mergeSnapshots(lastSyncedSnapshot, snapshotLocal(), server.data)
         : server.data;
       lastSyncedSnapshot = cloneData(server.data);
+      maybeTakeDailySnapshot();
       applyImportedData(JSON.stringify(merged));
       // Local edits survived the merge -> push them back up.
       if(stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
+      if(!pushPending) flashSaved(); else renderSyncStatus();
       if(!silent) showToast('Synced.');
       return true;
     }catch(e){
@@ -2011,6 +2121,7 @@
       const result = await res.json();
       if(result && result.sha) ghSha = result.sha;
       lastSyncedSnapshot = cloneData(merged);
+      maybeTakeDailySnapshot();
       // Keep any edits made while the request was in flight, layered on what we just saved.
       const current = snapshotLocal();
       const next = stableStr(current) === stableStr(localAtStart) ? merged : mergeSnapshots(localAtStart, current, merged);
@@ -2388,6 +2499,7 @@
   function deleteTask(id){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
+    const undoSnap = captureUndo();
     if(t.linkedReportId){
       const r = reports.find(x => x.id === t.linkedReportId);
       if(r){
@@ -2399,13 +2511,16 @@
     tasks = tasks.filter(x=>x.id!==id);
     addHistory('Removed', `${taskLabel(t)} deleted`);
     persist(); renderAll();
+    offerUndo(`Deleted ${taskLabel(t)}`, undoSnap);
   }
   function deleteAllForDate(key){
     const count = tasks.filter(t=>t.date===key).length;
     if(count===0) return;
+    const undoSnap = captureUndo();
     tasks = tasks.filter(t=>t.date!==key);
     addHistory('Removed', `${count} task${count>1?'s':''} deleted from ${formatFull(key)}`);
     persist(); renderAll();
+    offerUndo(`Deleted ${count} task${count>1?'s':''} from ${formatShort(key)}`, undoSnap);
   }
   // Re-number the target day's tasks so the dropped task sits exactly where it
   // was released. Uses the nearest visible task cards around the drop point, so
@@ -2438,6 +2553,8 @@
     if(!t) return;
     const newDate = newDateKey==='backlog' ? null : newDateKey;
     if(t.date===newDate && !opts.dropEvt) return;
+    const undoSnap = captureUndo();
+    const dateChanged = t.date!==newDate;
     if(t.date!==newDate){
       const from = formatShort(t.date), to = formatShort(newDate);
       addHistory('Scheduled', `${taskLabel(t)} moved from ${from} to ${to}`);
@@ -2445,6 +2562,7 @@
     }
     if(opts.dropEvt) placeTaskAtDrop(t.id, opts.dropEvt);
     persist();
+    if(dateChanged) offerUndo(`Moved ${taskLabel(t)} to ${formatShort(newDate)}`, undoSnap);
     if(opts.deferRender) requestAnimationFrame(renderAll);
     else renderAll();
   }
@@ -2460,9 +2578,11 @@
       showToast(`"${name}" is already on ${dateVal ? formatFull(dateVal) : 'the Backlog'}.`);
       return false;
     }
+    const undoSnap = captureUndo();
     const newTask = addTask(name, icon, dateVal);
     if(opts.dropEvt) placeTaskAtDrop(newTask.id, opts.dropEvt);
     persist();
+    offerUndo(`Added "${name}" to ${dateVal ? formatShort(dateVal) : 'Backlog'}`, undoSnap);
     if(opts.deferRender) requestAnimationFrame(renderAll);
     else renderAll();
   }
@@ -2531,9 +2651,11 @@
   function deleteEvent(id){
     const ev = events.find(e=>e.id===id);
     if(!ev) return;
+    const undoSnap = captureUndo();
     events = events.filter(e=>e.id!==id);
     addHistory('Event removed', `"${ev.name}" (was ${formatFull(ev.date)}) removed`);
     persist(); renderAll();
+    offerUndo(`Removed event "${ev.name}"`, undoSnap);
   }
   function updateEvent(id, name, dateVal, color, batchNumber){
     const ev = events.find(e=>e.id===id);
@@ -2556,9 +2678,11 @@
   function removeFrequentTemplate(id){
     const t = frequentTemplates.find(x=>x.id===id);
     if(!t) return;
+    const undoSnap = captureUndo();
     frequentTemplates = frequentTemplates.filter(x=>x.id!==id);
     addHistory('Frequent task removed', `"${t.name}" removed from Frequent tasks`);
     persist(); renderAll();
+    offerUndo(`Removed frequent task "${t.name}"`, undoSnap);
   }
 
   // ---------- REPORTS MODULE ----------
@@ -3056,9 +3180,11 @@
     const todayKey = dateKey(new Date());
     const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
     if(overdue.length===0) return 0;
+    const undoSnap = captureUndo();
     overdue.forEach(t=>{ t.date = todayKey; });
     addHistory('Overdue tasks transferred', `${overdue.length} overdue task(s) moved to today (${formatFull(todayKey)})`);
     persist(); renderAll();
+    offerUndo(`Moved ${overdue.length} overdue task(s) to today`, undoSnap);
     return overdue.length;
   }
   function updateOverdueBadge(){
@@ -3104,10 +3230,10 @@
     const shown = assignees.slice(0,3);
     let html = '<span class="task-avatars">';
     shown.forEach(name=>{
-      html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${name}">${initialsForAssignee(name)}</span>`;
+      html += `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${escapeHtmlAttr(name)}">${escapeHtml(initialsForAssignee(name))}</span>`;
     });
     if(assignees.length>3){
-      html += `<span class="task-avatar more-avatar" title="${assignees.slice(3).join(', ')}">+${assignees.length-3}</span>`;
+      html += `<span class="task-avatar more-avatar" title="${escapeHtmlAttr(assignees.slice(3).join(', '))}">+${assignees.length-3}</span>`;
     }
     html += '</span>';
     return html;
@@ -3361,7 +3487,7 @@
       row.innerHTML = `
         <div class="b-top">
           <span class="batch-swatch" style="background:${c}"></span>
-          <span class="b-num">#${b.number}</span>
+          <span class="b-num">#${escapeHtml(b.number)}</span>
           <span class="b-actions"><button class="edit-batch" title="Edit">✎</button><button class="remove-batch" title="Remove batch">✕</button></span>
         </div>
         <div class="b-range">${formatFull(b.start)} – ${formatFull(b.end)}</div>
@@ -3403,12 +3529,13 @@
           return;
         }
         clearTimeout(this._t);
+        const undoSnap = captureUndo();
         const removedCount = tasks.filter(t=> t.date && t.date>=b.start && t.date<=b.end).length;
         tasks = tasks.filter(t=> !(t.date && t.date>=b.start && t.date<=b.end));
         batches = batches.filter(x=>x.number!==b.number);
         addHistory('Batch removed', `Batch #${b.number} removed along with ${removedCount} task(s)`);
         persist(); renderAll();
-        showToast(`Batch #${b.number} removed — ${removedCount} task(s) deleted.`);
+        offerUndo(`Batch #${b.number} removed — ${removedCount} task(s) deleted`, undoSnap);
       });
       row.querySelector('.save-batch').addEventListener('click', ()=>{
         const ns = row.querySelector('.edit-start').value;
@@ -3458,7 +3585,7 @@
       row.className = 'event-row';
       const batchOptions = ['<option value="">— None —</option>'].concat(
         batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).map(b=>
-          `<option value="${b.number}" ${ev.batchNumber===b.number?'selected':''}>Batch #${b.number}</option>`
+          `<option value="${escapeHtmlAttr(b.number)}" ${ev.batchNumber===b.number?'selected':''}>Batch #${escapeHtml(b.number)}</option>`
         )
       ).join('');
       row.innerHTML = `
@@ -3468,10 +3595,10 @@
           <span class="e-actions"><button class="edit-event" title="Edit">✎</button><button class="remove-event" title="Remove event">✕</button></span>
         </div>
         <div class="e-sub"></div>
-        ${ev.batchNumber ? `<span class="event-checklist-tag" style="background:var(--secondary-soft);color:var(--secondary);">Batch #${ev.batchNumber}</span>` : ''}
+        ${ev.batchNumber ? `<span class="event-checklist-tag" style="background:var(--secondary-soft);color:var(--secondary);">Batch #${escapeHtml(ev.batchNumber)}</span>` : ''}
         ${ev.checklist ? '<span class="event-checklist-tag">Frequent Task Checklist added</span>' : ''}
         <div class="event-edit">
-          <input type="text" class="edit-name" value="${ev.name}">
+          <input type="text" class="edit-name" value="${escapeHtmlAttr(ev.name)}">
           <input type="date" class="edit-date" value="${ev.date}">
           <input type="color" class="edit-color" value="${ev.color || DEFAULT_EVENT_COLOR}">
           <select class="edit-batch">${batchOptions}</select>
@@ -3587,7 +3714,7 @@
       if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
         const wm = document.createElement('div');
         wm.className = 'batch-watermark';
-        wm.textContent = '#' + activeBatches[0].number;
+        wm.textContent = '#' + activeBatches[0].number + ' · D' + batchAgeOn(activeBatches[0], key);
         cell.appendChild(wm);
       }
 
@@ -3617,8 +3744,13 @@
           const pill = document.createElement('span');
           pill.className = 'batch-pill';
           pill.style.background = colorForBatchNumber(b.number);
+          const age = batchAgeOn(b, key);
           pill.textContent = '#' + b.number;
-          pill.title = `Batch #${b.number}: ${formatFull(b.start)} – ${formatFull(b.end)}`;
+          const ageSpan = document.createElement('span');
+          ageSpan.className = 'batch-age';
+          ageSpan.textContent = '· D' + age;
+          pill.appendChild(ageSpan);
+          pill.title = `Batch #${b.number} · Day ${age} (${formatFull(b.start)} – ${formatFull(b.end)})`;
           pillRow.appendChild(pill);
         });
         cell.appendChild(pillRow);
@@ -3740,7 +3872,7 @@
       const pill = document.createElement('div');
       pill.className = 'day-context-batch';
       pill.style.background = colorForBatchNumber(b.number);
-      pill.textContent = '#' + b.number;
+      pill.textContent = '#' + b.number + ' · Day ' + batchAgeOn(b, key);
       container.appendChild(pill);
     });
 
@@ -3966,6 +4098,7 @@
     });
     filterRow.appendChild(selectToggleBtn);
     box.appendChild(filterRow);
+    activeAuditPrepEvents().forEach(ev=> box.appendChild(buildAuditPrepPanel(ev, true)));
     if(agendaFilter==='upcoming'){
       const evSection = buildUpcomingEventsSection();
       if(evSection) box.appendChild(evSection);
@@ -4020,6 +4153,7 @@
       <button class="bulk-btn bulk-delete" id="bulkDeleteBtn">🗑️ Delete</button>
     `;
     bar.querySelector('#bulkMarkDoneBtn').addEventListener('click', ()=>{
+      const undoSnap = captureUndo();
       let count = 0;
       bulkSelectedIds.forEach(id=>{
         const t = tasks.find(x=>x.id===id);
@@ -4028,7 +4162,7 @@
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
       renderAll();
-      showToast(`${count} task(s) marked done.`);
+      offerUndo(`${count} task(s) marked done`, undoSnap);
     });
     const delBtn = bar.querySelector('#bulkDeleteBtn');
     delBtn.addEventListener('click', ()=>{
@@ -4040,12 +4174,13 @@
         return;
       }
       const count = bulkSelectedIds.size;
+      const undoSnap = captureUndo();
       tasks = tasks.filter(t=>!bulkSelectedIds.has(t.id));
       addHistory('Removed', `${count} task(s) bulk-deleted`);
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
       renderAll();
-      showToast(`${count} task(s) deleted.`);
+      offerUndo(`${count} task(s) deleted`, undoSnap);
     });
   }
 
@@ -4134,6 +4269,7 @@
     bar.querySelector('#backlogBulkScheduleBtn').addEventListener('click', ()=>{
       const val = bar.querySelector('#backlogBulkDateInput').value;
       if(!val){ showToast('Pick a date first.', true); return; }
+      const undoSnap = captureUndo();
       let count = 0;
       backlogSelectedIds.forEach(id=>{
         const t = tasks.find(x=>x.id===id);
@@ -4143,7 +4279,7 @@
       persist();
       backlogSelectedIds.clear();
       renderAll(); renderBacklogModalList();
-      showToast(`${count} task(s) moved to ${formatFull(val)}.`);
+      offerUndo(`${count} task(s) moved to ${formatShort(val)}`, undoSnap);
     });
     const delBtn = bar.querySelector('#backlogBulkDeleteBtn');
     delBtn.addEventListener('click', ()=>{
@@ -4155,12 +4291,13 @@
         return;
       }
       const count = backlogSelectedIds.size;
+      const undoSnap = captureUndo();
       tasks = tasks.filter(t=>!backlogSelectedIds.has(t.id));
       addHistory('Removed', `${count} task(s) bulk-deleted from Backlog`);
       persist();
       backlogSelectedIds.clear();
       renderAll(); renderBacklogModalList();
-      showToast(`${count} task(s) deleted.`);
+      offerUndo(`${count} task(s) deleted`, undoSnap);
     });
   }
 
@@ -4182,7 +4319,7 @@
           <span class="kicon"></span>
         </span>
         <span class="kname"></span>
-        ${task.notes ? `<span class="knote-flag" title="${task.notes.replace(/"/g,'&quot;')}">📝</span>` : ''}
+        ${task.notes ? `<span class="knote-flag" title="${escapeHtmlAttr(task.notes)}">📝</span>` : ''}
         ${avatarsHtml}
         <span class="kdot ${task.status==='done'?'done':'open'}"></span>
         <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
@@ -4223,6 +4360,7 @@
     return card;
   }
 
+  let kanbanEdgeFadeUpdater = null;
   function renderKanban(){
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
@@ -4260,7 +4398,8 @@
             <span class="dtitle">${formatFullWithWeekday(key)}</span>
             <button class="col-toggle-btn" title="Collapse day">↔</button>
           </div>
-          <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>`;
+          <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>
+          ${batchesForDate(key).length ? `<div class="col-batch-age">${batchesForDate(key).map(b=>`<span style="background:${colorForBatchNumber(b.number)}">#${escapeHtml(b.number)} · Day ${batchAgeOn(b, key)}</span>`).join('')}</div>` : ''}`;
       }
       col.appendChild(head);
       head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
@@ -4326,7 +4465,7 @@
     }
     updateEdgeFades();
     board.addEventListener('scroll', updateEdgeFades);
-    window.addEventListener('resize', updateEdgeFades);
+    kanbanEdgeFadeUpdater = updateEdgeFades;
     if(currentDate.toDateString ? dateKey(currentDate)===todayKey : false){
       const todayCol = board.querySelector('.kanban-column.today');
       if(todayCol && window.innerWidth<=760) todayCol.scrollIntoView({behavior:'auto', inline:'start'});
@@ -4492,6 +4631,7 @@
     renderFrequentTasks();
     renderBatches();
     renderEvents();
+    renderAuditPrep();
     if(viewMode==='month') renderMonth();
     else if(viewMode==='day') renderDay();
     else if(viewMode==='year') renderYear();
@@ -4509,6 +4649,401 @@
     if($('#reportsDrawer').classList.contains('open')) renderReportsList();
   }
 
+  // ==================== UNDO ====================
+  let undoState = null, undoTimer = null;
+  function captureUndo(){ return cloneData({ tasks, batches, events, frequentTemplates }); }
+  function hideUndoToast(){
+    const el = $('#undoToast');
+    if(el) el.classList.remove('show');
+    clearTimeout(undoTimer);
+  }
+  function offerUndo(label, snap){
+    if(!snap) return;
+    undoState = { label, snap };
+    let el = $('#undoToast');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'undoToast';
+      el.className = 'undo-toast';
+      el.innerHTML = '<span class="undo-msg"></span><button type="button">Undo</button>';
+      document.body.appendChild(el);
+      el.querySelector('button').addEventListener('click', performUndo);
+    }
+    el.querySelector('.undo-msg').textContent = label;
+    el.classList.add('show');
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(()=>{ el.classList.remove('show'); undoState = null; }, 7000);
+  }
+  function performUndo(){
+    if(!undoState) return;
+    const s = undoState.snap, label = undoState.label;
+    undoState = null;
+    hideUndoToast();
+    tasks = s.tasks; batches = s.batches; events = s.events; frequentTemplates = s.frequentTemplates;
+    // Deleting a linked task cleared its report's link — put it back.
+    let relinked = false;
+    tasks.forEach(t=>{
+      if(!t.linkedReportId) return;
+      const r = reports.find(x=> x.id === t.linkedReportId);
+      if(r && !r.linkedTaskId){ r.linkedTaskId = t.id; r.updatedAt = new Date().toISOString(); relinked = true; }
+    });
+    if(relinked) scheduleReportsPush();
+    addHistory('Undone', label);
+    persist(); renderAll();
+    showToast('Undone.');
+  }
+
+  // ==================== AUDIT PREP ====================
+  function activeAuditPrepEvents(){
+    const todayKey = dateKey(new Date());
+    return events
+      .filter(e=> todayKey >= addDaysStr(e.date, -7) && todayKey <= e.date)
+      .sort((a,b)=> a.date.localeCompare(b.date));
+  }
+  function buildAuditPrepPanel(ev, compact){
+    const todayKey = dateKey(new Date());
+    const cs = addDaysStr(ev.date, -7);
+    const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+    const windowTasks = tasks.filter(t=> t.date && t.date >= cs && t.date <= ev.date);
+    const doneCount = windowTasks.filter(t=> t.status==='done').length;
+    const openTasks = windowTasks.filter(t=> t.status!=='done')
+      .sort((a,b)=> a.date.localeCompare(b.date) || taskSortCompare(a,b));
+    const prepNames = new Set(PREP_CHECKLIST.map(n=> n.toLowerCase()));
+    const backlogPrep = tasks.filter(t=> !t.date && t.status!=='done' && prepNames.has((t.name||'').trim().toLowerCase()));
+    const batch = ev.batchNumber ? batches.find(b=> b.number===ev.batchNumber) : null;
+    const shedSet = batch && Array.isArray(batch.sheds) && batch.sheds.length ? new Set(batch.sheds.map(s=> String(s.shed))) : null;
+    const openReports = reports.filter(r=> (r.status==='Open' || r.status==='In Progress') && (!shedSet || shedSet.has(String(r.shed))));
+
+    const panel = document.createElement('div');
+    panel.className = 'audit-prep';
+    const head = document.createElement('div');
+    head.className = 'audit-prep-head';
+    const title = document.createElement('div');
+    title.className = 'audit-prep-title';
+    title.textContent = '📝 ' + ev.name + (ev.batchNumber ? ` · Batch #${ev.batchNumber}` : '');
+    const badge = document.createElement('span');
+    badge.className = 'audit-prep-days';
+    badge.textContent = daysLeft <= 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft} days`;
+    head.append(title, badge);
+    panel.appendChild(head);
+
+    const sub = document.createElement('div');
+    sub.className = 'audit-prep-sub';
+    sub.textContent = `Audit ${formatFull(ev.date)} · prep week from ${formatShort(cs)}`;
+    panel.appendChild(sub);
+
+    const pct = windowTasks.length ? Math.round((doneCount / windowTasks.length) * 100) : 0;
+    const bar = document.createElement('div');
+    bar.className = 'audit-prep-bar';
+    bar.innerHTML = `<span style="width:${pct}%"></span>`;
+    panel.appendChild(bar);
+
+    const stats = document.createElement('div');
+    stats.className = 'audit-prep-stats';
+    const line = document.createElement('div');
+    line.textContent = windowTasks.length ? `✓ ${doneCount}/${windowTasks.length} prep-week tasks done` : 'No tasks scheduled in the prep week yet';
+    stats.appendChild(line);
+    if(backlogPrep.length){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'audit-prep-link';
+      b.textContent = `⚠ ${backlogPrep.length} checklist item(s) still in Backlog — schedule them`;
+      b.addEventListener('click', ()=>{ closeOverlays(); openBacklogModal(); });
+      stats.appendChild(b);
+    }
+    if(openReports.length){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'audit-prep-link';
+      b.textContent = `🚩 ${openReports.length} open report(s)${shedSet ? " in this batch's sheds" : ''}`;
+      b.addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
+      stats.appendChild(b);
+    }
+    panel.appendChild(stats);
+
+    const max = compact ? 3 : 4;
+    openTasks.slice(0, max).forEach(t=>{
+      const it = document.createElement('button');
+      it.type = 'button'; it.className = 'audit-prep-item';
+      const ic = document.createElement('span'); renderIconInto(ic, t.icon);
+      const nm = document.createElement('span'); nm.className = 'api-name'; nm.textContent = t.name;
+      const dt = document.createElement('span'); dt.className = 'api-date';
+      dt.textContent = (t.date < todayKey ? '⚠ ' : '') + formatShort(t.date);
+      it.append(ic, nm, dt);
+      it.addEventListener('click', ()=> openTaskDetailModal(t.id));
+      panel.appendChild(it);
+    });
+    if(openTasks.length > max){
+      const more = document.createElement('button');
+      more.type = 'button'; more.className = 'audit-prep-link';
+      more.textContent = `+ ${openTasks.length - max} more open — show this week`;
+      more.addEventListener('click', ()=>{ closeOverlays(); viewMode = 'list'; agendaFilter = 'week'; syncViewButtons(); renderAll(); });
+      panel.appendChild(more);
+    }
+    return panel;
+  }
+  function renderAuditPrep(){
+    const box = $('#auditPrepSidebar');
+    if(!box) return;
+    box.innerHTML = '';
+    activeAuditPrepEvents().forEach(ev=> box.appendChild(buildAuditPrepPanel(ev, false)));
+  }
+
+  // ==================== SEARCH ====================
+  function openSearch(){
+    closeOverlays();
+    $('#searchInput').value = '';
+    renderSearchResults();
+    openDrawer('#searchModal');
+    setTimeout(()=> $('#searchInput').focus(), 120);
+  }
+  function highlightInto(el, text, q){
+    text = String(text == null ? '' : text);
+    el.textContent = '';
+    if(!q){ el.textContent = text; return; }
+    const lower = text.toLowerCase();
+    let i = 0;
+    while(true){
+      const j = lower.indexOf(q, i);
+      if(j < 0){ el.appendChild(document.createTextNode(text.slice(i))); break; }
+      if(j > i) el.appendChild(document.createTextNode(text.slice(i, j)));
+      const m = document.createElement('mark');
+      m.textContent = text.slice(j, j + q.length);
+      el.appendChild(m);
+      i = j + q.length;
+    }
+  }
+  function buildSearchResult(icon, title, sub, q, onClick){
+    const el = document.createElement(onClick ? 'button' : 'div');
+    el.className = 'search-result';
+    if(onClick){ el.type = 'button'; el.addEventListener('click', onClick); }
+    else el.style.cursor = 'default';
+    const ic = document.createElement('span'); ic.className = 'sr-icon'; renderIconInto(ic, icon);
+    const body = document.createElement('span'); body.className = 'sr-body';
+    const t = document.createElement('span'); t.className = 'sr-title'; highlightInto(t, title, q);
+    const s2 = document.createElement('span'); s2.className = 'sr-sub'; highlightInto(s2, sub, q);
+    body.append(t, s2);
+    el.append(ic, body);
+    return el;
+  }
+  function jumpToDate(key){
+    closeOverlays();
+    currentDate = toDateObj(key);
+    if(viewMode==='list' || viewMode==='year'){
+      viewMode = window.innerWidth < 760 ? 'day' : (settings.calendarDensity==='day' ? 'day' : 'month');
+    }
+    syncViewButtons(); renderAll();
+  }
+  function renderSearchResults(){
+    const box = $('#searchResults');
+    box.innerHTML = '';
+    const q = ($('#searchInput').value || '').trim().toLowerCase();
+    if(q.length < 2){
+      box.innerHTML = '<div class="empty-note">Type at least 2 characters. Searches tasks, notes, assignees, reports, sheds, audits, batches and history.</div>';
+      return;
+    }
+    const has = v => String(v == null ? '' : v).toLowerCase().includes(q);
+    const todayKey = dateKey(new Date());
+    let total = 0;
+    function group(label, items, limit, build){
+      if(!items.length) return;
+      total += items.length;
+      const h = document.createElement('div');
+      h.className = 'search-group-title';
+      h.textContent = `${label} (${items.length})`;
+      box.appendChild(h);
+      items.slice(0, limit).forEach(x=> box.appendChild(build(x)));
+      if(items.length > limit){
+        const m = document.createElement('div');
+        m.className = 'empty-note';
+        m.textContent = `+ ${items.length - limit} more — type more to narrow it down`;
+        box.appendChild(m);
+      }
+    }
+    const taskHits = tasks.filter(t=> has(t.name) || has(t.notes) || (t.assignees||[]).some(has))
+      .sort((a,b)=>{
+        const ad = a.status==='done' ? 1 : 0, bd = b.status==='done' ? 1 : 0;
+        if(ad !== bd) return ad - bd;
+        return (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
+      });
+    group('Tasks', taskHits, 25, t=>{
+      const parts = [t.date ? formatFull(t.date) : 'Backlog', t.status==='done' ? 'Done' : (t.date && t.date < todayKey ? 'Overdue' : 'Open')];
+      if((t.assignees||[]).length) parts.push(t.assignees.join(', '));
+      if(t.notes && has(t.notes)) parts.push(t.notes.replace(/\s+/g, ' '));
+      return buildSearchResult(t.icon, t.name, parts.join(' · '), q, ()=>{ closeOverlays(); openTaskDetailModal(t.id); });
+    });
+    const repHits = reports.filter(r=> [r.code, r.shed, r.problemType, r.notes, r.createdBy, r.managerNotes, r.resolutionNotes].some(has))
+      .sort((a,b)=> (b.createdAt || '').localeCompare(a.createdAt || ''));
+    group('Reports', repHits, 15, r=> buildSearchResult('🚩', r.code || '(no code)',
+      `${r.status || 'Open'} · Shed ${r.shed} · ${r.problemType}${r.notes ? ' · ' + r.notes.replace(/\s+/g,' ') : ''}`, q,
+      ()=>{ closeOverlays(); openReportsDrawer(); openReportDetailModal(r.id); }));
+    const evHits = events.filter(e=> has(e.name) || has(e.batchNumber)).sort((a,b)=> a.date.localeCompare(b.date));
+    group('Events / Audits', evHits, 10, e=> buildSearchResult('📝', e.name,
+      `${formatFull(e.date)}${e.batchNumber ? ' · Batch #' + e.batchNumber : ''}`, q, ()=> jumpToDate(e.date)));
+    const bHits = batches.filter(b=> has(b.number)).sort((a,b)=> a.start.localeCompare(b.start));
+    group('Batches', bHits, 10, b=> buildSearchResult('🐣', `Batch #${b.number}`,
+      `${formatFull(b.start)} – ${formatFull(b.end)}${(b.sheds||[]).length ? ' · ' + b.sheds.length + ' shed(s)' : ''}`, q, ()=> jumpToDate(b.start)));
+    const hHits = history.filter(h=> has(h.action) || has(h.detail));
+    group('History', hHits, 10, h=> buildSearchResult('🕓', h.action,
+      `${h.detail} · ${new Date(h.ts).toLocaleDateString(undefined,{month:'short', day:'numeric'})}`, q, null));
+    if(!total){
+      const n = document.createElement('div');
+      n.className = 'empty-note';
+      n.textContent = `No matches for "${q}".`;
+      box.appendChild(n);
+    }
+  }
+
+  // ==================== DAILY RESTORE POINTS ====================
+  // Stored in a separate "<farm>-snapshots" file through the same Worker, so no
+  // Worker change is needed. One "daily" point per day (the first synced state
+  // of that day) plus the latest "before-restore" point; 7-day retention.
+  const SNAPSHOT_KEEP_DAYS = 7;
+  let snapshotInFlight = false;
+  function snapshotsUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName + '-snapshots')}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  async function fetchSnapshotsFile(){
+    const res = await fetch(snapshotsUrl(), { cache:'no-store' });
+    if(res.status === 404) return { list:[], sha:null };
+    if(!res.ok) throw new Error('Snapshots GET ' + res.status);
+    const r = await res.json();
+    if(!r || r.notFound) return { list:[], sha:null };
+    const d = r.data || {};
+    return { list: Array.isArray(d.snapshots) ? d.snapshots : [], sha: r.sha };
+  }
+  function pruneSnapshots(list){
+    const cutoff = addDaysStr(dateKey(new Date()), -SNAPSHOT_KEEP_DAYS);
+    const kept = list.filter(s=> s && s.date && s.date >= cutoff && s.data);
+    const pre = kept.filter(s=> s.kind==='before-restore').sort((a,b)=> (b.takenAt||0) - (a.takenAt||0)).slice(0,1);
+    const seenDaily = new Set();
+    const daily = kept.filter(s=> s.kind!=='before-restore')
+      .sort((a,b)=> (a.takenAt||0) - (b.takenAt||0))
+      .filter(s=>{ if(seenDaily.has(s.date)) return false; seenDaily.add(s.date); return true; });
+    return daily.concat(pre).sort((a,b)=> (b.takenAt||0) - (a.takenAt||0));
+  }
+  function snapshotPayload(d){
+    const c = cloneData(d) || {};
+    return { tasks: c.tasks || [], batches: c.batches || [], events: c.events || [], frequentTemplates: c.frequentTemplates || [] };
+  }
+  async function saveSnapshotEntry(entry, onlyIfMissingDaily, retry){
+    retry = retry || 0;
+    const { list, sha } = await fetchSnapshotsFile();
+    if(onlyIfMissingDaily && list.some(s=> s && s.kind==='daily' && s.date===entry.date)) return 'exists';
+    const next = pruneSnapshots(list.concat([entry]));
+    const res = await fetch(snapshotsUrl(), {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ sha, data: { snapshots: next } })
+    });
+    if((res.status === 409 || res.status === 422) && retry < 3){
+      await new Promise(r=> setTimeout(r, 500 * (retry + 1)));
+      return saveSnapshotEntry(entry, onlyIfMissingDaily, retry + 1);
+    }
+    if(!res.ok) throw new Error('Snapshots PUT ' + res.status);
+    return 'saved';
+  }
+  async function maybeTakeDailySnapshot(){
+    if(!ghPath || snapshotInFlight || !lastSyncedSnapshot) return;
+    const today = dateKey(new Date());
+    const key = 'cw-daily-snapshot-' + ghPath;
+    try{ if(localStorage.getItem(key) === today) return; }catch(e){}
+    snapshotInFlight = true;
+    try{
+      await saveSnapshotEntry({ id: uid(), kind:'daily', date: today, takenAt: Date.now(), data: snapshotPayload(lastSyncedSnapshot) }, true);
+      try{ localStorage.setItem(key, today); }catch(e){}
+    }catch(e){ console.warn('Daily restore point skipped', e); }
+    finally{ snapshotInFlight = false; }
+  }
+
+  let restoreSnapshots = [];
+  let restoreSelectedId = null;
+  function resetRestoreBtn(){
+    const btn = $('#confirmRestoreBtn');
+    btn.dataset.pending = '';
+    btn.classList.remove('confirm');
+    clearTimeout(btn._t);
+    btn.disabled = !restoreSelectedId;
+    btn.textContent = restoreSelectedId ? 'Restore this version' : 'Choose a restore point';
+  }
+  async function openRestoreModal(){
+    if(!ghPath){ showToast('Connect your farm in Settings first.', true); return; }
+    closeOverlays();
+    const today = dateKey(new Date());
+    const inp = $('#restoreDateInput');
+    inp.min = addDaysStr(today, -SNAPSHOT_KEEP_DAYS);
+    inp.max = today;
+    inp.value = '';
+    restoreSelectedId = null;
+    restoreSnapshots = [];
+    resetRestoreBtn();
+    $('#restoreList').innerHTML = '';
+    $('#restoreStatus').textContent = 'Loading restore points…';
+    openDrawer('#restoreModal');
+    try{
+      const { list } = await fetchSnapshotsFile();
+      restoreSnapshots = pruneSnapshots(list);
+    }catch(e){
+      $('#restoreStatus').textContent = 'Could not load restore points — check your connection.';
+      return;
+    }
+    renderRestoreList();
+  }
+  function restoreEntryTitle(s){
+    if(s.kind === 'before-restore') return `Before last restore — ${new Date(s.takenAt).toLocaleString(undefined,{weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}`;
+    return `${formatFullWithWeekday(s.date)} — start of day`;
+  }
+  function renderRestoreList(){
+    const date = $('#restoreDateInput').value;
+    const listEl = $('#restoreList');
+    const status = $('#restoreStatus');
+    listEl.innerHTML = '';
+    if(!restoreSnapshots.length){
+      status.textContent = 'No restore points yet. The first one is saved automatically today — you will be able to restore from tomorrow onwards.';
+      status.classList.remove('has-matches');
+      return;
+    }
+    const shown = date ? restoreSnapshots.filter(s=> s.date === date) : restoreSnapshots;
+    if(date && !shown.length){
+      const avail = [...new Set(restoreSnapshots.map(s=> s.date))].sort().map(d=> formatShort(d)).join(', ');
+      status.textContent = `No restore point for ${formatFull(date)}. Available: ${avail}.`;
+      status.classList.remove('has-matches');
+    } else {
+      status.textContent = date ? `${shown.length} restore point(s) for ${formatFull(date)}.` : `${shown.length} restore point(s) in the last 7 days — pick a date to filter, then choose one.`;
+      status.classList.add('has-matches');
+    }
+    if(restoreSelectedId && !shown.some(s=> s.id === restoreSelectedId)){ restoreSelectedId = null; resetRestoreBtn(); }
+    shown.forEach(s=>{
+      const d = s.data || {};
+      const sub = `${(d.tasks||[]).length} tasks · ${(d.batches||[]).length} batches · ${(d.events||[]).length} events · saved ${new Date(s.takenAt).toLocaleTimeString(undefined,{hour:'numeric', minute:'2-digit'})}`;
+      const el = buildSearchResult(s.kind==='before-restore' ? '↩️' : '📅', restoreEntryTitle(s), sub, '', ()=>{
+        restoreSelectedId = s.id;
+        listEl.querySelectorAll('.search-result').forEach(x=> x.classList.remove('active'));
+        el.classList.add('active');
+        resetRestoreBtn();
+      });
+      if(s.id === restoreSelectedId) el.classList.add('active');
+      listEl.appendChild(el);
+    });
+  }
+  async function performRestore(entry){
+    const btn = $('#confirmRestoreBtn');
+    btn.disabled = true;
+    btn.textContent = 'Restoring…';
+    const undoSnap = captureUndo();
+    try{
+      await saveSnapshotEntry({ id: uid(), kind:'before-restore', date: dateKey(new Date()), takenAt: Date.now(), data: snapshotPayload(snapshotLocal()) }, false);
+    }catch(e){ console.warn('Could not save the before-restore point', e); }
+    const d = cloneData(entry.data) || {};
+    tasks = d.tasks || [];
+    batches = d.batches || [];
+    events = d.events || [];
+    frequentTemplates = d.frequentTemplates || [];
+    migrateTaskOrder();
+    const label = entry.kind === 'before-restore' ? 'the copy saved before the last restore' : `${formatFull(entry.date)} (start of day)`;
+    addHistory('Restored', `Data restored to ${label}`);
+    closeOverlays();
+    persist(); renderAll();
+    reconcileReportTaskLinks();
+    offerUndo(`Restored to ${label}`, undoSnap);
+  }
+
   let editingAssignees = [];
   let detailTaskId = null;
   function openTaskDetailModal(id){
@@ -4523,7 +5058,7 @@
     $('#detailDate').textContent = t.date ? toDateObj(t.date).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'}) : 'Backlog (unscheduled)';
     const activeBatch = t.date ? batchesForDate(t.date).find(b=>b) : null;
     const batchEl = $('#detailBatch');
-    if(activeBatch){ batchEl.innerHTML = `<span class="batch-chip" style="background:${colorForBatchNumber(activeBatch.number)}">#${activeBatch.number}</span>`; }
+    if(activeBatch){ batchEl.innerHTML = `<span class="batch-chip" style="background:${colorForBatchNumber(activeBatch.number)}">#${escapeHtml(activeBatch.number)} · Day ${batchAgeOn(activeBatch, t.date)}</span>`; batchEl.style.color = ''; }
     else { batchEl.innerHTML = ''; batchEl.textContent = 'Not linked to a batch'; batchEl.style.color = 'var(--muted)'; }
     const assigneeRow = $('#detailAssigneeRow');
     const assigneeList = $('#detailAssigneeList');
@@ -4533,7 +5068,7 @@
       t.assignees.forEach(name=>{
         const item = document.createElement('div');
         item.className = 'assignee-item';
-        item.innerHTML = `<span class="dvalue"></span><span class="task-avatar" style="background:${colorForAssignee(name)}">${initialsForAssignee(name)}</span>`;
+        item.innerHTML = `<span class="dvalue"></span><span class="task-avatar" style="background:${colorForAssignee(name)}">${escapeHtml(initialsForAssignee(name))}</span>`;
         item.querySelector('.dvalue').textContent = name;
         assigneeList.appendChild(item);
       });
@@ -4798,7 +5333,7 @@
       const chip = document.createElement('span');
       chip.className = 'assignee-chip';
       chip.style.background = colorForAssignee(name);
-      chip.innerHTML = `<span class="chip-initial">${initialsForAssignee(name)}</span><span class="chip-name"></span><button class="chip-remove" type="button" data-idx="${i}">✕</button>`;
+      chip.innerHTML = `<span class="chip-initial">${escapeHtml(initialsForAssignee(name))}</span><span class="chip-name"></span><button class="chip-remove" type="button" data-idx="${i}">✕</button>`;
       chip.querySelector('.chip-name').textContent = name;
       box.appendChild(chip);
     });
@@ -5105,6 +5640,8 @@
     $('#seriesDeleteModal').classList.remove('open');
     $('#copyModal').classList.remove('open');
     $('#reportDetailModal').classList.remove('open');
+    $('#searchModal').classList.remove('open');
+    $('#restoreModal').classList.remove('open');
     document.querySelector('.sidebar').classList.remove('open');
     $('#quickAddSheet').classList.add('hidden');
     $('#moreSheet').classList.add('hidden');
@@ -5315,15 +5852,16 @@
       ? tasks.filter(x=> x.seriesId===target.seriesId && x.date && x.date >= target.date)
       : [target];
     const count = toDelete.length;
+    const undoSnap = captureUndo();
     tasks = tasks.filter(x=> !toDelete.includes(x));
     addHistory('Removed', `${count} occurrence(s) of "${target.name}" deleted from series`);
     persist(); renderAll();
-    showToast(`${count} occurrence(s) deleted.`);
+    offerUndo(`${count} occurrence(s) deleted`, undoSnap);
   });
   $('#closeOverdueModal').addEventListener('click', closeOverlays);
   $('#moveOverdueToTodayBtn').addEventListener('click', ()=>{
     const count = transferOverdueToToday();
-    if(count>0){ closeOverlays(); showToast(`Moved ${count} overdue task(s) to today.`); }
+    if(count>0){ closeOverlays(); }
   });
   $('#closeOverdueBtn').addEventListener('click', closeOverlays);
   $('#scrim').addEventListener('click', closeOverlays);
@@ -5531,6 +6069,7 @@
       return;
     }
     clearTimeout(this._t);
+    const undoSnap = captureUndo();
     const toDelete = new Set(matches.map(t=> t.id));
     tasks = tasks.filter(t=> !toDelete.has(t.id));
     const desc = bulkDeleteMode==='range'
@@ -5542,7 +6081,7 @@
     this.classList.remove('confirm');
     this.textContent = resetLabel;
     closeOverlays();
-    showToast(`${count} task(s) deleted.`);
+    offerUndo(`${count} task(s) deleted`, undoSnap);
   });
 
   $('#connectGithubBtn').addEventListener('click', connectGithub);
@@ -5618,6 +6157,7 @@
   });
   window.addEventListener('resize', ()=>{
     closeAllTaskMenus();
+    if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();
     updatePeriodLabel();
     if(viewMode==='month') renderMonth();
     else if(viewMode==='day') renderDay();
@@ -5683,6 +6223,50 @@
     btn.classList.add('spinning');
     try{ await performManualRefresh(); }
     finally{ btn.classList.remove('spinning'); }
+  });
+
+  // ---------- New feature listeners ----------
+  $('#searchBtn').addEventListener('click', openSearch);
+  $('#moreSearchBtn').addEventListener('click', openSearch);
+  $('#closeSearchModal').addEventListener('click', closeOverlays);
+  $('#searchInput').addEventListener('input', renderSearchResults);
+  $('#openRestoreBtn').addEventListener('click', openRestoreModal);
+  $('#closeRestoreModal').addEventListener('click', closeOverlays);
+  $('#restoreDateInput').addEventListener('change', renderRestoreList);
+  $('#confirmRestoreBtn').addEventListener('click', function(){
+    const entry = restoreSnapshots.find(s=> s.id === restoreSelectedId);
+    if(!entry) return;
+    if(!this.dataset.pending){
+      this.dataset.pending = 'true';
+      this.classList.add('confirm');
+      this.textContent = 'Tap again to restore — this replaces current data';
+      clearTimeout(this._t);
+      this._t = setTimeout(resetRestoreBtn, 4000);
+      return;
+    }
+    clearTimeout(this._t);
+    performRestore(entry);
+  });
+  $('#saveIndicator').addEventListener('click', ()=>{
+    const label = $('#saveIndicator .sync-label');
+    if(window.innerWidth <= 760 && label) showToast(label.textContent);
+  });
+  window.addEventListener('online', ()=>{
+    renderSyncStatus();
+    if(ghPath){
+      if(pushPending) runScheduledPush();
+      if(reportsPushPending) runScheduledReportsPush();
+    }
+  });
+  window.addEventListener('offline', renderSyncStatus);
+  setInterval(renderSyncStatus, 30000);
+  document.addEventListener('keydown', (e)=>{
+    const tag = (e.target && e.target.tagName) || '';
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable);
+    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openSearch(); return; }
+    if(typing) return;
+    if((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && undoState){ e.preventDefault(); performUndo(); return; }
+    if(e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); openSearch(); }
   });
 
   load();
