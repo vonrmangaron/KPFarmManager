@@ -1118,6 +1118,70 @@
   /* ---- Restore ---- */
   .restore-list{ display:flex; flex-direction:column; gap:6px; }
 
+  /* ---- Floating view dock (Trello-style) ---- */
+  .mode-dock{
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:44;
+    display:flex; align-items:center; gap:4px; padding:6px;
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow-lg);
+  }
+  .md-btn{
+    position:relative; display:flex; align-items:center; gap:8px;
+    border:none; background:transparent; color:var(--ink); cursor:pointer;
+    font-family:'Sora',sans-serif; font-weight:700; font-size:14px;
+    padding:10px 16px; border-radius:11px; transition:background .12s ease, color .12s ease;
+  }
+  .md-btn .md-ic{ font-size:17px; line-height:1; }
+  .md-btn:hover{ background:var(--surface-soft); }
+  .md-btn.active{ background:var(--primary-soft); color:var(--primary-dark); }
+  .md-btn.active::after{
+    content:''; position:absolute; left:50%; bottom:3px; width:22px; height:3px; border-radius:2px;
+    background:var(--primary-dark); transform:translateX(-50%);
+  }
+  .md-sep{ width:1px; align-self:stretch; margin:6px 4px; background:var(--line); }
+  .mode-dock .calendar-density-btn{
+    border:none; background:transparent; font-size:14px; padding:10px 14px; border-radius:11px; color:var(--ink);
+  }
+  .mode-dock .calendar-density-btn:hover{ background:var(--surface-soft); border-color:transparent; }
+  .mode-dock .calendar-density-pop{ top:auto; bottom:calc(100% + 12px); right:0; }
+  .mode-dock .cd-chevron{ transform:rotate(180deg); }
+  .mode-dock .calendar-density-wrap.open .cd-chevron{ transform:none; }
+  /* keep the page content, FABs and toasts clear of the dock */
+  @media (min-width: 761px){
+    .calendar-wrap{ padding-bottom:96px; }
+    .toast{ bottom:96px; }
+    .undo-toast{ bottom:150px; }
+    .bulk-action-bar{ bottom:96px; }
+  }
+  @media (min-width: 761px) and (max-width: 1180px){
+    .fab-refresh, .fab-viewer, .fab-delete{ bottom:96px; }
+  }
+  @media (max-width: 760px){
+    .mode-dock{ display:none; }
+  }
+
+  /* ---- Weather ---- */
+  .wx{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; font-family:'Inter',sans-serif; color:var(--ink); }
+  .wx .wx-ic{ line-height:1; }
+  .wx .wx-lo, .wx .wx-sub{ color:var(--muted); font-weight:600; }
+  .wx-cell{ font-size:11.5px; font-weight:700; margin-right:auto; margin-left:6px; min-width:0; }
+  .wx-cell .wx-ic{ font-size:14px; }
+  .wx-cell.wx-today .wx-now{ color:var(--primary-dark); font-weight:800; }
+  .wx-line{ font-size:11.5px; font-weight:700; margin-top:6px; }
+  .wx-line .wx-ic{ font-size:14px; }
+  .wx-big{ margin-left:auto; padding:6px 12px; border-radius:12px; background:var(--surface-soft); border:1px solid var(--line); font-size:13px; font-weight:700; flex-wrap:wrap; justify-content:flex-end; white-space:normal; text-align:right; }
+  .wx-big .wx-ic{ font-size:22px; }
+  .wx-big .wx-now{ font-family:'Sora',sans-serif; font-size:18px; font-weight:800; }
+  .wx-list{ font-size:12px; font-weight:700; margin-right:10px; }
+  .wx-list .wx-ic{ font-size:14px; }
+  .wx-modal{ font-size:13px; font-weight:600; padding:8px 12px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); margin-bottom:10px; white-space:normal; flex-wrap:wrap; }
+  .wx-modal .wx-ic{ font-size:18px; }
+  .wsc-wx{ font-size:12px; line-height:1; margin-top:2px; }
+  .week-strip-cell.selected .wsc-wx{ filter:drop-shadow(0 0 1px rgba(0,0,0,0.3)); }
+  .settings-body input[type="text"]{ border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:9px 10px; font-size:15px; color:var(--ink); width:100%; min-width:0; }
+  @media (max-width: 1023px){ .wx-cell .wx-lo{ display:none; } }
+  @media (max-width: 480px){ .wx-cell .wx-t{ display:none; } .wx-cell{ margin-left:3px; } .wx-big .wx-sub{ display:none; } }
+
   @media (max-width: 760px){
     .sync-status .sync-label{ display:none; }
     .sync-status{ padding:10px 6px; cursor:pointer; position:absolute; right:12px; top:calc(max(14px, env(safe-area-inset-top)) + 4px); }
@@ -1158,21 +1222,6 @@
     </div>
 
     <div class="toolbar">
-      <div class="segmented" role="group" aria-label="Calendar view">
-        <button id="viewCalendarBtn" class="active">📅 Calendar</button>
-        <button id="viewListBtn">📋 List</button>
-        <button id="viewKanbanBtn">🗂️ Board</button>
-      </div>
-      <div class="calendar-density-wrap" id="calendarDensityWrap">
-        <button class="calendar-density-btn" id="calendarDensityBtn" aria-haspopup="true" aria-expanded="false">
-          <span id="calendarDensityLabel">Month</span>
-          <span class="cd-chevron">▾</span>
-        </button>
-        <div class="calendar-density-pop" id="calendarDensityPop">
-          <button type="button" data-density="month">Month</button>
-          <button type="button" data-density="day">Day</button>
-        </div>
-      </div>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search">🔍</button>
       <button class="btn-history" id="historyBtn">History</button>
@@ -1230,6 +1279,23 @@
 
   <footer class="app-footer">Made by Von Mangaron • Personal use only • not for commercial use</footer>
 </div>
+
+<nav class="mode-dock" id="modeDock" aria-label="Switch view">
+  <button type="button" class="md-btn active" id="viewCalendarBtn"><span class="md-ic">📅</span><span>Calendar</span></button>
+  <button type="button" class="md-btn" id="viewListBtn"><span class="md-ic">📋</span><span>List</span></button>
+  <button type="button" class="md-btn" id="viewKanbanBtn"><span class="md-ic">🗂️</span><span>Board</span></button>
+  <span class="md-sep" aria-hidden="true"></span>
+  <div class="calendar-density-wrap" id="calendarDensityWrap">
+    <button class="calendar-density-btn" id="calendarDensityBtn" aria-haspopup="true" aria-expanded="false">
+      <span id="calendarDensityLabel">Month</span>
+      <span class="cd-chevron">▾</span>
+    </button>
+    <div class="calendar-density-pop" id="calendarDensityPop">
+      <button type="button" data-density="month">Month</button>
+      <button type="button" data-density="day">Day</button>
+    </div>
+  </div>
+</nav>
 
 <nav class="bottom-nav" id="bottomNav">
   <button id="navAgendaBtn"><span class="bn-icon">📋</span>Agenda</button>
@@ -1336,6 +1402,22 @@
 
     <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
 
+    <label style="margin-top:16px;">Weather</label>
+    <div id="weatherLocStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">No farm location set yet.</div>
+    <div class="ai-icon-row">
+      <input type="text" id="weatherSearchInput" placeholder="Nearest town, e.g. Gingin" autocomplete="off">
+      <button class="btn-ghost-ai" id="weatherSearchBtn" type="button" title="Search">🔍</button>
+    </div>
+    <div class="restore-list" id="weatherSearchResults" style="margin-top:6px;"></div>
+    <button class="btn-ai-wide" id="weatherUseMyLocationBtn" type="button" style="margin-top:6px;">📍 Use this device's location</button>
+    <label for="setWeatherUnit">Temperature unit</label>
+    <select id="setWeatherUnit">
+      <option value="celsius">Celsius (°C)</option>
+      <option value="fahrenheit">Fahrenheit (°F)</option>
+    </select>
+    <label class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="setShowWeather"> Show weather on the calendar</label>
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Forecast from Open-Meteo (free, no account): last 7 days + next 16 days. The location is shared with the viewer app.</p>
+
     <label style="margin-top:16px;">Cloud sync</label>
     <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
     <label for="githubPathInput">Farm name</label>
@@ -1371,6 +1453,7 @@
 <div class="form-modal" id="dayModal">
   <div class="form-modal-head"><h2 id="dayModalTitle"></h2><button id="closeDayModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
+    <div id="dayModalWeather"></div>
     <div id="dayModalInlineAddWrap"></div>
     <div class="day-tasks" id="dayModalTaskList" data-date="" style="margin-top:10px; margin-bottom:18px;"></div>
     <button class="btn-ai-wide" id="copyDayTasksBtn" style="margin-top:6px;">📄 Copy all tasks to another day</button>
@@ -1681,7 +1764,7 @@
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
-  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month' };
+  const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month', showWeather:true, weatherUnit:'celsius', weatherLocation:null };
   const DEFAULT_EVENT_COLOR = '#000000';
   const ICON_RULES = [
     [/feed|grain|corn/i,'🌾'],[/water|drink|hydrat/i,'💧'],[/vaccin|inject|dose/i,'💉'],
@@ -1859,6 +1942,11 @@
     document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
       b.classList.toggle('active', b.dataset.density === settings.calendarDensity);
     });
+    const wu = $('#setWeatherUnit'), sw = $('#setShowWeather'), wls = $('#weatherLocStatus');
+    if(wu) wu.value = settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
+    if(sw) sw.checked = settings.showWeather !== false;
+    if(wls) wls.textContent = settings.weatherLocation ? `📍 ${settings.weatherLocation.name}` : 'No farm location set yet — search for the nearest town below.';
+    setTimeout(()=> refreshWeather(false), 0);
   }
 
   // ==================== SYNC: MAIN FILE ====================
@@ -3464,6 +3552,127 @@
     return card;
   }
 
+  // ==================== WEATHER (Open-Meteo — free, no API key) ====================
+  // One request covers the last 7 days + next 16 days, plus "now". Cached on the
+  // device for 30 min (and used offline). The farm location lives in the synced
+  // settings, so the viewer shows the same weather.
+  const WX_KINDS = {
+    clear:['☀️','Clear'], mostlyClear:['🌤️','Mostly clear'], partlyCloudy:['⛅','Partly cloudy'], overcast:['☁️','Overcast'],
+    fog:['🌫️','Fog'], drizzle:['🌦️','Drizzle'], rain:['🌧️','Rain'], heavyRain:['🌧️','Heavy rain'], freezingRain:['🧊','Freezing rain'],
+    snow:['🌨️','Snow'], showers:['🌦️','Showers'], thunderstorm:['⛈️','Thunderstorm']
+  };
+  function wxKindForCode(code){
+    if(code === 0) return 'clear';
+    if(code === 1) return 'mostlyClear';
+    if(code === 2) return 'partlyCloudy';
+    if(code === 3) return 'overcast';
+    if(code === 45 || code === 48) return 'fog';
+    if(code >= 51 && code <= 55) return 'drizzle';
+    if(code === 56 || code === 57 || code === 66 || code === 67) return 'freezingRain';
+    if(code === 61 || code === 63) return 'rain';
+    if(code === 65) return 'heavyRain';
+    if((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+    if(code >= 80 && code <= 82) return 'showers';
+    if(code >= 95) return 'thunderstorm';
+    return 'overcast';
+  }
+  function wxIconLabel(code, isDay){
+    const kind = wxKindForCode(code);
+    const [icon, label] = WX_KINDS[kind];
+    if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
+    return [icon, label];
+  }
+  const WX_TTL = 30 * 60 * 1000;
+  let weatherData = null;
+  let weatherFetchInFlight = false;
+  function weatherEnabled(){ return settings.showWeather !== false && !!(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
+  function wxKey(){
+    const l = settings.weatherLocation;
+    if(!l) return null;
+    return `${(+l.lat).toFixed(3)},${(+l.lon).toFixed(3)},${settings.weatherUnit === 'fahrenheit' ? 'F' : 'C'}`;
+  }
+  function loadWeatherCache(){
+    try{
+      const c = JSON.parse(localStorage.getItem('cw-weather-cache') || 'null');
+      if(c && c.key === wxKey()) weatherData = c;
+    }catch(e){}
+  }
+  async function refreshWeather(force){
+    const key = wxKey();
+    if(!weatherEnabled() || !key) return;
+    if(!weatherData || weatherData.key !== key){ weatherData = null; loadWeatherCache(); if(weatherData) renderAll(); }
+    if(!force && weatherData && weatherData.key === key && Date.now() - weatherData.fetchedAt < WX_TTL) return;
+    if(weatherFetchInFlight || !navigator.onLine) return;
+    weatherFetchInFlight = true;
+    try{
+      const l = settings.weatherLocation;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
+        + `&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min`
+        + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`;
+      const res = await fetch(url, { cache:'no-store' });
+      if(!res.ok) throw new Error('Weather ' + res.status);
+      const j = await res.json();
+      const days = {};
+      const d = j.daily || {};
+      (d.time || []).forEach((dk, i)=>{
+        days[dk] = { max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i] };
+      });
+      const cur = j.current || null;
+      weatherData = {
+        key, fetchedAt: Date.now(),
+        today: cur && cur.time ? String(cur.time).slice(0, 10) : null,
+        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day } : null,
+        days
+      };
+      try{ localStorage.setItem('cw-weather-cache', JSON.stringify(weatherData)); }catch(e){}
+      renderAll();
+    }catch(e){ console.warn('Weather unavailable', e); }
+    finally{ weatherFetchInFlight = false; }
+  }
+  function wxForDate(key){
+    if(!weatherEnabled() || !weatherData || weatherData.key !== wxKey()) return null;
+    const d = weatherData.days[key];
+    if(!d) return null;
+    const isToday = key === dateKey(new Date()) && weatherData.current && (!weatherData.today || weatherData.today === key);
+    return Object.assign({}, d, { current: isToday ? weatherData.current : null });
+  }
+  function wxT(v){ return (v == null || isNaN(v)) ? '–' : Math.round(v) + '°'; }
+  // size: 'cell' (month), 'line' (board), 'big' (day view), 'list' (agenda), 'modal' (day popup)
+  function buildWxChip(key, size){
+    const w = wxForDate(key);
+    if(!w) return null;
+    const [dayIcon, dayLabel] = wxIconLabel(w.code);
+    const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : [dayIcon, dayLabel];
+    const el = document.createElement('span');
+    el.className = 'wx wx-' + size + (w.current ? ' wx-today' : '');
+    el.title = `${w.current ? 'Now ' + wxT(w.current.temp) + ' · ' + label + ' · ' : ''}High ${wxT(w.max)} · Low ${wxT(w.min)} · ${dayLabel}`;
+    const add = (cls, text)=>{ const s2 = document.createElement('span'); s2.className = cls; s2.textContent = text; el.appendChild(s2); return s2; };
+    add('wx-ic', icon);
+    if(size === 'cell'){
+      const t2 = add('wx-t', '');
+      if(w.current){
+        const now = document.createElement('span'); now.className = 'wx-now'; now.textContent = wxT(w.current.temp);
+        const hi = document.createElement('span'); hi.className = 'wx-lo'; hi.textContent = ' ↑' + wxT(w.max);
+        t2.append(now, hi);
+      } else {
+        t2.appendChild(document.createTextNode(wxT(w.max)));
+        const lo = document.createElement('span'); lo.className = 'wx-lo'; lo.textContent = '/' + wxT(w.min);
+        t2.appendChild(lo);
+      }
+    } else if(size === 'big'){
+      if(w.current) add('wx-now', wxT(w.current.temp));
+      add('wx-sub', `${w.current ? label + ' · ' : ''}H ${wxT(w.max)} · L ${wxT(w.min)}${w.current ? '' : ' · ' + dayLabel}`);
+    } else if(size === 'modal'){
+      add('wx-sub-strong', w.current
+        ? `Now ${wxT(w.current.temp)} · ${label} · High ${wxT(w.max)} · Low ${wxT(w.min)}`
+        : `${dayLabel} · High ${wxT(w.max)} · Low ${wxT(w.min)}`);
+    } else {
+      add('wx-hl', `${wxT(w.max)} / ${wxT(w.min)}`);
+      add('wx-sub', w.current ? `· now ${wxT(w.current.temp)}` : `· ${dayLabel}`);
+    }
+    return el;
+  }
+
   const SIDEBAR_BACKLOG_CAP = 4;
   function renderBacklog(){
     const list = $('#backlogList');
@@ -3747,6 +3956,8 @@
       num.className = 'day-num';
       num.textContent = d.getDate();
       header.appendChild(num);
+      const wxCell = buildWxChip(key, 'cell');
+      if(wxCell) header.appendChild(wxCell);
 
       if(exactEvent){
         const rb = document.createElement('div');
@@ -3928,6 +4139,15 @@
       num.textContent = d.getDate();
       cell.appendChild(wd);
       cell.appendChild(num);
+      const wxs = wxForDate(key);
+      if(wxs){
+        const wi = document.createElement('span');
+        wi.className = 'wsc-wx';
+        const [wIcon] = wxs.current ? wxIconLabel(wxs.current.code, wxs.current.isDay) : wxIconLabel(wxs.code);
+        wi.textContent = wIcon;
+        wi.title = `High ${wxT(wxs.max)} · Low ${wxT(wxs.min)}`;
+        cell.appendChild(wi);
+      }
       const hasTasks = tasks.some(t => t.date === key);
       if(hasTasks) cell.classList.add('has-tasks');
       cell.addEventListener('click', () => {
@@ -4000,6 +4220,8 @@
       renderAll();
     });
     header.appendChild(nextDayBtn);
+    const wxBig = buildWxChip(selectedKey, 'big');
+    if(wxBig) header.appendChild(wxBig);
 
     right.appendChild(header);
 
@@ -4148,6 +4370,8 @@
       groupEl.querySelector('.list-date-main').textContent = (isPastGroup ? '⚠ Overdue — ' : '') + formatFullWithWeekday(key);
       if(isPastGroup) groupEl.querySelector('.list-date-main').style.color = 'var(--danger)';
       groupEl.querySelector('.list-date-sub').textContent = `${doneCount}/${groups[key].length} done`;
+      const wxList = buildWxChip(key, 'list');
+      if(wxList) groupEl.querySelector('.list-date-sub').prepend(wxList);
       const listEl = document.createElement('div');
       listEl.className = 'day-tasks list-tasks';
       listEl.dataset.date = key;
@@ -4422,6 +4646,10 @@
           </div>
           <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>
           ${batchesForDate(key).length ? `<div class="col-batch-age">${batchesForDate(key).map(b=>`<span style="background:${colorForBatchNumber(b.number)}">#${escapeHtml(b.number)} · Day ${batchAgeOn(b, key)}</span>`).join('')}</div>` : ''}`;
+      }
+      if(!isCollapsed){
+        const wxLine = buildWxChip(key, 'line');
+        if(wxLine) head.appendChild(wxLine);
       }
       col.appendChild(head);
       head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
@@ -5182,6 +5410,10 @@
   }
   function renderDayModalTasks(key){
     $('#dayModalTitle').textContent = toDateObj(key).toLocaleDateString(undefined,{day:'numeric', month:'long', year:'numeric', weekday:'long'});
+    const wxBox = $('#dayModalWeather');
+    wxBox.innerHTML = '';
+    const wxm = buildWxChip(key, 'modal');
+    if(wxm){ wxm.style.display = 'flex'; wxBox.appendChild(wxm); }
     const inlineWrap = $('#dayModalInlineAddWrap');
     inlineWrap.innerHTML = '';
     inlineWrap.appendChild(buildInlineAddRow('daymodal-'+key, key));
@@ -5992,7 +6224,57 @@
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
   $('#setDefaultView').addEventListener('change', (e)=>{ settings.defaultView = e.target.value; persist(); });
-  $('#resetSettingsBtn').addEventListener('click', ()=>{ settings = Object.assign({}, DEFAULT_SETTINGS); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
+  $('#setWeatherUnit').addEventListener('change', (e)=>{ settings.weatherUnit = e.target.value; weatherData = null; applySettings(); persist(); renderAll(); });
+  $('#setShowWeather').addEventListener('change', (e)=>{ settings.showWeather = e.target.checked; applySettings(); persist(); renderAll(); });
+  function setWeatherLocation(loc){
+    settings.weatherLocation = loc;
+    weatherData = null;
+    $('#weatherSearchResults').innerHTML = '';
+    $('#weatherSearchInput').value = '';
+    addHistory('Settings', `Weather location set to ${loc.name}`);
+    applySettings(); persist(); renderAll();
+    refreshWeather(true);
+    showToast(`Weather location: ${loc.name}`);
+  }
+  async function searchWeatherLocation(){
+    const q = ($('#weatherSearchInput').value || '').trim();
+    const box = $('#weatherSearchResults');
+    if(q.length < 2){ showToast('Type a town or area name.', true); return; }
+    box.innerHTML = '<div class="empty-note">Searching…</div>';
+    try{
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`, { cache:'no-store' });
+      if(!res.ok) throw new Error('Geocoding ' + res.status);
+      const j = await res.json();
+      box.innerHTML = '';
+      const results = j.results || [];
+      if(!results.length){ box.innerHTML = '<div class="empty-note">No places found — try a nearby town.</div>'; return; }
+      results.forEach(r=>{
+        const place = [r.admin1, r.country].filter(Boolean).join(', ');
+        const name = r.name + (r.admin1 ? ', ' + r.admin1 : '');
+        box.appendChild(buildSearchResult('📍', r.name, `${place} · ${(+r.latitude).toFixed(2)}, ${(+r.longitude).toFixed(2)}`, '', ()=>{
+          setWeatherLocation({ name, lat: +r.latitude, lon: +r.longitude });
+        }));
+      });
+    }catch(e){
+      box.innerHTML = '<div class="empty-note">Could not search right now — check your connection.</div>';
+    }
+  }
+  $('#weatherSearchBtn').addEventListener('click', searchWeatherLocation);
+  $('#weatherSearchInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); searchWeatherLocation(); } });
+  $('#weatherUseMyLocationBtn').addEventListener('click', ()=>{
+    if(!navigator.geolocation){ showToast('This device cannot share its location.', true); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const lat = +pos.coords.latitude.toFixed(4), lon = +pos.coords.longitude.toFixed(4);
+        setWeatherLocation({ name: `Device location (${lat.toFixed(2)}, ${lon.toFixed(2)})`, lat, lon });
+      },
+      ()=> showToast('Location permission was denied — search for the town instead.', true),
+      { enableHighAccuracy:false, timeout:10000, maximumAge:600000 }
+    );
+  });
+  setInterval(()=> refreshWeather(false), 10 * 60 * 1000);
+  window.addEventListener('online', ()=> refreshWeather(false));
+  $('#resetSettingsBtn').addEventListener('click', ()=>{ const keepLoc = settings.weatherLocation; settings = Object.assign({}, DEFAULT_SETTINGS, { weatherLocation: keepLoc }); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
 
   // ---------- Bulk delete modal (mode tabs: range / name) ----------
   let bulkDeleteMode = 'range';
@@ -6187,6 +6469,7 @@
   document.addEventListener('visibilitychange', async ()=>{
     if(document.visibilityState === 'hidden'){ flushPendingPush(); flushPendingReportsPush(); }
     else if(document.visibilityState === 'visible'){
+      refreshWeather(false);
       if(ghPath){
         if(pushPending){ await runScheduledPush(); }
         if(reportsPushPending){ await runScheduledReportsPush(); }
