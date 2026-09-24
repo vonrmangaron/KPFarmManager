@@ -2423,6 +2423,15 @@
   function instantiateFrequentTask(name, icon, toDateKey, opts){
     opts = opts || {};
     const dateVal = toDateKey==='backlog' ? null : toDateKey;
+    const norm = (name || '').trim().toLowerCase();
+    const isDuplicate = tasks.some(t=> (t.date || null) === dateVal && (t.name || '').trim().toLowerCase() === norm);
+    if(isDuplicate){
+      // Drop the dragged clone and leave the data untouched.
+      if(opts.deferRender) requestAnimationFrame(renderAll);
+      else renderAll();
+      showToast(`"${name}" is already on ${dateVal ? formatFull(dateVal) : 'the Backlog'}.`);
+      return false;
+    }
     addTask(name, icon, dateVal);
     persist();
     if(opts.deferRender) requestAnimationFrame(renderAll);
