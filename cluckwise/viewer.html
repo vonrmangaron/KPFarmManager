@@ -179,6 +179,16 @@
     display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
     background:rgba(255,255,255,0.4); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px;
   }
+  .hero-weather{
+    display:flex; align-items:center; gap:10px; width:fit-content; max-width:100%;
+    margin:2px 0 12px; padding:8px 14px 8px 10px; border-radius:14px; background:rgba(255,255,255,0.38);
+  }
+  .hw-ic{ font-size:30px; line-height:1; flex-shrink:0; }
+  .hw-now{ font-family:'Sora',sans-serif; font-weight:800; font-size:26px; line-height:1; flex-shrink:0; }
+  .hw-meta{ display:flex; flex-direction:column; gap:2px; font-size:12.5px; font-weight:700; min-width:0; }
+  .hw-meta .hw-label{ opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wx-date{ display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:var(--ink); margin-right:8px; white-space:nowrap; }
+  .wx-date .wx-lo{ color:var(--muted); }
   .hero-batch-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .hero-stats{ display:flex; align-items:center; gap:14px; }
   .hero-ring{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.35); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; }
@@ -458,6 +468,7 @@
   <div class="hero-card">
     <div class="hero-date" id="heroDate">Today</div>
     <div class="hero-batches" id="heroBatches" style="display:none;"></div>
+    <div class="hero-weather" id="heroWeather" style="display:none;"></div>
     <div class="hero-title" id="heroTitle">Let's see what's on.</div>
     <div class="hero-stats">
       <div class="hero-ring" id="heroRing">0/0</div>
@@ -603,7 +614,8 @@
       notSavedRetry:'Not saved yet — retrying', connecting:'Connecting…', notConnected:'Not connected',
       savedOnPhone:'No signal — saved on this phone. It will sync when you are back online.',
       showingSaved:'No connection — showing the last saved data.',
-      batch:'Batch', day:'Day'
+      batch:'Batch', day:'Day',
+      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm'
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -634,7 +646,8 @@
       notSavedRetry:'Aún no guardado — reintentando', connecting:'Conectando…', notConnected:'Sin conectar',
       savedOnPhone:'Sin señal — guardado en este teléfono. Se sincronizará cuando vuelva la conexión.',
       showingSaved:'Sin conexión — mostrando los últimos datos guardados.',
-      batch:'Lote', day:'Día'
+      batch:'Lote', day:'Día',
+      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta'
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -665,7 +678,8 @@
       notSavedRetry:'Hindi pa na-save — sinusubukan ulit', connecting:'Kumokonekta…', notConnected:'Hindi konektado',
       savedOnPhone:'Walang signal — naka-save sa phone na ito. Magsi-sync kapag may internet na.',
       showingSaved:'Walang koneksyon — ipinapakita ang huling na-save na data.',
-      batch:'Batch', day:'Araw'
+      batch:'Batch', day:'Araw',
+      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat'
     }
   };
   function t(key){
@@ -706,6 +720,109 @@
     let tEl=$('#toast'); if(!tEl){ tEl=document.createElement('div'); tEl.id='toast'; tEl.className='toast'; document.body.appendChild(tEl); }
     tEl.textContent=msg; tEl.classList.toggle('error',!!isError); tEl.classList.add('show');
     clearTimeout(showToast._t); showToast._t=setTimeout(()=>tEl.classList.remove('show'),2600);
+  }
+
+  // ---------- Weather (Open-Meteo; location comes from the manager's settings) ----------
+  const WX_ICONS = { clear:'☀️', mostlyClear:'🌤️', partlyCloudy:'⛅', overcast:'☁️', fog:'🌫️', drizzle:'🌦️', rain:'🌧️', heavyRain:'🌧️', freezingRain:'🧊', snow:'🌨️', showers:'🌦️', thunderstorm:'⛈️' };
+  function wxKindForCode(code){
+    if(code === 0) return 'clear';
+    if(code === 1) return 'mostlyClear';
+    if(code === 2) return 'partlyCloudy';
+    if(code === 3) return 'overcast';
+    if(code === 45 || code === 48) return 'fog';
+    if(code >= 51 && code <= 55) return 'drizzle';
+    if(code === 56 || code === 57 || code === 66 || code === 67) return 'freezingRain';
+    if(code === 61 || code === 63) return 'rain';
+    if(code === 65) return 'heavyRain';
+    if((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+    if(code >= 80 && code <= 82) return 'showers';
+    if(code >= 95) return 'thunderstorm';
+    return 'overcast';
+  }
+  function wxIconLabel(code, isDay){
+    const kind = wxKindForCode(code);
+    const icon = (isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) ? '🌙' : WX_ICONS[kind];
+    return [icon, t('wx_' + kind)];
+  }
+  const WX_TTL = 30 * 60 * 1000;
+  let weatherData = null;
+  let weatherFetchInFlight = false;
+  function weatherEnabled(){ const l = syncedDisplay.weatherLocation; return syncedDisplay.showWeather !== false && !!(l && isFinite(l.lat)); }
+  function wxKey(){
+    const l = syncedDisplay.weatherLocation;
+    if(!l) return null;
+    return `${(+l.lat).toFixed(3)},${(+l.lon).toFixed(3)},${syncedDisplay.weatherUnit === 'fahrenheit' ? 'F' : 'C'}`;
+  }
+  function loadWeatherCache(){
+    try{ const c = JSON.parse(localStorage.getItem('cw-viewer-weather-cache') || 'null'); if(c && c.key === wxKey()) weatherData = c; }catch(e){}
+  }
+  async function refreshWeather(force){
+    const key = wxKey();
+    if(!weatherEnabled() || !key){ renderHeroWeather(); return; }
+    if(!weatherData || weatherData.key !== key){ weatherData = null; loadWeatherCache(); if(weatherData) renderAll(); }
+    if(!force && weatherData && Date.now() - weatherData.fetchedAt < WX_TTL) return;
+    if(weatherFetchInFlight || !navigator.onLine) return;
+    weatherFetchInFlight = true;
+    try{
+      const l = syncedDisplay.weatherLocation;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
+        + `&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min`
+        + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${syncedDisplay.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`;
+      const res = await fetch(url, { cache:'no-store' });
+      if(!res.ok) throw new Error('Weather ' + res.status);
+      const j = await res.json();
+      const days = {};
+      const d = j.daily || {};
+      (d.time || []).forEach((dk, i)=>{ days[dk] = { max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i] }; });
+      const cur = j.current || null;
+      weatherData = {
+        key, fetchedAt: Date.now(),
+        today: cur && cur.time ? String(cur.time).slice(0, 10) : null,
+        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day } : null,
+        days
+      };
+      try{ localStorage.setItem('cw-viewer-weather-cache', JSON.stringify(weatherData)); }catch(e){}
+      renderAll();
+    }catch(e){ console.warn('Weather unavailable', e); }
+    finally{ weatherFetchInFlight = false; }
+  }
+  function wxForDate(key){
+    if(!weatherEnabled() || !weatherData || weatherData.key !== wxKey()) return null;
+    const d = weatherData.days[key];
+    if(!d) return null;
+    const isToday = key === dateKey(new Date()) && weatherData.current && (!weatherData.today || weatherData.today === key);
+    return Object.assign({}, d, { current: isToday ? weatherData.current : null });
+  }
+  function wxT(v){ return (v == null || isNaN(v)) ? '–' : Math.round(v) + '°'; }
+  function renderHeroWeather(){
+    const el = $('#heroWeather');
+    if(!el) return;
+    const w = wxForDate(dateKey(new Date()));
+    if(!w){ el.style.display = 'none'; el.innerHTML = ''; return; }
+    const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
+    el.innerHTML = '<span class="hw-ic"></span><span class="hw-now"></span><span class="hw-meta"><span class="hw-hl"></span><span class="hw-label"></span></span>';
+    el.querySelector('.hw-ic').textContent = icon;
+    const now = el.querySelector('.hw-now');
+    if(w.current) now.textContent = wxT(w.current.temp); else now.remove();
+    el.querySelector('.hw-hl').textContent = `${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`;
+    el.querySelector('.hw-label').textContent = label;
+    el.title = `${w.current ? t('wxNow') + ' ' + wxT(w.current.temp) + ' · ' : ''}${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`;
+    el.style.display = 'flex';
+  }
+  function buildDateWxChip(key){
+    const w = wxForDate(key);
+    if(!w) return null;
+    const [icon] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
+    const [, label] = wxIconLabel(w.code);
+    const el = document.createElement('span');
+    el.className = 'wx-date';
+    el.title = `${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`;
+    const ic = document.createElement('span'); ic.textContent = icon;
+    const hi = document.createElement('span'); hi.textContent = wxT(w.max);
+    const lo = document.createElement('span'); lo.className = 'wx-lo'; lo.textContent = '/' + wxT(w.min);
+    hi.appendChild(lo);
+    el.append(ic, hi);
+    return el;
   }
 
   // ---------- Overdue ----------
@@ -750,7 +867,7 @@
 
   // ---------- Settings ----------
   const THEME_CLASSES = ['theme-dark'];
-  let syncedDisplay = { theme:'light', batchBadgeStyle:'bottom-left', showIcons:true };
+  let syncedDisplay = { theme:'light', batchBadgeStyle:'bottom-left', showIcons:true, showWeather:true, weatherUnit:'celsius', weatherLocation:null };
   function applySettings(){
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize]||FONT_SIZE_MAP.medium);
     document.body.classList.remove(...THEME_CLASSES);
@@ -883,8 +1000,12 @@
         syncedDisplay = {
           theme: parsed.settings.theme || 'light',
           batchBadgeStyle: parsed.settings.batchBadgeStyle || 'bottom-left',
-          showIcons: parsed.settings.showIcons !== false
+          showIcons: parsed.settings.showIcons !== false,
+          showWeather: parsed.settings.showWeather !== false,
+          weatherUnit: parsed.settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius',
+          weatherLocation: parsed.settings.weatherLocation || null
         };
+        setTimeout(()=> refreshWeather(false), 0);
       }
       applySettings();
       renderAll();
@@ -1401,6 +1522,7 @@
         });
       hb.style.display = hb.children.length ? 'flex' : 'none';
     }
+    renderHeroWeather();
 
     const todaysAudits = events.filter(e=> e.date===todayKey);
     let banner = document.getElementById('heroAuditBanner');
@@ -1531,6 +1653,8 @@
       groupEl.innerHTML=`<div class="list-date"><span class="list-date-main"></span><span class="list-date-sub"></span></div>`;
       groupEl.querySelector('.list-date-main').textContent=formatFullWithWeekday(key);
       groupEl.querySelector('.list-date-sub').textContent=`${doneCount}/${groups[key].length} done`;
+      const wxChip = buildDateWxChip(key);
+      if(wxChip) groupEl.querySelector('.list-date-sub').prepend(wxChip);
       const listEl=document.createElement('div'); listEl.className='list-tasks';
       groups[key].forEach(tk=> listEl.appendChild(buildReadOnlyTaskCard(tk)));
       groupEl.appendChild(listEl); wrap.appendChild(groupEl);
@@ -1670,6 +1794,7 @@
   document.addEventListener('visibilitychange', ()=>{
     if(!ghPath) return;
     if(document.visibilityState === 'visible'){
+      refreshWeather(false);
       pullFromGithub(true);
       flushPendingReports();
       if(pendingTicks.size) flushTicks();
@@ -1685,6 +1810,7 @@
   });
   window.addEventListener('offline', renderSyncStatus);
   window.addEventListener('focus', ()=>{ flushPendingReports(); if(pendingTicks.size) flushTicks(); });
+  setInterval(()=> refreshWeather(false), 10 * 60 * 1000);
   setInterval(()=>{
     renderSyncStatus();
     if(ghPath && pendingTicks.size && !tickFlushInFlight && navigator.onLine) flushTicks();
