@@ -417,6 +417,20 @@ function groupLoadSummary(group){
   const totalBlocks=Object.values(buckets).reduce((s,b)=>s+b.blocks,0);
   return {buckets,totalTonnes,totalBlocks,loadCount:arr.length};
 }
+function farmLoadsByFeedType(){
+  const buckets={
+    starter:{id:'starter',label:'Starter',loads:0},
+    grower:{id:'grower',label:'Grower',loads:0},
+    finisher:{id:'finisher',label:'Finisher',loads:0},
+    withdrawal:{id:'withdrawal',label:'Withdrawal',loads:0},
+    unspecified:{id:'unspecified',label:'Unspecified',loads:0}
+  };
+  farmLoads.forEach(l=>{
+    const key=FEED_TYPES.some(f=>f.id===l.feedType)?l.feedType:'unspecified';
+    buckets[key].loads+=1;
+  });
+  return buckets;
+}
 function farmLoadsSummary(){
   const total=farmLoads.length;
   const plannedKg=farmLoads.reduce((s,l)=>s+(Number(l.plannedKg)||0),0);
@@ -1795,6 +1809,16 @@ function renderLoadsModalBody(){
   const dateCounts={};
   all.forEach(l=>{const k=iso(l.date);dateCounts[k]=(dateCounts[k]||0)+1;});
 
+  const feedTypeCounts=farmLoadsByFeedType();
+  const feedTypeChipList=['starter','grower','finisher','withdrawal','unspecified']
+    .map(k=>feedTypeCounts[k])
+    .filter(b=>b.loads>0)
+    .map(b=>`<span class="chip ${b.id}">${b.label} <span class="num">${b.loads} ${b.loads===1?'load':'loads'}</span></span>`)
+    .join('');
+  const feedTypeRowHtml=feedTypeChipList
+    ? `<div class="loads-feedtype-row"><span class="lbl">By feed type</span><div class="delivery-type-chips">${feedTypeChipList}</div><span class="total-chip">Total <strong>${summary.total} load${summary.total===1?'':'s'}</strong></span></div>`
+    : '';
+
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
@@ -1802,6 +1826,7 @@ function renderLoadsModalBody(){
       <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div><div class="sub">${summary.total} docket${summary.total===1?'':'s'}</div></div>
       <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div><div class="sub">${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded</div></div>
     </div>
+    ${feedTypeRowHtml}
     <div class="loads-summary-actions">
       <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button>
       <div class="loads-view-toggle">
