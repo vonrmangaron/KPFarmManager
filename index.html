@@ -117,6 +117,7 @@ const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
 let loadsModalState={open:false,filter:'all',view:'table'},loadModalState=null,newBatchModalPhase='choice',batchHistoryCache=null,batchHistoryPage=0;
+let siloModalOpenGroups={1:true,2:false,3:false,4:false};
 const BATCHES_PER_PAGE=4;
 let renderTimer=null,syncFarmName=null,syncSha=null,syncExcelSha=null,syncExcelMeta=null,syncConnectedAt=null,syncLastSyncAt=null,syncState='idle';
 let pushDebounceTimer=null,pushMaxWaitTimer=null,pushPending=false,pushInFlight=false;
@@ -2418,6 +2419,7 @@ function generateBatchReport(){
 
 function openSiloModal(){
   closeSettingsDrawer();
+  siloModalOpenGroups={1:true,2:false,3:false,4:false};
   const m=document.getElementById('siloModal');
   if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
   renderSiloModalBody();
@@ -2443,6 +2445,7 @@ function renderSiloModalBody(){
     grandTotalKg+=totalKg;
     const shedIds=SILO_GROUP_SHEDS[g];
     const shedsLabel=`Sheds ${shedIds.join(' & ')}`;
+    const isOpen=siloModalOpenGroups[g]===true;
     const silosHtml=[1,2,3].map(n=>{
       const rings=latest?latest[`silo${n}Rings`]:null;
       const isOff=(rings===null||rings===undefined||rings==='');
@@ -2459,8 +2462,9 @@ function renderSiloModalBody(){
         </div>
       </div>`;
     }).join('');
-    return `<div class="sms-group-section">
-      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}">
+    return `<div class="sms-group-section${isOpen?' open':''}" data-sms-section="${g}">
+      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle Group ${g}">
+        <span class="sms-group-caret" aria-hidden="true">▶</span>
         <span class="sms-group-name">Group ${g}</span>
         <span class="sms-group-sub">${shedsLabel}</span>
         <span class="sms-group-total" id="smsGroupTotal-${g}">${(totalKg/1000).toFixed(2)} t</span>
@@ -2470,7 +2474,7 @@ function renderSiloModalBody(){
   }).join('');
   body.innerHTML=`<div class="sms-date-bar">
       <div class="sms-date-main"><span class="sms-date-label">Recording for</span><span class="sms-date-value">${fmtShort(new Date())}</span></div>
-      <span class="sms-date-hint">Tap a ring level to save instantly</span>
+      <span class="sms-date-hint">Tap a group to expand · tap a ring to save</span>
     </div>
     ${groupsHtml}
     <div class="sms-grand-total"><span class="sms-gt-label">Grand total across all groups</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
@@ -2489,6 +2493,18 @@ function renderSiloModalBody(){
         else setSiloRingFromModal(g,n,r);
       }
     });
+  });
+  body.querySelectorAll('[data-sms-toggle]').forEach(el=>{
+    const toggle=()=>{
+      const g=Number(el.dataset.smsToggle);
+      if(!Number.isFinite(g))return;
+      siloModalOpenGroups[g]=!siloModalOpenGroups[g];
+      const section=body.querySelector(`[data-sms-section="${g}"]`);
+      if(section)section.classList.toggle('open',siloModalOpenGroups[g]);
+      el.setAttribute('aria-expanded',siloModalOpenGroups[g]?'true':'false');
+    };
+    el.addEventListener('click',toggle);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
   });
   const doneBtn=document.getElementById('siloModalDone');
   if(doneBtn)doneBtn.addEventListener('click',closeSiloModal);
