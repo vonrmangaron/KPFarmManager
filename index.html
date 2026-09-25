@@ -1851,29 +1851,48 @@ function renderLoadsModalBody(){
   const view=loadsModalState.view||'table';
   let bodyHtml='';
   if(view==='oneline'){
-    const lines=filtered.map(l=>{
+    const rows=filtered.map(l=>{
       const r=rowBase(l);
       const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`G${g} ${(v/1000).toFixed(1)}`:`G${g} —`;}).join(' · ');
-      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?`Actual ${(l.actualKg/1000).toFixed(2)} t ✓`:'Actual —';
-      const actualCls=(l.actualKg!=null)?'filled':'needs';
-      const noteStr=(l.note&&l.note.trim())?escapeHtml(l.note):'no note';
-      const noteCls=(l.note&&l.note.trim())?'':'empty';
-      return `<div class="loads-oneline ${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
-        <span class="lon-num">#${r.loadNum}</span>
-        <span class="lon-date">${fmtShort(l.date)}</span>${r.badge}
-        ${feedTypeTagHtml(l.feedType)}
-        <span class="lon-planned">${(l.plannedKg/1000).toFixed(2)} t</span>
-        <span class="lon-split">${splitParts}</span>
-        <span class="lon-actual ${actualCls}">${actualStr}</span>
-        <span class="lon-note ${noteCls}" title="${escapeAttr(l.note||'')}">${noteStr}</span>
-        <span class="lon-actions">
+      let actualCell='';
+      if(l.actualKg!=null&&Number.isFinite(Number(l.actualKg))){
+        actualCell=`<span class="lon-actual filled">${(l.actualKg/1000).toFixed(2)} t ✓</span>`;
+      } else if(r.needsActual){
+        actualCell=`<span class="lon-actual needs">missing docket</span>`;
+      } else {
+        actualCell=`<span class="lon-actual pending">—</span>`;
+      }
+      const hasNote=!!(l.note&&l.note.trim());
+      const noteStr=hasNote?escapeHtml(l.note):'no note';
+      const noteCls=hasNote?'':'empty';
+      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
+        <td class="lon-num-cell"><span class="load-num-badge">#${r.loadNum}</span></td>
+        <td class="lon-date">${fmtShort(l.date)}${r.badge}</td>
+        <td>${feedTypeTagHtml(l.feedType)}</td>
+        <td class="num lon-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
+        <td class="lon-split">${splitParts}</td>
+        <td class="num">${actualCell}</td>
+        <td class="lon-note-cell ${noteCls}">${noteStr}</td>
+        <td class="lon-actions-cell">
           <button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button>
           <button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button>
-        </span>
-      </div>`;
+        </td>
+      </tr>`;
     }).join('');
-    bodyHtml=`<div class="loads-oneline-list">${lines}</div>
-      <div class="loads-hint">💡 One row per load — notes visible at a glance. Switch to <strong>☰ Table</strong> to enter or edit actuals inline.</div>`;
+    bodyHtml=`<div class="loads-table-wrap"><table class="loads-table loads-oneline-table">
+      <thead><tr>
+        <th class="lon-num-cell">#</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th class="num">Planned</th>
+        <th>Split</th>
+        <th class="num">Actual</th>
+        <th>Note</th>
+        <th class="lon-actions-cell"></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="loads-hint">💡 <strong>Audit view</strong> — one row per load, aligned columns for comparing physical dockets. Red rows are past loads <strong>missing their actual</strong>. Switch to <strong>☰ Table</strong> to enter or edit actuals inline.</div>`;
   } else {
     const rows=filtered.map(l=>{
       const r=rowBase(l);
