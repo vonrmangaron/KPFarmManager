@@ -43,6 +43,7 @@
       <div class="topbar-right">
         <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark mode">🌙</button>
         <button class="loads-btn" id="loadsBtn" type="button" title="Feed loads" aria-label="Feed loads">🚛<span class="loads-dot" id="loadsDot"></span></button>
+<button class="silo-btn" id="siloBtn" type="button" title="Record silo readings" aria-label="Record silo readings">🛢️</button>
         <div class="batch-input">
           <label for="batchNumber">Batch</label>
           <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
@@ -87,6 +88,11 @@
   <h3 id="loadModalTitle"><span>🚛</span> Add Load</h3>
   <button type="button" id="loadModalClose" aria-label="Close">✕</button>
 </div><div class="sync-modal-body" id="loadModalBody"></div></div>
+
+<div class="compare-modal" id="siloModal" aria-hidden="true"><div class="compare-modal-panel">
+  <div class="compare-modal-head"><h3><span>🛢️</span> Silo Readings</h3><button type="button" class="compare-modal-close" id="siloClose" aria-label="Close">✕</button></div>
+  <div class="compare-modal-body" id="siloBody"></div>
+</div></div>
 <script>
 const STORAGE_KEY='prodwise_vm_phase2_v1',VIEW_KEY='prodwise_vm_shedview_v1',THEME_KEY='prodwise_vm_theme_v1',SILO_KEY_V2='prodwise_vm_silo_v2',SILO_KEY='prodwise_vm_silo_v3',SESSION_KEY='prodwise_session_init_v1',SYNC_FARMNAME_KEY='prodwise_sync_farmname_v1',PRED_KEY='prodwise_predictions_v1',LOADS_KEY='prodwise_loads_v1',LOADS_VIEW_KEY='prodwise_loads_view_v1';
 const SHED_COUNT=8,FEED_BLOCK_T=60,FIXED_FLOOR_AREA_M2=3162,MAX_PICKUPS_PER_SHED=5,MIN_PICKUPS_PER_SHED=4,MAX_PREDICTED_PICKUPS=6,DEFAULT_MORT_RATE_PCT=0.1,MAX_MORT_RATE_PCT=5;
@@ -2410,6 +2416,121 @@ function generateBatchReport(){
   setTimeout(restore,60000);
 }
 
+function openSiloModal(){
+  closeSettingsDrawer();
+  const m=document.getElementById('siloModal');
+  if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
+  renderSiloModalBody();
+}
+function closeSiloModal(){
+  const m=document.getElementById('siloModal');
+  if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+  render();
+}
+const SILO_GROUP_SHEDS={1:[1,2],2:[3,4],3:[5,6],4:[7,8]};
+const SILO_GROUP_COLORS={
+  1:'linear-gradient(135deg,#E0A339,#A8721F)',
+  2:'linear-gradient(135deg,#B08463,#5E2E22)',
+  3:'linear-gradient(135deg,#C9774A,#8F4A28)',
+  4:'linear-gradient(135deg,#A89055,#6E5A32)'
+};
+function renderSiloModalBody(){
+  const body=document.getElementById('siloBody');if(!body)return;
+  let grandTotalKg=0;
+  const groupsHtml=[1,2,3,4].map(g=>{
+    const latest=latestReading(g);
+    const totalKg=latest?readingTotalKg(latest):0;
+    grandTotalKg+=totalKg;
+    const shedIds=SILO_GROUP_SHEDS[g];
+    const shedsLabel=`Sheds ${shedIds.join(' & ')}`;
+    const silosHtml=[1,2,3].map(n=>{
+      const rings=latest?latest[`silo${n}Rings`]:null;
+      const isOff=(rings===null||rings===undefined||rings==='');
+      const kg=ringsToKg(rings);
+      const totalStr=isOff?'Off':(kg/1000).toFixed(2)+' t';
+      const ringBtns=[0,1,2,3,4,5].map(r=>
+        `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-label="Silo ${n} at ${r} rings, ${(ringsToKg(r)/1000).toFixed(0)} tonnes">${r}</button>`
+      ).join('');
+      return `<div class="sms-silo-row">
+        <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span><span class="sms-silo-total${isOff?' off':''}" id="smsTotal-${g}-${n}">${totalStr}</span></div>
+        <div class="sms-ring-group" id="smsRings-${g}-${n}">
+          <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-label="Silo ${n} off">Off</button>
+          ${ringBtns}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="sms-group-section">
+      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}">
+        <span class="sms-group-name">Group ${g}</span>
+        <span class="sms-group-sub">${shedsLabel}</span>
+        <span class="sms-group-total" id="smsGroupTotal-${g}">${(totalKg/1000).toFixed(2)} t</span>
+      </div>
+      <div class="sms-group-body">${silosHtml}</div>
+    </div>`;
+  }).join('');
+  body.innerHTML=`<div class="sms-date-bar">
+      <div class="sms-date-main"><span class="sms-date-label">Recording for</span><span class="sms-date-value">${fmtShort(new Date())}</span></div>
+      <span class="sms-date-hint">Tap a ring level to save instantly</span>
+    </div>
+    ${groupsHtml}
+    <div class="sms-grand-total"><span class="sms-gt-label">Grand total across all groups</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
+    <div class="sms-actions"><button type="button" class="sms-done-btn" id="siloModalDone">✓ Done</button></div>`;
+  body.querySelectorAll('[data-sms-ring]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const g=Number(btn.dataset.smsGroup);
+      const n=Number(btn.dataset.smsSilo);
+      const raw=btn.dataset.smsRing;
+      if(raw==='off')setSiloRingFromModal(g,n,null);
+      else{
+        const r=Number(raw);
+        const latest=latestReading(g);
+        const current=latest?latest[`silo${n}Rings`]:null;
+        if(current===r)setSiloRingFromModal(g,n,null);
+        else setSiloRingFromModal(g,n,r);
+      }
+    });
+  });
+  const doneBtn=document.getElementById('siloModalDone');
+  if(doneBtn)doneBtn.addEventListener('click',closeSiloModal);
+}
+function setSiloRingFromModal(group,siloNum,rings){
+  if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
+  const s=siloData[group];
+  const todayIso=iso(new Date());
+  let reading=s.readings.find(r=>r.date===todayIso);
+  if(!reading){
+    const prev=s.readings.length?s.readings[s.readings.length-1]:null;
+    reading={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null};
+    s.readings.push(reading);
+    s.readings.sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  const normalized=(rings===null)?null:normalizeRing(rings);
+  reading[`silo${siloNum}Rings`]=normalized;
+  saveSiloData();schedulePush();
+  const ringGroup=document.getElementById(`smsRings-${group}-${siloNum}`);
+  if(ringGroup){
+    ringGroup.querySelectorAll('.sms-ring-btn').forEach(btn=>{
+      const raw=btn.dataset.smsRing;
+      if(raw==='off')btn.classList.toggle('active',normalized===null);
+      else btn.classList.toggle('active',Number(raw)===normalized);
+    });
+  }
+  const totalEl=document.getElementById(`smsTotal-${group}-${siloNum}`);
+  if(totalEl){
+    if(normalized===null){totalEl.textContent='Off';totalEl.classList.add('off');}
+    else{totalEl.textContent=(ringsToKg(normalized)/1000).toFixed(2)+' t';totalEl.classList.remove('off');}
+  }
+  const gTotalEl=document.getElementById(`smsGroupTotal-${group}`);
+  if(gTotalEl){
+    const latest=latestReading(group);
+    gTotalEl.textContent=latest?((readingTotalKg(latest)/1000).toFixed(2)+' t'):'0.00 t';
+  }
+  let totalKg=0;
+  [1,2,3,4].forEach(g=>{const latest=latestReading(g);if(latest)totalKg+=readingTotalKg(latest);});
+  const gtEl=document.getElementById('smsGrandTotal');
+  if(gtEl)gtEl.textContent=(totalKg/1000).toFixed(2)+' t';
+}
+
 /* ---------- Main render ---------- */
 function scheduleRender(delay=50){
   const active=document.activeElement;const activeId=active?active.id:null;
@@ -3107,8 +3228,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
     if(loadsModalState.open&&e.target.id==='loadsModal'){closeLoadsModal();return;}
-    if(e.target.closest('[data-open-loads-modal]')){openLoadsModal();return;}
+        if(e.target.closest('[data-open-loads-modal]')){openLoadsModal();return;}
     if(e.target.closest('#loadModalClose')){closeLoadModal();return;}
+
+    if(e.target.closest('#siloBtn')){openSiloModal();return;}
+    if(e.target.closest('#siloClose')){closeSiloModal();return;}
+    if(e.target.id==='siloModal'&&document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
 
     if(feedCompareState.modalOpen&&e.target.id==='compareFeedModal'){closeCompareModal();return;}
     if(e.target.closest('#compareFeedClose')){closeCompareModal();return;}
@@ -3207,8 +3332,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){
+        if(e.key==='Escape'){
       if(inlineDeliveryState){inlineDeliveryState=null;render();return;}
+      if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}
       if(feedCompareState.modalOpen){closeCompareModal();return;}
       if(settingsDrawerOpen){closeSettingsDrawer();return;}
