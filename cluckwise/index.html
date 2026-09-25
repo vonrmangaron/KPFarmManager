@@ -1139,6 +1139,47 @@
     background:var(--primary-dark); transform:translateX(-50%);
   }
   .md-sep{ width:1px; align-self:stretch; margin:6px 4px; background:var(--line); }
+  /* ---- Dock v2: lighter (frosted glass) + more noticeable (bright active pill) ---- */
+  .mode-dock{
+    background:rgba(255,255,255,0.78);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4);
+    backdrop-filter:blur(14px) saturate(1.4);
+    border:1px solid rgba(201,154,14,0.35);
+    border-radius:18px;
+    padding:6px;
+    gap:6px;
+    box-shadow:0 10px 30px rgba(43,33,22,0.14), 0 2px 6px rgba(43,33,22,0.06), 0 0 0 4px rgba(255,200,18,0.12);
+    animation:dock-in .35s ease-out both;
+  }
+  @keyframes dock-in{ from{ opacity:0; transform:translate(-50%, 14px); } to{ opacity:1; transform:translate(-50%, 0); } }
+  .md-btn{
+    color:#5C4B37; font-size:14.5px; padding:10px 18px; border-radius:13px;
+    transition:background .15s ease, color .15s ease, box-shadow .15s ease, transform .12s ease;
+  }
+  .md-btn .md-ic{ font-size:19px; transition:transform .15s ease; }
+  .md-btn:hover{ background:rgba(255,200,18,0.16); color:var(--ink); }
+  .md-btn:hover .md-ic{ transform:translateY(-1px) scale(1.08); }
+  .md-btn:active{ transform:scale(0.96); }
+  .md-btn.active{
+    background:linear-gradient(135deg, #FFC812, #FFDD55);
+    color:#241A08;
+    box-shadow:0 4px 12px rgba(255,190,0,0.45), inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+  .md-btn.active::after{ display:none; }
+  .md-btn:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:2px; }
+  body.theme-dark .mode-dock{
+    background:rgba(40,50,77,0.78);
+    border-color:rgba(240,168,64,0.4);
+    box-shadow:0 10px 30px rgba(0,0,0,0.45), 0 0 0 4px rgba(240,168,64,0.12);
+  }
+  body.theme-dark .md-btn{ color:#C9D2E5; }
+  body.theme-dark .md-btn:hover{ background:rgba(240,168,64,0.16); color:#fff; }
+  body.theme-dark .md-btn.active{ background:linear-gradient(135deg, #F0A840, #FFC876); color:#1A1300; box-shadow:0 4px 14px rgba(240,168,64,0.4); }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .mode-dock{ background:rgba(255,255,255,0.96); }
+    body.theme-dark .mode-dock{ background:rgba(40,50,77,0.97); }
+  }
+  @media (prefers-reduced-motion: reduce){ .mode-dock{ animation:none; } }
   /* view dropdown now sits beside the period label in the top bar */
   .nav-group .calendar-density-wrap{ margin-left:6px; }
   .nav-group .calendar-density-pop{ left:0; right:auto; top:calc(100% + 8px); }
@@ -1304,7 +1345,9 @@
   .wx-cell .wx-t{ overflow:hidden; text-overflow:ellipsis; }
   .wx-cell .wx-ic{ font-size:18px !important; }
   .wx-cell .wx-rain{ font-size:11.5px; font-weight:800; color:#1864AB; }
-  .wx-cell{ gap:3px !important; }
+  .wx-cell{ gap:3px !important; padding:2px 5px !important; margin-left:4px !important; }
+  .wx-cell .wx-ic{ font-size:16px !important; }
+  .day-cell-header{ gap:4px; }
   .wx-cell.wx-has-alert{ box-shadow:0 0 0 1.5px #D9480F; }
   .wx-cell.wx-tone-sun{ background:rgba(255,200,18,0.22); }
   .wx-cell.wx-tone-rain, .wx-cell.wx-tone-storm{ background:rgba(90,150,230,0.18); }
@@ -1314,7 +1357,8 @@
   .wx-list .wx-rain{ color:#1864AB; font-weight:800; }
   body.theme-dark .wx-cell .wx-rain, body.theme-dark .wx-list .wx-rain{ color:#8FC1FF; }
   .wx-list .wxa{ font-size:10.5px; padding:2px 7px; }
-  @media (max-width: 1023px){ .wx-cell .wx-rain{ display:none; } .wx-cell .wx-lo{ display:none; } }
+  @media (max-width: 1350px){ .wx-cell .wx-rain{ display:none; } .wx-cell .wx-lo{ display:none; } }
+  @media (min-width: 1025px) and (max-width: 1180px){ .day-cell .day-num{ width:28px; height:28px; font-size:16px; } .wx-cell{ font-size:12px !important; padding:2px 4px !important; margin-left:2px !important; } .wx-cell .wx-ic{ font-size:15px !important; } }
   @media (max-width: 760px){ .wx-card-wide{ margin-left:0; min-width:0; max-width:none; width:100%; } .day-view-header{ flex-wrap:wrap; } }
   .year-mini-day{ position:relative; }
   .ymd-wx{ position:absolute; top:-3px; right:-2px; font-size:8px; line-height:1; pointer-events:none; }
@@ -3739,7 +3783,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-h2';
+  const APP_VERSION = '2026.09.25-d2';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
