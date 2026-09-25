@@ -1865,13 +1865,64 @@ function handleLoadActualBlur(inp){
   const raw=inp.value.trim();
   const currentVal=(load.actualKg!=null)?(load.actualKg/1000).toFixed(2):'';
   if(raw===currentVal)return;
-  if(raw===''){load.actualKg=null;saveFarmLoads();schedulePush();inp.value='';inp.classList.remove('filled','invalid');updateLoadsDot();renderLoadsModalBody();return;}
+  const tr=inp.closest('tr');
+  if(raw===''){
+    load.actualKg=null;
+    saveFarmLoads();schedulePush();
+    inp.value='';
+    inp.classList.remove('filled','invalid');
+    inp.classList.add('needs');
+    inp.placeholder='enter actual';
+    if(tr)tr.classList.add('load-needs-actual');
+    updateLoadsDot();
+    updateLoadsSummaryInline();
+    return;
+  }
   const n=Number(raw);
-  if(!Number.isFinite(n)||n<=0){showToast('Enter a positive number for the actual.',true);inp.classList.add('invalid');setTimeout(()=>{inp.classList.remove('invalid');inp.value=currentVal;},900);return;}
-  load.actualKg=n*1000;saveFarmLoads();schedulePush();
+  if(!Number.isFinite(n)||n<=0){
+    showToast('Enter a positive number for the actual.',true);
+    inp.classList.add('invalid');
+    setTimeout(()=>{inp.classList.remove('invalid');inp.value=currentVal;},900);
+    return;
+  }
+  load.actualKg=n*1000;
+  saveFarmLoads();schedulePush();
   inp.value=(load.actualKg/1000).toFixed(2);
-  inp.classList.remove('invalid');inp.classList.add('filled');
-  updateLoadsDot();renderLoadsModalBody();
+  inp.classList.remove('invalid','needs');
+  inp.classList.add('filled');
+  if(tr)tr.classList.remove('load-needs-actual');
+  updateLoadsDot();
+  updateLoadsSummaryInline();
+}
+function updateLoadsSummaryInline(){
+  const summary=farmLoadsSummary();
+  const body=document.getElementById('loadsBody');if(!body)return;
+  const tiles=body.querySelectorAll('.loads-summary-item');
+  if(tiles[1]){
+    const valEl=tiles[1].querySelector('.val');
+    const subEl=tiles[1].querySelector('.sub');
+    if(valEl)valEl.textContent=String(summary.withActual);
+    if(subEl)subEl.textContent=summary.needsActual>0?`${summary.needsActual} still need one`:'all caught up';
+  }
+  if(tiles[3]){
+    const valEl=tiles[3].querySelector('.val');
+    const subEl=tiles[3].querySelector('.sub');
+    if(valEl){
+      valEl.textContent=summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—';
+      valEl.classList.toggle('warn',summary.needsActual>0);
+      valEl.classList.toggle('ok',summary.needsActual===0);
+    }
+    if(subEl)subEl.textContent=`${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded`;
+  }
+  body.querySelectorAll('[data-loads-filter]').forEach(chip=>{
+    const countEl=chip.querySelector('.count');
+    if(!countEl)return;
+    const f=chip.dataset.loadsFilter;
+    if(f==='all')countEl.textContent=String(summary.total);
+    else if(f==='upcoming')countEl.textContent=String(summary.upcoming);
+    else if(f==='needs')countEl.textContent=String(summary.needsActual);
+    else if(f==='past')countEl.textContent=String(summary.past);
+  });
 }
 function confirmDeleteLoad(id){
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
