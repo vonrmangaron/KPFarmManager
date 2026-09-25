@@ -1087,3 +1087,57 @@ body.theme-dark .load-modal-actions button.primary{color:#1A2438;}
 .loads-actual-input.needs::placeholder{color:var(--danger);font-weight:700;font-style:normal;opacity:0.75;}
 body.theme-dark .loads-table tr.load-needs-actual td{background:rgba(240,104,90,0.12);}
 body.theme-dark .loads-actual-input.needs{background:rgba(240,104,90,0.10);}
+
+/* ============ PRINT REPORT ============ */
+#reportPrint{display:none;}
+
+@media print{
+  @page{size:A4 portrait;margin:16mm;}
+  html,body{background:#fff !important;color:#000 !important;}
+  body > *{display:none !important;}
+  #reportPrint{display:block !important;background:#fff;color:#000;
+    font-family:Georgia,'Times New Roman',serif;font-size:10pt;line-height:1.45;}
+  #reportPrint *{color:#000;background:transparent;box-shadow:none;}
+
+  #reportPrint .rpt-header{border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;}
+  #reportPrint .rpt-brand{font-size:16pt;font-weight:bold;letter-spacing:0.02em;margin-bottom:2px;}
+  #reportPrint .rpt-meta{font-size:9.5pt;}
+
+  #reportPrint h2{font-size:12pt;font-weight:bold;margin:16px 0 6px;padding-bottom:3px;
+    border-bottom:1px solid #999;page-break-after:avoid;text-transform:uppercase;letter-spacing:0.04em;}
+  #reportPrint section{margin-bottom:14px;}
+
+  #reportPrint table{width:100%;border-collapse:collapse;font-size:9.5pt;page-break-inside:auto;}
+  #reportPrint th{background:#eee;text-align:left;padding:5px 7px;border:1px solid #999;
+    font-weight:bold;font-size:9pt;text-transform:uppercase;letter-spacing:0.03em;}
+  #reportPrint td{padding:4px 7px;border:1px solid #ccc;vertical-align:top;}
+  #reportPrint tr{page-break-inside:avoid;}
+  #reportPrint .num{text-align:right;font-family:'Courier New',monospace;}
+  #reportPrint .total-row td{font-weight:bold;border-top:2px solid #000;}
+
+  #reportPrint .rpt-kv{width:100%;margin-bottom:4px;}
+  #reportPrint .rpt-kv th{width:65%;}
+  #reportPrint .rpt-kv th,#reportPrint .rpt-kv td{padding:4px 8px;}
+
+  #reportPrint .rpt-silo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+  #reportPrint .rpt-silo-block{border:1px solid #999;padding:7px 10px;font-size:9.5pt;page-break-inside:avoid;}
+  #reportPrint .rpt-silo-block .rpt-silo-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}
+
+  #reportPrint .rpt-shed{border:1px solid #999;padding:9px 12px;margin-bottom:8px;page-break-inside:avoid;}
+  #reportPrint .rpt-shed-title{font-size:11pt;font-weight:bold;margin-bottom:4px;
+    border-bottom:1px solid #ccc;padding-bottom:3px;}
+  #reportPrint .rpt-shed-line{font-size:9.5pt;margin-bottom:2px;line-height:1.5;}
+  #reportPrint .rpt-shed-sub{font-size:9pt;margin-top:5px;margin-bottom:2px;
+    text-transform:uppercase;letter-spacing:0.04em;font-weight:bold;}
+  #reportPrint .rpt-shed-table{width:100%;border-collapse:collapse;margin-top:2px;font-size:9pt;}
+  #reportPrint .rpt-shed-table th{background:#f2f2f2;padding:3px 6px;border:1px solid #ccc;font-size:8.5pt;}
+  #reportPrint .rpt-shed-table td{padding:3px 6px;border:1px solid #ddd;}
+
+  #reportPrint .rpt-notplaced{font-style:italic;color:#666;padding:6px 0;}
+
+  #reportPrint .rpt-signature{margin-top:40px;page-break-inside:avoid;display:flex;gap:40px;font-size:9.5pt;}
+  #reportPrint .rpt-signature .rpt-sig{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center;}
+
+  #reportPrint .rpt-disclaimer{margin-top:20px;padding-top:10px;border-top:1px solid #999;
+    font-size:8.5pt;text-align:center;font-style:italic;line-height:1.5;}
+}
