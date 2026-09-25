@@ -1942,7 +1942,7 @@ function renderLoadsModalBody(){
         <th class="split-cell" style="text-align:center;">G2</th>
         <th class="split-cell" style="text-align:center;">G3</th>
         <th class="split-cell" style="text-align:center;">G4</th>
-        <th>Actual (t)</th>
+        <th>Actual Delivery</th>
         <th style="width:80px;text-align:right;">Actions</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -2236,7 +2236,7 @@ function buildBatchReportHTML(){
     html+=`<section><h2>Feed Deliveries</h2><table>
       <thead><tr><th>#</th><th>Date</th><th>Type</th><th class="num">Planned</th>
         <th class="num">G1</th><th class="num">G2</th><th class="num">G3</th><th class="num">G4</th>
-        <th class="num">Actual</th><th>Note</th></tr></thead><tbody>`;
+        <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
       const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?(v/1000).toFixed(1):'—';};
       const actualStr=l.actualKg!=null?(l.actualKg/1000).toFixed(2)+' t':'—';
@@ -2610,7 +2610,7 @@ function renderFeedPlanner(group,sheds,today){
     <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span></h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?(readingTotalKg(latest)/1000).toFixed(2)+' t':'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
     <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting Group ${group} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
     ${rangeBarHtml(siloRange,'silo',`<button class="btn-compare-toggle" id="compareFeedBtn" type="button" title="Compare with other groups">⇄ Compare groups</button>`)}
-    <div class="planner-card"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Actual</strong> (creates a single-group load). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
+    <div class="planner-card"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
   </div>`;
 }
 function renderSiloForecastTable(forecast,group,opts){
@@ -2645,7 +2645,7 @@ function renderSiloForecastTable(forecast,group,opts){
       testDels.forEach(td=>{const kg=Number(td.amountKg)||0;chunks.push(`<span class="delivery-pill test">🚜 +${(kg/1000).toFixed(1)} t</span><button class="test-x" type="button" data-remove-test="${group}|${td.id}" title="Remove this test delivery">✕</button>`);});
       deliveryCell=chunks.join(' ');
     }
-    if(isInlineOpen){deliveryCell+=`<div class="inline-del"><input type="number" class="inline-del-input" placeholder="tonnes" min="0.1" step="0.1" value="" /><button type="button" class="inline-del-btn test" data-inline-test="${group}|${iso(r.date)}" title="Add as test delivery (session only)">🚜 Test</button><button type="button" class="inline-del-btn actual" data-inline-actual="${group}|${iso(r.date)}" title="Record as actual delivery (creates a load)">✅ Actual</button><button type="button" class="inline-del-btn cancel" data-inline-cancel="1" title="Cancel">✕</button></div>`;}
+    if(isInlineOpen){deliveryCell+=`<div class="inline-del"><input type="number" class="inline-del-input" placeholder="tonnes" min="0.1" step="0.1" value="" /><button type="button" class="inline-del-btn test" data-inline-test="${group}|${iso(r.date)}" title="Add as test delivery (session only)">🚜 Test</button><button type="button" class="inline-del-btn actual" data-inline-actual="${group}|${iso(r.date)}" title="Record this load as ordered">✅ Order</button><button type="button" class="inline-del-btn cancel" data-inline-cancel="1" title="Cancel">✕</button></div>`;}
     let dateCls='';
     if(r.isToday)dateCls='fb-date-today';else if(r.isWeekend)dateCls='fb-date-weekend';
     const reading=readingOnDate(group,iso(r.date));
