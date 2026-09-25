@@ -1758,9 +1758,12 @@ function updateLoadsDot(){
 }
 function renderLoadsModalBody(){
   const body=document.getElementById('loadsBody');if(!body)return;
+  const prevScroll=body.scrollTop;
   const summary=farmLoadsSummary();
   const today=dateOnly(new Date());
   const all=farmLoads.slice().sort((a,b)=>{const t=dateOnly(a.date)-dateOnly(b.date);if(t!==0)return t;return String(a.createdAt||'').localeCompare(String(b.createdAt||''));});
+  const loadNumberMap=new Map();
+  all.forEach((l,i)=>loadNumberMap.set(l.id,i+1));
   const filter=loadsModalState.filter||'all';
   let filtered=all;
   if(filter==='upcoming')filtered=all.filter(l=>dateOnly(l.date)>=today);
@@ -1796,6 +1799,7 @@ function renderLoadsModalBody(){
     const ab1=document.getElementById('loadsAddBtn');if(ab1)ab1.addEventListener('click',()=>openLoadModal(null,null));
     const ab2=document.getElementById('loadsEmptyAddBtn');if(ab2)ab2.addEventListener('click',()=>openLoadModal(null,null));
     body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
+    requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
     return;
   }
 
@@ -1804,15 +1808,25 @@ function renderLoadsModalBody(){
     const isPast=dateOnly(l.date)<today;
     const dc=dateCounts[iso(l.date)]||0;
     const badge=dc>1?`<span class="loads-count-badge">${dc} loads</span>`:'';
+    const loadNum=loadNumberMap.get(l.id)||0;
+    const needsActual=!l.migrated&&l.actualKg==null&&isPast;
+    const rowCls=[
+      isWeekendRow?'is-weekend':'',
+      isPast?'is-past':'',
+      needsActual?'load-needs-actual':'',
+      (!isPast&&!isWeekendRow)?'load-upcoming':''
+    ].filter(Boolean).join(' ');
     const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${(v/1000).toFixed(1)}</td>`;};
     const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?(l.actualKg/1000).toFixed(2):'';
     const actualCls=(l.actualKg!=null)?'filled':'';
-    return `<tr class="${isWeekendRow?'is-weekend':''} ${isPast?'is-past':''}" data-load-row="${escapeAttr(l.id)}">
-      <td class="loads-date">${fmtShort(l.date)}${badge}</td>
+    const actualNeedsCls=needsActual?'needs':'';
+    const actualPlaceholder=needsActual?'enter actual':'—';
+    return `<tr class="${rowCls}" data-load-row="${escapeAttr(l.id)}">
+      <td class="loads-date"><span class="load-num-badge">#${loadNum}</span>${fmtShort(l.date)}${badge}</td>
       <td>${feedTypeTagHtml(l.feedType)}</td>
       <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
       ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
-      <td class="loads-actual-cell"><input type="number" class="loads-actual-input ${actualCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="—" value="${actualStr}" /></td>
+      <td class="loads-actual-cell"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" /></td>
       <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
     </tr>`;
   }).join('');
@@ -1843,6 +1857,7 @@ function renderLoadsModalBody(){
       if(e.key==='Escape'){e.preventDefault();const load=farmLoads.find(l=>l.id===inp.dataset.loadActual);if(load)inp.value=(load.actualKg!=null)?(load.actualKg/1000).toFixed(2):'';inp.classList.remove('invalid');inp.blur();}
     });
   });
+  requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
 }
 function handleLoadActualBlur(inp){
   const id=inp.dataset.loadActual;
