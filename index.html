@@ -88,7 +88,7 @@
   <button type="button" id="loadModalClose" aria-label="Close">✕</button>
 </div><div class="sync-modal-body" id="loadModalBody"></div></div>
 <script>
-const STORAGE_KEY='prodwise_vm_phase2_v1',VIEW_KEY='prodwise_vm_shedview_v1',THEME_KEY='prodwise_vm_theme_v1',SILO_KEY_V2='prodwise_vm_silo_v2',SILO_KEY='prodwise_vm_silo_v3',SESSION_KEY='prodwise_session_init_v1',SYNC_FARMNAME_KEY='prodwise_sync_farmname_v1',PRED_KEY='prodwise_predictions_v1',LOADS_KEY='prodwise_loads_v1';
+const STORAGE_KEY='prodwise_vm_phase2_v1',VIEW_KEY='prodwise_vm_shedview_v1',THEME_KEY='prodwise_vm_theme_v1',SILO_KEY_V2='prodwise_vm_silo_v2',SILO_KEY='prodwise_vm_silo_v3',SESSION_KEY='prodwise_session_init_v1',SYNC_FARMNAME_KEY='prodwise_sync_farmname_v1',PRED_KEY='prodwise_predictions_v1',LOADS_KEY='prodwise_loads_v1';LOADS_VIEW_KEY='prodwise_loads_view_v1';
 const SHED_COUNT=8,FEED_BLOCK_T=60,FIXED_FLOOR_AREA_M2=3162,MAX_PICKUPS_PER_SHED=5,MIN_PICKUPS_PER_SHED=4,MAX_PREDICTED_PICKUPS=6,DEFAULT_MORT_RATE_PCT=0.1,MAX_MORT_RATE_PCT=5;
 const DEFAULT_CHICK_WEIGHT_KG=0.044,MIN_CHICK_WEIGHT_KG=0.030,MAX_CHICK_WEIGHT_KG=0.080,DEFAULT_BIAS_FACTOR=0.90,MIN_BIAS_FACTOR=0.70,MAX_BIAS_FACTOR=1.10;
 const GOMPERTZ_K_MIN=0.02,GOMPERTZ_K_MAX=0.12,GOMPERTZ_A_MAX=30,MAX_UNCERTAINTY=0.35,DEFAULT_SHED_POPULATION=52000;
@@ -110,7 +110,7 @@ let predState={beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},pre
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
-let loadsModalState={open:false,filter:'all'},loadModalState=null,newBatchModalPhase='choice',batchHistoryCache=null,batchHistoryPage=0;
+let loadsModalState={open:false,filter:'all',view:'table'},loadModalState=null,newBatchModalPhase='choice',batchHistoryCache=null,batchHistoryPage=0;
 const BATCHES_PER_PAGE=4;
 let renderTimer=null,syncFarmName=null,syncSha=null,syncExcelSha=null,syncExcelMeta=null,syncConnectedAt=null,syncLastSyncAt=null,syncState='idle';
 let pushDebounceTimer=null,pushMaxWaitTimer=null,pushPending=false,pushInFlight=false;
@@ -1762,6 +1762,15 @@ function closeLoadsModal(){
   if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
 }
 function setLoadsFilter(f){loadsModalState.filter=f;renderLoadsModalBody();}
+function setLoadsView(v){
+  if(v!=='table'&&v!=='oneline')return;
+  loadsModalState.view=v;
+  try{localStorage.setItem(LOADS_VIEW_KEY,v);}catch(e){}
+  renderLoadsModalBody();
+}
+function loadLoadsView(){
+  try{const v=localStorage.getItem(LOADS_VIEW_KEY);if(v==='table'||v==='oneline')loadsModalState.view=v;}catch(e){}
+}
 function updateLoadsDot(){
   const dot=document.getElementById('loadsDot');if(!dot)return;
   const summary=farmLoadsSummary();
@@ -1793,7 +1802,13 @@ function renderLoadsModalBody(){
       <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div><div class="sub">${summary.total} docket${summary.total===1?'':'s'}</div></div>
       <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div><div class="sub">${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded</div></div>
     </div>
-    <div class="loads-summary-actions"><button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button></div>
+    <div class="loads-summary-actions">
+      <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button>
+      <div class="loads-view-toggle">
+        <button type="button" class="${loadsModalState.view==='table'?'active':''}" data-loads-view="table">☰ Table</button>
+        <button type="button" class="${loadsModalState.view==='oneline'?'active':''}" data-loads-view="oneline">📋 One-line</button>
+      </div>
+    </div>
   </div>`;
 
   const chipsHtml=`<div class="loads-filter-chips">
@@ -1813,11 +1828,12 @@ function renderLoadsModalBody(){
     const ab1=document.getElementById('loadsAddBtn');if(ab1)ab1.addEventListener('click',()=>openLoadModal(null,null));
     const ab2=document.getElementById('loadsEmptyAddBtn');if(ab2)ab2.addEventListener('click',()=>openLoadModal(null,null));
     body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
+    body.querySelectorAll('[data-loads-view]').forEach(b=>b.addEventListener('click',()=>setLoadsView(b.dataset.loadsView)));
     requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
     return;
   }
 
-  const rows=filtered.map(l=>{
+  const rowBase=l=>{
     const isWeekendRow=isWeekend(l.date);
     const isPast=dateOnly(l.date)<today;
     const dc=dateCounts[iso(l.date)]||0;
@@ -1830,38 +1846,70 @@ function renderLoadsModalBody(){
       needsActual?'load-needs-actual':'',
       (!isPast&&!isWeekendRow)?'load-upcoming':''
     ].filter(Boolean).join(' ');
-    const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${(v/1000).toFixed(1)}</td>`;};
-    const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?(l.actualKg/1000).toFixed(2):'';
-    const actualCls=(l.actualKg!=null)?'filled':'';
-    const actualNeedsCls=needsActual?'needs':'';
-    const actualPlaceholder=needsActual?'enter actual':'—';
-    return `<tr class="${rowCls}" data-load-row="${escapeAttr(l.id)}">
-      <td class="loads-date"><span class="load-num-badge">#${loadNum}</span>${fmtShort(l.date)}${badge}</td>
-      <td>${feedTypeTagHtml(l.feedType)}</td>
-      <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
-      ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
-      <td class="loads-actual-cell"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" /></td>
-      <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
-    </tr>`;
-  }).join('');
+    return {isWeekendRow,isPast,dc,badge,loadNum,needsActual,rowCls};
+  };
+  const view=loadsModalState.view||'table';
+  let bodyHtml='';
+  if(view==='oneline'){
+    const lines=filtered.map(l=>{
+      const r=rowBase(l);
+      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`G${g} ${(v/1000).toFixed(1)}`:`G${g} —`;}).join(' · ');
+      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?`Actual ${(l.actualKg/1000).toFixed(2)} t ✓`:'Actual —';
+      const actualCls=(l.actualKg!=null)?'filled':'needs';
+      const noteStr=(l.note&&l.note.trim())?escapeHtml(l.note):'no note';
+      const noteCls=(l.note&&l.note.trim())?'':'empty';
+      return `<div class="loads-oneline ${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
+        <span class="lon-num">#${r.loadNum}</span>
+        <span class="lon-date">${fmtShort(l.date)}</span>${r.badge}
+        ${feedTypeTagHtml(l.feedType)}
+        <span class="lon-planned">${(l.plannedKg/1000).toFixed(2)} t</span>
+        <span class="lon-split">${splitParts}</span>
+        <span class="lon-actual ${actualCls}">${actualStr}</span>
+        <span class="lon-note ${noteCls}" title="${escapeAttr(l.note||'')}">${noteStr}</span>
+        <span class="lon-actions">
+          <button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button>
+          <button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button>
+        </span>
+      </div>`;
+    }).join('');
+    bodyHtml=`<div class="loads-oneline-list">${lines}</div>
+      <div class="loads-hint">💡 One row per load — notes visible at a glance. Switch to <strong>☰ Table</strong> to enter or edit actuals inline.</div>`;
+  } else {
+    const rows=filtered.map(l=>{
+      const r=rowBase(l);
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${(v/1000).toFixed(1)}</td>`;};
+      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?(l.actualKg/1000).toFixed(2):'';
+      const actualCls=(l.actualKg!=null)?'filled':'';
+      const actualNeedsCls=r.needsActual?'needs':'';
+      const actualPlaceholder=r.needsActual?'enter actual':'—';
+      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
+        <td class="loads-date"><span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
+        <td>${feedTypeTagHtml(l.feedType)}</td>
+        <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
+        ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
+        <td class="loads-actual-cell"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" /></td>
+        <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
+      </tr>`;
+    }).join('');
+    bodyHtml=`<div class="loads-table-wrap"><table class="loads-table">
+      <thead><tr>
+        <th>Date</th><th>Type</th><th class="num">Planned</th>
+        <th class="split-cell" style="text-align:center;">G1</th>
+        <th class="split-cell" style="text-align:center;">G2</th>
+        <th class="split-cell" style="text-align:center;">G3</th>
+        <th class="split-cell" style="text-align:center;">G4</th>
+        <th>Actual (t)</th>
+        <th style="width:80px;text-align:right;">Actions</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="loads-hint">💡 Type the docket total straight into the Actual column. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
+  }
 
-  const tableHtml=`<div class="loads-table-wrap"><table class="loads-table">
-    <thead><tr>
-      <th>Date</th><th>Type</th><th class="num">Planned</th>
-      <th class="split-cell" style="text-align:center;">G1</th>
-      <th class="split-cell" style="text-align:center;">G2</th>
-      <th class="split-cell" style="text-align:center;">G3</th>
-      <th class="split-cell" style="text-align:center;">G4</th>
-      <th>Actual (t)</th>
-      <th style="width:80px;text-align:right;">Actions</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table></div>
-  <div class="loads-hint">💡 Type the docket total straight into the Actual column. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
-
-  body.innerHTML=sumHtml+chipsHtml+tableHtml;
+  body.innerHTML=sumHtml+chipsHtml+bodyHtml;
   document.getElementById('loadsAddBtn').addEventListener('click',()=>openLoadModal(null,null));
   body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
+  body.querySelectorAll('[data-loads-view]').forEach(b=>b.addEventListener('click',()=>setLoadsView(b.dataset.loadsView)));
   body.querySelectorAll('[data-load-edit]').forEach(b=>b.addEventListener('click',()=>openLoadModal(b.dataset.loadEdit,null)));
   body.querySelectorAll('[data-load-delete]').forEach(b=>b.addEventListener('click',()=>confirmDeleteLoad(b.dataset.loadDelete)));
   body.querySelectorAll('[data-load-actual]').forEach(inp=>{
@@ -2978,6 +3026,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const savedSilo=loadSiloData();if(savedSilo)siloData=savedSilo;
   const savedLoads=loadFarmLoads();if(savedLoads)farmLoads=savedLoads;
   migrateDeliveriesToLoads();
+  loadLoadsView();
   render();
   if(syncFarmName&&syncConnectedAt){if(syncLastSyncAt)pullFromCloud(true).catch(()=>{});else pushToCloud().catch(()=>{});}
   if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
