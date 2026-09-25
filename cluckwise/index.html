@@ -1254,6 +1254,51 @@
   body.theme-dark .wxc-now{ background:rgba(0,0,0,0.25); }
   body.theme-dark .wxc-meta.strong{ color:#8FC1FF; }
 
+  /* clickable weather → hourly forecast */
+  .wx-clickable{ cursor:pointer; transition:transform .1s ease, box-shadow .15s ease, filter .15s ease; }
+  .wx-card.wx-clickable:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); }
+  .wx.wx-clickable:hover{ filter:brightness(0.96); text-decoration:underline dotted; text-underline-offset:3px; }
+  .wx-clickable:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .wx-card.wx-clickable::after{ content:'Hourly ›'; align-self:flex-end; font-size:10.5px; font-weight:800; opacity:0.55; margin-top:-4px; }
+  #wxModal{ width:600px; }
+  .wxh-highlights{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .wxh-hl{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); font-size:13.5px; color:var(--ink); }
+  .wxh-hl b{ font-family:'Sora',sans-serif; }
+  .wxh-hl-ic{ font-size:18px; width:22px; text-align:center; flex-shrink:0; }
+  .wxh-hl-rain{ background:#E4F0FF; border-color:#8DB5E6; }
+  .wxh-hl-hot{ background:#FFF1E6; border-color:#F2A66B; }
+  body.theme-dark .wxh-hl-rain{ background:rgba(90,150,230,0.18); border-color:rgba(110,165,235,0.55); }
+  body.theme-dark .wxh-hl-hot{ background:rgba(217,72,15,0.18); border-color:rgba(242,166,107,0.5); }
+  .wxh-chart-wrap{ background:var(--surface-soft); border:1px solid var(--line); border-radius:12px; padding:6px 4px 0; margin-bottom:10px; }
+  .wxh-chart{ width:100%; height:auto; display:block; }
+  .wxh-grid{ stroke:var(--line); stroke-width:1; }
+  .wxh-axis{ font-size:13px; fill:var(--muted); font-family:'Inter',sans-serif; font-weight:600; }
+  .wxh-bar{ fill:#4C8FE0; opacity:0.28; }
+  .wxh-bar.strong{ opacity:0.55; }
+  .wxh-line{ fill:none; stroke:#E8590C; stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round; }
+  .wxh-dot{ stroke:var(--surface); stroke-width:2; }
+  .wxh-dot.hot{ fill:#D9480F; }
+  .wxh-dot.cold{ fill:#1C7ED6; }
+  .wxh-dot-label{ font-size:13.5px; font-weight:800; font-family:'Sora',sans-serif; }
+  .wxh-dot-label.hot{ fill:#D9480F; }
+  .wxh-dot-label.cold{ fill:#1C7ED6; }
+  .wxh-now{ stroke:var(--primary-dark); stroke-width:1.5; stroke-dasharray:3 3; }
+  .wxh-now-label{ font-size:12.5px; font-weight:800; fill:var(--primary-dark); font-family:'Sora',sans-serif; }
+  .wxh-strip{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 10px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; }
+  .wxh-hour{ flex:0 0 62px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); }
+  .wxh-hour.rain{ background:#E4F0FF; border-color:#8DB5E6; }
+  .wxh-hour.hot{ border-color:#D9480F; box-shadow:inset 0 0 0 1px #D9480F; }
+  .wxh-hour.now{ border-color:var(--primary-dark); box-shadow:inset 0 0 0 1.5px var(--primary-dark); }
+  body.theme-dark .wxh-hour.rain{ background:rgba(90,150,230,0.18); border-color:rgba(110,165,235,0.55); }
+  .wxh-time{ font-size:11px; font-weight:800; color:var(--muted); white-space:nowrap; }
+  .wxh-hour.now .wxh-time{ color:var(--primary-dark); }
+  .wxh-ic{ font-size:20px; line-height:1; }
+  .wxh-temp{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; color:var(--ink); }
+  .wxh-prob{ font-size:10.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
+  body.theme-dark .wxh-prob{ color:#8FC1FF; }
+  .wxh-loc{ font-size:11px; color:var(--muted); text-align:right; }
+  .wxh-error{ color:var(--danger); }
+
   /* bigger, more noticeable chips (Month cells + List headers) */
   .wx-cell{ font-size:13px !important; font-weight:800 !important; padding:2px 7px; border-radius:8px; min-width:0; overflow:hidden; }
   .wx-cell .wx-t{ overflow:hidden; text-overflow:ellipsis; }
@@ -1839,6 +1884,11 @@
     <button class="btn-app secondary-action" id="rdViewTaskBtn" style="margin-top:8px; display:none;">📋 View linked task</button>
     <button class="btn-danger-outline" id="rdDeleteBtn" style="margin-top:8px;">Delete report</button>
   </div>
+</div>
+
+<div class="form-modal" id="wxModal">
+  <div class="form-modal-head"><h2 id="wxModalTitle">Weather</h2><button id="closeWxModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="wxModalBody"></div>
 </div>
 
 <div class="form-modal" id="searchModal">
@@ -3682,7 +3732,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-p1';
+  const APP_VERSION = '2026.09.25-h1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -3871,7 +3921,19 @@
       + (w.rain != null ? ` · Rain ${Math.round(w.rain)}%` : '')
       + (w.wind != null ? ` · Wind ${Math.round(w.wind)} ${wxWindUnit()}` : '')
       + (w.current ? ` · Now ${wxT(w.current.temp)}` : '');
+    if(!card.classList.contains('wx-card-modal')) makeWxClickable(card, key);
+    card.title += ' — tap for hourly forecast';
     return card;
+  }
+  function makeWxClickable(el, key){
+    el.classList.add('wx-clickable');
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    const open = (e)=>{ e.stopPropagation(); e.preventDefault(); openWeatherDetail(key); };
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') open(e); });
+    el.addEventListener('mousedown', e=> e.stopPropagation());
+    el.addEventListener('touchstart', e=> e.stopPropagation(), { passive:true });
   }
 
   function buildWxChip(key, size){
@@ -3916,7 +3978,234 @@
       if(w.rain != null && w.rain >= 30) add('wx-rain', `💧${Math.round(w.rain)}%`);
       chipAlerts.forEach(([k, text])=> add('wxa wxa-' + k, text));
     }
+    if(size !== 'modal'){ makeWxClickable(el, key); el.title += ' — tap for hourly forecast'; }
     return el;
+  }
+
+  // ==================== HOURLY FORECAST (tap any weather) ====================
+  const WX_HOURLY_TTL = 30 * 60 * 1000;
+  const wxHourlyCache = new Map();   // `${wxKey()}|${date}` -> { fetchedAt, hours:[...] }
+  let wxDetailKey = null;
+  async function fetchHourly(dateKeyStr){
+    const ck = `${wxKey()}|${dateKeyStr}`;
+    const hit = wxHourlyCache.get(ck);
+    if(hit && Date.now() - hit.fetchedAt < WX_HOURLY_TTL) return hit.hours;
+    const l = settings.weatherLocation;
+    const F = settings.weatherUnit === 'fahrenheit';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
+      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day`
+      + `&timezone=auto&start_date=${dateKeyStr}&end_date=${dateKeyStr}`
+      + `&temperature_unit=${F ? 'fahrenheit' : 'celsius'}&wind_speed_unit=${F ? 'mph' : 'kmh'}`
+      + `&cb=${Math.floor(Date.now() / WX_HOURLY_TTL)}`;
+    const res = await fetch(url, { cache:'no-store' });
+    if(!res.ok) throw new Error('Hourly weather ' + res.status);
+    const j = await res.json();
+    const h = j.hourly || {};
+    const hours = (h.time || []).map((t, i)=>({
+      time: t,
+      hour: parseInt(String(t).slice(11, 13), 10),
+      temp: h.temperature_2m ? h.temperature_2m[i] : null,
+      prob: h.precipitation_probability ? h.precipitation_probability[i] : null,
+      precip: h.precipitation ? h.precipitation[i] : null,
+      code: h.weather_code ? h.weather_code[i] : null,
+      wind: h.wind_speed_10m ? h.wind_speed_10m[i] : null,
+      isDay: h.is_day ? h.is_day[i] : 1
+    }));
+    wxHourlyCache.set(ck, { fetchedAt: Date.now(), hours });
+    return hours;
+  }
+  function wxHourLabel(h){
+    const d = new Date(2000, 0, 1, h, 0, 0);
+    return d.toLocaleTimeString(undefined, { hour:'numeric' });
+  }
+  function isRainHour(x){ return (x.prob != null && x.prob >= 50) || (x.precip != null && x.precip >= 0.2); }
+  // Everything a manager wants to know at a glance for that day.
+  function hourlyHighlights(hours){
+    const valid = hours.filter(x=> x.temp != null);
+    const out = [];
+    if(valid.length){
+      const hot = valid.reduce((a, b)=> b.temp > a.temp ? b : a);
+      const cold = valid.reduce((a, b)=> b.temp < a.temp ? b : a);
+      out.push({ kind:'hot', icon:'🌡️', text:`Hottest: <b>${wxT(hot.temp)}</b> at <b>${wxHourLabel(hot.hour)}</b>`, hour: hot.hour });
+      out.push({ kind:'cold', icon:'🌙', text:`Coolest: <b>${wxT(cold.temp)}</b> at <b>${wxHourLabel(cold.hour)}</b>`, hour: cold.hour });
+    }
+    // Rain windows (consecutive rainy hours)
+    const windows = [];
+    let cur = null;
+    hours.forEach(x=>{
+      if(isRainHour(x)){
+        if(!cur){ cur = { start:x.hour, end:x.hour, peak:x.prob || 0, mm:x.precip || 0 }; windows.push(cur); }
+        else { cur.end = x.hour; cur.peak = Math.max(cur.peak, x.prob || 0); cur.mm += (x.precip || 0); }
+      } else cur = null;
+    });
+    if(windows.length){
+      const w0 = windows[0];
+      const until = w0.end + 1 >= 24 ? 'midnight' : wxHourLabel(w0.end + 1);
+      let text = `Rain from <b>${wxHourLabel(w0.start)}</b> until <b>${until}</b>`;
+      const extras = [];
+      if(w0.peak) extras.push(`up to ${Math.round(w0.peak)}%`);
+      if(w0.mm >= 0.1) extras.push(`${w0.mm.toFixed(1)} mm`);
+      if(extras.length) text += ` (${extras.join(', ')})`;
+      if(windows.length > 1) text += ` · again from <b>${wxHourLabel(windows[1].start)}</b>`;
+      out.push({ kind:'rain', icon:'🌧️', text, hour: w0.start });
+    } else {
+      const withProb = hours.filter(x=> x.prob != null);
+      const maxP = withProb.length ? withProb.reduce((a, b)=> b.prob > a.prob ? b : a) : null;
+      if(maxP && maxP.prob >= 20) out.push({ kind:'rain-low', icon:'🌦️', text:`Small chance of rain — ${Math.round(maxP.prob)}% around <b>${wxHourLabel(maxP.hour)}</b>`, hour: maxP.hour });
+      else out.push({ kind:'dry', icon:'☀️', text:'No rain expected', hour: null });
+    }
+    const withWind = hours.filter(x=> x.wind != null);
+    if(withWind.length){
+      const windy = withWind.reduce((a, b)=> b.wind > a.wind ? b : a);
+      out.push({ kind:'wind', icon:'💨', text:`Windiest: <b>${Math.round(windy.wind)} ${wxWindUnit()}</b> at <b>${wxHourLabel(windy.hour)}</b>`, hour: windy.hour });
+    }
+    return out;
+  }
+  // Temperature line over rain-chance bars, with the hottest hour and "now" marked.
+  function buildHourlyChart(hours, isToday){
+    const W = 520, H = 200, L = 40, R = 12, T = 26, B = 30;
+    const pw = W - L - R, ph = H - T - B;
+    const temps = hours.map(x=> x.temp).filter(v=> v != null);
+    if(!temps.length) return '';
+    let tMin = Math.min(...temps), tMax = Math.max(...temps);
+    if(tMax - tMin < 4){ tMax += 2; tMin -= 2; }
+    const pad = (tMax - tMin) * 0.12;
+    tMin -= pad; tMax += pad;
+    const n = hours.length;
+    const xAt = i => L + (n <= 1 ? pw / 2 : (i / (n - 1)) * pw);
+    const yAt = v => T + (1 - (v - tMin) / (tMax - tMin)) * ph;
+    const bw = Math.max(4, pw / n - 3);
+    let svg = `<svg class="wxh-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hourly temperature and chance of rain">`;
+    // grid + y labels
+    [tMax - pad, (tMin + tMax) / 2, tMin + pad].forEach(v=>{
+      const y = yAt(v).toFixed(1);
+      svg += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" class="wxh-grid"/>`;
+      svg += `<text x="${L - 6}" y="${(+y + 4).toFixed(1)}" text-anchor="end" class="wxh-axis">${Math.round(v)}°</text>`;
+    });
+    // rain bars
+    hours.forEach((x, i)=>{
+      const p = x.prob != null ? x.prob : (x.precip ? Math.min(100, x.precip * 40) : 0);
+      if(p <= 0) return;
+      const bh = (p / 100) * ph;
+      svg += `<rect x="${(xAt(i) - bw / 2).toFixed(1)}" y="${(T + ph - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" class="wxh-bar${isRainHour(x) ? ' strong' : ''}"><title>${wxHourLabel(x.hour)} · ${Math.round(p)}% rain</title></rect>`;
+    });
+    // "now" marker
+    if(isToday){
+      const nowH = new Date().getHours() + new Date().getMinutes() / 60;
+      const idx = hours.findIndex(x=> x.hour === Math.floor(nowH));
+      if(idx >= 0){
+        const nx = (xAt(idx) + (nowH % 1) * (pw / Math.max(1, n - 1))).toFixed(1);
+        svg += `<line x1="${nx}" x2="${nx}" y1="${T - 6}" y2="${T + ph}" class="wxh-now"/>`;
+        svg += `<text x="${nx}" y="${T - 9}" text-anchor="middle" class="wxh-now-label">Now</text>`;
+      }
+    }
+    // temperature line
+    const pts = hours.map((x, i)=> x.temp != null ? `${xAt(i).toFixed(1)},${yAt(x.temp).toFixed(1)}` : null).filter(Boolean);
+    svg += `<polyline points="${pts.join(' ')}" class="wxh-line"/>`;
+    // hottest + coolest markers
+    const valid = hours.map((x, i)=> ({ x, i })).filter(o=> o.x.temp != null);
+    const hot = valid.reduce((a, b)=> b.x.temp > a.x.temp ? b : a);
+    const cold = valid.reduce((a, b)=> b.x.temp < a.x.temp ? b : a);
+    [[hot, 'hot', -10], [cold, 'cold', 20]].forEach(([o, cls, dy])=>{
+      const cx = xAt(o.i), cy = yAt(o.x.temp);
+      // keep labels inside the chart and clear of the time axis
+      let ly = cy + dy;
+      if(ly > T + ph - 2) ly = cy - 10;
+      if(ly < 12) ly = cy + 20;
+      const anchor = o.i <= 1 ? 'start' : (o.i >= n - 2 ? 'end' : 'middle');
+      const lx = anchor === 'start' ? cx - 4 : (anchor === 'end' ? cx + 4 : cx);
+      svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" class="wxh-dot ${cls}"/>`;
+      svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" class="wxh-dot-label ${cls}">${wxT(o.x.temp)} · ${wxHourLabel(o.x.hour)}</text>`;
+    });
+    // x labels every 3 h
+    hours.forEach((x, i)=>{
+      if(x.hour % 3 !== 0) return;
+      if(n > 12 && x.hour % 6 !== 0 && window.innerWidth < 480) return;   // fewer labels on phones
+      svg += `<text x="${xAt(i).toFixed(1)}" y="${H - 9}" text-anchor="middle" class="wxh-axis">${wxHourLabel(x.hour)}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+  function buildHourlyStrip(hours, isToday, focusHour){
+    const strip = document.createElement('div');
+    strip.className = 'wxh-strip';
+    const valid = hours.filter(x=> x.temp != null);
+    const hotHour = valid.length ? valid.reduce((a, b)=> b.temp > a.temp ? b : a).hour : null;
+    const nowH = new Date().getHours();
+    hours.forEach(x=>{
+      const c = document.createElement('div');
+      c.className = 'wxh-hour' + (isRainHour(x) ? ' rain' : '') + (x.hour === hotHour ? ' hot' : '') + (isToday && x.hour === nowH ? ' now' : '');
+      c.dataset.hour = x.hour;
+      const [ic, label] = x.code != null ? wxIconLabel(x.code, x.isDay) : ['·', ''];
+      c.title = `${wxHourLabel(x.hour)} · ${label} · ${wxT(x.temp)}` + (x.prob != null ? ` · ${Math.round(x.prob)}% rain` : '') + (x.wind != null ? ` · ${Math.round(x.wind)} ${wxWindUnit()}` : '');
+      const mk = (cls, t)=>{ const e = document.createElement('span'); e.className = cls; e.textContent = t; c.appendChild(e); };
+      mk('wxh-time', isToday && x.hour === nowH ? 'Now' : wxHourLabel(x.hour));
+      mk('wxh-ic', ic);
+      mk('wxh-temp', wxT(x.temp));
+      mk('wxh-prob', x.prob != null ? `💧${Math.round(x.prob)}%` : (x.precip ? `${x.precip.toFixed(1)}mm` : '—'));
+      strip.appendChild(c);
+    });
+    // Scroll to "now" today, otherwise to the rain start / hottest hour.
+    requestAnimationFrame(()=>{
+      const target = strip.querySelector(`.wxh-hour[data-hour="${focusHour}"]`);
+      if(target) strip.scrollLeft = Math.max(0, target.offsetLeft - strip.clientWidth / 2 + target.clientWidth / 2);
+    });
+    return strip;
+  }
+  async function openWeatherDetail(key){
+    if(wxNeedsSetup()){ openWeatherSettings(); return; }
+    if(!wxForDate(key)) return;
+    wxDetailKey = key;
+    const isToday = key === dateKey(new Date());
+    $('#wxModalTitle').textContent = (isToday ? 'Today · ' : '') + toDateObj(key).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+    const body = $('#wxModalBody');
+    body.innerHTML = '';
+    const built = buildWxCard(key, 'wide');
+    if(built){
+      const summary = built.cloneNode(true);          // clone = no click handlers
+      summary.classList.add('wx-card-modal');
+      summary.classList.remove('wx-clickable');
+      summary.removeAttribute('role'); summary.removeAttribute('tabindex');
+      summary.title = summary.title.replace(' — tap for hourly forecast', '');
+      body.appendChild(summary);
+    }
+    const loading = document.createElement('div');
+    loading.className = 'empty-note';
+    loading.textContent = 'Loading hourly forecast…';
+    body.appendChild(loading);
+    const loc = document.createElement('div');
+    loc.className = 'wxh-loc';
+    loc.textContent = `📍 ${settings.weatherLocation.name} · Open-Meteo`;
+    openDrawer('#wxModal');
+    try{
+      const hours = await fetchHourly(key);
+      if(wxDetailKey !== key) return;
+      loading.remove();
+      if(!hours.length){ body.appendChild(Object.assign(document.createElement('div'), { className:'empty-note', textContent:'No hourly data for this day.' })); return; }
+      const hl = hourlyHighlights(hours);
+      const list = document.createElement('div');
+      list.className = 'wxh-highlights';
+      hl.forEach(item=>{
+        const row = document.createElement('div');
+        row.className = 'wxh-hl wxh-hl-' + item.kind;
+        row.innerHTML = `<span class="wxh-hl-ic"></span><span class="wxh-hl-text">${item.text}</span>`;
+        row.querySelector('.wxh-hl-ic').textContent = item.icon;
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+      const chartWrap = document.createElement('div');
+      chartWrap.className = 'wxh-chart-wrap';
+      chartWrap.innerHTML = buildHourlyChart(hours, isToday);
+      body.appendChild(chartWrap);
+      const rainItem = hl.find(x=> x.kind === 'rain');
+      const hotItem = hl.find(x=> x.kind === 'hot');
+      const focus = isToday ? new Date().getHours() : (rainItem ? rainItem.hour : (hotItem ? hotItem.hour : 12));
+      body.appendChild(buildHourlyStrip(hours, isToday, focus));
+      body.appendChild(loc);
+    }catch(e){
+      loading.textContent = navigator.onLine ? 'Could not load the hourly forecast — try again in a moment.' : 'Hourly forecast needs a connection.';
+      loading.classList.add('wxh-error');
+    }
   }
 
   const SIDEBAR_BACKLOG_CAP = 4;
@@ -6185,6 +6474,8 @@
     $('#backlogModal').classList.remove('open');
     $('#seriesDeleteModal').classList.remove('open');
     $('#copyModal').classList.remove('open');
+    $('#wxModal').classList.remove('open');
+    wxDetailKey = null;
     $('#reportDetailModal').classList.remove('open');
     $('#searchModal').classList.remove('open');
     $('#restoreModal').classList.remove('open');
@@ -6552,6 +6843,7 @@
     }
   }
   $('#weatherSearchBtn').addEventListener('click', searchWeatherLocation);
+  $('#closeWxModal').addEventListener('click', closeOverlays);
   $('#weatherRefreshBtn').addEventListener('click', ()=>{ weatherLastError = null; refreshWeather(true); });
   $('#appVersion').textContent = 'CluckWise.vm manager · version ' + APP_VERSION;
   $('#weatherSearchInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); searchWeatherLocation(); } });
