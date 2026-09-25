@@ -1223,3 +1223,93 @@ body.theme-dark .loads-oneline-table tbody tr.load-needs-actual.is-weekend td{ba
 /* Loads table — remove the pill's left offset so Type column aligns under its header */
 .loads-table .feed-tag,
 .loads-oneline-table .feed-tag{margin-left:0;vertical-align:middle;}
+
+/* ============ SILO READINGS MODAL ============ */
+.silo-btn{border:1px solid var(--line);background:var(--surface-soft);color:var(--ink);
+  width:40px;height:40px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;transition:background .15s ease,transform .12s ease;}
+.silo-btn:hover{background:var(--primary-soft);color:var(--primary-dark);transform:translateY(-1px);}
+
+#siloModal .compare-modal-panel{max-width:720px;max-height:900px;}
+@media(max-width:640px){#siloModal .compare-modal-panel{max-width:none;max-height:none;}}
+
+#siloBody{padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;}
+@media(max-width:640px){#siloBody{padding:12px 12px 20px;gap:10px;}}
+
+.sms-date-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;
+  padding:12px 14px;background:var(--surface-soft);border:1px solid var(--line);
+  border-radius:12px;}
+.sms-date-main{display:flex;align-items:baseline;gap:8px;}
+.sms-date-label{font-family:'Sora',sans-serif;font-weight:700;font-size:10.5px;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+.sms-date-value{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;color:var(--ink);}
+.sms-date-hint{margin-left:auto;font-size:11.5px;color:var(--muted);font-style:italic;}
+@media(max-width:520px){.sms-date-hint{margin-left:0;width:100%;font-size:11px;}}
+
+.sms-group-section{border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+.sms-group-head{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  color:#fff;flex-wrap:wrap;}
+.sms-group-name{font-family:'Sora',sans-serif;font-weight:800;font-size:14.5px;}
+.sms-group-sub{font-size:11.5px;font-weight:500;opacity:0.9;}
+.sms-group-total{margin-left:auto;font-family:'Sora',sans-serif;font-weight:800;
+  font-size:13px;background:rgba(255,255,255,0.22);padding:3px 11px;
+  border-radius:999px;white-space:nowrap;}
+.sms-group-body{padding:12px 14px;display:flex;flex-direction:column;
+  gap:14px;background:var(--surface);}
+
+.sms-silo-row{display:flex;flex-direction:column;gap:7px;}
+.sms-silo-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.sms-silo-name{font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;color:var(--ink);}
+.sms-silo-total{font-family:'Sora',sans-serif;font-weight:800;font-size:14.5px;
+  color:var(--primary-dark);}
+.sms-silo-total.off{color:var(--muted);font-weight:600;font-size:12.5px;font-style:italic;}
+
+.sms-ring-group{display:grid;grid-template-columns:minmax(46px,auto) repeat(6,1fr);gap:6px;}
+.sms-ring-btn{height:48px;min-width:0;padding:0;
+  border:1.5px solid var(--line);background:var(--surface-soft);color:var(--ink);
+  border-radius:10px;font-family:'Sora',sans-serif;font-weight:800;font-size:15px;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s,border-color .12s,transform .08s;
+  touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent;}
+.sms-ring-btn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-dark);}
+.sms-ring-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;box-shadow:0 2px 6px rgba(168,114,31,0.25);}
+body.theme-dark .sms-ring-btn.active{color:#1A2438;}
+.sms-ring-btn:active{transform:scale(0.94);}
+.sms-ring-off{font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;}
+.sms-ring-btn.sms-ring-off.active{background:var(--muted);border-color:var(--muted);
+  color:var(--surface);box-shadow:none;}
+
+@media(max-width:640px){
+  .sms-ring-group{gap:6px;}
+  .sms-ring-btn{height:54px;font-size:16px;border-radius:12px;}
+  .sms-ring-off{font-size:11px;}
+  .sms-silo-name{font-size:14px;}
+  .sms-silo-total{font-size:15px;}
+  .sms-group-head{padding:12px 14px;}
+  .sms-group-name{font-size:15px;}
+}
+
+.sms-grand-total{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:14px 16px;
+  background:linear-gradient(135deg,rgba(224,163,57,0.14),rgba(168,114,31,0.08));
+  border:1.5px solid var(--primary);border-radius:12px;margin-top:4px;}
+.sms-gt-label{font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  text-transform:uppercase;letter-spacing:0.05em;color:var(--primary-dark);}
+.sms-gt-value{font-family:'Sora',sans-serif;font-weight:800;font-size:20px;color:var(--primary-dark);}
+
+.sms-actions{display:flex;justify-content:flex-end;margin-top:4px;
+  padding-top:14px;border-top:1px dashed var(--line);}
+.sms-done-btn{border:none;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:15px;
+  padding:14px 32px;min-height:50px;transition:filter .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.sms-done-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+.sms-done-btn:active{transform:scale(0.98);}
+body.theme-dark .sms-done-btn{color:#1A2438;}
+@media(max-width:640px){
+  .sms-actions{padding-bottom:calc(14px + env(safe-area-inset-bottom,0));}
+  .sms-done-btn{width:100%;padding:16px;font-size:16px;min-height:54px;}
+}
