@@ -1314,3 +1314,38 @@ body.theme-dark .sms-done-btn{color:#1A2438;}
   .sms-actions{padding-bottom:calc(14px + env(safe-area-inset-bottom,0));}
   .sms-done-btn{width:100%;padding:16px;font-size:16px;min-height:54px;}
 }
+/* ============ SILO MODAL — collapsible groups ============ */
+.sms-group-head{
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:filter .12s;
+}
+.sms-group-head:hover{ filter:brightness(1.06); }
+.sms-group-head:active{ filter:brightness(0.94); }
+.sms-group-head:focus{ outline:none; }
+.sms-group-head:focus-visible{ outline:2px solid rgba(255,255,255,0.6); outline-offset:-3px; }
+
+.sms-group-caret{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:7px;
+  background:rgba(255,255,255,0.22);
+  font-family:'Sora',sans-serif; font-weight:900; font-size:10px;
+  color:#fff; flex-shrink:0;
+  transition:transform .2s ease, background .12s;
+  line-height:1; padding-left:2px;
+}
+body.theme-dark .sms-group-caret{ color:#fff; }
+.sms-group-section.open .sms-group-caret{ transform:rotate(90deg); }
+
+.sms-group-body{ display:none; }
+.sms-group-section.open .sms-group-body{ display:block; }
+
+/* Collapsed state gets a subtle hover hint so it's obvious it's clickable */
+.sms-group-section:not(.open) .sms-group-head::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:0; pointer-events:none;
+}
+.sms-group-section{ position:relative; }
+.sms-group-section:not(.open):hover .sms-group-head{ filter:brightness(1.10); }
