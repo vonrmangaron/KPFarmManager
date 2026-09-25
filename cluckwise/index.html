@@ -107,7 +107,7 @@
   html{ -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; text-size-adjust:100%; }
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter', sans-serif; font-size:16px; }
 
-  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, #historyBtn, #exportBtn{ font-family:'Sora', sans-serif; }
+  h1,h2,h3, .brand, .btn-app, .toolbar-label, .segmented button, .btn-today, #historyBtn{ font-family:'Sora', sans-serif; }
 
   .shell{ display:flex; flex-direction:column; height:100vh; }
 
@@ -185,8 +185,6 @@
   .btn-today:hover{ background:var(--primary); color:#fff; }
   #historyBtn{ border:1px solid var(--secondary); background:var(--secondary-soft); color:var(--secondary); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
   #historyBtn:hover{ background:var(--secondary); color:#fff; }
-  #exportBtn{ border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
-  #exportBtn:hover{ background:var(--primary); color:#fff; }
   #reportsBtn{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
   #reportsBtn:hover{ background:var(--danger); color:#fff; }
   #reportsBtn .notif-badge{ top:-6px; right:-6px; border:2px solid var(--surface); }
@@ -1023,7 +1021,7 @@
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #exportBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
@@ -1117,6 +1115,83 @@
 
   /* ---- Restore ---- */
   .restore-list{ display:flex; flex-direction:column; gap:6px; }
+
+  /* ================= Settings panel (v2) ================= */
+  .settings-drawer{ width:420px; background:var(--bg); }
+  .st-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 20px 12px; background:var(--surface); }
+  .st-head h2{ font-family:'Sora',sans-serif; font-size:20px; font-weight:800; margin:0; color:var(--ink); }
+  .st-sub{ font-size:12.5px; color:var(--muted); font-weight:600; margin-top:2px; }
+  .st-close{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-size:15px; cursor:pointer; flex-shrink:0; }
+  .st-close:hover{ background:var(--ink); color:var(--surface); }
+  .st-tabs{ display:flex; gap:4px; padding:0 14px 10px; background:var(--surface); border-bottom:1px solid var(--line); overflow-x:auto; scrollbar-width:none; }
+  .st-tabs::-webkit-scrollbar{ display:none; }
+  .st-tabs button{ flex:1; border:none; background:transparent; color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:8px 10px; border-radius:9px; cursor:pointer; white-space:nowrap; }
+  .st-tabs button:hover{ background:var(--surface-soft); color:var(--ink); }
+  .st-tabs button.active{ background:var(--primary-soft); color:var(--primary-dark); }
+  .st-body{ padding:16px 16px 28px !important; gap:0 !important; scroll-behavior:smooth; flex:1; min-height:0; }
+  .st-section{ margin-bottom:20px; }
+  .st-section-head{ display:flex; align-items:flex-start; gap:10px; margin:0 4px 10px; }
+  .st-section-head .st-ic{ font-size:18px; width:34px; height:34px; border-radius:10px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .st-section-head h3{ font-family:'Sora',sans-serif; font-size:14.5px; font-weight:800; margin:0; color:var(--ink); }
+  .st-section-head p{ font-size:12px; color:var(--muted); margin:2px 0 0; line-height:1.4; }
+  .st-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-sm); overflow:hidden; }
+  .st-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-top:1px solid var(--line); margin:0 !important; }
+  .st-row:first-child{ border-top:none; }
+  .st-row-stack{ flex-direction:column; align-items:stretch; gap:8px; }
+  .st-row-switch{ cursor:pointer; }
+  .st-row-text{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .settings-body .st-label, .st-label{ font-size:13.5px !important; font-weight:700 !important; color:var(--ink) !important; margin:0 !important; font-family:'Inter',sans-serif; }
+  .st-hint{ font-size:11.5px !important; color:var(--muted) !important; font-weight:500 !important; }
+  .st-status{ font-size:12.5px; color:var(--muted); font-weight:600; }
+  .st-note{ font-size:11.5px; color:var(--muted); margin:8px 4px 0; line-height:1.45; }
+  .st-center{ text-align:center; }
+  .st-warn{ font-size:11.5px; color:var(--danger); font-weight:600; margin:0; line-height:1.4; }
+  .st-seg-source{ display:none !important; }
+  .st-seg{ display:inline-flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; flex-shrink:0; }
+  .st-seg button{ border:none; background:transparent; color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:6px 11px; border-radius:7px; cursor:pointer; white-space:nowrap; min-width:34px; transition:background .12s ease, color .12s ease; }
+  .st-seg button:hover{ color:var(--ink); }
+  .st-seg button.active{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(43,33,22,0.14); }
+  body.theme-dark .st-seg button.active{ background:var(--primary); color:#1A1300; }
+  .st-switch{ position:relative; width:44px; height:26px; flex-shrink:0; }
+  .st-switch input{ position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer; z-index:1; }
+  .st-slider{ position:absolute; inset:0; border-radius:999px; background:var(--line); transition:background .18s ease; }
+  .st-slider::after{ content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .18s ease; }
+  .st-switch input:checked + .st-slider{ background:#34A853; }
+  .st-switch input:checked + .st-slider::after{ transform:translateX(18px); }
+  .st-switch input:focus-visible + .st-slider{ outline:2px solid var(--primary); outline-offset:2px; }
+  .st-select, .st-input, .settings-body input.st-input{ width:100%; border:1px solid var(--line); background:var(--surface-soft); border-radius:10px; padding:10px 12px; font-size:15px; color:var(--ink); font-family:inherit; min-width:0; }
+  .st-select:focus, .st-input:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
+  .st-input-row{ display:flex; gap:6px; }
+  .st-btn{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; transition:filter .12s ease, background .12s ease; }
+  .st-btn:hover{ filter:brightness(0.97); }
+  .st-btn-icon{ width:42px; padding:0; flex-shrink:0; font-size:15px; }
+  .st-btn-ghost{ background:transparent; }
+  .st-btn-ghost:hover{ background:var(--surface-soft); }
+  .st-btn-sm{ padding:6px 10px; font-size:12px; flex-shrink:0; }
+  .st-btn-primary{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); border-color:transparent; color:#241A08; }
+  .st-btn-danger{ width:100%; background:transparent; border-color:var(--danger); color:var(--danger); }
+  .st-btn-danger:hover{ background:var(--danger-soft); }
+  .st-btn-pair{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .st-row-foot{ background:var(--surface-soft); }
+  .st-row-foot .wx-diag{ margin:0; font-size:11.5px; }
+  .st-sync-status{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .st-badge{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; padding:3px 9px; border-radius:999px; background:var(--danger-soft); color:var(--danger); }
+  .st-badge.on{ background:var(--success-soft); color:var(--success); }
+  .st-action{ display:flex; align-items:center; gap:12px; width:100%; padding:13px 14px; border:none; border-top:1px solid var(--line); background:transparent; color:var(--ink); text-align:left; cursor:pointer; font-family:inherit; margin:0 !important; }
+  .st-action:first-child{ border-top:none; }
+  .st-action:hover{ background:var(--surface-soft); }
+  .st-action-ic{ font-size:18px; width:36px; height:36px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .st-action-text{ display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .st-action-title{ font-size:13.5px; font-weight:700; color:var(--ink); }
+  .st-action-sub{ font-size:11.5px; color:var(--muted); font-weight:500; }
+  .st-action-chev{ font-size:18px; color:var(--muted); flex-shrink:0; }
+  .st-action-primary{ background:linear-gradient(135deg, var(--primary-soft), transparent); }
+  .st-action-primary .st-action-ic{ background:var(--primary); border-color:var(--primary); }
+  .st-action-primary .st-action-title{ color:var(--primary-dark); }
+  .st-section-last{ margin-top:8px; }
+  .st-section-last .app-version{ margin-top:10px; }
+  #weatherSearchResults:empty{ display:none; }
+  @media (max-width: 760px){ .settings-drawer{ width:100%; } }
 
   /* ---- Floating view dock (Trello-style) ---- */
   .mode-dock{
@@ -1425,7 +1500,6 @@
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search">🔍</button>
       <button class="btn-history" id="historyBtn">History</button>
-      <button class="btn-history" id="exportBtn">Export</button>
       <button class="btn-history notif-btn" id="reportsBtn" title="Reports">🚩 Reports<span class="notif-badge hidden" id="reportsBadge">0</span></button>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode">🌙</button>
@@ -1517,7 +1591,6 @@
     <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
     <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
-    <button class="sheet-option" id="moreExportBtn"><span class="s-ic" style="background:#3E7CB1;">📄</span>Export</button>
     <button class="sheet-option" id="moreReportsBtn"><span class="s-ic" style="background:var(--danger);">🚩</span>Reports <span id="moreReportsCount" style="margin-left:auto;font-weight:800;color:var(--danger);"></span></button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
     <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
@@ -1563,72 +1636,138 @@
   <div class="reports-list" id="reportsList"></div>
 </div>
 
-<div class="history-drawer" id="settingsDrawer">
-  <div class="history-head"><h2>Settings</h2><button id="closeSettings" aria-label="Close">✕</button></div>
-  <div class="settings-body">
-    <label for="setFontSize">Task font size</label>
-    <select id="setFontSize">
-      <option value="small">Small</option>
-      <option value="medium">Medium</option>
-      <option value="large">Large</option>
-    </select>
-
-    <label for="setBatchStyle">Batch label style on calendar</label>
-    <select id="setBatchStyle">
-      <option value="pill">Inline pill</option>
-      <option value="watermark">Watermark only</option>
-    </select>
-
-    <label for="setDefaultView">Default view when opening the app</label>
-    <select id="setDefaultView">
-      <option value="auto">Auto (Month on desktop, Agenda on phone)</option>
-      <option value="auto-board">Auto (Board on desktop, Agenda on phone)</option>
-      <option value="month">Month</option>
-      <option value="day">Day</option>
-      <option value="list">Agenda / List</option>
-      <option value="kanban">Board</option>
-    </select>
-
-    <label class="checkbox-row" style="margin-top:14px;"><input type="checkbox" id="setShowIcons"> Show task icons</label>
-
-    <label style="margin-top:16px;">Weather</label>
-    <div id="weatherLocStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">No farm location set yet.</div>
-    <div class="ai-icon-row">
-      <input type="text" id="weatherSearchInput" placeholder="Nearest town, e.g. Gingin" autocomplete="off">
-      <button class="btn-ghost-ai" id="weatherSearchBtn" type="button" title="Search">🔍</button>
+<div class="history-drawer settings-drawer" id="settingsDrawer" aria-label="Settings">
+  <div class="st-head">
+    <div class="st-head-text">
+      <h2>Settings</h2>
+      <div class="st-sub" id="settingsSubtitle">CluckWise.vm</div>
     </div>
-    <div class="restore-list" id="weatherSearchResults" style="margin-top:6px;"></div>
-    <button class="btn-ai-wide" id="weatherUseMyLocationBtn" type="button" style="margin-top:6px;">📍 Use this device's location</button>
-    <label for="setWeatherUnit">Temperature unit</label>
-    <select id="setWeatherUnit">
-      <option value="celsius">Celsius (°C)</option>
-      <option value="fahrenheit">Fahrenheit (°F)</option>
-    </select>
-    <label class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="setShowWeather"> Show weather on the calendar</label>
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Forecast from Open-Meteo (free, no account): last 7 days + next 16 days. The location is shared with the viewer app.</p>
-    <div class="wx-diag" id="weatherDiag"></div>
-    <button class="btn-ai-wide" id="weatherRefreshBtn" type="button" style="margin-top:6px;">🔄 Refresh weather now</button>
+    <button id="closeSettings" class="st-close" aria-label="Close">✕</button>
+  </div>
+  <nav class="st-tabs" id="settingsTabs" aria-label="Settings sections">
+    <button type="button" data-target="stAppearance" class="active">Appearance</button>
+    <button type="button" data-target="stWeather">Weather</button>
+    <button type="button" data-target="stSync">Sync</button>
+    <button type="button" data-target="stData">Data</button>
+  </nav>
+  <div class="settings-body st-body" id="settingsBody">
 
-    <label style="margin-top:16px;">Cloud sync</label>
-    <div id="githubStatus" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Not connected</div>
-    <label for="githubPathInput">Farm name</label>
-    <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
-    <p style="font-size:11px;color:var(--danger);margin:2px 0 0;font-weight:600;">⚠️ Remember this exact name — you'll need to type it the same way on every other device to sync the same data.</p>
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Just type your farm's name — the file it creates is handled automatically.</p>
-    <button class="btn-app" id="connectGithubBtn" style="margin-top:6px;">Connect</button>
-    <button class="btn-ai-wide" id="syncGithubBtn" style="margin-top:6px;">Sync now</button>
+    <section class="st-section" id="stAppearance">
+      <div class="st-section-head"><span class="st-ic">🎨</span><div><h3>Appearance</h3><p>Theme and text size. Theme and icons also apply to the viewer.</p></div></div>
+      <div class="st-card">
+        <div class="st-row">
+          <div class="st-row-text"><span class="st-label">Theme</span></div>
+          <select id="setTheme" data-seg><option value="light">☀️ Light</option><option value="dark">🌙 Dark</option></select>
+        </div>
+        <div class="st-row">
+          <div class="st-row-text"><span class="st-label">Task text size</span></div>
+          <select id="setFontSize" data-seg><option value="small">S</option><option value="medium">M</option><option value="large">L</option></select>
+        </div>
+        <div class="st-row">
+          <div class="st-row-text"><span class="st-label">Batch labels</span><span class="st-hint">On calendar days</span></div>
+          <select id="setBatchStyle" data-seg><option value="pill">Pill</option><option value="watermark">Watermark</option></select>
+        </div>
+        <label class="st-row st-row-switch" for="setShowIcons">
+          <div class="st-row-text"><span class="st-label">Task icons</span><span class="st-hint">Emoji next to each task</span></div>
+          <span class="st-switch"><input type="checkbox" id="setShowIcons"><span class="st-slider"></span></span>
+        </label>
+      </div>
+    </section>
 
-    <label style="margin-top:16px;">Restore a previous version</label>
-    <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">A restore point is saved automatically once a day and kept for 7 days.</p>
-    <button class="btn-ai-wide" id="openRestoreBtn" style="margin-top:6px;">🕓 Restore from a date…</button>
+    <section class="st-section" id="stCalendar">
+      <div class="st-section-head"><span class="st-ic">📅</span><div><h3>Calendar</h3><p>What you see when the app opens.</p></div></div>
+      <div class="st-card">
+        <div class="st-row st-row-stack">
+          <label class="st-label" for="setDefaultView">Opening view</label>
+          <select id="setDefaultView" class="st-select">
+            <option value="auto">Auto — Month on desktop, Agenda on phone</option>
+            <option value="auto-board">Auto — Board on desktop, Agenda on phone</option>
+            <option value="month">Month</option>
+            <option value="day">Day</option>
+            <option value="list">Agenda / List</option>
+            <option value="kanban">Board</option>
+          </select>
+        </div>
+      </div>
+    </section>
 
-    <label style="margin-top:16px;">Backup &amp; transfer to another device</label>
-    <button class="btn-app" id="exportDataBtn">Export data (.json)</button>
-    <label for="importDataInput" class="btn-ai-wide" style="text-align:center;margin-top:8px;">Import data (.json)</label>
-    <input type="file" id="importDataInput" accept="application/json" style="display:none;">
+    <section class="st-section" id="stWeather">
+      <div class="st-section-head"><span class="st-ic">🌤️</span><div><h3>Weather</h3><p>Forecast for the farm — shared with the viewer.</p></div></div>
+      <div class="st-card">
+        <div class="st-row st-row-stack">
+          <span class="st-label">Farm location</span>
+          <div class="st-status" id="weatherLocStatus">No farm location set yet.</div>
+          <div class="st-input-row">
+            <input type="text" id="weatherSearchInput" class="st-input" placeholder="Nearest town, e.g. Gingin" autocomplete="off">
+            <button class="st-btn st-btn-icon" id="weatherSearchBtn" type="button" title="Search">🔍</button>
+          </div>
+          <div class="restore-list" id="weatherSearchResults"></div>
+          <button class="st-btn st-btn-ghost" id="weatherUseMyLocationBtn" type="button">📍 Use this device's location</button>
+        </div>
+        <div class="st-row">
+          <div class="st-row-text"><span class="st-label">Units</span><span class="st-hint">Wind follows: km/h or mph</span></div>
+          <select id="setWeatherUnit" data-seg><option value="celsius">°C</option><option value="fahrenheit">°F</option></select>
+        </div>
+        <label class="st-row st-row-switch" for="setShowWeather">
+          <div class="st-row-text"><span class="st-label">Show weather</span><span class="st-hint">On the calendar, board and list</span></div>
+          <span class="st-switch"><input type="checkbox" id="setShowWeather"><span class="st-slider"></span></span>
+        </label>
+        <div class="st-row st-row-foot">
+          <div class="wx-diag" id="weatherDiag"></div>
+          <button class="st-btn st-btn-ghost st-btn-sm" id="weatherRefreshBtn" type="button">🔄 Refresh</button>
+        </div>
+      </div>
+      <p class="st-note">Open-Meteo (free, no account) · last 7 days + next 16 days · tap any weather for the hourly forecast.</p>
+    </section>
 
-    <button class="btn-app" id="resetSettingsBtn" style="margin-top:16px;">Reset to defaults</button>
-    <div class="app-version" id="appVersion"></div>
+    <section class="st-section" id="stSync">
+      <div class="st-section-head"><span class="st-ic">☁️</span><div><h3>Farm sync</h3><p>Keep every device on the same farm data.</p></div></div>
+      <div class="st-card">
+        <div class="st-row st-row-stack">
+          <div class="st-sync-status"><span class="st-badge" id="syncBadge">Not connected</span><span class="st-status" id="githubStatus">Not connected</span></div>
+          <label class="st-label" for="githubPathInput">Farm name</label>
+          <input type="text" id="githubPathInput" class="st-input" placeholder="e.g. Riverside Farm">
+          <p class="st-warn">⚠️ Use exactly the same name on every device — it's how they find the same data.</p>
+          <div class="st-btn-pair">
+            <button class="st-btn st-btn-primary" id="connectGithubBtn" type="button">Connect</button>
+            <button class="st-btn st-btn-ghost" id="syncGithubBtn" type="button">🔄 Sync now</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="st-section" id="stData">
+      <div class="st-section-head"><span class="st-ic">🗂️</span><div><h3>Data &amp; backup</h3><p>Export, back up or roll back your farm data.</p></div></div>
+      <div class="st-card">
+        <button class="st-action st-action-primary" id="settingsExportBtn" type="button">
+          <span class="st-action-ic">📄</span>
+          <span class="st-action-text"><span class="st-action-title">Export</span><span class="st-action-sub">PDF report, printable checklist or CSV — all data, a batch or a date range</span></span>
+          <span class="st-action-chev">›</span>
+        </button>
+        <button class="st-action" id="exportDataBtn" type="button">
+          <span class="st-action-ic">💾</span>
+          <span class="st-action-text"><span class="st-action-title">Download backup</span><span class="st-action-sub">Full copy of the farm data (.json)</span></span>
+          <span class="st-action-chev">›</span>
+        </button>
+        <label class="st-action" for="importDataInput">
+          <span class="st-action-ic">📥</span>
+          <span class="st-action-text"><span class="st-action-title">Restore from backup file</span><span class="st-action-sub">Replaces current data with a .json backup</span></span>
+          <span class="st-action-chev">›</span>
+        </label>
+        <input type="file" id="importDataInput" accept="application/json" style="display:none;">
+        <button class="st-action" id="openRestoreBtn" type="button">
+          <span class="st-action-ic">🕓</span>
+          <span class="st-action-text"><span class="st-action-title">Restore from a date</span><span class="st-action-sub">Daily restore points, kept for 7 days</span></span>
+          <span class="st-action-chev">›</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="st-section st-section-last">
+      <button class="st-btn st-btn-danger" id="resetSettingsBtn" type="button">Reset settings to defaults</button>
+      <p class="st-note st-center">Resets display settings only — your farm data and weather location are kept.</p>
+      <div class="app-version" id="appVersion"></div>
+    </section>
   </div>
 </div>
 
@@ -2142,11 +2281,15 @@
     const mtl = $('#moreThemeToggleLabel');
     if(mtl) mtl.textContent = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
     updateViewDropdown();
+    const thSel = $('#setTheme');
+    if(thSel) thSel.value = settings.theme === 'dark' ? 'dark' : 'light';
     const wu = $('#setWeatherUnit'), sw = $('#setShowWeather'), wls = $('#weatherLocStatus');
     if(wu) wu.value = settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
     if(sw) sw.checked = settings.showWeather !== false;
     if(wls) wls.textContent = settings.weatherLocation ? `📍 ${settings.weatherLocation.name}` : 'No farm location set yet — search for the nearest town below.';
     if(typeof renderWeatherDiag === 'function') renderWeatherDiag();
+    syncSegmented();
+    renderSettingsHeader();
     setTimeout(()=> refreshWeather(false), 0);
   }
 
@@ -2363,6 +2506,7 @@
   function updateGithubStatusUI(){
     const el = $('#githubStatus');
     if(!el) return;
+    setTimeout(renderSettingsHeader, 0);
     if(ghPath) el.textContent = `Connected — farm "${ghFarmName}"`;
     else el.textContent = 'Enter your farm name, then click Connect.';
     const pathInput = $('#githubPathInput');
@@ -3783,7 +3927,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-d2';
+  const APP_VERSION = '2026.09.25-s2';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -4255,6 +4399,51 @@
     }catch(e){
       loading.textContent = navigator.onLine ? 'Could not load the hourly forecast — try again in a moment.' : 'Hourly forecast needs a connection.';
       loading.classList.add('wxh-error');
+    }
+  }
+
+  // ---------- Settings panel helpers ----------
+  // Turns <select data-seg> into a row of tap buttons (the select stays as the source of truth).
+  function enhanceSegmented(sel){
+    if(sel._seg) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'st-seg';
+    wrap.setAttribute('role', 'radiogroup');
+    Array.from(sel.options).forEach(opt=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = opt.textContent;
+      b.dataset.value = opt.value;
+      b.setAttribute('role', 'radio');
+      b.addEventListener('click', ()=>{
+        if(sel.value === opt.value) return;
+        sel.value = opt.value;
+        sel.dispatchEvent(new Event('change', { bubbles:true }));
+        syncSegmented();
+      });
+      wrap.appendChild(b);
+    });
+    sel.classList.add('st-seg-source');
+    sel.after(wrap);
+    sel._seg = wrap;
+  }
+  function syncSegmented(){
+    document.querySelectorAll('#settingsDrawer select[data-seg]').forEach(sel=>{
+      if(!sel._seg) return;
+      sel._seg.querySelectorAll('button').forEach(b=>{
+        const on = b.dataset.value === sel.value;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    });
+  }
+  function renderSettingsHeader(){
+    const sub = $('#settingsSubtitle');
+    if(sub) sub.textContent = ghFarmName ? `Farm: ${ghFarmName}` : 'Not connected to a farm yet';
+    const badge = $('#syncBadge');
+    if(badge){
+      badge.textContent = ghPath ? 'Connected' : 'Not connected';
+      badge.classList.toggle('on', !!ghPath);
     }
   }
 
@@ -6365,7 +6554,8 @@
     showToast('Event added.');
   });
 
-  $('#exportBtn').addEventListener('click', ()=>{
+  function openExportModal(){
+    closeOverlays();
     const sel = $('#reportBatchSelect');
     sel.innerHTML = '<option value="all">All data</option>';
     batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
@@ -6379,7 +6569,8 @@
     $('#reportRangeRow').style.display = 'none';
     $('#reportChecklistOnly').checked = false;
     openDrawer('#reportModal');
-  });
+  }
+  $('#settingsExportBtn').addEventListener('click', openExportModal);
   $('#reportScopeSelect').addEventListener('change', (e)=>{
     $('#reportBatchRow').style.display = e.target.value==='batch' ? 'block' : 'none';
     $('#reportRangeRow').style.display = e.target.value==='range' ? 'block' : 'none';
@@ -6577,7 +6768,6 @@
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
-  $('#moreExportBtn').addEventListener('click', ()=>{ closeOverlays(); $('#exportBtn').click(); });
   $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
   $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
@@ -6588,7 +6778,7 @@
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#reportsBtn').addEventListener('click', openReportsDrawer);
   $('#closeReports').addEventListener('click', closeOverlays);
-  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); openDrawer('#settingsDrawer'); });
+  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); openDrawer('#settingsDrawer'); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){
@@ -6853,6 +7043,25 @@
   });
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
+  $('#setTheme').addEventListener('change', (e)=>{ settings.theme = e.target.value === 'dark' ? 'dark' : 'light'; applySettings(); persist(); });
+  document.querySelectorAll('#settingsDrawer select[data-seg]').forEach(enhanceSegmented);
+  syncSegmented();
+  $('#settingsTabs').addEventListener('click', (e)=>{
+    const b = e.target.closest('button[data-target]');
+    if(!b) return;
+    const sec = document.getElementById(b.dataset.target);
+    const body = $('#settingsBody');
+    if(sec && body) body.scrollTo({ top: sec.offsetTop - body.offsetTop - 6, behavior:'smooth' });
+    document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x === b));
+  });
+  $('#settingsBody').addEventListener('scroll', ()=>{
+    const body = $('#settingsBody');
+    const ids = ['stAppearance','stWeather','stSync','stData'];
+    let current = ids[0];
+    ids.forEach(id=>{ const el = document.getElementById(id); if(el && el.offsetTop - body.offsetTop - 40 <= body.scrollTop) current = id; });
+    if(body.scrollTop + body.clientHeight >= body.scrollHeight - 4) current = 'stData';
+    document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x.dataset.target === current));
+  }, { passive:true });
   $('#themeToggleBtn').addEventListener('click', ()=>{ settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
