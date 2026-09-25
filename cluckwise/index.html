@@ -1990,6 +1990,13 @@
 
   const $ = (sel) => document.querySelector(sel);
 
+  // 12-hour clock everywhere, same style on every device: "3 PM", "3:05 PM".
+  function fmt12(d, withMinutes){
+    const h = d.getHours(), m = d.getMinutes();
+    const hh = h % 12 || 12, ap = h < 12 ? 'AM' : 'PM';
+    return (withMinutes === false) ? `${hh} ${ap}` : `${hh}:${String(m).padStart(2,'0')} ${ap}`;
+  }
+  function fmtDateTime12(d, dateOpts){ return d.toLocaleDateString(undefined, dateOpts) + ', ' + fmt12(d); }
   function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
   function toDateObj(key){ const [y,m,d] = key.split('-').map(Number); return new Date(y,m-1,d); }
   function sameDay(a,b){ return dateKey(a)===dateKey(b); }
@@ -2203,7 +2210,7 @@
     else { cls = 'syncing'; text = 'Connecting…'; }
     el.className = 'sync-status ' + cls;
     if(label) label.textContent = text;
-    el.title = text + (lastSyncAt ? ` · last sync ${new Date(lastSyncAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}` : '');
+    el.title = text + (lastSyncAt ? ` · last sync ${fmt12(new Date(lastSyncAt))}` : '');
   }
   function showSyncPending(){ syncState = 'syncing'; renderSyncStatus(); }
   function showSyncError(){ syncState = 'error'; renderSyncStatus(); }
@@ -3046,7 +3053,7 @@
     $('#rdShed').textContent = r.shed || '';
     $('#rdType').textContent = r.problemType || '';
     $('#rdBy').textContent = r.createdBy || '';
-    $('#rdAt').textContent = r.createdAt ? new Date(r.createdAt).toLocaleString(undefined, {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+    $('#rdAt').textContent = r.createdAt ? fmtDateTime12(new Date(r.createdAt), {month:'short',day:'numeric',year:'numeric'}) : '';
     $('#rdNotes').textContent = r.notes || '';
     $('#rdManagerNotes').value = r.managerNotes || '';
     $('#rdResolutionNotes').value = r.resolutionNotes || '';
@@ -3732,7 +3739,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-h1';
+  const APP_VERSION = '2026.09.25-h2';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -4015,8 +4022,7 @@
     return hours;
   }
   function wxHourLabel(h){
-    const d = new Date(2000, 0, 1, h, 0, 0);
-    return d.toLocaleTimeString(undefined, { hour:'numeric' });
+    return fmt12(new Date(2000, 0, 1, h, 0, 0), false);
   }
   function isRainHour(x){ return (x.prob != null && x.prob >= 50) || (x.precip != null && x.precip >= 0.2); }
   // Everything a manager wants to know at a glance for that day.
@@ -5298,7 +5304,7 @@
     history.forEach(h=>{
       const item = document.createElement('div');
       item.className = 'history-item';
-      const time = new Date(h.ts).toLocaleString(undefined,{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+      const time = fmtDateTime12(new Date(h.ts), {month:'short', day:'numeric'});
       item.innerHTML = `<div class="h-action"></div><div class="h-detail"></div><div class="h-time"></div>`;
       item.querySelector('.h-action').textContent = h.action;
       item.querySelector('.h-detail').textContent = h.detail;
@@ -5816,7 +5822,7 @@
     renderRestoreList();
   }
   function restoreEntryTitle(s){
-    if(s.kind === 'before-restore') return `Before last restore — ${new Date(s.takenAt).toLocaleString(undefined,{weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}`;
+    if(s.kind === 'before-restore') return `Before last restore — ${fmtDateTime12(new Date(s.takenAt), {weekday:'short', month:'short', day:'numeric'})}`;
     return `${formatFullWithWeekday(s.date)} — start of day`;
   }
   function renderRestoreList(){
@@ -5841,7 +5847,7 @@
     if(restoreSelectedId && !shown.some(s=> s.id === restoreSelectedId)){ restoreSelectedId = null; resetRestoreBtn(); }
     shown.forEach(s=>{
       const d = s.data || {};
-      const sub = `${(d.tasks||[]).length} tasks · ${(d.batches||[]).length} batches · ${(d.events||[]).length} events · saved ${new Date(s.takenAt).toLocaleTimeString(undefined,{hour:'numeric', minute:'2-digit'})}`;
+      const sub = `${(d.tasks||[]).length} tasks · ${(d.batches||[]).length} batches · ${(d.events||[]).length} events · saved ${fmt12(new Date(s.takenAt))}`;
       const el = buildSearchResult(s.kind==='before-restore' ? '↩️' : '📅', restoreEntryTitle(s), sub, '', ()=>{
         restoreSelectedId = s.id;
         listEl.querySelectorAll('.search-result').forEach(x=> x.classList.remove('active'));
