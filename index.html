@@ -863,7 +863,21 @@ function closeSettingsDrawer(){
 }
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
-  body.innerHTML=renderSettingsDataCard()+renderSettingsSyncCard()+renderSettingsBatchHistoryCard();
+  body.innerHTML=renderSettingsDataCard()+renderSettingsSyncCard()+renderSettingsBatchHistoryCard()+renderSettingsReportsCard();
+}
+function renderSettingsReportsCard(){
+  const hasData=!!farmData;
+  const batchLabel=(predState.batchNumber||(farmData&&farmData.batchNumber)||'').trim();
+  const placedCount=farmData?farmData.sheds.filter(s=>s.placementDate).length:0;
+  let subHtml='';
+  if(!hasData) subHtml=`<div class="sync-hint" style="margin-top:10px;">Import Excel first.</div>`;
+  else if(batchLabel) subHtml=`<div class="sync-hint" style="margin-top:10px;">Batch <strong>${escapeHtml(batchLabel)}</strong> · ${placedCount} shed${placedCount===1?'':'s'} placed</div>`;
+  else subHtml=`<div class="sync-hint" style="margin-top:10px;">No batch number set — the report will still generate.</div>`;
+  return `<div class="settings-card"><h3>📄 Reports</h3>
+    <p class="settings-desc">Generate a print-ready batch report with every detail — shed performance, pickups, feed loads, silo status, and estimates. Opens your browser's print dialog — choose "Save as PDF" to download.</p>
+    <div class="settings-btn-grid"><button class="settings-action-btn primary" id="settingsReportBtn" type="button" ${hasData?'':'disabled'}>📄 Generate Batch Report</button></div>
+    ${subHtml}
+  </div>`;
 }
 function renderSettingsDataCard(){
   return `<div class="settings-card"><h3>📥 Import Excel</h3><p class="settings-desc">Import the sheds Excel file to fill in shed data for the current batch. In-yard readings, extra reading days, mortality rates, chick weights, and target-pickup settings are preserved across re-imports.</p><div class="settings-btn-grid"><button class="settings-action-btn primary" id="settingsImportBtn" type="button">📥 Import Excel</button></div></div>`;
@@ -2082,6 +2096,229 @@ function renderCompareModalBody(){
 }
 
 /* ---------- Main render ---------- */
+/* ---------- Batch Report (print-to-PDF) ---------- */
+function ensureReportContainer(){
+  let rpt=document.getElementById('reportPrint');
+  if(!rpt){rpt=document.createElement('div');rpt.id='reportPrint';document.body.appendChild(rpt);}
+  return rpt;
+}
+function buildBatchReportHTML(){
+  if(!farmData)return '';
+  const now=new Date();
+  const batchLabel=(predState.batchNumber||(farmData&&farmData.batchNumber)||'').trim()||'—';
+  const farmLabel=syncFarmName||'—';
+  const dateStr=fmtShort(now)+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  let html=`<div class="rpt-header">
+    <div class="rpt-brand">ProdWise.VM — Batch Report</div>
+    <div class="rpt-meta">Batch ${escapeHtml(batchLabel)} · Farm ${escapeHtml(farmLabel)}</div>
+    <div class="rpt-meta">Generated ${escapeHtml(dateStr)}</div>
+  </div>`;
+
+  /* Whole Farm KPIs */
+  const t=computeFarmTotals();
+  if(t.hasData){
+    html+=`<section><h2>Whole Farm KPIs</h2><table class="rpt-kv">
+      <tr><th>Est. Total Live Weight</th><td class="num">${fmtKgAlways(t.totalLiveWeight)}</td></tr>
+      <tr><th>Est. Total Feed Consumption</th><td class="num">${fmtTonnesAlways(t.totalFeed)}</td></tr>
+      <tr><th>Est. FCR</th><td class="num">${t.fcr.toFixed(3)}</td></tr>
+      <tr><th>Est. cFCR</th><td class="num">${t.cfcr.toFixed(3)}</td></tr>
+      <tr><th>Est. PIF</th><td class="num">${t.pif.toFixed(2)}</td></tr>
+      <tr><th>Est. Total Average Weight</th><td class="num">${t.avgWeight.toFixed(3)} kg</td></tr>
+      <tr><th>Est. Livability</th><td class="num">${t.livability.toFixed(2)}%</td></tr>
+      <tr><th>Est. Total Mortality</th><td class="num">${t.mortality.toLocaleString()}</td></tr>
+    </table>`;
+    if(t.usingManualFeed||t.leftoverApplied){
+      html+=`<div style="font-size:9pt;margin-top:4px;">`;
+      if(t.usingManualFeed)html+=`Note: Feed consumption uses a manual override (${Number(t.totalFeed).toLocaleString()} kg). `;
+      if(t.leftoverApplied)html+=`Leftover at cleanout applied: ${Math.round(t.leftoverKg).toLocaleString()} kg.`;
+      html+=`</div>`;
+    }
+    html+=`</section>`;
+  } else {
+    html+=`<section><h2>Whole Farm KPIs</h2><div class="rpt-notplaced">No sheds placed this batch.</div></section>`;
+  }
+
+  /* Feed Deliveries */
+  const sortedLoads=farmLoads.slice().sort((a,b)=>{const d=dateOnly(a.date)-dateOnly(b.date);if(d!==0)return d;return String(a.createdAt||'').localeCompare(String(b.createdAt||''));});
+  if(sortedLoads.length>0){
+    html+=`<section><h2>Feed Deliveries</h2><table>
+      <thead><tr><th>#</th><th>Date</th><th>Type</th><th class="num">Planned</th>
+        <th class="num">G1</th><th class="num">G2</th><th class="num">G3</th><th class="num">G4</th>
+        <th class="num">Actual</th><th>Note</th></tr></thead><tbody>`;
+    sortedLoads.forEach((l,i)=>{
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?(v/1000).toFixed(1):'—';};
+      const actualStr=l.actualKg!=null?(l.actualKg/1000).toFixed(2)+' t':'—';
+      html+=`<tr>
+        <td class="num">#${i+1}</td>
+        <td>${fmtShort(l.date)}</td>
+        <td>${escapeHtml(feedTypeLabel(l.feedType))}</td>
+        <td class="num">${(l.plannedKg/1000).toFixed(2)} t</td>
+        <td class="num">${splitCell(1)}</td>
+        <td class="num">${splitCell(2)}</td>
+        <td class="num">${splitCell(3)}</td>
+        <td class="num">${splitCell(4)}</td>
+        <td class="num">${escapeHtml(actualStr)}</td>
+        <td>${escapeHtml(l.note||'')}</td>
+      </tr>`;
+    });
+    const sumPlanned=farmLoads.reduce((s,l)=>s+(Number(l.plannedKg)||0),0);
+    const sumActual=farmLoads.reduce((s,l)=>s+(Number(l.actualKg)||0),0);
+    const missing=farmLoads.filter(l=>!l.migrated&&l.actualKg==null&&dateOnly(l.date)<dateOnly(now)).length;
+    html+=`<tr class="total-row">
+      <td colspan="3">Totals</td>
+      <td class="num">${fmtTonnesAlways(sumPlanned)}</td>
+      <td colspan="4" class="num" style="font-weight:normal;font-family:Georgia,serif;">${missing>0?`${missing} missing actual${missing===1?'':'s'}`:'All actuals recorded'}</td>
+      <td class="num">${sumActual>0?fmtTonnesAlways(sumActual):'—'}</td>
+      <td></td>
+    </tr></tbody></table></section>`;
+  } else {
+    html+=`<section><h2>Feed Deliveries</h2><div class="rpt-notplaced">No loads recorded this batch.</div></section>`;
+  }
+
+  /* Feed Summary */
+  if(farmLoads.length>0){
+    const buckets={starter:{label:'Starter',tonnes:0,loads:0},grower:{label:'Grower',tonnes:0,loads:0},finisher:{label:'Finisher',tonnes:0,loads:0},withdrawal:{label:'Withdrawal',tonnes:0,loads:0},unspecified:{label:'Unspecified',tonnes:0,loads:0}};
+    farmLoads.forEach(l=>{
+      const tt=(Number(l.plannedKg)||0)/1000;
+      const key=FEED_TYPES.some(f=>f.id===l.feedType)?l.feedType:'unspecified';
+      buckets[key].tonnes+=tt;buckets[key].loads+=1;
+    });
+    const active=Object.entries(buckets).filter(([k,v])=>v.loads>0);
+    if(active.length>0){
+      html+=`<section><h2>Feed Summary</h2><table>
+        <thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>`;
+      let tT=0,tL=0,tB=0;
+      active.forEach(([k,v])=>{
+        const blocks=v.tonnes/FEED_BLOCK_T;
+        tT+=v.tonnes;tL+=v.loads;tB+=blocks;
+        html+=`<tr><td>${escapeHtml(v.label)}</td><td class="num">${v.tonnes.toFixed(2)} t</td><td class="num">${v.loads}</td><td class="num">${fmtBlocks(blocks)}</td></tr>`;
+      });
+      html+=`<tr class="total-row"><td>Total</td><td class="num">${tT.toFixed(2)} t</td><td class="num">${tL}</td><td class="num">${fmtBlocks(tB)}</td></tr></tbody></table></section>`;
+    }
+  }
+
+  /* Silo Status */
+  html+=`<section><h2>Silo Status</h2><div class="rpt-silo-grid">`;
+  [1,2,3,4].forEach(g=>{
+    const latest=latestReading(g);
+    const bal=currentBalanceKg(g);
+    const lo=projectedLeftoverForGroup(g);
+    html+=`<div class="rpt-silo-block"><div class="rpt-silo-title">Group ${g}</div>`;
+    if(latest){
+      const s1=latest.silo1Rings==null?'off':latest.silo1Rings+'r';
+      const s2=latest.silo2Rings==null?'off':latest.silo2Rings+'r';
+      const s3=latest.silo3Rings==null?'off':latest.silo3Rings+'r';
+      html+=`<div class="rpt-shed-line">Last reading: ${fmtShort(dateOnly(latest.date))}</div>
+        <div class="rpt-shed-line">Rings: S1 ${s1} · S2 ${s2} · S3 ${s3}</div>
+        <div class="rpt-shed-line">Reading total: ${(readingTotalKg(latest)/1000).toFixed(2)} t</div>
+        <div class="rpt-shed-line">Projected today: ${bal!=null?fmtFeed(bal):'—'}</div>
+        <div class="rpt-shed-line">Leftover at cleanout: ${lo&&lo.balance!=null?fmtFeed(lo.balance):'—'}</div>`;
+    } else {
+      html+=`<div class="rpt-shed-line" style="font-style:italic;">No silo reading recorded.</div>`;
+    }
+    html+=`</div>`;
+  });
+  html+=`</div></section>`;
+
+  /* Per-Shed Detail */
+  html+=`<section><h2>Per-Shed Detail</h2>`;
+  farmData.sheds.forEach(shed=>{
+    const grp=Math.floor((shed.id-1)/2)+1;
+    const pred=computePredictions(shed,grp);
+    if(!shed.placementDate){
+      html+=`<div class="rpt-shed"><div class="rpt-shed-title">Shed ${shed.id}</div><div class="rpt-notplaced">Not placed this batch.</div></div>`;
+      return;
+    }
+    const age=ageInDays(shed,now);
+    const live=liveAtStartOfDay(shed,now);
+    const mortPct=shed.initialPopulation>0?(Number(shed.mortality||0)/shed.initialPopulation)*100:0;
+    const livPct=100-mortPct;
+    const chickG=Math.round(shedChickWeight(shed)*1000);
+    const customFeedStr=(shed.customFeedKg!=null&&shed.customFeedKg>0)?shed.customFeedKg.toFixed(3)+' kg/bird':'— (standard)';
+    html+=`<div class="rpt-shed">
+      <div class="rpt-shed-title">Shed ${shed.id}</div>
+      <div class="rpt-shed-line">Placed: <strong>${shed.initialPopulation.toLocaleString()}</strong> birds · Placement: ${fmtShort(shed.placementDate)} · Age ${age}d</div>
+      <div class="rpt-shed-line">Live: <strong>${live.toLocaleString()}</strong> · Mortality: ${Number(shed.mortality||0).toLocaleString()} (${mortPct.toFixed(2)}%) · Livability: ${livPct.toFixed(2)}%</div>
+      <div class="rpt-shed-line">Chick weight: ${chickG} g · Custom feed: ${escapeHtml(customFeedStr)}</div>`;
+    const hasGrid=TARGET_DAYS.some(d=>shed.targetCurve&&shed.targetCurve[d]>0);
+    const hasSamples=(shed.inYardSamples||[]).length>0;
+    if(hasGrid||hasSamples){
+      html+=`<div class="rpt-shed-sub">In-Yard Readings</div><table class="rpt-shed-table">
+        <thead><tr><th>Day</th><th class="num">Weight</th><th>Source</th></tr></thead><tbody>`;
+      TARGET_DAYS.forEach(day=>{
+        const v=shed.targetCurve&&shed.targetCurve[day];
+        if(v!=null&&Number(v)>0)html+=`<tr><td>Day ${day}</td><td class="num">${Number(v).toFixed(3)} kg</td><td>Shed scale</td></tr>`;
+      });
+      (shed.inYardSamples||[]).forEach(x=>{
+        const a=sampleAge(shed,x);
+        html+=`<tr><td>Day ${a}</td><td class="num">${x.avgWeightKg.toFixed(3)} kg</td><td>${x.isOfficial?'Plant weight':'Shed scale'} (extra reading)</td></tr>`;
+      });
+      html+=`</tbody></table>`;
+    }
+    const fit=getShedGompertzFit(shed);
+    if(fit){
+      const nGrid=TARGET_DAYS.filter(d=>shed.targetCurve&&shed.targetCurve[d]>0).length;
+      const nCustom=(shed.inYardSamples||[]).length;
+      html+=`<div class="rpt-shed-line" style="margin-top:5px;"><strong>AI Growth Curve:</strong> Active — based on chick weight + ${nGrid} check-day reading${nGrid===1?'':'s'}${nCustom>0?' + '+nCustom+' extra reading'+(nCustom===1?'':'s'):''}.</div>`;
+    } else if(hasGrid||hasSamples){
+      html+=`<div class="rpt-shed-line" style="margin-top:5px;"><strong>Growth Curve:</strong> Adjusted standard (not enough readings for AI fit).</div>`;
+    } else {
+      html+=`<div class="rpt-shed-line" style="margin-top:5px;"><strong>Growth Curve:</strong> Standard Ross 308 (no shed readings).</div>`;
+    }
+    const pickups=computeEffectivePickups(shed);
+    if(pickups.length>0){
+      html+=`<div class="rpt-shed-sub">Pickups</div><table class="rpt-shed-table">
+        <thead><tr><th>#</th><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Avg wt</th><th class="num">Total wt</th><th>Type</th></tr></thead><tbody>`;
+      pickups.forEach((p,i)=>{
+        const a=pickupAge(shed,p);
+        const isPred=p.__source==='predicted';
+        const avg=pickupAvgKg(p);
+        const avgStr=avg!=null?avg.toFixed(3)+' kg':(isPred?'—':'est. '+(p.avgWeightKg||0).toFixed(3)+' kg');
+        const totalKg=Number(p.birds)*(avg!=null?avg:(p.avgWeightKg||0));
+        const totalStr=totalKg>0?Math.round(totalKg).toLocaleString()+' kg':'—';
+        const typeStr=isPred?(p.isFinal?'FINAL (predicted)':'Predicted'):'Actual';
+        html+=`<tr><td>#${i+1}</td><td>${fmtShort(p.date)}</td><td class="num">Day ${a}</td><td class="num">${Number(p.birds||0).toLocaleString()}</td><td class="num">${avgStr}</td><td class="num">${totalStr}</td><td>${typeStr}</td></tr>`;
+      });
+      html+=`</tbody></table>`;
+    } else {
+      html+=`<div class="rpt-shed-line" style="margin-top:5px;font-style:italic;">No pickups recorded.</div>`;
+    }
+    html+=`<div class="rpt-shed-sub">Estimates</div>
+      <div class="rpt-shed-line">Final avg weight: <strong>${pred.estFinalALW.toFixed(3)} kg</strong> · FCR: <strong>${pred.fcr.toFixed(3)}</strong> · cFCR: <strong>${pred.cfcr.toFixed(3)}</strong> · PIF: <strong>${pred.pif.toFixed(2)}</strong></div>
+      <div class="rpt-shed-line">Confidence: ${pred.confidence}% ${confidenceLabel(pred.confidence).label}</div>
+    </div>`;
+  });
+  html+=`</section>`;
+
+  /* Signature + Disclaimer */
+  html+=`<div class="rpt-signature">
+    <div class="rpt-sig">Grower signature</div>
+    <div class="rpt-sig">Date</div>
+  </div>
+  <div class="rpt-disclaimer">
+    Prepared by <strong>Von Mangaron</strong>.<br>
+    This report was generated by ProdWise.VM — a personal tool.<br>
+    Not an official production record.
+  </div>`;
+
+  return html;
+}
+function generateBatchReport(){
+  if(!farmData){showToast('Import Excel first.',true);return;}
+  const rpt=ensureReportContainer();
+  rpt.innerHTML=buildBatchReportHTML();
+  const origTitle=document.title;
+  const batchLabel=(predState.batchNumber||(farmData&&farmData.batchNumber)||'').trim();
+  const safeBatch=batchLabel?batchLabel.replace(/[^a-z0-9\-]/gi,'-'):'batch';
+  const dateStr=new Date().toISOString().slice(0,10);
+  document.title=`ProdWise-${safeBatch}-${dateStr}`;
+  const restore=()=>{document.title=origTitle;window.removeEventListener('afterprint',restore);};
+  window.addEventListener('afterprint',restore);
+  setTimeout(()=>{window.print();},150);
+  setTimeout(restore,60000);
+}
+
+/* ---------- Main render ---------- */
 function scheduleRender(delay=50){
   const active=document.activeElement;const activeId=active?active.id:null;
   let selStart=null,selEnd=null;
@@ -2772,6 +3009,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#settingsDlBatchBtn')){downloadCurrentBatchAsJson();return;}
     if(e.target.closest('#settingsDisconnectBtn')){disconnectSync();return;}
     if(e.target.closest('#settingsBatchHistoryBtn')){openBatchHistoryModal();return;}
+    if(e.target.closest('#settingsReportBtn')){generateBatchReport();return;}
 
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
