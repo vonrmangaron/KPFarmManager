@@ -797,7 +797,7 @@
     const icon = (isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) ? '🌙' : WX_ICONS[kind];
     return [icon, t('wx_' + kind)];
   }
-  const APP_VERSION = '2026.09.25-h1';
+  const APP_VERSION = '2026.09.25-h2';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -925,7 +925,8 @@
   let wxDetailKey = null;
   const tf = (key, vars)=> Object.keys(vars || {}).reduce((str, k)=> str.split('{' + k + '}').join(vars[k]), t(key));
   function windUnit(){ return syncedDisplay.weatherUnit === 'fahrenheit' ? 'mph' : 'km/h'; }
-  function hourLabel(h){ return new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour:'numeric' }); }
+  // 12-hour clock, same style on every phone: "3 PM"
+  function hourLabel(h){ const hh = h % 12 || 12; return `${hh} ${h < 12 ? 'AM' : 'PM'}`; }
   function isRainHour(x){ return (x.prob != null && x.prob >= 50) || (x.precip != null && x.precip >= 0.2); }
   async function fetchHourly(dk){
     const ck = `${wxKey()}|${dk}`;
