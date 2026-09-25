@@ -191,6 +191,48 @@
   .hw-meta .hw-warn{ align-self:flex-start; margin-top:3px; font-size:11.5px; font-weight:800; color:#fff; background:#C1502E; padding:2px 8px; border-radius:999px; }
   .wx-date{ display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:var(--ink); margin-right:8px; white-space:nowrap; }
   .wx-date .wx-lo{ color:var(--muted); }
+  .hero-weather{ cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .1s ease; }
+  .hero-weather:active{ transform:scale(0.98); }
+  .hw-tap{ font-size:22px; font-weight:800; opacity:0.55; margin-left:4px; align-self:center; }
+  .wx-date{ cursor:pointer; padding:3px 7px; border-radius:8px; background:var(--surface-soft); }
+  .wx-date:active{ filter:brightness(0.95); }
+  #wxSheet{ max-height:90vh; }
+  .wxh-loading{ text-align:center; color:var(--muted); font-size:14px; font-weight:600; padding:30px 10px; }
+  .wxh-error{ color:var(--danger); }
+  .wxh-highlights{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .wxh-hl{ display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; background:var(--surface-soft); border:1px solid var(--line); font-size:14.5px; color:var(--ink); line-height:1.35; }
+  .wxh-hl b{ font-family:'Sora',sans-serif; }
+  .wxh-hl-ic{ font-size:20px; width:24px; text-align:center; flex-shrink:0; }
+  .wxh-hl-rain{ background:#E4F0FF; border-color:#8DB5E6; }
+  .wxh-hl-hot{ background:#FFF1E6; border-color:#F2A66B; }
+  body.theme-dark .wxh-hl-rain{ background:rgba(90,150,230,0.18); border-color:rgba(110,165,235,0.55); }
+  body.theme-dark .wxh-hl-hot{ background:rgba(217,72,15,0.18); border-color:rgba(242,166,107,0.5); }
+  .wxh-chart-wrap{ background:var(--surface-soft); border:1px solid var(--line); border-radius:14px; padding:6px 4px 0; margin-bottom:12px; }
+  .wxh-chart{ width:100%; height:auto; display:block; }
+  .wxh-grid{ stroke:var(--line); stroke-width:1; }
+  .wxh-axis{ font-size:15px; fill:var(--muted); font-family:'Inter',sans-serif; font-weight:600; }
+  .wxh-bar{ fill:#4C8FE0; opacity:0.28; }
+  .wxh-bar.strong{ opacity:0.55; }
+  .wxh-line{ fill:none; stroke:#E8590C; stroke-width:3; stroke-linejoin:round; stroke-linecap:round; }
+  .wxh-dot{ stroke:var(--surface); stroke-width:2; }
+  .wxh-dot.hot{ fill:#D9480F; } .wxh-dot.cold{ fill:#1C7ED6; }
+  .wxh-dot-label{ font-size:15.5px; font-weight:800; font-family:'Sora',sans-serif; }
+  .wxh-dot-label.hot{ fill:#D9480F; } .wxh-dot-label.cold{ fill:#1C7ED6; }
+  .wxh-now{ stroke:var(--primary-dark); stroke-width:1.8; stroke-dasharray:4 3; }
+  .wxh-now-label{ font-size:14px; font-weight:800; fill:var(--primary-dark); font-family:'Sora',sans-serif; }
+  .wxh-strip{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
+  .wxh-hour{ flex:0 0 66px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 4px; border-radius:12px; background:var(--surface-soft); border:1px solid var(--line); }
+  .wxh-hour.rain{ background:#E4F0FF; border-color:#8DB5E6; }
+  .wxh-hour.hot{ border-color:#D9480F; box-shadow:inset 0 0 0 1px #D9480F; }
+  .wxh-hour.now{ border-color:var(--primary-dark); box-shadow:inset 0 0 0 1.5px var(--primary-dark); }
+  body.theme-dark .wxh-hour.rain{ background:rgba(90,150,230,0.18); border-color:rgba(110,165,235,0.55); }
+  .wxh-time{ font-size:12px; font-weight:800; color:var(--muted); white-space:nowrap; }
+  .wxh-hour.now .wxh-time{ color:var(--primary-dark); }
+  .wxh-ic{ font-size:22px; line-height:1; }
+  .wxh-temp{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--ink); }
+  .wxh-prob{ font-size:11.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
+  body.theme-dark .wxh-prob{ color:#8FC1FF; }
+  .wxh-loc{ font-size:11.5px; color:var(--muted); text-align:right; }
   .hero-batch-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .hero-stats{ display:flex; align-items:center; gap:14px; }
   .hero-ring{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.35); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; }
@@ -540,6 +582,13 @@
   </div>
 </div>
 
+<!-- Hourly weather sheet -->
+<div class="sheet" id="wxSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 id="wxSheetTitle">Weather</h2><button id="closeWxSheet" aria-label="Close">✕</button></div>
+  <div class="sheet-body" id="wxSheetBody"></div>
+</div>
+
 <!-- Report Problem Sheet -->
 <div class="sheet" id="reportProblemSheet">
   <div class="sheet-handle"></div>
@@ -619,7 +668,7 @@
       savedOnPhone:'No signal — saved on this phone. It will sync when you are back online.',
       showingSaved:'No connection — showing the last saved data.',
       batch:'Batch', day:'Day',
-      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
+      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', hrTitleToday:'Today', hrHottest:'Hottest: <b>{t}</b> at <b>{h}</b>', hrCoolest:'Coolest: <b>{t}</b> at <b>{h}</b>', hrRain:'Rain from <b>{s}</b> until <b>{e}</b>', hrUpTo:'up to {p}%', hrAgain:'again from <b>{h}</b>', hrSmall:'Small chance of rain — {p}% around <b>{h}</b>', hrDry:'No rain expected', hrWindiest:'Windiest: <b>{w}</b> at <b>{h}</b>', hrLoading:'Loading hourly forecast…', hrError:'Could not load the hourly forecast — check your connection.', hrMidnight:'midnight', hrTap:'Tap for hourly forecast', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -651,7 +700,7 @@
       savedOnPhone:'Sin señal — guardado en este teléfono. Se sincronizará cuando vuelva la conexión.',
       showingSaved:'Sin conexión — mostrando los últimos datos guardados.',
       batch:'Lote', day:'Día',
-      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
+      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', hrTitleToday:'Hoy', hrHottest:'Más calor: <b>{t}</b> a las <b>{h}</b>', hrCoolest:'Más fresco: <b>{t}</b> a las <b>{h}</b>', hrRain:'Lluvia desde las <b>{s}</b> hasta las <b>{e}</b>', hrUpTo:'hasta {p}%', hrAgain:'otra vez desde las <b>{h}</b>', hrSmall:'Poca probabilidad de lluvia — {p}% cerca de las <b>{h}</b>', hrDry:'No se espera lluvia', hrWindiest:'Más viento: <b>{w}</b> a las <b>{h}</b>', hrLoading:'Cargando pronóstico por hora…', hrError:'No se pudo cargar el pronóstico por hora — revisa tu conexión.', hrMidnight:'medianoche', hrTap:'Toca para ver por hora', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -683,7 +732,7 @@
       savedOnPhone:'Walang signal — naka-save sa phone na ito. Magsi-sync kapag may internet na.',
       showingSaved:'Walang koneksyon — ipinapakita ang huling na-save na data.',
       batch:'Batch', day:'Araw',
-      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
+      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
   function t(key){
@@ -748,7 +797,7 @@
     const icon = (isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) ? '🌙' : WX_ICONS[kind];
     return [icon, t('wx_' + kind)];
   }
-  const APP_VERSION = '2026.09.25-wx3';
+  const APP_VERSION = '2026.09.25-h1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -844,7 +893,10 @@
       wb = document.createElement('span'); wb.className = 'hw-warn'; wb.textContent = warn.join('  ');
       el.querySelector('.hw-meta').appendChild(wb);
     }
-    el.title = `${w.current ? t('wxNow') + ' ' + wxT(w.current.temp) + ' · ' : ''}${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`;
+    el.title = `${w.current ? t('wxNow') + ' ' + wxT(w.current.temp) + ' · ' : ''}${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)} — ${t('hrTap')}`;
+    const tap = document.createElement('span'); tap.className = 'hw-tap'; tap.textContent = '›';
+    el.appendChild(tap);
+    el.dataset.wxKey = dateKey(new Date());
     el.style.display = 'flex';
   }
   function buildDateWxChip(key){
@@ -860,7 +912,201 @@
     const lo = document.createElement('span'); lo.className = 'wx-lo'; lo.textContent = '/' + wxT(w.min);
     hi.appendChild(lo);
     el.append(ic, hi);
+    el.title += ' — ' + t('hrTap');
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('click', (e)=>{ e.stopPropagation(); openWeatherDetail(key); });
     return el;
+  }
+
+  // ---------- Hourly forecast sheet ----------
+  const WX_HOURLY_TTL = 30 * 60 * 1000;
+  const wxHourlyCache = new Map();
+  let wxDetailKey = null;
+  const tf = (key, vars)=> Object.keys(vars || {}).reduce((str, k)=> str.split('{' + k + '}').join(vars[k]), t(key));
+  function windUnit(){ return syncedDisplay.weatherUnit === 'fahrenheit' ? 'mph' : 'km/h'; }
+  function hourLabel(h){ return new Date(2000, 0, 1, h).toLocaleTimeString(undefined, { hour:'numeric' }); }
+  function isRainHour(x){ return (x.prob != null && x.prob >= 50) || (x.precip != null && x.precip >= 0.2); }
+  async function fetchHourly(dk){
+    const ck = `${wxKey()}|${dk}`;
+    const hit = wxHourlyCache.get(ck);
+    if(hit && Date.now() - hit.fetchedAt < WX_HOURLY_TTL) return hit.hours;
+    const l = syncedDisplay.weatherLocation;
+    const F = syncedDisplay.weatherUnit === 'fahrenheit';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
+      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day`
+      + `&timezone=auto&start_date=${dk}&end_date=${dk}`
+      + `&temperature_unit=${F ? 'fahrenheit' : 'celsius'}&wind_speed_unit=${F ? 'mph' : 'kmh'}`
+      + `&cb=${Math.floor(Date.now() / WX_HOURLY_TTL)}`;
+    const res = await fetch(url, { cache:'no-store' });
+    if(!res.ok) throw new Error('Hourly ' + res.status);
+    const j = await res.json();
+    const h = j.hourly || {};
+    const hours = (h.time || []).map((tm, i)=>({
+      hour: parseInt(String(tm).slice(11, 13), 10),
+      temp: h.temperature_2m ? h.temperature_2m[i] : null,
+      prob: h.precipitation_probability ? h.precipitation_probability[i] : null,
+      precip: h.precipitation ? h.precipitation[i] : null,
+      code: h.weather_code ? h.weather_code[i] : null,
+      wind: h.wind_speed_10m ? h.wind_speed_10m[i] : null,
+      isDay: h.is_day ? h.is_day[i] : 1
+    }));
+    wxHourlyCache.set(ck, { fetchedAt: Date.now(), hours });
+    return hours;
+  }
+  function hourlyHighlights(hours){
+    const out = [];
+    const valid = hours.filter(x=> x.temp != null);
+    if(valid.length){
+      const hot = valid.reduce((a, b)=> b.temp > a.temp ? b : a);
+      const cold = valid.reduce((a, b)=> b.temp < a.temp ? b : a);
+      out.push({ kind:'hot', icon:'🌡️', html: tf('hrHottest', { t: wxT(hot.temp), h: hourLabel(hot.hour) }), hour: hot.hour });
+      out.push({ kind:'cold', icon:'🌙', html: tf('hrCoolest', { t: wxT(cold.temp), h: hourLabel(cold.hour) }), hour: cold.hour });
+    }
+    const windows = []; let cur = null;
+    hours.forEach(x=>{
+      if(isRainHour(x)){
+        if(!cur){ cur = { start:x.hour, end:x.hour, peak:x.prob || 0, mm:x.precip || 0 }; windows.push(cur); }
+        else { cur.end = x.hour; cur.peak = Math.max(cur.peak, x.prob || 0); cur.mm += (x.precip || 0); }
+      } else cur = null;
+    });
+    if(windows.length){
+      const w0 = windows[0];
+      let html = tf('hrRain', { s: hourLabel(w0.start), e: w0.end + 1 >= 24 ? t('hrMidnight') : hourLabel(w0.end + 1) });
+      const extra = [];
+      if(w0.peak) extra.push(tf('hrUpTo', { p: Math.round(w0.peak) }));
+      if(w0.mm >= 0.1) extra.push(w0.mm.toFixed(1) + ' mm');
+      if(extra.length) html += ` (${extra.join(', ')})`;
+      if(windows.length > 1) html += ' · ' + tf('hrAgain', { h: hourLabel(windows[1].start) });
+      out.push({ kind:'rain', icon:'🌧️', html, hour: w0.start });
+    } else {
+      const wp = hours.filter(x=> x.prob != null);
+      const mx = wp.length ? wp.reduce((a, b)=> b.prob > a.prob ? b : a) : null;
+      if(mx && mx.prob >= 20) out.push({ kind:'rain-low', icon:'🌦️', html: tf('hrSmall', { p: Math.round(mx.prob), h: hourLabel(mx.hour) }), hour: mx.hour });
+      else out.push({ kind:'dry', icon:'☀️', html: t('hrDry'), hour: null });
+    }
+    const ww = hours.filter(x=> x.wind != null);
+    if(ww.length){
+      const wd = ww.reduce((a, b)=> b.wind > a.wind ? b : a);
+      out.push({ kind:'wind', icon:'💨', html: tf('hrWindiest', { w: `${Math.round(wd.wind)} ${windUnit()}`, h: hourLabel(wd.hour) }), hour: wd.hour });
+    }
+    return out;
+  }
+  function buildHourlyChart(hours, isToday){
+    const W = 520, H = 200, L = 40, R = 12, T = 26, B = 30;
+    const pw = W - L - R, ph = H - T - B;
+    const temps = hours.map(x=> x.temp).filter(v=> v != null);
+    if(!temps.length) return '';
+    let tMin = Math.min(...temps), tMax = Math.max(...temps);
+    if(tMax - tMin < 4){ tMax += 2; tMin -= 2; }
+    const pad = (tMax - tMin) * 0.12; tMin -= pad; tMax += pad;
+    const n = hours.length;
+    const xAt = i => L + (n <= 1 ? pw / 2 : (i / (n - 1)) * pw);
+    const yAt = v => T + (1 - (v - tMin) / (tMax - tMin)) * ph;
+    const bw = Math.max(4, pw / n - 3);
+    let svg = `<svg class="wxh-chart" viewBox="0 0 ${W} ${H}" role="img">`;
+    [tMax - pad, (tMin + tMax) / 2, tMin + pad].forEach(v=>{
+      const y = yAt(v).toFixed(1);
+      svg += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" class="wxh-grid"/><text x="${L - 6}" y="${(+y + 4).toFixed(1)}" text-anchor="end" class="wxh-axis">${Math.round(v)}°</text>`;
+    });
+    hours.forEach((x, i)=>{
+      const p = x.prob != null ? x.prob : (x.precip ? Math.min(100, x.precip * 40) : 0);
+      if(p <= 0) return;
+      const bh = (p / 100) * ph;
+      svg += `<rect x="${(xAt(i) - bw / 2).toFixed(1)}" y="${(T + ph - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" class="wxh-bar${isRainHour(x) ? ' strong' : ''}"/>`;
+    });
+    if(isToday){
+      const now = new Date(), nowH = now.getHours() + now.getMinutes() / 60;
+      const idx = hours.findIndex(x=> x.hour === Math.floor(nowH));
+      if(idx >= 0){
+        const nx = (xAt(idx) + (nowH % 1) * (pw / Math.max(1, n - 1))).toFixed(1);
+        svg += `<line x1="${nx}" x2="${nx}" y1="${T - 6}" y2="${T + ph}" class="wxh-now"/><text x="${nx}" y="${T - 9}" text-anchor="middle" class="wxh-now-label">${t('wxNow')}</text>`;
+      }
+    }
+    const pts = hours.map((x, i)=> x.temp != null ? `${xAt(i).toFixed(1)},${yAt(x.temp).toFixed(1)}` : null).filter(Boolean);
+    svg += `<polyline points="${pts.join(' ')}" class="wxh-line"/>`;
+    const valid = hours.map((x, i)=> ({ x, i })).filter(o=> o.x.temp != null);
+    const hot = valid.reduce((a, b)=> b.x.temp > a.x.temp ? b : a);
+    const cold = valid.reduce((a, b)=> b.x.temp < a.x.temp ? b : a);
+    [[hot, 'hot', -10], [cold, 'cold', 20]].forEach(([o, cls, dy])=>{
+      const cx = xAt(o.i), cy = yAt(o.x.temp);
+      let ly = cy + dy; if(ly > T + ph - 2) ly = cy - 10; if(ly < 12) ly = cy + 20;
+      const anchor = o.i <= 1 ? 'start' : (o.i >= n - 2 ? 'end' : 'middle');
+      const lx = anchor === 'start' ? cx - 4 : (anchor === 'end' ? cx + 4 : cx);
+      svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" class="wxh-dot ${cls}"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" class="wxh-dot-label ${cls}">${wxT(o.x.temp)} · ${hourLabel(o.x.hour)}</text>`;
+    });
+    hours.forEach((x, i)=>{
+      if(x.hour % 6 !== 0) return;
+      svg += `<text x="${xAt(i).toFixed(1)}" y="${H - 9}" text-anchor="middle" class="wxh-axis">${hourLabel(x.hour)}</text>`;
+    });
+    return svg + '</svg>';
+  }
+  function buildHourlyStrip(hours, isToday, focusHour){
+    const strip = document.createElement('div');
+    strip.className = 'wxh-strip';
+    const valid = hours.filter(x=> x.temp != null);
+    const hotHour = valid.length ? valid.reduce((a, b)=> b.temp > a.temp ? b : a).hour : null;
+    const nowH = new Date().getHours();
+    hours.forEach(x=>{
+      const c = document.createElement('div');
+      c.className = 'wxh-hour' + (isRainHour(x) ? ' rain' : '') + (x.hour === hotHour ? ' hot' : '') + (isToday && x.hour === nowH ? ' now' : '');
+      c.dataset.hour = x.hour;
+      const [ic] = x.code != null ? wxIconLabel(x.code, x.isDay) : ['·'];
+      const mk = (cls, txt)=>{ const e = document.createElement('span'); e.className = cls; e.textContent = txt; c.appendChild(e); };
+      mk('wxh-time', isToday && x.hour === nowH ? t('wxNow') : hourLabel(x.hour));
+      mk('wxh-ic', ic);
+      mk('wxh-temp', wxT(x.temp));
+      mk('wxh-prob', x.prob != null ? `💧${Math.round(x.prob)}%` : (x.precip ? `${x.precip.toFixed(1)}mm` : '—'));
+      strip.appendChild(c);
+    });
+    requestAnimationFrame(()=>{
+      const target = strip.querySelector(`.wxh-hour[data-hour="${focusHour}"]`);
+      if(target) strip.scrollLeft = Math.max(0, target.offsetLeft - strip.clientWidth / 2 + target.clientWidth / 2);
+    });
+    return strip;
+  }
+  async function openWeatherDetail(key){
+    if(!wxForDate(key)) return;
+    wxDetailKey = key;
+    const isToday = key === dateKey(new Date());
+    $('#wxSheetTitle').textContent = (isToday ? t('hrTitleToday') + ' · ' : '') + toDateObj(key).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+    const body = $('#wxSheetBody');
+    body.innerHTML = '';
+    const loading = document.createElement('div');
+    loading.className = 'wxh-loading';
+    loading.textContent = t('hrLoading');
+    body.appendChild(loading);
+    openSheet('#wxSheet');
+    try{
+      const hours = await fetchHourly(key);
+      if(wxDetailKey !== key) return;
+      loading.remove();
+      const hl = hourlyHighlights(hours);
+      const list = document.createElement('div');
+      list.className = 'wxh-highlights';
+      hl.forEach(item=>{
+        const row = document.createElement('div');
+        row.className = 'wxh-hl wxh-hl-' + item.kind;
+        row.innerHTML = `<span class="wxh-hl-ic"></span><span class="wxh-hl-text">${item.html}</span>`;
+        row.querySelector('.wxh-hl-ic').textContent = item.icon;
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+      const chart = document.createElement('div');
+      chart.className = 'wxh-chart-wrap';
+      chart.innerHTML = buildHourlyChart(hours, isToday);
+      body.appendChild(chart);
+      const rainItem = hl.find(x=> x.kind === 'rain'), hotItem = hl.find(x=> x.kind === 'hot');
+      const focus = isToday ? new Date().getHours() : (rainItem ? rainItem.hour : (hotItem ? hotItem.hour : 12));
+      body.appendChild(buildHourlyStrip(hours, isToday, focus));
+      const loc = document.createElement('div');
+      loc.className = 'wxh-loc';
+      loc.textContent = `📍 ${syncedDisplay.weatherLocation.name} · Open-Meteo`;
+      body.appendChild(loc);
+    }catch(e){
+      loading.textContent = t('hrError');
+      loading.classList.add('wxh-error');
+    }
   }
 
   // ---------- Overdue ----------
@@ -1729,7 +1975,7 @@
   // ---------- Overlays / sheets ----------
   function openSheet(sel){ $(sel).classList.add('open'); $('#scrim').classList.add('show'); }
   function closeOverlays(){
-    ['#settingsSheet','#overdueTransferModal','#reportProblemSheet'].forEach(sel=>{
+    ['#settingsSheet','#overdueTransferModal','#reportProblemSheet','#wxSheet'].forEach(sel=>{
       const el = $(sel); if(el) el.classList.remove('open');
     });
     $('#scrim').classList.remove('show');
@@ -1746,6 +1992,8 @@
   // ---------- Report Problem wiring ----------
   $('#reportProblemBtn').addEventListener('click', openReportProblem);
   $('#closeReportProblem').addEventListener('click', closeOverlays);
+  $('#closeWxSheet').addEventListener('click', closeOverlays);
+  $('#heroWeather').addEventListener('click', ()=>{ const k = $('#heroWeather').dataset.wxKey; if(k) openWeatherDetail(k); });
   $('#photoCapture').addEventListener('click', (e)=>{
     if(e.target.closest('#photoRetake')) return;
     if(pendingPhotoFile) return;
