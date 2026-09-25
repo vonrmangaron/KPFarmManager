@@ -1400,7 +1400,7 @@
   .wxh-dot-label.cold{ fill:#1C7ED6; }
   .wxh-now{ stroke:var(--primary-dark); stroke-width:1.5; stroke-dasharray:3 3; }
   .wxh-now-label{ font-size:12.5px; font-weight:800; fill:var(--primary-dark); font-family:'Sora',sans-serif; }
-  .wxh-strip{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 10px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; }
+  .wxh-strip{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch; }
   .wxh-hour{ flex:0 0 62px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); }
   .wxh-hour.rain{ background:#E4F0FF; border-color:#8DB5E6; }
   .wxh-hour.hot{ border-color:#D9480F; box-shadow:inset 0 0 0 1px #D9480F; }
@@ -3927,7 +3927,7 @@
     if(isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) return ['🌙', label];
     return [icon, label];
   }
-  const APP_VERSION = '2026.09.25-s2';
+  const APP_VERSION = '2026.09.25-w1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -4320,9 +4320,25 @@
     svg += `</svg>`;
     return svg;
   }
+  // Mouse wheel scrolls a sideways strip. At either end the wheel falls through
+  // to the page/panel so normal vertical scrolling still works.
+  function enableWheelHScroll(el){
+    el.addEventListener('wheel', (e)=>{
+      if(el.scrollWidth <= el.clientWidth + 1) return;
+      if(Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;          // trackpad sideways swipe: let it be
+      const unit = e.deltaMode === 1 ? 32 : (e.deltaMode === 2 ? el.clientWidth : 1);
+      const delta = e.deltaY * unit;
+      const atStart = el.scrollLeft <= 0 && delta < 0;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && delta > 0;
+      if(atStart || atEnd) return;
+      e.preventDefault();
+      el.scrollBy({ left: delta, behavior:'instant' });
+    }, { passive:false });
+  }
   function buildHourlyStrip(hours, isToday, focusHour){
     const strip = document.createElement('div');
     strip.className = 'wxh-strip';
+    enableWheelHScroll(strip);
     const valid = hours.filter(x=> x.temp != null);
     const hotHour = valid.length ? valid.reduce((a, b)=> b.temp > a.temp ? b : a).hour : null;
     const nowH = new Date().getHours();
