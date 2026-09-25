@@ -233,6 +233,16 @@
   .wxh-prob{ font-size:11.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
   body.theme-dark .wxh-prob{ color:#8FC1FF; }
   .wxh-loc{ font-size:11.5px; color:var(--muted); text-align:right; }
+  .day-nav{ display:flex; align-items:center; gap:8px; margin:0 0 16px; padding:6px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow-sm); }
+  .dn-arrow{ width:48px; height:48px; flex-shrink:0; border-radius:12px; border:none; background:var(--surface-soft); color:var(--ink); font-size:26px; font-weight:800; line-height:1; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .dn-arrow:active{ transform:scale(0.92); background:var(--primary-soft); }
+  .dn-center{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; }
+  .dn-main{ font-family:'Sora',sans-serif; font-weight:800; font-size:17px; color:var(--ink); }
+  .dn-sub{ font-size:12.5px; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .dn-today{ flex-shrink:0; border:none; background:var(--primary); color:#241A08; font-family:'Sora',sans-serif; font-weight:800; font-size:13px; padding:10px 14px; border-radius:999px; cursor:pointer; }
+  body.theme-dark .dn-today{ color:#1A1300; }
+  .dn-next{ display:block; width:100%; margin:12px 0 22px; padding:15px 14px; border-radius:14px; border:1.5px dashed var(--primary-dark); background:var(--primary-soft); color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer; }
+  .dn-next:active{ transform:scale(0.98); }
   .hero-batch-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .hero-stats{ display:flex; align-items:center; gap:14px; }
   .hero-ring{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.35); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; }
@@ -668,7 +678,7 @@
       savedOnPhone:'No signal — saved on this phone. It will sync when you are back online.',
       showingSaved:'No connection — showing the last saved data.',
       batch:'Batch', day:'Day',
-      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', hrTitleToday:'Today', hrHottest:'Hottest: <b>{t}</b> at <b>{h}</b>', hrCoolest:'Coolest: <b>{t}</b> at <b>{h}</b>', hrRain:'Rain from <b>{s}</b> until <b>{e}</b>', hrUpTo:'up to {p}%', hrAgain:'again from <b>{h}</b>', hrSmall:'Small chance of rain — {p}% around <b>{h}</b>', hrDry:'No rain expected', hrWindiest:'Windiest: <b>{w}</b> at <b>{h}</b>', hrLoading:'Loading hourly forecast…', hrError:'Could not load the hourly forecast — check your connection.', hrMidnight:'midnight', hrTap:'Tap for hourly forecast', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
+      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', dnDay:'Day', dnTomorrow:'Tomorrow', dnYesterday:'Yesterday', dnPrev:'Previous day', dnNext:'Next day', dnNoTasks:'no tasks', dnDone:'{d}/{n} done', dnNoTasksOn:'No tasks scheduled for {d}.', dnNextTasks:'Next tasks: {d} ({n}) →', hrTitleToday:'Today', hrHottest:'Hottest: <b>{t}</b> at <b>{h}</b>', hrCoolest:'Coolest: <b>{t}</b> at <b>{h}</b>', hrRain:'Rain from <b>{s}</b> until <b>{e}</b>', hrUpTo:'up to {p}%', hrAgain:'again from <b>{h}</b>', hrSmall:'Small chance of rain — {p}% around <b>{h}</b>', hrDry:'No rain expected', hrWindiest:'Windiest: <b>{w}</b> at <b>{h}</b>', hrLoading:'Loading hourly forecast…', hrError:'Could not load the hourly forecast — check your connection.', hrMidnight:'midnight', hrTap:'Tap for hourly forecast', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -700,7 +710,7 @@
       savedOnPhone:'Sin señal — guardado en este teléfono. Se sincronizará cuando vuelva la conexión.',
       showingSaved:'Sin conexión — mostrando los últimos datos guardados.',
       batch:'Lote', day:'Día',
-      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', hrTitleToday:'Hoy', hrHottest:'Más calor: <b>{t}</b> a las <b>{h}</b>', hrCoolest:'Más fresco: <b>{t}</b> a las <b>{h}</b>', hrRain:'Lluvia desde las <b>{s}</b> hasta las <b>{e}</b>', hrUpTo:'hasta {p}%', hrAgain:'otra vez desde las <b>{h}</b>', hrSmall:'Poca probabilidad de lluvia — {p}% cerca de las <b>{h}</b>', hrDry:'No se espera lluvia', hrWindiest:'Más viento: <b>{w}</b> a las <b>{h}</b>', hrLoading:'Cargando pronóstico por hora…', hrError:'No se pudo cargar el pronóstico por hora — revisa tu conexión.', hrMidnight:'medianoche', hrTap:'Toca para ver por hora', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
+      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', dnDay:'Día', dnTomorrow:'Mañana', dnYesterday:'Ayer', dnPrev:'Día anterior', dnNext:'Día siguiente', dnNoTasks:'sin tareas', dnDone:'{d}/{n} hechas', dnNoTasksOn:'No hay tareas para el {d}.', dnNextTasks:'Próximas tareas: {d} ({n}) →', hrTitleToday:'Hoy', hrHottest:'Más calor: <b>{t}</b> a las <b>{h}</b>', hrCoolest:'Más fresco: <b>{t}</b> a las <b>{h}</b>', hrRain:'Lluvia desde las <b>{s}</b> hasta las <b>{e}</b>', hrUpTo:'hasta {p}%', hrAgain:'otra vez desde las <b>{h}</b>', hrSmall:'Poca probabilidad de lluvia — {p}% cerca de las <b>{h}</b>', hrDry:'No se espera lluvia', hrWindiest:'Más viento: <b>{w}</b> a las <b>{h}</b>', hrLoading:'Cargando pronóstico por hora…', hrError:'No se pudo cargar el pronóstico por hora — revisa tu conexión.', hrMidnight:'medianoche', hrTap:'Toca para ver por hora', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -732,7 +742,7 @@
       savedOnPhone:'Walang signal — naka-save sa phone na ito. Magsi-sync kapag may internet na.',
       showingSaved:'Walang koneksyon — ipinapakita ang huling na-save na data.',
       batch:'Batch', day:'Araw',
-      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
+      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
   function t(key){
@@ -748,6 +758,7 @@
   let tasks = [], history = [], batches = [], events = [], reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let agendaFilter = 'today';
+  let agendaDate = null;   // day shown by the Today/Day tab (null = today)
   let ghPath=null, ghFarmName=null, ghSha=null;
 
   const $ = (sel)=> document.querySelector(sel);
@@ -797,7 +808,7 @@
     const icon = (isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) ? '🌙' : WX_ICONS[kind];
     return [icon, t('wx_' + kind)];
   }
-  const APP_VERSION = '2026.09.25-w1';
+  const APP_VERSION = '2026.09.25-n1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -1771,17 +1782,67 @@
   function getAgendaTasks(){
     const todayKey=dateKey(new Date());
     let filtered;
-    if(agendaFilter==='today') filtered = tasks.filter(tk=> tk.date===todayKey);
+    if(agendaFilter==='today'){ const dk = agendaDayKey(); filtered = tasks.filter(tk=> tk.date===dk); }
     else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey && tk.date<=weekEnd); }
     else filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey);
     return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.status==='done'?1:0)-(b.status==='done'?1:0)) || ((a.order||0)-(b.order||0)));
   }
+  // ---------- Day navigation (Today/Day tab) ----------
+  function agendaDayKey(){ return agendaDate || dateKey(new Date()); }
+  function goAgendaDay(key){
+    agendaDate = key === dateKey(new Date()) ? null : key;
+    agendaFilter = 'today';
+    renderList();
+  }
+  function shiftAgendaDay(delta){ goAgendaDay(addDaysStr(agendaDayKey(), delta)); }
+  function nextDayWithTasks(afterKey){
+    let best = null;
+    tasks.forEach(tk=>{ if(tk.date && tk.date > afterKey && (!best || tk.date < best)) best = tk.date; });
+    return best;
+  }
+  function dayName(key){
+    const today = dateKey(new Date());
+    if(key === today) return t('today');
+    if(key === addDaysStr(today, 1)) return t('dnTomorrow');
+    if(key === addDaysStr(today, -1)) return t('dnYesterday');
+    return toDateObj(key).toLocaleDateString(undefined, { weekday:'long' });
+  }
+  function buildDayNav(){
+    const key = agendaDayKey();
+    const today = dateKey(new Date());
+    const dayTasks = tasks.filter(tk=> tk.date === key);
+    const done = dayTasks.filter(tk=> tk.status === 'done').length;
+    const nav = document.createElement('div');
+    nav.className = 'day-nav';
+    const mkArrow = (txt, label, delta)=>{
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'dn-arrow'; b.textContent = txt; b.setAttribute('aria-label', label);
+      b.addEventListener('click', ()=> shiftAgendaDay(delta));
+      return b;
+    };
+    const center = document.createElement('div');
+    center.className = 'dn-center';
+    const main = document.createElement('span'); main.className = 'dn-main'; main.textContent = dayName(key);
+    const sub = document.createElement('span'); sub.className = 'dn-sub';
+    sub.textContent = toDateObj(key).toLocaleDateString(undefined, { day:'numeric', month:'long' }) + ' · '
+      + (dayTasks.length ? t('dnDone').replace('{d}', done).replace('{n}', dayTasks.length) : t('dnNoTasks'));
+    center.append(main, sub);
+    nav.append(mkArrow('‹', t('dnPrev'), -1), center, mkArrow('›', t('dnNext'), 1));
+    if(key !== today){
+      const back = document.createElement('button');
+      back.type = 'button'; back.className = 'dn-today'; back.textContent = t('today');
+      back.addEventListener('click', ()=> goAgendaDay(today));
+      nav.appendChild(back);
+    }
+    return nav;
+  }
   function renderAgendaFilterBar(){
     const bar=$('#agendaFilterBar'); bar.innerHTML='';
-    [['today',t('today')],['week',t('thisWeek')],['upcoming',t('upcoming')]].forEach(([key,label])=>{
+    const dayTab = agendaDayKey() === dateKey(new Date()) ? t('today') : t('dnDay');
+    [['today',dayTab],['week',t('thisWeek')],['upcoming',t('upcoming')]].forEach(([key,label])=>{
       const btn=document.createElement('button');
       btn.textContent=label; btn.className = agendaFilter===key ? 'active' : '';
-      btn.addEventListener('click', ()=>{ agendaFilter=key; renderList(); });
+      btn.addEventListener('click', ()=>{ if(key==='today') agendaDate = null; agendaFilter=key; renderList(); });
       bar.appendChild(btn);
     });
   }
@@ -1941,11 +2002,29 @@
   function renderList(){
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
+    if(agendaFilter==='today') wrap.appendChild(buildDayNav());
     const dated=getAgendaTasks();
     if(dated.length===0){
-      const emptyMsg = agendaFilter==='today' ? t('noTasksToday') : agendaFilter==='week' ? t('noTasksWeek') : t('noTasksUpcoming');
+      const dk = agendaDayKey();
+      const emptyMsg = agendaFilter==='today'
+        ? (dk === dateKey(new Date()) ? t('noTasksToday') : t('dnNoTasksOn').replace('{d}', toDateObj(dk).toLocaleDateString(undefined, { weekday:'long', day:'numeric', month:'long' })))
+        : agendaFilter==='week' ? t('noTasksWeek') : t('noTasksUpcoming');
       const note=document.createElement('div'); note.className='empty-note'; note.textContent=emptyMsg;
-      wrap.appendChild(note); return;
+      wrap.appendChild(note);
+      if(agendaFilter==='today'){
+        const nk = nextDayWithTasks(dk);
+        if(nk){
+          const n = tasks.filter(tk=> tk.date === nk).length;
+          const label = [t('dnTomorrow')].includes(dayName(nk)) || dayName(nk) === t('today') ? dayName(nk)
+            : toDateObj(nk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'dn-next';
+          b.textContent = t('dnNextTasks').replace('{d}', label).replace('{n}', n);
+          b.addEventListener('click', ()=> goAgendaDay(nk));
+          wrap.appendChild(b);
+        }
+      }
+      return;
     }
     const groups={}; dated.forEach(tk=>{ (groups[tk.date]=groups[tk.date]||[]).push(tk); });
     Object.keys(groups).sort().forEach(key=>{
@@ -2091,6 +2170,21 @@
       currentDist = 0;
     });
   }
+  (function(){
+    const el = $('#taskListSection');
+    let sx = 0, sy = 0, st = 0, tracking = false;
+    el.addEventListener('touchstart', (e)=>{
+      if(agendaFilter !== 'today' || e.touches.length !== 1){ tracking = false; return; }
+      tracking = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+    }, { passive:true });
+    el.addEventListener('touchend', (e)=>{
+      if(!tracking) return;
+      tracking = false;
+      const tt = e.changedTouches[0];
+      const dx = tt.clientX - sx, dy = tt.clientY - sy;
+      if(Math.abs(dx) > 70 && Math.abs(dy) < 45 && Date.now() - st < 600) shiftAgendaDay(dx < 0 ? 1 : -1);
+    }, { passive:true });
+  })();
   initPullToRefresh(document.body, $('#pullRefreshIndicator'), async ()=>{
     if(ghPath){ await pullFromGithub(); } else { showToast('Connect in Settings to enable syncing.', true); }
   });
