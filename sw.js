@@ -1,94 +1,75 @@
-/* ProdWise.VM — service worker
-   Cache strategy:
-   - App shell (HTML, manifest, icons) — network-first for HTML, cache-first for assets
-   - CDN assets (SheetJS, Google Fonts) — cache-first with long TTL
-   - Cloud sync (workers.dev) — always network (never cached)
+/* ProdWise.VM — Service Worker
+   Strategy: network-first for HTML/CSS/JS so updates take effect immediately.
+   Cache-first only for icons/fonts (rarely change).
 */
 
-const CACHE_VERSION = 'prodwise-v1';
-
-const APP_SHELL = [
+const CACHE_NAME = 'prodwise-v4';
+const CORE_ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './prodwise.css',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) =>
-      cache.addAll(APP_SHELL).catch(() => {})
-    )
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(CORE_ASSETS).catch(() => {}))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE_VERSION)
-            .map((k) => caches.delete(k))
-      )
-    )
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-
-  // Never cache cloud sync calls
-  if (url.hostname.endsWith('workers.dev')) return;
-
-  // Only handle GET
   if (req.method !== 'GET') return;
 
-  // CDN assets: cache-first
-  const isCDN =
-    url.hostname.includes('cdnjs.cloudflare.com') ||
-    url.hostname.includes('cdn.jsdelivr.net') ||
-    url.hostname.includes('fonts.googleapis.com') ||
-    url.hostname.includes('fonts.gstatic.com');
+  const url = new URL(req.url);
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) return;
 
-  if (isCDN) {
+  const path = url.pathname.toLowerCase();
+  const isHtml = req.mode === 'navigate' || path.endsWith('/') || path.endsWith('.html');
+  const isCode = path.endsWith('.css') || path.endsWith('.js') || path.endsWith('.json');
+
+  // Network-first for HTML/CSS/JS — always try the server, fall back to cache offline
+  if (isHtml || isCode) {
     event.respondWith(
-      caches.match(req).then((hit) =>
-        hit || fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
+      fetch(req)
+        .then(res => {
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(req, clone)).catch(() => {});
+          }
           return res;
-        }).catch(() => caches.match('./index.html'))
-      )
+        })
+        .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
     );
     return;
   }
 
-  // Same-origin
-  if (url.origin === self.location.origin) {
-    // HTML navigation: network-first (so updates roll in fast)
-    if (req.mode === 'navigate' || req.destination === 'document') {
-      event.respondWith(
-        fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
-          return res;
-        }).catch(() => caches.match('./index.html'))
-      );
-      return;
-    }
-    // Other assets: cache-first
-    event.respondWith(
-      caches.match(req).then((hit) => {
-        if (hit) return hit;
-        return fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
-          return res;
-        }).catch(() => caches.match('./index.html'));
-      })
-    );
-  }
+  // Cache-first for everything else (icons, images, fonts)
+  event.respondWith(
+    caches.match(req).then(hit => {
+      if (hit) return hit;
+      return fetch(req).then(res => {
+        if (res && res.ok && (path.endsWith('.png') || path.endsWith('.svg') || path.endsWith('.ico') || path.endsWith('.woff2') || path.endsWith('.woff'))) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, clone)).catch(() => {});
+        }
+        return res;
+      });
+    })
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
