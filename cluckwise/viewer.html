@@ -233,6 +233,44 @@
   .wxh-prob{ font-size:11.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
   body.theme-dark .wxh-prob{ color:#8FC1FF; }
   .wxh-loc{ font-size:11.5px; color:var(--muted); text-align:right; }
+  /* ---------- Compact day card ---------- */
+  .day-card{
+    border-radius:18px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08;
+    padding:10px 10px 12px; margin-bottom:14px; box-shadow:0 6px 18px rgba(43,33,22,0.14);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  body.theme-dark .day-card{ color:#1A1300; }
+  .dc-top{ display:flex; align-items:center; gap:8px; }
+  .dc-arrow{ width:44px; height:44px; flex-shrink:0; border-radius:12px; border:none; background:rgba(255,255,255,0.42); color:#241A08; font-size:26px; font-weight:800; line-height:1; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .dc-arrow:active{ transform:scale(0.92); background:rgba(255,255,255,0.65); }
+  .dc-center{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .dc-title-row{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .dc-main{ font-family:'Sora',sans-serif; font-weight:800; font-size:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dc-today{ flex-shrink:0; height:30px; padding:0 12px; border-radius:999px; border:none; background:rgba(36,26,8,0.88); color:#FFE9A6; font-family:'Sora',sans-serif; font-weight:700; font-size:12px; cursor:pointer; }
+  .dc-today[hidden]{ display:none; }
+  .dc-sub{ font-size:12.5px; font-weight:700; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dc-ring{ width:46px; height:46px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .dc-ring-inner{ width:36px; height:36px; border-radius:50%; background:#F7D25E; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:12.5px; color:#241A08; }
+  .dc-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .dc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:none; background:rgba(255,255,255,0.5); color:#241A08; font-size:12.5px; font-weight:700; white-space:nowrap; font-family:inherit; }
+  .dc-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
+  .dc-wx{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .dc-wx:active{ transform:scale(0.97); }
+  .dc-wx.wet{ background:rgba(228,240,255,0.92); color:#1E4E86; }
+  .dc-chev{ opacity:0.55; font-size:15px; margin-left:1px; }
+  .dc-warn{ color:#fff; }
+  .dc-warn-heat{ background:#C2410C; }
+  .dc-warn-frost{ background:#1C6FC4; }
+  .dc-warn-rain{ background:#1864AB; }
+  .dc-warn-storm{ background:#6741D9; }
+  .dc-warn-wind{ background:#4B5563; }
+  #auditBarSection:empty{ display:none; }
+  .day-card .audit-bar{ margin:0; background:rgba(255,255,255,0.55); border:none; border-radius:12px; color:#241A08; }
+  .day-card .audit-bar + .audit-bar{ margin-top:6px; }
+  .day-card .audit-bar-head{ min-height:48px; color:#241A08; }
+  .day-card .ab-count, .day-card .ab-chevron{ color:#5C4A2E; }
+  .day-card .audit-bar-body .ab-task-date{ color:#5C4A2E; }
+  .agenda-filter button{ padding:10px 10px !important; }
   .day-nav{ display:flex; align-items:center; gap:8px; margin:0 0 16px; padding:6px; background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow-sm); }
   .dn-arrow{ width:48px; height:48px; flex-shrink:0; border-radius:12px; border:none; background:var(--surface-soft); color:var(--ink); font-size:26px; font-weight:800; line-height:1; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .dn-arrow:active{ transform:scale(0.92); background:var(--primary-soft); }
@@ -519,18 +557,19 @@
 <div class="pull-refresh-indicator" id="pullRefreshIndicator"><div class="pr-spinner"></div></div>
 
 <main class="dashboard" id="dashboardWrap">
-  <div class="hero-card">
-    <div class="hero-date" id="heroDate">Today</div>
-    <div class="hero-batches" id="heroBatches" style="display:none;"></div>
-    <div class="hero-weather" id="heroWeather" style="display:none;"></div>
-    <div class="hero-title" id="heroTitle">Let's see what's on.</div>
-    <div class="hero-stats">
-      <div class="hero-ring" id="heroRing">0/0</div>
-      <div class="hero-progress-text" id="heroProgressText">No tasks scheduled for today.</div>
+  <div class="day-card" id="dayCard">
+    <div class="dc-top">
+      <button class="dc-arrow" id="dcPrev" type="button" aria-label="Previous day">‹</button>
+      <div class="dc-center">
+        <div class="dc-title-row"><span class="dc-main" id="dcMain">Today</span><button class="dc-today" id="dcToday" type="button" hidden>Today</button></div>
+        <span class="dc-sub" id="dcSub"></span>
+      </div>
+      <div class="dc-ring" id="dcRing" aria-hidden="true"><span class="dc-ring-inner" id="dcRingText">0/0</span></div>
+      <button class="dc-arrow" id="dcNext" type="button" aria-label="Next day">›</button>
     </div>
+    <div class="dc-chips" id="dcChips"></div>
+    <div id="auditBarSection"></div>
   </div>
-
-  <div id="auditBarSection"></div>
 
   <div class="wide-grid">
     <div>
@@ -678,7 +717,7 @@
       savedOnPhone:'No signal — saved on this phone. It will sync when you are back online.',
       showingSaved:'No connection — showing the last saved data.',
       batch:'Batch', day:'Day',
-      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', dnDay:'Day', dnTomorrow:'Tomorrow', dnYesterday:'Yesterday', dnPrev:'Previous day', dnNext:'Next day', dnNoTasks:'no tasks', dnDone:'{d}/{n} done', dnNoTasksOn:'No tasks scheduled for {d}.', dnNextTasks:'Next tasks: {d} ({n}) →', hrTitleToday:'Today', hrHottest:'Hottest: <b>{t}</b> at <b>{h}</b>', hrCoolest:'Coolest: <b>{t}</b> at <b>{h}</b>', hrRain:'Rain from <b>{s}</b> until <b>{e}</b>', hrUpTo:'up to {p}%', hrAgain:'again from <b>{h}</b>', hrSmall:'Small chance of rain — {p}% around <b>{h}</b>', hrDry:'No rain expected', hrWindiest:'Windiest: <b>{w}</b> at <b>{h}</b>', hrLoading:'Loading hourly forecast…', hrError:'Could not load the hourly forecast — check your connection.', hrMidnight:'midnight', hrTap:'Tap for hourly forecast', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
+      wxNow:'Now', wxHigh:'H', wxLow:'L', wx_clear:'Clear', wx_mostlyClear:'Mostly clear', wx_partlyCloudy:'Partly cloudy', wx_overcast:'Overcast', wx_fog:'Fog', wx_drizzle:'Drizzle', wx_rain:'Rain', wx_heavyRain:'Heavy rain', wx_freezingRain:'Freezing rain', wx_snow:'Snow', wx_showers:'Showers', wx_thunderstorm:'Thunderstorm', dcDone:'{d} of {n} done', dnDay:'Day', dnTomorrow:'Tomorrow', dnYesterday:'Yesterday', dnPrev:'Previous day', dnNext:'Next day', dnNoTasks:'no tasks', dnDone:'{d}/{n} done', dnNoTasksOn:'No tasks scheduled for {d}.', dnNextTasks:'Next tasks: {d} ({n}) →', hrTitleToday:'Today', hrHottest:'Hottest: <b>{t}</b> at <b>{h}</b>', hrCoolest:'Coolest: <b>{t}</b> at <b>{h}</b>', hrRain:'Rain from <b>{s}</b> until <b>{e}</b>', hrUpTo:'up to {p}%', hrAgain:'again from <b>{h}</b>', hrSmall:'Small chance of rain — {p}% around <b>{h}</b>', hrDry:'No rain expected', hrWindiest:'Windiest: <b>{w}</b> at <b>{h}</b>', hrLoading:'Loading hourly forecast…', hrError:'Could not load the hourly forecast — check your connection.', hrMidnight:'midnight', hrTap:'Tap for hourly forecast', wxHeat:'Heat', wxFrost:'Frost', wxStorm:'Storm', wxRainLikely:'Rain likely', wxWindy:'Windy', wxWaiting:'Weather: waiting for the manager to set the farm location.', wxOk:'Weather: {place}', wxErr:"Weather: couldn't load — check your connection."
     },
     es: {
       today:'Hoy', thisWeek:'Esta semana', upcoming:'Próximas',
@@ -710,7 +749,7 @@
       savedOnPhone:'Sin señal — guardado en este teléfono. Se sincronizará cuando vuelva la conexión.',
       showingSaved:'Sin conexión — mostrando los últimos datos guardados.',
       batch:'Lote', day:'Día',
-      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', dnDay:'Día', dnTomorrow:'Mañana', dnYesterday:'Ayer', dnPrev:'Día anterior', dnNext:'Día siguiente', dnNoTasks:'sin tareas', dnDone:'{d}/{n} hechas', dnNoTasksOn:'No hay tareas para el {d}.', dnNextTasks:'Próximas tareas: {d} ({n}) →', hrTitleToday:'Hoy', hrHottest:'Más calor: <b>{t}</b> a las <b>{h}</b>', hrCoolest:'Más fresco: <b>{t}</b> a las <b>{h}</b>', hrRain:'Lluvia desde las <b>{s}</b> hasta las <b>{e}</b>', hrUpTo:'hasta {p}%', hrAgain:'otra vez desde las <b>{h}</b>', hrSmall:'Poca probabilidad de lluvia — {p}% cerca de las <b>{h}</b>', hrDry:'No se espera lluvia', hrWindiest:'Más viento: <b>{w}</b> a las <b>{h}</b>', hrLoading:'Cargando pronóstico por hora…', hrError:'No se pudo cargar el pronóstico por hora — revisa tu conexión.', hrMidnight:'medianoche', hrTap:'Toca para ver por hora', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
+      wxNow:'Ahora', wxHigh:'Máx', wxLow:'Mín', wx_clear:'Despejado', wx_mostlyClear:'Mayormente despejado', wx_partlyCloudy:'Parcialmente nublado', wx_overcast:'Nublado', wx_fog:'Niebla', wx_drizzle:'Llovizna', wx_rain:'Lluvia', wx_heavyRain:'Lluvia fuerte', wx_freezingRain:'Lluvia helada', wx_snow:'Nieve', wx_showers:'Chubascos', wx_thunderstorm:'Tormenta', dcDone:'{d} de {n} hechas', dnDay:'Día', dnTomorrow:'Mañana', dnYesterday:'Ayer', dnPrev:'Día anterior', dnNext:'Día siguiente', dnNoTasks:'sin tareas', dnDone:'{d}/{n} hechas', dnNoTasksOn:'No hay tareas para el {d}.', dnNextTasks:'Próximas tareas: {d} ({n}) →', hrTitleToday:'Hoy', hrHottest:'Más calor: <b>{t}</b> a las <b>{h}</b>', hrCoolest:'Más fresco: <b>{t}</b> a las <b>{h}</b>', hrRain:'Lluvia desde las <b>{s}</b> hasta las <b>{e}</b>', hrUpTo:'hasta {p}%', hrAgain:'otra vez desde las <b>{h}</b>', hrSmall:'Poca probabilidad de lluvia — {p}% cerca de las <b>{h}</b>', hrDry:'No se espera lluvia', hrWindiest:'Más viento: <b>{w}</b> a las <b>{h}</b>', hrLoading:'Cargando pronóstico por hora…', hrError:'No se pudo cargar el pronóstico por hora — revisa tu conexión.', hrMidnight:'medianoche', hrTap:'Toca para ver por hora', wxHeat:'Calor', wxFrost:'Helada', wxStorm:'Tormenta', wxRainLikely:'Probable lluvia', wxWindy:'Ventoso', wxWaiting:'Clima: esperando que el gerente configure la ubicación de la granja.', wxOk:'Clima: {place}', wxErr:"Clima: no se pudo cargar — revisa tu conexión."
     },
     tl: {
       today:'Ngayon', thisWeek:'Ngayong Linggo', upcoming:'Paparating',
@@ -742,7 +781,7 @@
       savedOnPhone:'Walang signal — naka-save sa phone na ito. Magsi-sync kapag may internet na.',
       showingSaved:'Walang koneksyon — ipinapakita ang huling na-save na data.',
       batch:'Batch', day:'Araw',
-      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
+      wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dcDone:'{d} sa {n} tapos', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
   function t(key){
@@ -808,7 +847,7 @@
     const icon = (isDay === 0 && (kind === 'clear' || kind === 'mostlyClear')) ? '🌙' : WX_ICONS[kind];
     return [icon, t('wx_' + kind)];
   }
-  const APP_VERSION = '2026.09.25-n1';
+  const APP_VERSION = '2026.09.25-c1';
   const WX_TTL = 30 * 60 * 1000;
   let weatherData = null;
   let weatherFetchInFlight = false;
@@ -877,39 +916,46 @@
   }
   function wxT(v){ return (v == null || isNaN(v)) ? '–' : Math.round(v) + '°'; }
   function renderHeroWeather(){
-    const el = $('#heroWeather');
-    if(!el) return;
-    const w = wxForDate(dateKey(new Date()));
-    if(!w){ el.style.display = 'none'; el.innerHTML = ''; return; }
-    const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
-    el.innerHTML = '<span class="hw-ic"></span><span class="hw-now"></span><span class="hw-meta"><span class="hw-hl"></span><span class="hw-label"></span><span class="hw-extra"></span></span>';
-    el.querySelector('.hw-ic').textContent = icon;
-    const now = el.querySelector('.hw-now');
-    if(w.current) now.textContent = wxT(w.current.temp); else now.remove();
-    el.querySelector('.hw-hl').textContent = `${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`;
-    el.querySelector('.hw-label').textContent = label;
+    const chips = $('#dcChips');
+    if(!chips) return;
+    chips.querySelectorAll('.dc-wx, .dc-warn').forEach(el=> el.remove());
+    const key = agendaDayKey();
+    const w = wxForDate(key);
+    if(!w){ chips.style.display = chips.children.length ? 'flex' : 'none'; return; }
     const F = syncedDisplay.weatherUnit === 'fahrenheit';
-    const extra = [];
-    if(w.rain != null) extra.push(`💧 ${Math.round(w.rain)}%`);
-    if(w.wind != null) extra.push(`💨 ${Math.round(w.wind)} ${F ? 'mph' : 'km/h'}`);
-    el.querySelector('.hw-extra').textContent = extra.join('  ·  ');
+    const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
+    const kind = wxKindForCode(w.code);
+    const wet = (w.rain != null && w.rain >= 60) || ['rain','heavyRain','showers','thunderstorm','drizzle','freezingRain'].includes(kind);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dc-chip dc-wx' + (wet ? ' wet' : '');
+    let text = w.current
+      ? `${icon} ${wxT(w.current.temp)} · ${t('wxHigh')} ${wxT(w.max)} ${t('wxLow')} ${wxT(w.min)}`
+      : `${icon} ${wxT(w.max)} / ${wxT(w.min)}`;
+    if(w.rain != null) text += ` · 💧 ${Math.round(w.rain)}%`;
+    btn.textContent = text;
+    const chev = document.createElement('span'); chev.className = 'dc-chev'; chev.textContent = '›';
+    btn.appendChild(chev);
+    btn.title = `${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`
+      + (w.wind != null ? ` · 💨 ${Math.round(w.wind)} ${F ? 'mph' : 'km/h'}` : '') + ` — ${t('hrTap')}`;
+    btn.setAttribute('aria-label', btn.title);
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openWeatherDetail(key); });
+    chips.appendChild(btn);
     const warn = [];
-    if(w.max != null && w.max >= (F ? 95 : 35)) warn.push('🔥 ' + t('wxHeat'));
-    if(w.min != null && w.min <= (F ? 36 : 2)) warn.push('🥶 ' + t('wxFrost'));
-    if(wxKindForCode(w.code) === 'thunderstorm') warn.push('⛈️ ' + t('wxStorm'));
-    else if(w.rain != null && w.rain >= 60) warn.push('☔ ' + t('wxRainLikely'));
-    if(w.wind != null && w.wind >= (F ? 25 : 40)) warn.push('💨 ' + t('wxWindy'));
-    let wb = el.querySelector('.hw-warn');
-    if(warn.length){
-      wb = document.createElement('span'); wb.className = 'hw-warn'; wb.textContent = warn.join('  ');
-      el.querySelector('.hw-meta').appendChild(wb);
-    }
-    el.title = `${w.current ? t('wxNow') + ' ' + wxT(w.current.temp) + ' · ' : ''}${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)} — ${t('hrTap')}`;
-    const tap = document.createElement('span'); tap.className = 'hw-tap'; tap.textContent = '›';
-    el.appendChild(tap);
-    el.dataset.wxKey = dateKey(new Date());
-    el.style.display = 'flex';
+    if(w.max != null && w.max >= (F ? 95 : 35)) warn.push(['heat', '🔥 ' + t('wxHeat')]);
+    if(w.min != null && w.min <= (F ? 36 : 2)) warn.push(['frost', '🥶 ' + t('wxFrost')]);
+    if(kind === 'thunderstorm') warn.push(['storm', '⛈️ ' + t('wxStorm')]);
+    else if(w.rain != null && w.rain >= 60) warn.push(['rain', '☔ ' + t('wxRainLikely')]);
+    if(w.wind != null && w.wind >= (F ? 25 : 40)) warn.push(['wind', '💨 ' + t('wxWindy')]);
+    warn.forEach(([k, txt])=>{
+      const c = document.createElement('span');
+      c.className = 'dc-chip dc-warn dc-warn-' + k;
+      c.textContent = txt;
+      chips.appendChild(c);
+    });
+    chips.style.display = 'flex';
   }
+
   function buildDateWxChip(key){
     const w = wxForDate(key);
     if(!w) return null;
@@ -1792,6 +1838,8 @@
   function goAgendaDay(key){
     agendaDate = key === dateKey(new Date()) ? null : key;
     agendaFilter = 'today';
+    renderHero();
+    renderAuditBars();
     renderList();
   }
   function shiftAgendaDay(delta){ goAgendaDay(addDaysStr(agendaDayKey(), delta)); }
@@ -1842,63 +1890,53 @@
     [['today',dayTab],['week',t('thisWeek')],['upcoming',t('upcoming')]].forEach(([key,label])=>{
       const btn=document.createElement('button');
       btn.textContent=label; btn.className = agendaFilter===key ? 'active' : '';
-      btn.addEventListener('click', ()=>{ if(key==='today') agendaDate = null; agendaFilter=key; renderList(); });
+      btn.addEventListener('click', ()=>{
+        const wasOff = agendaDate !== null;
+        if(key==='today') agendaDate = null;
+        agendaFilter=key;
+        if(wasOff && key==='today'){ renderHero(); renderAuditBars(); }
+        renderList();
+      });
       bar.appendChild(btn);
     });
   }
+  // ---------- Day card (replaces the old hero): follows the selected day ----------
   function renderHero(){
+    const key = agendaDayKey();
     const todayKey = dateKey(new Date());
-    const todayTasks = tasks.filter(tk=> tk.date===todayKey);
-    const done = todayTasks.filter(tk=>tk.status==='done').length;
-    const total = todayTasks.length;
-    $('#heroDate').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
-    if(total===0){
-      $('#heroTitle').textContent = t('nothingToday');
-      $('#heroProgressText').innerHTML = t('enjoyQuiet');
-    } else if(done===total){
-      $('#heroTitle').textContent = t('allDone');
-      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> ${t('tasksComplete')}`;
-    } else {
-      $('#heroTitle').textContent = t('hereWhatsOn');
-      $('#heroProgressText').innerHTML = `<strong>${done}/${total}</strong> ${t('tasksComplete')}`;
-    }
-    $('#heroRing').textContent = `${done}/${total}`;
+    const dayTasks = tasks.filter(tk=> tk.date === key);
+    const done = dayTasks.filter(tk=> tk.status === 'done').length;
+    const total = dayTasks.length;
+    $('#dcMain').textContent = dayName(key);
+    $('#dcToday').hidden = key === todayKey;
+    $('#dcToday').textContent = t('today');
+    $('#dcSub').textContent = toDateObj(key).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' })
+      + ' · ' + (total ? t('dcDone').replace('{d}', done).replace('{n}', total) : t('dnNoTasks'));
+    const pct = total ? Math.round(done / total * 100) : 0;
+    $('#dcRing').style.background = `conic-gradient(#2B2116 0 ${pct}%, rgba(255,255,255,0.5) ${pct}% 100%)`;
+    $('#dcRingText').textContent = `${done}/${total}`;
+    $('#dcPrev').setAttribute('aria-label', t('dnPrev'));
+    $('#dcNext').setAttribute('aria-label', t('dnNext'));
 
-    const hb = $('#heroBatches');
-    if(hb){
-      hb.innerHTML = '';
-      batches
-        .filter(b=> b.start && b.end && todayKey >= b.start && todayKey <= b.end)
-        .sort((a,b)=> a.start.localeCompare(b.start))
-        .forEach(b=>{
-          const age = Math.round((toDateObj(todayKey) - toDateObj(b.start)) / 86400000);
-          const chip = document.createElement('span');
-          chip.className = 'hero-batch-chip';
-          const dot = document.createElement('span');
-          dot.className = 'hero-batch-dot';
-          dot.style.background = colorForBatchNumber(b.number);
-          const txt = document.createElement('span');
-          txt.textContent = `${t('batch')} #${b.number} · ${t('day')} ${age}`;
-          chip.append(dot, txt);
-          hb.appendChild(chip);
-        });
-      hb.style.display = hb.children.length ? 'flex' : 'none';
-    }
+    const chips = $('#dcChips');
+    chips.innerHTML = '';
+    batches
+      .filter(b=> b.start && b.end && key >= b.start && key <= b.end)
+      .sort((a,b)=> a.start.localeCompare(b.start))
+      .forEach(b=>{
+        const age = Math.round((toDateObj(key) - toDateObj(b.start)) / 86400000);
+        const chip = document.createElement('span');
+        chip.className = 'dc-chip';
+        const dot = document.createElement('span');
+        dot.className = 'dc-dot';
+        dot.style.background = colorForBatchNumber(b.number);
+        const txt = document.createElement('span');
+        txt.textContent = `#${b.number} · ${t('day')} ${age}`;
+        chip.append(dot, txt);
+        chips.appendChild(chip);
+      });
     renderHeroWeather();
-
-    const todaysAudits = events.filter(e=> e.date===todayKey);
-    let banner = document.getElementById('heroAuditBanner');
-    if(todaysAudits.length>0){
-      if(!banner){
-        banner = document.createElement('div');
-        banner.id = 'heroAuditBanner';
-        banner.className = 'hero-audit-banner';
-        $('.hero-card').appendChild(banner);
-      }
-      banner.textContent = `📋 ${t('auditToday')}: ${todaysAudits.map(e=>e.name).join(', ')}`;
-    } else if(banner){
-      banner.remove();
-    }
+    chips.style.display = chips.children.length ? 'flex' : 'none';
   }
 
   // ---------- Audit prep bar ----------
@@ -1914,9 +1952,9 @@
     try{ sessionStorage.setItem('cw-viewer-open-audit-bars', JSON.stringify([...openAuditBars])); }catch(e){}
   }
   function activeAuditPrepEvents(){
-    const todayKey = dateKey(new Date());
+    const key = agendaDayKey();
     return events
-      .filter(e=> e.date && todayKey >= addDaysStr(e.date, -7) && todayKey <= e.date)
+      .filter(e=> e.date && key >= addDaysStr(e.date, -7) && key <= e.date)
       .sort((a,b)=> a.date.localeCompare(b.date));
   }
   function renderAuditBars(){
@@ -1926,7 +1964,7 @@
     const todayKey = dateKey(new Date());
     activeAuditPrepEvents().forEach(ev=>{
       const cs = addDaysStr(ev.date, -7);
-      const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+      const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(agendaDayKey())) / 86400000);
       const windowTasks = tasks.filter(tk=> tk.date && tk.date >= cs && tk.date <= ev.date);
       const doneCount = windowTasks.filter(tk=> tk.status==='done').length;
       const openTasks = windowTasks.filter(tk=> tk.status!=='done')
@@ -2002,7 +2040,6 @@
   function renderList(){
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
-    if(agendaFilter==='today') wrap.appendChild(buildDayNav());
     const dated=getAgendaTasks();
     if(dated.length===0){
       const dk = agendaDayKey();
@@ -2027,6 +2064,12 @@
       return;
     }
     const groups={}; dated.forEach(tk=>{ (groups[tk.date]=groups[tk.date]||[]).push(tk); });
+    if(agendaFilter==='today'){
+      const listEl=document.createElement('div'); listEl.className='list-tasks';
+      dated.forEach(tk=> listEl.appendChild(buildReadOnlyTaskCard(tk)));
+      wrap.appendChild(listEl);
+      return;
+    }
     Object.keys(groups).sort().forEach(key=>{
       const groupEl=document.createElement('div'); groupEl.className='list-group';
       const doneCount=groups[key].filter(tk=>tk.status==='done').length;
@@ -2089,7 +2132,9 @@
   $('#reportProblemBtn').addEventListener('click', openReportProblem);
   $('#closeReportProblem').addEventListener('click', closeOverlays);
   $('#closeWxSheet').addEventListener('click', closeOverlays);
-  $('#heroWeather').addEventListener('click', ()=>{ const k = $('#heroWeather').dataset.wxKey; if(k) openWeatherDetail(k); });
+  $('#dcPrev').addEventListener('click', ()=> shiftAgendaDay(-1));
+  $('#dcNext').addEventListener('click', ()=> shiftAgendaDay(1));
+  $('#dcToday').addEventListener('click', ()=> goAgendaDay(dateKey(new Date())));
   $('#photoCapture').addEventListener('click', (e)=>{
     if(e.target.closest('#photoRetake')) return;
     if(pendingPhotoFile) return;
@@ -2171,19 +2216,19 @@
     });
   }
   (function(){
-    const el = $('#taskListSection');
     let sx = 0, sy = 0, st = 0, tracking = false;
-    el.addEventListener('touchstart', (e)=>{
-      if(agendaFilter !== 'today' || e.touches.length !== 1){ tracking = false; return; }
+    [$('#taskListSection'), $('#dayCard')].forEach(el=> el.addEventListener('touchstart', (e)=>{
+      if(e.touches.length !== 1 || (el.id === 'taskListSection' && agendaFilter !== 'today')){ tracking = false; return; }
+      if(e.target.closest('.audit-bar-body')){ tracking = false; return; }
       tracking = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
-    }, { passive:true });
-    el.addEventListener('touchend', (e)=>{
+    }, { passive:true }));
+    [$('#taskListSection'), $('#dayCard')].forEach(el=> el.addEventListener('touchend', (e)=>{
       if(!tracking) return;
       tracking = false;
       const tt = e.changedTouches[0];
       const dx = tt.clientX - sx, dy = tt.clientY - sy;
       if(Math.abs(dx) > 70 && Math.abs(dy) < 45 && Date.now() - st < 600) shiftAgendaDay(dx < 0 ? 1 : -1);
-    }, { passive:true });
+    }, { passive:true }));
   })();
   initPullToRefresh(document.body, $('#pullRefreshIndicator'), async ()=>{
     if(ghPath){ await pullFromGithub(); } else { showToast('Connect in Settings to enable syncing.', true); }
