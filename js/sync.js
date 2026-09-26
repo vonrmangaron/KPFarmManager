@@ -11,7 +11,40 @@ function saveSyncState(){try{if(!syncFarmName){localStorage.removeItem(SYNC_FARM
 function arrayBufferToBase64(buf){const bytes=new Uint8Array(buf);let binary='';const chunk=8192;for(let i=0;i<bytes.length;i+=chunk){binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));}return btoa(binary);}
 function base64ToBlob(base64,mime){const binary=atob(base64);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:mime});}
 function serializeSiloDataForCloud(){const out={};[1,2,3,4].forEach(g=>{const s=siloData[g]||{readings:[],deliveries:[]};out[g]={readings:(s.readings||[]).map(r=>({date:r.date,silo1Rings:r.silo1Rings,silo2Rings:r.silo2Rings,silo3Rings:r.silo3Rings})),deliveries:(s.deliveries||[]).map(d=>({id:d.id,date:d.date?iso(d.date):null,amountKg:Number(d.amountKg)||0,feedType:d.feedType||'',note:d.note||''}))};});return out;}
-function buildCloudPayload(){return {app:SYNC_APP_TAG,schemaVersion:SYNC_SCHEMA_VERSION,lastUpdated:new Date().toISOString(),farmName:syncFarmName,batchNumber:predState.batchNumber||(farmData&&farmData.batchNumber)||'',farmData,siloData:serializeSiloDataForCloud(),farmLoads:serializeFarmLoads(),excelMetadata:syncExcelMeta,predictions:{beta:predState.beta,targetHarvestWeightKg:predState.targetHarvestWeightKg,farmFeedOverride:predState.farmFeedOverride,farmLeftoverKg:predState.farmLeftoverKg,densityGlobal:predState.densityGlobal,noPickupDays:predState.noPickupDays||[]},preferences:{shedViewByGroup,shedRange,siloRange,theme:loadTheme(),deliveriesOpen:predState.deliveriesOpen,notifPrefs:{shedPerformance:!!notifPrefs.shedPerformance,feedBalance:!!notifPrefs.feedBalance}}};}
+
+function buildCloudPayload(){
+  return {
+    app:SYNC_APP_TAG,
+    schemaVersion:SYNC_SCHEMA_VERSION,
+    lastUpdated:new Date().toISOString(),
+    farmName:syncFarmName,
+    batchNumber:predState.batchNumber||(farmData&&farmData.batchNumber)||'',
+    farmData,
+    siloData:serializeSiloDataForCloud(),
+    farmLoads:serializeFarmLoads(),
+    excelMetadata:syncExcelMeta,
+    predictions:{
+      beta:predState.beta,
+      targetHarvestWeightKg:predState.targetHarvestWeightKg,
+      farmFeedOverride:predState.farmFeedOverride,
+      farmLeftoverKg:predState.farmLeftoverKg,
+      densityGlobal:predState.densityGlobal,
+      noPickupDays:predState.noPickupDays||[]
+    },
+    preferences:{
+      shedViewByGroup,
+      shedRange,
+      siloRange,
+      theme:loadTheme(),
+      deliveriesOpen:predState.deliveriesOpen,
+      notifPrefs:{
+        shedPerformance:!!notifPrefs.shedPerformance,
+        feedBalance:!!notifPrefs.feedBalance
+      }
+    }
+  };
+}
+
 function applyCloudPayload(payload,options){
   options=options||{};if(!payload||typeof payload!=='object')return false;
   if(payload.app&&payload.app!==SYNC_APP_TAG)return false;
