@@ -1022,39 +1022,89 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 .adj-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
 .adj-hint{flex-basis:100%;width:100%;font-size:11px;color:var(--muted);font-weight:500;line-height:1.4;margin-top:-2px;}
 
-/* No-pickup days — Mon–Sun pill toggles */
-.no-pickup-days{display:flex;gap:5px;flex-wrap:wrap;}
-.npd-btn{
-  border:1px solid var(--line);background:var(--surface);color:var(--muted);
-  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:6px 12px;border-radius:999px;cursor:pointer;
-  transition:background .15s ease,color .15s ease,border-color .15s ease;
-  min-width:44px;text-align:center;line-height:1;
+/* ── No-pickup days — Mon–Sun pill toggles ──────────────────── */
+.no-pickup-days{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  align-items:center;
 }
-.npd-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.npd-btn{
+  appearance:none;
+  -webkit-appearance:none;
+  border:1.5px solid var(--line);
+  background:var(--surface);
+  color:var(--muted);
+  font-family:'Sora',sans-serif;
+  font-weight:700;
+  font-size:12px;
+  padding:7px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;
+  min-width:48px;
+  text-align:center;
+  line-height:1;
+  outline:none;
+}
+.npd-btn:hover{
+  background:var(--primary-soft);
+  color:var(--primary-dark);
+  border-color:var(--primary);
+  transform:translateY(-1px);
+}
+.npd-btn:active{transform:translateY(0);}
 .npd-btn.active{
   background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;border-color:transparent;
+  color:#2B2116;
+  border-color:transparent;
+  box-shadow:0 2px 6px rgba(224,163,57,0.30);
 }
-body.theme-dark .npd-btn.active{color:#1A2438;}
+body.theme-dark .npd-btn{
+  background:var(--surface-soft);
+  border-color:var(--line);
+  color:var(--muted);
+}
+body.theme-dark .npd-btn:hover{
+  background:var(--primary-soft);
+  color:var(--primary);
+  border-color:var(--primary);
+}
+body.theme-dark .npd-btn.active{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#1A2438;
+  border-color:transparent;
+  box-shadow:0 2px 8px rgba(240,168,64,0.45);
+}
 
 /* Warning block — appears when existing pickups sit on blocked days */
 .blocked-days-warning{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:10px 14px;margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:10px 14px;
+  margin:10px 0 10px;
   background:var(--primary-soft);
   border:1px solid var(--primary);
   border-radius:10px;
-  font-size:12.5px;color:var(--ink);
+  font-size:12.5px;
+  color:var(--ink);
 }
-body.theme-dark .blocked-days-warning{background:var(--primary-soft);border-color:var(--primary);}
 .blocked-days-warning .bdw-icon{font-size:16px;line-height:1;flex-shrink:0;}
 .blocked-days-warning .bdw-text{flex:1;min-width:180px;font-weight:600;color:var(--primary-dark);}
 body.theme-dark .blocked-days-warning .bdw-text{color:var(--primary);}
 .blocked-days-warning .bdw-btn{
-  border:none;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
-  padding:6px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  border:none;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;
+  font-family:'Sora',sans-serif;
+  font-weight:700;
+  font-size:11.5px;
+  padding:7px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  white-space:nowrap;
   transition:filter .15s ease,transform .1s ease;
 }
 body.theme-dark .blocked-days-warning .bdw-btn{color:#1A2438;}
