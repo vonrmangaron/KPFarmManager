@@ -37,6 +37,9 @@ function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
   const sections=[renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
   body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div>';
+  // Bind notification checkboxes directly — belt-and-braces alongside the
+  // document-level delegated change handler.
+  if(typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();
 }
 function renderSettingsNotificationsCard(){
   return `<div class="settings-section">
