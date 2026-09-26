@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
       return;
     }
-    const stab=e.target.closest('.stab[data-shedview]');
+    const stab=e.target.closest('[data-shedview][data-group]');
     if(stab){const g=Number(stab.dataset.group);const view=stab.dataset.shedview;if(g&&view)setShedView(g,view);return;}
 
     const pill=e.target.closest('.fpill');

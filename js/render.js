@@ -999,12 +999,18 @@ function groupViewHtml(g){
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=`<div class="group-switch-mobile" role="tablist" aria-label="Group">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" data-tab="g${gi}" aria-selected="${gi===g}">G${gi}</button>`).join('')}</div>`;
-  return groupSwitch+`<div class="group-view-head" style="background:${grad}"><h1>Group ${g} <span>Sheds ${sheds.map(s=>s.id).join(' & ')}</span></h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>Group ${g} <span>Sheds ${sheds.map(s=>s.id).join(' & ')}</span></h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
-  const sA=sheds[0].id,sB=sheds[1].id;
-  return `<div class="sticky-sentinel" aria-hidden="true"></div><div class="shed-tabs sticky-tabs"><button class="stab ${view==='shed1'?'active':''}" data-shedview="shed1" data-group="${g}"><span class="stab-icon">🏠</span> Shed ${sA}</button><button class="stab ${view==='shed2'?'active':''}" data-shedview="shed2" data-group="${g}"><span class="stab-icon">🏠</span> Shed ${sB}</button><button class="stab both-btn ${view==='both'?'active':''}" data-shedview="both" data-group="${g}"><span class="stab-icon">🏘️</span> Both sheds</button><button class="stab planner-btn ${view==='planner'?'active':''}" data-shedview="planner" data-group="${g}"><span class="stab-icon">🌾</span> Feed &amp; Silo</button></div>`;
+  const btn=(v,icon,label,title)=>`<button type="button" class="pred-rail-btn${view===v?' active':''}" data-shedview="${v}" data-group="${g}" aria-pressed="${view===v}" title="${title}">${navIcon(icon)}<span>${label}</span></button>`;
+  return `<nav class="pred-rail" aria-label="Shed view">
+    ${btn('shed1','home',`Shed ${sheds[0].id}`,`Show shed ${sheds[0].id}`)}
+    ${btn('shed2','home',`Shed ${sheds[1].id}`,`Show shed ${sheds[1].id}`)}
+    ${btn('both','homes','Both','Show both sheds side by side')}
+    <span class="pred-rail-sep" aria-hidden="true"></span>
+    ${btn('planner','silo','Feed & Silo','Feed and silo planner')}
+  </nav>`;
 }
 function rangeBarHtml(range,ctx,extraHtml){
   const presets=[{label:'Last 7',start:-7,end:0},{label:'Today',start:0,end:0},{label:'Next 7',start:0,end:7},{label:'Next 14',start:0,end:14},{label:'Next 21',start:0,end:21}];
