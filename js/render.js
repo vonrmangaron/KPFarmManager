@@ -1076,6 +1076,16 @@ function computeForecast(shed,range){
   }
   return {rows,totalFeed};
 }
+// Pickup cell for the shed forecast: birds taken plus whether it's an
+// official (logged) pickup or a planned (predicted) one.
+function forecastPickupCell(pickups){
+  const list=(pickups||[]).filter(p=>(Number(p.birds)||0)>0);
+  if(!list.length)return '<span class="fc-none">—</span>';
+  return list.map(p=>{
+    const planned=p.__source==='predicted';
+    return `<span class="fc-pickup"><span class="fc-birds">−${(Number(p.birds)||0).toLocaleString()}</span><span class="fc-tag ${planned?'planned':'official'}">${planned?'Planned':'Official'}</span>${p.isFinal?'<span class="fc-tag final">Final</span>':''}</span>`;
+  }).join('');
+}
 function renderShedForecastTable(shed,forecast){
   const lbl=rangeLabel(shedRange);
   if(forecast.notStarted)return `<div class="forecast-block"><h4>📈 Forecast <span class="window-label">${lbl}</span></h4><div class="forecast-empty">Shed hasn't been placed yet — set a placement date to see the forecast.</div></div>`;
@@ -1085,7 +1095,7 @@ function renderShedForecastTable(shed,forecast){
     const rowClasses=[weekend?'is-weekend':'',r.isPast?'is-past':'',r.isToday?'is-today':'',r.pickupsBirds>0&&!r.hasPredicted?'pickup-day':'',r.hasPredicted?'predicted-pickup-day':'',r.isFinalDay?'is-final':''].filter(Boolean).join(' ');
     const todayTag=r.isToday?' · <span style="color:var(--secondary);font-weight:700;">Today</span>':'';
     const weekendTag=weekend?' <span class="weekend-pill">Weekend</span>':'';
-    return `<tr class="${rowClasses}"><td>${fmtShort(r.date)}${todayTag}${weekendTag}</td><td class="num">${r.age}d</td><td class="num">${r.liveStart.toLocaleString()}</td><td class="num">${r.dailyFeed.toFixed(1)} kg</td><td>—</td></tr>`;
+    return `<tr class="${rowClasses}"><td>${fmtShort(r.date)}${todayTag}${weekendTag}</td><td class="num">${r.age}d</td><td class="num">${r.liveStart.toLocaleString()}</td><td class="num">${r.dailyFeed.toFixed(1)} kg</td><td>${forecastPickupCell(r.pickups)}</td></tr>`;
   }).join('');
   return `<div class="forecast-block"><h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4><div class="forecast-table-wrap"><table class="forecast-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th><th class="num">Daily Feed</th><th>Pickup</th></tr></thead><tbody>${rows}<tr class="total-row"><td colspan="3">Total over range</td><td class="num">${forecast.totalFeed.toFixed(1)} kg</td><td style="font-size:12px;font-weight:600;color:var(--muted);">${(forecast.totalFeed/1000).toFixed(2)} tonnes</td></tr></tbody></table></div></div>`;
 }
