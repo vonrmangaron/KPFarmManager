@@ -1425,6 +1425,7 @@
   .wxh-temp{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; color:var(--ink); }
   .wxh-prob{ font-size:10.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
   body.theme-dark .wxh-prob{ color:#8FC1FF; }
+  .wxh-hum{ font-size:10px; font-weight:600; color:var(--muted); white-space:nowrap; }
   .wxh-loc{ font-size:11px; color:var(--muted); text-align:right; }
   .wxh-error{ color:var(--danger); }
 
@@ -4027,8 +4028,8 @@
     try{
       const l = settings.weatherLocation;
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
-        + `&current=temperature_2m,weather_code,is_day`
-        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max`
+        + `&current=temperature_2m,weather_code,is_day,relative_humidity_2m`
+        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,relative_humidity_2m_mean`
         + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`
         + `&wind_speed_unit=${settings.weatherUnit === 'fahrenheit' ? 'mph' : 'kmh'}`
         + `&cb=${Math.floor(Date.now() / WX_TTL)}`;   // new URL every 30 min so an app cache can't serve stale weather
@@ -4041,14 +4042,15 @@
         days[dk] = {
           max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i],
           rain: d.precipitation_probability_max ? d.precipitation_probability_max[i] : null,
-          wind: d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null
+          wind: d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null,
+          hum: d.relative_humidity_2m_mean ? d.relative_humidity_2m_mean[i] : null
         };
       });
       const cur = j.current || null;
       weatherData = {
         key, fetchedAt: Date.now(),
         today: cur && cur.time ? String(cur.time).slice(0, 10) : null,
-        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day } : null,
+        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day, hum: cur.relative_humidity_2m } : null,
         days
       };
       try{ localStorage.setItem('cw-weather-cache', JSON.stringify(weatherData)); }catch(e){}
@@ -4120,6 +4122,8 @@
     info.appendChild(mk('span', 'wxc-label', dayLabel));
     if(w.rain != null) info.appendChild(mk('span', 'wxc-meta' + (w.rain >= 60 ? ' strong' : ''), `💧 ${Math.round(w.rain)}%`));
     if(w.wind != null) info.appendChild(mk('span', 'wxc-meta', `💨 ${Math.round(w.wind)} ${wxWindUnit()}`));
+    const hum = w.current && w.current.hum != null ? w.current.hum : w.hum;
+    if(hum != null){ const he = mk('span', 'wxc-meta', `RH ${Math.round(hum)}%`); he.title = w.current && w.current.hum != null ? 'Humidity now' : 'Average humidity'; info.appendChild(he); }
     card.appendChild(info);
 
     if(alerts.length){
@@ -4130,6 +4134,7 @@
     card.title = `${dayLabel} · High ${wxT(w.max)} · Low ${wxT(w.min)}`
       + (w.rain != null ? ` · Rain ${Math.round(w.rain)}%` : '')
       + (w.wind != null ? ` · Wind ${Math.round(w.wind)} ${wxWindUnit()}` : '')
+      + (hum != null ? ` · Humidity ${Math.round(hum)}%` : '')
       + (w.current ? ` · Now ${wxT(w.current.temp)}` : '');
     if(!card.classList.contains('wx-card-modal')) makeWxClickable(card, key);
     card.title += ' — tap for hourly forecast';
@@ -4203,7 +4208,7 @@
     const l = settings.weatherLocation;
     const F = settings.weatherUnit === 'fahrenheit';
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
-      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day`
+      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day,relative_humidity_2m`
       + `&timezone=auto&start_date=${dateKeyStr}&end_date=${dateKeyStr}`
       + `&temperature_unit=${F ? 'fahrenheit' : 'celsius'}&wind_speed_unit=${F ? 'mph' : 'kmh'}`
       + `&cb=${Math.floor(Date.now() / WX_HOURLY_TTL)}`;
@@ -4219,6 +4224,7 @@
       precip: h.precipitation ? h.precipitation[i] : null,
       code: h.weather_code ? h.weather_code[i] : null,
       wind: h.wind_speed_10m ? h.wind_speed_10m[i] : null,
+      hum: h.relative_humidity_2m ? h.relative_humidity_2m[i] : null,
       isDay: h.is_day ? h.is_day[i] : 1
     }));
     wxHourlyCache.set(ck, { fetchedAt: Date.now(), hours });
@@ -4362,12 +4368,13 @@
       c.className = 'wxh-hour' + (isRainHour(x) ? ' rain' : '') + (x.hour === hotHour ? ' hot' : '') + (isToday && x.hour === nowH ? ' now' : '');
       c.dataset.hour = x.hour;
       const [ic, label] = x.code != null ? wxIconLabel(x.code, x.isDay) : ['·', ''];
-      c.title = `${wxHourLabel(x.hour)} · ${label} · ${wxT(x.temp)}` + (x.prob != null ? ` · ${Math.round(x.prob)}% rain` : '') + (x.wind != null ? ` · ${Math.round(x.wind)} ${wxWindUnit()}` : '');
+      c.title = `${wxHourLabel(x.hour)} · ${label} · ${wxT(x.temp)}` + (x.prob != null ? ` · ${Math.round(x.prob)}% rain` : '') + (x.wind != null ? ` · ${Math.round(x.wind)} ${wxWindUnit()}` : '') + (x.hum != null ? ` · ${Math.round(x.hum)}% humidity` : '');
       const mk = (cls, t)=>{ const e = document.createElement('span'); e.className = cls; e.textContent = t; c.appendChild(e); };
       mk('wxh-time', isToday && x.hour === nowH ? 'Now' : wxHourLabel(x.hour));
       mk('wxh-ic', ic);
       mk('wxh-temp', wxT(x.temp));
       mk('wxh-prob', x.prob != null ? `💧${Math.round(x.prob)}%` : (x.precip ? `${x.precip.toFixed(1)}mm` : '—'));
+      if(x.hum != null) mk('wxh-hum', `RH ${Math.round(x.hum)}%`);
       strip.appendChild(c);
     });
     // Scroll to "now" today, otherwise to the rain start / hottest hour.
@@ -4881,6 +4888,7 @@
         if(al.length) cell.classList.add('wx-alert-day');
         cell.title = `${wxIconLabel(mw.code)[1]} · High ${wxT(mw.max)} · Low ${wxT(mw.min)}`
           + (mw.rain != null ? ` · Rain ${Math.round(mw.rain)}%` : '')
+          + (mw.hum != null ? ` · Humidity ${Math.round(mw.hum)}%` : '')
           + (al.length ? ' · ' + al.map(x=> x[1]).join(', ') : '');
       }
       const hasTasks = tasks.some(t => t.date === key);

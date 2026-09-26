@@ -232,6 +232,7 @@
   .wxh-temp{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--ink); }
   .wxh-prob{ font-size:11.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
   body.theme-dark .wxh-prob{ color:#8FC1FF; }
+  .wxh-hum{ font-size:10px; font-weight:600; color:var(--muted); white-space:nowrap; }
   .wxh-loc{ font-size:11.5px; color:var(--muted); text-align:right; }
   /* ---------- Compact day card ---------- */
   .day-card{
@@ -879,8 +880,8 @@
     try{
       const l = syncedDisplay.weatherLocation;
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
-        + `&current=temperature_2m,weather_code,is_day`
-        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max`
+        + `&current=temperature_2m,weather_code,is_day,relative_humidity_2m`
+        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,relative_humidity_2m_mean`
         + `&timezone=auto&past_days=7&forecast_days=16&temperature_unit=${syncedDisplay.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius'}`
         + `&wind_speed_unit=${syncedDisplay.weatherUnit === 'fahrenheit' ? 'mph' : 'kmh'}`
         + `&cb=${Math.floor(Date.now() / WX_TTL)}`;
@@ -892,13 +893,14 @@
       (d.time || []).forEach((dk, i)=>{ days[dk] = {
         max: d.temperature_2m_max[i], min: d.temperature_2m_min[i], code: d.weather_code[i],
         rain: d.precipitation_probability_max ? d.precipitation_probability_max[i] : null,
-        wind: d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null
+        wind: d.wind_speed_10m_max ? d.wind_speed_10m_max[i] : null,
+        hum: d.relative_humidity_2m_mean ? d.relative_humidity_2m_mean[i] : null
       }; });
       const cur = j.current || null;
       weatherData = {
         key, fetchedAt: Date.now(),
         today: cur && cur.time ? String(cur.time).slice(0, 10) : null,
-        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day } : null,
+        current: cur ? { temp: cur.temperature_2m, code: cur.weather_code, isDay: cur.is_day, hum: cur.relative_humidity_2m } : null,
         days
       };
       try{ localStorage.setItem('cw-viewer-weather-cache', JSON.stringify(weatherData)); }catch(e){}
@@ -933,11 +935,14 @@
       ? `${icon} ${wxT(w.current.temp)} · ${t('wxHigh')} ${wxT(w.max)} ${t('wxLow')} ${wxT(w.min)}`
       : `${icon} ${wxT(w.max)} / ${wxT(w.min)}`;
     if(w.rain != null) text += ` · 💧 ${Math.round(w.rain)}%`;
+    const hum = w.current && w.current.hum != null ? w.current.hum : w.hum;
+    if(hum != null) text += ` · RH ${Math.round(hum)}%`;
     btn.textContent = text;
     const chev = document.createElement('span'); chev.className = 'dc-chev'; chev.textContent = '›';
     btn.appendChild(chev);
     btn.title = `${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`
-      + (w.wind != null ? ` · 💨 ${Math.round(w.wind)} ${F ? 'mph' : 'km/h'}` : '') + ` — ${t('hrTap')}`;
+      + (w.wind != null ? ` · 💨 ${Math.round(w.wind)} ${F ? 'mph' : 'km/h'}` : '')
+      + (hum != null ? ` · RH ${Math.round(hum)}%` : '') + ` — ${t('hrTap')}`;
     btn.setAttribute('aria-label', btn.title);
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); openWeatherDetail(key); });
     chips.appendChild(btn);
@@ -992,7 +997,7 @@
     const l = syncedDisplay.weatherLocation;
     const F = syncedDisplay.weatherUnit === 'fahrenheit';
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(l.lat)}&longitude=${encodeURIComponent(l.lon)}`
-      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day`
+      + `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,is_day,relative_humidity_2m`
       + `&timezone=auto&start_date=${dk}&end_date=${dk}`
       + `&temperature_unit=${F ? 'fahrenheit' : 'celsius'}&wind_speed_unit=${F ? 'mph' : 'kmh'}`
       + `&cb=${Math.floor(Date.now() / WX_HOURLY_TTL)}`;
@@ -1007,6 +1012,7 @@
       precip: h.precipitation ? h.precipitation[i] : null,
       code: h.weather_code ? h.weather_code[i] : null,
       wind: h.wind_speed_10m ? h.wind_speed_10m[i] : null,
+      hum: h.relative_humidity_2m ? h.relative_humidity_2m[i] : null,
       isDay: h.is_day ? h.is_day[i] : 1
     }));
     wxHourlyCache.set(ck, { fetchedAt: Date.now(), hours });
@@ -1131,6 +1137,7 @@
       mk('wxh-ic', ic);
       mk('wxh-temp', wxT(x.temp));
       mk('wxh-prob', x.prob != null ? `💧${Math.round(x.prob)}%` : (x.precip ? `${x.precip.toFixed(1)}mm` : '—'));
+      if(x.hum != null) mk('wxh-hum', `RH ${Math.round(x.hum)}%`);
       strip.appendChild(c);
     });
     requestAnimationFrame(()=>{
