@@ -158,6 +158,54 @@ function reconcilePredictedPickups(shed){
   shed.predictedPickups=(shed.predictedPickups||[]).filter(pp=>!realDates.has(iso(pp.date)));
   if(shed.cleanoutDate){(shed.predictedPickups||[]).forEach(pp=>{if(pp.isFinal)pp.date=dateOnly(shed.cleanoutDate);});shed.predictedPickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));}
 }
+
+/* ── No-pickup days (e.g. Fri/Sat/Sun when the plant doesn't run) ── */
+function isNoPickupDay(date){
+  const list=predState.noPickupDays||[];
+  if(!list.length)return false;
+  return list.includes(dateOnly(date).getDay());
+}
+function nextAllowedPickupDate(date){
+  let d=dateOnly(date);let guard=0;
+  while(isNoPickupDay(d)&&guard<14){d=addDays(d,1);guard++;}
+  return d;
+}
+function countPredictedPickupsOnBlockedDays(shed){
+  if(!shed||!Array.isArray(shed.predictedPickups))return 0;
+  if(!(predState.noPickupDays||[]).length)return 0;
+  return shed.predictedPickups.filter(pp=>isNoPickupDay(pp.date)).length;
+}
+
+/* Recalculate the final cleanout pickup = "whatever's left at cleanout". */
+function recalcFinalPredictedBirds(shed){
+  if(!shed||!Array.isArray(shed.predictedPickups))return;
+  if(!shed.cleanoutDate)return;
+  const finalPp=shed.predictedPickups.find(pp=>pp.isFinal);
+  if(!finalPp)return;
+  const priorRegular=shed.predictedPickups.filter(pp=>!pp.isFinal).map(pp=>({date:pp.date,birds:Number(pp.birds)||0}));
+  const remaining=computeLiveBirdsBefore(shed,shed.cleanoutDate,priorRegular);
+  finalPp.birds=Math.max(0,Math.floor(remaining));
+}
+
+/* Cascade: after editing a regular predicted pickup, resize every regular
+   pickup AFTER it to hit target density, then resize the final to absorb
+   the remainder. Dates never move — only bird counts. */
+function cascadePredictedPickups(shed,editedPpId){
+  if(!shed||!Array.isArray(shed.predictedPickups))return;
+  if(!shed.placementDate)return;
+  const working=shed.predictedPickups.slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  const editIdx=working.findIndex(pp=>pp.id===editedPpId);
+  if(editIdx<0)return;
+  // Point shed at working so densityOnDate() sees the updated values mid-walk.
+  shed.predictedPickups=working;
+  for(let i=editIdx+1;i<working.length;i++){
+    const pp=working[i];
+    if(pp.isFinal)continue;
+    const rec=recommendPickupForDate(shed,iso(pp.date),{excludePredictedId:pp.id});
+    if(rec&&Number.isFinite(rec.recommendedRemove))pp.birds=rec.recommendedRemove;
+  }
+  recalcFinalPredictedBirds(shed);
+}
 function collectShedWeightAnchors(shed){
   const anchors=[];const bias=currentBiasFactor();const chickW=shedChickWeight(shed);
   anchors.push({t:0,w:chickW,wgt:1.0,source:'day-old'});
