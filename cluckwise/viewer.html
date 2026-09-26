@@ -33,7 +33,7 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <title>CluckWise.vm — Viewer</title>
 <link rel="manifest" href="manifest-viewer.json">
-<meta name="theme-color" content="#FFC812">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1230,6 +1230,7 @@
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize]||FONT_SIZE_MAP.medium);
     document.body.classList.remove(...THEME_CLASSES);
     if(syncedDisplay.theme && syncedDisplay.theme!=='light') document.body.classList.add('theme-'+syncedDisplay.theme);
+    { const tc=document.querySelector('meta[name="theme-color"]'); if(tc) tc.content=getComputedStyle(document.body).getPropertyValue('--surface').trim()||'#FFFFFF'; }
     document.body.classList.toggle('hide-icons', !syncedDisplay.showIcons);
     const fs=$('#setFontSize');
     if(fs) fs.value=settings.fontSize;
