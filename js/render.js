@@ -424,19 +424,50 @@ function dashKpiIcon(name){
 // same model the rest of the app uses for predictions). Never
 // silently mixes the two: callers get told which kind they got.
 // ─────────────────────────────────────────────────────────────
+// Live weight that has already left a shed via pickups on or before
+// `today` — the same pickups liveAtStartOfDay() subtracts. Uses the
+// weighed total when logged, else the growth-curve weight at the pickup
+// age, else `fallbackKg` per bird.
+function shippedWeightToDate(shed, today, fallbackKg) {
+  const t = dateOnly(today);
+  const fit = getShedGompertzFit(shed);
+  return computeEffectivePickups(shed).reduce((sum, p) => {
+    if (!p.date || dateOnly(p.date) > t) return sum;
+    const birds = Number(p.birds) || 0;
+    if (birds <= 0) return sum;
+    if (p.totalWeightKg && p.totalWeightKg > 0) return sum + p.totalWeightKg;
+    const kg = (fit && gompertzWeightAt(fit, pickupAge(shed, p))) || fallbackKg || 0;
+    return sum + birds * kg;
+  }, 0);
+}
 function currentShedWeightEstimate(shed, today) {
-  const wp = weightedPickups(shed);
-  if (wp.length) {
-    const last = wp[wp.length - 1];
-    return { kg: last.totalWeightKg / last.birds, isEstimate: false };
-  }
   if (!shed.placementDate) return null;
   const age = daysBetween(shed.placementDate, today);
   const fit = getShedGompertzFit(shed);
+  const t = dateOnly(today);
+  const wp = weightedPickups(shed).filter(p => dateOnly(p.date) <= t);
+  if (wp.length) {
+    const last = wp[wp.length - 1];
+    const lastKg = last.totalWeightKg / last.birds;
+    const lastAge = pickupAge(shed, last);
+    // Weighed today (or later-dated age override) — that's a measurement.
+    if (age <= lastAge) return { kg: lastKg, isEstimate: false, basis: 'pickup' };
+    // Birds kept growing since the weighing: carry the weighed value
+    // forward along the growth curve so it stays anchored to the real
+    // measurement, falling back to the observed daily gain.
+    const fAt = gompertzWeightAt(fit, lastAge), fNow = gompertzWeightAt(fit, age);
+    const kg = (fAt && fNow) ? lastKg * fNow / fAt : forecastFromPickups(shed, today);
+    return { kg: kg || lastKg, isEstimate: true, basis: 'pickup-projected', fromAge: lastAge };
+  }
   if (!fit) return null;
   const kg = gompertzWeightAt(fit, age);
   if (!kg) return null;
-  return { kg, isEstimate: true };
+  return { kg, isEstimate: true, basis: 'curve' };
+}
+// Tooltip for an est chip next to a currentShedWeightEstimate() value
+function weightEstTitle(est) {
+  if (est && est.basis === 'pickup-projected') return `Projected from the last pickup weighing (day ${est.fromAge}) along the growth curve.`;
+  return 'No logged pickup weight yet — estimated from the growth curve fitted to in-yard samples.';
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -545,7 +576,7 @@ function renderGroupStatusGrid() {
       const est = currentShedWeightEstimate(shed, today);
       if (est) {
         const shedLive = liveAtStartOfDay(shed, today);
-        weightNow += est.kg * shedLive;
+        weightNow += est.kg * shedLive + shippedWeightToDate(shed, today, est.kg);
         alwSum += est.kg; alwCount++;
       }
     });
@@ -625,11 +656,13 @@ function renderDashboardView() {
     // Cumulative feed: sum shedFeedOn() from placement to today
     let d = dateOnly(shed.placementDate);
     while (d <= today) { farmFeedToDate += shedFeedOn(shed, d); d = addDays(d, 1); }
-    // Current live weight — best available estimate
+    // Current live weight — best available estimate — plus the weight
+    // already shipped out, since the feed total above includes what
+    // the picked-up birds ate before they left.
     const est = currentShedWeightEstimate(shed, today);
     if (est) {
       const live = liveAtStartOfDay(shed, today);
-      farmLiveWeightNow += est.kg * live;
+      farmLiveWeightNow += est.kg * live + shippedWeightToDate(shed, today, est.kg);
       farmAvgAlwNow += est.kg;
       alwCount++;
       if (est.isEstimate) anyEstimated = true;
@@ -645,7 +678,7 @@ function renderDashboardView() {
     ? (farmLivability * avgAlw) / (batchAge * fcrTodayVal) * 100
     : 0;
 
-  const estChip = anyEstimated ? '<span class="est-chip" title="Some sheds have no logged pickup weight yet — using the growth-curve estimate from in-yard samples instead.">est</span>' : '';
+  const estChip = anyEstimated ? '<span class="est-chip" title="Some shed weights are estimates — projected from the last pickup weighing or from the growth curve fitted to in-yard samples.">est</span>' : '';
   const fcrDisplay  = fcrTodayVal > 0  ? fcrTodayVal.toFixed(2)  : '—';
   const cFcrDisplay = cFcrVal > 0      ? cFcrVal.toFixed(2)       : '—';
   const epefDisplay = epefVal > 0      ? Math.round(epefVal)      : '—';
@@ -692,7 +725,7 @@ function renderDashboardView() {
     const dotColor = sev === 'unknown' ? '#9CA3AF' : sev === 'bad' ? 'var(--danger)' : sev === 'warn' ? 'var(--primary)' : 'var(--success)';
     const rowClass = sev === 'bad' ? 'shed-row-bad' : sev === 'warn' ? 'shed-row-warn' : '';
     const behindText = daysVar == null ? '—' : Math.abs(daysVar) < 0.1 ? 'On target' : `${Math.abs(daysVar).toFixed(1)}d ${daysVar > 0 ? 'ahead' : 'behind'}`;
-    const alwChip = est && est.isEstimate ? '<span class="est-chip" title="No logged pickup weight yet — estimated from the growth curve fitted to in-yard samples.">est</span>' : '';
+    const alwChip = est && est.isEstimate ? `<span class="est-chip" title="${escapeAttr(weightEstTitle(est))}">est</span>` : '';
     return `<tr class="${rowClass}">
       <td class="shed-name-cell">Shed ${shed.id}</td>
       <td>D${age}</td>
@@ -761,7 +794,7 @@ function renderDashboardView() {
       <span class="dash-kpi-icon">${dashKpiIcon('fcr')}</span>
       <span class="dash-kpi-label">FCR today${estChip}</span>
       <span class="dash-kpi-value">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
-      <span class="dash-kpi-sub">Projected EPEF ${epefDisplay}</span>
+      <span class="dash-kpi-sub">EPEF today ${epefDisplay}</span>
     </div>
     <div class="dash-kpi dash-kpi-red">
       <span class="dash-kpi-icon">${dashKpiIcon('mortality')}</span>
@@ -1248,7 +1281,7 @@ function renderFarmKpiCard(){
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>🏭 Whole Farm KPIs · Estimates</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span></div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="100" min="0" placeholder="Manual override (kg)" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (kg)</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="1" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" /></div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ weight gained</div></div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub">FCR adjusted for final weight (${t.avgWeight.toFixed(2)} kg)</div></div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><div class="fkt-sub">Overall score: weight × survival ÷ (age × FCR)</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Weighted across ${t.birdsAtHarvest.toLocaleString()} birds</div></div>
