@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ProdWise.VM — Smart Production Planner</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F0B854'/%3E%3Cstop offset='1' stop-color='%23A8721F'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cellipse cx='32' cy='38' rx='16' ry='15' fill='%23FFF'/%3E%3Ccircle cx='38' cy='26' r='10' fill='%23FFF'/%3E%3Cpath d='M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z' fill='%235E2E22'/%3E%3Cpath d='M 46 26 L 51 28 L 46 30 Z' fill='%23F0B854'/%3E%3Ccircle cx='40.5' cy='24.5' r='1.3' fill='%232B2116'/%3E%3Cpath d='M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z' fill='%23C1502E'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#33251A" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ProdWise.VM" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="prodwise.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     APP SHELL — sidebar layout
+     .app-layout  = full-viewport flex row
+       nav.sidebar  = fixed left rail (desktop) / bottom bar (mobile)
+       .main-wrap   = scrollable right area
+         .page-header = per-page title bar
+         main#app     = view output
+═══════════════════════════════════════════════ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+
+    <!-- Brand -->
+    <div class="sb-brand">
+      <svg class="sb-brand-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="sbBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0B854"/><stop offset="100%" stop-color="#A8721F"/></linearGradient>
+          <linearGradient id="sbCk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#F6E4C1"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="64" height="64" rx="14" ry="14" fill="url(#sbBg)"/>
+        <ellipse cx="25" cy="20" rx="22" ry="14" fill="#FFFFFF" opacity="0.10"/>
+        <path d="M 18 38 Q 11 33 14 26 Q 18 30 21 34 Z" fill="#5E2E22"/>
+        <ellipse cx="32" cy="38" rx="16" ry="15" fill="url(#sbCk)"/>
+        <path d="M 27 40 Q 33 37 38 42 Q 33 46 27 44 Z" fill="#E8D4AA" opacity="0.75"/>
+        <circle cx="38" cy="26" r="10" fill="url(#sbCk)"/>
+        <path d="M 35 16 Q 37 13 39 15 Q 41 12 43 15 Q 42 18 39 17 Q 37 18.5 35 16 Z" fill="#C1502E"/>
+        <path d="M 46 26 L 51 28 L 46 30 Z" fill="#F0B854"/>
+        <circle cx="40.5" cy="24.5" r="1.3" fill="#2B2116"/>
+      </svg>
+      <div class="sb-brand-text">
+        <span class="sb-brand-name">ProdWise<span class="sb-accent">.VM</span></span>
+        <span class="sb-brand-sub">Production planner</span>
+      </div>
+    </div>
+
+    <!-- Nav links (rendered by sidebarHtml()) -->
+    <div class="sb-nav" id="sidebarNav"></div>
+
+    <!-- Sync status pill -->
+    <div class="sb-sync" id="sbSync"></div>
+
+    <!-- Bottom actions -->
+    <div class="sb-bottom">
+      <div class="sb-theme-seg" id="themeToggle" role="group" aria-label="Theme">
+        <button type="button" class="sb-theme-opt" data-theme-value="light" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <span>Light</span>
+        </button>
+        <button type="button" class="sb-theme-opt" data-theme-value="dark" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+          <span>Dark</span>
+        </button>
+      </div>
+      <button class="sb-action-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </div>
+
+  </nav><!-- /sidebar -->
+
+  <!-- MAIN CONTENT -->
+  <div class="main-wrap">
+
+    <!-- Per-page header bar -->
+    <header class="page-header" id="pageHeader">
+      <div class="page-header-left">
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <span class="page-sub" id="pageSub"></span>
+      </div>
+      <div class="page-header-right">
+        <div class="batch-input">
+          <label for="batchNumber">Batch</label>
+          <input id="batchNumber" type="text" placeholder="—" maxlength="32" />
+        </div>
+        <div class="alerts-bell-wrap">
+          <button class="alerts-bell-btn" id="alertsBellBtn" type="button" title="Alerts" aria-label="Alerts">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="alerts-badge" id="alertsBadge"></span>
+          </button>
+          <div class="alerts-popover" id="alertsPopover"></div>
+        </div>
+        <button class="new-batch-btn" id="newBatchBtn" type="button" title="Start a new production batch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+          New Batch
+        </button>
+        <button class="hdr-import-btn" id="importBtn" type="button" title="Import Excel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Import Excel
+        </button>
+      </div>
+    </header>
+
+    <main id="app"></main>
+
+    <footer class="app-footer">Made by Von Mangaron · Personal use only · Not for commercial use</footer>
+
+  </div><!-- /main-wrap -->
+
+</div><!-- /app-layout -->
+
+<!-- MOBILE BOTTOM NAV (populated by sidebarHtml()) -->
+<nav class="mobile-bottom-nav" id="mobileNav" aria-label="Main navigation"></nav>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls,.json" hidden />
+<div class="toast" id="toast"></div>
+
+<div class="settings-scrim" id="settingsScrim"></div>
+<aside class="settings-drawer" id="settingsDrawer" aria-hidden="true" aria-label="Settings">
+  <div class="settings-drawer-head"><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg> Settings</h3><button type="button" class="settings-drawer-close" id="settingsDrawerClose" aria-label="Close settings">✕</button></div>
+  <div class="settings-drawer-body" id="settingsDrawerBody"></div>
+</aside>
+
+<div class="sync-scrim" id="syncScrim"></div>
+<div class="sync-modal" id="syncModal"><div class="sync-modal-head"><h3><span>☁️</span> Cloud Sync</h3><button type="button" id="syncModalClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="syncModalBody"></div></div>
+<div class="sync-modal" id="farmFoundModal"><div class="sync-modal-head"><h3><span>☁️</span> Cloud Sync</h3><button type="button" id="farmFoundClose" aria-label="Close">✕</button></div><div class="farm-found-body" id="farmFoundBody"></div></div>
+<div class="sync-modal" id="newBatchModal"><div class="sync-modal-head"><h3><span>🔄</span> New Batch</h3><button type="button" id="newBatchClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="newBatchModalBody"></div></div>
+<div class="sync-modal wide" id="batchHistoryModal"><div class="sync-modal-head"><h3><span>📁</span> Batch History</h3><button type="button" id="batchHistoryClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="batchHistoryModalBody"></div></div>
+<div class="sync-modal wide" id="farmBatchPickerModal"><div class="sync-modal-head"><h3><span>📁</span> Choose a batch</h3><button type="button" id="farmBatchPickerClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="farmBatchPickerBody"></div></div>
+<div class="sync-modal" id="manualPickupModal"><div class="sync-modal-head"><h3 id="manualPickupModalTitle"><span>📝</span> Pickup</h3><button type="button" id="manualPickupClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="manualPickupModalBody"></div></div>
+<div class="sync-modal" id="sampleModal"><div class="sync-modal-head"><h3 id="sampleModalTitle"><span>📏</span> Extra Reading Day</h3><button type="button" id="sampleClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="sampleModalBody"></div></div>
+<div class="sync-modal" id="predictedPickupModal"><div class="sync-modal-head"><h3 id="predictedPickupModalTitle"><span>🎯</span> Predicted Pickup</h3><button type="button" id="predictedPickupClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="predictedPickupModalBody"></div></div>
+<div class="sync-modal" id="importConflictModal"><div class="sync-modal-head"><h3><span>⚠️</span> Existing Pickup Data</h3><button type="button" id="importConflictClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="importConflictBody"></div></div>
+<div class="sync-modal wide" id="importReviewModal"><div class="sync-modal-head"><h3><span>🔀</span> Review Pickup Data</h3><button type="button" id="importReviewClose" aria-label="Close">✕</button></div><div class="sync-modal-body" id="importReviewBody"></div></div>
+<div class="compare-modal" id="compareFeedModal" aria-hidden="true"><div class="compare-modal-panel">
+  <div class="compare-modal-head"><h3><span>⇄</span> Compare Feed Balance</h3><button type="button" class="compare-modal-close" id="compareFeedClose" aria-label="Close">✕</button></div>
+  <div class="compare-modal-body" id="compareFeedBody"></div>
+</div></div>
+<div class="compare-modal" id="loadsModal" aria-hidden="true"><div class="compare-modal-panel">
+  <div class="compare-modal-head"><h3><span>🚛</span> Feed Loads — All Groups</h3><button type="button" class="compare-modal-close" id="loadsClose" aria-label="Close">✕</button></div>
+  <div class="compare-modal-body" id="loadsBody"></div>
+</div></div>
+<div class="sync-modal" id="loadModal"><div class="sync-modal-head">
+  <h3 id="loadModalTitle"><span>🚛</span> Add Load</h3>
+  <button type="button" id="loadModalClose" aria-label="Close">✕</button>
+</div><div class="sync-modal-body" id="loadModalBody"></div></div>
+<div class="compare-modal" id="siloModal" aria-hidden="true"><div class="compare-modal-panel">
+  <div class="compare-modal-head"><h3><span>🛢️</span> Silo Readings</h3><button type="button" class="compare-modal-close" id="siloClose" aria-label="Close">✕</button></div>
+  <div class="compare-modal-body" id="siloBody"></div>
+</div></div>
+
+<script src="js/constants.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/loads.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/history.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
