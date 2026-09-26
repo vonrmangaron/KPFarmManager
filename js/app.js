@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('keydown',e=>{
         if(e.key==='Escape'){
       if(inlineDeliveryState){inlineDeliveryState=null;render();return;}
+      if(adjModalOpen){toggleAdjCollapse();return;}
       if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}

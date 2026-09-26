@@ -1008,7 +1008,7 @@ function liveUpdateShedMortality(shedIdx,rawValue){
   saveState();schedulePush();
   if(activeTab==='predictions')updateFarmKpiValues();
 }
-function toggleAdjCollapse(){predState.adjOpen=!(predState.adjOpen===true);savePredState();render();}
+function toggleAdjCollapse(){adjModalOpen=!adjModalOpen;render();}
 function setDensityGlobal(field,value){
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};
   const n=Number(value);if(!Number.isFinite(n))return;

@@ -152,6 +152,7 @@ function navIcon(type) {
     silo: '<path d="M6 4h12v11l-6 5-6-5z"/><path d="M6 9h12"/>',
     compare: '<path d="M8 3 4 7l4 4"/><path d="M4 7h11a5 5 0 0 1 5 5v1"/><path d="m16 21 4-4-4-4"/><path d="M20 17H9a5 5 0 0 1-5-5v-1"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
+    homes: '<path d="M2 11 7 7l5 4v9H2z"/><path d="M12 11l5-4 5 4v9h-10"/><path d="M5 20v-4h4v4"/><path d="M15 20v-4h4v4"/>',
     more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
     refresh: '<path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/>',
     download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
@@ -929,6 +930,9 @@ function render(){
     if(moreSheetOpen)renderMoreSheet();
     renderSyncPill();
     renderSidebarBatch();
+    // Adjustments modal lives at body level so it stacks above the nav
+    const adjRoot=document.getElementById('adjModalRoot');
+    if(adjRoot){const show=adjModalOpen&&activeTab==='predictions'&&farmData&&shedsForGroup(predState.predGroup).length;if(!show)adjModalOpen=false;adjRoot.innerHTML=show?renderAdjustmentModal(predState.predGroup):'';}
     updatePageHeader();
     updateAlertsBell();
     // Main content
@@ -1360,14 +1364,16 @@ function updateFarmKpiValues(){
   const lo=el('farmLeftoverInput');
   if(lo){const want=t.autoLeftover!=null?`auto: ${Math.round(t.autoLeftover).toLocaleString()}`:'auto: —';if(lo.placeholder!==want)lo.placeholder=want;}
 }
-function renderAdjustmentCollapse(group){
-  const isOpen=predState.adjOpen===true;
+// Prediction adjustments — opened from the gear on the floating rail.
+// Not persisted: a reload never reopens it.
+let adjModalOpen=false;
+function renderAdjustmentModal(group){
   const biasPct=Math.round(currentBiasFactor()*100);
   const betaVal=predState.beta;
   const targetKg=predState.targetHarvestWeightKg[group];
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};
   const tp=Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups;
-  return `<div class="adj-collapse adj-collapse-highlight ${isOpen?'open':''}"><button type="button" class="adj-collapse-head" data-toggle-adjustments="1" aria-expanded="${isOpen?'true':'false'}"><span class="adj-collapse-title">⚙️ Prediction adjustments</span><span class="adj-collapse-summary"><span class="adj-chip" id="adjChipBeta">cFCR β <strong>${betaVal.toFixed(3)}</strong></span><span class="adj-chip" id="adjChipScale">Scale <strong>${biasPct}%</strong></span><span class="adj-chip" id="adjChipTarget">Target <strong>${targetKg.toFixed(2)} kg</strong></span><span class="adj-chip" id="adjChipDensity">Density <strong>${dg.triggerDensity}/${dg.targetDensity}</strong></span><span class="adj-chip" id="adjChipPickups">Pickups <strong>${tp}</strong></span></span><span class="adj-collapse-caret">▾</span></button><div class="adj-collapse-body"><div class="adj-row"><label>📊 cFCR β factor</label><input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" /><input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight.</span></div><div class="adj-row"><label>📐 Scale correction</label><input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><span class="adj-unit">%</span><span class="adj-hint">How much your shed scale reads heavier than the plant weight.</span></div><div class="adj-row"><label>🎯 Target weight at harvest</label><input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div><div class="density-settings-title"><span>🎯 Pickup density (global defaults)</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button><button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button></span></div><div class="adj-row"><label>Trigger density</label><input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Schedule a pickup when density is forecast to reach this.</span></div><div class="adj-row"><label>Target after pickup</label><input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">What density to aim for after each pickup.</span></div><div class="adj-row"><label>Hard maximum</label><input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div><div class="adj-row"><label>Target pickups per shed</label><input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Total pickups per shed (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>${renderNoPickupDaysRow()}</div></div>`;
+    return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>Group ${group}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body"><div class="adj-row"><label>📊 cFCR β factor</label><input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" /><input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight.</span></div><div class="adj-row"><label>📐 Scale correction</label><input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><span class="adj-unit">%</span><span class="adj-hint">How much your shed scale reads heavier than the plant weight.</span></div><div class="adj-row"><label>🎯 Target weight at harvest</label><input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div><div class="density-settings-title"><span>🎯 Pickup density (global defaults)</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button><button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button></span></div><div class="adj-row"><label>Trigger density</label><input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Schedule a pickup when density is forecast to reach this.</span></div><div class="adj-row"><label>Target after pickup</label><input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">What density to aim for after each pickup.</span></div><div class="adj-row"><label>Hard maximum</label><input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div><div class="adj-row"><label>Target pickups per shed</label><input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Total pickups per shed (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>${renderNoPickupDaysRow()}</div></div></div>`;
 }
 
 function renderNoPickupDaysRow(){
@@ -1394,6 +1400,18 @@ function renderNoPickupDaysRow(){
     : '';
   return `<div class="adj-row"><label>📅 No-pickup days</label><div class="no-pickup-days">${pills}</div><span class="adj-hint">${label} Existing pickups stay where they are — use Auto-fill or Re-plan to update them.</span></div>${warnHtml}`;
 }
+// Floating rail on the Predictions page: shed view switcher + settings.
+// Vertical on the left on desktop, a pill above the bottom nav on phones.
+function predRailHtml(g,view,sheds){
+  const btn=(v,icon,label,title)=>`<button type="button" class="pred-rail-btn${view===v?' active':''}" data-predview="${v}" aria-pressed="${view===v}" title="${title}">${navIcon(icon)}<span>${label}</span></button>`;
+  const shedBtns=sheds.map((s,i)=>btn(i===0?'shed1':'shed2','home',`Shed ${s.id}`,`Show shed ${s.id} only`)).join('');
+  return `<nav class="pred-rail" aria-label="Prediction view">
+    ${sheds.length>1?btn('both','homes','Both','Show both sheds side by side'):''}
+    ${shedBtns}
+    <span class="pred-rail-sep" aria-hidden="true"></span>
+    <button type="button" class="pred-rail-btn pred-rail-settings${adjModalOpen?' active':''}" data-toggle-adjustments="1" aria-haspopup="dialog" title="Prediction adjustments">${navIcon('gear')}<span>Adjust</span></button>
+  </nav>`;
+}
 function renderPredictionsView(){
   const g=predState.predGroup;
   const sheds=shedsForGroup(g);
@@ -1402,7 +1420,7 @@ function renderPredictionsView(){
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
   const groupNames={1:'Group 1',2:'Group 2',3:'Group 3',4:'Group 4'};
-  return `<div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Whole-farm estimates · group result · per-shed detail below</span></div>${renderFarmKpiCard()}<div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div><div class="sticky-sentinel" aria-hidden="true"></div><div class="shed-tabs sticky-tabs tabs-left" style="margin-bottom:14px;"><button class="stab planner-btn ${view==='both'?'active':''}" data-predview="both">🏘️ Both sheds</button><button class="stab ${view==='shed1'?'active':''}" data-predview="shed1">🏠 Shed ${sheds[0]?.id||''}</button>${sheds[1]?`<button class="stab ${view==='shed2'?'active':''}" data-predview="shed2">🏠 Shed ${sheds[1].id}</button>`:''}</div>${renderAdjustmentCollapse(g)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div>`;
+  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Whole-farm estimates · group result · per-shed detail below</span></div>${renderFarmKpiCard()}<div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
 }
 function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};
