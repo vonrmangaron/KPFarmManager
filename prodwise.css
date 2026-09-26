@@ -1022,6 +1022,47 @@ body.theme-dark .adj-collapse-head:hover .adj-collapse-caret{color:#1A2438;}
 .adj-unit{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
 .adj-hint{flex-basis:100%;width:100%;font-size:11px;color:var(--muted);font-weight:500;line-height:1.4;margin-top:-2px;}
 
+/* No-pickup days — Mon–Sun pill toggles */
+.no-pickup-days{display:flex;gap:5px;flex-wrap:wrap;}
+.npd-btn{
+  border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:6px 12px;border-radius:999px;cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+  min-width:44px;text-align:center;line-height:1;
+}
+.npd-btn:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary-soft);}
+.npd-btn.active{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-color:transparent;
+}
+body.theme-dark .npd-btn.active{color:#1A2438;}
+
+/* Warning block — appears when existing pickups sit on blocked days */
+.blocked-days-warning{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;margin-bottom:10px;
+  background:var(--primary-soft);
+  border:1px solid var(--primary);
+  border-radius:10px;
+  font-size:12.5px;color:var(--ink);
+}
+body.theme-dark .blocked-days-warning{background:var(--primary-soft);border-color:var(--primary);}
+.blocked-days-warning .bdw-icon{font-size:16px;line-height:1;flex-shrink:0;}
+.blocked-days-warning .bdw-text{flex:1;min-width:180px;font-weight:600;color:var(--primary-dark);}
+body.theme-dark .blocked-days-warning .bdw-text{color:var(--primary);}
+.blocked-days-warning .bdw-btn{
+  border:none;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;
+  padding:6px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  transition:filter .15s ease,transform .1s ease;
+}
+body.theme-dark .blocked-days-warning .bdw-btn{color:#1A2438;}
+.blocked-days-warning .bdw-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+@media(max-width:520px){
+  .blocked-days-warning .bdw-btn{width:100%;}
+}
+
 .pred-grid{display:grid;grid-template-columns:1fr;gap:18px;}
 .pred-grid.compare{grid-template-columns:1fr 1fr;gap:16px;}
 @media(max-width:1000px){.pred-grid.compare{grid-template-columns:1fr;}}
