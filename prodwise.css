@@ -2787,3 +2787,22 @@ body.theme-dark .mob-nav-fab { color: #1A2438; box-shadow: 0 6px 16px rgba(0,0,0
   .sms-group-head { padding: 12px; gap: 8px; }
   .sms-group-sub { font-size: 11px; }
 }
+
+/* ── iPhone home-screen app: status bar + notch/Dynamic Island ─────
+   With the black-translucent status bar, iOS draws the page under the
+   status bar but sizes the viewport as if it weren't there, leaving a
+   gap at the bottom the height of the status bar. Growing the root by
+   the top inset fills the screen. No-op elsewhere (inset is 0). */
+@media (display-mode: standalone) {
+  html, body { height: calc(100% + env(safe-area-inset-top, 0px)); max-height: none; }
+}
+/* Keep headers clear of the status bar / Dynamic Island */
+.sidebar { padding-top: env(safe-area-inset-top, 0px); }
+.settings-drawer-head { padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+.settings-drawer-body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 768px) {
+  .page-header { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+}
+@media (max-width: 640px) {
+  .compare-modal-head { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+}
