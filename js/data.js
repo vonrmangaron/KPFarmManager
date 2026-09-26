@@ -44,6 +44,22 @@ function setNotifPref(key,value){
   notifPrefs[key]=!!value;saveNotifPrefs();
   updateAlertsBell();
 }
+function bindNotifCheckboxes(){
+  const s=document.getElementById('notifShedPerf');
+  const f=document.getElementById('notifFeedBalance');
+  if(s&&!s.__notifBound){
+    s.__notifBound=true;
+    // Set initial visual state from the loaded prefs — guards against any
+    // render-order edge case where the HTML checked attribute is stale.
+    s.checked=!!notifPrefs.shedPerformance;
+    s.addEventListener('change',()=>{setNotifPref('shedPerformance',s.checked);});
+  }
+  if(f&&!f.__notifBound){
+    f.__notifBound=true;
+    f.checked=!!notifPrefs.feedBalance;
+    f.addEventListener('change',()=>{setNotifPref('feedBalance',f.checked);});
+  }
+}
 
 function readingsSorted(group){const s=siloData[group]||{readings:[]};return (s.readings||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));}
 function latestReading(group){const arr=readingsSorted(group);return arr.length?arr[arr.length-1]:null;}
