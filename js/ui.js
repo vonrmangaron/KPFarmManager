@@ -651,9 +651,22 @@ function savePredictedPickup(){
   const realMatch=(shed.pickups||[]).some(rp=>iso(rp.date)===iso(dateObj));
   if(realMatch){showToast('A real pickup already exists on this date — predicted pickup not saved.',true);return;}
   if(!shed.predictedPickups)shed.predictedPickups=[];
-  if(s.mode==='add'){shed.predictedPickups.push({id:uid('pp'),date:dateObj,birds:Math.floor(birds),isFinal:!!s.isFinal});showToast(s.isFinal?'✅ Cleanout predicted pickup added.':'✅ Predicted pickup added.');}
-  else{const idx=shed.predictedPickups.findIndex(x=>x.id===s.editId);if(idx<0){showToast('Predicted pickup not found.',true);return;}shed.predictedPickups[idx]={...shed.predictedPickups[idx],date:dateObj,birds:Math.floor(birds),isFinal:!!s.isFinal};showToast('✅ Predicted pickup updated.');}
+  let editedId=null;
+  if(s.mode==='add'){
+    editedId=uid('pp');
+    shed.predictedPickups.push({id:editedId,date:dateObj,birds:Math.floor(birds),isFinal:!!s.isFinal});
+    showToast(s.isFinal?'✅ Cleanout predicted pickup added.':'✅ Predicted pickup added.');
+  }else{
+    const idx=shed.predictedPickups.findIndex(x=>x.id===s.editId);
+    if(idx<0){showToast('Predicted pickup not found.',true);return;}
+    editedId=s.editId;
+    shed.predictedPickups[idx]={...shed.predictedPickups[idx],date:dateObj,birds:Math.floor(birds),isFinal:!!s.isFinal};
+    showToast('✅ Predicted pickup updated.');
+  }
   shed.predictedPickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  // Cascade: resize everything after the edited pickup to hit target density,
+  // then resize the final cleanout to absorb the remainder.
+  if(!s.isFinal&&editedId)cascadePredictedPickups(shed,editedId);
   saveState();schedulePush();closePredictedPickupModal();render();
 }
 function deletePredictedPickup(shedId,ppId){
@@ -663,6 +676,14 @@ function deletePredictedPickup(shedId,ppId){
   const label=pp.isFinal?'cleanout predicted pickup':'predicted pickup';
   if(!confirm(`Delete the ${label} on ${fmtShort(pp.date)}?`))return;
   shed.predictedPickups=shed.predictedPickups.filter(x=>x.id!==ppId);
+  // Cascade: find the latest regular pickup before the deleted one and
+  // resize everything after it.
+  if(!pp.isFinal){
+    const sorted=shed.predictedPickups.slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    const before=sorted.filter(x=>!x.isFinal&&dateOnly(x.date)<dateOnly(pp.date));
+    if(before.length>0)cascadePredictedPickups(shed,before[before.length-1].id);
+    else recalcFinalPredictedBirds(shed);
+  }
   saveState();schedulePush();render();
   showToast('Predicted pickup removed.');
 }
