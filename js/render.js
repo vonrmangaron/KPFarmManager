@@ -605,31 +605,19 @@ function renderDashboardView() {
   const mortPct        = totalInit > 0 ? (totalMort / totalInit * 100) : 0;
 
 
-  // ── Upcoming predicted pickups across all sheds ──
+  // ── Upcoming feed deliveries (farm loads) ──
   const WD2 = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   const MO2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const upcomingPickups = [];
-  allSheds.forEach(shed => {
-    (shed.predictedPickups || []).forEach(pp => {
-      if (!pp.date) return;
-      const d = dateOnly(pp.date);
-      if (d >= dateOnly(today)) upcomingPickups.push({ shed: shed.id, date: d, birds: pp.birds, isFinal: !!pp.isFinal });
-    });
-  });
-  upcomingPickups.sort((a,b) => a.date - b.date);
-  // Group by date
-  const pickupsByDate = [];
-  upcomingPickups.forEach(p => {
-    const key = iso(p.date);
-    let grp = pickupsByDate.find(x => x.key === key);
-    if (!grp) { grp = { key, date: p.date, sheds: [], birds: 0, isFinal: false }; pickupsByDate.push(grp); }
-    grp.sheds.push(p.shed);
-    grp.birds += p.birds || 0;
-    if (p.isFinal) grp.isFinal = true;
-  });
-  const pickupRows = pickupsByDate.slice(0, 3).map(p => {
-    const d = p.date;
-    const loads = Math.ceil((p.birds || 0) / 6000) || 1;
+  const todayD = dateOnly(today);
+  const upcomingLoads = (farmLoads || [])
+    .filter(l => l.date && dateOnly(l.date) >= todayD)
+    .sort((a,b) => dateOnly(a.date) - dateOnly(b.date));
+  const deliveryRows = upcomingLoads.slice(0, 3).map(l => {
+    const d = dateOnly(l.date);
+    const groups = [1,2,3,4].filter(g => (Number(l.splitKg[g])||0) > 0);
+    const typeCls = FEED_TYPES.some(f => f.id === l.feedType) ? l.feedType : 'unspecified';
+    const totalKg = l.actualKg != null ? l.actualKg : l.plannedKg;
+    const splitText = groups.length > 1 ? ' · ' + groups.map(g => `G${g} ${(l.splitKg[g]/1000).toFixed(1)} t`).join(', ') : '';
     return `<div class="dash-pickup-item">
       <div class="dash-pickup-date-block">
         <span class="dash-pickup-dow">${WD2[d.getDay()]}</span>
@@ -637,9 +625,9 @@ function renderDashboardView() {
         <span style="font-size:9px;color:var(--muted)">${MO2[d.getMonth()]}</span>
       </div>
       <div class="dash-pickup-info">
-        <span class="dash-pickup-kind ${p.isFinal ? 'dash-pickup-kind-final' : 'dash-pickup-kind-thin'}">${p.isFinal ? 'FINAL' : 'THIN-OUT'}</span>
-        <span class="dash-pickup-sheds">Shed${p.sheds.length > 1 ? 's' : ''} ${p.sheds.join(' &amp; ')}</span>
-        <span class="dash-pickup-detail">${p.birds ? (p.birds/1000).toFixed(1)+'k birds · ' : ''}~${loads} load${loads!==1?'s':''}</span>
+        <span class="dash-pickup-kind dash-delivery-kind-${typeCls}">${escapeHtml(feedTypeLabel(l.feedType)).toUpperCase()}</span>
+        <span class="dash-pickup-sheds">${groups.length ? `Group${groups.length > 1 ? 's' : ''} ${groups.join(' &amp; ')}` : 'Unassigned'}</span>
+        <span class="dash-pickup-detail">${(totalKg/1000).toFixed(2)} t${splitText}${l.note ? ' · ' + escapeHtml(l.note) : ''}</span>
       </div>
     </div>`;
   }).join('');
@@ -759,10 +747,10 @@ function renderDashboardView() {
     </div>
     <div class="dash-card">
       <div class="dash-card-head">
-        <h2 class="dash-card-title">Upcoming pickups</h2>
+        <h2 class="dash-card-title">Upcoming deliveries</h2>
         <button class="dash-card-action" data-open-loads-modal type="button">All loads</button>
       </div>
-      ${pickupRows || '<p style="font-size:13px;color:var(--muted);margin:0">No predicted pickups yet. Go to Predictions to plan them.</p>'}
+      ${deliveryRows || '<p style="font-size:13px;color:var(--muted);margin:0">No feed deliveries scheduled. Open All loads to plan one.</p>'}
     </div>
   </div>
 
