@@ -134,11 +134,12 @@ function computeLiveBirdsBefore(shed,dateObj,extraPredicted){
   while(cursor<=lastWalkDay){live=live*(1-rate);live=Math.max(0,live-sumPickupsOn(cursor));live=Math.round(live);cursor=addDays(cursor,1);}
   return Math.max(0,live);
 }
+
 // Auto-fill now produces EXACTLY (targetN − realCount) predicted pickups.
 // The target is a hard contract — if the density model can't produce enough
 // natural trigger days, the remaining slots are evenly spaced across the
-// window between the last density pickup and (cleanout − 2 days). The final
-// cleanout pickup is always emitted on the cleanout date.
+// WHOLE planning window (placement → cleanout − 2), respecting blocked days.
+// The final cleanout pickup is always emitted on the cleanout date.
 function autoFillPredictedPickups(shed){
   if(!shed||!shed.placementDate)return [];
   const ds=getShedDensitySettings(shed);
@@ -183,21 +184,37 @@ function autoFillPredictedPickups(shed){
       searchStart=addDays(foundDate,3);
     }
 
-    // ── Phase 2: strict fill — evenly space any remaining slots ──
+    // ── Phase 2: strict fill — fill remaining slots evenly across the
+    // WHOLE planning window (not just after the last density pickup).
+    // This guarantees we hit the target count whenever the window has
+    // enough open (non-blocked) days.
     const remaining=regularNeeded-result.length;
     if(remaining>0){
-      const lastUsed=result.length?dateOnly(result[result.length-1].date):today;
-      const start=addDays(lastUsed,2);
-      if(start<=maxDay){
-        const totalDays=Math.max(1,daysBetween(start,maxDay));
-        const step=totalDays/(remaining+1);
-        for(let i=1;i<=remaining;i++){
-          let slot=addDays(start,Math.round(i*step));
-          if(slot>maxDay)slot=maxDay;
-          slot=nextAllowedPickupDate(slot);
-          if(slot>maxDay)continue;
-          // Avoid clashing with an already-placed pickup
-          if(result.some(x=>iso(x.date)===iso(slot)))continue;
+      const floor=addDays(today,1);
+      let windowStart=addDays(shed.placementDate,5);
+      if(windowStart<floor)windowStart=floor;
+      if(windowStart>maxDay)windowStart=maxDay;
+
+      // Collect every allowed day in the window
+      const candidates=[];
+      let cc=windowStart;
+      while(cc<=maxDay){
+        if(!isNoPickupDay(cc))candidates.push(dateOnly(cc));
+        cc=addDays(cc,1);
+      }
+
+      // Exclude days already used by density pickups
+      const used=new Set(result.map(x=>iso(x.date)));
+      const free=candidates.filter(d=>!used.has(iso(d)));
+
+      if(free.length>0){
+        const n=Math.min(remaining,free.length);
+        const step=free.length/n;
+        for(let i=0;i<n;i++){
+          const idx=Math.min(free.length-1,Math.floor((i+0.5)*step));
+          const slot=free[idx];
+          if(!slot||used.has(iso(slot)))continue;
+          used.add(iso(slot));
           const rec=recommendPickupForDate(tempShed,iso(slot),{extraPredicted:result});
           const remove=(rec&&rec.recommendedRemove>0)?rec.recommendedRemove:0;
           result.push({id:uid('pp'),date:slot,birds:remove,isFinal:false});
@@ -212,6 +229,7 @@ function autoFillPredictedPickups(shed){
   result.push({id:uid('pp'),date:cleanout,birds:Math.max(0,Math.floor(finalBirds)),isFinal:true});
   return result;
 }
+
 function reconcilePredictedPickups(shed){
   if(!shed)return;const real=shed.pickups||[];
   if(real.some(p=>p.isFinal)){shed.predictedPickups=[];return;}
@@ -267,6 +285,7 @@ function cascadePredictedPickups(shed,editedPpId){
   }
   recalcFinalPredictedBirds(shed);
 }
+
 function collectShedWeightAnchors(shed){
   const anchors=[];const bias=currentBiasFactor();const chickW=shedChickWeight(shed);
   anchors.push({t:0,w:chickW,wgt:1.0,source:'day-old'});
