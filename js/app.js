@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Mobile nav extras
     if(e.target.closest('#loadsBtnMob')){openLoadsModal();return;}
     if(e.target.closest('#settingsBtnMob')){openSettingsDrawer();return;}
+    if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
     // CluckWise — can come from sidebar data-tab="cluckwise"
     if(e.target.closest('[data-tab="cluckwise"]')){window.open(CLUCKWISE_URL,'_blank','noopener');return;}
     if(e.target.closest('#cluckwiseBtn')){window.open(CLUCKWISE_URL,'_blank','noopener');return;}
@@ -175,7 +176,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const deleteBtn=e.target.closest('[data-pickup-delete]');if(deleteBtn){closeAllPickupActionsMenus();const parts=deleteBtn.dataset.pickupDelete.split('|');deleteManualPickup(Number(parts[0]),parts[1]);return;}
     closeAllPickupActionsMenus();
 
-    const pg=e.target.closest('[data-predgroup]');if(pg){setPredGroup(Number(pg.dataset.predgroup));return;}
+    const pg=e.target.closest('[data-predgroup]');if(pg){if(pg.closest('.sidebar')){activeTab='predictions';sbPredOpen=true;}setPredGroup(Number(pg.dataset.predgroup));return;}
     const pv=e.target.closest('[data-predview]');if(pv){setPredView(pv.dataset.predview);return;}
     const toggleDel=e.target.closest('[data-toggle-deliveries]');
     if(toggleDel){predState.deliveriesOpen=!(predState.deliveriesOpen!==false);savePredState();schedulePush();render();return;}

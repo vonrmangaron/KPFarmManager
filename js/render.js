@@ -256,7 +256,34 @@ function historyRowHtml(s) {
 // ─────────────────────────────────────────────────────────────
 // Sidebar HTML (desktop rail)
 // ─────────────────────────────────────────────────────────────
+// Predictions submenu open state (sidebar only — not persisted)
+let sbPredOpen = true;
+function toggleSidebarPredictions() {
+  if (activeTab !== 'predictions') { activeTab = 'predictions'; sbPredOpen = true; }
+  else sbPredOpen = !sbPredOpen;
+  render();
+}
+
+// Worst days-behind severity across a group's sheds — same thresholds as
+// the dashboard's shed performance table (daysBehindSeverity).
+function groupSeverity(g, today) {
+  const rank = { unknown: 0, ok: 1, warn: 2, bad: 3 };
+  let worst = 'unknown';
+  shedsForGroup(g).forEach(shed => {
+    if (!shed.placementDate) return;
+    const age = daysBetween(shed.placementDate, today);
+    const est = currentShedWeightEstimate(shed, today);
+    const sev = daysBehindSeverity((est && age > 0) ? daysVsTarget(age, est.kg) : null);
+    if (rank[sev] > rank[worst]) worst = sev;
+  });
+  return worst;
+}
+
 function sidebarHtml() {
+  const today = new Date();
+  const alerts = farmData ? computeFarmAlerts() : [];
+  const sevLabel = { ok: 'On target', warn: 'Slightly behind target', bad: 'Behind target' };
+  const chev = '<svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
   return NAV_ITEMS.map(item => {
     if (item.section) {
       return `<span class="sb-section-label">${escapeHtml(item.section)}</span>`;
@@ -264,35 +291,51 @@ function sidebarHtml() {
     if (item.modalBtnId) {
       const dot = item.modalBtnId === 'loadsBtn' ? '<span class="loads-dot" id="loadsDot"></span>' : '';
       return `<button class="sb-link" id="${escapeAttr(item.modalBtnId)}" type="button">
-        ${navIcon(item.icon)}${escapeHtml(item.label)}${dot}
+        ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span>${dot}
       </button>`;
     }
     const isActive = activeTab === item.id;
-    const badge = item.badge && farmData
-      ? (() => {
-          const g = Number(item.id.replace('g',''));
-          const sheds = shedsForGroup(g);
-          const live = sheds.reduce((s,x) => s + liveAtStartOfDay(x, new Date()), 0);
-          return live > 0 ? `<span class="sb-link-badge">${(live/1000).toFixed(0)}k</span>` : '';
-        })()
-      : '';
-    const extIcon = item.external
-      ? `<svg style="margin-left:auto;width:13px;height:13px;opacity:0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>`
-      : '';
-    const link = `<button class="sb-link${isActive?' active':''}" data-tab="${escapeAttr(item.id)}" type="button">
-      ${navIcon(item.icon)}${escapeHtml(item.label)}${badge}${extIcon}
-    </button>`;
-    // Predictions expands to show Group 1–4 as sub-items once it's the active page,
-    // so the group selector lives in the sidebar instead of cluttering the tab bar.
-    if (item.id === 'predictions' && isActive && farmData) {
-      const subnav = [1,2,3,4].map(gi => {
-        const subActive = predState.predGroup === gi;
-        return `<button class="sb-sub-link${subActive?' active':''}" data-predgroup="${gi}" type="button">Group ${gi}</button>`;
-      }).join('');
-      return link + `<div class="sb-subnav">${subnav}</div>`;
+    let meta = '';
+    if (item.badge && farmData) {
+      const g = Number(item.id.replace('g',''));
+      const count = alerts.filter(a => a.tab === item.id).length;
+      const sev = groupSeverity(g, today);
+      meta = `<span class="sb-link-meta">${count ? `<span class="sb-count" title="${count} open alert${count>1?'s':''}">${count}</span>` : ''}${sev !== 'unknown' ? `<span class="sb-status-dot ${sev}" title="${sevLabel[sev]}"></span>` : ''}</span>`;
     }
-    return link;
+    if (item.external) {
+      meta = `<span class="sb-link-meta"><svg class="sb-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>`;
+    }
+    // Predictions expands in place to show Group 1–4, so the group selector
+    // lives in the sidebar instead of cluttering the tab bar.
+    if (item.id === 'predictions' && farmData) {
+      const open = isActive && sbPredOpen;
+      const subnav = [1,2,3,4].map(gi => {
+        const subActive = isActive && predState.predGroup === gi;
+        const ids = shedsForGroup(gi).map(s => s.id);
+        const shedTxt = ids.length ? `Sheds ${ids.join('–')}` : '';
+        return `<button class="sb-sub-link${subActive?' active':''}" data-predgroup="${gi}" type="button"${subActive?' aria-current="page"':''}>Group ${gi}<span class="sb-sub-meta">${shedTxt}</span></button>`;
+      }).join('');
+      return `<button class="sb-link${isActive?' active':''}" data-sb-pred type="button" aria-expanded="${open}"${isActive?' aria-current="page"':''}>
+        ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span><span class="sb-link-meta">${chev}</span>
+      </button>${open ? `<div class="sb-subnav">${subnav}</div>` : ''}`;
+    }
+    return `<button class="sb-link${isActive?' active':''}" data-tab="${escapeAttr(item.id)}" type="button"${isActive?' aria-current="page"':''}>
+      ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span>${meta}
+    </button>`;
   }).join('');
+}
+
+// Batch chip under the brand: batch number + current bird age
+function renderSidebarBatch() {
+  const el = document.getElementById('sbBatch');
+  if (!el) return;
+  if (!farmData) { el.hidden = true; return; }
+  const batch = predState.batchNumber || farmData.batchNumber || '';
+  const today = new Date();
+  const age = Math.max(0, ...(farmData.sheds || []).filter(s => s.placementDate).map(s => daysBetween(s.placementDate, today)));
+  el.hidden = false;
+  el.innerHTML = `<span class="sb-batch-k">Current batch</span>
+    <span class="sb-batch-v">${batch ? 'Batch ' + escapeHtml(String(batch)) : 'No batch number'}${age > 0 ? ` <em>· Day ${age}</em>` : ''}</span>`;
 }
 
 // Mobile bottom nav (5 items max)
@@ -323,19 +366,23 @@ function mobileNavHtml() {
 // ─────────────────────────────────────────────────────────────
 function renderSyncPill() {
   const el = document.getElementById('sbSync');
+  const farmEl = document.getElementById('sbFarm');
   if (!el) return;
   if (!syncFarmName) {
-    el.innerHTML = `<div class="sb-sync-row"><span class="sb-sync-dot"></span>Not connected</div>
-      <div class="sb-sync-sub">Connect in Settings to sync</div>
-      <button class="sb-sync-btn" id="sbConnectBtn" type="button">Connect farm</button>`;
+    el.innerHTML = `<span class="sb-sync-dot"></span><span class="sb-sync-text"><b>Not connected</b></span>
+      <button class="sb-sync-btn" id="sbConnectBtn" type="button">Connect</button>`;
+    if (farmEl) farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">–</span><span class="sb-farm-text"><span class="sb-farm-name">This device</span><span class="sb-farm-sub">Not synced</span></span>`;
     return;
   }
   const dotCls = syncState === 'error' ? 'error' : syncConnectedAt ? 'ok' : '';
-  const stateLabel = syncState === 'pulling' ? 'Syncing…' : syncState === 'pushing' ? 'Saving…' : syncState === 'error' ? 'Sync error' : 'Cloud sync on';
-  const sub = syncLastSyncAt ? `${escapeHtml(syncFarmName)} · ${fmtRelativeTime(syncLastSyncAt)}` : `${escapeHtml(syncFarmName)} · not yet synced`;
-  el.innerHTML = `<div class="sb-sync-row"><span class="sb-sync-dot ${dotCls}"></span>${stateLabel}</div>
-    <div class="sb-sync-sub">${sub}</div>
+  const stateLabel = syncState === 'pulling' ? 'Syncing…' : syncState === 'pushing' ? 'Saving…' : syncState === 'error' ? 'Sync error' : 'Synced';
+  const when = syncLastSyncAt ? fmtRelativeTime(syncLastSyncAt) : 'not yet';
+  el.innerHTML = `<span class="sb-sync-dot ${dotCls}"></span><span class="sb-sync-text"><b>${stateLabel}</b> · ${escapeHtml(when)}</span>
     <button class="sb-sync-btn" id="sbSyncNowBtn" type="button">Sync now</button>`;
+  if (farmEl) {
+    const initials = String(syncFarmName).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'F';
+    farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">${escapeHtml(initials)}</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(syncFarmName)}</span><span class="sb-farm-sub">Cloud sync on</span></span>`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -796,6 +843,7 @@ function render(){
     const mobNav=document.getElementById('mobileNav');
     if(mobNav)mobNav.innerHTML=mobileNavHtml();
     renderSyncPill();
+    renderSidebarBatch();
     updatePageHeader();
     updateAlertsBell();
     // Main content
