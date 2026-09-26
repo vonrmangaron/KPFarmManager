@@ -33,8 +33,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Dashboard card shortcut buttons (data-tab handled by tab handler below)
     if(e.target.closest('#siloFromDash')){openSiloModal();return;}
     // Mobile nav extras
-    if(e.target.closest('#loadsBtnMob')){openLoadsModal();return;}
-    if(e.target.closest('#settingsBtnMob')){openSettingsDrawer();return;}
+    if(e.target.closest('#siloBtnMob')){openSiloModal();return;}
+    if(e.target.closest('#moreBtnMob')){openMoreSheet();return;}
+    if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
+    if(e.target.closest('#moreSheet')){
+      const id=e.target.closest('button')?.id;
+      const actions={moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
+      if(actions[id]){closeMoreSheet();actions[id]();return;}
+    }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
     // CluckWise — can come from sidebar data-tab="cluckwise"
     if(e.target.closest('[data-tab="cluckwise"]')){window.open(CLUCKWISE_URL,'_blank','noopener');return;}
@@ -208,6 +214,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('keydown',e=>{
         if(e.key==='Escape'){
       if(inlineDeliveryState){inlineDeliveryState=null;render();return;}
+      if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}
       if(feedCompareState.modalOpen){closeCompareModal();return;}

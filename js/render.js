@@ -152,6 +152,13 @@ function navIcon(type) {
     silo: '<path d="M6 4h12v11l-6 5-6-5z"/><path d="M6 9h12"/>',
     compare: '<path d="M8 3 4 7l4 4"/><path d="M4 7h11a5 5 0 0 1 5 5v1"/><path d="m16 21 4-4-4-4"/><path d="M20 17H9a5 5 0 0 1-5-5v-1"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
+    more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+    refresh: '<path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/>',
+    download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+    cloud: '<path d="M17.5 19H7a5 5 0 1 1 1.4-9.8A6 6 0 0 1 20 11.5a3.8 3.8 0 0 1-2.5 7.5z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   };
   const p = icons[type] || icons.home;
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -338,27 +345,71 @@ function renderSidebarBatch() {
     <span class="sb-batch-v">${batch ? 'Batch ' + escapeHtml(String(batch)) : 'No batch number'}${age > 0 ? ` <em>· Day ${age}</em>` : ''}</span>`;
 }
 
-// Mobile bottom nav (5 items max)
+// Mobile bottom nav: Home · Groups · [Silo reading] · Predict · More.
+// Silo reading is the most common on-the-spot task, so it gets the
+// raised centre button.
 function mobileNavHtml() {
-  const MOB = [
-    { id: 'dashboard', label: 'Home',   icon: 'grid'  },
-    { id: 'g1',        label: 'Groups', icon: 'home'  },
-    { id: 'predictions',label: 'Predict',icon: 'chart'},
-  ];
-  const items = MOB.map(item => {
-    const active = activeTab === item.id || (item.id === 'g1' && ['g1','g2','g3','g4'].includes(activeTab));
-    return `<button class="mob-nav-btn${active?' active':''}" data-tab="${escapeAttr(item.id)}" type="button">
-      <span class="mob-nav-pill">${navIcon(item.icon)}</span>${escapeHtml(item.label)}
+  const tab = (id, label, icon, active) => `<button class="mob-nav-btn${active?' active':''}" data-tab="${escapeAttr(id)}" type="button"${active?' aria-current="page"':''}>
+      <span class="mob-nav-pill">${navIcon(icon)}</span>${escapeHtml(label)}
     </button>`;
-  });
-  // Add loads + settings
-  items.push(`<button class="mob-nav-btn" id="loadsBtnMob" type="button">
-    <span class="mob-nav-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>Loads
-  </button>`);
-  items.push(`<button class="mob-nav-btn" id="settingsBtnMob" type="button">
-    <span class="mob-nav-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>More
-  </button>`);
-  return `<div class="mob-nav-inner">${items.join('')}</div>`;
+  const inGroup = ['g1','g2','g3','g4'].includes(activeTab);
+  const summary = typeof farmLoadsSummary === 'function' ? farmLoadsSummary() : { needsActual: 0 };
+  const moreDot = summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : '';
+  return `<div class="mob-nav-inner">
+    ${tab('dashboard', 'Home', 'grid', activeTab === 'dashboard')}
+    ${tab(inGroup ? activeTab : 'g1', 'Groups', 'home', inGroup)}
+    <button class="mob-nav-btn mob-nav-silo" id="siloBtnMob" type="button" aria-label="Record silo reading">
+      <span class="mob-nav-fab">${navIcon('silo')}</span>Silo reading
+    </button>
+    ${tab('predictions', 'Predict', 'chart', activeTab === 'predictions')}
+    <button class="mob-nav-btn${activeTab === 'history' ? ' active' : ''}" id="moreBtnMob" type="button" aria-haspopup="dialog">
+      <span class="mob-nav-pill">${navIcon('more')}${moreDot}</span>More
+    </button>
+  </div>`;
+}
+
+// Mobile "More" sheet — everything the sidebar offers that the bottom
+// nav doesn't, plus the header actions hidden on small screens.
+let moreSheetOpen = false;
+function openMoreSheet() { moreSheetOpen = true; renderMoreSheet(); }
+function closeMoreSheet() { moreSheetOpen = false; renderMoreSheet(); }
+function renderMoreSheet() {
+  const el = document.getElementById('moreSheet');
+  if (!el) return;
+  el.classList.toggle('open', moreSheetOpen);
+  el.setAttribute('aria-hidden', moreSheetOpen ? 'false' : 'true');
+  if (!moreSheetOpen) return;
+  const summary = farmLoadsSummary();
+  const isDark = document.body.classList.contains('theme-dark');
+  const row = (id, icon, label, sub, extra = '') => `<button type="button" class="more-row" id="${id}">
+      <span class="more-row-ic">${navIcon(icon)}</span>
+      <span class="more-row-text"><span class="more-row-label">${label}</span>${sub ? `<span class="more-row-sub">${sub}</span>` : ''}</span>${extra}
+    </button>`;
+  const syncLine = !syncFarmName ? 'Not connected'
+    : syncState === 'error' ? 'Sync error'
+    : syncLastSyncAt ? `Synced ${fmtRelativeTime(syncLastSyncAt)}` : 'Not yet synced';
+  el.innerHTML = `<div class="more-scrim" data-more-close></div>
+    <div class="more-panel" role="dialog" aria-modal="true" aria-label="More">
+      <div class="more-grip" aria-hidden="true"></div>
+      <div class="more-group">
+        ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
+        ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
+        ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
+        ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}
+      </div>
+      <div class="more-group">
+        ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
+        ${row('moreImport', 'download', 'Import Excel', 'Load shed data from a file')}
+        ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(syncFarmName) : 'Cloud sync', escapeHtml(syncLine))}
+      </div>
+      <div class="more-foot">
+        <div class="sb-theme-seg more-theme" role="group" aria-label="Theme">
+          <button type="button" class="sb-theme-opt${!isDark?' active':''}" data-theme-value="light" aria-pressed="${!isDark}">${navIcon('sun')}<span>Light</span></button>
+          <button type="button" class="sb-theme-opt${isDark?' active':''}" data-theme-value="dark" aria-pressed="${isDark}">${navIcon('moon')}<span>Dark</span></button>
+        </div>
+        <button type="button" class="more-settings" id="moreSettings">${navIcon('gear')}<span>Settings</span></button>
+      </div>
+    </div>`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -875,6 +926,7 @@ function render(){
     if(sbNav)sbNav.innerHTML=sidebarHtml();
     const mobNav=document.getElementById('mobileNav');
     if(mobNav)mobNav.innerHTML=mobileNavHtml();
+    if(moreSheetOpen)renderMoreSheet();
     renderSyncPill();
     renderSidebarBatch();
     updatePageHeader();
@@ -942,7 +994,8 @@ function groupViewHtml(g){
   const view=shedViewByGroup[g]||'planner';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
-  return `<div class="group-view-head" style="background:${grad}"><h1>Group ${g} <span>Sheds ${sheds.map(s=>s.id).join(' & ')}</span></h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}`;
+  const groupSwitch=`<div class="group-switch-mobile" role="tablist" aria-label="Group">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" data-tab="g${gi}" aria-selected="${gi===g}">G${gi}</button>`).join('')}</div>`;
+  return groupSwitch+`<div class="group-view-head" style="background:${grad}"><h1>Group ${g} <span>Sheds ${sheds.map(s=>s.id).join(' & ')}</span></h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';

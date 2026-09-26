@@ -1679,9 +1679,33 @@ function generateBatchReport(){
   setTimeout(restore,60000);
 }
 
+// Session state for the silo sheet: which silos were tapped since it
+// opened, and which groups had today's reading created by this session
+// (their untouched silos are still yesterday's values carried forward).
+let siloModalTouched={1:new Set(),2:new Set(),3:new Set(),4:new Set()};
+let siloModalCreatedToday={1:false,2:false,3:false,4:false};
+function siloReadToday(g){const latest=latestReading(g);return !!latest&&latest.date===iso(new Date());}
+function siloIsCarried(g,n){
+  if(!siloReadToday(g))return true;
+  return siloModalCreatedToday[g]&&!siloModalTouched[g].has(n);
+}
+function siloGroupStatusHtml(g){
+  const latest=latestReading(g);
+  if(!latest)return `<span class="sms-status none">No readings</span>`;
+  if(latest.date===iso(new Date())){
+    const carried=[1,2,3].filter(n=>siloIsCarried(g,n)).length;
+    return carried?`<span class="sms-status partial">${3-carried}/3 read</span>`:`<span class="sms-status done">✓ Today</span>`;
+  }
+  const days=daysBetween(dateOnly(latest.date),new Date());
+  return `<span class="sms-status stale">${days===1?'Yesterday':days+'d ago'}</span>`;
+}
 function openSiloModal(){
   closeSettingsDrawer();
-  siloModalOpenGroups={1:true,2:false,3:false,4:false};
+  siloModalTouched={1:new Set(),2:new Set(),3:new Set(),4:new Set()};
+  siloModalCreatedToday={1:false,2:false,3:false,4:false};
+  // Open the first group that still needs today's reading.
+  const next=[1,2,3,4].find(g=>!siloReadToday(g))||1;
+  siloModalOpenGroups={1:false,2:false,3:false,4:false};siloModalOpenGroups[next]=true;
   const m=document.getElementById('siloModal');
   if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
   renderSiloModalBody();
@@ -1698,6 +1722,29 @@ const SILO_GROUP_COLORS={
   3:'linear-gradient(135deg,#C9774A,#8F4A28)',
   4:'linear-gradient(135deg,#A89055,#6E5A32)'
 };
+function siloRowHtml(g,n){
+  const latest=latestReading(g);
+  const rings=latest?latest[`silo${n}Rings`]:null;
+  const isOff=(rings===null||rings===undefined||rings==='');
+  const kg=ringsToKg(rings);
+  const totalStr=isOff?'Off':(kg/1000).toFixed(2)+' t';
+  const carried=latest&&siloIsCarried(g,n);
+  // A carried value comes from the last reading before today.
+  const todayIso=iso(new Date());
+  const prior=readingsSorted(g).filter(r=>r.date<todayIso).pop();
+  const fromDate=prior?dateOnly(prior.date):null;
+  const fromLbl=carried&&fromDate?`<span class="sms-silo-from">from ${fromDate.getDate()} ${fromDate.toLocaleString('en',{month:'short'})}</span>`:(siloModalTouched[g].has(n)?'<span class="sms-silo-saved">✓ Saved</span>':'');
+  const ringBtns=[0,1,2,3,4,5].map(r=>
+    `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${(ringsToKg(r)/1000).toFixed(0)} tonnes"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${(ringsToKg(r)/1000).toFixed(0)}t</span></button>`
+  ).join('');
+  return `<div class="sms-silo-row${carried?' carried':''}" id="smsRow-${g}-${n}">
+    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${fromLbl}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></div>
+    <div class="sms-ring-group">
+      <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-pressed="${isOff}" aria-label="Silo ${n} off">Off</button>
+      ${ringBtns}
+    </div>
+  </div>`;
+}
 function renderSiloModalBody(){
   const body=document.getElementById('siloBody');if(!body)return;
   let grandTotalKg=0;
@@ -1705,71 +1752,67 @@ function renderSiloModalBody(){
     const latest=latestReading(g);
     const totalKg=latest?readingTotalKg(latest):0;
     grandTotalKg+=totalKg;
-    const shedIds=SILO_GROUP_SHEDS[g];
-    const shedsLabel=`Sheds ${shedIds.join(' & ')}`;
+    const shedsLabel=`Sheds ${SILO_GROUP_SHEDS[g].join(' & ')}`;
     const isOpen=siloModalOpenGroups[g]===true;
-    const silosHtml=[1,2,3].map(n=>{
-      const rings=latest?latest[`silo${n}Rings`]:null;
-      const isOff=(rings===null||rings===undefined||rings==='');
-      const kg=ringsToKg(rings);
-      const totalStr=isOff?'Off':(kg/1000).toFixed(2)+' t';
-      const ringBtns=[0,1,2,3,4,5].map(r=>
-        `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-label="Silo ${n} at ${r} rings, ${(ringsToKg(r)/1000).toFixed(0)} tonnes">${r}</button>`
-      ).join('');
-      return `<div class="sms-silo-row">
-        <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span><span class="sms-silo-total${isOff?' off':''}" id="smsTotal-${g}-${n}">${totalStr}</span></div>
-        <div class="sms-ring-group" id="smsRings-${g}-${n}">
-          <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-label="Silo ${n} off">Off</button>
-          ${ringBtns}
-        </div>
-      </div>`;
-    }).join('');
+    const silosHtml=[1,2,3].map(n=>siloRowHtml(g,n)).join('');
+    const nextBtn=g<4
+      ?`<button type="button" class="sms-next-btn" data-sms-next="${g+1}">Next: Group ${g+1} →</button>`
+      :`<button type="button" class="sms-next-btn" data-sms-finish>Finish</button>`;
     return `<div class="sms-group-section${isOpen?' open':''}" data-sms-section="${g}">
       <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle Group ${g}">
         <span class="sms-group-caret" aria-hidden="true">▶</span>
-        <span class="sms-group-name">Group ${g}</span>
-        <span class="sms-group-sub">${shedsLabel}</span>
+        <span class="sms-group-titles"><span class="sms-group-name">Group ${g}</span><span class="sms-group-sub">${shedsLabel}</span></span>
+        <span class="sms-status-wrap" id="smsStatus-${g}">${siloGroupStatusHtml(g)}</span>
         <span class="sms-group-total" id="smsGroupTotal-${g}">${(totalKg/1000).toFixed(2)} t</span>
       </div>
-      <div class="sms-group-body">${silosHtml}</div>
+      <div class="sms-group-body"><div id="smsSilos-${g}" class="sms-silos">${silosHtml}</div>${nextBtn}</div>
     </div>`;
   }).join('');
   body.innerHTML=`<div class="sms-date-bar">
       <div class="sms-date-main"><span class="sms-date-label">Recording for</span><span class="sms-date-value">${fmtShort(new Date())}</span></div>
-      <span class="sms-date-hint">Tap a group to expand · tap a ring to save</span>
+      <span class="sms-date-hint">Tap the ring level for each silo · saves instantly</span>
     </div>
     ${groupsHtml}
-    <div class="sms-grand-total"><span class="sms-gt-label">Grand total across all groups</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
+    <div class="sms-grand-total"><span class="sms-gt-label">Total feed on hand</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
     <div class="sms-actions"><button type="button" class="sms-done-btn" id="siloModalDone">✓ Done</button></div>`;
-  body.querySelectorAll('[data-sms-ring]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const g=Number(btn.dataset.smsGroup);
-      const n=Number(btn.dataset.smsSilo);
-      const raw=btn.dataset.smsRing;
+  if(body.dataset.bound)return;
+  body.dataset.bound='1';
+  // Delegated so re-rendered rows keep working.
+  body.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-sms-ring]');
+    if(btn){
+      const g=Number(btn.dataset.smsGroup),n=Number(btn.dataset.smsSilo),raw=btn.dataset.smsRing;
       if(raw==='off')setSiloRingFromModal(g,n,null);
       else{
         const r=Number(raw);
         const latest=latestReading(g);
         const current=latest?latest[`silo${n}Rings`]:null;
-        if(current===r)setSiloRingFromModal(g,n,null);
+        // Tapping the already-lit level on a silo that was read this
+        // session turns it off; on a carried-forward value it confirms it.
+        if(current===r&&!siloIsCarried(g,n))setSiloRingFromModal(g,n,null);
         else setSiloRingFromModal(g,n,r);
       }
-    });
+      return;
+    }
+    const tog=e.target.closest('[data-sms-toggle]');
+    if(tog){toggleSiloGroup(Number(tog.dataset.smsToggle));return;}
+    const nx=e.target.closest('[data-sms-next]');
+    if(nx){const g=Number(nx.dataset.smsNext);[1,2,3,4].forEach(x=>toggleSiloGroup(x,x===g));body.querySelector(`[data-sms-section="${g}"]`)?.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    if(e.target.closest('[data-sms-finish]')||e.target.closest('#siloModalDone')){closeSiloModal();return;}
   });
-  body.querySelectorAll('[data-sms-toggle]').forEach(el=>{
-    const toggle=()=>{
-      const g=Number(el.dataset.smsToggle);
-      if(!Number.isFinite(g))return;
-      siloModalOpenGroups[g]=!siloModalOpenGroups[g];
-      const section=body.querySelector(`[data-sms-section="${g}"]`);
-      if(section)section.classList.toggle('open',siloModalOpenGroups[g]);
-      el.setAttribute('aria-expanded',siloModalOpenGroups[g]?'true':'false');
-    };
-    el.addEventListener('click',toggle);
-    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+  body.addEventListener('keydown',e=>{
+    const tog=e.target.closest('[data-sms-toggle]');
+    if(tog&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggleSiloGroup(Number(tog.dataset.smsToggle));}
   });
-  const doneBtn=document.getElementById('siloModalDone');
-  if(doneBtn)doneBtn.addEventListener('click',closeSiloModal);
+}
+function toggleSiloGroup(g,force){
+  if(!Number.isFinite(g))return;
+  siloModalOpenGroups[g]=force===undefined?!siloModalOpenGroups[g]:force;
+  const body=document.getElementById('siloBody');if(!body)return;
+  const section=body.querySelector(`[data-sms-section="${g}"]`);
+  if(section)section.classList.toggle('open',siloModalOpenGroups[g]);
+  const head=body.querySelector(`[data-sms-toggle="${g}"]`);
+  if(head)head.setAttribute('aria-expanded',siloModalOpenGroups[g]?'true':'false');
 }
 function setSiloRingFromModal(group,siloNum,rings){
   if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
@@ -1781,23 +1824,17 @@ function setSiloRingFromModal(group,siloNum,rings){
     reading={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null};
     s.readings.push(reading);
     s.readings.sort((a,b)=>a.date.localeCompare(b.date));
+    siloModalCreatedToday[group]=true;
   }
-  const normalized=(rings===null)?null:normalizeRing(rings);
-  reading[`silo${siloNum}Rings`]=normalized;
+  reading[`silo${siloNum}Rings`]=(rings===null)?null:normalizeRing(rings);
+  siloModalTouched[group].add(siloNum);
   saveSiloData();schedulePush();
-  const ringGroup=document.getElementById(`smsRings-${group}-${siloNum}`);
-  if(ringGroup){
-    ringGroup.querySelectorAll('.sms-ring-btn').forEach(btn=>{
-      const raw=btn.dataset.smsRing;
-      if(raw==='off')btn.classList.toggle('active',normalized===null);
-      else btn.classList.toggle('active',Number(raw)===normalized);
-    });
-  }
-  const totalEl=document.getElementById(`smsTotal-${group}-${siloNum}`);
-  if(totalEl){
-    if(normalized===null){totalEl.textContent='Off';totalEl.classList.add('off');}
-    else{totalEl.textContent=(ringsToKg(normalized)/1000).toFixed(2)+' t';totalEl.classList.remove('off');}
-  }
+  try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
+  // Refresh just this group's rows, status and totals.
+  const silos=document.getElementById(`smsSilos-${group}`);
+  if(silos)silos.innerHTML=[1,2,3].map(n=>siloRowHtml(group,n)).join('');
+  const st=document.getElementById(`smsStatus-${group}`);
+  if(st)st.innerHTML=siloGroupStatusHtml(group);
   const gTotalEl=document.getElementById(`smsGroupTotal-${group}`);
   if(gTotalEl){
     const latest=latestReading(group);
