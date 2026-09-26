@@ -43,6 +43,11 @@ function applyCloudPayload(payload,options){
   if(prefs.siloRange&&typeof prefs.siloRange==='object'){const s=Number(prefs.siloRange.start),e=Number(prefs.siloRange.end);if(Number.isFinite(s)&&Number.isFinite(e)&&s<=e){siloRange={start:s,end:e};}}
   if(prefs.theme==='dark'||prefs.theme==='light'){applyTheme(prefs.theme);saveTheme(prefs.theme);}
   if(typeof prefs.deliveriesOpen==='boolean')predState.deliveriesOpen=prefs.deliveriesOpen;
+  if(prefs.notifPrefs&&typeof prefs.notifPrefs==='object'){
+    if(typeof prefs.notifPrefs.shedPerformance==='boolean')notifPrefs.shedPerformance=prefs.notifPrefs.shedPerformance;
+    if(typeof prefs.notifPrefs.feedBalance==='boolean')notifPrefs.feedBalance=prefs.notifPrefs.feedBalance;
+    saveNotifPrefs();
+  }
   syncExcelMeta=newExcelMeta;
   const newUploadedAt=newExcelMeta&&newExcelMeta.uploadedAt;
   if(!options.isFirstPull&&oldExcelUploadedAt&&newUploadedAt&&oldExcelUploadedAt!==newUploadedAt){showToast('📄 Excel updated on another device — re-import to load it.',true);}
