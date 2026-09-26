@@ -572,9 +572,26 @@ function openPredictedPickupModal(shedId,editId){
     const pp=(shed.predictedPickups||[]).find(x=>x.id===editId);if(!pp)return;
     predictedPickupState={shedId,mode:'edit',editId,dateIso:iso(pp.date),birds:pp.birds,isFinal:!!pp.isFinal,userEditedBirds:true};
   }else{
-    if((shed.predictedPickups||[]).length>=MAX_PREDICTED_PICKUPS){showToast(`Maximum ${MAX_PREDICTED_PICKUPS} predicted pickups per shed.`,true);return;}
+    // Strict target enforcement — real + predicted must not exceed target.
+    const realCount=(shed.pickups||[]).length;
+    const predictedCount=(shed.predictedPickups||[]).length;
+    const targetN=ds.targetPickups;
+    if(realCount+predictedCount>=targetN){
+      showToast(`This shed already has its target of ${targetN} pickups (${realCount} real + ${predictedCount} planned).`,true);
+      return;
+    }
     let defaultDate=addDays(new Date(),7);
-    if(shed.placementDate){let cursor=addDays(new Date(),1);const maxDate=cleanout||addDays(new Date(),40);while(cursor<=maxDate){const info=densityOnDate(shed,cursor);if(info.density>=ds.triggerDensity){defaultDate=cursor;break;}cursor=addDays(cursor,1);}}
+    if(shed.placementDate){
+      let cursor=addDays(new Date(),1);
+      const maxDate=cleanout||addDays(new Date(),40);
+      while(cursor<=maxDate){
+        const info=densityOnDate(shed,cursor);
+        if(info.density>=ds.triggerDensity){defaultDate=cursor;break;}
+        cursor=addDays(cursor,1);
+      }
+      // If the found date lands on a blocked day, push forward
+      defaultDate=nextAllowedPickupDate(defaultDate);
+    }
     predictedPickupState={shedId,mode:'add',editId:null,dateIso:iso(defaultDate),birds:null,isFinal:false,userEditedBirds:false};
   }
   renderPredictedPickupModal();
