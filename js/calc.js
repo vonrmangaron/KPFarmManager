@@ -134,26 +134,41 @@ function computeLiveBirdsBefore(shed,dateObj,extraPredicted){
   while(cursor<=lastWalkDay){live=live*(1-rate);live=Math.max(0,live-sumPickupsOn(cursor));live=Math.round(live);cursor=addDays(cursor,1);}
   return Math.max(0,live);
 }
+// Auto-fill now produces EXACTLY (targetN − realCount) predicted pickups.
+// The target is a hard contract — if the density model can't produce enough
+// natural trigger days, the remaining slots are evenly spaced across the
+// window between the last density pickup and (cleanout − 2 days). The final
+// cleanout pickup is always emitted on the cleanout date.
 function autoFillPredictedPickups(shed){
   if(!shed||!shed.placementDate)return [];
-  const ds=getShedDensitySettings(shed);const trigger=ds.triggerDensity;const targetN=ds.targetPickups;
-  const realPickups=shed.pickups||[];const hasRealFinal=realPickups.some(p=>p.isFinal);if(hasRealFinal)return [];
-  const realCount=realPickups.length;const needed=targetN-realCount;if(needed<=0)return [];
+  const ds=getShedDensitySettings(shed);
+  const trigger=ds.triggerDensity;
+  const targetN=ds.targetPickups;
+  const realPickups=shed.pickups||[];
+  if(realPickups.some(p=>p.isFinal))return [];
+  const realCount=realPickups.length;
+  const needed=targetN-realCount;
+  if(needed<=0)return [];
+
   const regularNeeded=Math.max(0,needed-1);
-  const result=[];const tempShed={...shed,predictedPickups:[]};const today=dateOnly(new Date());
+  const result=[];
+  const tempShed={...shed,predictedPickups:[]};
+  const today=dateOnly(new Date());
   const cleanout=shed.cleanoutDate?dateOnly(shed.cleanoutDate):addDays(today,50);
   if(cleanout<=today)return [];
+  const maxDay=addDays(cleanout,-2);
+
+  // ── Phase 1: density-triggered regulars ──
   if(regularNeeded>0){
-    let searchStart=addDays(today,1);let safety=0;const maxDay=addDays(cleanout,-2);
-    while(result.length<regularNeeded&&safety<30){
+    let searchStart=addDays(today,1);
+    let safety=0;
+    while(result.length<regularNeeded&&safety<40){
       safety++;
       let foundDate=null;
       let cursor=searchStart;
       while(cursor<=maxDay){
         const info=densityOnDate(tempShed,cursor,result);
         if(info.density>=trigger){
-          // Trigger date hit — but if it lands on a blocked day, push forward
-          // to the next allowed pickup day.
           const allowed=nextAllowedPickupDate(cursor);
           if(allowed>maxDay)break;
           foundDate=allowed;
@@ -163,13 +178,38 @@ function autoFillPredictedPickups(shed){
       }
       if(!foundDate)break;
       const rec=recommendPickupForDate(tempShed,iso(foundDate),{extraPredicted:result});
-      if(!rec||rec.recommendedRemove<500)break;
-      result.push({id:uid('pp'),date:foundDate,birds:rec.recommendedRemove,isFinal:false});
+      const remove=(rec&&rec.recommendedRemove>0)?rec.recommendedRemove:0;
+      result.push({id:uid('pp'),date:foundDate,birds:remove,isFinal:false});
       searchStart=addDays(foundDate,3);
     }
+
+    // ── Phase 2: strict fill — evenly space any remaining slots ──
+    const remaining=regularNeeded-result.length;
+    if(remaining>0){
+      const lastUsed=result.length?dateOnly(result[result.length-1].date):today;
+      const start=addDays(lastUsed,2);
+      if(start<=maxDay){
+        const totalDays=Math.max(1,daysBetween(start,maxDay));
+        const step=totalDays/(remaining+1);
+        for(let i=1;i<=remaining;i++){
+          let slot=addDays(start,Math.round(i*step));
+          if(slot>maxDay)slot=maxDay;
+          slot=nextAllowedPickupDate(slot);
+          if(slot>maxDay)continue;
+          // Avoid clashing with an already-placed pickup
+          if(result.some(x=>iso(x.date)===iso(slot)))continue;
+          const rec=recommendPickupForDate(tempShed,iso(slot),{extraPredicted:result});
+          const remove=(rec&&rec.recommendedRemove>0)?rec.recommendedRemove:0;
+          result.push({id:uid('pp'),date:slot,birds:remove,isFinal:false});
+        }
+        result.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+      }
+    }
   }
+
+  // ── Phase 3: final cleanout — always emitted ──
   const finalBirds=computeLiveBirdsBefore(shed,cleanout,result);
-  if(finalBirds>0)result.push({id:uid('pp'),date:cleanout,birds:finalBirds,isFinal:true});
+  result.push({id:uid('pp'),date:cleanout,birds:Math.max(0,Math.floor(finalBirds)),isFinal:true});
   return result;
 }
 function reconcilePredictedPickups(shed){
