@@ -730,6 +730,12 @@ function renderDashboardView() {
     ? (farmLivability * avgAlw) / (batchAge * fcrTodayVal) * 100
     : 0;
 
+  // Predicted end-of-batch FCR / cFCR from the Predictions page, for
+  // side-by-side comparison with today's figures.
+  const farmTotals = computeFarmTotals();
+  const harvestFcrHtml = farmTotals.hasData && farmTotals.fcr > 0
+    ? `<span class="dash-kpi-compare" title="Projected at the final pickup (Predictions page), at ${farmTotals.avgWeight.toFixed(2)} kg average weight."><span class="dkc-k">At harvest (est.)</span><span class="dkc-v">FCR <b>${farmTotals.fcr.toFixed(2)}</b> · cFCR <b>${farmTotals.cfcr.toFixed(2)}</b></span></span>`
+    : '';
   const estChip = anyEstimated ? '<span class="est-chip" title="Some shed weights are estimates — projected from the last pickup weighing or from the growth curve fitted to in-yard samples.">est</span>' : '';
   const fcrDisplay  = fcrTodayVal > 0  ? fcrTodayVal.toFixed(2)  : '—';
   const cFcrDisplay = cFcrVal > 0      ? cFcrVal.toFixed(2)       : '—';
@@ -845,8 +851,9 @@ function renderDashboardView() {
     <div class="dash-kpi dash-kpi-green">
       <span class="dash-kpi-icon">${dashKpiIcon('fcr')}</span>
       <span class="dash-kpi-label">FCR today${estChip}</span>
-      <span class="dash-kpi-value">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
-      <span class="dash-kpi-sub">EPEF today ${epefDisplay}</span>
+      <span class="dash-kpi-value" title="cFCR corrects FCR to a 2.45 kg reference weight: FCR − (avg weight − 2.45) × β. Birds lighter than 2.45 kg get a cFCR above FCR.">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
+      <span class="dash-kpi-sub" title="European Production Efficiency Factor: livability % × avg weight (kg) ÷ (age in days × FCR) × 100. Higher is better.">EPEF today ${epefDisplay}</span>
+      ${harvestFcrHtml}
     </div>
     <div class="dash-kpi dash-kpi-red">
       <span class="dash-kpi-icon">${dashKpiIcon('mortality')}</span>
@@ -1248,7 +1255,19 @@ function computePredictions(shed,group){
   totalWeightKg+=finalLiveBirds*estFinalALW;
   let totalFeedKg=0;
   if(shed.placementDate&&shed.cleanoutDate){let d=dateOnly(shed.placementDate);const end=dateOnly(shed.cleanoutDate);while(d<=end){totalFeedKg+=shedFeedOn(shed,d);d=addDays(d,1);}}
-  else if(shed.placementDate){let d=dateOnly(shed.placementDate);const end=dateOnly(new Date());while(d<=end){totalFeedKg+=shedFeedOn(shed,d);d=addDays(d,1);}}
+  // No clean-out date yet: project feed to the same horizon the weight uses
+  // (final age), not just to today — otherwise today's feed gets divided
+  // by the projected harvest weight. Feed stops by itself once pickups
+  // have taken every bird (liveAtStartOfDay → 0).
+  else if(shed.placementDate){
+    // Horizon: the age birds reach the estimated harvest weight (never
+    // before the last planned pickup, never past finalAge).
+    const wAt=a=>{const g=fit?gompertzWeightAt(fit,a):null;return g!=null?g:rossWeightKg(a)*perfFactor;};
+    let horizon=currentAge;while(horizon<finalAge&&wAt(horizon)<estFinalALW)horizon++;
+    const lastPickupAge=pickups.length?pickupAge(shed,pickups[pickups.length-1]):0;
+    horizon=Math.min(finalAge,Math.max(horizon,lastPickupAge));
+    let d=dateOnly(shed.placementDate);const end=addDays(dateOnly(shed.placementDate),horizon);while(d<=end){totalFeedKg+=shedFeedOn(shed,d);d=addDays(d,1);}
+  }
   const fcr=totalWeightKg>0?(totalFeedKg/totalWeightKg):0;
   const cfcr=fcr-(estFinalALW-2.45)*beta;
   const pif=(finalAge>0&&fcr>0)?((estLivability*estFinalALW)/(finalAge*fcr)*100):0;
