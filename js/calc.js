@@ -145,7 +145,28 @@ function autoFillPredictedPickups(shed){
   if(cleanout<=today)return [];
   if(regularNeeded>0){
     let searchStart=addDays(today,1);let safety=0;const maxDay=addDays(cleanout,-2);
-    while(result.length<regularNeeded&&safety<30){safety++;let foundDate=null;let cursor=searchStart;while(cursor<=maxDay){const info=densityOnDate(tempShed,cursor,result);if(info.density>=trigger){foundDate=cursor;break;}cursor=addDays(cursor,1);}if(!foundDate)break;const rec=recommendPickupForDate(tempShed,iso(foundDate),{extraPredicted:result});if(!rec||rec.recommendedRemove<500)break;result.push({id:uid('pp'),date:foundDate,birds:rec.recommendedRemove,isFinal:false});searchStart=addDays(foundDate,3);}
+    while(result.length<regularNeeded&&safety<30){
+      safety++;
+      let foundDate=null;
+      let cursor=searchStart;
+      while(cursor<=maxDay){
+        const info=densityOnDate(tempShed,cursor,result);
+        if(info.density>=trigger){
+          // Trigger date hit — but if it lands on a blocked day, push forward
+          // to the next allowed pickup day.
+          const allowed=nextAllowedPickupDate(cursor);
+          if(allowed>maxDay)break;
+          foundDate=allowed;
+          break;
+        }
+        cursor=addDays(cursor,1);
+      }
+      if(!foundDate)break;
+      const rec=recommendPickupForDate(tempShed,iso(foundDate),{extraPredicted:result});
+      if(!rec||rec.recommendedRemove<500)break;
+      result.push({id:uid('pp'),date:foundDate,birds:rec.recommendedRemove,isFinal:false});
+      searchStart=addDays(foundDate,3);
+    }
   }
   const finalBirds=computeLiveBirdsBefore(shed,cleanout,result);
   if(finalBirds>0)result.push({id:uid('pp'),date:cleanout,birds:finalBirds,isFinal:true});
