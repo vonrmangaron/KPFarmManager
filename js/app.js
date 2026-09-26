@@ -96,6 +96,35 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-global-autofill]')){autoFillAllSheds();return;}
     if(e.target.closest('[data-global-clear-pickups]')){clearAllPredictedPickups();return;}
 
+    const npdBtn=e.target.closest('[data-npd]');
+    if(npdBtn){
+      const d=Number(npdBtn.dataset.npd);
+      if(Number.isInteger(d)&&d>=0&&d<=6){
+        const cur=predState.noPickupDays||[];
+        if(cur.includes(d))predState.noPickupDays=cur.filter(x=>x!==d);
+        else predState.noPickupDays=[...cur,d].sort((a,b)=>a-b);
+        savePredState();schedulePush();render();
+      }
+      return;
+    }
+
+    if(e.target.closest('[data-replan-blocked]')){
+      if(!farmData){showToast('Import Excel first.',true);return;}
+      if(!confirm('Delete all predicted pickups and re-run auto-fill respecting the blocked days?\n\nYour actual pickups are not affected.'))return;
+      let regularTotal=0,finalTotal=0,shedsTouched=0;
+      farmData.sheds.forEach(s=>{
+        if(!s.placementDate)return;
+        const generated=autoFillPredictedPickups(s);
+        s.predictedPickups=generated;
+        regularTotal+=generated.filter(g=>!g.isFinal).length;
+        finalTotal+=generated.filter(g=>g.isFinal).length;
+        if(generated.length>0)shedsTouched++;
+      });
+      saveState();schedulePush();render();
+      showToast(`✨ Re-planned: ${regularTotal} regular + ${finalTotal} cleanout pickup${(regularTotal+finalTotal)===1?'':'s'} across ${shedsTouched} shed${shedsTouched===1?'':'s'}.`);
+      return;
+    }
+
     const deleteReadingBtn=e.target.closest('[data-delete-reading]');
     if(deleteReadingBtn){e.stopPropagation();const parts=deleteReadingBtn.dataset.deleteReading.split('|');deleteSiloReading(Number(parts[0]),parts[1]);return;}
 
