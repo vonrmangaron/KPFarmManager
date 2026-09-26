@@ -1452,6 +1452,7 @@ function buildBatchReportHTML(){
     <div class="rpt-brand">ProdWise.VM — Batch Report</div>
     <div class="rpt-meta">Batch ${escapeHtml(batchLabel)} · Farm ${escapeHtml(farmLabel)}</div>
     <div class="rpt-meta">Generated ${escapeHtml(dateStr)}</div>
+    ${(()=>{const n=predState.noPickupDays||[];if(!n.length)return '';const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];return `<div class="rpt-meta">No-pickup days: ${n.map(d=>dn[d]).join(', ')}</div>`;})()}
   </div>`;
 
   /* Whole Farm KPIs */
