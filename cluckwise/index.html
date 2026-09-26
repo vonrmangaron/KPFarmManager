@@ -2162,6 +2162,9 @@
   function loadCollapsedKanbanCols(){ try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }catch(e){ return []; } }
   function saveCollapsedKanbanCols(){ try{ localStorage.setItem('prodplan-collapsed-kanban-days', JSON.stringify([...collapsedKanbanCols])); }catch(e){} }
   let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
+  let openingViewApplied = false;
+  let hiddenAt = 0;
+  const RESUME_RESET_MS = 30 * 60 * 1000;   // back after this long counts as reopening the app
   let agendaFilter = 'today';
   let agendaDate = null;   // day shown by the List "Today/Day" tab (null = today)
   let sortables = [];
@@ -2790,15 +2793,18 @@
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       settings.calendarDensity = normalizeDensity(settings.calendarDensity);
       frequentTemplates = parsed.frequentTemplates || [];
-      let sessionViewMode = null;
-      try{ sessionViewMode = sessionStorage.getItem('prodplan-session-viewmode'); }catch(e){}
-      if(sessionViewMode && ['month','year','list','kanban','day'].includes(sessionViewMode)){ viewMode = sessionViewMode; }
-      else if(settings.defaultView==='auto-board'){ viewMode = window.innerWidth <= 1024 ? 'list' : 'kanban'; }
-      else if(settings.defaultView && settings.defaultView!=='auto'){ viewMode = settings.defaultView; }
-      else { viewMode = window.innerWidth <= 1024 ? 'list' : 'month'; }
+      // Opening view applies once per launch; later syncs must not move the user off their current view.
+      if(!openingViewApplied){ viewMode = openingViewMode(); openingViewApplied = true; syncViewButtons(); }
       migrateTaskOrder();
       applySettings(); updateBatchColorDefault(); updateEventColorDefault(); renderAll();
     }catch(e){ showToast('Could not read that synced data.', true); }
+  }
+
+  function openingViewMode(){
+    const v = settings.defaultView;
+    if(v === 'auto-board') return window.innerWidth <= 1024 ? 'list' : 'kanban';
+    if(['month','day','list','kanban'].includes(v)) return v;
+    return window.innerWidth <= 1024 ? 'list' : 'month';
   }
 
   function addHistory(action, detail){
@@ -5736,7 +5742,6 @@
     $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
     $('#navMonthBtn').classList.toggle('active', isCalendar);
     updateViewDropdown();
-    try{ sessionStorage.setItem('prodplan-session-viewmode', viewMode); }catch(e){}
   }
 
   function beginDragNoSelect(){
@@ -7452,8 +7457,13 @@
     else if(viewMode==='day') renderDay();
   });
   document.addEventListener('visibilitychange', async ()=>{
-    if(document.visibilityState === 'hidden'){ flushPendingPush(); flushPendingReportsPush(); }
+    if(document.visibilityState === 'hidden'){ hiddenAt = Date.now(); flushPendingPush(); flushPendingReportsPush(); }
     else if(document.visibilityState === 'visible'){
+      if(hiddenAt && Date.now() - hiddenAt >= RESUME_RESET_MS && openingViewApplied){
+        const v = openingViewMode();
+        if(v !== viewMode){ viewMode = v; syncViewButtons(); renderAll(); }
+      }
+      hiddenAt = 0;
       refreshWeather(false);
       if(ghPath){
         if(pushPending){ await runScheduledPush(); }
