@@ -29,15 +29,20 @@ let manualPickupState=null,sampleState=null,predictedPickupState=null,pendingImp
 let gompertzCache=new Map(),settingsDrawerOpen=false,pendingNewBatchClean='',pendingNewBatchDownload=true;
 let notifPrefs={shedPerformance:true,feedBalance:true};
 
+// Display name for a group (a pair of sheds sharing one silo bank).
+// Groups are named by their sheds: group 2 → "Sheds 3–4".
+function pairShort(g){return `${2*g-1}–${2*g}`;}
+function pairLabel(g){return `Sheds ${pairShort(g)}`;}
+
 // Sidebar navigation definition — used by sidebarHtml() in render.js
 const NAV_ITEMS = [
   { section: 'OVERVIEW' },
   { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
-  { section: 'GROUPS' },
-  { id: 'g1', label: 'Group 1', icon: 'home', badge: true },
-  { id: 'g2', label: 'Group 2', icon: 'home', badge: true },
-  { id: 'g3', label: 'Group 3', icon: 'home', badge: true },
-  { id: 'g4', label: 'Group 4', icon: 'home', badge: true },
+  { section: 'SHEDS' },
+  { id: 'g1', label: pairLabel(1), icon: 'home', badge: true },
+  { id: 'g2', label: pairLabel(2), icon: 'home', badge: true },
+  { id: 'g3', label: pairLabel(3), icon: 'home', badge: true },
+  { id: 'g4', label: pairLabel(4), icon: 'home', badge: true },
   { section: 'REPORTS' },
   { id: 'predictions', label: 'Predictions', icon: 'chart' },
   { section: 'TOOLS' },

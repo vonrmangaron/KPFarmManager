@@ -319,9 +319,7 @@ function sidebarHtml() {
       const open = isActive && sbPredOpen;
       const subnav = [1,2,3,4].map(gi => {
         const subActive = isActive && predState.predGroup === gi;
-        const ids = shedsForGroup(gi).map(s => s.id);
-        const shedTxt = ids.length ? `Sheds ${ids.join('–')}` : '';
-        return `<button class="sb-sub-link${subActive?' active':''}" data-predgroup="${gi}" type="button"${subActive?' aria-current="page"':''}>Group ${gi}<span class="sb-sub-meta">${shedTxt}</span></button>`;
+        return `<button class="sb-sub-link${subActive?' active':''}" data-predgroup="${gi}" type="button"${subActive?' aria-current="page"':''}>${pairLabel(gi)}</button>`;
       }).join('');
       return `<button class="sb-link${isActive?' active':''}" data-sb-pred type="button" aria-expanded="${open}"${isActive?' aria-current="page"':''}>
         ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span><span class="sb-link-meta">${chev}</span>
@@ -358,7 +356,7 @@ function mobileNavHtml() {
   const moreDot = summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : '';
   return `<div class="mob-nav-inner">
     ${tab('dashboard', 'Home', 'grid', activeTab === 'dashboard')}
-    ${tab(inGroup ? activeTab : 'g1', 'Groups', 'home', inGroup)}
+    ${tab(inGroup ? activeTab : 'g1', 'Sheds', 'home', inGroup)}
     <button class="mob-nav-btn mob-nav-silo" id="siloBtnMob" type="button" aria-label="Record silo reading">
       <span class="mob-nav-fab">${navIcon('silo')}</span>Silo reading
     </button>
@@ -444,13 +442,13 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { dashboard:'Dashboard', g1:'Group 1', g2:'Group 2', g3:'Group 3', g4:'Group 4', predictions:'Predictions' };
+  const tabLabels = { dashboard:'Dashboard', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   if (subEl) {
     if (farmData) {
       const batch = predState.batchNumber || farmData.batchNumber || '';
       const farm  = syncFarmName ? `${syncFarmName} · ` : '';
-      subEl.textContent = `${farm}${batch ? 'Batch ' + batch + ' · ' : ''}${SHED_COUNT} sheds across 4 groups`;
+      subEl.textContent = `${farm}${batch ? 'Batch ' + batch + ' · ' : ''}${SHED_COUNT} sheds in 4 pairs`;
     } else {
       subEl.textContent = '';
     }
@@ -552,7 +550,7 @@ function computeFarmAlerts() {
       if (!forecast.depletedDate) return;
       const days = Math.max(0, daysBetween(today, forecast.depletedDate));
       if (days < 3) {
-        alerts.push({ kind: days < 1.5 ? 'error' : 'warn', msg: `<strong>Group ${g} silos</strong> — ${days} day${days===1?'':'s'} of feed remaining`, tab: 'g'+g, feedGroup: g });
+        alerts.push({ kind: days < 1.5 ? 'error' : 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — ${days} day${days===1?'':'s'} of feed remaining`, tab: 'g'+g, feedGroup: g });
       } else if (days <= 8) {
         // Not urgent by day-count alone, but if the depletion date itself
         // lands on a weekend, an emergency delivery is much harder to get —
@@ -560,7 +558,7 @@ function computeFarmAlerts() {
         const dow = forecast.depletedDate.getDay();
         if (dow === 0 || dow === 6) {
           const dayName = dow === 0 ? 'Sunday' : 'Saturday';
-          alerts.push({ kind: 'warn', msg: `<strong>Group ${g} silos</strong> — feed runs out ${dayName} (${days} day${days===1?'':'s'}), a weekend`, tab: 'g'+g, feedGroup: g });
+          alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — feed runs out ${dayName} (${days} day${days===1?'':'s'}), a weekend`, tab: 'g'+g, feedGroup: g });
         }
       }
     });
@@ -612,7 +610,7 @@ function renderGroupStatusGrid() {
     const placed = sheds.filter(s => s.placementDate);
     if (!placed.length) {
       return `<div class="dash-gs-tile dash-gs-empty">
-        <div class="dash-gs-head"><span class="dash-gs-name">Group ${g}</span><span class="dash-gs-sub">Sheds ${sheds.map(s=>s.id).join(' & ')}</span></div>
+        <div class="dash-gs-head"><span class="dash-gs-name">${pairLabel(g)}</span></div>
         <p class="dash-gs-empty-msg">Not placed yet</p>
       </div>`;
     }
@@ -648,7 +646,7 @@ function renderGroupStatusGrid() {
     const cleanIn = cleanouts.length ? Math.max(0, daysBetween(today, new Date(Math.min(...cleanouts)))) : null;
 
     return `<button class="dash-gs-tile" data-tab="g${g}" type="button">
-      <div class="dash-gs-head"><span class="dash-gs-name">Group ${g}</span><span class="dash-gs-sub">Sheds ${sheds.map(s=>s.id).join(' & ')}</span></div>
+      <div class="dash-gs-head"><span class="dash-gs-name">${pairLabel(g)}</span></div>
       <div class="dash-gs-row"><span class="dash-gs-lbl">Age</span><span class="dash-gs-val">D${age}</span></div>
       <div class="dash-gs-row"><span class="dash-gs-lbl">Live birds</span><span class="dash-gs-val">${live > 0 ? live.toLocaleString() : '—'}</span></div>
       <div class="dash-gs-row"><span class="dash-gs-lbl">Avg weight</span><span class="dash-gs-val">${avgWeight != null ? avgWeight.toFixed(2)+' kg' : '—'}</span></div>
@@ -658,7 +656,7 @@ function renderGroupStatusGrid() {
     </button>`;
   }).join('');
   return `<div class="dash-card">
-    <div class="dash-card-head"><h2 class="dash-card-title">Group status</h2></div>
+    <div class="dash-card-head"><h2 class="dash-card-title">Shed status</h2></div>
     <div class="dash-gs-grid">${tiles}</div>
   </div>`;
 }
@@ -764,7 +762,7 @@ function renderDashboardView() {
       </div>
       <div class="dash-pickup-info">
         <span class="dash-pickup-kind dash-delivery-kind-${typeCls}">${escapeHtml(feedTypeLabel(l.feedType)).toUpperCase()}</span>
-        <span class="dash-pickup-sheds">${groups.length ? `Group${groups.length > 1 ? 's' : ''} ${groups.join(' &amp; ')}` : 'Unassigned'}</span>
+        <span class="dash-pickup-sheds">${groups.length ? `Sheds ${groups.map(pairShort).join(' &amp; ')}` : 'Unassigned'}</span>
         <span class="dash-pickup-detail">${(totalKg/1000).toFixed(2)} t${splitText}${l.note ? ' · ' + escapeHtml(l.note) : ''}</span>
       </div>
     </div>`;
@@ -810,7 +808,7 @@ function renderDashboardView() {
     const label= days != null ? days.toFixed(1)+' days' : '—';
     return `<div class="dash-silo-item">
       <div class="dash-silo-row">
-        <span class="dash-silo-name">Group ${g}</span>
+        <span class="dash-silo-name">${pairLabel(g)}</span>
         <span class="dash-silo-days ${cls}">${label}</span>
       </div>
       <div class="dash-silo-bar"><div class="dash-silo-fill ${cls}" style="width:${pct}%"></div></div>
@@ -840,7 +838,7 @@ function renderDashboardView() {
       <span class="dash-kpi-value">${ageStr}</span>
       <span class="dash-kpi-sub">${cleanStr || 'No clean-out date set'}</span>
       <div class="dash-kpi-progress"><div class="dash-kpi-progress-fill" style="width:${batchPct}%"></div></div>
-      <button class="dash-kpi-link" data-tab="g1" type="button">Open Group 1</button>
+      <button class="dash-kpi-link" data-tab="g1" type="button">Open Sheds 1–2</button>
     </div>
     <div class="dash-kpi dash-kpi-amber">
       <span class="dash-kpi-icon">${dashKpiIcon('birds')}</span>
@@ -898,7 +896,7 @@ function renderDashboardView() {
   <div class="dash-card">
     <div class="dash-card-head">
       <h2 class="dash-card-title">Shed performance</h2>
-      <button class="dash-card-action" data-tab="g1" type="button">All groups</button>
+      <button class="dash-card-action" data-tab="g1" type="button">All sheds</button>
     </div>
     <table class="dash-shed-table">
       <thead><tr>
@@ -987,13 +985,13 @@ function emptyStateHtml(){
   return `<div class="empty-state"><div class="empty-card"><div class="emoji">🐔</div><h1>Welcome to <span class="accent">ProdWise.VM</span></h1><p>Start by importing your sheds Excel file, or connect to cloud sync to load your data from another device.</p><div class="empty-actions"><button class="btn-primary" id="emptyImportBtn" type="button">📥 Import Excel</button><span class="empty-or">or</span><button class="btn-cloud" id="emptyConnectBtn" type="button">☁️ Connect to cloud</button></div><div class="hint">Excel: look for a file named like <strong>sheds.xlsx</strong> or <strong>KP-2026.xlsx</strong></div><div class="hint small">Cloud: enter the same farm name you used on your other device.</div></div></div>`;
 }
 function tabsHtml(){
-  const tabs=[{id:'g1',label:'Group 1'},{id:'g2',label:'Group 2'},{id:'g3',label:'Group 3'},{id:'g4',label:'Group 4'},{id:'predictions',label:'📊 Predictions',cls:'tab-predictions'}];
+  const tabs=[{id:'g1',label:pairLabel(1)},{id:'g2',label:pairLabel(2)},{id:'g3',label:pairLabel(3)},{id:'g4',label:pairLabel(4)},{id:'predictions',label:'📊 Predictions',cls:'tab-predictions'}];
   const mainTabs=tabs.map(t=>`<button class="tab-btn ${t.id===activeTab?'active':''} ${t.cls||''}" data-tab="${t.id}">${t.label}</button>`).join('');
   const cluckwiseTab=`<button class="tab-btn tab-cluckwise" id="cluckwiseBtn" type="button" title="Open CluckWise">🐔 CluckWise</button>`;
   return mainTabs+cluckwiseTab;
 }
 function groupViewHtml(g){
-  const sheds=shedsForGroup(g);if(sheds.length===0)return `<div class="empty-card">Group ${g} has no data.</div>`;
+  const sheds=shedsForGroup(g);if(sheds.length===0)return `<div class="empty-card">${pairLabel(g)} has no data.</div>`;
   const today=new Date();
   const init=sheds.reduce((s,x)=>s+(x.initialPopulation||0),0);
   const mort=sheds.reduce((s,x)=>s+Number(x.mortality||0),0);
@@ -1005,8 +1003,8 @@ function groupViewHtml(g){
   const view=shedViewByGroup[g]||'planner';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
-  const groupSwitch=`<div class="group-switch-mobile" role="tablist" aria-label="Group">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" data-tab="g${gi}" aria-selected="${gi===g}">G${gi}</button>`).join('')}</div>`;
-  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>Group ${g} <span>Sheds ${sheds.map(s=>s.id).join(' & ')}</span></h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
+  const groupSwitch=`<div class="group-switch-mobile" role="tablist" aria-label="Shed pair">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" data-tab="g${gi}" aria-selected="${gi===g}">${pairShort(gi)}</button>`).join('')}</div>`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairLabel(g)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
@@ -1114,7 +1112,7 @@ function renderReadingHistory(group){
 }
 function renderGroupLoadsCard(group){
   const arr=loadsAffectingGroup(group);
-  if(arr.length===0)return `<div class="group-loads-empty">No loads routed to this group yet — open 🚛 Loads to plan one.</div><div class="group-loads-footnote">These loads are shared across groups. <button type="button" data-open-loads-modal="1">Open 🚛 Loads</button></div>`;
+  if(arr.length===0)return `<div class="group-loads-empty">No loads routed to these sheds yet — open 🚛 Loads to plan one.</div><div class="group-loads-footnote">These loads are shared across groups. <button type="button" data-open-loads-modal="1">Open 🚛 Loads</button></div>`;
   const rows=arr.map(l=>{
     const share=Number(l.splitKg[group])||0;
     const actualStr=(l.actualKg!=null)?`✓ actual ${(l.actualKg/1000).toFixed(2)} t`:'';
@@ -1127,7 +1125,7 @@ function renderFeedSummary(group){
   const activeRows=['starter','grower','finisher','withdrawal','unspecified'].map(k=>summary.buckets[k]).filter(b=>b.tonnes>0);
   if(activeRows.length===0)return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary <span class="sub">· per feed type · 1 block = 60 T · 30 T = 0.5</span></div><div class="feed-summary-empty">No loads scheduled yet — add one via 🚛 Loads to see the block count.</div></div>`;
   const rows=activeRows.map(b=>`<tr class="${b.blocks>=0.5?'has-blocks':''}"><td>${feedTypeTagHtml(b.id)}</td><td class="num">${b.tonnes.toFixed(2)} t</td><td class="num">${b.loads}</td><td class="num">${b.blocks>0?`<span class="block-count">${fmtBlocks(b.blocks)}</span>`:`<span class="block-count zero">0</span>`}</td></tr>`).join('');
-  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (this group's share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total</td><td class="num">${summary.totalTonnes.toFixed(2)} t</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).</div></div>`;
+  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (these sheds' share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total</td><td class="num">${summary.totalTonnes.toFixed(2)} t</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).</div></div>`;
 }
 function renderFeedPlanner(group,sheds,today){
   const forecast=computeSiloForecast(group,siloRange);
@@ -1164,7 +1162,7 @@ function renderFeedPlanner(group,sheds,today){
     </div>
     ${hasReading?`<div class="reading-info"><div class="ri-item"><span class="ri-label">Last reading:</span><span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span></div><div class="ri-item"><span class="ri-label">Consumed since:</span><span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>${deliveredSince>0?`<div class="ri-item"><span class="ri-label">Delivered since:</span><span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>`:''}<div class="ri-item"><span class="ri-label">Projected today:</span><span class="ri-value amber">${fmtFeed(projected)}</span></div></div>`:''}
     <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span></h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?(readingTotalKg(latest)/1000).toFixed(2)+' t':'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
-    <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting Group ${group} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
+    <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
     ${rangeBarHtml(siloRange,'silo',`<button class="btn-compare-toggle" id="compareFeedBtn" type="button" title="Compare with other groups">⇄ Compare groups</button>`)}
     <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
   </div>`;
@@ -1408,7 +1406,7 @@ function renderAdjustmentModal(group){
   const targetKg=predState.targetHarvestWeightKg[group];
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};
   const tp=Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups;
-    return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>Group ${group}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body"><div class="adj-row"><label>📊 cFCR β factor</label><input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" /><input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight.</span></div><div class="adj-row"><label>📐 Scale correction</label><input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><span class="adj-unit">%</span><span class="adj-hint">How much your shed scale reads heavier than the plant weight.</span></div><div class="adj-row"><label>🎯 Target weight at harvest</label><input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div><div class="density-settings-title"><span>🎯 Pickup density (global defaults)</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button><button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button></span></div><div class="adj-row"><label>Trigger density</label><input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Schedule a pickup when density is forecast to reach this.</span></div><div class="adj-row"><label>Target after pickup</label><input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">What density to aim for after each pickup.</span></div><div class="adj-row"><label>Hard maximum</label><input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div><div class="adj-row"><label>Target pickups per shed</label><input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Total pickups per shed (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>${renderNoPickupDaysRow()}</div></div></div>`;
+    return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>${pairLabel(group)}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body"><div class="adj-row"><label>📊 cFCR β factor</label><input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" /><input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight.</span></div><div class="adj-row"><label>📐 Scale correction</label><input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><span class="adj-unit">%</span><span class="adj-hint">How much your shed scale reads heavier than the plant weight.</span></div><div class="adj-row"><label>🎯 Target weight at harvest</label><input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div><div class="density-settings-title"><span>🎯 Pickup density (global defaults)</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button><button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button></span></div><div class="adj-row"><label>Trigger density</label><input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Schedule a pickup when density is forecast to reach this.</span></div><div class="adj-row"><label>Target after pickup</label><input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">What density to aim for after each pickup.</span></div><div class="adj-row"><label>Hard maximum</label><input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div><div class="adj-row"><label>Target pickups per shed</label><input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Total pickups per shed (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>${renderNoPickupDaysRow()}</div></div></div>`;
 }
 
 function renderNoPickupDaysRow(){
@@ -1450,12 +1448,12 @@ function predRailHtml(g,view,sheds){
 function renderPredictionsView(){
   const g=predState.predGroup;
   const sheds=shedsForGroup(g);
-  if(sheds.length===0)return `<div class="empty-card">Group ${g} has no data.</div>`;
+  if(sheds.length===0)return `<div class="empty-card">${pairLabel(g)} has no data.</div>`;
   const view=predState.predView;
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
-  const groupNames={1:'Group 1',2:'Group 2',3:'Group 3',4:'Group 4'};
-  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Whole-farm estimates · group result · per-shed detail below</span></div>${renderFarmKpiCard()}<div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+  const groupNames={1:pairLabel(1),2:pairLabel(2),3:pairLabel(3),4:pairLabel(4)};
+  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Whole-farm estimates · pair result · per-shed detail below</span></div>${renderFarmKpiCard()}<div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
 }
 function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};
@@ -1648,10 +1646,10 @@ function renderPredictionsShedCard(shed,group){
   const canAdd=realPickupCount<MAX_PICKUPS_PER_SHED;
   const pill=pickupPlanPillHtml(shed);
   const pickupHeaderHtml=`<h4 class="pickup-header"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span>Pickup History — edit total or avg, both auto-compute</span>${pill}</span><button class="btn-pickup-add" data-pickup-add="${shed.id}" type="button" ${canAdd?'':'disabled'} title="${canAdd?'Add a pickup manually':'Maximum 5 pickups reached'}">＋ Add Actual Pickup</button></h4>`;
-  const groupLabel=grp&&grp.hasData?`Group ${group} Combined Result`:`Group ${group} Result`;
+  const groupLabel=grp&&grp.hasData?`${pairLabel(group)} combined result`:`${pairLabel(group)} result`;
   const groupShedsLabel=groupSheds.map(s=>`Shed ${s.id}`).join(' + ');
-  const estimatesHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-estimates-head"><span>📊 ${groupLabel}</span><span class="sub">· ${groupShedsLabel} · batch result</span></div><div class="pred-estimates"><div class="pred-est-tile amber"><div class="lbl">Est. Final Avg Weight</div><div class="val">${grp.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div></div><div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${grp.fcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${grp.cfcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${grp.livability.toFixed(2)}%</div></div><div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${grp.totalMortalityEst.toLocaleString()}</div></div><div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(grp.totalLiveWeight)}</div></div><div class="pred-est-tile amber" style="grid-column: span 2;"><div class="lbl">Est. Final PIF</div><div class="val">${grp.pif.toFixed(2)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Overall score: weight × survival ÷ (age × FCR)</div></div></div>`:`<div class="pred-empty" style="margin-top:14px;"><strong>Group estimates unlock after the first reading or pickup.</strong><br>Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.</div>`;
-  const confidenceHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-confidence"><span style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Group Confidence</span><div class="bar"><div class="bar-fill ${groupConf.cls}" style="width:${grp.confidence}%"></div></div><span class="pct" style="color:${groupConf.cls==='low'?'var(--danger)':(groupConf.cls==='medium'?'var(--primary-dark)':'var(--success)')};">${grp.confidence}%</span><span style="font-size:11px;color:var(--muted);">${groupConf.label}</span></div>`:'';
+  const estimatesHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-estimates-head"><span>📊 ${groupLabel}</span><span class="sub">· ${groupShedsLabel} · batch result</span></div><div class="pred-estimates"><div class="pred-est-tile amber"><div class="lbl">Est. Final Avg Weight</div><div class="val">${grp.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div></div><div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${grp.fcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${grp.cfcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${grp.livability.toFixed(2)}%</div></div><div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${grp.totalMortalityEst.toLocaleString()}</div></div><div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(grp.totalLiveWeight)}</div></div><div class="pred-est-tile amber" style="grid-column: span 2;"><div class="lbl">Est. Final PIF</div><div class="val">${grp.pif.toFixed(2)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Overall score: weight × survival ÷ (age × FCR)</div></div></div>`:`<div class="pred-empty" style="margin-top:14px;"><strong>Pair estimates unlock after the first reading or pickup.</strong><br>Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.</div>`;
+  const confidenceHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-confidence"><span style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Pair confidence</span><div class="bar"><div class="bar-fill ${groupConf.cls}" style="width:${grp.confidence}%"></div></div><span class="pct" style="color:${groupConf.cls==='low'?'var(--danger)':(groupConf.cls==='medium'?'var(--primary-dark)':'var(--success)')};">${grp.confidence}%</span><span style="font-size:11px;color:var(--muted);">${groupConf.label}</span></div>`:'';
   const daysBehindHtml=renderDaysBehind(shed);
   const dailyPerfHtml=renderDailyPerformance(shed);
   return `<article class="pred-shed-card" id="pred-shed-card-${shed.id}"><div class="pred-shed-head"><h3>🏠 Shed ${shed.id}</h3><div style="display:flex;gap:6px;flex-wrap:wrap;"><span class="tag muted">Age ${pred.currentAge}d</span><span class="tag amber">Live ${pred.liveNow.toLocaleString()}</span>${pred.gompertzFit?`<span class="tag green">AI curve</span>`:''}${realPickupCount>0?`<span class="tag green">${realPickupCount} pickup${realPickupCount===1?'':'s'}</span>`:''}</div></div><div class="pred-shed-body">${snapshotHtml}${rateBarHtml}${curvePanelHtml}${daysBehindHtml}${forecastDayBarHtml()}${dailyPerfHtml}<div class="pickups-block" style="margin-top:14px;">${pickupHeaderHtml}${pickupTableHtml}</div>${planBlockHtml}${estimatesHtml}${confidenceHtml}</div></article>`;

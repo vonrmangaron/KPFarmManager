@@ -1,7 +1,7 @@
 function showToast(msg,isError){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.toggle('error',!!isError);el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3200);}
 function renderDeliveriesSummary(group){
   const summary=groupLoadSummary(group);const totalOrders=summary.loadCount;
-  if(totalOrders===0)return `<span class="count">No loads affecting this group</span>`;
+  if(totalOrders===0)return `<span class="count">No loads affecting these sheds</span>`;
   const orderWord=totalOrders===1?'load':'loads';
   const activeTypes=['starter','grower','finisher','withdrawal','unspecified'].map(k=>({id:k,label:summary.buckets[k].label,loads:summary.buckets[k].loads,blocks:summary.buckets[k].blocks})).filter(x=>x.loads>0);
   const chips=activeTypes.map(t=>`<span class="chip ${t.id}">${t.label} <span class="num">${fmtBlocks(t.blocks)}</span></span>`).join('');
@@ -1349,7 +1349,7 @@ function renderLoadModal(){
     <div class="mp-field"><label>Feed type</label><select id="lmType"><option value="" ${s.feedType===''?'selected':''}>— Unspecified —</option>${FEED_TYPES.map(f=>`<option value="${f.id}" ${s.feedType===f.id?'selected':''}>${f.label}</option>`).join('')}</select></div>
     <div class="mp-field"><label>Planned total (t)</label><input type="number" id="lmPlanned" step="0.1" min="0.1" value="${s.plannedT}" /></div>
     <div class="load-form-section"><div class="load-form-section-title"><span>Split across groups</span><button type="button" class="btn-split-evenly" id="lmSplitEven">⚖ Split evenly</button></div>
-      <div class="split-grid">${[1,2,3,4].map(g=>`<div class="split-input-group"><label>Group ${g}</label><input type="number" min="0" step="0.1" data-lm-split="${g}" value="${s.splitT[g]}" /><span class="silo-note">${escapeHtml(siloNotes[g-1])}</span></div>`).join('')}</div>
+      <div class="split-grid">${[1,2,3,4].map(g=>`<div class="split-input-group"><label>${pairLabel(g)}</label><input type="number" min="0" step="0.1" data-lm-split="${g}" value="${s.splitT[g]}" /><span class="silo-note">${escapeHtml(siloNotes[g-1])}</span></div>`).join('')}</div>
       <div class="split-sum" id="lmSum"></div>
     </div>
     <div class="mp-field"><label>Note (optional)</label><input type="text" id="lmNote" maxlength="60" value="${escapeAttr(s.note)}" placeholder="e.g. Order #1234 — Barlow's truck" /></div>
@@ -1445,10 +1445,10 @@ function renderCompareGroupPicker(currentGroup){
       else{statusEmoji='🟢';statusText=`Lasts > ${siloRange.end}d`;}
     }else{balText='No reading';statusEmoji='⚪';statusText='Tap rings to record';}
     const cls='cmp-group-card'+(isSelected?' selected':'');
-    return `<button type="button" class="${cls}" data-compare-group="${g}" aria-pressed="${isSelected?'true':'false'}"><div class="cmp-group-top"><span class="cmp-group-name">Group ${g}</span>${isCurrent?'<span class="cmp-group-current">Current</span>':''}${isSelected?'<span class="cmp-group-check">✓</span>':''}</div><div class="cmp-group-bal">${escapeHtml(balText)}</div><div class="cmp-group-status">${statusEmoji} ${escapeHtml(statusText)}</div></button>`;
+    return `<button type="button" class="${cls}" data-compare-group="${g}" aria-pressed="${isSelected?'true':'false'}"><div class="cmp-group-top"><span class="cmp-group-name">${pairLabel(g)}</span>${isCurrent?'<span class="cmp-group-current">Current</span>':''}${isSelected?'<span class="cmp-group-check">✓</span>':''}</div><div class="cmp-group-bal">${escapeHtml(balText)}</div><div class="cmp-group-status">${statusEmoji} ${escapeHtml(statusText)}</div></button>`;
   }).join('');
   const count=feedCompareState.selectedGroups.length;const total=groups.length;
-  return `<div class="compare-picker"><span class="compare-picker-label">Groups shown · click to toggle · ${count} of ${total} shown</span><div class="compare-picker-cards">${cards}</div></div>`;
+  return `<div class="compare-picker"><span class="compare-picker-label">Sheds shown · click to toggle · ${count} of ${total} shown</span><div class="compare-picker-cards">${cards}</div></div>`;
 }
 function renderCompareColumnPicker(){
   const cols=feedCompareState.visibleColumns;
@@ -1476,7 +1476,7 @@ function renderCompareModalBody(){
         let statusChip='';
         if(info.hasReading){const emoji=info.daysUntil!=null?(info.daysUntil<=2?'🔴':(info.daysUntil<=7?'🟡':'🟢')):'🟢';const daysStr=info.daysUntil!=null?`runs out in ${info.daysUntil}d`:`lasts > ${siloRange.end}d`;statusChip=`${emoji} ${fmtFeed(info.balance)} · ${daysStr}`;}
         else statusChip='⚪ No reading';
-        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">Group ${g}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div></div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
+        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div></div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
       }).join('');
   body.innerHTML=`${rangeBarHtml(siloRange,'compare')}${renderCompareGroupPicker(currentGroup)}${renderCompareColumnPicker()}<div class="compare-layout-toggle"><span class="clt-label">Layout:</span><button type="button" data-compare-layout="stacked" class="${layout==='stacked'?'active':''}">☰ Stacked</button><button type="button" data-compare-layout="grid" class="${layout==='grid'?'active':''}">▦ Grid</button></div><div class="compare-tables ${layout}">${tablesHtml}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">💡 Click any future weekday row in <strong>any</strong> table to plan a load for that group. Rows with a load already scheduled show a small <strong>✎</strong> button to edit it.</div>`;
   if(inlineDeliveryState){const inp=body.querySelector('.inline-del-input');if(inp)requestAnimationFrame(()=>{try{inp.focus();}catch(e){}});}
@@ -1591,7 +1591,7 @@ function buildBatchReportHTML(){
     const latest=latestReading(g);
     const bal=currentBalanceKg(g);
     const lo=projectedLeftoverForGroup(g);
-    html+=`<div class="rpt-silo-block"><div class="rpt-silo-title">Group ${g}</div>`;
+    html+=`<div class="rpt-silo-block"><div class="rpt-silo-title">${pairLabel(g)}</div>`;
     if(latest){
       const s1=latest.silo1Rings==null?'off':latest.silo1Rings+'r';
       const s2=latest.silo2Rings==null?'off':latest.silo2Rings+'r';
@@ -1783,12 +1783,12 @@ function renderSiloModalBody(){
     const isOpen=siloModalOpenGroups[g]===true;
     const silosHtml=[1,2,3].map(n=>siloRowHtml(g,n)).join('');
     const nextBtn=g<4
-      ?`<button type="button" class="sms-next-btn" data-sms-next="${g+1}">Next: Group ${g+1} →</button>`
+      ?`<button type="button" class="sms-next-btn" data-sms-next="${g+1}">Next: ${pairLabel(g+1)} →</button>`
       :`<button type="button" class="sms-next-btn" data-sms-finish>Finish</button>`;
     return `<div class="sms-group-section${isOpen?' open':''}" data-sms-section="${g}">
-      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle Group ${g}">
+      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle ${pairLabel(g)}">
         <span class="sms-group-caret" aria-hidden="true">▶</span>
-        <span class="sms-group-titles"><span class="sms-group-name">Group ${g}</span><span class="sms-group-sub">${shedsLabel}</span></span>
+        <span class="sms-group-titles"><span class="sms-group-name">${pairLabel(g)}</span></span>
         <span class="sms-status-wrap" id="smsStatus-${g}">${siloGroupStatusHtml(g)}</span>
         <span class="sms-group-total" id="smsGroupTotal-${g}">${(totalKg/1000).toFixed(2)} t</span>
       </div>
