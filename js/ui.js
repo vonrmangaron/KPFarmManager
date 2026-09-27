@@ -985,6 +985,33 @@ function setTargetCurveValue(shedId,day,value){
 }
 function setPredBeta(v){let n=Number(v);if(!Number.isFinite(n))n=0.27;n=Math.max(0,Math.min(0.6,n));predState.beta=n;savePredState();schedulePush();}
 function setTargetHarvestWeight(group,v){let n=Number(v);if(!Number.isFinite(n)||n<=0)n=2.65;n=Math.max(0.5,Math.min(5,n));predState.targetHarvestWeightKg[group]=n;savePredState();schedulePush();render();}
+// Shed-performance alert → that shed's Daily Performance (actual + forecast)
+// on its group's Predictions page.
+function openShedPerformance(shedId){
+  const g=Math.ceil(shedId/2);
+  const idx=shedsForGroup(g).findIndex(s=>s.id===shedId);
+  activeTab='predictions';sbPredOpen=true;
+  predState.predGroup=g;predState.predView=idx===1?'shed2':'shed1';savePredState();
+  if(feedCompareState.modalOpen)closeCompareModal();
+  render();
+  requestAnimationFrame(()=>{
+    const el=document.getElementById('dailyPerf-'+shedId);if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+    el.classList.add('flash-target');setTimeout(()=>el.classList.remove('flash-target'),1600);
+  });
+}
+// Feed alert → that group's Feed Balance Forecast on the Feed & Silo view.
+function openFeedForecast(g){
+  activeTab='g'+g;inlineDeliveryState=null;
+  shedViewByGroup[g]='planner';saveShedViews();
+  if(feedCompareState.modalOpen)closeCompareModal();
+  render();
+  requestAnimationFrame(()=>{
+    const el=document.getElementById('feedForecast-'+g);if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+    el.classList.add('flash-target');setTimeout(()=>el.classList.remove('flash-target'),1600);
+  });
+}
 function setPredGroup(g){predState.predGroup=g;savePredState();render();}
 function setPredView(v){if(!['shed1','shed2','both'].includes(v))return;predState.predView=v;savePredState();render();}
 function setPredDailyPreset(start,end){dailyRangeState={mode:'today',start,end};render();}

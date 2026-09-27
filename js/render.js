@@ -552,7 +552,7 @@ function computeFarmAlerts() {
       if (!forecast.depletedDate) return;
       const days = Math.max(0, daysBetween(today, forecast.depletedDate));
       if (days < 3) {
-        alerts.push({ kind: days < 1.5 ? 'error' : 'warn', msg: `<strong>Group ${g} silos</strong> — ${days} day${days===1?'':'s'} of feed remaining`, tab: 'g'+g });
+        alerts.push({ kind: days < 1.5 ? 'error' : 'warn', msg: `<strong>Group ${g} silos</strong> — ${days} day${days===1?'':'s'} of feed remaining`, tab: 'g'+g, feedGroup: g });
       } else if (days <= 8) {
         // Not urgent by day-count alone, but if the depletion date itself
         // lands on a weekend, an emergency delivery is much harder to get —
@@ -560,7 +560,7 @@ function computeFarmAlerts() {
         const dow = forecast.depletedDate.getDay();
         if (dow === 0 || dow === 6) {
           const dayName = dow === 0 ? 'Sunday' : 'Saturday';
-          alerts.push({ kind: 'warn', msg: `<strong>Group ${g} silos</strong> — feed runs out ${dayName} (${days} day${days===1?'':'s'}), a weekend`, tab: 'g'+g });
+          alerts.push({ kind: 'warn', msg: `<strong>Group ${g} silos</strong> — feed runs out ${dayName} (${days} day${days===1?'':'s'}), a weekend`, tab: 'g'+g, feedGroup: g });
         }
       }
     });
@@ -575,7 +575,7 @@ function computeFarmAlerts() {
       const daysVar = daysVsTarget(age, est.kg);
       if (daysBehindSeverity(daysVar) === 'bad') {
         const g = Math.ceil(shed.id / 2);
-        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — ${Math.abs(daysVar).toFixed(1)} days behind Ross 308 standard`, tab: 'g'+g });
+        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — ${Math.abs(daysVar).toFixed(1)} days behind Ross 308 standard`, tab: 'g'+g, shedId: shed.id });
       }
     });
   }
@@ -586,7 +586,7 @@ function renderAlertsPopoverBody() {
   const alerts = computeFarmAlerts();
   if (!alerts.length) return `<p style="font-size:13px;color:var(--muted);margin:0;padding:14px 16px">All systems normal — no alerts.</p>`;
   return `<div class="dash-alerts" style="padding:10px">${alerts.map(a =>
-    `<button class="dash-alert dash-alert-${a.kind}" data-tab="${a.tab}" type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
+    `<button class="dash-alert dash-alert-${a.kind}" ${a.shedId ? `data-alert-shed="${a.shedId}"` : a.feedGroup ? `data-alert-feed="${a.feedGroup}"` : `data-tab="${a.tab}"`} type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
       <span class="dash-alert-dot dash-alert-dot-${a.kind}"></span><span>${a.msg}</span>
     </button>`
   ).join('')}</div>`;
@@ -1166,7 +1166,7 @@ function renderFeedPlanner(group,sheds,today){
     <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span></h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?(readingTotalKg(latest)/1000).toFixed(2)+' t':'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
     <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting Group ${group} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
     ${rangeBarHtml(siloRange,'silo',`<button class="btn-compare-toggle" id="compareFeedBtn" type="button" title="Compare with other groups">⇄ Compare groups</button>`)}
-    <div class="planner-card"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
+    <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
   </div>`;
 }
 function renderSiloForecastTable(forecast,group,opts){
@@ -1485,7 +1485,7 @@ function forecastDayBarHtml(){
   return `<div class="pred-daily-range-bar" style="margin:14px 0 10px;"><label>📅 Forecast Day</label>${presets.map(p=>{const active=(s.mode==='today'&&p.start===s.start&&p.end===s.end);return `<button class="fpill ${active?'active':''}" data-preddays="${p.start},${p.end}">${p.label}</button>`;}).join('')}<span class="pdrb-sep">· or ·</span><span class="pdrb-cycle-inputs"><span>Day</span><input type="number" min="0" max="200" step="1" data-pred-cycle="start" value="${s.start}" /><span>to</span><span>Day</span><input type="number" min="0" max="200" step="1" data-pred-cycle="end" value="${s.end}" /><button class="pdrb-apply" type="button" data-pred-cycle-apply="1">Go</button></span><span class="pdrb-resolved">${resolvedLabel}</span></div>`;
 }
 function renderDailyPerformance(shed){
-  if(!shed.placementDate)return `<div class="pickups-block" style="margin-top:14px;"><h4>📅 Daily Performance — Actual + AI Forecast</h4><div class="forecast-empty">No placement date set — forecast unavailable.</div></div>`;
+  if(!shed.placementDate)return `<div class="pickups-block" id="dailyPerf-${shed.id}" style="margin-top:14px;"><h4>📅 Daily Performance — Actual + AI Forecast</h4><div class="forecast-empty">No placement date set — forecast unavailable.</div></div>`;
   const today=dateOnly(new Date());
   const last=lastWeightedPickup(shed);
   const currentAge=ageInDays(shed,today);
@@ -1519,7 +1519,7 @@ function renderDailyPerformance(shed){
   else sourceNote=`No readings yet — showing the standard growth curve.`;
   const hasAnyPredicted=effective.some(p=>p.__source==='predicted');
   if(hasAnyPredicted)sourceNote+=` <strong style="color:var(--secondary);">Planned pickups are included in this forecast.</strong>`;
-  return `<div class="pickups-block" style="margin-top:14px;"><h4>📅 Daily Performance — Actual + AI Forecast <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">· Day ${startDay}–${endDay} of cycle · ⭐ = check day · 📏 = weighed</span></h4><div class="forecast-table-wrap"><table class="pred-daily-table" style="min-width:820px;"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th><th class="num">Weight (kg)</th><th class="num">Standard (kg)</th><th class="num">Days vs Standard</th></tr></thead><tbody>${rows.map(r=>{
+  return `<div class="pickups-block" id="dailyPerf-${shed.id}" style="margin-top:14px;"><h4>📅 Daily Performance — Actual + AI Forecast <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">· Day ${startDay}–${endDay} of cycle · ⭐ = check day · 📏 = weighed</span></h4><div class="forecast-table-wrap"><table class="pred-daily-table" style="min-width:820px;"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th><th class="num">Weight (kg)</th><th class="num">Standard (kg)</th><th class="num">Days vs Standard</th></tr></thead><tbody>${rows.map(r=>{
     const cls=[r.isToday?'is-today':'',r.isWeekend?'is-weekend':'',r.hasPredicted?'predicted-pickup-row':'',(r.weightType==='gompertz'||r.weightType==='ai-pickup'||r.weightType==='ai-target'||r.weightType==='ross-scaled')?'is-forecast-row':''].filter(Boolean).join(' ');
     const todayTag=r.isToday?' · <span style="color:var(--secondary);font-weight:700;">Today</span>':'';
     const wkndTag=r.isWeekend?' <span class="weekend-pill">Weekend</span>':'';

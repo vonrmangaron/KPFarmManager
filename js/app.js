@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     const alertItem=e.target.closest('.alerts-popover [data-tab]');
     if(alertItem){alertsPop.classList.remove('open');}
+    const shedAlert=e.target.closest('.alerts-popover [data-alert-shed]');
+    if(shedAlert){alertsPop.classList.remove('open');openShedPerformance(Number(shedAlert.dataset.alertShed));return;}
+    const feedAlert=e.target.closest('.alerts-popover [data-alert-feed]');
+    if(feedAlert){alertsPop.classList.remove('open');openFeedForecast(Number(feedAlert.dataset.alertFeed));return;}
     // Sidebar sync pill buttons
     if(e.target.closest('#sbConnectBtn')){openSyncModal();return;}
     if(e.target.closest('#sbSyncNowBtn')){pullFromCloud(false);return;}
