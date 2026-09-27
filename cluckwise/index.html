@@ -1524,19 +1524,20 @@
   .mlog-dayhead.is-today .dnum{ display:inline-block; min-width:24px; padding:1px 4px; border-radius:999px; background:var(--primary); color:#241A08; }
   .mlog-table td.is-today{ background:color-mix(in srgb, var(--primary) 9%, var(--surface)); }
   .mlog-table tbody tr:hover > td{ background:var(--surface-soft); }
-  .mlog-open{ display:flex; flex-direction:column; gap:3px; width:100%; padding:10px 14px 10px 16px; border:none; background:none; text-align:left; color:inherit; font:inherit; cursor:pointer; }
+  .mlog-open{ display:flex; flex-direction:column; gap:4px; width:100%; padding:6px 12px 6px 16px; border:none; background:none; text-align:left; color:inherit; font:inherit; cursor:pointer; }
   .mlog-open:hover .mlog-nm{ text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }
   .mlog-name{ display:flex; align-items:center; gap:7px; font-family:'Sora',sans-serif; font-size:14px; font-weight:700; color:var(--ink); min-width:0; }
-  .mlog-nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mlog-nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:0 1 auto; min-width:0; }
   .mlog-ic{ font-size:15px; flex-shrink:0; }
   body.hide-icons .mlog-ic{ display:none; }
-  .mlog-meta{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mlog-state{ display:flex; align-items:center; gap:8px; margin-top:3px; min-width:0; }
-  .mlog-pill{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px 3px 8px; border-radius:999px; background:var(--mlog-soft); color:var(--mlog-ink); font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+  .mlog-meta{ font-family:'Inter',sans-serif; font-size:11.5px; font-weight:500; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:0 100 auto; min-width:0; }
+  .mlog-meta::before{ content:'·'; margin-right:6px; }
+  .mlog-state{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .mlog-pill{ display:inline-flex; align-items:center; gap:6px; padding:2px 9px 2px 7px; border-radius:999px; background:var(--mlog-soft); color:var(--mlog-ink); font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
   .mlog-pill .mlog-dot{ width:8px; height:8px; }
   .mlog-last{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mlog-cell{ text-align:center; padding:6px 3px !important; }
-  .mlog-box{ width:28px; height:28px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface-soft); color:#fff; font-size:15px; font-weight:800; line-height:1; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .08s ease, border-color .12s ease; }
+  .mlog-cell{ text-align:center; padding:4px 3px !important; }
+  .mlog-box{ width:26px; height:26px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface-soft); color:#fff; font-size:15px; font-weight:800; line-height:1; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .08s ease, border-color .12s ease; }
   .mlog-box:hover{ border-color:var(--success); }
   .mlog-box:active{ transform:scale(0.9); }
   .mlog-box:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:1px; }
@@ -1597,11 +1598,13 @@
     .mlog-chip b{ font-size:14px; }
     .mlog-main{ padding:10px 10px max(12px, env(safe-area-inset-bottom)); }
     .mlog-table .mlog-task-col{ width:156px; min-width:156px; max-width:156px; }
-    .mlog-open{ padding:9px 8px 9px 10px; }
+    .mlog-open{ padding:6px 8px 6px 10px; gap:3px; }
+    .mlog-name .mlog-meta{ display:none; }
+    .mlog-pill{ font-size:11.5px; }
+    .mlog-last{ display:none; }
     .mlog-name{ font-size:13px; gap:5px; }
-    .mlog-state{ flex-direction:column; align-items:flex-start; gap:3px; }
     .mlog-dayhead{ min-width:32px; }
-    .mlog-box{ width:26px; height:26px; }
+    .mlog-box{ width:24px; height:24px; }
   }
 </style>
 </head>
@@ -7218,13 +7221,13 @@
       const every = mlogEvery(m);
       const doneSet = new Set(dates);
       const inRange = keys.filter(k=> doneSet.has(k)).length;
-      const meta = [m.shed, m.category, `every ${every} day${every === 1 ? '' : 's'}`].filter(Boolean).map(escapeHtml).join(' · ');
+      const meta = [m.shed, m.category].filter(Boolean).map(escapeHtml).join(' · ');
       const pill = st.key === 'none' ? 'No records' : mlogAgo(st.since);
-      const lastTxt = st.last ? `Last done ${formatFull(st.last)}` : 'Never logged';
+      const lastTxt = st.last ? `Last ${formatFull(st.last)}` : 'Never logged';
+      const pillTip = `Expected every ${every} day${every === 1 ? '' : 's'}`;
       body += `<tr><th scope="row" class="mlog-task-col"><button type="button" class="mlog-open" data-mid="${escapeHtmlAttr(m.id)}" title="Show history">
-        <span class="mlog-name"><span class="mlog-ic">${escapeHtml(mlogIcon(m))}</span><span class="mlog-nm">${escapeHtml(m.name)}</span></span>
-        <span class="mlog-meta">${meta}</span>
-        <span class="mlog-state"><span class="mlog-pill st-${st.key}"><span class="mlog-dot"></span>${pill}</span><span class="mlog-last" title="Done ${inRange}× in this range">${lastTxt}</span></span>
+        <span class="mlog-name"><span class="mlog-ic">${escapeHtml(mlogIcon(m))}</span><span class="mlog-nm">${escapeHtml(m.name)}</span>${meta ? `<span class="mlog-meta">${meta}</span>` : ''}</span>
+        <span class="mlog-state"><span class="mlog-pill st-${st.key}" title="${escapeHtmlAttr(pillTip)}"><span class="mlog-dot"></span>${pill}</span><span class="mlog-last" title="Done ${inRange}× in this range">${lastTxt}</span></span>
       </button></th>`;
       // Walk the range with a pointer into the sorted done dates so each
       // empty day knows how long it had been since the last completion.
