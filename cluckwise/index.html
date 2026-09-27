@@ -1021,7 +1021,7 @@
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #mlogBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:var(--surface); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -6px 16px rgba(0,0,0,0.06); }
     .bottom-nav button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; padding:6px 2px; cursor:pointer; }
@@ -1468,6 +1468,141 @@
   @media (max-width: 480px){
     .batch-pill .batch-age{ display:none; }
   }
+
+  /* ============================================================
+     MAINTENANCE LOG — full-page register of recurring farm jobs.
+     Rows = tracked tasks, columns = days. Completions come from done
+     calendar tasks with the same name.
+     ============================================================ */
+  #mlogBtn{ border:1px solid var(--success); background:var(--success-soft); color:var(--success); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #mlogBtn:hover{ background:var(--success); color:#fff; }
+  :root{ --mlog-ok:var(--success); --mlog-ok-soft:var(--success-soft); --mlog-soon:#E0A020; --mlog-soon-ink:#8A5F00; --mlog-soon-soft:#FFF1CF; --mlog-over:var(--danger); --mlog-over-soft:var(--danger-soft); --mlog-none:#A89A89; --mlog-none-soft:var(--surface-soft); }
+  body.theme-dark{ --mlog-soon:#F0B040; --mlog-soon-ink:#FFC876; --mlog-soon-soft:#3D3320; --mlog-none:#7C88A2; }
+  .mlog-page{ position:fixed; inset:0; z-index:45; background:var(--bg); display:none; flex-direction:column; color:var(--ink); }
+  .mlog-page.open{ display:flex; }
+  .mlog-head{ display:flex; align-items:center; gap:14px; padding:14px 24px; padding-top:max(14px, env(safe-area-inset-top)); background:var(--surface); border-bottom:1px solid var(--line); }
+  .mlog-back{ width:38px; height:38px; flex-shrink:0; border-radius:50%; border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); font-size:18px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .mlog-back:hover{ border-color:var(--primary-dark); }
+  .mlog-title{ flex:1; min-width:0; }
+  .mlog-title h2{ margin:0; font-family:'Sora',sans-serif; font-size:19px; font-weight:800; line-height:1.2; }
+  .mlog-sub{ font-size:12.5px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mlog-add{ padding:9px 16px; font-size:13.5px; white-space:nowrap; font-family:'Sora',sans-serif; flex-shrink:0; }
+  .mlog-toolbar{ display:flex; flex-direction:column; gap:12px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); }
+  .mlog-summary{ display:flex; gap:8px; flex-wrap:wrap; }
+  .mlog-summary:empty{ display:none; }
+  .mlog-chip{ display:inline-flex; align-items:center; gap:7px; padding:6px 13px 6px 10px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:'Sora',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .mlog-chip b{ font-size:15px; font-weight:800; }
+  .mlog-chip:hover{ border-color:var(--mlog-c); }
+  .mlog-chip.active{ border-color:var(--mlog-c); background:var(--mlog-soft); }
+  .mlog-chip.zero{ opacity:0.55; }
+  .st-ok{ --mlog-c:var(--mlog-ok); --mlog-soft:var(--mlog-ok-soft); --mlog-ink:var(--mlog-ok); }
+  .st-soon{ --mlog-c:var(--mlog-soon); --mlog-soft:var(--mlog-soon-soft); --mlog-ink:var(--mlog-soon-ink); }
+  .st-over{ --mlog-c:var(--mlog-over); --mlog-soft:var(--mlog-over-soft); --mlog-ink:var(--mlog-over); }
+  .st-none{ --mlog-c:var(--mlog-none); --mlog-soft:var(--mlog-none-soft); --mlog-ink:var(--muted); }
+  .mlog-dot{ width:10px; height:10px; border-radius:50%; background:var(--mlog-c); flex-shrink:0; display:inline-block; }
+  .mlog-controls{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+  .mlog-seg{ display:inline-flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:999px; padding:3px; flex-shrink:0; }
+  .mlog-seg button{ border:none; background:transparent; color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:6px 13px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .mlog-seg button.active{ background:var(--primary); color:#241A08; }
+  .mlog-custom{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); }
+  .mlog-custom.hidden, .mlog-suggest.hidden, #mlogRenameRow.hidden, .mlog-untrack.hidden{ display:none; }
+  .mlog-custom input, .mlog-filters input, .mlog-filters select{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:10px; padding:7px 10px; font-size:13.5px; font-family:inherit; min-width:0; }
+  .mlog-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; }
+  .mlog-filters input{ width:190px; }
+  .mlog-main{ flex:1; min-height:0; display:flex; flex-direction:column; padding:16px 24px max(20px, env(safe-area-inset-bottom)); }
+  .mlog-card{ min-height:0; overflow:auto; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-sm); overscroll-behavior:contain; }
+  .mlog-table{ border-collapse:separate; border-spacing:0; min-width:100%; }
+  .mlog-table th, .mlog-table td{ padding:0; border-bottom:1px solid var(--line); background:var(--surface); }
+  .mlog-table tbody tr:last-child > *{ border-bottom:none; }
+  .mlog-table thead th{ position:sticky; top:0; z-index:2; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; padding:8px 2px 7px; text-align:center; }
+  .mlog-table .mlog-task-col{ position:sticky; left:0; z-index:1; width:285px; min-width:285px; max-width:285px; text-align:left; border-right:1px solid var(--line); }
+  .mlog-table thead .mlog-task-col{ z-index:3; padding-left:16px; font-family:'Sora',sans-serif; }
+  .mlog-dayhead{ min-width:36px; }
+  .mlog-dayhead .dnum{ display:block; font-family:'Sora',sans-serif; font-size:13px; font-weight:700; color:var(--ink); letter-spacing:0; margin-top:2px; }
+  .mlog-dayhead .dmon{ display:block; color:var(--primary-dark); font-weight:800; }
+  .mlog-dayhead.wkend .dnum{ color:var(--muted); }
+  .mlog-dayhead.is-today .dnum{ display:inline-block; min-width:24px; padding:1px 4px; border-radius:999px; background:var(--primary); color:#241A08; }
+  .mlog-table td.is-today{ background:color-mix(in srgb, var(--primary) 9%, var(--surface)); }
+  .mlog-table tbody tr:hover > td{ background:var(--surface-soft); }
+  .mlog-open{ display:flex; flex-direction:column; gap:3px; width:100%; padding:10px 14px 10px 16px; border:none; background:none; text-align:left; color:inherit; font:inherit; cursor:pointer; }
+  .mlog-open:hover .mlog-nm{ text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px; }
+  .mlog-name{ display:flex; align-items:center; gap:7px; font-family:'Sora',sans-serif; font-size:14px; font-weight:700; color:var(--ink); min-width:0; }
+  .mlog-nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mlog-ic{ font-size:15px; flex-shrink:0; }
+  body.hide-icons .mlog-ic{ display:none; }
+  .mlog-meta{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mlog-state{ display:flex; align-items:center; gap:8px; margin-top:3px; min-width:0; }
+  .mlog-pill{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px 3px 8px; border-radius:999px; background:var(--mlog-soft); color:var(--mlog-ink); font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+  .mlog-pill .mlog-dot{ width:8px; height:8px; }
+  .mlog-last{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mlog-cell{ text-align:center; padding:6px 3px !important; }
+  .mlog-box{ width:28px; height:28px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface-soft); color:#fff; font-size:15px; font-weight:800; line-height:1; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .08s ease, border-color .12s ease; }
+  .mlog-box:hover{ border-color:var(--success); }
+  .mlog-box:active{ transform:scale(0.9); }
+  .mlog-box:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:1px; }
+  .mlog-box.done{ background:var(--success); border-color:var(--success); }
+  .mlog-box.gap{ background:color-mix(in srgb, var(--danger) 13%, var(--surface)); border-color:color-mix(in srgb, var(--danger) 28%, var(--surface)); }
+  .mlog-box.gap:hover{ border-color:var(--success); }
+  .mlog-box:disabled{ opacity:0.35; cursor:default; }
+  .mlog-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:11.5px; color:var(--muted); flex-shrink:0; }
+  .mlog-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .mlog-legend .mlog-box{ width:14px; height:14px; border-radius:4px; cursor:default; pointer-events:none; }
+  .mlog-empty{ margin:auto; max-width:460px; text-align:center; padding:28px 20px; }
+  .mlog-empty .mlog-empty-ic{ font-size:40px; }
+  .mlog-empty h3{ font-family:'Sora',sans-serif; font-size:18px; margin:10px 0 6px; }
+  .mlog-empty p{ color:var(--muted); font-size:13.5px; line-height:1.5; margin:0 0 16px; }
+  .mlog-empty .mlog-suggest-chips{ justify-content:center; margin-top:14px; }
+  .mlog-suggest-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .mlog-suggest-chips button{ border:1px dashed var(--primary-dark); background:var(--primary-soft); color:var(--ink); border-radius:999px; padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .mlog-suggest-chips button small{ color:var(--muted); font-weight:600; margin-left:4px; }
+  .mlog-hint{ font-size:12px; color:var(--muted); margin:-2px 0 4px; line-height:1.4; }
+  .mlog-hint.match{ color:var(--success); font-weight:600; }
+  .mlog-opt{ font-weight:500; opacity:.8; }
+  .mlog-untrack{ border:none; background:none; color:var(--danger); font-weight:700; font-size:13px; padding:8px; cursor:pointer; }
+  .mlog-hist-body{ flex:1; overflow-y:auto; padding:14px 18px 24px; }
+  .mlog-hist-meta{ font-size:12px; color:var(--muted); margin:0 0 12px; }
+  .mlog-hist-stats{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .mlog-stat{ background:var(--surface-soft); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .mlog-stat .k{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .mlog-stat .v{ font-family:'Sora',sans-serif; font-size:15px; font-weight:800; margin-top:3px; }
+  .mlog-stat .s{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .mlog-stat.st-ok .v, .mlog-stat.st-soon .v, .mlog-stat.st-over .v{ color:var(--mlog-ink); }
+  .mlog-hist-h{ font-family:'Sora',sans-serif; font-size:13px; font-weight:800; margin:0 0 6px; }
+  .mlog-hist-list{ list-style:none; margin:0; padding:0; }
+  .mlog-hist-list li{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .mlog-hist-list li:last-child{ border-bottom:none; }
+  .mlog-hist-list .hd{ flex:1; min-width:0; }
+  .mlog-hist-list .hd b{ display:block; font-size:14px; }
+  .mlog-hist-list .hd span{ font-size:11.5px; color:var(--muted); }
+  .mlog-hist-list .gapn{ font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .mlog-hist-list .gapn.late{ color:var(--danger); }
+  .mlog-hist-list .tick{ width:22px; height:22px; border-radius:6px; background:var(--success); color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .mlog-hist-none{ color:var(--muted); font-size:13px; line-height:1.5; }
+  @media (max-width: 760px){
+    .mlog-head{ padding:12px 14px; gap:10px; }
+    .mlog-title h2{ font-size:17px; }
+    .mlog-add{ padding:8px 12px; font-size:13px; }
+    .mlog-toolbar{ padding:10px 14px; gap:10px; }
+    .mlog-summary{ flex-wrap:nowrap; overflow-x:auto; margin:0 -14px; padding:0 14px; scrollbar-width:none; }
+    .mlog-summary::-webkit-scrollbar{ display:none; }
+    .mlog-controls{ gap:8px; }
+    .mlog-seg{ width:100%; }
+    .mlog-seg button{ flex:1; padding:6px 4px; }
+    .mlog-custom{ width:100%; }
+    .mlog-custom input{ flex:1; }
+    .mlog-filters{ width:100%; margin-left:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:6px; }
+    .mlog-filters input{ width:auto; grid-column:1 / -1; font-size:16px; }
+    .mlog-filters select{ font-size:13px; padding:7px 6px; }
+    .mlog-chip{ padding:5px 11px 5px 9px; font-size:12px; }
+    .mlog-chip b{ font-size:14px; }
+    .mlog-main{ padding:10px 10px max(12px, env(safe-area-inset-bottom)); }
+    .mlog-table .mlog-task-col{ width:156px; min-width:156px; max-width:156px; }
+    .mlog-open{ padding:9px 8px 9px 10px; }
+    .mlog-name{ font-size:13px; gap:5px; }
+    .mlog-state{ flex-direction:column; align-items:flex-start; gap:3px; }
+    .mlog-dayhead{ min-width:32px; }
+    .mlog-box{ width:26px; height:26px; }
+  }
 </style>
 </head>
 <body>
@@ -1514,6 +1649,7 @@
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search">🔍</button>
       <button class="btn-history" id="historyBtn">History</button>
+      <button class="btn-history" id="mlogBtn" title="Maintenance Log">🔧 Log</button>
       <button class="btn-history notif-btn" id="reportsBtn" title="Reports">🚩 Reports<span class="notif-badge hidden" id="reportsBadge">0</span></button>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode">🌙</button>
@@ -1587,6 +1723,44 @@
 <button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
 <button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
 
+<section class="mlog-page" id="mlogPage" aria-label="Maintenance Log">
+  <header class="mlog-head">
+    <button type="button" class="mlog-back" id="mlogCloseBtn" aria-label="Back to calendar" title="Back (Esc)">←</button>
+    <div class="mlog-title">
+      <h2>Maintenance Log</h2>
+      <div class="mlog-sub" id="mlogSub"></div>
+    </div>
+    <button type="button" class="btn-app mlog-add" id="mlogAddBtn">+ Track task</button>
+  </header>
+  <div class="mlog-toolbar">
+    <div class="mlog-summary" id="mlogSummary"></div>
+    <div class="mlog-controls">
+      <div class="mlog-seg" id="mlogRangeSeg" role="group" aria-label="Date range">
+        <button type="button" data-range="7">7 days</button>
+        <button type="button" data-range="14">14 days</button>
+        <button type="button" data-range="30">30 days</button>
+        <button type="button" data-range="custom">Custom</button>
+      </div>
+      <div class="mlog-custom hidden" id="mlogCustom">
+        <input type="date" id="mlogFrom" aria-label="From date">
+        <span>to</span>
+        <input type="date" id="mlogTo" aria-label="To date">
+      </div>
+      <div class="mlog-filters">
+        <input type="search" id="mlogSearch" placeholder="Search tasks…" autocomplete="off" aria-label="Search tracked tasks">
+        <select id="mlogShedFilter" aria-label="Filter by shed"></select>
+        <select id="mlogCatFilter" aria-label="Filter by category"></select>
+        <select id="mlogSort" aria-label="Sort">
+          <option value="urgency">Most urgent first</option>
+          <option value="name">Name A–Z</option>
+          <option value="shed">By shed</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="mlog-main" id="mlogMain"></div>
+</section>
+
 <div class="sheet-overlay hidden" id="quickAddSheet">
   <div class="sheet-panel">
     <div class="sheet-handle"></div>
@@ -1606,6 +1780,7 @@
     <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
     <button class="sheet-option" id="moreReportsBtn"><span class="s-ic" style="background:var(--danger);">🚩</span>Reports <span id="moreReportsCount" style="margin-left:auto;font-weight:800;color:var(--danger);"></span></button>
+    <button class="sheet-option" id="moreMlogBtn"><span class="s-ic" style="background:var(--success);">🔧</span>Maintenance Log</button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
     <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
     <button class="sheet-option" id="moreThemeToggleBtn"><span class="s-ic" style="background:var(--secondary);">🌙</span><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
@@ -2025,6 +2200,43 @@
   </div>
 </div>
 
+<div class="history-drawer" id="mlogHistDrawer">
+  <div class="history-head">
+    <h2 id="mlogHistTitle">Task history</h2>
+    <div style="display:flex; gap:2px;">
+      <button id="mlogHistEditBtn" title="Edit tracked task" aria-label="Edit tracked task">✎</button>
+      <button id="closeMlogHist" aria-label="Close">✕</button>
+    </div>
+  </div>
+  <div class="mlog-hist-body" id="mlogHistBody"></div>
+</div>
+
+<div class="form-modal" id="mlogTaskModal">
+  <div class="form-modal-head"><h2 id="mlogTaskModalTitle">Track a task</h2><button id="closeMlogTaskModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <div class="mlog-suggest hidden" id="mlogSuggestWrap">
+      <label>Recurring in your calendar</label>
+      <div class="mlog-suggest-chips" id="mlogSuggestChips"></div>
+    </div>
+    <label for="mlogNameInput">Task name</label>
+    <input type="text" id="mlogNameInput" list="mlogNameList" maxlength="60" placeholder="e.g. Hoe Shed 1" autocomplete="off">
+    <datalist id="mlogNameList"></datalist>
+    <p class="mlog-hint" id="mlogMatchHint"></p>
+    <label class="checkbox-row hidden" id="mlogRenameRow"><input type="checkbox" id="mlogRenameTasks" checked><span id="mlogRenameLabel"></span></label>
+    <label for="mlogShedInput">Shed <span class="mlog-opt">(optional)</span></label>
+    <input type="text" id="mlogShedInput" list="mlogShedList" maxlength="30" placeholder="e.g. Shed 1" autocomplete="off">
+    <datalist id="mlogShedList"></datalist>
+    <label for="mlogCatInput">Category <span class="mlog-opt">(optional)</span></label>
+    <input type="text" id="mlogCatInput" list="mlogCatList" maxlength="30" placeholder="e.g. Grounds, Pest control, Equipment" autocomplete="off">
+    <datalist id="mlogCatList"></datalist>
+    <label for="mlogEveryInput">Should be done every (days)</label>
+    <input type="number" id="mlogEveryInput" min="1" max="365" inputmode="numeric" placeholder="7">
+    <p class="mlog-hint">Sets the colours: amber when it's nearly due, red once it's overdue.</p>
+    <button class="btn-app" id="mlogSaveBtn" style="margin-top:6px;">Save</button>
+    <button type="button" class="mlog-untrack hidden" id="mlogDeleteBtn">Stop tracking this task</button>
+  </div>
+</div>
+
 <div class="form-modal" id="copyModal">
   <div class="form-modal-head"><h2 id="copyModalTitle">Copy task</h2><button id="closeCopyModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
@@ -2157,6 +2369,7 @@
   let reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
+  let maintenance = [];   // Maintenance Log: tracked recurring tasks {id, name, shed, category, every}
   let currentDate = new Date();
   let collapsedKanbanCols = new Set(loadCollapsedKanbanCols());
   function loadCollapsedKanbanCols(){ try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }catch(e){ return []; } }
@@ -2318,7 +2531,7 @@
   // viewer edits (e.g. tasks marked done) survive a manager push, and unsynced
   // manager edits survive a pull.
   let lastSyncedSnapshot = null;
-  const EMPTY_SNAPSHOT = { tasks:[], history:[], batches:[], events:[], settings:{}, frequentTemplates:[] };
+  const EMPTY_SNAPSHOT = { tasks:[], history:[], batches:[], events:[], settings:{}, frequentTemplates:[], maintenance:[] };
 
   function stableStr(v){
     if(v === undefined) return 'undefined';
@@ -2327,7 +2540,7 @@
     return '{' + Object.keys(v).filter(k=> v[k] !== undefined).sort().map(k=> JSON.stringify(k)+':'+stableStr(v[k])).join(',') + '}';
   }
   function cloneData(v){ return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
-  function snapshotLocal(){ return cloneData({tasks, history, batches, events, settings, frequentTemplates}); }
+  function snapshotLocal(){ return cloneData({tasks, history, batches, events, settings, frequentTemplates, maintenance}); }
   function normalizeSnapshot(d){
     d = d || {};
     return {
@@ -2336,7 +2549,8 @@
       batches: Array.isArray(d.batches) ? d.batches : [],
       events: Array.isArray(d.events) ? d.events : [],
       settings: (d.settings && typeof d.settings === 'object') ? d.settings : {},
-      frequentTemplates: Array.isArray(d.frequentTemplates) ? d.frequentTemplates : []
+      frequentTemplates: Array.isArray(d.frequentTemplates) ? d.frequentTemplates : [],
+      maintenance: Array.isArray(d.maintenance) ? d.maintenance : []
     };
   }
   // Field-level: a field we changed since base wins; otherwise take the server's value.
@@ -2383,13 +2597,15 @@
       batches: mergeCollection(base.batches, local.batches, server.batches, b=> b.number),
       events: mergeCollection(base.events, local.events, server.events, byId),
       settings: mergeRecord(base.settings, local.settings, server.settings),
-      frequentTemplates: mergeCollection(base.frequentTemplates, local.frequentTemplates, server.frequentTemplates, byId)
+      frequentTemplates: mergeCollection(base.frequentTemplates, local.frequentTemplates, server.frequentTemplates, byId),
+      maintenance: mergeCollection(base.maintenance, local.maintenance, server.maintenance, byId)
     };
   }
   function applyMergedState(d){
     tasks = d.tasks; history = d.history; batches = d.batches; events = d.events;
     settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
     frequentTemplates = d.frequentTemplates;
+    maintenance = d.maintenance || [];
     migrateTaskOrder();
     applySettings();
     // Don't wipe what the user is typing into an inline "+ Add task" box;
@@ -2469,7 +2685,7 @@
   async function load(){
     lastSyncedSnapshot = null;
     tasks=[]; history=[]; batches=[]; events=[]; reports=[];
-    settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[];
+    settings=Object.assign({}, DEFAULT_SETTINGS); frequentTemplates=[]; maintenance=[];
     applySettings();
     try{
       ghFarmName = localStorage.getItem('prodplan-gh-farmname') || null;
@@ -2793,6 +3009,7 @@
       settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
       settings.calendarDensity = normalizeDensity(settings.calendarDensity);
       frequentTemplates = parsed.frequentTemplates || [];
+      maintenance = Array.isArray(parsed.maintenance) ? parsed.maintenance : [];
       // Opening view applies once per launch; later syncs must not move the user off their current view.
       if(!openingViewApplied){ viewMode = openingViewMode(); openingViewApplied = true; syncViewButtons(); }
       migrateTaskOrder();
@@ -5859,11 +6076,13 @@
     updateOverdueBadge();
     updateReportsBadge();
     if($('#reportsDrawer').classList.contains('open')) renderReportsList();
+    renderMlog();
+    if(mlogHistId) renderMlogHistory();
   }
 
   // ==================== UNDO ====================
   let undoState = null, undoTimer = null;
-  function captureUndo(){ return cloneData({ tasks, batches, events, frequentTemplates }); }
+  function captureUndo(){ return cloneData({ tasks, batches, events, frequentTemplates, maintenance }); }
   function hideUndoToast(){
     const el = $('#undoToast');
     if(el) el.classList.remove('show');
@@ -5892,6 +6111,7 @@
     undoState = null;
     hideUndoToast();
     tasks = s.tasks; batches = s.batches; events = s.events; frequentTemplates = s.frequentTemplates;
+    if(Array.isArray(s.maintenance)) maintenance = s.maintenance;
     // Deleting a linked task cleared its report's link — put it back.
     let relinked = false;
     tasks.forEach(t=>{
@@ -6037,6 +6257,7 @@
     return el;
   }
   function jumpToDate(key){
+    if(mlogIsOpen()) closeMlog();
     closeOverlays();
     currentDate = toDateObj(key);
     if(viewMode==='list' || viewMode==='year'){
@@ -6132,7 +6353,7 @@
   }
   function snapshotPayload(d){
     const c = cloneData(d) || {};
-    return { tasks: c.tasks || [], batches: c.batches || [], events: c.events || [], frequentTemplates: c.frequentTemplates || [] };
+    return { tasks: c.tasks || [], batches: c.batches || [], events: c.events || [], frequentTemplates: c.frequentTemplates || [], maintenance: c.maintenance || [] };
   }
   async function saveSnapshotEntry(entry, onlyIfMissingDaily, retry){
     retry = retry || 0;
@@ -6247,6 +6468,7 @@
     batches = d.batches || [];
     events = d.events || [];
     frequentTemplates = d.frequentTemplates || [];
+    if(Array.isArray(d.maintenance)) maintenance = d.maintenance;
     migrateTaskOrder();
     const label = entry.kind === 'before-restore' ? 'the copy saved before the last restore' : `${formatFull(entry.date)} (start of day)`;
     addHistory('Restored', `Data restored to ${label}`);
@@ -6840,6 +7062,424 @@
   });
   $('#todayBtn').addEventListener('click', ()=>{ currentDate = new Date(); agendaDate = null; renderAll(); });
 
+  // ==================== MAINTENANCE LOG ====================
+  // A register of recurring farm jobs. A tracked task matches every calendar
+  // task with the same name (case/spacing-insensitive); each done one dated
+  // today or earlier counts as a completion. Ticking a day in the log marks
+  // the matching calendar task done, or creates one, so both always agree.
+  const MLOG_RANGES = { '7':7, '14':14, '30':30 };
+  const MLOG_STATUS_ORDER = { over:0, soon:1, none:2, ok:3 };
+  let mlogRange = '14', mlogFrom = null, mlogTo = null;
+  let mlogStatusFilter = '', mlogSearch = '', mlogShed = '', mlogCat = '', mlogSort = 'urgency';
+  let mlogHistId = null, mlogEditId = null, mlogScrollToEnd = false, mlogShedTouched = false;
+  try{
+    const r = localStorage.getItem('cw-mlog-range');
+    if(r && (MLOG_RANGES[r] || r === 'custom')) mlogRange = r;
+    const so = localStorage.getItem('cw-mlog-sort');
+    if(so) mlogSort = so;
+  }catch(e){}
+
+  function mlogIsOpen(){ return $('#mlogPage').classList.contains('open'); }
+  function mlogNorm(s){ return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+  function mlogDaysBetween(a, b){ return Math.round((toDateObj(b) - toDateObj(a)) / 86400000); }
+  function mlogEvery(m){ const n = parseInt(m.every, 10); return n > 0 ? n : 7; }
+  function mlogIcon(m){ return m.icon || guessIcon(m.name); }
+  function mlogAgo(n){ return n === 0 ? 'Today' : n === 1 ? 'Yesterday' : `${n} days ago`; }
+  function mlogDoneDates(m){
+    const n = mlogNorm(m.name), today = dateKey(new Date()), set = new Set();
+    tasks.forEach(t=>{ if(t.status === 'done' && t.date && t.date <= today && mlogNorm(t.name) === n) set.add(t.date); });
+    return [...set].sort();
+  }
+  function mlogStatus(m, dates){
+    if(!dates.length) return { key:'none', since:null, last:null };
+    const last = dates[dates.length - 1];
+    const since = mlogDaysBetween(last, dateKey(new Date()));
+    const every = mlogEvery(m);
+    const warnAt = every <= 2 ? every : every - Math.max(1, Math.round(every * 0.25));
+    return { key: since > every ? 'over' : (since >= warnAt ? 'soon' : 'ok'), since, last };
+  }
+  function mlogMedianGap(dates){
+    if(dates.length < 2) return null;
+    const gaps = [];
+    for(let i = 1; i < dates.length; i++) gaps.push(mlogDaysBetween(dates[i-1], dates[i]));
+    gaps.sort((a,b)=> a - b);
+    return gaps[Math.floor(gaps.length / 2)];
+  }
+  function mlogRangeKeys(){
+    const today = dateKey(new Date());
+    let from, to;
+    if(mlogRange === 'custom' && mlogFrom && mlogTo){
+      from = mlogFrom <= mlogTo ? mlogFrom : mlogTo;
+      to = mlogFrom <= mlogTo ? mlogTo : mlogFrom;
+    } else {
+      to = today;
+      from = addDaysStr(today, -((MLOG_RANGES[mlogRange] || 14) - 1));
+    }
+    const keys = [];
+    for(let k = from; k <= to && keys.length < 366; k = addDaysStr(k, 1)) keys.push(k);
+    return keys;
+  }
+  function mlogSuggestions(){
+    const tracked = new Set(maintenance.map(m=> mlogNorm(m.name)));
+    const today = dateKey(new Date()), by = new Map();
+    tasks.forEach(t=>{
+      if(t.status !== 'done' || !t.date || t.date > today || t.source === 'auto-weight') return;
+      const n = mlogNorm(t.name);
+      if(!n || tracked.has(n)) return;
+      if(!by.has(n)) by.set(n, { name: t.name.trim().replace(/\s+/g, ' '), dates: new Set() });
+      by.get(n).dates.add(t.date);
+    });
+    return [...by.values()].filter(x=> x.dates.size >= 2)
+      .sort((a,b)=> b.dates.size - a.dates.size || a.name.localeCompare(b.name)).slice(0, 8);
+  }
+  function mlogSuggestChipsHtml(list){
+    return list.map(x=> `<button type="button" data-suggest="${escapeHtmlAttr(x.name)}">+ ${escapeHtml(x.name)}<small>${x.dates.size}×</small></button>`).join('');
+  }
+  function mlogUniq(field){
+    return [...new Set(maintenance.map(m=> (m[field] || '').trim()).filter(Boolean))]
+      .sort((a,b)=> a.localeCompare(b, undefined, { numeric:true, sensitivity:'base' }));
+  }
+  function mlogFillSelect(sel, values, allLabel, current){
+    sel.innerHTML = `<option value="">${allLabel}</option>` + values.map(v=> `<option value="${escapeHtmlAttr(v)}">${escapeHtml(v)}</option>`).join('');
+    sel.value = values.includes(current) ? current : '';
+    sel.style.display = values.length ? '' : 'none';
+    return sel.value;
+  }
+
+  function openMlog(){
+    closeOverlays();
+    $('#mlogPage').classList.add('open');
+    mlogScrollToEnd = true;
+    renderMlog();
+  }
+  function closeMlog(){
+    closeOverlays();
+    $('#mlogPage').classList.remove('open');
+  }
+
+  function renderMlog(){
+    if(!mlogIsOpen()) return;
+    const sheds = mlogUniq('shed'), cats = mlogUniq('category');
+    mlogShed = mlogFillSelect($('#mlogShedFilter'), sheds, 'All sheds', mlogShed);
+    mlogCat = mlogFillSelect($('#mlogCatFilter'), cats, 'All categories', mlogCat);
+    $('#mlogSort').value = mlogSort;
+    $('#mlogRangeSeg').querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.dataset.range === mlogRange));
+    $('#mlogCustom').classList.toggle('hidden', mlogRange !== 'custom');
+    const keys = mlogRangeKeys();
+    const sub = [ghFarmName, `${maintenance.length} tracked task${maintenance.length === 1 ? '' : 's'}`];
+    if(keys.length) sub.push(`${formatShort(keys[0])} – ${formatFull(keys[keys.length-1])}`);
+    $('#mlogSub').textContent = sub.filter(Boolean).join(' · ');
+
+    const main = $('#mlogMain');
+    if(!maintenance.length){
+      const sugg = mlogSuggestions();
+      $('#mlogSummary').innerHTML = '';
+      main.innerHTML = `<div class="mlog-empty">
+        <div class="mlog-empty-ic">🔧</div>
+        <h3>Track your recurring farm jobs</h3>
+        <p>Add jobs like <b>Hoe Shed 1</b>, <b>Change Rat Baits</b> or <b>Service Generator</b>. Every time one is marked done in the calendar, or ticked here, it shows up in the log, so you can see at a glance what's overdue.</p>
+        <button type="button" class="btn-app" data-mlog-add>+ Track a task</button>
+        ${sugg.length ? `<p style="margin:22px 0 0;font-size:12px;">Already recurring in your calendar:</p><div class="mlog-suggest-chips">${mlogSuggestChipsHtml(sugg)}</div>` : ''}
+      </div>`;
+      return;
+    }
+
+    const q = mlogNorm(mlogSearch);
+    let rows = maintenance.map(m=>{ const dates = mlogDoneDates(m); return { m, dates, st: mlogStatus(m, dates) }; })
+      .filter(r=> (!q || mlogNorm(r.m.name).includes(q) || mlogNorm(r.m.shed).includes(q) || mlogNorm(r.m.category).includes(q))
+        && (!mlogShed || (r.m.shed || '').trim() === mlogShed)
+        && (!mlogCat || (r.m.category || '').trim() === mlogCat));
+    const counts = { over:0, soon:0, ok:0, none:0 };
+    rows.forEach(r=> counts[r.st.key]++);
+    const chipDefs = [['over','Overdue'], ['soon','Due soon'], ['ok','Up to date'], ['none','No records']];
+    $('#mlogSummary').innerHTML = chipDefs.map(([k, label])=>
+      `<button type="button" class="mlog-chip st-${k}${mlogStatusFilter === k ? ' active' : ''}${counts[k] ? '' : ' zero'}" data-status="${k}" aria-pressed="${mlogStatusFilter === k}"><span class="mlog-dot"></span><b>${counts[k]}</b>${label}</button>`).join('');
+    if(mlogStatusFilter) rows = rows.filter(r=> r.st.key === mlogStatusFilter);
+    const byName = (a,b)=> a.m.name.localeCompare(b.m.name, undefined, { numeric:true, sensitivity:'base' });
+    if(mlogSort === 'name') rows.sort(byName);
+    else if(mlogSort === 'shed') rows.sort((a,b)=> (a.m.shed || '￿').localeCompare(b.m.shed || '￿', undefined, { numeric:true, sensitivity:'base' }) || byName(a,b));
+    else rows.sort((a,b)=> (MLOG_STATUS_ORDER[a.st.key] - MLOG_STATUS_ORDER[b.st.key])
+      || ((b.st.since || 0) / mlogEvery(b.m) - (a.st.since || 0) / mlogEvery(a.m)) || byName(a,b));
+
+    if(!rows.length){
+      main.innerHTML = `<div class="mlog-empty"><div class="mlog-empty-ic">🔍</div><h3>Nothing matches</h3><p>No tracked tasks match these filters.</p><button type="button" class="btn-app" data-mlog-clear>Clear filters</button></div>`;
+      return;
+    }
+
+    const today = dateKey(new Date());
+    let head = `<th class="mlog-task-col" scope="col">Task</th>`;
+    keys.forEach((k, i)=>{
+      const d = toDateObj(k), wd = d.getDay();
+      const mon = (i === 0 || k.endsWith('-01')) ? `<span class="dmon">${d.toLocaleDateString(undefined, { month:'short' })}</span>` : '';
+      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'narrow' })}<span class="dnum">${d.getDate()}</span></th>`;
+    });
+    let body = '';
+    rows.forEach(({ m, dates, st })=>{
+      const every = mlogEvery(m);
+      const doneSet = new Set(dates);
+      const inRange = keys.filter(k=> doneSet.has(k)).length;
+      const meta = [m.shed, m.category, `every ${every} day${every === 1 ? '' : 's'}`].filter(Boolean).map(escapeHtml).join(' · ');
+      const pill = st.key === 'none' ? 'No records' : mlogAgo(st.since);
+      const lastTxt = st.last ? `Last done ${formatFull(st.last)}` : 'Never logged';
+      body += `<tr><th scope="row" class="mlog-task-col"><button type="button" class="mlog-open" data-mid="${escapeHtmlAttr(m.id)}" title="Show history">
+        <span class="mlog-name"><span class="mlog-ic">${escapeHtml(mlogIcon(m))}</span><span class="mlog-nm">${escapeHtml(m.name)}</span></span>
+        <span class="mlog-meta">${meta}</span>
+        <span class="mlog-state"><span class="mlog-pill st-${st.key}"><span class="mlog-dot"></span>${pill}</span><span class="mlog-last" title="Done ${inRange}× in this range">${lastTxt}</span></span>
+      </button></th>`;
+      // Walk the range with a pointer into the sorted done dates so each
+      // empty day knows how long it had been since the last completion.
+      let p = -1;
+      keys.forEach(k=>{
+        while(p + 1 < dates.length && dates[p + 1] <= k) p++;
+        const done = doneSet.has(k), future = k > today;
+        const gap = !done && !future && p >= 0 && mlogDaysBetween(dates[p], k) > every;
+        const label = `${m.name}, ${formatFull(k)}: ${done ? 'done' : future ? 'upcoming' : gap ? 'not done (overdue)' : 'not done'}`;
+        body += `<td class="mlog-cell${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}"${future ? ' disabled' : ''}>${done ? '✓' : ''}</button></td>`;
+      });
+      body += '</tr>';
+    });
+
+    const prev = main.querySelector('.mlog-card');
+    const keepLeft = prev ? prev.scrollLeft : 0, keepTop = prev ? prev.scrollTop : 0;
+    main.innerHTML = `<div class="mlog-card"><table class="mlog-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <div class="mlog-legend">
+        <span><i class="mlog-box done">✓</i>Done</span>
+        <span><i class="mlog-box gap"></i>Overdue gap</span>
+        <span><i class="mlog-box"></i>Not done</span>
+        <span>Tap a day to log or undo it · tap a task for its history</span>
+      </div>`;
+    const card = main.querySelector('.mlog-card');
+    if(mlogScrollToEnd){ card.scrollLeft = card.scrollWidth; mlogScrollToEnd = false; }
+    else { card.scrollLeft = keepLeft; card.scrollTop = keepTop; }
+  }
+
+  function mlogToggle(id, key){
+    const m = maintenance.find(x=> x.id === id);
+    if(!m || key > dateKey(new Date())) return;
+    const n = mlogNorm(m.name);
+    const same = tasks.filter(t=> t.date === key && mlogNorm(t.name) === n);
+    const done = same.filter(t=> t.status === 'done');
+    if(done.length){
+      // Undo: drop ticks the log created; reopen real calendar tasks (toggleDone keeps linked reports in step).
+      const logIds = new Set(done.filter(t=> t.source === 'maint-log').map(t=> t.id));
+      if(logIds.size){
+        tasks = tasks.filter(t=> !logIds.has(t.id));
+        addHistory('Reopened', `"${m.name}" unticked for ${formatFull(key)} (Maintenance Log)`);
+      }
+      done.filter(t=> !logIds.has(t.id)).forEach(t=> toggleDone(t.id));
+      showToast(`${m.name}: ${formatShort(key)} cleared`);
+    } else {
+      const open = same.find(t=> t.status !== 'done');
+      if(open){ toggleDone(open.id); }
+      else {
+        tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'done', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
+        addHistory('Completed', `"${m.name}" logged for ${formatFull(key)} (Maintenance Log)`);
+      }
+      showToast(`${m.name}: logged for ${formatShort(key)}`);
+    }
+    persist(); renderAll();
+  }
+
+  function openMlogHistory(id){
+    closeOverlays();
+    mlogHistId = id;
+    renderMlogHistory();
+    openDrawer('#mlogHistDrawer');
+  }
+  function renderMlogHistory(){
+    const m = maintenance.find(x=> x.id === mlogHistId);
+    const body = $('#mlogHistBody');
+    if(!m){ body.innerHTML = ''; return; }
+    const dates = mlogDoneDates(m), st = mlogStatus(m, dates), every = mlogEvery(m);
+    const today = dateKey(new Date()), n = mlogNorm(m.name);
+    const next = tasks.filter(t=> t.status !== 'done' && t.date && t.date >= today && mlogNorm(t.name) === n)
+      .map(t=> t.date).sort()[0];
+    const median = mlogMedianGap(dates);
+    $('#mlogHistTitle').textContent = m.name;
+    const meta = [m.shed, m.category].filter(Boolean).join(' · ');
+    let dueTxt = '—';
+    if(st.last){
+      const left = every - st.since;
+      dueTxt = left > 0 ? `Due in ${left} day${left === 1 ? '' : 's'}` : left === 0 ? 'Due today' : `${-left} day${left === -1 ? '' : 's'} overdue`;
+    }
+    let html = meta ? `<p class="mlog-hist-meta">${escapeHtml(meta)}</p>` : '';
+    html += `<div class="mlog-hist-stats">
+      <div class="mlog-stat st-${st.key}"><div class="k">Last done</div><div class="v">${st.last ? mlogAgo(st.since) : 'Never'}</div><div class="s">${st.last ? escapeHtml(formatFull(st.last)) : 'No records yet'}</div></div>
+      <div class="mlog-stat st-${st.key}"><div class="k">Status</div><div class="v">${dueTxt}</div><div class="s">Expected every ${every} day${every === 1 ? '' : 's'}</div></div>
+      <div class="mlog-stat"><div class="k">Times done</div><div class="v">${dates.length}</div><div class="s">${median != null ? `Usually every ~${median} day${median === 1 ? '' : 's'}` : 'All time'}</div></div>
+      <div class="mlog-stat"><div class="k">Next scheduled</div><div class="v">${next ? escapeHtml(formatShort(next)) : 'None'}</div><div class="s">${next ? 'In the calendar' : 'Nothing planned'}</div></div>
+    </div>`;
+    if(!dates.length){
+      html += `<p class="mlog-hist-none">No completions yet. Tick a day in the log, or mark a “${escapeHtml(m.name)}” task done in the calendar.</p>`;
+    } else {
+      html += `<h3 class="mlog-hist-h">Completion history</h3><ul class="mlog-hist-list">`;
+      for(let i = dates.length - 1; i >= 0; i--){
+        const k = dates[i];
+        const gap = i > 0 ? mlogDaysBetween(dates[i-1], k) : null;
+        html += `<li><span class="tick">✓</span><span class="hd"><b>${escapeHtml(formatFull(k))}</b><span>${escapeHtml(toDateObj(k).toLocaleDateString(undefined, { weekday:'long' }))} · ${escapeHtml(mlogAgo(mlogDaysBetween(k, today)))}</span></span>`
+          + (gap != null ? `<span class="gapn${gap > every ? ' late' : ''}">${gap} day${gap === 1 ? '' : 's'} after previous</span>` : `<span class="gapn">First record</span>`)
+          + `</li>`;
+      }
+      html += `</ul>`;
+    }
+    body.innerHTML = html;
+  }
+
+  function mlogMatchCount(name){
+    const n = mlogNorm(name);
+    return n ? tasks.filter(t=> t.status === 'done' && t.date && mlogNorm(t.name) === n).length : 0;
+  }
+  function mlogUpdateModalHints(){
+    const name = $('#mlogNameInput').value;
+    const hint = $('#mlogMatchHint');
+    const c = mlogMatchCount(name);
+    if(!name.trim()){ hint.textContent = 'Use the same name as the task in your calendar so its completions are picked up.'; hint.classList.remove('match'); }
+    else if(c){ hint.textContent = `✓ ${c} completed calendar task${c === 1 ? '' : 's'} with this name will show in the log.`; hint.classList.add('match'); }
+    else { hint.textContent = 'No completed calendar tasks with this name yet. Days you tick in the log will add them.'; hint.classList.remove('match'); }
+    const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
+    const renamed = m && mlogNorm(m.name) !== mlogNorm(name) && name.trim();
+    const oldCount = m ? tasks.filter(t=> mlogNorm(t.name) === mlogNorm(m.name)).length : 0;
+    $('#mlogRenameRow').classList.toggle('hidden', !(renamed && oldCount));
+    if(renamed && oldCount) $('#mlogRenameLabel').textContent = `Also rename the ${oldCount} calendar task${oldCount === 1 ? '' : 's'} called “${m.name}”`;
+  }
+  function openMlogTaskModal(id, prefill){
+    closeOverlays();
+    mlogEditId = id || null;
+    const m = id ? maintenance.find(x=> x.id === id) : null;
+    const pre = prefill || {};
+    $('#mlogTaskModalTitle').textContent = m ? 'Edit tracked task' : 'Track a task';
+    $('#mlogNameInput').value = m ? m.name : (pre.name || '');
+    $('#mlogShedInput').value = m ? (m.shed || '') : (pre.shed || '');
+    $('#mlogCatInput').value = m ? (m.category || '') : '';
+    $('#mlogEveryInput').value = m ? mlogEvery(m) : (pre.every || '');
+    $('#mlogRenameTasks').checked = true;
+    mlogShedTouched = !!(m && m.shed);
+    $('#mlogDeleteBtn').classList.toggle('hidden', !m);
+    const names = [...new Set(tasks.filter(t=> t.source !== 'auto-weight').map(t=> (t.name || '').trim().replace(/\s+/g, ' ')).filter(Boolean))].sort().slice(0, 300);
+    $('#mlogNameList').innerHTML = names.map(x=> `<option value="${escapeHtmlAttr(x)}">`).join('');
+    const sheds = [...new Set([...mlogUniq('shed'), ...(batches || []).flatMap(b=> (b.sheds || []).map(x=> `Shed ${x.shed}`))])];
+    $('#mlogShedList').innerHTML = sheds.map(x=> `<option value="${escapeHtmlAttr(x)}">`).join('');
+    const cats = [...new Set([...mlogUniq('category'), 'Grounds', 'Cleaning', 'Pest control', 'Equipment', 'Water'])];
+    $('#mlogCatList').innerHTML = cats.map(x=> `<option value="${escapeHtmlAttr(x)}">`).join('');
+    const sugg = m ? [] : mlogSuggestions();
+    $('#mlogSuggestWrap').classList.toggle('hidden', !sugg.length || !!pre.name);
+    $('#mlogSuggestChips').innerHTML = mlogSuggestChipsHtml(sugg);
+    mlogUpdateModalHints();
+    openDrawer('#mlogTaskModal');
+    setTimeout(()=> $('#mlogNameInput').focus(), 60);
+  }
+  function mlogPrefillFromName(name){
+    const n = mlogNorm(name);
+    const dates = [...new Set(tasks.filter(t=> t.status === 'done' && t.date && mlogNorm(t.name) === n).map(t=> t.date))].sort();
+    const med = mlogMedianGap(dates);
+    const sm = name.match(/\bshed\s*#?\s*(\w+)/i);
+    return { name, shed: sm ? `Shed ${sm[1]}` : '', every: med ? Math.min(365, Math.max(1, med)) : '' };
+  }
+  function saveMlogTask(){
+    const name = $('#mlogNameInput').value.trim().replace(/\s+/g, ' ');
+    if(!name){ showToast('Give the task a name.', true); $('#mlogNameInput').focus(); return; }
+    if(maintenance.some(x=> x.id !== mlogEditId && mlogNorm(x.name) === mlogNorm(name))){ showToast(`“${name}” is already tracked.`, true); return; }
+    const every = Math.min(365, Math.max(1, parseInt($('#mlogEveryInput').value, 10) || 7));
+    const shed = $('#mlogShedInput').value.trim(), category = $('#mlogCatInput').value.trim();
+    const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
+    if(m){
+      if(mlogNorm(m.name) !== mlogNorm(name) && !$('#mlogRenameRow').classList.contains('hidden') && $('#mlogRenameTasks').checked){
+        const old = mlogNorm(m.name);
+        tasks.forEach(t=>{ if(mlogNorm(t.name) === old) t.name = name; });
+      }
+      Object.assign(m, { name, shed, category, every });
+      delete m.icon;
+      addHistory('Maintenance Log', `Updated tracked task "${name}"`);
+    } else {
+      maintenance.push({ id: uid(), name, shed, category, every, createdAt: Date.now() });
+      addHistory('Maintenance Log', `Started tracking "${name}"`);
+    }
+    closeOverlays();
+    persist(); renderAll();
+    showToast(m ? 'Saved.' : `Tracking “${name}”.`);
+  }
+  function deleteMlogTask(){
+    const m = maintenance.find(x=> x.id === mlogEditId);
+    if(!m) return;
+    const snap = captureUndo();
+    maintenance = maintenance.filter(x=> x.id !== m.id);
+    addHistory('Maintenance Log', `Stopped tracking "${m.name}"`);
+    closeOverlays();
+    persist(); renderAll();
+    offerUndo(`Stopped tracking “${m.name}”. Calendar tasks kept.`, snap);
+  }
+
+  $('#mlogBtn').addEventListener('click', openMlog);
+  $('#moreMlogBtn').addEventListener('click', openMlog);
+  $('#mlogCloseBtn').addEventListener('click', closeMlog);
+  $('#mlogAddBtn').addEventListener('click', ()=> openMlogTaskModal(null));
+  $('#mlogPage').addEventListener('click', (e)=>{
+    const box = e.target.closest('.mlog-box[data-date]');
+    if(box){ mlogToggle(box.dataset.mid, box.dataset.date); return; }
+    const row = e.target.closest('.mlog-open');
+    if(row){ openMlogHistory(row.dataset.mid); return; }
+    const chip = e.target.closest('.mlog-chip');
+    if(chip){ mlogStatusFilter = mlogStatusFilter === chip.dataset.status ? '' : chip.dataset.status; renderMlog(); return; }
+    const sug = e.target.closest('[data-suggest]');
+    if(sug){ openMlogTaskModal(null, mlogPrefillFromName(sug.dataset.suggest)); return; }
+    if(e.target.closest('[data-mlog-add]')){ openMlogTaskModal(null); return; }
+    if(e.target.closest('[data-mlog-clear]')){
+      mlogSearch = ''; mlogShed = ''; mlogCat = ''; mlogStatusFilter = '';
+      $('#mlogSearch').value = '';
+      renderMlog();
+    }
+  });
+  $('#mlogRangeSeg').addEventListener('click', (e)=>{
+    const b = e.target.closest('button[data-range]');
+    if(!b) return;
+    mlogRange = b.dataset.range;
+    if(mlogRange === 'custom' && !(mlogFrom && mlogTo)){
+      const today = dateKey(new Date());
+      mlogTo = today; mlogFrom = addDaysStr(today, -13);
+      $('#mlogFrom').value = mlogFrom; $('#mlogTo').value = mlogTo;
+    }
+    try{ localStorage.setItem('cw-mlog-range', mlogRange); }catch(e){}
+    mlogScrollToEnd = true;
+    renderMlog();
+  });
+  ['#mlogFrom', '#mlogTo'].forEach(sel=> $(sel).addEventListener('change', ()=>{
+    mlogFrom = $('#mlogFrom').value || null;
+    mlogTo = $('#mlogTo').value || null;
+    mlogScrollToEnd = true;
+    renderMlog();
+  }));
+  $('#mlogSearch').addEventListener('input', (e)=>{ mlogSearch = e.target.value; renderMlog(); });
+  $('#mlogShedFilter').addEventListener('change', (e)=>{ mlogShed = e.target.value; renderMlog(); });
+  $('#mlogCatFilter').addEventListener('change', (e)=>{ mlogCat = e.target.value; renderMlog(); });
+  $('#mlogSort').addEventListener('change', (e)=>{
+    mlogSort = e.target.value;
+    try{ localStorage.setItem('cw-mlog-sort', mlogSort); }catch(err){}
+    renderMlog();
+  });
+  $('#closeMlogHist').addEventListener('click', closeOverlays);
+  $('#mlogHistEditBtn').addEventListener('click', ()=>{ if(mlogHistId) openMlogTaskModal(mlogHistId); });
+  $('#closeMlogTaskModal').addEventListener('click', closeOverlays);
+  $('#mlogNameInput').addEventListener('input', ()=>{
+    if(!mlogShedTouched){
+      const sm = $('#mlogNameInput').value.match(/\bshed\s*#?\s*(\w+)/i);
+      $('#mlogShedInput').value = sm ? `Shed ${sm[1]}` : '';
+    }
+    mlogUpdateModalHints();
+  });
+  $('#mlogShedInput').addEventListener('input', ()=>{ mlogShedTouched = true; });
+  $('#mlogSuggestChips').addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-suggest]');
+    if(!b) return;
+    const pre = mlogPrefillFromName(b.dataset.suggest);
+    $('#mlogNameInput').value = pre.name;
+    if(!mlogShedTouched) $('#mlogShedInput').value = pre.shed;
+    if(pre.every && !$('#mlogEveryInput').value) $('#mlogEveryInput').value = pre.every;
+    mlogUpdateModalHints();
+  });
+  $('#mlogSaveBtn').addEventListener('click', saveMlogTask);
+  $('#mlogTaskModal').addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox'){ e.preventDefault(); saveMlogTask(); } });
+  $('#mlogDeleteBtn').addEventListener('click', deleteMlogTask);
+
   function openDrawer(sel){
     closeAllTaskMenus();
     $(sel).classList.add('open');
@@ -6848,6 +7488,8 @@
   function closeOverlays(){
     $('#historyDrawer').classList.remove('open');
     $('#reportsDrawer').classList.remove('open');
+    $('#mlogHistDrawer').classList.remove('open');
+    $('#mlogTaskModal').classList.remove('open');
     $('#settingsDrawer').classList.remove('open');
     $('#dayModal').classList.remove('open');
     $('#taskDetailModal').classList.remove('open');
@@ -6878,6 +7520,8 @@
     copySourceTaskId = null;
     copySourceDayKey = null;
     currentReportId = null;
+    mlogHistId = null;
+    mlogEditId = null;
   }
   function toggleSidebar(){
     const sb = document.querySelector('.sidebar');
@@ -7396,7 +8040,7 @@
   $('#moreViewerBtn').addEventListener('click', ()=>{ closeOverlays(); openViewerMode(); });
 
   $('#exportDataBtn').addEventListener('click', ()=>{
-    const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates, reports}, null, 2);
+    const payload = JSON.stringify({tasks, history, batches, events, settings, frequentTemplates, maintenance, reports}, null, 2);
     const blob = new Blob([payload], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -7423,6 +8067,7 @@
         reports = parsed.reports || [];
         settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
         frequentTemplates = parsed.frequentTemplates || [];
+        maintenance = parsed.maintenance || [];
         applySettings();
         updateBatchColorDefault();
         updateEventColorDefault();
@@ -7444,6 +8089,8 @@
         closeReportDetailOnly();
         return;
       }
+      // Esc steps back out of the Maintenance Log one layer at a time.
+      if(mlogIsOpen() && !document.querySelector('.form-modal.open, .history-drawer.open')){ closeMlog(); return; }
       closeAllTaskMenus();
       $('#calendarDensityWrap').classList.remove('open');
       closeOverlays();
