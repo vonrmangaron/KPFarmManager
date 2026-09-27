@@ -1488,13 +1488,6 @@
   .mlog-sub{ font-size:12.5px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .mlog-add{ padding:9px 16px; font-size:13.5px; white-space:nowrap; font-family:'Sora',sans-serif; flex-shrink:0; }
   .mlog-toolbar{ display:flex; flex-direction:column; gap:12px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line); }
-  .mlog-summary{ display:flex; gap:8px; flex-wrap:wrap; }
-  .mlog-summary:empty{ display:none; }
-  .mlog-chip{ display:inline-flex; align-items:center; gap:7px; padding:6px 13px 6px 10px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:'Sora',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
-  .mlog-chip b{ font-size:15px; font-weight:800; }
-  .mlog-chip:hover{ border-color:var(--mlog-c); }
-  .mlog-chip.active{ border-color:var(--mlog-c); background:var(--mlog-soft); }
-  .mlog-chip.zero{ opacity:0.55; }
   .st-ok{ --mlog-c:var(--mlog-ok); --mlog-soft:var(--mlog-ok-soft); --mlog-ink:var(--mlog-ok); }
   .st-soon{ --mlog-c:var(--mlog-soon); --mlog-soft:var(--mlog-soon-soft); --mlog-ink:var(--mlog-soon-ink); }
   .st-over{ --mlog-c:var(--mlog-over); --mlog-soft:var(--mlog-over-soft); --mlog-ink:var(--mlog-over); }
@@ -1586,8 +1579,6 @@
     .mlog-title h2{ font-size:17px; }
     .mlog-add{ padding:8px 12px; font-size:13px; }
     .mlog-toolbar{ padding:10px 14px; gap:10px; }
-    .mlog-summary{ flex-wrap:nowrap; overflow-x:auto; margin:0 -14px; padding:0 14px; scrollbar-width:none; }
-    .mlog-summary::-webkit-scrollbar{ display:none; }
     .mlog-controls{ gap:8px; }
     .mlog-seg{ width:100%; }
     .mlog-seg button{ flex:1; padding:6px 4px; }
@@ -1596,8 +1587,6 @@
     .mlog-filters{ width:100%; margin-left:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:6px; }
     .mlog-filters input{ width:auto; grid-column:1 / -1; font-size:16px; }
     .mlog-filters select{ font-size:13px; padding:7px 6px; }
-    .mlog-chip{ padding:5px 11px 5px 9px; font-size:12px; }
-    .mlog-chip b{ font-size:14px; }
     .mlog-main{ padding:10px 10px max(12px, env(safe-area-inset-bottom)); }
     .mlog-table .mlog-task-col{ width:156px; min-width:156px; max-width:156px; }
     .mlog-open{ padding:6px 8px 6px 10px; gap:3px; }
@@ -1738,7 +1727,6 @@
     <button type="button" class="btn-app mlog-add" id="mlogAddBtn">+ Track task</button>
   </header>
   <div class="mlog-toolbar">
-    <div class="mlog-summary" id="mlogSummary"></div>
     <div class="mlog-controls">
       <div class="mlog-seg" id="mlogRangeSeg" role="group" aria-label="Date range">
         <button type="button" data-range="7">7 days</button>
@@ -7075,7 +7063,7 @@
   const MLOG_RANGES = { '7':7, '14':14, '30':30 };
   const MLOG_STATUS_ORDER = { over:0, soon:1, none:2, ok:3 };
   let mlogRange = '14', mlogFrom = null, mlogTo = null;
-  let mlogStatusFilter = '', mlogSearch = '', mlogShed = '', mlogCat = '', mlogSort = 'urgency';
+  let mlogSearch = '', mlogShed = '', mlogCat = '', mlogSort = 'urgency';
   let mlogHistId = null, mlogEditId = null, mlogScrollToEnd = false, mlogShedTouched = false;
   try{
     const r = localStorage.getItem('cw-mlog-range');
@@ -7178,7 +7166,6 @@
     const main = $('#mlogMain');
     if(!maintenance.length){
       const sugg = mlogSuggestions();
-      $('#mlogSummary').innerHTML = '';
       main.innerHTML = `<div class="mlog-empty">
         <div class="mlog-empty-ic">🔧</div>
         <h3>Track your recurring farm jobs</h3>
@@ -7194,12 +7181,6 @@
       .filter(r=> (!q || mlogNorm(r.m.name).includes(q) || mlogNorm(r.m.shed).includes(q) || mlogNorm(r.m.category).includes(q))
         && (!mlogShed || (r.m.shed || '').trim() === mlogShed)
         && (!mlogCat || (r.m.category || '').trim() === mlogCat));
-    const counts = { over:0, soon:0, ok:0, none:0 };
-    rows.forEach(r=> counts[r.st.key]++);
-    const chipDefs = [['over','Overdue'], ['soon','Due soon'], ['ok','Up to date'], ['none','No records']];
-    $('#mlogSummary').innerHTML = chipDefs.map(([k, label])=>
-      `<button type="button" class="mlog-chip st-${k}${mlogStatusFilter === k ? ' active' : ''}${counts[k] ? '' : ' zero'}" data-status="${k}" aria-pressed="${mlogStatusFilter === k}"><span class="mlog-dot"></span><b>${counts[k]}</b>${label}</button>`).join('');
-    if(mlogStatusFilter) rows = rows.filter(r=> r.st.key === mlogStatusFilter);
     const byName = (a,b)=> a.m.name.localeCompare(b.m.name, undefined, { numeric:true, sensitivity:'base' });
     if(mlogSort === 'name') rows.sort(byName);
     else if(mlogSort === 'shed') rows.sort((a,b)=> (a.m.shed || '￿').localeCompare(b.m.shed || '￿', undefined, { numeric:true, sensitivity:'base' }) || byName(a,b));
@@ -7425,13 +7406,11 @@
     if(box){ mlogToggle(box.dataset.mid, box.dataset.date); return; }
     const row = e.target.closest('.mlog-open');
     if(row){ openMlogHistory(row.dataset.mid); return; }
-    const chip = e.target.closest('.mlog-chip');
-    if(chip){ mlogStatusFilter = mlogStatusFilter === chip.dataset.status ? '' : chip.dataset.status; renderMlog(); return; }
     const sug = e.target.closest('[data-suggest]');
     if(sug){ openMlogTaskModal(null, mlogPrefillFromName(sug.dataset.suggest)); return; }
     if(e.target.closest('[data-mlog-add]')){ openMlogTaskModal(null); return; }
     if(e.target.closest('[data-mlog-clear]')){
-      mlogSearch = ''; mlogShed = ''; mlogCat = ''; mlogStatusFilter = '';
+      mlogSearch = ''; mlogShed = ''; mlogCat = '';
       $('#mlogSearch').value = '';
       renderMlog();
     }
