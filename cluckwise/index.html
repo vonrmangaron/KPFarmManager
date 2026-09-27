@@ -1599,6 +1599,110 @@
     .mlog-dayhead{ min-width:34px; }
     .mlog-box{ width:24px; height:24px; }
   }
+
+  /* ============================================================
+     SIDEBAR — quiet surface, uniform section headers, compact rows.
+     Overrides the older card styles for everything inside .sidebar.
+     ============================================================ */
+  .sidebar{ padding:16px 14px 24px; }
+  .sidebar .quick-actions{ flex-direction:row; gap:8px; margin-bottom:12px; }
+  .sidebar .btn-create-wide{ display:flex; align-items:center; justify-content:center; gap:7px; height:40px; padding:0 8px; border-radius:10px; font-size:13.5px; box-shadow:none; transition:background .12s ease, border-color .12s ease; }
+  .sidebar .btn-create-wide:hover{ transform:none; filter:none; }
+  .sidebar .btn-create-wide svg{ width:16px; height:16px; flex-shrink:0; }
+  .sidebar .btn-create-wide.batch{ background:var(--primary); color:#241A08; }
+  .sidebar .btn-create-wide.batch:hover{ background:color-mix(in srgb, var(--primary) 88%, #000); }
+  .sidebar .btn-create-wide.audit{ background:transparent; color:var(--ink); border:1px solid var(--line); font-weight:600; }
+  .sidebar .btn-create-wide.audit:hover{ background:var(--surface-soft); }
+  .sb-card{ background:var(--surface-soft); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:9px; margin-bottom:12px; }
+  .sb-card-top, .sb-card-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .sb-card-foot{ font-size:11.5px; color:var(--muted); }
+  .sb-eyebrow{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .sb-chip{ font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
+  .sb-chip.ok{ background:var(--success-soft); color:var(--success); }
+  .sb-chip.soon{ background:var(--secondary-soft); color:var(--secondary); }
+  .sb-chip.done{ background:var(--surface-soft); color:var(--muted); }
+  .sb-batch-title{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .sb-batch-num{ font-family:'Sora',sans-serif; font-weight:700; font-size:16px; color:var(--ink); }
+  .sb-batch-meta{ font-size:12px; color:var(--muted); }
+  .sb-track{ height:6px; border-radius:999px; background:color-mix(in srgb, var(--ink) 9%, transparent); overflow:hidden; }
+  .sb-track > span{ display:block; height:100%; border-radius:999px; background:var(--primary); }
+  .sb-divider{ height:1px; background:var(--line); margin:2px 0 6px; }
+  .sb-sec{ margin-top:6px; }
+  .sb-sec-h{ display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+  .sidebar h2.sb-sec-heading{ flex:1; min-width:0; margin:0; padding:0; border:none; display:block; font-size:inherit; font-weight:inherit; }
+  .sb-sec-toggle{ width:100%; display:flex; align-items:center; gap:8px; height:32px; padding:0 6px; border:none; border-radius:8px; background:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; text-align:left; }
+  .sb-sec-toggle:hover{ background:var(--surface-soft); color:var(--ink); }
+  .sb-sec-toggle:focus-visible, .sb-icon-btn:focus-visible, .sb-more:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:1px; }
+  .sb-chev{ width:14px; height:14px; flex-shrink:0; transition:transform .15s ease; }
+  .sb-sec-toggle.collapsed .sb-chev{ transform:rotate(-90deg); }
+  .sb-count{ font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; background:var(--surface-soft); color:var(--muted); padding:1px 7px; border-radius:999px; }
+  .sb-count:empty{ display:none; }
+  .sb-icon-btn{ width:30px; height:30px; flex-shrink:0; border:none; border-radius:8px; background:none; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .sb-icon-btn:hover{ background:var(--surface-soft); color:var(--ink); }
+  .sidebar .sb-more, .sidebar .view-all-backlog-btn{ display:block; width:100%; height:30px; padding:0 8px; border:none; border-radius:8px; background:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; text-align:left; cursor:pointer; }
+  .sidebar .sb-more:hover, .sidebar .view-all-backlog-btn:hover{ background:var(--surface-soft); color:var(--ink); }
+  .sidebar .empty-note{ font-size:12.5px; padding:6px 8px; }
+  .sidebar .backlog-list .inline-add-wrap{ margin-top:0; }
+  .sidebar .inline-add-trigger{ height:30px; padding:0 8px; font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; }
+
+  /* Frequent + backlog rows */
+  .sidebar .frequent-list{ max-height:none; overflow:visible; gap:2px; padding-right:0; }
+  .sidebar .backlog-list{ gap:2px; }
+  .sidebar .backlog-list > *{ margin-bottom:0; }
+  .sidebar .frequent-list .task-card, .sidebar .backlog-list .task-card{ background:none; border:none; border-radius:8px; box-shadow:none; padding:6px 8px; min-height:38px; justify-content:center; }
+  .sidebar .frequent-chip{ border-style:none !important; }
+  .sidebar .frequent-list .task-card:hover, .sidebar .backlog-list .task-card:hover, .sidebar .task-card.menu-open{ background:var(--surface-soft); box-shadow:none; }
+  .sidebar .backlog-list .task-card.high-priority, .sidebar .backlog-list .task-card.overdue{ background:none; border:none; }
+  .sidebar .task-card-top{ gap:10px; }
+  .sidebar .task-card .task-name{ font-size:13.5px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .sidebar .task-icon-slot{ width:26px; height:26px; }
+  .sidebar .task-icon-slot .task-complete-btn{ inset:3px; }
+  .task-icon.sb-ic{ width:26px; height:26px; flex-shrink:0; border-radius:7px; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, currentColor 13%, transparent); }
+  .task-icon.sb-ic svg{ width:15px; height:15px; }
+  .tone-green{ color:var(--success); }
+  .tone-red{ color:var(--danger); }
+  .tone-blue{ color:#3E7CB1; }
+  body.theme-dark .tone-blue{ color:#8FC1FF; }
+  .tone-amber{ color:var(--primary-dark); }
+  .tone-muted{ color:var(--muted); }
+  .sidebar .task-card.done .task-icon.sb-ic{ filter:grayscale(1); opacity:.6; }
+  .sb-high-tag{ display:inline-block; margin-top:3px; font-size:10.5px; font-weight:700; padding:0 6px; border-radius:999px; background:var(--primary-soft); color:#8A5F00; }
+  body.theme-dark .sb-high-tag{ color:#FFC876; }
+  @media (hover:none){ .sidebar .task-icon-slot{ width:auto; height:auto; } }
+
+  /* Batches + audits rows */
+  .sidebar .batches-list, .sidebar .events-list{ gap:2px; }
+  .sidebar .batches-list > *, .sidebar .events-list > *{ margin-bottom:0; }
+  .sidebar .batch-row, .sidebar .event-row{ background:none; border:none; box-shadow:none; border-radius:8px; padding:7px 8px; }
+  .sidebar .batch-row:hover, .sidebar .event-row:hover, .sidebar .batch-row:focus-within, .sidebar .event-row:focus-within{ background:var(--surface-soft); }
+  .sidebar .batch-swatch{ border-radius:3px; }
+  .sidebar .batch-row .b-num{ font-family:'Sora',sans-serif; font-weight:700; flex:1; }
+  .sidebar .batch-row .b-range, .sidebar .event-row .e-sub{ font-size:11.5px; margin-top:1px; padding-left:18px; }
+  .sidebar .event-row .e-name{ font-weight:600; }
+  .sidebar .e-countdown{ font-size:11.5px; font-weight:700; color:var(--danger); flex-shrink:0; }
+  .sidebar .event-checklist-tag{ margin-left:18px; }
+  .sidebar .b-actions, .sidebar .e-actions{ opacity:0; transition:opacity .12s ease; }
+  .sidebar .batch-row:hover .b-actions, .sidebar .batch-row:focus-within .b-actions,
+  .sidebar .event-row:hover .e-actions, .sidebar .event-row:focus-within .e-actions{ opacity:1; }
+  @media (hover:none){ .sidebar .b-actions, .sidebar .e-actions{ opacity:1; } }
+  .sidebar .batch-edit input, .sidebar .batch-edit select{ background:var(--surface); color:var(--ink); }
+
+  /* Audit prep card (sidebar + agenda) */
+  .audit-prep{ background:var(--surface-soft); border:none; border-radius:12px; padding:12px 14px; margin-bottom:12px; gap:9px; }
+  .audit-prep-head{ justify-content:flex-start; gap:12px; }
+  .audit-date-tile{ width:42px; height:46px; flex-shrink:0; border-radius:9px; background:var(--danger-soft); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .adt-mon{ font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--danger); }
+  .adt-day{ font-family:'Sora',sans-serif; font-weight:800; font-size:17px; line-height:1.1; color:var(--ink); }
+  .audit-prep-headtext{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .audit-prep-titlerow{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .audit-prep-title{ font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .audit-prep-days{ background:none; color:var(--danger); padding:0; font-family:'Inter',sans-serif; font-size:11.5px; font-weight:700; }
+  .audit-prep-bar{ background:color-mix(in srgb, var(--ink) 9%, transparent); }
+  .audit-prep-bar > span{ background:var(--danger); }
+  .audit-prep-stats{ font-size:11.5px; color:var(--muted); }
+  .audit-prep-item{ background:var(--surface); border:none; min-height:34px; }
+  .audit-prep-item .task-icon.sb-ic{ width:22px; height:22px; border-radius:6px; }
+  .audit-prep-item .task-icon.sb-ic svg{ width:13px; height:13px; }
 </style>
 </head>
 <body>
@@ -1658,37 +1762,47 @@
   <div class="main">
     <aside class="sidebar">
       <div class="quick-actions">
-        <button class="btn-create-wide batch" id="openBatchModalBtn">🐣 New Batch</button>
-        <button class="btn-create-wide audit" id="openEventModalBtn">📝 New Audit</button>
+        <button class="btn-create-wide batch" id="openBatchModalBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New batch</button>
+        <button class="btn-create-wide audit" id="openEventModalBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg>New audit</button>
       </div>
+      <div id="sbActiveBatch"></div>
       <div id="auditPrepSidebar"></div>
+      <div class="sb-divider"></div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
-        <div class="section-header-left">
-          <button class="section-collapse-btn" id="frequentCollapseBtn" aria-label="Collapse Frequent tasks" title="Collapse">▾</button>
-          <h2 style="margin:0; padding-bottom:6px; border-bottom:2px solid var(--primary); display:inline-block;" id="frequentTasksHeader">Frequent tasks</h2>
+      <section class="sb-sec">
+        <div class="sb-sec-h">
+          <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="frequentCollapseBtn" aria-controls="frequentSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="frequentTasksHeader">Frequent tasks</span><span class="sb-count" id="frequentCount"></span></button></h2>
+          <button type="button" class="sb-icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" aria-label="Add the Frequent Task Checklist"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
-        <button class="icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" style="width:26px;height:26px;font-size:14px;flex-shrink:0;">+</button>
-      </div>
-      <div class="collapsible-section" id="frequentSectionBody">
-      <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
-      </div>
-
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px;">
-        <div class="section-header-left">
-          <button class="section-collapse-btn" id="backlogCollapseBtn" aria-label="Collapse Backlog" title="Collapse">▾</button>
-          <h2 id="backlogHeader">Backlog</h2>
+        <div class="collapsible-section" id="frequentSectionBody">
+          <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
+          <div id="frequentMore"></div>
         </div>
-      </div>
-      <div class="collapsible-section" id="backlogSectionBody">
-      <div class="backlog-list" id="backlogList" data-date="backlog"></div>
-      </div>
-
-      <h2>Batches</h2>
-      <div class="batches-list" id="batchesList"></div>
-
-      <h2>Events / Audits</h2>
-      <div class="events-list" id="eventsList"></div>
+      </section>
+      <section class="sb-sec">
+        <div class="sb-sec-h">
+          <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="backlogCollapseBtn" aria-controls="backlogSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="backlogHeader">Backlog</span><span class="sb-count" id="backlogCount"></span></button></h2>
+        </div>
+        <div class="collapsible-section" id="backlogSectionBody">
+          <div class="backlog-list" id="backlogList" data-date="backlog"></div>
+        </div>
+      </section>
+      <section class="sb-sec">
+        <div class="sb-sec-h">
+          <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="batchesCollapseBtn" aria-controls="batchesSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="batchesHeader">Batches</span><span class="sb-count" id="batchesCount"></span></button></h2>
+        </div>
+        <div class="collapsible-section" id="batchesSectionBody">
+          <div class="batches-list" id="batchesList"></div>
+        </div>
+      </section>
+      <section class="sb-sec">
+        <div class="sb-sec-h">
+          <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="eventsCollapseBtn" aria-controls="eventsSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="eventsHeader">Audits</span><span class="sb-count" id="eventsCount"></span></button></h2>
+        </div>
+        <div class="collapsible-section" id="eventsSectionBody">
+          <div class="events-list" id="eventsList"></div>
+        </div>
+      </section>
     </aside>
 
     <div class="calendar-wrap-outer">
@@ -4087,7 +4201,7 @@
         <button class="freq-edit-confirm" type="button" title="Save">✓</button>
         <button class="freq-edit-cancel" type="button" title="Cancel">✕</button>
       </div>`;
-    renderIconInto(card.querySelector('.task-icon'), item.icon);
+    renderSidebarIcon(card.querySelector('.task-icon'), item.name, item.icon);
     card.querySelector('.task-name').textContent = item.name;
     const menuBtn = card.querySelector('.task-menu-btn');
     const popup = card.querySelector('.task-menu-popup');
@@ -4704,19 +4818,30 @@
   }
 
   const SIDEBAR_BACKLOG_CAP = 4;
+  const SIDEBAR_FREQUENT_CAP = 4;
+  let frequentShowAll = false;
   function renderBacklog(){
     const list = $('#backlogList');
     list.innerHTML = '';
     const open = tasks.filter(t=>t.date===null).sort(taskSortCompare);
-    const header = $('#backlogHeader');
-    header.textContent = open.length ? `Backlog (${open.length})` : 'Backlog';
+    $('#backlogCount').textContent = open.length || '';
     if(open.length===0){ list.innerHTML = '<div class="empty-note">No tasks waiting.</div>'; }
     else{
-      open.slice(0, SIDEBAR_BACKLOG_CAP).forEach(t=> list.appendChild(buildTaskCard(t)));
+      open.slice(0, SIDEBAR_BACKLOG_CAP).forEach(t=>{
+        const card = buildTaskCard(t);
+        renderSidebarIcon(card.querySelector('.task-icon'), t.name, t.icon);
+        if(t.priority === 'high' && t.status !== 'done'){
+          const tag = document.createElement('span');
+          tag.className = 'sb-high-tag';
+          tag.textContent = 'High';
+          card.querySelector('.task-body').appendChild(tag);
+        }
+        list.appendChild(card);
+      });
       if(open.length > SIDEBAR_BACKLOG_CAP){
         const viewAllBtn = document.createElement('button');
-        viewAllBtn.className = 'view-all-backlog-btn';
-        viewAllBtn.textContent = `View all ${open.length} →`;
+        viewAllBtn.className = 'view-all-backlog-btn sb-more';
+        viewAllBtn.textContent = `Show all ${open.length}`;
         viewAllBtn.addEventListener('click', openBacklogModal);
         list.appendChild(viewAllBtn);
       }
@@ -4727,31 +4852,104 @@
   function renderFrequentTasks(){
     const box = $('#frequentList');
     box.innerHTML = '';
-    const header = $('#frequentTasksHeader');
+    const more = $('#frequentMore');
+    more.innerHTML = '';
+    $('#frequentCount').textContent = frequentTemplates.length || '';
     if(!frequentTemplates.length){
-      header.textContent = 'Frequent tasks';
       box.innerHTML = '<div class="empty-note">Check "Save as a frequent task" when adding a task to build this list.</div>';
       return;
     }
-    header.textContent = `Frequent tasks (${frequentTemplates.length})`;
-    frequentTemplates.forEach(item=> box.appendChild(buildFrequentChip(item)));
+    const shown = frequentShowAll ? frequentTemplates : frequentTemplates.slice(0, SIDEBAR_FREQUENT_CAP);
+    shown.forEach(item=> box.appendChild(buildFrequentChip(item)));
+    if(frequentTemplates.length > SIDEBAR_FREQUENT_CAP){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sb-more';
+      btn.textContent = frequentShowAll ? 'Show less' : `Show all ${frequentTemplates.length}`;
+      btn.addEventListener('click', ()=>{ frequentShowAll = !frequentShowAll; renderFrequentTasks(); initSortables(); });
+      more.appendChild(btn);
+    }
+  }
+
+  // ==================== SIDEBAR ====================
+  // Line icons picked from a task's name, so the sidebar reads as one set.
+  // A custom image icon (URL) is kept as-is.
+  const SB_ICONS = {
+    sprout:'<path d="M12 20v-8M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-4 3-6 7-6 0 4-3 6-7 6z"/>',
+    target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+    drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+    sparkle:'<path d="M12 4l1.8 4.2L18 10l-4.2 1.8L12 16l-1.8-4.2L6 10l4.2-1.8z"/><path d="M18 16l.8 1.7 1.7.8-1.7.8L18 21l-.8-1.7-1.7-.8 1.7-.8z"/>',
+    sack:'<path d="M9 4h6l-1.5 3h-3z"/><path d="M8.5 7C5 10 5 20 12 20s7-10 3.5-13z"/>',
+    scale:'<path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-2.5 6a2.5 2.5 0 0 0 5 0zM19 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+    zap:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+    wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+    clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/>',
+    dot:'<circle cx="12" cy="12" r="7"/><path d="M9 12l2 2 4-4"/>'
+  };
+  const SB_ICON_RULES = [
+    [/grass|mow|hoe|weed|garden|range area|landscap/i, 'sprout', 'green'],
+    [/rat|bait|pest|mouse|rodent|insect|fly|flies/i, 'target', 'red'],
+    [/foot ?bath|water|drink|nipple|tank|cool ?pad|coolpad|mist|flush|pipe/i, 'drop', 'blue'],
+    [/clean|wash|sweep|disinfect|sanitiz|scrub|spray/i, 'sparkle', 'blue'],
+    [/feed|auger|silo|grain|hopper/i, 'sack', 'amber'],
+    [/weigh|weight|scale/i, 'scale', 'amber'],
+    [/light|electric|generator|power|fan|motor|battery/i, 'zap', 'amber'],
+    [/r&m|repair|fix|replace|cover|hole|gate|fence|weld|snip|patch|install/i, 'wrench', 'muted'],
+    [/mortality|cull|record|count|check|inspect|audit|report|log/i, 'clip', 'muted']
+  ];
+  function renderSidebarIcon(el, name, icon){
+    if(!el) return;
+    if(icon && /^https?:\/\//.test(icon)){ renderIconInto(el, icon); return; }
+    const rule = SB_ICON_RULES.find(r=> r[0].test(name || '')) || [null, 'dot', 'muted'];
+    el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SB_ICONS[rule[1]]}</svg>`;
+    el.classList.add('sb-ic', 'tone-' + rule[2]);
+  }
+  function renderActiveBatchCard(){
+    const box = $('#sbActiveBatch');
+    if(!box) return;
+    const today = dateKey(new Date());
+    const active = batches.filter(b=> today >= b.start && today <= b.end).sort((a,b)=> b.start.localeCompare(a.start))[0];
+    const next = active ? null : batches.filter(b=> b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0];
+    const b = active || next;
+    if(!b){ box.innerHTML = ''; return; }
+    const sheds = (b.sheds || []).length;
+    const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
+    const pct = active ? Math.min(100, Math.max(0, Math.round(batchAgeOn(b, today) / total * 100))) : 0;
+    const daysTo = Math.round((toDateObj(b.start) - toDateObj(today)) / 86400000);
+    box.innerHTML = `<div class="sb-card">
+      <div class="sb-card-top"><span class="sb-eyebrow">${active ? 'Active batch' : 'Next batch'}</span>
+        <span class="sb-chip ${active ? 'ok' : 'soon'}">${active ? `Day ${batchAgeOn(b, today)}` : `in ${daysTo} day${daysTo === 1 ? '' : 's'}`}</span></div>
+      <div class="sb-batch-title"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span>
+        <span class="sb-batch-num">#${escapeHtml(b.number)}</span>${sheds ? `<span class="sb-batch-meta">· ${sheds} shed${sheds === 1 ? '' : 's'}</span>` : ''}</div>
+      ${active ? `<div class="sb-track" role="progressbar" aria-label="Batch progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%;background:${colorForBatchNumber(b.number)}"></span></div>` : ''}
+      <div class="sb-card-foot"><span>${active ? 'Placed' : 'Starts'} ${escapeHtml(formatShort(b.start))}</span><span>Ends ${escapeHtml(formatShort(b.end))}</span></div>
+    </div>`;
   }
 
   function renderBatches(){
     const box = $('#batchesList');
     box.innerHTML = '';
+    $('#batchesCount').textContent = batches.length || '';
     if(batches.length===0){ box.innerHTML = '<div class="empty-note">No batches yet. Use + Batch above to add one.</div>'; return; }
     batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
       const row = document.createElement('div');
       row.className = 'batch-row';
       const c = colorForBatchNumber(b.number);
+      const bToday = dateKey(new Date());
+      const shedCount = (b.sheds || []).length;
+      const shedTxt = shedCount ? ` · ${shedCount} shed${shedCount === 1 ? '' : 's'}` : '';
+      const bState = bToday < b.start ? 'upcoming' : bToday > b.end ? 'ended' : 'active';
+      const bChip = { active:['ok','Active'], upcoming:['soon','Upcoming'], ended:['done','Ended'] }[bState];
+      const bSub = bState === 'active' ? `Day ${batchAgeOn(b, bToday)}${shedTxt} · ends ${formatShort(b.end)}`
+        : bState === 'upcoming' ? `Starts ${formatShort(b.start)}${shedTxt}` : `${formatShort(b.start)} – ${formatFull(b.end)}`;
       row.innerHTML = `
         <div class="b-top">
           <span class="batch-swatch" style="background:${c}"></span>
           <span class="b-num">#${escapeHtml(b.number)}</span>
-          <span class="b-actions"><button class="edit-batch" title="Edit">✎</button><button class="remove-batch" title="Remove batch">✕</button></span>
+          <span class="sb-chip ${bChip[0]}">${bChip[1]}</span>
+          <span class="b-actions"><button class="edit-batch" title="Edit" aria-label="Edit batch #${escapeHtmlAttr(b.number)}">✎</button><button class="remove-batch" title="Remove batch" aria-label="Remove batch #${escapeHtmlAttr(b.number)}">✕</button></span>
         </div>
-        <div class="b-range">${formatFull(b.start)} – ${formatFull(b.end)}</div>
+        <div class="b-range" title="${formatFull(b.start)} – ${formatFull(b.end)}">${bSub}</div>
         <div class="batch-edit">
           <input type="date" class="edit-start" value="${b.start}">
           <input type="date" class="edit-end" value="${b.end}">
@@ -4838,6 +5036,7 @@
     box.innerHTML = '';
     const todayKey = dateKey(new Date());
     const upcomingEvents = events.filter(e=> e.date >= todayKey);
+    $('#eventsCount').textContent = upcomingEvents.length || '';
     if(events.length===0){ box.innerHTML = '<div class="empty-note">No events yet. Use + Audit above to add one.</div>'; return; }
     if(upcomingEvents.length===0){ box.innerHTML = '<div class="empty-note">No upcoming events.</div>'; return; }
     upcomingEvents.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
@@ -4853,6 +5052,7 @@
         <div class="e-top">
           <span class="batch-swatch" style="background:${ev.color || DEFAULT_EVENT_COLOR}"></span>
           <span class="e-name"></span>
+          <span class="e-countdown"></span>
           <span class="e-actions"><button class="edit-event" title="Edit">✎</button><button class="remove-event" title="Remove event">✕</button></span>
         </div>
         <div class="e-sub"></div>
@@ -4866,7 +5066,10 @@
           <button class="save-event">Save changes</button>
         </div>`;
       row.querySelector('.e-name').textContent = ev.name;
-      row.querySelector('.e-sub').textContent = `${formatFull(ev.date)} • prep ${formatFull(cs)}–${formatFull(ce)}`;
+      row.querySelector('.e-sub').textContent = `${formatFull(ev.date)} · prep from ${formatShort(cs)}`;
+      row.querySelector('.e-sub').title = `Prep week ${formatFull(cs)} – ${formatFull(ce)}`;
+      const evDays = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+      row.querySelector('.e-countdown').textContent = evDays === 0 ? 'Today' : `${evDays}d`;
       const evEditPanel = row.querySelector('.event-edit');
       row.querySelector('.edit-event').addEventListener('click', ()=> evEditPanel.classList.toggle('open'));
       row.querySelector('.remove-event').addEventListener('click', ()=> deleteEvent(ev.id));
@@ -5984,9 +6187,12 @@
         onChoose: beginDragNoSelect,
         onUnchoose: endDragNoSelect,
         onUpdate:(evt)=>{
+          // The sidebar may show only the first few; keep the hidden ones after them in their old order.
           const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
-          ids.forEach((id,i)=>{ const f = frequentTemplates.find(x=>x.id===id); if(f) f._order = i; });
-          frequentTemplates.sort((a,b)=>(a._order||0)-(b._order||0));
+          const shownIds = new Set(ids);
+          const rest = frequentTemplates.filter(x=> !shownIds.has(x.id));
+          frequentTemplates = ids.map(id=> frequentTemplates.find(x=> x.id===id)).filter(Boolean).concat(rest);
+          frequentTemplates.forEach(x=>{ delete x._order; });
           persist();
           requestAnimationFrame(renderAll);
         },
@@ -6054,6 +6260,7 @@
     renderBacklog();
     renderFrequentTasks();
     renderBatches();
+    renderActiveBatchCard();
     renderEvents();
     renderAuditPrep();
     if(viewMode==='month') renderMonth();
@@ -6145,19 +6352,27 @@
     panel.className = 'audit-prep';
     const head = document.createElement('div');
     head.className = 'audit-prep-head';
+    const evDate = toDateObj(ev.date);
+    const tile = document.createElement('div');
+    tile.className = 'audit-date-tile';
+    tile.innerHTML = `<span class="adt-mon">${escapeHtml(evDate.toLocaleDateString(undefined, { month:'short' }))}</span><span class="adt-day">${evDate.getDate()}</span>`;
+    const headText = document.createElement('div');
+    headText.className = 'audit-prep-headtext';
+    const titleRow = document.createElement('div');
+    titleRow.className = 'audit-prep-titlerow';
     const title = document.createElement('div');
     title.className = 'audit-prep-title';
-    title.textContent = '📝 ' + ev.name + (ev.batchNumber ? ` · Batch #${ev.batchNumber}` : '');
+    title.textContent = ev.name;
     const badge = document.createElement('span');
     badge.className = 'audit-prep-days';
-    badge.textContent = daysLeft <= 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft} days`;
-    head.append(title, badge);
-    panel.appendChild(head);
-
+    badge.textContent = daysLeft <= 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `in ${daysLeft} days`;
+    titleRow.append(title, badge);
     const sub = document.createElement('div');
     sub.className = 'audit-prep-sub';
-    sub.textContent = `Audit ${formatFull(ev.date)} · prep week from ${formatShort(cs)}`;
-    panel.appendChild(sub);
+    sub.textContent = (ev.batchNumber ? `Batch #${ev.batchNumber} · ` : '') + `prep week from ${formatShort(cs)}`;
+    headText.append(titleRow, sub);
+    head.append(tile, headText);
+    panel.appendChild(head);
 
     const pct = windowTasks.length ? Math.round((doneCount / windowTasks.length) * 100) : 0;
     const bar = document.createElement('div');
@@ -6168,7 +6383,7 @@
     const stats = document.createElement('div');
     stats.className = 'audit-prep-stats';
     const line = document.createElement('div');
-    line.textContent = windowTasks.length ? `✓ ${doneCount}/${windowTasks.length} prep-week tasks done` : 'No tasks scheduled in the prep week yet';
+    line.textContent = windowTasks.length ? `Prep ${doneCount} of ${windowTasks.length} tasks done` : 'No tasks scheduled in the prep week yet';
     stats.appendChild(line);
     if(backlogPrep.length){
       const b = document.createElement('button');
@@ -6190,7 +6405,7 @@
     openTasks.slice(0, max).forEach(t=>{
       const it = document.createElement('button');
       it.type = 'button'; it.className = 'audit-prep-item';
-      const ic = document.createElement('span'); renderIconInto(ic, t.icon);
+      const ic = document.createElement('span'); ic.className = 'task-icon'; renderSidebarIcon(ic, t.name, t.icon);
       const nm = document.createElement('span'); nm.className = 'api-name'; nm.textContent = t.name;
       const dt = document.createElement('span'); dt.className = 'api-date';
       dt.textContent = (t.date < todayKey ? '⚠ ' : '') + formatShort(t.date);
@@ -6791,9 +7006,11 @@
   function wireSectionCollapse(btnId, bodyId, key){
     const btn = $(btnId), body = $(bodyId);
     if(collapsedSidebarSections.has(key)){ btn.classList.add('collapsed'); body.classList.add('collapsed'); }
+    btn.setAttribute('aria-expanded', String(!body.classList.contains('collapsed')));
     btn.addEventListener('click', ()=>{
       const nowCollapsed = !body.classList.contains('collapsed');
       btn.classList.toggle('collapsed', nowCollapsed);
+      btn.setAttribute('aria-expanded', String(!nowCollapsed));
       body.classList.toggle('collapsed', nowCollapsed);
       if(nowCollapsed) collapsedSidebarSections.add(key); else collapsedSidebarSections.delete(key);
       saveCollapsedSidebarSections();
@@ -6801,6 +7018,8 @@
   }
   wireSectionCollapse('#frequentCollapseBtn', '#frequentSectionBody', 'frequent');
   wireSectionCollapse('#backlogCollapseBtn', '#backlogSectionBody', 'backlog');
+  wireSectionCollapse('#batchesCollapseBtn', '#batchesSectionBody', 'batches');
+  wireSectionCollapse('#eventsCollapseBtn', '#eventsSectionBody', 'events');
 
   $('#quickFrequentAddBtn').addEventListener('click', ()=>{
     let added = 0;
