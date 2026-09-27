@@ -1517,11 +1517,12 @@
   .mlog-table thead th{ position:sticky; top:0; z-index:2; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; padding:8px 2px 7px; text-align:center; }
   .mlog-table .mlog-task-col{ position:sticky; left:0; z-index:1; width:285px; min-width:285px; max-width:285px; text-align:left; border-right:1px solid var(--line); }
   .mlog-table thead .mlog-task-col{ z-index:3; padding-left:16px; font-family:'Sora',sans-serif; }
-  .mlog-dayhead{ min-width:36px; }
+  .mlog-dayhead{ min-width:38px; text-transform:none !important; letter-spacing:0 !important; }
   .mlog-dayhead .dnum{ display:block; font-family:'Sora',sans-serif; font-size:13px; font-weight:700; color:var(--ink); letter-spacing:0; margin-top:2px; }
   .mlog-dayhead .dmon{ display:block; color:var(--primary-dark); font-weight:800; }
   .mlog-dayhead.wkend .dnum{ color:var(--muted); }
-  .mlog-dayhead.is-today .dnum{ display:inline-block; min-width:24px; padding:1px 4px; border-radius:999px; background:var(--primary); color:#241A08; }
+  .mlog-dayhead.is-today .dnum{ width:fit-content; margin:0 auto; line-height:1.25; min-width:24px; padding:1px 4px; border-radius:999px; background:var(--primary); color:#241A08; }
+  .mlog-table th.mlog-dayhead.wkend, .mlog-table td.wkend{ background:var(--weekend-bg); }
   .mlog-table td.is-today{ background:color-mix(in srgb, var(--primary) 9%, var(--surface)); }
   .mlog-table tbody tr:hover > td{ background:var(--surface-soft); }
   .mlog-open{ display:flex; flex-direction:column; gap:4px; width:100%; padding:6px 12px 6px 16px; border:none; background:none; text-align:left; color:inherit; font:inherit; cursor:pointer; }
@@ -1547,6 +1548,7 @@
   .mlog-box:disabled{ opacity:0.35; cursor:default; }
   .mlog-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:11.5px; color:var(--muted); flex-shrink:0; }
   .mlog-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .mlog-legend .mlog-wk-swatch{ width:14px; height:14px; border-radius:4px; background:var(--weekend-bg); border:1px solid var(--line); }
   .mlog-legend .mlog-box{ width:14px; height:14px; border-radius:4px; cursor:default; pointer-events:none; }
   .mlog-empty{ margin:auto; max-width:460px; text-align:center; padding:28px 20px; }
   .mlog-empty .mlog-empty-ic{ font-size:40px; }
@@ -1603,7 +1605,7 @@
     .mlog-pill{ font-size:11.5px; }
     .mlog-last{ display:none; }
     .mlog-name{ font-size:13px; gap:5px; }
-    .mlog-dayhead{ min-width:32px; }
+    .mlog-dayhead{ min-width:34px; }
     .mlog-box{ width:24px; height:24px; }
   }
 </style>
@@ -7214,7 +7216,7 @@
     keys.forEach((k, i)=>{
       const d = toDateObj(k), wd = d.getDay();
       const mon = (i === 0 || k.endsWith('-01')) ? `<span class="dmon">${d.toLocaleDateString(undefined, { month:'short' })}</span>` : '';
-      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'narrow' })}<span class="dnum">${d.getDate()}</span></th>`;
+      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'short' })}<span class="dnum">${d.getDate()}</span></th>`;
     });
     let body = '';
     rows.forEach(({ m, dates, st })=>{
@@ -7233,11 +7235,12 @@
       // empty day knows how long it had been since the last completion.
       let p = -1;
       keys.forEach(k=>{
+        const wd = toDateObj(k).getDay();
         while(p + 1 < dates.length && dates[p + 1] <= k) p++;
         const done = doneSet.has(k), future = k > today;
         const gap = !done && !future && p >= 0 && mlogDaysBetween(dates[p], k) > every;
         const label = `${m.name}, ${formatFull(k)}: ${done ? 'done' : future ? 'upcoming' : gap ? 'not done (overdue)' : 'not done'}`;
-        body += `<td class="mlog-cell${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}"${future ? ' disabled' : ''}>${done ? '✓' : ''}</button></td>`;
+        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}"${future ? ' disabled' : ''}>${done ? '✓' : ''}</button></td>`;
       });
       body += '</tr>';
     });
@@ -7249,6 +7252,7 @@
         <span><i class="mlog-box done">✓</i>Done</span>
         <span><i class="mlog-box gap"></i>Overdue gap</span>
         <span><i class="mlog-box"></i>Not done</span>
+        <span><i class="mlog-wk-swatch"></i>Weekend</span>
         <span>Tap a day to log or undo it · tap a task for its history</span>
       </div>`;
     const card = main.querySelector('.mlog-card');
