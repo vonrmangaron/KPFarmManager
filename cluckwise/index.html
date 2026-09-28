@@ -1542,9 +1542,8 @@
   .mlog-box.gap:hover{ border-color:var(--success); }
   .mlog-box.future{ background:transparent; border-style:dashed; }
   .mlog-box.planned{ background:var(--primary-soft); border:1.5px dashed var(--primary-dark); }
+  .mlog-box.done.future{ background:var(--success); border:1.5px solid var(--success); }
   .mlog-box.planned::after{ content:''; width:8px; height:8px; border-radius:50%; background:var(--primary-dark); }
-  .mlog-box.due{ box-shadow:0 0 0 2px var(--mlog-soon); border-color:transparent; }
-  .mlog-box.due.planned{ border-color:var(--primary-dark); }
   .mlog-dayhead.future .dnum{ color:var(--muted); font-weight:600; }
   .mlog-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:11.5px; color:var(--muted); flex-shrink:0; }
   .mlog-legend span{ display:inline-flex; align-items:center; gap:6px; }
@@ -7451,7 +7450,7 @@
       main.innerHTML = `<div class="mlog-empty">
         <div class="mlog-empty-ic">🔁</div>
         <h3>Plan and track your farm routines</h3>
-        <p>Add recurring jobs like <b>Hoe Shed 1</b>, <b>Change Rat Baits</b> or <b>Service Generator</b>. Tap a future day to plan one on the calendar, and tick a day once it's done. Jobs marked done in the calendar show up here too, so you can see at a glance what's overdue and what's coming up.</p>
+        <p>Add recurring jobs like <b>Hoe Shed 1</b>, <b>Change Rat Baits</b> or <b>Service Generator</b>. Tap a day once to plan it on the calendar, again to mark it done, and a third time to remove it. Jobs marked done in the calendar show up here too, so you can see at a glance what's overdue and what's coming up.</p>
         <button type="button" class="btn-app" data-mlog-add>+ Track a task</button>
         ${sugg.length ? `<p style="margin:22px 0 0;font-size:12px;">Already recurring in your calendar:</p><div class="mlog-suggest-chips">${mlogSuggestChipsHtml(sugg)}</div>` : ''}
       </div>`;
@@ -7499,19 +7498,17 @@
       let p = -1;
       // Ahead of today: days already scheduled in the calendar, and the day it next falls due.
       const nm = mlogNorm(m.name);
-      const planned = new Set(tasks.filter(t=> t.status !== 'done' && t.date && t.date >= today && mlogNorm(t.name) === nm).map(t=> t.date));
-      const dueKey = st.last ? addDaysStr(st.last, every) : null;
+      const planned = new Set(), doneAny = new Set();
+      tasks.forEach(t=>{ if(t.date && mlogNorm(t.name) === nm) (t.status === 'done' ? doneAny : planned).add(t.date); });
       keys.forEach(k=>{
         const wd = toDateObj(k).getDay();
         while(p + 1 < dates.length && dates[p + 1] <= k) p++;
-        const done = doneSet.has(k), future = k > today;
+        const done = doneAny.has(k), future = k > today;
         const plan = !done && planned.has(k);
-        const due = !done && dueKey === k && k >= today;
         const gap = !done && !future && !plan && p >= 0 && mlogDaysBetween(dates[p], k) > every;
-        const state = done ? 'done' : plan ? 'planned' : future ? (due ? 'due, not planned' : 'not planned') : gap ? 'not done (overdue)' : 'not done';
-        const hint = future ? (plan ? ' · tap to unplan' : ' · tap to plan') : '';
-        const label = `${m.name}, ${formatFull(k)}: ${state}${due && !future ? ' (due today)' : ''}${hint}`;
-        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${due ? ' due' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done || plan}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
+        const state = done ? 'done · tap to remove' : plan ? 'planned · tap to mark done' : (gap ? 'overdue · ' : '') + 'tap to plan';
+        const label = `${m.name}, ${formatFull(k)}: ${state}`;
+        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done ? 'true' : plan ? 'mixed' : 'false'}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
       });
       body += '</tr>';
     });
@@ -7524,9 +7521,8 @@
         <span><i class="mlog-box gap"></i>Overdue gap</span>
         <span><i class="mlog-box"></i>Not done</span>
         <span><i class="mlog-box planned"></i>Planned</span>
-        <span><i class="mlog-box due"></i>Next due</span>
         <span><i class="mlog-wk-swatch"></i>Weekend</span>
-        <span>Tap a past day to log it · tap a future day to plan it · swipe for more days · tap a task for its history</span>
+        <span>Tap a day once to plan · twice to mark done · three times to remove · swipe for more days · tap a task for its history</span>
       </div>`;
     const card = main.querySelector('.mlog-card');
     if(mlogScrollToEnd){
@@ -7623,46 +7619,31 @@
     mlogDrag = null;
   });
 
+  // One tap cycles a day through: empty → planned (open calendar task) → done → removed.
   function mlogToggle(id, key){
     const m = maintenance.find(x=> x.id === id);
     if(!m) return;
     const n = mlogNorm(m.name);
     const same = tasks.filter(t=> t.date === key && mlogNorm(t.name) === n);
-    if(key > dateKey(new Date())){
-      // Future day: plan it as an open calendar task, or take back a plan the log made.
-      const open = same.filter(t=> t.status !== 'done');
-      if(open.length){
-        const logIds = new Set(open.filter(t=> t.source === 'maint-log').map(t=> t.id));
-        if(!logIds.size){ showToast(`${m.name} is already planned for ${formatShort(key)} in the calendar.`); return; }
-        tasks = tasks.filter(t=> !logIds.has(t.id));
-        addHistory('Deleted', `"${m.name}" unplanned for ${formatFull(key)} (Routine Tracker)`);
-        showToast(`${m.name}: plan for ${formatShort(key)} removed`);
-      } else {
-        tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
-        addHistory('Added', `"${m.name}" planned for ${formatFull(key)} (Routine Tracker)`);
-        showToast(`${m.name}: planned for ${formatShort(key)}`);
-      }
-      persist(); renderAll();
-      return;
-    }
-    const done = same.filter(t=> t.status === 'done');
-    if(done.length){
-      // Undo: drop ticks the log created; reopen real calendar tasks (toggleDone keeps linked reports in step).
-      const logIds = new Set(done.filter(t=> t.source === 'maint-log').map(t=> t.id));
-      if(logIds.size){
-        tasks = tasks.filter(t=> !logIds.has(t.id));
-        addHistory('Reopened', `"${m.name}" unticked for ${formatFull(key)} (Routine Tracker)`);
-      }
-      done.filter(t=> !logIds.has(t.id)).forEach(t=> toggleDone(t.id));
-      showToast(`${m.name}: ${formatShort(key)} cleared`);
+    const open = same.filter(t=> t.status !== 'done');
+    if(!same.length){
+      tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
+      addHistory('Added', `"${m.name}" planned for ${formatFull(key)} (Routine Tracker)`);
+      showToast(`${m.name}: planned for ${formatShort(key)}`);
+    } else if(open.length){
+      // toggleDone keeps any linked report in step.
+      open.forEach(t=> toggleDone(t.id));
+      showToast(`${m.name}: done on ${formatShort(key)}`);
     } else {
-      const open = same.find(t=> t.status !== 'done');
-      if(open){ toggleDone(open.id); }
-      else {
-        tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'done', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
-        addHistory('Completed', `"${m.name}" logged for ${formatFull(key)} (Routine Tracker)`);
-      }
-      showToast(`${m.name}: logged for ${formatShort(key)}`);
+      const snap = captureUndo();
+      const ids = new Set(same.map(t=> t.id));
+      same.forEach(t=>{
+        const r = t.linkedReportId ? reports.find(x=> x.id === t.linkedReportId) : null;
+        if(r){ r.linkedTaskId = null; r.updatedAt = new Date().toISOString(); scheduleReportsPush(); }
+      });
+      tasks = tasks.filter(t=> !ids.has(t.id));
+      addHistory('Removed', `"${m.name}" removed from ${formatFull(key)} (Routine Tracker)`);
+      offerUndo(`${m.name}: removed from ${formatShort(key)}`, snap);
     }
     persist(); renderAll();
   }
@@ -7697,7 +7678,7 @@
       <div class="mlog-stat"><div class="k">Next scheduled</div><div class="v">${next ? escapeHtml(formatShort(next)) : 'None'}</div><div class="s">${next ? 'In the calendar' : 'Nothing planned'}</div></div>
     </div>`;
     if(!dates.length){
-      html += `<p class="mlog-hist-none">No completions yet. Tick a day in the Routine Tracker, or mark a “${escapeHtml(m.name)}” task done in the calendar.</p>`;
+      html += `<p class="mlog-hist-none">No completions yet. Tap a day twice in the Routine Tracker, or mark a “${escapeHtml(m.name)}” task done in the calendar.</p>`;
     } else {
       html += `<h3 class="mlog-hist-h">Completion history</h3><ul class="mlog-hist-list">`;
       for(let i = dates.length - 1; i >= 0; i--){
@@ -7722,7 +7703,7 @@
     const c = mlogMatchCount(name);
     if(!name.trim()){ hint.textContent = 'Use the same name as the task in your calendar so its completions are picked up.'; hint.classList.remove('match'); }
     else if(c){ hint.textContent = `✓ ${c} completed calendar task${c === 1 ? '' : 's'} with this name will show here.`; hint.classList.add('match'); }
-    else { hint.textContent = 'No completed calendar tasks with this name yet. Days you tick or plan here will add them.'; hint.classList.remove('match'); }
+    else { hint.textContent = 'No completed calendar tasks with this name yet. Days you plan here will add them.'; hint.classList.remove('match'); }
     const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
     const renamed = m && mlogNorm(m.name) !== mlogNorm(name) && name.trim();
     const oldCount = m ? tasks.filter(t=> mlogNorm(t.name) === mlogNorm(m.name)).length : 0;
