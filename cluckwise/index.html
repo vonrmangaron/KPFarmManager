@@ -1515,9 +1515,15 @@
   .mlog-dayhead{ min-width:38px; text-transform:none !important; letter-spacing:0 !important; }
   .mlog-dayhead .dnum{ display:block; font-family:'Sora',sans-serif; font-size:13px; font-weight:700; color:var(--ink); letter-spacing:0; margin-top:2px; }
   .mlog-dayhead .dmon{ display:block; color:var(--primary-dark); font-weight:800; }
-  .mlog-dayhead.wkend .dnum{ color:var(--muted); }
+  .mlog-dayhead.wkend, .mlog-dayhead.wkend .dnum{ color:var(--mlog-wk-ink); }
   .mlog-dayhead.is-today .dnum{ width:fit-content; margin:0 auto; line-height:1.25; min-width:24px; padding:1px 4px; border-radius:999px; background:var(--primary); color:#241A08; }
-  .mlog-table th.mlog-dayhead.wkend, .mlog-table td.wkend{ background:var(--weekend-bg); }
+  /* Weekends: blue tint (matches SAT/SUN in the calendar header) with a divider around each weekend */
+  :root{ --mlog-wk-bg:#E4EDF8; --mlog-wk-line:#BFD3EC; --mlog-wk-ink:#2F6CB0; }
+  body.theme-dark{ --mlog-wk-bg:#283D63; --mlog-wk-line:#4163A0; --mlog-wk-ink:#8FC1FF; }
+  .mlog-table th.mlog-dayhead.wkend, .mlog-table td.wkend{ background:var(--mlog-wk-bg); }
+  .mlog-table .wk-sat{ border-left:1px solid var(--mlog-wk-line); }
+  .mlog-table .wk-sun{ border-right:1px solid var(--mlog-wk-line); }
+  .mlog-table td.wkend .mlog-box:not(.done):not(.planned):not(.gap){ background:color-mix(in srgb, var(--mlog-wk-bg) 55%, var(--surface)); border-color:var(--mlog-wk-line); }
   .mlog-table td.is-today{ background:color-mix(in srgb, var(--primary) 9%, var(--surface)); }
   .mlog-table tbody tr:hover > td{ background:var(--surface-soft); }
   .mlog-open{ display:flex; flex-direction:column; gap:4px; width:100%; padding:6px 12px 6px 16px; border:none; background:none; text-align:left; color:inherit; font:inherit; cursor:pointer; }
@@ -1547,7 +1553,7 @@
   .mlog-dayhead.future .dnum{ color:var(--muted); font-weight:600; }
   .mlog-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:11.5px; color:var(--muted); flex-shrink:0; }
   .mlog-legend span{ display:inline-flex; align-items:center; gap:6px; }
-  .mlog-legend .mlog-wk-swatch{ width:14px; height:14px; border-radius:4px; background:var(--weekend-bg); border:1px solid var(--line); }
+  .mlog-legend .mlog-wk-swatch{ width:14px; height:14px; border-radius:4px; background:var(--mlog-wk-bg); border:1px solid var(--mlog-wk-line); }
   .mlog-legend .mlog-box.planned::after{ width:5px; height:5px; }
   .mlog-legend .mlog-box{ width:14px; height:14px; border-radius:4px; cursor:default; pointer-events:none; }
   .mlog-empty{ margin:auto; max-width:460px; text-align:center; padding:28px 20px; }
@@ -7478,7 +7484,7 @@
     keys.forEach((k, i)=>{
       const d = toDateObj(k), wd = d.getDay();
       const mon = (i === 0 || k.endsWith('-01')) ? `<span class="dmon">${d.toLocaleDateString(undefined, { month:'short' })}</span>` : '';
-      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}${k > today ? ' future' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'short' })}<span class="dnum">${d.getDate()}</span></th>`;
+      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${wd === 6 ? ' wk-sat' : wd === 0 ? ' wk-sun' : ''}${k === today ? ' is-today' : ''}${k > today ? ' future' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'short' })}<span class="dnum">${d.getDate()}</span></th>`;
     });
     let body = '';
     rows.forEach(({ m, dates, st })=>{
@@ -7508,7 +7514,7 @@
         const gap = !done && !future && !plan && p >= 0 && mlogDaysBetween(dates[p], k) > every;
         const state = done ? 'done · tap to remove' : plan ? 'planned · tap to mark done' : (gap ? 'overdue · ' : '') + 'tap to plan';
         const label = `${m.name}, ${formatFull(k)}: ${state}`;
-        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done ? 'true' : plan ? 'mixed' : 'false'}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
+        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${wd === 6 ? ' wk-sat' : wd === 0 ? ' wk-sun' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done ? 'true' : plan ? 'mixed' : 'false'}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
       });
       body += '</tr>';
     });
