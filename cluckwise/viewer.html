@@ -343,6 +343,13 @@
   .task-body{ flex:1; min-width:0; }
   .task-name{ font-size:var(--task-font-size); font-weight:600; color:var(--ink); word-break:break-word; }
   .task-card.done .task-name{ text-decoration:line-through; color:var(--muted); }
+  .task-people{ display:flex; flex-wrap:wrap; gap:4px 6px; margin-top:5px; }
+  .task-person{ display:inline-flex; align-items:center; gap:5px; max-width:100%; padding:2px 8px 2px 2px; border-radius:999px; background:var(--surface-soft); border:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; }
+  .task-person.me{ background:var(--primary-soft); border-color:var(--primary); }
+  .tp-dot{ width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:9.5px; font-weight:800; font-family:'Sora',sans-serif; }
+  .tp-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tp-you{ color:var(--muted); font-weight:600; }
+  .task-card.done .task-person{ opacity:.6; }
   .task-avatars{ display:flex; margin-right:2px; flex-shrink:0; }
   .task-avatar{
     width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -834,6 +841,9 @@
       wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dcDone:'{d} sa {n} tapos', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
+  Object.assign(TRANSLATIONS.en, { you:'you', assignedTo:'Assigned to' });
+  Object.assign(TRANSLATIONS.es, { you:'tú', assignedTo:'Asignado a' });
+  Object.assign(TRANSLATIONS.tl, { you:'ikaw', assignedTo:'Nakatalaga kay' });
   Object.assign(TRANSLATIONS.en, {
     joinTitle:'Join your farm', joinSub:'Enter the farm name and password your manager gave you.',
     joinFarm:'Farm name', joinPw:'Farm password', joinContinue:'Continue', joinChecking:'Checking…',
@@ -2136,6 +2146,17 @@
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+  // Full names under the task (phones have no hover to reveal initials); the worker's own name is highlighted.
+  function buildAssigneeNamesHtml(assignees){
+    if(!assignees || !assignees.length) return '';
+    const me = (typeof loadMember === 'function' && loadMember()) || null;
+    const myName = me && me.name ? me.name.trim().toLowerCase() : '';
+    const chips = assignees.map(name=>{
+      const mine = myName && name.trim().toLowerCase() === myName;
+      return `<span class="task-person${mine ? ' me' : ''}"><span class="tp-dot" style="background:${colorForAssignee(name)}" aria-hidden="true">${escapeHtml(initialsForAssignee(name))}</span><span class="tp-name">${escapeHtml(name)}${mine ? ` <span class="tp-you">(${escapeHtml(t('you'))})</span>` : ''}</span></span>`;
+    }).join('');
+    return `<span class="task-people" aria-label="${escapeHtml(t('assignedTo'))}: ${escapeHtml(assignees.join(', '))}">${chips}</span>`;
+  }
   function buildAssigneeAvatarsHtml(assignees){
     if(!assignees || assignees.length===0) return '';
     const shown = assignees.slice(0,3);
@@ -2152,7 +2173,7 @@
     const isHighPriority = tk.priority === 'high' && tk.status!=='done';
     card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'');
     card.dataset.id = tk.id;
-    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span></span>${buildAssigneeAvatarsHtml(tk.assignees)}<button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     card.querySelector('.task-name').textContent = tk.name;
     if(tk.notes) card.querySelector('.tnc-text').textContent = tk.notes;
