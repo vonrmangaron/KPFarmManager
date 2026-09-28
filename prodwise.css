@@ -3103,3 +3103,54 @@ body.theme-dark .mob-nav-fab { color: #1A2438; box-shadow: 0 6px 16px rgba(0,0,0
 /* Feed on hand + Upcoming deliveries share the row now */
 .dash-row-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
 @media (max-width: 768px) { .dash-row-pair { grid-template-columns: 1fr; } }
+
+/* ── Settings: Cloud sync, tidy layout ──────────────────────── */
+.settings-status-block { gap: 0; padding: 4px 14px; }
+.settings-status-row { align-items: center; min-height: 36px; font-size: 12.5px; }
+.settings-status-row + .settings-status-row { border-top: 1px solid var(--line); }
+.settings-status-row .val { font-family: Inter, system-ui, sans-serif; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.settings-status-row .val.file {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11px; font-weight: 500;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
+}
+.settings-subcard {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft);
+}
+.settings-subcard .settings-field-label { margin-bottom: 0; }
+.settings-subcard-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+.settings-btn-sm { width: auto; height: 38px; padding: 0 14px; font-size: 13px; }
+.settings-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.settings-list-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 8px 12px;
+  border: none; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  transition: background-color var(--t-fast, 140ms) ease;
+}
+.settings-list-row + .settings-list-row { border-top: 1px solid var(--line); }
+.settings-list-row:hover { background: var(--sb-hover); }
+.settings-list-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.slr-ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--sb-tint); color: var(--primary-dark); flex-shrink: 0; }
+.slr-ic svg { width: 16px; height: 16px; }
+.slr-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.slr-label { font-size: 13.5px; font-weight: 600; }
+.slr-sub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slr-chev { width: 16px; height: 16px; color: var(--sb-faint); flex-shrink: 0; }
+.settings-link-danger {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 2px; border: none; background: none; cursor: pointer;
+  color: var(--danger); font: 600 12.5px Inter, sans-serif;
+}
+.settings-link-danger svg { width: 14px; height: 14px; }
+.settings-link-danger:hover { text-decoration: underline; }
+
+/* ── Dashboard: larger livability ring in the Mortality tile ─── */
+.dash-liv-ring { width: 78px; height: 78px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.dash-liv-ring svg { width: 78px; height: 78px; }
+.dash-liv-ring-val { font-size: 15px; letter-spacing: -0.3px; line-height: 1; }
+.dash-liv-ring-lbl { position: relative; font: 600 8.5px Inter, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; margin-top: 2px; }
+.dash-kpi-top .dash-kpi-icon { flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .dash-liv-ring, .dash-liv-ring svg { width: 64px; height: 64px; }
+  .dash-liv-ring-val { font-size: 13px; }
+  .dash-liv-ring-lbl { display: none; }
+}

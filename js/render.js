@@ -836,6 +836,7 @@ function renderDashboardView() {
         stroke-dasharray="${ringFill.toFixed(1)} ${ringC.toFixed(1)}" transform="rotate(-90 24 24)"/>
     </svg>
     <span class="dash-liv-ring-val">${livability != null ? livability.toFixed(1) + '%' : '—'}</span>
+    <span class="dash-liv-ring-lbl">Livability</span>
   </span>`;
 
   // ── Assemble ──
@@ -968,21 +969,27 @@ function render(){
     updateAlertsBell();
     // Main content
     const app=document.getElementById('app');
-    if(activeTab==='history'){app.innerHTML=renderHistoryView();return;}
-    if(!farmData){
+    if(activeTab==='history'){app.innerHTML=renderHistoryView();}
+    else if(!farmData){
       if(activeTab!=='dashboard')activeTab='dashboard';
       app.innerHTML=renderDashboardView();
+      // Nothing to compare without data
       if(feedCompareState.modalOpen){feedCompareState.modalOpen=false;const cm=document.getElementById('compareFeedModal');if(cm)cm.classList.remove('open');}
-      return;
     }
-    if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();return;}
-    if(activeTab==='predictions'){app.innerHTML=renderPredictionsView();if(feedCompareState.modalOpen){feedCompareState.modalOpen=false;const cm=document.getElementById('compareFeedModal');if(cm)cm.classList.remove('open');}return;}
-    if(!['g1','g2','g3','g4'].includes(activeTab))activeTab='dashboard';
-    const g=Number(activeTab.replace('g',''));
-    app.innerHTML=groupViewHtml(g);
+    else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
+    else if(activeTab==='predictions'){app.innerHTML=renderPredictionsView();}
+    else{
+      if(!['g1','g2','g3','g4'].includes(activeTab))activeTab='dashboard';
+      app.innerHTML=activeTab==='dashboard'?renderDashboardView():groupViewHtml(Number(activeTab.replace('g','')));
+    }
+    // Pop-ups opened from the sidebar (Compare feed, Feed loads) can sit over
+    // any page, so refresh them on every render — not just on shed pages.
     if(feedCompareState.modalOpen)renderCompareModalBody();
     if(loadsModalState.open)renderLoadsModalBody();
-    if(inlineDeliveryState&&!feedCompareState.modalOpen){requestAnimationFrame(()=>{const input=app.querySelector('.inline-del-input');if(input)input.focus();});}
+    if(inlineDeliveryState){
+      const scope=feedCompareState.modalOpen?document.getElementById('compareFeedModal'):app;
+      requestAnimationFrame(()=>{const input=scope&&scope.querySelector('.inline-del-input');if(input)input.focus();});
+    }
   }finally{requestAnimationFrame(updateStickyHeaderHeight);requestAnimationFrame(setupStickyTabObservers);}
 }
 let _stickyTabObserver=null;

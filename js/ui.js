@@ -101,11 +101,22 @@ function renderSettingsSyncCard(){
   const batch=currentBatchKey();
   const fileName=batch?`${sanitizeUserFarmName(syncFarmName)}${SYNC_SUFFIX}-${batch}.json`:`${sanitizeUserFarmName(syncFarmName)}${SYNC_SUFFIX}.json`;
   const isError=syncState==='error';
+  const excelName=syncExcelMeta?(syncExcelMeta.name||'sheds.xlsx'):'';
+  const excelWhen=syncExcelMeta&&syncExcelMeta.uploadedAt?fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()):'';
   const statusRows=`<div class="settings-status-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch||'—')}</span></div>
-    <div class="settings-status-row"><span class="lbl">Backed up as</span><span class="val mono">${escapeHtml(fileName)}</span></div>
-    <div class="settings-status-row"><span class="lbl">Last sync</span><span class="val">${syncLastSyncAt?fmtRelativeTime(syncLastSyncAt):'never'}</span></div>
-    ${syncExcelMeta?`<div class="settings-status-row"><span class="lbl">Stored Excel</span><span class="val mono">${escapeHtml(syncExcelMeta.name||'sheds.xlsx')}${syncExcelMeta.uploadedAt?' · '+fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()):''}</span></div>`:''}
-    ${isError?`<div class="settings-status-row"><span class="lbl">Status</span><span class="val err">Last attempt failed</span></div>`:''}`;
+    <div class="settings-status-row"><span class="lbl">Last sync</span><span class="val${isError?' err':''}">${isError?'Last attempt failed':(syncLastSyncAt?fmtRelativeTime(syncLastSyncAt):'Never')}</span></div>
+    <div class="settings-status-row"><span class="lbl">Backup file</span><span class="val file" title="${escapeAttr(fileName)}">${escapeHtml(fileName)}</span></div>`;
+  // List-style actions: icon · label + detail · chevron
+  const row=(id,icon,label,sub)=>`<button type="button" class="settings-list-row" id="${id}"><span class="slr-ic">${settingsIcon(icon)}</span><span class="slr-text"><span class="slr-label">${label}</span>${sub?`<span class="slr-sub">${sub}</span>`:''}</span><svg class="slr-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+  const changeForm=settingsChangeFarmOpen?`<div class="settings-subcard">
+      <label class="settings-field-label" for="settingsSwitchFarmInput">Switch to farm</label>
+      <input type="text" class="settings-input" id="settingsSwitchFarmInput" value="${escapeAttr(settingsChangeFarmDraft)}" placeholder="Farm name" autocomplete="off" spellcheck="false" maxlength="40" />
+      <p class="settings-section-note">Your current data stays saved under <strong>${escapeHtml(syncFarmName)}</strong>.</p>
+      <div class="settings-subcard-actions">
+        <button class="settings-btn settings-btn-sm" id="settingsChangeFarmCancel" type="button">Cancel</button>
+        <button class="settings-btn settings-btn-sm settings-btn-primary" id="settingsSwitchFarmBtn" type="button">${settingsIcon('swap')}Switch farm</button>
+      </div>
+    </div>`:'';
   return `<div class="settings-section">
     <div class="settings-section-head">
       <span class="settings-icon">${settingsIcon('cloud')}</span>
@@ -115,22 +126,14 @@ function renderSettingsSyncCard(){
       </div>
     </div>
     <div class="settings-status-block">${statusRows}</div>
-    ${settingsChangeFarmOpen?`<div class="settings-change-farm">
-      <span class="settings-field-label">Switch to farm</span>
-      <input type="text" class="settings-input" id="settingsSwitchFarmInput" value="${escapeAttr(settingsChangeFarmDraft)}" placeholder="Farm name" autocomplete="off" spellcheck="false" maxlength="40" />
-      <p class="settings-section-note">Your current data stays saved under <strong>${escapeHtml(syncFarmName)}</strong>.</p>
-      <div class="settings-btn-row">
-        <button class="settings-btn settings-btn-primary" id="settingsSwitchFarmBtn" type="button">${settingsIcon('swap')}Switch farm</button>
-        <button class="settings-btn" id="settingsChangeFarmCancel" type="button">Cancel</button>
-      </div>
-    </div>`:''}
-    <div class="settings-btn-row">
-      <button class="settings-btn" id="settingsSyncNowBtn" type="button">${settingsIcon('sync')}Sync now</button>
-      ${settingsChangeFarmOpen?'':`<button class="settings-btn" id="settingsChangeFarmBtn" type="button">${settingsIcon('swap')}Change farm</button>`}
-      ${syncExcelMeta?`<button class="settings-btn" id="settingsDlExcelBtn" type="button">${settingsIcon('import')}Download Excel</button>`:''}
-      <button class="settings-btn" id="settingsDlBatchBtn" type="button">${settingsIcon('import')}Download JSON</button>
+    <button class="settings-btn settings-btn-primary" id="settingsSyncNowBtn" type="button">${settingsIcon('sync')}Sync now</button>
+    ${changeForm}
+    <div class="settings-list">
+      ${settingsChangeFarmOpen?'':row('settingsChangeFarmBtn','swap','Change farm','Switch to another farm ID')}
+      ${syncExcelMeta?row('settingsDlExcelBtn','import','Download Excel',`${escapeHtml(excelName)}${excelWhen?' · '+escapeHtml(excelWhen):''}`):''}
+      ${row('settingsDlBatchBtn','import','Download backup','Current batch as JSON')}
     </div>
-    <div class="settings-actions"><button class="settings-btn settings-btn-danger" id="settingsDisconnectBtn" type="button">${settingsIcon('unplug')}Disconnect</button></div>
+    <button class="settings-link-danger" id="settingsDisconnectBtn" type="button">${settingsIcon('unplug')}Disconnect this device</button>
   </div>`;
 }
 // Inline "Change farm" form inside Settings → Cloud sync (no separate modal).
@@ -1510,7 +1513,7 @@ function renderCompareModalBody(){
   cols.date=true;feedCompareState.visibleColumns=cols;
   const layout=effectiveCompareLayout();
   const tablesHtml=selected.length===0
-    ? `<div class="compare-empty-state">Pick one or more groups above to compare their feed balance side by side.</div>`
+    ? `<div class="compare-empty-state">Pick one or more shed pairs above to compare their feed balance side by side.</div>`
     : selected.map(g=>{
         const forecast=computeSiloForecast(g,siloRange);const isCurrent=g===currentGroup;const info=groupStatusSummary(g);
         let statusChip='';
