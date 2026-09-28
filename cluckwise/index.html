@@ -7522,7 +7522,7 @@
         <span><i class="mlog-box"></i>Not done</span>
         <span><i class="mlog-box planned"></i>Planned</span>
         <span><i class="mlog-wk-swatch"></i>Weekend</span>
-        <span>Tap a day once to plan · twice to mark done · three times to remove · swipe for more days · tap a task for its history</span>
+        <span>Tap a day once to plan · twice to mark done · three times to remove · swipe, drag or scroll the wheel for more days · tap a task for its history</span>
       </div>`;
     const card = main.querySelector('.mlog-card');
     if(mlogScrollToEnd){
@@ -7572,12 +7572,23 @@
     if(Math.abs(dx) >= MLOG_PULL_PX && mlogAtEdge(card, dir)){ mlogExtend(dir); return true; }
     return false;
   }
+  // Mouse wheel over the days scrolls through dates (down = later, up = earlier);
+  // over the task column it still scrolls the list up and down.
   $('#mlogMain').addEventListener('wheel', (e)=>{
     const card = e.target.closest('.mlog-card');
-    if(!card) return;
-    const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
-    if(dx && mlogAtEdge(card, dx < 0 ? 'before' : 'after')) mlogExtend(dx < 0 ? 'before' : 'after');
-  }, { passive:true });
+    if(!card || e.ctrlKey) return;
+    const trackpadSideways = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    let dx = trackpadSideways ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+    if(!dx && !e.target.closest('.mlog-task-col')) dx = e.deltaY;
+    if(!dx) return;
+    const dir = dx < 0 ? 'before' : 'after';
+    if(!trackpadSideways){
+      e.preventDefault();
+      const unit = e.deltaMode === 1 ? 32 : (e.deltaMode === 2 ? card.clientWidth : 1);
+      card.scrollLeft += dx * unit;
+    }
+    if(mlogAtEdge(card, dir)) mlogExtend(dir);
+  }, { passive:false });
   let mlogTouch = null;
   $('#mlogMain').addEventListener('touchstart', (e)=>{
     const card = e.target.closest('.mlog-card');
