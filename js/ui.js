@@ -115,14 +115,37 @@ function renderSettingsSyncCard(){
       </div>
     </div>
     <div class="settings-status-block">${statusRows}</div>
+    ${settingsChangeFarmOpen?`<div class="settings-change-farm">
+      <span class="settings-field-label">Switch to farm</span>
+      <input type="text" class="settings-input" id="settingsSwitchFarmInput" value="${escapeAttr(settingsChangeFarmDraft)}" placeholder="Farm name" autocomplete="off" spellcheck="false" maxlength="40" />
+      <p class="settings-section-note">Your current data stays saved under <strong>${escapeHtml(syncFarmName)}</strong>.</p>
+      <div class="settings-btn-row">
+        <button class="settings-btn settings-btn-primary" id="settingsSwitchFarmBtn" type="button">${settingsIcon('swap')}Switch farm</button>
+        <button class="settings-btn" id="settingsChangeFarmCancel" type="button">Cancel</button>
+      </div>
+    </div>`:''}
     <div class="settings-btn-row">
       <button class="settings-btn" id="settingsSyncNowBtn" type="button">${settingsIcon('sync')}Sync now</button>
-      <button class="settings-btn" id="settingsChangeFarmBtn" type="button">${settingsIcon('swap')}Change farm</button>
+      ${settingsChangeFarmOpen?'':`<button class="settings-btn" id="settingsChangeFarmBtn" type="button">${settingsIcon('swap')}Change farm</button>`}
       ${syncExcelMeta?`<button class="settings-btn" id="settingsDlExcelBtn" type="button">${settingsIcon('import')}Download Excel</button>`:''}
       <button class="settings-btn" id="settingsDlBatchBtn" type="button">${settingsIcon('import')}Download JSON</button>
     </div>
     <div class="settings-actions"><button class="settings-btn settings-btn-danger" id="settingsDisconnectBtn" type="button">${settingsIcon('unplug')}Disconnect</button></div>
   </div>`;
+}
+// Inline "Change farm" form inside Settings → Cloud sync (no separate modal).
+let settingsChangeFarmOpen=false,settingsChangeFarmDraft='';
+function openSettingsChangeFarm(){
+  settingsChangeFarmOpen=true;settingsChangeFarmDraft='';renderSettingsDrawerBody();
+  setTimeout(()=>document.getElementById('settingsSwitchFarmInput')?.focus(),50);
+}
+function cancelSettingsChangeFarm(){settingsChangeFarmOpen=false;settingsChangeFarmDraft='';renderSettingsDrawerBody();}
+function submitSettingsChangeFarm(){
+  const v=(document.getElementById('settingsSwitchFarmInput')?.value||'').trim();
+  if(!v){showToast('Enter a farm name.',true);return;}
+  if(v===syncFarmName){showToast(`Already connected to ${v}.`);return;}
+  settingsChangeFarmOpen=false;settingsChangeFarmDraft='';
+  handleConnectFarm(v);
 }
 function renderSettingsBatchHistoryCard(){
   const connected=!!syncFarmName;

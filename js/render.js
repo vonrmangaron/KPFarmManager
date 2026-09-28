@@ -1484,7 +1484,7 @@ function renderPredictionsView(){
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
   const groupNames={1:pairLabel(1),2:pairLabel(2),3:pairLabel(3),4:pairLabel(4)};
-  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div><div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 ${groupNames[g]} Prediction</h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div><div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
 }
 function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};

@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     if(e.target.closest('#settingsConnectBtn')){const inp=document.getElementById('settingsFarmInput');const v=inp?inp.value.trim():'';if(!v){showToast('Enter a farm name.',true);return;}handleConnectFarm(v);return;}
     if(e.target.closest('#settingsSyncNowBtn')){pullFromCloud(false);return;}
-    if(e.target.closest('#settingsChangeFarmBtn')){openSyncModal();return;}
+    if(e.target.closest('#settingsChangeFarmBtn')){openSettingsChangeFarm();return;}
+    if(e.target.closest('#settingsSwitchFarmBtn')){submitSettingsChangeFarm();return;}
+    if(e.target.closest('#settingsChangeFarmCancel')){cancelSettingsChangeFarm();return;}
     if(e.target.closest('#settingsDlExcelBtn')){downloadExcelFromCloud();return;}
     if(e.target.closest('#settingsDlBatchBtn')){downloadCurrentBatchAsJson();return;}
     if(e.target.closest('#settingsDisconnectBtn')){disconnectSync();return;}
@@ -225,6 +227,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(feedCompareState.modalOpen){closeCompareModal();return;}
       if(settingsDrawerOpen){closeSettingsDrawer();return;}
     }
+    if(e.key==='Enter'&&e.target.id==='settingsSwitchFarmInput'){e.preventDefault();submitSettingsChangeFarm();return;}
     if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('inline-del-input')){
       e.preventDefault();
       const form=e.target.closest('.inline-del');
@@ -276,6 +279,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.addEventListener('input',e=>{
     if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
+    if(e.target&&e.target.id==='settingsSwitchFarmInput'){settingsChangeFarmDraft=e.target.value;return;}
     const t=e.target;
     if(t.dataset&&t.dataset.mortrateShed!==undefined){const sid=t.dataset.mortrateShed;const slider=document.getElementById(`mortRateSlider_${sid}`);const num=document.getElementById(`mortRateNum_${sid}`);if(t===slider&&num)num.value=t.value;else if(t===num&&slider)slider.value=t.value;return;}
     if(t.id==='predBetaSlider'){const num=document.getElementById('predBetaNumber');if(num)num.value=Number(t.value).toFixed(3);setPredBeta(t.value);const chip=document.getElementById('adjChipBeta');if(chip)chip.innerHTML=`cFCR β <strong>${Number(t.value).toFixed(3)}</strong>`;return;}
