@@ -24,6 +24,7 @@ function settingsIcon(name){
   const icons={
     import:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
     cloud:'<path d="M17.5 19H7a5 5 0 1 1 1.3-9.8 6 6 0 0 1 11.4 2.4A4 4 0 0 1 17.5 19z"/>',
+    farm:'<path d="M3 21V10l9-6 9 6v11"/><path d="M9 21v-6h6v6"/><path d="M3 21h18"/>',
     archive:'<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     document:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     sync:'<path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>',
@@ -35,11 +36,20 @@ function settingsIcon(name){
 }
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
-  const sections=[renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
+  const sections=[renderSettingsDisplayNameCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
   body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div>';
   // Bind notification checkboxes directly — belt-and-braces alongside the
   // document-level delegated change handler.
   if(typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();
+}
+function renderSettingsDisplayNameCard(){
+  const cloudId=syncFarmName?`Your cloud farm ID stays <strong>${escapeHtml(syncFarmName)}</strong> — this only changes what you see.`:'Only changes what you see on this device.';
+  return `<div class="settings-section">
+    <div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm display name</h4></div></div>
+    <p class="settings-section-desc">The name shown in the sidebar, page headers and the dashboard.</p>
+    <input type="text" class="settings-input" id="settingsDisplayName" value="${escapeAttr(farmDisplayName)}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
+    <p class="settings-section-note">${cloudId} Leave empty to use the cloud farm ID.</p>
+  </div>`;
 }
 function renderSettingsNotificationsCard(){
   return `<div class="settings-section">

@@ -399,7 +399,7 @@ function renderMoreSheet() {
       <div class="more-group">
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
         ${row('moreImport', 'download', 'Import Excel', 'Load shed data from a file')}
-        ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(syncFarmName) : 'Cloud sync', escapeHtml(syncLine))}
+        ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
       </div>
       <div class="more-foot">
         <div class="sb-theme-seg more-theme" role="group" aria-label="Theme">
@@ -421,7 +421,7 @@ function renderSyncPill() {
   if (!syncFarmName) {
     el.innerHTML = `<span class="sb-sync-dot"></span><span class="sb-sync-text"><b>Not connected</b></span>
       <button class="sb-sync-btn" id="sbConnectBtn" type="button">Connect</button>`;
-    if (farmEl) farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">–</span><span class="sb-farm-text"><span class="sb-farm-name">This device</span><span class="sb-farm-sub">Not synced</span></span>`;
+    if (farmEl) farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">–</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(displayFarmName() || 'This device')}</span><span class="sb-farm-sub">Not synced</span></span>`;
     return;
   }
   const dotCls = syncState === 'error' ? 'error' : syncConnectedAt ? 'ok' : '';
@@ -430,8 +430,9 @@ function renderSyncPill() {
   el.innerHTML = `<span class="sb-sync-dot ${dotCls}"></span><span class="sb-sync-text"><b>${stateLabel}</b> · ${escapeHtml(when)}</span>
     <button class="sb-sync-btn" id="sbSyncNowBtn" type="button">Sync now</button>`;
   if (farmEl) {
-    const initials = String(syncFarmName).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'F';
-    farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">${escapeHtml(initials)}</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(syncFarmName)}</span><span class="sb-farm-sub">Cloud sync on</span></span>`;
+    const shown = displayFarmName();
+    const initials = String(shown).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'F';
+    farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">${escapeHtml(initials)}</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(shown)}</span><span class="sb-farm-sub">Cloud sync on</span></span>`;
   }
 }
 
@@ -447,7 +448,7 @@ function updatePageHeader() {
   if (subEl) {
     if (farmData) {
       const batch = predState.batchNumber || farmData.batchNumber || '';
-      const farm  = syncFarmName ? `${syncFarmName} · ` : '';
+      const farm  = displayFarmName() ? `${displayFarmName()} · ` : '';
       subEl.textContent = `${farm}${batch ? 'Batch ' + batch + ' · ' : ''}${SHED_COUNT} sheds in 4 pairs`;
     } else {
       subEl.textContent = '';
@@ -690,9 +691,19 @@ function renderDashboardView() {
   const batchStart  = placedDates.length ? new Date(Math.min(...placedDates)) : null;
   const batchAge    = batchStart ? daysBetween(batchStart, today) : null;
   const cleanouts   = allSheds.map(s => s.cleanoutDate).filter(Boolean).map(d => dateOnly(d));
-  const nextCleanout= cleanouts.length ? new Date(Math.min(...cleanouts)) : null;
-  const daysToClean = nextCleanout ? Math.max(0, daysBetween(today, nextCleanout)) : null;
-  const batchTotal  = batchStart && nextCleanout ? daysBetween(batchStart, nextCleanout) : null;
+  // End of batch: the last clean-out date if set, otherwise the last
+  // (final) pickup — logged or planned — across all sheds.
+  const lastCleanout = cleanouts.length ? new Date(Math.max(...cleanouts)) : null;
+  let batchEnd = lastCleanout, batchEndSrc = lastCleanout ? 'clean-out' : null;
+  if (!batchEnd) {
+    let latest = null, planned = false;
+    allSheds.forEach(sh => computeEffectivePickups(sh).forEach(p => {
+      if (!p.date) return; const d = dateOnly(p.date);
+      if (!latest || d > latest) { latest = d; planned = p.__source === 'predicted'; }
+    }));
+    if (latest) { batchEnd = latest; batchEndSrc = planned ? 'final pickup, planned' : 'final pickup'; }
+  }
+  const batchTotal  = batchStart && batchEnd ? daysBetween(batchStart, batchEnd) : null;
   const batchPct    = (batchAge != null && batchTotal) ? Math.min(100, Math.round(batchAge / batchTotal * 100)) : 0;
 
   // ── Today-consistent farm FCR ──────────────────────────────
@@ -815,30 +826,32 @@ function renderDashboardView() {
     </div>`;
   }).join('');
 
-  // ── Livability donut ──
-  const livR = 46, livC = 52, livCirc = 2 * Math.PI * livR;
-  const livFill = livability != null ? (livability / 100) * livCirc : 0;
-  const donut = `<svg width="110" height="110" viewBox="0 0 ${livC*2} ${livC*2}" role="img" aria-label="Livability ${livability != null ? livability.toFixed(1) : '—'}%">
-    <circle cx="${livC}" cy="${livC}" r="${livR}" fill="none" stroke="var(--danger-soft)" stroke-width="14"/>
-    <circle cx="${livC}" cy="${livC}" r="${livR}" fill="none" stroke="var(--success)" stroke-width="14"
-      stroke-dasharray="${livFill.toFixed(1)} ${livCirc.toFixed(1)}" transform="rotate(-90 ${livC} ${livC})"/>
-    <text x="${livC}" y="${livC+4}" text-anchor="middle" font-family="Sora,sans-serif" font-size="14" font-weight="700" fill="var(--ink)">
-      ${livability != null ? livability.toFixed(1)+'%' : '—'}
-    </text>
-  </svg>`;
+  // Compact livability ring for the Mortality tile
+  const ringR = 19, ringC = 2 * Math.PI * ringR;
+  const ringFill = livability != null ? (livability / 100) * ringC : 0;
+  const livRing = `<span class="dash-liv-ring" title="Livability ${livability != null ? livability.toFixed(1) + '%' : '—'} · target ≥ 96%">
+    <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
+      <circle cx="24" cy="24" r="${ringR}" fill="none" stroke="var(--ring-track)" stroke-width="5"/>
+      <circle cx="24" cy="24" r="${ringR}" fill="none" stroke="var(--ring-fill)" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="${ringFill.toFixed(1)} ${ringC.toFixed(1)}" transform="rotate(-90 24 24)"/>
+    </svg>
+    <span class="dash-liv-ring-val">${livability != null ? livability.toFixed(1) + '%' : '—'}</span>
+  </span>`;
 
   // ── Assemble ──
   const ageStr  = batchAge != null ? `Day ${batchAge}` : '—';
-  const cleanStr= daysToClean != null ? `Clean-out in ${daysToClean} day${daysToClean!==1?'s':''}` : '';
+  const daysLeft = batchEnd ? daysBetween(today, batchEnd) : null;
+  const endStr  = batchEnd
+    ? `Ends <strong>${fmtShort(batchEnd)}</strong> · ${daysLeft > 0 ? `${daysLeft} day${daysLeft!==1?'s':''} left` : daysLeft === 0 ? 'today' : 'ended'}<br><span class="dash-kpi-src">${batchEndSrc}</span>`
+    : 'No end date yet — plan pickups in Predictions';
 
   return `<div class="dash-wrap">
   <div class="dash-grid dash-row-kpi">
     <div class="dash-kpi dash-kpi-neutral">
       <span class="dash-kpi-label">Batch progress</span>
       <span class="dash-kpi-value">${ageStr}</span>
-      <span class="dash-kpi-sub">${cleanStr || 'No clean-out date set'}</span>
-      <div class="dash-kpi-progress"><div class="dash-kpi-progress-fill" style="width:${batchPct}%"></div></div>
-      <button class="dash-kpi-link" data-tab="g1" type="button">Open Sheds 1–2</button>
+      <span class="dash-kpi-sub">${endStr}</span>
+      <div class="dash-kpi-progress" title="${batchPct}% of the batch complete"><div class="dash-kpi-progress-fill" style="width:${batchPct}%"></div></div>
     </div>
     <div class="dash-kpi dash-kpi-amber">
       <span class="dash-kpi-icon">${dashKpiIcon('birds')}</span>
@@ -854,10 +867,13 @@ function renderDashboardView() {
       ${harvestFcrHtml}
     </div>
     <div class="dash-kpi dash-kpi-red">
-      <span class="dash-kpi-icon">${dashKpiIcon('mortality')}</span>
+      <div class="dash-kpi-top">
+        <span class="dash-kpi-icon">${dashKpiIcon('mortality')}</span>
+        ${livRing}
+      </div>
       <span class="dash-kpi-label">Mortality</span>
       <span class="dash-kpi-value">${mortPct.toFixed(1)}<span>%</span></span>
-      <span class="dash-kpi-sub">${totalMort.toLocaleString()} birds${livability != null ? ' · ' + livability.toFixed(1) + '% livability' : ''}</span>
+      <span class="dash-kpi-sub">${totalMort.toLocaleString()} birds · livability ${livability != null ? livability.toFixed(1) + '%' : '—'} <span class="dash-kpi-src">(target ≥ 96%)</span></span>
     </div>
   </div>
 
@@ -865,18 +881,7 @@ function renderDashboardView() {
 
   ${renderGroupStatusGrid()}
 
-  <div class="dash-grid dash-row-triple">
-    <div class="dash-card">
-      <div class="dash-card-head"><h2 class="dash-card-title">Livability</h2></div>
-      <div class="dash-donut-wrap">
-        ${donut}
-        <div class="dash-donut-legend">
-          <div class="dash-donut-legend-item"><span class="dash-donut-swatch" style="background:var(--success)"></span>Alive</div>
-          <div class="dash-donut-legend-item"><span class="dash-donut-swatch" style="background:var(--danger-soft);border:1px solid var(--danger)"></span>Dead + culls</div>
-          <span style="font-size:12px;color:var(--muted)">Target ≥ 96%</span>
-        </div>
-      </div>
-    </div>
+  <div class="dash-grid dash-row-pair">
     <div class="dash-card">
       <div class="dash-card-head">
         <h2 class="dash-card-title">Feed on hand</h2>
@@ -1382,19 +1387,19 @@ function farmFeedSubText(t){
 /* ---------- Predictions page ---------- */
 // "<Farm> · Projected batch result" — farm name from cloud sync when set.
 function farmResultTitle(){
-  const farm=syncFarmName?escapeHtml(String(syncFarmName)):'';
+  const farm=displayFarmName()?escapeHtml(String(displayFarmName())):'';
   return farm?`${farm} <span class="farm-kpi-title-sep">·</span> Projected batch result`:'Projected batch result';
 }
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
-  if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
+  if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
   const overrideVal=predState.farmFeedOverride!=null?predState.farmFeedOverride:'';
   const overrideCls=t.usingManualFeed?'manual':'';
   const feedSub=farmFeedSubText(t);
   const leftoverVal=(predState.farmLeftoverKg!=null&&predState.farmLeftoverKg>0)?predState.farmLeftoverKg:'';
   const leftoverCls=t.leftoverApplied?'manual':'';
   const leftoverPlaceholder=t.autoLeftover!=null?`auto: ${Math.round(t.autoLeftover).toLocaleString()}`:'auto: —';
-  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span></div><div class="farm-kpi-grid">
+  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span></div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="100" min="0" placeholder="Manual override (kg)" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (kg)</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="1" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" /></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>

@@ -29,6 +29,20 @@ let manualPickupState=null,sampleState=null,predictedPickupState=null,pendingImp
 let gompertzCache=new Map(),settingsDrawerOpen=false,pendingNewBatchClean='',pendingNewBatchDownload=true;
 let notifPrefs={shedPerformance:true,feedBalance:true};
 
+// Farm name shown in the app. A view-only label: the cloud farm ID
+// (syncFarmName) used for sync/storage never changes. Per device.
+const FARM_DISPLAY_KEY='prodwise_farm_display_name_v1';
+let farmDisplayName=(()=>{try{return localStorage.getItem(FARM_DISPLAY_KEY)||'';}catch(e){return '';}})();
+function displayFarmName(){return (farmDisplayName||'').trim()||(typeof syncFarmName!=='undefined'&&syncFarmName)||'';}
+function setFarmDisplayName(v){
+  farmDisplayName=String(v||'').slice(0,40);
+  try{if(farmDisplayName.trim())localStorage.setItem(FARM_DISPLAY_KEY,farmDisplayName);else localStorage.removeItem(FARM_DISPLAY_KEY);}catch(e){}
+  // Update names in place — no full render, so typing isn't interrupted.
+  if(typeof renderSyncPill==='function')renderSyncPill();
+  if(typeof updatePageHeader==='function')updatePageHeader();
+  const t=document.getElementById('farmResultTitle');if(t&&typeof farmResultTitle==='function')t.innerHTML=farmResultTitle();
+}
+
 // Display name for a group (a pair of sheds sharing one silo bank).
 // Groups are named by their sheds: group 2 → "Sheds 3–4".
 function pairShort(g){return `${2*g-1}–${2*g}`;}

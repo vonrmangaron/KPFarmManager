@@ -275,6 +275,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   document.addEventListener('input',e=>{
+    if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
     const t=e.target;
     if(t.dataset&&t.dataset.mortrateShed!==undefined){const sid=t.dataset.mortrateShed;const slider=document.getElementById(`mortRateSlider_${sid}`);const num=document.getElementById(`mortRateNum_${sid}`);if(t===slider&&num)num.value=t.value;else if(t===num&&slider)slider.value=t.value;return;}
     if(t.id==='predBetaSlider'){const num=document.getElementById('predBetaNumber');if(num)num.value=Number(t.value).toFixed(3);setPredBeta(t.value);const chip=document.getElementById('adjChipBeta');if(chip)chip.innerHTML=`cFCR β <strong>${Number(t.value).toFixed(3)}</strong>`;return;}
