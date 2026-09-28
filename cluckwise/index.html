@@ -8081,9 +8081,22 @@
   let accessData = null, accessBusy = false;
   function accessFarm(){ return ghFarmName ? ghFarmName + '-access' : null; }
   function accessUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(accessFarm())}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  // One entry per worker (matched by name), each with the phones they joined from.
+  // Also folds older one-entry-per-phone records and same-name duplicates together.
+  function memberKey(n){ return String(n || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
   function normAccess(d){
     d = d && typeof d === 'object' ? d : {};
-    return { password: d.password || null, members: Array.isArray(d.members) ? d.members : [] };
+    const byName = new Map();
+    (Array.isArray(d.members) ? d.members : []).forEach(m=>{
+      if(!m || !memberKey(m.name)) return;
+      const devs = Array.isArray(m.devices) ? m.devices : (m.id ? [{ id: m.id, device: m.device || '', joinedAt: m.joinedAt || 0 }] : []);
+      const k = memberKey(m.name);
+      let p = byName.get(k);
+      if(!p){ p = { id: m.id, name: String(m.name).trim().replace(/\s+/g, ' '), joinedAt: m.joinedAt || 0, devices: [] }; byName.set(k, p); }
+      else if(m.joinedAt && (!p.joinedAt || m.joinedAt < p.joinedAt)) p.joinedAt = m.joinedAt;
+      devs.forEach(dv=>{ if(dv && dv.id && !p.devices.some(x=> x.id === dv.id)) p.devices.push({ id: dv.id, device: dv.device || '', joinedAt: dv.joinedAt || 0 }); });
+    });
+    return { password: d.password || null, members: [...byName.values()].filter(p=> p.devices.length) };
   }
   async function fetchAccessFile(){
     const res = await fetch(accessUrl(), { cache:'no-store' });
@@ -8148,9 +8161,12 @@
     list.innerHTML = members.map(m=>{
       const name = m.name || 'Worker';
       const when = m.joinedAt ? `Joined ${formatFull(dateKey(new Date(m.joinedAt)))}` : 'Joined';
+      const devs = m.devices || [];
+      const devTxt = devs.length > 1 ? `${devs.length} devices` : (devs[0] && devs[0].device) || '';
+      const devTitle = devs.map(x=> x.device || 'Device').join(', ');
       return `<div class="access-row"><span class="access-avatar" style="background:${colorForAssignee(name)}">${escapeHtml(initialsForAssignee(name))}</span>
-        <span class="access-text"><span class="access-name">${escapeHtml(name)}${accessNewIds.has(m.id) ? '<span class="access-new">New</span>' : ''}</span><span class="access-sub">${escapeHtml(when)}${m.device ? ' · ' + escapeHtml(m.device) : ''}</span></span>
-        <button type="button" class="access-remove" data-id="${escapeHtmlAttr(m.id)}" aria-label="Remove ${escapeHtmlAttr(name)} from this farm">Remove</button></div>`;
+        <span class="access-text"><span class="access-name">${escapeHtml(name)}${accessNewIds.has(m.id) ? '<span class="access-new">New</span>' : ''}</span><span class="access-sub" title="${escapeHtmlAttr(devTitle)}">${escapeHtml(when)}${devTxt ? ' · ' + escapeHtml(devTxt) : ''}</span></span>
+        <button type="button" class="access-remove" data-id="${escapeHtmlAttr(m.id)}" aria-label="Remove ${escapeHtmlAttr(name)} from this farm${devs.length > 1 ? ' (all ' + devs.length + ' devices)' : ''}">Remove</button></div>`;
     }).join('');
   }
   async function saveFarmPassword(){
@@ -8177,7 +8193,7 @@
       await updateAccessFile(d=>{ d.members = d.members.filter(x=> x.id !== id); });
       try{ localStorage.setItem(knownMembersKey(), JSON.stringify(accessData.members.map(x=> x.id))); }catch(e){}
       addHistory('Workers', `Removed ${m.name} from the farm`);
-      showToast(`${m.name} removed. They'll need the farm password to join again.`);
+      showToast(`${m.name} removed${(m.devices || []).length > 1 ? ' from all ' + m.devices.length + ' devices' : ''}. They'll need the farm password to join again.`);
     }catch(e){ showToast('Could not remove the worker. Check your connection.', true); }
     accessBusy = false; renderAccess();
   }
