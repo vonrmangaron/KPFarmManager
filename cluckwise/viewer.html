@@ -472,6 +472,12 @@
   .join-error:empty{ min-height:0; margin:0; }
   .join-farm-ok{ background:var(--success-soft); color:var(--success); border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; margin:0 0 4px; }
   .join-leave{ color:var(--danger); }
+  .loc-seg{ display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--surface-soft); border:1.5px solid var(--line); margin-bottom:8px; }
+  .loc-opt{ flex:1; padding:10px 8px; border:none; border-radius:9px; background:transparent; color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .loc-opt.selected{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
+  .loc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .loc-chip{ padding:8px 12px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); font-size:13px; font-weight:600; cursor:pointer; }
+  .loc-chip.selected{ border-color:var(--primary); background:var(--primary-soft); }
   .join-confirm-q{ font-family:'Sora',sans-serif; font-weight:700; font-size:15px; line-height:1.4; text-align:center; margin:4px 0 6px; }
   .join-confirm-sub{ text-align:center; margin:6px 0 4px; }
   .loading-overlay{
@@ -734,8 +740,18 @@
       <button class="type-btn" type="button" data-type="Other"><span>❓</span>Other</button>
     </div>
 
-    <span class="field-label" id="shedLabel">Shed Number</span>
-    <input type="number" id="shedInput" inputmode="numeric" min="1" max="99" placeholder="e.g. 3">
+    <span class="field-label" id="shedLabel">Where is it?</span>
+    <div class="loc-seg" role="radiogroup" aria-labelledby="shedLabel">
+      <button type="button" class="loc-opt selected" data-loc="shed" role="radio" aria-checked="true" id="locShedBtn">In a shed</button>
+      <button type="button" class="loc-opt" data-loc="farm" role="radio" aria-checked="false" id="locFarmBtn">Around the farm</button>
+    </div>
+    <div id="locShedRow">
+      <input type="number" id="shedInput" inputmode="numeric" min="1" max="99" placeholder="Shed number, e.g. 3" aria-label="Shed number">
+    </div>
+    <div id="locFarmRow" hidden>
+      <div class="loc-chips" id="placeChips"></div>
+      <input type="text" id="placeInput" maxlength="40" placeholder="Or type the place, e.g. Pump house" aria-label="Place on the farm">
+    </div>
 
     <span class="field-label" id="notesLabel">Where in the shed?</span>
     <textarea id="notesInput" rows="2" maxlength="200" placeholder="e.g. Back left corner, near feeder line 2"></textarea>
@@ -850,6 +866,12 @@
       wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dcDone:'{d} sa {n} tapos', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
+  Object.assign(TRANSLATIONS.en, { locWhere:'Where is it?', locShed:'In a shed', locFarm:'Around the farm', shedNumPh:'Shed number, e.g. 3', placePh:'Or type the place, e.g. Pump house', whereExactly:'Where exactly?',
+    places:['Feed silos','Water tanks','Generator','Gate & fences','Office','Roads & yard','Incinerator'] });
+  Object.assign(TRANSLATIONS.es, { locWhere:'¿Dónde está?', locShed:'En un galpón', locFarm:'En la granja', shedNumPh:'Número de galpón, ej. 3', placePh:'O escribe el lugar, ej. Casa de bombas', whereExactly:'¿Dónde exactamente?',
+    places:['Silos de alimento','Tanques de agua','Generador','Portón y cercas','Oficina','Caminos y patio','Incinerador'] });
+  Object.assign(TRANSLATIONS.tl, { locWhere:'Nasaan ito?', locShed:'Sa kulungan', locFarm:'Sa paligid ng bukid', shedNumPh:'Numero ng kulungan, hal. 3', placePh:'O i-type ang lugar, hal. Pump house', whereExactly:'Saan mismo?',
+    places:['Feed silo','Tangke ng tubig','Generator','Gate at bakod','Opisina','Daan at bakuran','Incinerator'] });
   Object.assign(TRANSLATIONS.en, { you:'you', assignedTo:'Assigned to',
     joinExistsQ:'A worker named "{n}" has already joined this farm. Is that you?', joinSame:"Yes, that's me", joinSameSub:'This phone will be added to {n}.',
     joinDiff:"No, I'm a different person", joinNeedDistinct:'Add your surname or initial so your manager can tell you apart, e.g. "{n} S."',
@@ -1470,7 +1492,13 @@
     $('#reportProblemTitle').textContent = t('reportProblem');
     $('#photoLabel').textContent = t('photo');
     $('#problemTypeLabel').textContent = t('whatsTheProblem');
-    $('#shedLabel').textContent = t('shedNumber');
+    $('#shedLabel').textContent = t('locWhere');
+    $('#locShedBtn').textContent = t('locShed');
+    $('#locFarmBtn').textContent = t('locFarm');
+    $('#shedInput').placeholder = t('shedNumPh');
+    $('#placeInput').placeholder = t('placePh');
+    renderPlaceChips();
+    setReportLocMode(reportLocMode);
     $('#notesLabel').textContent = t('whereInShed');
     $('#nameLabel').textContent = t('yourName');
     $('#submitReportBtn').textContent = t('submitReport');
@@ -2097,10 +2125,27 @@
     }
     return `${getFarmSlug()}-rpt-${code.toLowerCase()}`;
   }
+  // Where the problem is: a shed number, or a place elsewhere on the farm.
+  let reportLocMode = 'shed';
+  function reportPlaceLabel(r){ return r.shed ? `Shed ${r.shed}` : (r.location || 'Around the farm'); }
+  function setReportLocMode(mode){
+    reportLocMode = mode === 'farm' ? 'farm' : 'shed';
+    document.querySelectorAll('.loc-opt').forEach(b=>{ const on = b.dataset.loc === reportLocMode; b.classList.toggle('selected', on); b.setAttribute('aria-checked', String(on)); });
+    $('#locShedRow').hidden = reportLocMode !== 'shed';
+    $('#locFarmRow').hidden = reportLocMode !== 'farm';
+    const nl = $('#notesLabel'); if(nl) nl.textContent = reportLocMode === 'shed' ? t('whereInShed') : t('whereExactly');
+    updateSubmitState();
+  }
+  function renderPlaceChips(){
+    const box = $('#placeChips'); if(!box) return;
+    const cur = ($('#placeInput').value || '').trim();
+    const places = (TRANSLATIONS[settings.lang || 'en'] || TRANSLATIONS.en).places || TRANSLATIONS.en.places;
+    box.innerHTML = places.map(p=> `<button type="button" class="loc-chip${p === cur ? ' selected' : ''}" data-place="${escapeHtml(p)}" aria-pressed="${p === cur}">${escapeHtml(p)}</button>`).join('');
+  }
   function buildWhatsAppMessage(report){
     return [
       `🚩 ${report.code}`,
-      `Shed ${report.shed} · ${report.problemType}`,
+      `${reportPlaceLabel(report)} · ${report.problemType}`,
       report.notes,
       '',
       `— ${report.createdBy}`
@@ -2109,7 +2154,7 @@
   function updateSubmitState(){
     const hasPhoto = !!pendingPhotoFile;
     const hasType = !!selectedType;
-    const hasShed = ($('#shedInput').value || '').trim().length > 0;
+    const hasShed = reportLocMode === 'shed' ? ($('#shedInput').value || '').trim().length > 0 : ($('#placeInput').value || '').trim().length > 0;
     const hasNotes = ($('#notesInput').value || '').trim().length > 0;
     const hasName = ($('#nameInput').value || '').trim().length > 0;
     const btn = $('#submitReportBtn');
@@ -2126,6 +2171,9 @@
     $('#photoInput').value = '';
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
     $('#shedInput').value = '';
+    $('#placeInput').value = '';
+    renderPlaceChips();
+    setReportLocMode('shed');
     $('#notesInput').value = '';
     $('#nameInput').value = '';
     updateSubmitState();
@@ -2166,13 +2214,14 @@
   }
   async function submitReportProblem(){
     if(!ghPath){ showToast(t('connectFirst'), true); return; }
-    const shed = ($('#shedInput').value || '').trim();
+    const shed = reportLocMode === 'shed' ? ($('#shedInput').value || '').trim() : '';
+    const location = reportLocMode === 'farm' ? ($('#placeInput').value || '').trim().replace(/\s+/g, ' ') : '';
     const notes = ($('#notesInput').value || '').trim();
     const createdBy = ($('#nameInput').value || '').trim();
     const problemType = selectedType;
     const photoFile = pendingPhotoFile;
 
-    if(!shed || !notes || !createdBy || !problemType || !photoFile){
+    if(!(shed || location) || !notes || !createdBy || !problemType || !photoFile){
       showToast(t('fillAllFields'), true);
       return;
     }
@@ -2183,6 +2232,7 @@
       createdAt: new Date().toISOString(),
       createdBy: createdBy,
       shed: shed,
+      location: location,
       problemType: problemType,
       notes: notes,
       photoUrls: [],
@@ -2610,6 +2660,13 @@
     updateSubmitState();
   });
   $('#shedInput').addEventListener('input', updateSubmitState);
+  document.querySelectorAll('.loc-opt').forEach(b=> b.addEventListener('click', ()=>{ setReportLocMode(b.dataset.loc); (reportLocMode === 'shed' ? $('#shedInput') : $('#placeInput')).focus(); }));
+  $('#placeChips').addEventListener('click', (e)=>{
+    const c = e.target.closest('.loc-chip'); if(!c) return;
+    $('#placeInput').value = c.dataset.place;
+    renderPlaceChips(); updateSubmitState();
+  });
+  $('#placeInput').addEventListener('input', ()=>{ renderPlaceChips(); updateSubmitState(); });
   $('#notesInput').addEventListener('input', updateSubmitState);
   $('#nameInput').addEventListener('input', updateSubmitState);
   $('#submitReportBtn').addEventListener('click', submitReportProblem);

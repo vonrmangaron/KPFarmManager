@@ -906,6 +906,9 @@
   body.theme-dark .rd-note-section{ background:#3D3320; border-color:#8A6A1F; }
   .rd-note-label{ font-size:11px; font-weight:800; color:var(--primary-dark); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
   .rd-note-text{ font-size:13.5px; color:var(--ink); white-space:pre-wrap; line-height:1.5; }
+  .rd-photo-note{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+  .rd-wa-btn{ display:inline-flex; align-items:center; gap:7px; border:none; border-radius:999px; background:#1FA855; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:8px 14px; cursor:pointer; }
+  .rd-wa-btn:hover{ background:#178C46; }
   .rd-photo-note{ background:var(--surface-soft); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--muted); margin-bottom:12px; }
   .rd-input-label{ font-size:12px; font-weight:600; color:var(--muted); display:block; margin:8px 0 4px; }
   #rdManagerNotes, #rdResolutionNotes{ border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:14px;width:100%;color:var(--ink);font-family:inherit;resize:vertical; }
@@ -2555,7 +2558,7 @@
       <button class="rd-status-btn" data-status="Resolved" type="button">Resolved</button>
     </div>
     <div class="rd-info">
-      <div class="rd-row"><span class="rd-label">Shed</span><span class="rd-value" id="rdShed"></span></div>
+      <div class="rd-row"><span class="rd-label">Location</span><span class="rd-value" id="rdShed"></span></div>
       <div class="rd-row"><span class="rd-label">Type</span><span class="rd-value" id="rdType"></span></div>
       <div class="rd-row"><span class="rd-label">Reported by</span><span class="rd-value" id="rdBy"></span></div>
       <div class="rd-row"><span class="rd-label">Reported</span><span class="rd-value" id="rdAt"></span></div>
@@ -2568,7 +2571,10 @@
       <div class="rd-note-label" style="color:var(--success);">Resolution</div>
       <div class="rd-note-text" id="rdResolution"></div>
     </div>
-    <div class="rd-photo-note">📷 Photo shared via WhatsApp — search the group for this code to view.</div>
+    <div class="rd-photo-note">
+      <span>📷 Photo shared via WhatsApp — search the group for this code to view.</span>
+      <button type="button" class="rd-wa-btn" id="rdWhatsAppBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Open WhatsApp</button>
+    </div>
     <label class="rd-input-label" for="rdManagerNotes">Manager Notes (internal)</label>
     <textarea id="rdManagerNotes" rows="2" maxlength="500" placeholder="Internal notes..."></textarea>
     <label class="rd-input-label" id="rdResolutionLabel" for="rdResolutionNotes" style="display:none;">Resolution Notes (worker sees this)</label>
@@ -3269,13 +3275,8 @@
 
     reports.forEach(r => {
       if(!r.linkedTaskId) return;
-      const t = tasks.find(x => x.id === r.linkedTaskId);
-      if(!t){
-        r.linkedTaskId = null;
-        r.updatedAt = new Date().toISOString();
-        reportsChanged = true;
-      }
     });
+    if(reopenReportsWithoutTask()) reportsChanged = true;
 
     if(reportsChanged) scheduleReportsPush();
     if(tasksChanged) persist();
@@ -3474,16 +3475,9 @@
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
     const undoSnap = captureUndo();
-    if(t.linkedReportId){
-      const r = reports.find(x => x.id === t.linkedReportId);
-      if(r){
-        r.linkedTaskId = null;
-        r.updatedAt = new Date().toISOString();
-        scheduleReportsPush();
-      }
-    }
     tasks = tasks.filter(x=>x.id!==id);
     addHistory('Removed', `${taskLabel(t)} deleted`);
+    if(reopenReportsWithoutTask()) showToast('Its report is Open again.');
     persist(); renderAll();
     offerUndo(`Deleted ${taskLabel(t)}`, undoSnap);
   }
@@ -3492,6 +3486,7 @@
     if(count===0) return;
     const undoSnap = captureUndo();
     tasks = tasks.filter(t=>t.date!==key);
+    reopenReportsWithoutTask();
     addHistory('Removed', `${count} task${count>1?'s':''} deleted from ${formatFull(key)}`);
     persist(); renderAll();
     offerUndo(`Deleted ${count} task${count>1?'s':''} from ${formatShort(key)}`, undoSnap);
@@ -3683,8 +3678,10 @@
       const currentVal = shedSelect.value;
       const sheds = [...new Set(reports.map(r => r.shed).filter(Boolean))]
         .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
-      shedSelect.innerHTML = '<option value="">All sheds</option>' +
-        sheds.map(s => `<option value="${escapeHtmlAttr(s)}">Shed ${escapeHtmlAttr(s)}</option>`).join('');
+      const anyFarm = reports.some(r => !r.shed);
+      shedSelect.innerHTML = '<option value="">All places</option>' +
+        sheds.map(s => `<option value="${escapeHtmlAttr(s)}">Shed ${escapeHtmlAttr(s)}</option>`).join('') +
+        (anyFarm ? '<option value="__farm">Around the farm</option>' : '');
       shedSelect.value = currentVal;
     }
 
@@ -3694,13 +3691,14 @@
       filtered = filtered.filter(r => r.status === reportsFilterStatus);
     }
     if(reportsShedFilter){
-      filtered = filtered.filter(r => String(r.shed) === String(reportsShedFilter));
+      filtered = filtered.filter(r => reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter));
     }
     if(reportsSearchQuery){
       const q = reportsSearchQuery.toLowerCase();
       filtered = filtered.filter(r =>
         (r.code || '').toLowerCase().includes(q) ||
         (r.shed || '').toLowerCase().includes(q) ||
+        (r.location || '').toLowerCase().includes(q) ||
         (r.problemType || '').toLowerCase().includes(q) ||
         (r.notes || '').toLowerCase().includes(q) ||
         (r.createdBy || '').toLowerCase().includes(q)
@@ -3738,7 +3736,7 @@
     `;
     card.querySelector('.report-card-code').textContent = r.code || '';
     card.querySelector('.report-card-status').textContent = r.status || 'Open';
-    card.querySelector('.report-card-sub').textContent = `Shed ${r.shed} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
+    card.querySelector('.report-card-sub').textContent = `${reportPlace(r)} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
     card.querySelector('.report-card-note').textContent = r.notes || '';
     const meta = card.querySelector('.report-card-meta');
     const metaText = document.createElement('span');
@@ -3746,6 +3744,26 @@
     meta.insertBefore(metaText, meta.firstChild);
     card.addEventListener('click', () => openReportDetailModal(r.id));
     return card;
+  }
+  // Copies the report code (to paste into the group search) and opens the WhatsApp app.
+  // If the app doesn't take over within a moment, it probably isn't installed: offer WhatsApp Web.
+  async function openWhatsAppForReport(){
+    const r = reports.find(x=> x.id === currentReportId);
+    const code = r ? r.code : '';
+    let copied = false;
+    if(code){ try{ await navigator.clipboard.writeText(code); copied = true; }catch(e){} }
+    let left = false;
+    const onLeave = ()=>{ left = true; };
+    window.addEventListener('blur', onLeave);
+    document.addEventListener('visibilitychange', onLeave);
+    window.location.href = 'whatsapp://send';   // opens the app at the chat list; the code is on the clipboard for the group search
+    if(copied) showToast(`Code ${code} copied. Paste it in the group search.`);
+    setTimeout(()=>{
+      window.removeEventListener('blur', onLeave);
+      document.removeEventListener('visibilitychange', onLeave);
+      if(left || document.hidden || !document.hasFocus()) return;
+      if(confirm("WhatsApp didn't open. It may not be installed on this device.\n\nOpen WhatsApp Web in the browser instead?")) window.open('https://web.whatsapp.com/', '_blank', 'noopener');
+    }, 2500);
   }
   function openReportsDrawer(){
     renderReportsList();
@@ -3757,7 +3775,7 @@
     currentReportId = id;
 
     $('#rdCode').textContent = r.code || '';
-    $('#rdShed').textContent = r.shed || '';
+    $('#rdShed').textContent = reportPlace(r);
     $('#rdType').textContent = r.problemType || '';
     $('#rdBy').textContent = r.createdBy || '';
     $('#rdAt').textContent = r.createdAt ? fmtDateTime12(new Date(r.createdAt), {month:'short',day:'numeric',year:'numeric'}) : '';
@@ -3840,7 +3858,7 @@
     reports = reports.filter(x => x.id !== id);
     deletedReportIds.add(id);
     saveDeletedReportIds();
-    addHistory('Report deleted', `${r.code} (Shed ${r.shed} · ${r.problemType}) deleted`);
+    addHistory('Report deleted', `${r.code} (${reportPlace(r)} · ${r.problemType}) deleted`);
     scheduleReportsPush();
     renderAll();
     closeReportDetailOnly();
@@ -3860,6 +3878,21 @@
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
 
+  function reportPlace(r){ return r.shed ? `Shed ${r.shed}` : (r.location || 'Around the farm'); }
+  // A report whose converted task no longer exists goes back to Open (unless the manager resolved it by hand).
+  function reopenReportsWithoutTask(){
+    let changed = false;
+    reports.forEach(r=>{
+      if(!r.linkedTaskId || tasks.some(t=> t.id === r.linkedTaskId)) return;
+      r.linkedTaskId = null;
+      if(!(r.status === 'Resolved' && !r.autoResolved)){ r.status = 'Open'; r.resolvedAt = null; r.autoResolved = false; }
+      r.updatedAt = new Date().toISOString();
+      addHistory('Report reopened', `${r.code} is Open again: its task was deleted`);
+      changed = true;
+    });
+    if(changed) scheduleReportsPush();
+    return changed;
+  }
   function convertReportToTask(reportId){
     const r = reports.find(x => x.id === reportId);
     if(!r) return;
@@ -3867,10 +3900,10 @@
       showToast('This report already has a linked task.');
       return;
     }
-    const taskName = `Fix ${r.problemType} — Shed ${r.shed}`;
-    const today = dateKey(new Date());
+    const taskName = `Fix ${r.problemType} — ${reportPlace(r)}`;
     const noteText = `Report ${r.code}\n${r.notes || ''}`.trim();
-    const t = addTask(taskName, guessIcon(taskName), today, {
+    // Goes to the Backlog so the manager can schedule it.
+    const t = addTask(taskName, guessIcon(taskName), null, {
       priority: 'high',
       linkedReportId: r.id,
       notes: noteText
@@ -3884,7 +3917,7 @@
     scheduleReportsPush();
     renderAll();
     openReportDetailModal(reportId);
-    showToast('Task created. Report set to In Progress.');
+    showToast('Task added to Backlog. Report set to In Progress.');
   }
   // ---------- END REPORTS MODULE ----------
 
@@ -5214,6 +5247,7 @@
         const undoSnap = captureUndo();
         const removedCount = tasks.filter(t=> t.date && t.date>=b.start && t.date<=b.end).length;
         tasks = tasks.filter(t=> !(t.date && t.date>=b.start && t.date<=b.end));
+        reopenReportsWithoutTask();
         batches = batches.filter(x=>x.number!==b.number);
         addHistory('Batch removed', `Batch #${b.number} removed along with ${removedCount} task(s)`);
         persist(); renderAll();
@@ -5997,6 +6031,7 @@
       const count = bulkSelectedIds.size;
       const undoSnap = captureUndo();
       tasks = tasks.filter(t=>!bulkSelectedIds.has(t.id));
+      reopenReportsWithoutTask();
       addHistory('Removed', `${count} task(s) bulk-deleted`);
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
@@ -6114,6 +6149,7 @@
       const count = backlogSelectedIds.size;
       const undoSnap = captureUndo();
       tasks = tasks.filter(t=>!backlogSelectedIds.has(t.id));
+      reopenReportsWithoutTask();
       addHistory('Removed', `${count} task(s) bulk-deleted from Backlog`);
       persist();
       backlogSelectedIds.clear();
@@ -6455,6 +6491,7 @@
           if(!t) return;
           addFrequentTemplate(t.name, t.icon);
           tasks = tasks.filter(x=>x.id!==id);
+          reopenReportsWithoutTask();
           persist();
           requestAnimationFrame(renderAll);
         }
@@ -6589,7 +6626,11 @@
     tasks.forEach(t=>{
       if(!t.linkedReportId) return;
       const r = reports.find(x=> x.id === t.linkedReportId);
-      if(r && !r.linkedTaskId){ r.linkedTaskId = t.id; r.updatedAt = new Date().toISOString(); relinked = true; }
+      if(r && !r.linkedTaskId){
+        r.linkedTaskId = t.id;
+        if(r.status === 'Open') r.status = t.status === 'done' ? 'Resolved' : 'In Progress';
+        r.updatedAt = new Date().toISOString(); relinked = true;
+      }
     });
     if(relinked) scheduleReportsPush();
     addHistory('Undone', label);
@@ -6785,10 +6826,10 @@
       renderTaskIcon(res.querySelector('.sr-icon'), t.name, t.icon);
       return res;
     });
-    const repHits = reports.filter(r=> [r.code, r.shed, r.problemType, r.notes, r.createdBy, r.managerNotes, r.resolutionNotes].some(has))
+    const repHits = reports.filter(r=> [r.code, r.shed, r.location, r.problemType, r.notes, r.createdBy, r.managerNotes, r.resolutionNotes].some(has))
       .sort((a,b)=> (b.createdAt || '').localeCompare(a.createdAt || ''));
     group('Reports', repHits, 15, r=> buildSearchResult('🚩', r.code || '(no code)',
-      `${r.status || 'Open'} · Shed ${r.shed} · ${r.problemType}${r.notes ? ' · ' + r.notes.replace(/\s+/g,' ') : ''}`, q,
+      `${r.status || 'Open'} · ${reportPlace(r)} · ${r.problemType}${r.notes ? ' · ' + r.notes.replace(/\s+/g,' ') : ''}`, q,
       ()=>{ closeOverlays(); openReportsDrawer(); openReportDetailModal(r.id); }));
     const evHits = events.filter(e=> has(e.name) || has(e.batchNumber)).sort((a,b)=> a.date.localeCompare(b.date));
     group('Events / Audits', evHits, 10, e=> buildSearchResult('📝', e.name,
@@ -7863,11 +7904,8 @@
     } else {
       const snap = captureUndo();
       const ids = new Set(same.map(t=> t.id));
-      same.forEach(t=>{
-        const r = t.linkedReportId ? reports.find(x=> x.id === t.linkedReportId) : null;
-        if(r){ r.linkedTaskId = null; r.updatedAt = new Date().toISOString(); scheduleReportsPush(); }
-      });
       tasks = tasks.filter(t=> !ids.has(t.id));
+      reopenReportsWithoutTask();
       addHistory('Removed', `"${m.name}" removed from ${formatFull(key)} (Routine Tracker)`);
       offerUndo(`${m.name}: removed from ${formatShort(key)}`, snap);
     }
@@ -8449,6 +8487,7 @@
     const count = toDelete.length;
     const undoSnap = captureUndo();
     tasks = tasks.filter(x=> !toDelete.includes(x));
+    reopenReportsWithoutTask();
     addHistory('Removed', `${count} occurrence(s) of "${target.name}" deleted from series`);
     persist(); renderAll();
     offerUndo(`${count} occurrence(s) deleted`, undoSnap);
@@ -8499,6 +8538,7 @@
     });
   });
   $('#rdSaveBtn').addEventListener('click', saveReportChanges);
+  $('#rdWhatsAppBtn').addEventListener('click', openWhatsAppForReport);
   $('#rdConvertBtn').addEventListener('click', ()=>{
     if(!currentReportId) return;
     convertReportToTask(currentReportId);
@@ -8739,6 +8779,7 @@
     const undoSnap = captureUndo();
     const toDelete = new Set(matches.map(t=> t.id));
     tasks = tasks.filter(t=> !toDelete.has(t.id));
+    reopenReportsWithoutTask();
     const desc = bulkDeleteMode==='range'
       ? `from ${formatFull($('#bulkDeleteStart').value)} to ${formatFull($('#bulkDeleteEnd').value)}`
       : `matching name "${$('#bulkDeleteName').value.trim()}"`;
