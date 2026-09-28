@@ -98,7 +98,7 @@
   ::-webkit-scrollbar-corner{ background:transparent; }
   @supports (-moz-appearance:none){
     *{ scrollbar-width:thin; scrollbar-color:var(--sb-thumb) transparent; }
-    .kanban-board{ scrollbar-color:#4A90D9 transparent; }
+    .kanban-board{ scrollbar-width:none; }
     .kanban-cards{ scrollbar-width:none; }
   }
 
@@ -1816,6 +1816,24 @@
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; transition-delay:0s !important; scroll-behavior:auto !important; }
   }
+
+  /* Board: no floating scrollbar — edge fades + arrow buttons + wheel/trackpad/drag */
+  .kanban-board{ padding-bottom:0; scrollbar-width:none; }
+  .kanban-board::-webkit-scrollbar{ display:none; }
+  .kanban-board.panning{ cursor:grabbing; user-select:none; }
+  .kanban-fade{ bottom:0; }
+  .kanban-nav{ position:absolute; top:50%; z-index:5; width:40px; height:40px; margin-top:-20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;
+    background:var(--surface); color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow-md);
+    opacity:0; visibility:hidden; transform:scale(.9);
+    transition:opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-out), visibility 0s linear var(--dur-2), background-color var(--dur-2) ease; }
+  .kanban-nav-left{ left:6px; }
+  .kanban-nav-right{ right:6px; }
+  .kanban-canvas.show-fade-left .kanban-nav-left, .kanban-canvas.show-fade-right .kanban-nav-right{ opacity:1; visibility:visible; transform:none; transition:opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-out), visibility 0s, background-color var(--dur-2) ease; }
+  .kanban-nav:hover{ background:var(--surface-soft); }
+  .kanban-nav:active{ transform:scale(.92); }
+  .kanban-nav:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:2px; }
+  @media (max-width: 760px){ .kanban-nav{ display:none; } }
 </style>
 </head>
 <body>
@@ -6204,6 +6222,22 @@
     fadeRight.className = 'kanban-fade kanban-fade-right';
     canvas.appendChild(fadeLeft);
     canvas.appendChild(fadeRight);
+    // Edge arrows replace a visible scrollbar: they show only when there's more board that way.
+    const CHEV = (d)=> `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+    [['left', 'M15 6l-6 6 6 6', 'Scroll to earlier days', -1], ['right', 'M9 6l6 6-6 6', 'Scroll to later days', 1]].forEach(([side, path, label, dir])=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'kanban-nav kanban-nav-' + side;
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+      btn.innerHTML = CHEV(path);
+      btn.addEventListener('click', ()=>{
+        const colW = board.firstElementChild ? board.firstElementChild.getBoundingClientRect().width + 15 : 285;
+        const step = Math.max(colW, Math.floor((board.clientWidth - 40) / colW) * colW);
+        board.scrollBy({ left: dir * step, behavior: 'smooth' });
+      });
+      canvas.appendChild(btn);
+    });
     wrap.appendChild(canvas);
     const wrapStyle = getComputedStyle(wrap);
     const wrapPadding = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
@@ -6235,6 +6269,16 @@
         board.scrollLeft += e.deltaY;
       }
     }, {passive:false});
+    // Mouse drag on empty board space pans sideways (cards keep their own drag-and-drop).
+    board.addEventListener('pointerdown', (e)=>{
+      if(e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.kanban-column')) return;
+      const startX = e.clientX, startLeft = board.scrollLeft;
+      board.classList.add('panning');
+      const move = (ev)=>{ board.scrollLeft = startLeft - (ev.clientX - startX); };
+      const up = ()=>{ board.classList.remove('panning'); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
     function updateEdgeFades(){
       canvas.classList.toggle('show-fade-left', board.scrollLeft > 4);
       canvas.classList.toggle('show-fade-right', board.scrollLeft < board.scrollWidth - board.clientWidth - 4);
