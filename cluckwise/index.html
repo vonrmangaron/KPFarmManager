@@ -1470,7 +1470,7 @@
   }
 
   /* ============================================================
-     MAINTENANCE LOG — full-page register of recurring farm jobs.
+     ROUTINE TRACKER — full-page planner + register of recurring farm jobs.
      Rows = tracked tasks, columns = days. Completions come from done
      calendar tasks with the same name.
      ============================================================ */
@@ -1540,10 +1540,16 @@
   .mlog-box.done{ background:var(--success); border-color:var(--success); }
   .mlog-box.gap{ background:color-mix(in srgb, var(--danger) 13%, var(--surface)); border-color:color-mix(in srgb, var(--danger) 28%, var(--surface)); }
   .mlog-box.gap:hover{ border-color:var(--success); }
-  .mlog-box:disabled{ opacity:0.35; cursor:default; }
+  .mlog-box.future{ background:transparent; border-style:dashed; }
+  .mlog-box.planned{ background:var(--primary-soft); border:1.5px dashed var(--primary-dark); }
+  .mlog-box.planned::after{ content:''; width:8px; height:8px; border-radius:50%; background:var(--primary-dark); }
+  .mlog-box.due{ box-shadow:0 0 0 2px var(--mlog-soon); border-color:transparent; }
+  .mlog-box.due.planned{ border-color:var(--primary-dark); }
+  .mlog-dayhead.future .dnum{ color:var(--muted); font-weight:600; }
   .mlog-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:11.5px; color:var(--muted); flex-shrink:0; }
   .mlog-legend span{ display:inline-flex; align-items:center; gap:6px; }
   .mlog-legend .mlog-wk-swatch{ width:14px; height:14px; border-radius:4px; background:var(--weekend-bg); border:1px solid var(--line); }
+  .mlog-legend .mlog-box.planned::after{ width:5px; height:5px; }
   .mlog-legend .mlog-box{ width:14px; height:14px; border-radius:4px; cursor:default; pointer-events:none; }
   .mlog-empty{ margin:auto; max-width:460px; text-align:center; padding:28px 20px; }
   .mlog-empty .mlog-empty-ic{ font-size:40px; }
@@ -1765,7 +1771,7 @@
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search">🔍</button>
       <button class="btn-history" id="historyBtn">History</button>
-      <button class="btn-history" id="mlogBtn" title="Maintenance Log">🔧 Log</button>
+      <button class="btn-history" id="mlogBtn" title="Routine Tracker: plan and log recurring farm jobs">🔁 Routines</button>
       <button class="btn-history notif-btn" id="reportsBtn" title="Reports">🚩 Reports<span class="notif-badge hidden" id="reportsBadge">0</span></button>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode">🌙</button>
@@ -1849,11 +1855,11 @@
 <button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
 <button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
 
-<section class="mlog-page" id="mlogPage" aria-label="Maintenance Log">
+<section class="mlog-page" id="mlogPage" aria-label="Routine Tracker">
   <header class="mlog-head">
     <button type="button" class="mlog-back" id="mlogCloseBtn" aria-label="Back to calendar" title="Back (Esc)">←</button>
     <div class="mlog-title">
-      <h2>Maintenance Log</h2>
+      <h2>Routine Tracker</h2>
       <div class="mlog-sub" id="mlogSub"></div>
     </div>
     <button type="button" class="btn-app mlog-add" id="mlogAddBtn">+ Track task</button>
@@ -1905,7 +1911,7 @@
     <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
     <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
     <button class="sheet-option" id="moreReportsBtn"><span class="s-ic" style="background:var(--danger);">🚩</span>Reports <span id="moreReportsCount" style="margin-left:auto;font-weight:800;color:var(--danger);"></span></button>
-    <button class="sheet-option" id="moreMlogBtn"><span class="s-ic" style="background:var(--success);">🔧</span>Maintenance Log</button>
+    <button class="sheet-option" id="moreMlogBtn"><span class="s-ic" style="background:var(--success);">🔁</span>Routine Tracker</button>
     <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
     <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
     <button class="sheet-option" id="moreThemeToggleBtn"><span class="s-ic" style="background:var(--secondary);">🌙</span><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
@@ -2489,7 +2495,7 @@
   let reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let frequentTemplates = [];
-  let maintenance = [];   // Maintenance Log: tracked recurring tasks {id, name, shed, category, every}
+  let maintenance = [];   // Routine Tracker: tracked recurring tasks {id, name, shed, category, every}
   let currentDate = new Date();
   let collapsedKanbanCols = new Set(loadCollapsedKanbanCols());
   function loadCollapsedKanbanCols(){ try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }catch(e){ return []; } }
@@ -7326,7 +7332,7 @@
   });
   $('#todayBtn').addEventListener('click', ()=>{ currentDate = new Date(); agendaDate = null; renderAll(); });
 
-  // ==================== MAINTENANCE LOG ====================
+  // ==================== ROUTINE TRACKER ====================
   // A register of recurring farm jobs. A tracked task matches every calendar
   // task with the same name (case/spacing-insensitive); each done one dated
   // today or earlier counts as a completion. Ticking a day in the log marks
@@ -7337,7 +7343,7 @@
   let mlogSearch = '', mlogShed = '', mlogCat = '', mlogSort = 'urgency';
   let mlogHistId = null, mlogEditId = null, mlogScrollToEnd = false, mlogShedTouched = false;
   // Continuous scroll: days added past the chosen range as the user swipes to either edge.
-  const MLOG_EXTEND_BY = 14, MLOG_EDGE_PX = 160, MLOG_MAX_DAYS = 731;
+  const MLOG_EXTEND_BY = 14, MLOG_EDGE_PX = 160, MLOG_MAX_DAYS = 731, MLOG_FUTURE_DAYS = 7, MLOG_FUTURE_LIMIT = 365;
   let mlogExtraBefore = 0, mlogExtraAfter = 0, mlogExtending = false, mlogDrag = null, mlogSuppressClick = false;
   try{
     const r = localStorage.getItem('cw-mlog-range');
@@ -7379,11 +7385,11 @@
       from = mlogFrom <= mlogTo ? mlogFrom : mlogTo;
       to = mlogFrom <= mlogTo ? mlogTo : mlogFrom;
     } else {
-      to = today;
+      to = addDaysStr(today, MLOG_FUTURE_DAYS);
       from = addDaysStr(today, -((MLOG_RANGES[mlogRange] || 14) - 1));
     }
     from = addDaysStr(from, -mlogExtraBefore);
-    if(mlogExtraAfter && to < today){ const t = addDaysStr(to, mlogExtraAfter); to = t < today ? t : today; }
+    if(mlogExtraAfter){ const t = addDaysStr(to, mlogExtraAfter), cap = addDaysStr(today, MLOG_FUTURE_LIMIT); to = t < cap ? t : cap; }
     const keys = [];
     for(let k = from; k <= to && keys.length < MLOG_MAX_DAYS; k = addDaysStr(k, 1)) keys.push(k);
     return keys;
@@ -7443,9 +7449,9 @@
     if(!maintenance.length){
       const sugg = mlogSuggestions();
       main.innerHTML = `<div class="mlog-empty">
-        <div class="mlog-empty-ic">🔧</div>
-        <h3>Track your recurring farm jobs</h3>
-        <p>Add jobs like <b>Hoe Shed 1</b>, <b>Change Rat Baits</b> or <b>Service Generator</b>. Every time one is marked done in the calendar, or ticked here, it shows up in the log, so you can see at a glance what's overdue.</p>
+        <div class="mlog-empty-ic">🔁</div>
+        <h3>Plan and track your farm routines</h3>
+        <p>Add recurring jobs like <b>Hoe Shed 1</b>, <b>Change Rat Baits</b> or <b>Service Generator</b>. Tap a future day to plan one on the calendar, and tick a day once it's done. Jobs marked done in the calendar show up here too, so you can see at a glance what's overdue and what's coming up.</p>
         <button type="button" class="btn-app" data-mlog-add>+ Track a task</button>
         ${sugg.length ? `<p style="margin:22px 0 0;font-size:12px;">Already recurring in your calendar:</p><div class="mlog-suggest-chips">${mlogSuggestChipsHtml(sugg)}</div>` : ''}
       </div>`;
@@ -7473,7 +7479,7 @@
     keys.forEach((k, i)=>{
       const d = toDateObj(k), wd = d.getDay();
       const mon = (i === 0 || k.endsWith('-01')) ? `<span class="dmon">${d.toLocaleDateString(undefined, { month:'short' })}</span>` : '';
-      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'short' })}<span class="dnum">${d.getDate()}</span></th>`;
+      head += `<th scope="col" class="mlog-dayhead${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}${k > today ? ' future' : ''}" title="${escapeHtmlAttr(formatFullWithWeekday(k))}">${mon}${d.toLocaleDateString(undefined, { weekday:'short' })}<span class="dnum">${d.getDate()}</span></th>`;
     });
     let body = '';
     rows.forEach(({ m, dates, st })=>{
@@ -7491,13 +7497,21 @@
       // Walk the range with a pointer into the sorted done dates so each
       // empty day knows how long it had been since the last completion.
       let p = -1;
+      // Ahead of today: days already scheduled in the calendar, and the day it next falls due.
+      const nm = mlogNorm(m.name);
+      const planned = new Set(tasks.filter(t=> t.status !== 'done' && t.date && t.date >= today && mlogNorm(t.name) === nm).map(t=> t.date));
+      const dueKey = st.last ? addDaysStr(st.last, every) : null;
       keys.forEach(k=>{
         const wd = toDateObj(k).getDay();
         while(p + 1 < dates.length && dates[p + 1] <= k) p++;
         const done = doneSet.has(k), future = k > today;
-        const gap = !done && !future && p >= 0 && mlogDaysBetween(dates[p], k) > every;
-        const label = `${m.name}, ${formatFull(k)}: ${done ? 'done' : future ? 'upcoming' : gap ? 'not done (overdue)' : 'not done'}`;
-        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}"${future ? ' disabled' : ''}>${done ? '✓' : ''}</button></td>`;
+        const plan = !done && planned.has(k);
+        const due = !done && dueKey === k && k >= today;
+        const gap = !done && !future && !plan && p >= 0 && mlogDaysBetween(dates[p], k) > every;
+        const state = done ? 'done' : plan ? 'planned' : future ? (due ? 'due, not planned' : 'not planned') : gap ? 'not done (overdue)' : 'not done';
+        const hint = future ? (plan ? ' · tap to unplan' : ' · tap to plan') : '';
+        const label = `${m.name}, ${formatFull(k)}: ${state}${due && !future ? ' (due today)' : ''}${hint}`;
+        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${due ? ' due' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done || plan}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
       });
       body += '</tr>';
     });
@@ -7509,11 +7523,20 @@
         <span><i class="mlog-box done">✓</i>Done</span>
         <span><i class="mlog-box gap"></i>Overdue gap</span>
         <span><i class="mlog-box"></i>Not done</span>
+        <span><i class="mlog-box planned"></i>Planned</span>
+        <span><i class="mlog-box due"></i>Next due</span>
         <span><i class="mlog-wk-swatch"></i>Weekend</span>
-        <span>Tap a day to log or undo it · swipe or drag sideways for more days · tap a task for its history</span>
+        <span>Tap a past day to log it · tap a future day to plan it · swipe for more days · tap a task for its history</span>
       </div>`;
     const card = main.querySelector('.mlog-card');
-    if(mlogScrollToEnd){ card.scrollLeft = card.scrollWidth; mlogScrollToEnd = false; }
+    if(mlogScrollToEnd){
+      const th = card.querySelector('th.is-today'), stick = card.querySelector('thead .mlog-task-col');
+      if(th){
+        const view = card.clientWidth - (stick ? stick.offsetWidth : 0);
+        card.scrollLeft = Math.max(0, th.offsetLeft - (stick ? stick.offsetWidth : 0) - view * 0.5 + th.offsetWidth / 2);
+      } else card.scrollLeft = card.scrollWidth;
+      mlogScrollToEnd = false;
+    }
     else {
       // Days prepended on the left: shift by the added width so the view doesn't jump.
       const added = opts && opts.prepended ? card.scrollWidth - prevWidth : 0;
@@ -7526,7 +7549,7 @@
   function mlogCanExtend(dir){
     const keys = mlogRangeKeys();
     if(dir === 'before') return keys.length < MLOG_MAX_DAYS;
-    return keys.length > 0 && keys[keys.length - 1] < dateKey(new Date());
+    return keys.length > 0 && keys[keys.length - 1] < addDaysStr(dateKey(new Date()), MLOG_FUTURE_LIMIT);
   }
   function mlogExtend(dir){
     if(mlogExtending || !mlogCanExtend(dir)) return;
@@ -7602,16 +7625,33 @@
 
   function mlogToggle(id, key){
     const m = maintenance.find(x=> x.id === id);
-    if(!m || key > dateKey(new Date())) return;
+    if(!m) return;
     const n = mlogNorm(m.name);
     const same = tasks.filter(t=> t.date === key && mlogNorm(t.name) === n);
+    if(key > dateKey(new Date())){
+      // Future day: plan it as an open calendar task, or take back a plan the log made.
+      const open = same.filter(t=> t.status !== 'done');
+      if(open.length){
+        const logIds = new Set(open.filter(t=> t.source === 'maint-log').map(t=> t.id));
+        if(!logIds.size){ showToast(`${m.name} is already planned for ${formatShort(key)} in the calendar.`); return; }
+        tasks = tasks.filter(t=> !logIds.has(t.id));
+        addHistory('Deleted', `"${m.name}" unplanned for ${formatFull(key)} (Routine Tracker)`);
+        showToast(`${m.name}: plan for ${formatShort(key)} removed`);
+      } else {
+        tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
+        addHistory('Added', `"${m.name}" planned for ${formatFull(key)} (Routine Tracker)`);
+        showToast(`${m.name}: planned for ${formatShort(key)}`);
+      }
+      persist(); renderAll();
+      return;
+    }
     const done = same.filter(t=> t.status === 'done');
     if(done.length){
       // Undo: drop ticks the log created; reopen real calendar tasks (toggleDone keeps linked reports in step).
       const logIds = new Set(done.filter(t=> t.source === 'maint-log').map(t=> t.id));
       if(logIds.size){
         tasks = tasks.filter(t=> !logIds.has(t.id));
-        addHistory('Reopened', `"${m.name}" unticked for ${formatFull(key)} (Maintenance Log)`);
+        addHistory('Reopened', `"${m.name}" unticked for ${formatFull(key)} (Routine Tracker)`);
       }
       done.filter(t=> !logIds.has(t.id)).forEach(t=> toggleDone(t.id));
       showToast(`${m.name}: ${formatShort(key)} cleared`);
@@ -7620,7 +7660,7 @@
       if(open){ toggleDone(open.id); }
       else {
         tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'done', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
-        addHistory('Completed', `"${m.name}" logged for ${formatFull(key)} (Maintenance Log)`);
+        addHistory('Completed', `"${m.name}" logged for ${formatFull(key)} (Routine Tracker)`);
       }
       showToast(`${m.name}: logged for ${formatShort(key)}`);
     }
@@ -7657,7 +7697,7 @@
       <div class="mlog-stat"><div class="k">Next scheduled</div><div class="v">${next ? escapeHtml(formatShort(next)) : 'None'}</div><div class="s">${next ? 'In the calendar' : 'Nothing planned'}</div></div>
     </div>`;
     if(!dates.length){
-      html += `<p class="mlog-hist-none">No completions yet. Tick a day in the log, or mark a “${escapeHtml(m.name)}” task done in the calendar.</p>`;
+      html += `<p class="mlog-hist-none">No completions yet. Tick a day in the Routine Tracker, or mark a “${escapeHtml(m.name)}” task done in the calendar.</p>`;
     } else {
       html += `<h3 class="mlog-hist-h">Completion history</h3><ul class="mlog-hist-list">`;
       for(let i = dates.length - 1; i >= 0; i--){
@@ -7681,8 +7721,8 @@
     const hint = $('#mlogMatchHint');
     const c = mlogMatchCount(name);
     if(!name.trim()){ hint.textContent = 'Use the same name as the task in your calendar so its completions are picked up.'; hint.classList.remove('match'); }
-    else if(c){ hint.textContent = `✓ ${c} completed calendar task${c === 1 ? '' : 's'} with this name will show in the log.`; hint.classList.add('match'); }
-    else { hint.textContent = 'No completed calendar tasks with this name yet. Days you tick in the log will add them.'; hint.classList.remove('match'); }
+    else if(c){ hint.textContent = `✓ ${c} completed calendar task${c === 1 ? '' : 's'} with this name will show here.`; hint.classList.add('match'); }
+    else { hint.textContent = 'No completed calendar tasks with this name yet. Days you tick or plan here will add them.'; hint.classList.remove('match'); }
     const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
     const renamed = m && mlogNorm(m.name) !== mlogNorm(name) && name.trim();
     const oldCount = m ? tasks.filter(t=> mlogNorm(t.name) === mlogNorm(m.name)).length : 0;
@@ -7736,10 +7776,10 @@
       }
       Object.assign(m, { name, shed, category, every });
       delete m.icon;
-      addHistory('Maintenance Log', `Updated tracked task "${name}"`);
+      addHistory('Routine Tracker', `Updated tracked task "${name}"`);
     } else {
       maintenance.push({ id: uid(), name, shed, category, every, createdAt: Date.now() });
-      addHistory('Maintenance Log', `Started tracking "${name}"`);
+      addHistory('Routine Tracker', `Started tracking "${name}"`);
     }
     closeOverlays();
     persist(); renderAll();
@@ -7750,7 +7790,7 @@
     if(!m) return;
     const snap = captureUndo();
     maintenance = maintenance.filter(x=> x.id !== m.id);
-    addHistory('Maintenance Log', `Stopped tracking "${m.name}"`);
+    addHistory('Routine Tracker', `Stopped tracking "${m.name}"`);
     closeOverlays();
     persist(); renderAll();
     offerUndo(`Stopped tracking “${m.name}”. Calendar tasks kept.`, snap);
@@ -8408,7 +8448,7 @@
         closeReportDetailOnly();
         return;
       }
-      // Esc steps back out of the Maintenance Log one layer at a time.
+      // Esc steps back out of the Routine Tracker one layer at a time.
       if(mlogIsOpen() && !document.querySelector('.form-modal.open, .history-drawer.open')){ closeMlog(); return; }
       closeAllTaskMenus();
       $('#calendarDensityWrap').classList.remove('open');
