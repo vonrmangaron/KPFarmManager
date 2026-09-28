@@ -861,6 +861,8 @@ function renderDashboardView() {
     </div>
   </div>
 
+  ${renderFarmKpiCard()}
+
   ${renderGroupStatusGrid()}
 
   <div class="dash-grid dash-row-triple">
@@ -1378,16 +1380,21 @@ function farmFeedSubText(t){
 }
 
 /* ---------- Predictions page ---------- */
+// "<Farm> · Projected batch result" — farm name from cloud sync when set.
+function farmResultTitle(){
+  const farm=syncFarmName?escapeHtml(String(syncFarmName)):'';
+  return farm?`${farm} <span class="farm-kpi-title-sep">·</span> Projected batch result`:'Projected batch result';
+}
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
-  if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>🏭 Whole Farm KPIs · Estimates</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
+  if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
   const overrideVal=predState.farmFeedOverride!=null?predState.farmFeedOverride:'';
   const overrideCls=t.usingManualFeed?'manual':'';
   const feedSub=farmFeedSubText(t);
   const leftoverVal=(predState.farmLeftoverKg!=null&&predState.farmLeftoverKg>0)?predState.farmLeftoverKg:'';
   const leftoverCls=t.leftoverApplied?'manual':'';
   const leftoverPlaceholder=t.autoLeftover!=null?`auto: ${Math.round(t.autoLeftover).toLocaleString()}`:'auto: —';
-  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>🏭 Whole Farm KPIs · Estimates</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span></div><div class="farm-kpi-grid">
+  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2>${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span></div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="100" min="0" placeholder="Manual override (kg)" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (kg)</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="1" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" /></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>
@@ -1472,7 +1479,7 @@ function renderPredictionsView(){
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
   const groupNames={1:pairLabel(1),2:pairLabel(2),3:pairLabel(3),4:pairLabel(4)};
-  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Whole-farm estimates · pair result · per-shed detail below</span></div>${renderFarmKpiCard()}<div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 Results Predictions <span style="color:var(--muted);font-weight:600">— ${groupNames[g]}</span></h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div><div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
 }
 function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};
