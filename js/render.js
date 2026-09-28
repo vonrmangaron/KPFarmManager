@@ -919,8 +919,27 @@ function scheduleRender(delay=50){
     if(activeId){const el=document.getElementById(activeId);if(el){el.focus();if(selStart!=null&&typeof el.setSelectionRange==='function'){try{el.setSelectionRange(selStart,selEnd);}catch(e){}}}}
   },delay);
 }
+// Key identifying the page the user is looking at. When it changes
+// between renders, the content eases in and the scroll resets.
+let lastPageKey=null;
+function currentPageKey(){
+  if(activeTab==='predictions')return `pred:${predState.predGroup}:${predState.predView}`;
+  if(/^g[1-4]$/.test(activeTab))return `${activeTab}:${shedViewByGroup[Number(activeTab.slice(1))]||''}`;
+  return activeTab;
+}
 function render(){
   try{
+    const pageKey=currentPageKey();
+    if(pageKey!==lastPageKey){
+      const appEl=document.getElementById('app');
+      if(appEl&&lastPageKey!==null){
+        // Changing tab (not just the shed view) starts at the top.
+        if(String(pageKey).split(':')[0]!==String(lastPageKey).split(':')[0])appEl.scrollTo({top:0,behavior:'instant'});
+        appEl.classList.remove('page-enter');void appEl.offsetWidth;appEl.classList.add('page-enter');
+        clearTimeout(render._pe);render._pe=setTimeout(()=>appEl.classList.remove('page-enter'),500);
+      }
+      lastPageKey=pageKey;
+    }
     gompertzCache=new Map();
     // Batch number field
     const batchEl=document.getElementById('batchNumber');

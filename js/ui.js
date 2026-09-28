@@ -1035,7 +1035,14 @@ function liveUpdateShedMortality(shedIdx,rawValue){
   saveState();schedulePush();
   if(activeTab==='predictions')updateFarmKpiValues();
 }
-function toggleAdjCollapse(){adjModalOpen=!adjModalOpen;render();}
+function toggleAdjCollapse(){
+  if(!adjModalOpen){adjModalOpen=true;render();return;}
+  // Play the exit animation before removing the modal.
+  const m=document.querySelector('#adjModalRoot .adj-modal');
+  if(!m||m.classList.contains('closing')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){adjModalOpen=false;render();return;}
+  m.classList.add('closing');
+  setTimeout(()=>{adjModalOpen=false;render();},150);
+}
 function setDensityGlobal(field,value){
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};
   const n=Number(value);if(!Number.isFinite(n))return;

@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       return;
     }
     const tabBtn=e.target.closest('[data-tab]');
-    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;if(feedCompareState.modalOpen)closeCompareModal();render();document.getElementById('app')?.scrollTo({top:0,behavior:'smooth'});}return;}
+    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;if(feedCompareState.modalOpen)closeCompareModal();render();}return;}
   });
 
   document.addEventListener('keydown',e=>{

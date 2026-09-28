@@ -2903,3 +2903,164 @@ body.theme-dark .mob-nav-fab { color: #1A2438; box-shadow: 0 6px 16px rgba(0,0,0
 .flash-target { animation: flashTarget 1.6s ease; border-radius: 14px; }
 @keyframes flashTarget { 0%,40% { box-shadow: 0 0 0 3px var(--primary); } 100% { box-shadow: 0 0 0 3px transparent; } }
 @media (prefers-reduced-motion: reduce) { .flash-target { animation: none; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOTION — one timing system for every overlay, page and control.
+   Overlays stay in the DOM (visibility + opacity + transform) instead
+   of display:none, so they animate both in AND out without JS.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);      /* decelerate: things arriving */
+  --ease-in: cubic-bezier(.4, 0, 1, 1);          /* accelerate: things leaving */
+  --ease-spring: cubic-bezier(.34, 1.36, .64, 1); /* tiny overshoot for pops */
+  --t-fast: 140ms;
+  --t-med: 220ms;
+  --t-slow: 320ms;
+}
+
+/* Scroll feel */
+#app { scroll-behavior: smooth; overscroll-behavior-y: contain; }
+.compare-modal-body, .sync-modal-body, .settings-drawer-body, .more-panel,
+.adj-modal-body, .alerts-popover, .sb-nav { overscroll-behavior: contain; }
+
+/* Scrims: fade (+ light blur) in and out */
+.settings-scrim, .sync-scrim {
+  display: block; visibility: hidden; opacity: 0; pointer-events: none;
+  transition: opacity var(--t-med) var(--ease-out), visibility 0s linear var(--t-med);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.settings-scrim.open, .sync-scrim.open {
+  visibility: visible; opacity: 1; pointer-events: auto;
+  transition: opacity var(--t-med) var(--ease-out), visibility 0s;
+}
+
+/* Centered dialogs (sync, new batch, pickups, samples, load editor…) */
+.sync-modal {
+  display: flex; visibility: hidden; opacity: 0; pointer-events: none;
+  transform: translate(-50%, -48%) scale(.96);
+  transition: opacity var(--t-fast) var(--ease-in), transform var(--t-fast) var(--ease-in), visibility 0s linear var(--t-fast);
+}
+.sync-modal.open {
+  visibility: visible; opacity: 1; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity var(--t-med) var(--ease-out), transform var(--t-slow) var(--ease-spring), visibility 0s;
+}
+
+/* Full-panel sheets (Silo readings, Feed loads, Compare feed) */
+.compare-modal {
+  display: flex; align-items: center; justify-content: center;
+  visibility: hidden; opacity: 0; pointer-events: none;
+  transition: opacity var(--t-med) var(--ease-out), visibility 0s linear var(--t-med);
+}
+.compare-modal.open {
+  visibility: visible; opacity: 1; pointer-events: auto;
+  transition: opacity var(--t-med) var(--ease-out), visibility 0s;
+}
+.compare-modal .compare-modal-panel {
+  transform: translateY(14px) scale(.985);
+  transition: transform var(--t-fast) var(--ease-in);
+}
+.compare-modal.open .compare-modal-panel {
+  transform: none;
+  transition: transform var(--t-slow) var(--ease-out);
+}
+@media (max-width: 640px) {
+  .compare-modal .compare-modal-panel { transform: translateY(6%); }
+}
+
+/* Settings drawer: smoother slide */
+.settings-drawer { transition: transform var(--t-slow) var(--ease-out); }
+
+/* Alerts popover: drop from the bell */
+.alerts-popover {
+  display: block; visibility: hidden; opacity: 0; pointer-events: none;
+  transform: translateY(-6px) scale(.97); transform-origin: top right;
+  transition: opacity var(--t-fast) var(--ease-in), transform var(--t-fast) var(--ease-in), visibility 0s linear var(--t-fast);
+}
+.alerts-popover.open {
+  visibility: visible; opacity: 1; pointer-events: auto; transform: none;
+  transition: opacity var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out), visibility 0s;
+}
+
+/* Pickup ⋯ menu */
+.pickup-actions-menu {
+  display: flex; flex-direction: column; gap: 2px;
+  visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-4px);
+  transition: opacity var(--t-fast) var(--ease-in), transform var(--t-fast) var(--ease-in), visibility 0s linear var(--t-fast);
+}
+.pickup-actions.open .pickup-actions-menu {
+  visibility: visible; opacity: 1; pointer-events: auto; transform: none;
+  transition: opacity var(--t-fast) var(--ease-out), transform var(--t-med) var(--ease-out), visibility 0s;
+}
+
+/* Phone More sheet: slide up, slide down on close */
+.more-sheet {
+  display: block; visibility: hidden; pointer-events: none;
+  transition: visibility 0s linear var(--t-med);
+}
+.more-sheet.open { visibility: visible; pointer-events: auto; transition: visibility 0s; }
+.more-scrim { animation: none; opacity: 0; transition: opacity var(--t-med) var(--ease-out); }
+.more-sheet.open .more-scrim { opacity: 1; }
+.more-panel { animation: none; transform: translateY(100%); transition: transform var(--t-med) var(--ease-in); }
+.more-sheet.open .more-panel { transform: none; transition: transform var(--t-slow) var(--ease-out); }
+
+/* Prediction adjustments modal: rendered on open, JS adds .closing */
+@keyframes mFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mPopIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes mSheetIn { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes mFadeOut { to { opacity: 0; } }
+@keyframes mPopOut { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes mSheetOut { to { transform: translateY(100%); } }
+.adj-modal-scrim { animation: mFadeIn var(--t-med) var(--ease-out) both; }
+.adj-modal-panel { animation: mPopIn var(--t-slow) var(--ease-out) both; }
+.adj-modal.closing .adj-modal-scrim { animation: mFadeOut var(--t-fast) var(--ease-in) both; }
+.adj-modal.closing .adj-modal-panel { animation: mPopOut var(--t-fast) var(--ease-in) both; }
+@media (max-width: 768px) {
+  .adj-modal-panel { animation-name: mSheetIn; }
+  .adj-modal.closing .adj-modal-panel { animation-name: mSheetOut; }
+}
+
+/* Toast: rise with a small pop */
+.toast { transition: opacity var(--t-med) var(--ease-out), transform var(--t-slow) var(--ease-spring); transform: translate(-50%, 14px) scale(.96); }
+.toast.show { transform: translate(-50%, 0) scale(1); }
+@media (max-width: 768px) { .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); } }
+
+/* Page change: content eases in (only when the page actually changes) */
+@keyframes pageEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pageFade { from { opacity: 0; } to { opacity: 1; } }
+/* transform would re-anchor the fixed .pred-rail to its parent mid-animation,
+   so rail pages animate their children and the rail only fades */
+#app.page-enter > *:not(.pred-layout),
+#app.page-enter > .pred-layout > *:not(.pred-rail) { animation: pageEnter var(--t-slow) var(--ease-out) both; }
+#app.page-enter > .pred-layout > .pred-rail { animation: pageFade var(--t-med) var(--ease-out) both; }
+#app.page-enter > .pred-layout > :nth-child(2), #app.page-enter > :nth-child(2) { animation-delay: 30ms; }
+#app.page-enter > .pred-layout > :nth-child(3), #app.page-enter > :nth-child(3) { animation-delay: 60ms; }
+#app.page-enter > .pred-layout > :nth-child(n+4), #app.page-enter > :nth-child(n+4) { animation-delay: 90ms; }
+
+/* Silo sheet accordion: body eases open */
+@keyframes accOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.sms-group-section.open .sms-group-body { animation: accOpen var(--t-med) var(--ease-out); }
+.sms-group-caret { transition: transform var(--t-med) var(--ease-out), background .12s; }
+
+/* Press feedback on tappable controls */
+.sb-link, .sb-sub-link, .mob-nav-btn, .more-row, .pred-rail-btn, .gsm-btn, .stab, .fpill,
+.dash-card-action, .dash-kpi-link, .sms-next-btn, .new-batch-btn, .hdr-import-btn,
+.alerts-bell-btn, .sb-icon-btn, .sb-theme-opt, .btn-primary, .more-settings, .dash-alert,
+.dash-gs-tile, .sms-group-head, .adj-modal-close, .compare-modal-close {
+  transition: background-color var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease,
+              box-shadow var(--t-fast) ease, transform var(--t-fast) var(--ease-out), filter var(--t-fast) ease;
+}
+.sb-link:active, .sb-sub-link:active, .more-row:active, .pred-rail-btn:active, .gsm-btn:active, .stab:active,
+.fpill:active, .dash-card-action:active, .dash-kpi-link:active, .sms-next-btn:active, .new-batch-btn:active,
+.hdr-import-btn:active, .alerts-bell-btn:active, .sb-icon-btn:active, .btn-primary:active, .more-settings:active,
+.dash-gs-tile:active, .adj-modal-close:active, .compare-modal-close:active { transform: scale(.97); }
+.mob-nav-btn:active .mob-nav-pill { transform: scale(.9); }
+.mob-nav-pill { transition: background-color var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out); }
+
+/* Respect reduced-motion: keep state changes, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important; animation-delay: 0ms !important;
+    transition-duration: 1ms !important; scroll-behavior: auto !important;
+  }
+}
