@@ -170,8 +170,9 @@
   .section-header-left{ display:flex; align-items:center; gap:6px; min-width:0; }
   .section-collapse-btn{ flex-shrink:0; width:20px; height:20px; border:none; background:transparent; color:var(--muted); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .18s ease; }
   .section-collapse-btn.collapsed{ transform:rotate(-90deg); }
-  .collapsible-section{ max-height:2000px; overflow:hidden; transition:max-height .22s ease, opacity .18s ease; opacity:1; }
-  .collapsible-section.collapsed{ max-height:0; opacity:0; }
+  .collapsible-section{ display:grid; grid-template-rows:1fr; opacity:1; transition:grid-template-rows var(--dur-3) var(--ease-out), opacity var(--dur-2) ease; }
+  .collapsible-section.collapsed{ grid-template-rows:0fr; opacity:0; }
+  .collapsible-inner{ min-height:0; overflow:hidden; }
   .notif-btn{ position:relative; }
   .notif-badge{ position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; line-height:1; font-family:'Inter',sans-serif; }
   .notif-badge.hidden{ display:none; }
@@ -1730,6 +1731,91 @@
   .audit-prep-item{ background:var(--surface); border:none; min-height:34px; }
   .audit-prep-item .task-icon.sb-ic{ width:22px; height:22px; border-radius:6px; }
   .audit-prep-item .task-icon.sb-ic svg{ width:13px; height:13px; }
+
+  /* ============================================================
+     MOTION — one easing/duration system for every overlay, page and
+     control, so the app moves like one product. Enter = ease-out,
+     exit = quicker ease-in. Honours prefers-reduced-motion.
+     ============================================================ */
+  :root{
+    --ease-out:cubic-bezier(.2,.8,.2,1);
+    --ease-in:cubic-bezier(.4,0,1,1);
+    --ease-sheet:cubic-bezier(.32,.72,0,1);
+    --dur-1:120ms; --dur-2:180ms; --dur-3:260ms; --dur-4:340ms;
+  }
+  /* Backdrop fades instead of snapping */
+  .scrim{ display:block; opacity:0; visibility:hidden; transition:opacity var(--dur-2) ease, visibility 0s linear var(--dur-2); }
+  .scrim.show{ opacity:1; visibility:visible; transition:opacity var(--dur-3) ease, visibility 0s; }
+  @supports (backdrop-filter: blur(2px)){ .scrim{ backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); } }
+
+  /* Pop-ups: fade + settle from a slight scale; close is a touch quicker */
+  .form-modal{ display:flex; visibility:hidden; opacity:0; pointer-events:none; transform:translate(-50%,-48%) scale(.97);
+    transition:opacity var(--dur-1) var(--ease-in), transform var(--dur-2) var(--ease-in), visibility 0s linear var(--dur-2); }
+  .form-modal.open{ visibility:visible; opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1);
+    transition:opacity var(--dur-2) ease, transform var(--dur-3) var(--ease-out), visibility 0s; }
+  .form-modal-body{ overscroll-behavior:contain; }
+
+  /* Side drawers: native-feeling slide, hidden from focus when closed */
+  .history-drawer{ visibility:hidden; transition:transform var(--dur-3) var(--ease-in), visibility 0s linear var(--dur-3); overscroll-behavior:contain; }
+  .history-drawer.open{ visibility:visible; transition:transform var(--dur-4) var(--ease-sheet), visibility 0s; }
+  .sidebar{ overscroll-behavior:contain; }
+
+  /* Task "⋯" menu pops from its button */
+  .task-menu-popup{ transform-origin:top right; }
+  .task-menu-popup[style*="block"]{ animation:menuIn var(--dur-2) var(--ease-out); }
+  @keyframes menuIn{ from{ opacity:0; transform:scale(.95) translateY(-4px); } }
+
+  /* Full-screen pages (Routine Tracker) and loading screens */
+  .mlog-page{ display:flex; visibility:hidden; opacity:0; pointer-events:none; transform:translateY(12px);
+    transition:opacity var(--dur-2) var(--ease-in), transform var(--dur-2) var(--ease-in), visibility 0s linear var(--dur-2); }
+  .mlog-page.open{ visibility:visible; opacity:1; pointer-events:auto; transform:none;
+    transition:opacity var(--dur-3) ease, transform var(--dur-3) var(--ease-out), visibility 0s; }
+  .loading-overlay{ display:flex; visibility:hidden; opacity:0; transition:opacity var(--dur-3) ease, visibility 0s linear var(--dur-3); }
+  .loading-overlay.show{ visibility:visible; opacity:1; transition:opacity var(--dur-2) ease, visibility 0s; }
+
+  /* Calendar / list / board: ease new content in on view or period change */
+  .view-anim-fade{ animation:viewFade var(--dur-3) var(--ease-out); }
+  .view-anim-fwd{ animation:viewFwd var(--dur-3) var(--ease-out); }
+  .view-anim-back{ animation:viewBack var(--dur-3) var(--ease-out); }
+  @keyframes viewFade{ from{ opacity:0; transform:translateY(6px); } }
+  @keyframes viewFwd{ from{ opacity:0; transform:translateX(20px); } }
+  @keyframes viewBack{ from{ opacity:0; transform:translateX(-20px); } }
+
+  /* Toasts glide */
+  .toast, .undo-toast{ transition:opacity var(--dur-3) ease, transform var(--dur-3) var(--ease-out); }
+
+  /* Buttons: consistent hover colour easing + a small press */
+  .btn-app, .btn-today, .btn-history, .icon-btn, .btn-create-wide, .segmented button, .mlog-seg button, .reports-filter-row button,
+  .sb-sec-toggle, .sb-icon-btn, .sb-more, .inline-add-trigger, .sheet-option, .bottom-nav button, .mlog-back, .mlog-add,
+  .fab-add, .fab-notif, .fab-refresh, .fab-viewer, .fab-delete, .task-menu-item{
+    transition:background-color var(--dur-2) ease, color var(--dur-2) ease, border-color var(--dur-2) ease, box-shadow var(--dur-2) ease, filter var(--dur-2) ease, transform var(--dur-1) var(--ease-out);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn-app:active, .btn-today:active, .btn-history:active, .icon-btn:active, .btn-create-wide:active, .segmented button:active,
+  .mlog-seg button:active, .reports-filter-row button:active, .sb-icon-btn:active, .sheet-option:active, .bottom-nav button:active,
+  .mlog-back:active, .mlog-add:active, .fab-add:active, .fab-notif:active, .fab-refresh:active, .fab-viewer:active, .fab-delete:active{ transform:scale(.96); }
+  .task-card, .kcard, .mlog-box, .batch-row, .event-row{ -webkit-tap-highlight-color:transparent; }
+
+  /* Theme switch: colours cross-fade instead of flashing */
+  body.theme-anim, body.theme-anim *, body.theme-anim *::before, body.theme-anim *::after{
+    transition:background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease, stroke .35s ease !important;
+  }
+
+  @media (max-width: 760px){
+    /* Phone: pop-ups are full-screen sheets that slide up */
+    .form-modal{ transform:translateY(100%); opacity:1; transition:transform var(--dur-3) var(--ease-in), visibility 0s linear var(--dur-3); }
+    .form-modal.open{ transform:none; opacity:1; transition:transform var(--dur-4) var(--ease-sheet), visibility 0s; }
+    /* Bottom sheets: backdrop fades, panel slides */
+    .sheet-overlay{ transition:opacity var(--dur-3) ease, visibility 0s; }
+    .sheet-overlay.hidden{ display:flex; visibility:hidden; opacity:0; pointer-events:none; transition:opacity var(--dur-2) ease, visibility 0s linear var(--dur-3); }
+    .sheet-panel{ transform:none; transition:transform var(--dur-4) var(--ease-sheet); overscroll-behavior:contain; }
+    .sheet-overlay.hidden .sheet-panel{ transform:translateY(100%); transition:transform var(--dur-3) var(--ease-in); }
+    .sidebar{ transition:transform var(--dur-4) var(--ease-sheet); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; transition-delay:0s !important; scroll-behavior:auto !important; }
+  }
 </style>
 </head>
 <body>
@@ -1802,8 +1888,10 @@
           <button type="button" class="sb-icon-btn" id="quickFrequentAddBtn" title="Add the Frequent Task Checklist" aria-label="Add the Frequent Task Checklist"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
         <div class="collapsible-section" id="frequentSectionBody">
+          <div class="collapsible-inner">
           <div class="frequent-list" id="frequentList" data-date="frequent-source"></div>
           <div id="frequentMore"></div>
+          </div>
         </div>
       </section>
       <section class="sb-sec">
@@ -1811,7 +1899,9 @@
           <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="backlogCollapseBtn" aria-controls="backlogSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="backlogHeader">Backlog</span><span class="sb-count" id="backlogCount"></span></button></h2>
         </div>
         <div class="collapsible-section" id="backlogSectionBody">
+          <div class="collapsible-inner">
           <div class="backlog-list" id="backlogList" data-date="backlog"></div>
+          </div>
         </div>
       </section>
       <section class="sb-sec">
@@ -1819,7 +1909,9 @@
           <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="batchesCollapseBtn" aria-controls="batchesSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="batchesHeader">Batches</span><span class="sb-count" id="batchesCount"></span></button></h2>
         </div>
         <div class="collapsible-section" id="batchesSectionBody">
+          <div class="collapsible-inner">
           <div class="batches-list" id="batchesList"></div>
+          </div>
         </div>
       </section>
       <section class="sb-sec">
@@ -1827,7 +1919,9 @@
           <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="eventsCollapseBtn" aria-controls="eventsSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="eventsHeader">Audits</span><span class="sb-count" id="eventsCount"></span></button></h2>
         </div>
         <div class="collapsible-section" id="eventsSectionBody">
+          <div class="collapsible-inner">
           <div class="events-list" id="eventsList"></div>
+          </div>
         </div>
       </section>
     </aside>
@@ -2630,6 +2724,13 @@
     settings.batchBadgeStyle = normalizeBatchStyle(settings.batchBadgeStyle);
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
+    const themeChanging = document.body.classList.contains('theme-dark') !== (settings.theme === 'dark');
+    if(themeChanging && document.body.dataset.themeReady){
+      document.body.classList.add('theme-anim');
+      clearTimeout(applySettings._themeT);
+      applySettings._themeT = setTimeout(()=> document.body.classList.remove('theme-anim'), 420);
+    }
+    document.body.dataset.themeReady = '1';
     document.body.classList.remove(...THEME_CLASSES);
     if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
     { const tc=document.querySelector('meta[name="theme-color"]'); if(tc) tc.content=getComputedStyle(document.body).getPropertyValue('--surface').trim()||'#FFFFFF'; }
@@ -5615,11 +5716,13 @@
     agendaDate = next === dateKey(new Date()) ? null : next;
     agendaFilter = 'today';
     renderList();
+    animateViewChange();
   }
   function goAgendaDay(key){
     agendaDate = key === dateKey(new Date()) ? null : key;
     agendaFilter = 'today';
     renderList();
+    animateViewChange();
   }
   function nextDayWithTasks(afterKey){
     let best = null;
@@ -6316,6 +6419,24 @@
     });
   }
 
+  // Switching view or moving to another period eases the new content in:
+  // forward/back slide sideways, a view change fades up. Plain re-renders (edits, sync) don't animate.
+  let lastViewSig = null, lastViewTime = null;
+  function animateViewChange(){
+    const wrap = $('#calendarWrap');
+    if(!wrap) return;
+    const time = viewMode === 'list' ? agendaDayKey() : dateKey(currentDate);
+    const sig = viewMode + '|' + agendaFilter + '|' + ($('#periodLabel') ? $('#periodLabel').textContent : '') + '|' + (viewMode === 'list' ? time : '');
+    const prevSig = lastViewSig, prevTime = lastViewTime;
+    lastViewSig = sig; lastViewTime = time;
+    if(prevSig === null || prevSig === sig) return;
+    const sameView = prevSig.split('|').slice(0, 2).join('|') === sig.split('|').slice(0, 2).join('|');
+    const cls = !sameView ? 'view-anim-fade' : (time > prevTime ? 'view-anim-fwd' : time < prevTime ? 'view-anim-back' : 'view-anim-fade');
+    wrap.classList.remove('view-anim-fade', 'view-anim-fwd', 'view-anim-back');
+    void wrap.offsetWidth;   // restart the animation
+    wrap.classList.add(cls);
+  }
+
   function renderAll(){
     closeAllTaskMenus();
     renderBacklog();
@@ -6339,6 +6460,7 @@
     updateOverdueBadge();
     updateReportsBadge();
     if($('#reportsDrawer').classList.contains('open')) renderReportsList();
+    animateViewChange();
     renderMlog();
     if(mlogHistId) renderMlogHistory();
   }
