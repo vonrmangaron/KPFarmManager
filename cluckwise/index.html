@@ -1834,6 +1834,21 @@
   .kanban-nav:active{ transform:scale(.92); }
   .kanban-nav:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:2px; }
   @media (max-width: 760px){ .kanban-nav{ display:none; } }
+
+  /* Workers (viewer access) */
+  .access-head{ display:flex; align-items:center; gap:8px; }
+  .access-head #accessRefreshBtn{ margin-left:auto; }
+  .access-list{ display:flex; flex-direction:column; gap:2px; }
+  .access-row{ display:flex; align-items:center; gap:10px; padding:8px 4px; border-radius:10px; }
+  .access-row + .access-row{ border-top:1px solid var(--line); border-radius:0; }
+  .access-avatar{ width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; font-family:'Sora',sans-serif; }
+  .access-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .access-name{ font-size:13.5px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .access-sub{ font-size:11.5px; color:var(--muted); }
+  .access-new{ font-size:10.5px; font-weight:800; color:var(--success); background:var(--success-soft); padding:1px 7px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .access-remove{ border:1px solid var(--line); background:transparent; color:var(--muted); border-radius:8px; font-size:12px; font-weight:700; padding:6px 10px; cursor:pointer; flex-shrink:0; font-family:'Inter',sans-serif; }
+  .access-remove:hover{ color:var(--danger); border-color:var(--danger); background:var(--danger-soft); }
+  .access-remove.confirm{ color:#fff; background:var(--danger); border-color:var(--danger); }
 </style>
 </head>
 <body>
@@ -2085,6 +2100,7 @@
     <button type="button" data-target="stAppearance" class="active">Appearance</button>
     <button type="button" data-target="stWeather">Weather</button>
     <button type="button" data-target="stSync">Sync</button>
+    <button type="button" data-target="stWorkers">Workers</button>
     <button type="button" data-target="stData">Data</button>
   </nav>
   <div class="settings-body st-body" id="settingsBody">
@@ -2171,6 +2187,24 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="st-section" id="stWorkers">
+      <div class="st-section-head"><span class="st-ic">👥</span><div><h3>Workers</h3><p>Who has joined this farm in the viewer app, and the password they need to join.</p></div></div>
+      <div class="st-card">
+        <div class="st-row st-row-stack">
+          <div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint" id="accessPwStatus">Connect to a farm first (Sync tab).</span></div>
+          <div class="st-input-row">
+            <input type="password" id="accessPwInput" class="st-input" placeholder="New password (min. 4 characters)" autocomplete="new-password" aria-label="New farm password">
+            <button class="st-btn st-btn-primary" id="accessPwSaveBtn" type="button">Set</button>
+          </div>
+        </div>
+        <div class="st-row st-row-stack">
+          <div class="access-head"><span class="st-label">Joined workers</span><span class="sb-count" id="accessCount"></span><button class="st-btn st-btn-ghost st-btn-sm" id="accessRefreshBtn" type="button" aria-label="Refresh worker list">↻ Refresh</button></div>
+          <div class="access-list" id="accessMembers"><p class="st-hint">No workers have joined yet.</p></div>
+        </div>
+      </div>
+      <p class="st-note">Workers join once with the farm name, this password and their name, and stay connected until you remove them. Changing the password doesn't sign anyone out. The password only controls joining through the viewer; it doesn't encrypt the farm data.</p>
     </section>
 
     <section class="st-section" id="stData">
@@ -3029,6 +3063,7 @@
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
       if(!pushPending) flashSaved(); else renderSyncStatus();
+      loadAccess(true);
       if(!silent) showToast('Synced.');
       return true;
     }catch(e){
@@ -8030,6 +8065,127 @@
   $('#mlogTaskModal').addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox'){ e.preventDefault(); saveMlogTask(); } });
   $('#mlogDeleteBtn').addEventListener('click', deleteMlogTask);
 
+
+  // ==================== WORKERS (viewer access) ====================
+  // "<farm>-access" holds a salted hash of the farm password and the workers
+  // who joined through the viewer. Kept apart from the farm file so an older
+  // app version syncing the farm can never drop it.
+  let accessData = null, accessBusy = false;
+  function accessFarm(){ return ghFarmName ? ghFarmName + '-access' : null; }
+  function accessUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(accessFarm())}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  function normAccess(d){
+    d = d && typeof d === 'object' ? d : {};
+    return { password: d.password || null, members: Array.isArray(d.members) ? d.members : [] };
+  }
+  async function fetchAccessFile(){
+    const res = await fetch(accessUrl(), { cache:'no-store' });
+    if(res.status === 404) return { data:null, sha:null };
+    if(!res.ok) throw new Error('Access load failed ' + res.status);
+    const j = await res.json();
+    if(j.notFound) return { data:null, sha:null };
+    return { data: j.data || null, sha: j.sha || null };
+  }
+  async function updateAccessFile(mutate, retry){
+    retry = retry || 0;
+    const cur = await fetchAccessFile();
+    const next = normAccess(cloneData(cur.data || {}));
+    mutate(next);
+    const res = await fetch(accessUrl(), { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ sha: cur.sha, data: next }) });
+    if((res.status === 409 || res.status === 422) && retry < 4){ await new Promise(r=> setTimeout(r, 350 * (retry + 1))); return updateAccessFile(mutate, retry + 1); }
+    if(!res.ok) throw new Error('Access save failed ' + res.status);
+    accessData = next;
+    return next;
+  }
+  async function hashFarmPassword(farm, pw, salt){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}|${String(farm).trim().toLowerCase()}|${pw}`));
+    return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2, '0')).join('');
+  }
+  function randomSalt(){ const a = new Uint8Array(16); crypto.getRandomValues(a); return [...a].map(b=> b.toString(16).padStart(2, '0')).join(''); }
+  function knownMembersKey(){ return 'cw-known-members-' + (ghPath || 'none'); }
+  // Loads the worker list; tells the manager when someone new has joined since this device last looked.
+  async function loadAccess(silent){
+    if(!ghPath){ accessData = null; renderAccess(); return; }
+    try{
+      accessData = normAccess((await fetchAccessFile()).data);
+      let known = null;
+      try{ known = JSON.parse(localStorage.getItem(knownMembersKey()) || 'null'); }catch(e){}
+      const ids = accessData.members.map(m=> m.id);
+      if(Array.isArray(known)){
+        const fresh = accessData.members.filter(m=> !known.includes(m.id));
+        if(fresh.length) showToast(fresh.length === 1 ? `${fresh[0].name} joined the farm.` : `${fresh.length} workers joined the farm.`);
+        accessNewIds = new Set([...accessNewIds, ...fresh.map(m=> m.id)]);
+      }
+      try{ localStorage.setItem(knownMembersKey(), JSON.stringify(ids)); }catch(e){}
+      renderAccess();
+    }catch(e){
+      if(!silent) showToast('Could not load workers. Check your connection.', true);
+      renderAccess(true);
+    }
+  }
+  let accessNewIds = new Set();
+  function renderAccess(failed){
+    const st = $('#accessPwStatus'), list = $('#accessMembers'), cnt = $('#accessCount'), btn = $('#accessPwSaveBtn'), inp = $('#accessPwInput');
+    if(!st) return;
+    const connected = !!ghPath;
+    inp.disabled = btn.disabled = !connected || accessBusy;
+    $('#accessRefreshBtn').disabled = !connected;
+    if(!connected){ st.textContent = 'Connect to a farm first (Sync tab).'; list.innerHTML = '<p class="st-hint">Connect to a farm to see who has joined.</p>'; cnt.textContent = ''; return; }
+    if(!accessData){ st.textContent = failed ? 'Could not load. Check your connection.' : 'Loading…'; list.innerHTML = ''; cnt.textContent = ''; return; }
+    const pw = accessData.password;
+    st.textContent = pw ? `Set ${formatFull(dateKey(new Date(pw.setAt || Date.now())))}. New workers need it to join.` : 'Not set: anyone with the farm name can join.';
+    btn.textContent = pw ? 'Reset' : 'Set';
+    const members = accessData.members.slice().sort((a,b)=> (b.joinedAt || 0) - (a.joinedAt || 0));
+    cnt.textContent = members.length || '';
+    if(!members.length){ list.innerHTML = '<p class="st-hint">No workers have joined yet. Share the viewer link, the farm name and the password.</p>'; return; }
+    list.innerHTML = members.map(m=>{
+      const name = m.name || 'Worker';
+      const when = m.joinedAt ? `Joined ${formatFull(dateKey(new Date(m.joinedAt)))}` : 'Joined';
+      return `<div class="access-row"><span class="access-avatar" style="background:${colorForAssignee(name)}">${escapeHtml(initialsForAssignee(name))}</span>
+        <span class="access-text"><span class="access-name">${escapeHtml(name)}${accessNewIds.has(m.id) ? '<span class="access-new">New</span>' : ''}</span><span class="access-sub">${escapeHtml(when)}${m.device ? ' · ' + escapeHtml(m.device) : ''}</span></span>
+        <button type="button" class="access-remove" data-id="${escapeHtmlAttr(m.id)}" aria-label="Remove ${escapeHtmlAttr(name)} from this farm">Remove</button></div>`;
+    }).join('');
+  }
+  async function saveFarmPassword(){
+    const pw = $('#accessPwInput').value;
+    if(pw.length < 4){ showToast('Use at least 4 characters for the farm password.', true); $('#accessPwInput').focus(); return; }
+    const had = !!(accessData && accessData.password);
+    accessBusy = true; renderAccess();
+    try{
+      const salt = randomSalt();
+      const hash = await hashFarmPassword(ghFarmName, pw, salt);
+      await updateAccessFile(d=>{ d.password = { salt, hash, setAt: Date.now() }; });
+      $('#accessPwInput').value = '';
+      addHistory('Workers', had ? 'Farm password changed' : 'Farm password set');
+      showToast(had ? 'Farm password changed. Joined workers stay connected.' : 'Farm password set.');
+    }catch(e){ showToast('Could not save the password. Check your connection.', true); }
+    accessBusy = false; renderAccess();
+  }
+  async function removeAccessMember(id){
+    const m = accessData && accessData.members.find(x=> x.id === id);
+    if(!m) return;
+    accessBusy = true;
+    try{
+      await updateAccessFile(d=>{ d.members = d.members.filter(x=> x.id !== id); });
+      try{ localStorage.setItem(knownMembersKey(), JSON.stringify(accessData.members.map(x=> x.id))); }catch(e){}
+      addHistory('Workers', `Removed ${m.name} from the farm`);
+      showToast(`${m.name} removed. They'll need the farm password to join again.`);
+    }catch(e){ showToast('Could not remove the worker. Check your connection.', true); }
+    accessBusy = false; renderAccess();
+  }
+  $('#accessPwSaveBtn').addEventListener('click', saveFarmPassword);
+  $('#accessPwInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); saveFarmPassword(); } });
+  $('#accessRefreshBtn').addEventListener('click', ()=> loadAccess(false));
+  $('#accessMembers').addEventListener('click', (e)=>{
+    const b = e.target.closest('.access-remove');
+    if(!b) return;
+    if(!b.classList.contains('confirm')){
+      $('#accessMembers').querySelectorAll('.access-remove.confirm').forEach(x=>{ x.classList.remove('confirm'); x.textContent = 'Remove'; });
+      b.classList.add('confirm'); b.textContent = 'Confirm';
+      clearTimeout(b._t); b._t = setTimeout(()=>{ b.classList.remove('confirm'); b.textContent = 'Remove'; }, 3000);
+      return;
+    }
+    removeAccessMember(b.dataset.id);
+  });
   function openDrawer(sel){
     closeAllTaskMenus();
     $(sel).classList.add('open');
@@ -8109,7 +8265,7 @@
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
   $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
-  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#settingsDrawer'); });
+  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
   $('#moreThemeToggleBtn').addEventListener('click', ()=>{ closeOverlays(); settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
@@ -8117,7 +8273,7 @@
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#reportsBtn').addEventListener('click', openReportsDrawer);
   $('#closeReports').addEventListener('click', closeOverlays);
-  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); openDrawer('#settingsDrawer'); });
+  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){

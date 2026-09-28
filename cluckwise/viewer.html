@@ -437,7 +437,7 @@
   .sheet-body{ padding:18px 20px 24px; }
   .field-label{ font-size:12.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; display:block; margin:16px 0 6px; }
   .field-label:first-child{ margin-top:0; }
-  select, input[type="text"], input[type="number"], textarea{
+  select, input[type="text"], input[type="password"], input[type="number"], textarea{
     width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
     background:var(--surface-soft); color:var(--ink); font-size:16px; font-family:inherit;
   }
@@ -453,6 +453,18 @@
   .btn-secondary{ background:var(--surface-soft); color:var(--ink); border:1.5px solid var(--line); }
   .status-line{ font-size:13px; color:var(--muted); margin-bottom:4px; }
 
+  .join-overlay{ position:fixed; inset:0; z-index:110; background:var(--bg); display:none; align-items:center; justify-content:center; padding:24px 20px; overflow-y:auto; }
+  .join-overlay.show{ display:flex; animation:joinIn .28s cubic-bezier(.2,.8,.2,1); }
+  @keyframes joinIn{ from{ opacity:0; transform:translateY(10px); } }
+  .join-card{ width:100%; max-width:380px; background:var(--surface); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow-md); padding:26px 22px 22px; }
+  .join-logo{ width:52px; height:52px; border-radius:14px; display:block; margin:0 auto 12px; }
+  .join-card h2{ font-family:'Sora',sans-serif; font-size:20px; text-align:center; margin:0 0 6px; }
+  .join-sub{ text-align:center; font-size:13.5px; color:var(--muted); margin:0 0 16px; line-height:1.45; }
+  .join-alert{ background:var(--danger-soft); color:var(--danger); border-radius:12px; padding:10px 12px; font-size:13px; font-weight:600; line-height:1.4; margin:0 0 12px; }
+  .join-error{ color:var(--danger); font-size:13px; font-weight:600; min-height:18px; margin:8px 0 0; }
+  .join-error:empty{ min-height:0; margin:0; }
+  .join-farm-ok{ background:var(--success-soft); color:var(--success); border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; margin:0 0 4px; }
+  .join-leave{ color:var(--danger); }
   .loading-overlay{
     position:fixed; inset:0; background:var(--bg); z-index:100; display:none;
     flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;
@@ -553,6 +565,32 @@
   <button class="btn-secondary" id="openSettingsFromErrorBtn" style="max-width:220px;">Open Settings</button>
 </div>
 
+<div class="join-overlay" id="joinOverlay" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+  <div class="join-card">
+    <img class="join-logo" src="icons/icon-192.png" alt="">
+    <h2 id="joinTitle">Join your farm</h2>
+    <p class="join-sub" id="joinSub">Enter the farm name and password your manager gave you.</p>
+    <p class="join-alert" id="joinAlert" hidden></p>
+    <form id="joinStep1" novalidate>
+      <label class="field-label" for="joinFarmInput" id="joinFarmLabel">Farm name</label>
+      <input type="text" id="joinFarmInput" autocomplete="off" autocapitalize="words" spellcheck="false">
+      <label class="field-label" for="joinPwInput" id="joinPwLabel">Farm password</label>
+      <input type="password" id="joinPwInput" autocomplete="current-password">
+      <p class="join-error" id="joinError1" role="alert"></p>
+      <button type="submit" class="btn-primary" id="joinContinueBtn">Continue</button>
+    </form>
+    <form id="joinStep2" novalidate hidden>
+      <p class="join-farm-ok" id="joinFarmOk"></p>
+      <label class="field-label" for="joinNameInput" id="joinNameLabel">Your name</label>
+      <input type="text" id="joinNameInput" maxlength="40" autocomplete="name" autocapitalize="words">
+      <p class="field-note" id="joinNameNote">Your manager will see this name.</p>
+      <p class="join-error" id="joinError2" role="alert"></p>
+      <button type="submit" class="btn-primary" id="joinBtn">Join farm</button>
+      <button type="button" class="btn-secondary" id="joinBackBtn">Back</button>
+    </form>
+  </div>
+</div>
+
 <header class="app-header">
   <div class="brand">
     <img class="brand-icon" src="icons/icon-192.png" alt="CluckWise">
@@ -633,10 +671,11 @@
 
     <span class="field-label" id="farmConnLabel">Farm connection</span>
     <div class="status-line" id="githubStatus">Not connected</div>
-    <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm">
-    <p class="field-note" id="farmNameNote">⚠️ Enter the exact farm name your farm owner gave you.</p>
-    <button class="btn-primary" id="connectGithubBtn">Connect</button>
+    <input type="text" id="githubPathInput" placeholder="e.g. Riverside Farm" hidden>
+    <p class="field-note" id="farmNameNote" hidden>⚠️ Enter the exact farm name your farm owner gave you.</p>
+    <button class="btn-primary" id="connectGithubBtn" hidden>Connect</button>
     <button class="btn-secondary" id="syncGithubBtn">Refresh now</button>
+    <button class="btn-secondary join-leave" id="leaveFarmBtn">Leave this farm</button>
     <p class="field-note" id="weatherStatusNote"></p>
     <p class="field-note" id="appVersion" style="text-align:center;margin-top:14px;"></p>
   </div>
@@ -795,6 +834,42 @@
       wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dcDone:'{d} sa {n} tapos', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
+  Object.assign(TRANSLATIONS.en, {
+    joinTitle:'Join your farm', joinSub:'Enter the farm name and password your manager gave you.',
+    joinFarm:'Farm name', joinPw:'Farm password', joinContinue:'Continue', joinChecking:'Checking…',
+    joinName:'Your name', joinNameNote:'Your manager will see this name.', joinBtn:'Join farm', joinJoining:'Joining…', joinBack:'Back',
+    joinNeedFarm:'Enter the farm name.', joinNeedPw:'Enter the farm password.', joinNeedName:'Enter your name.',
+    joinNotFound:'No farm with that name. Check the spelling with your manager.', joinWrongPw:'That password is not right. Ask your manager for the current one.',
+    joinOffline:'Could not reach the farm. Check your internet and try again.', joinFarmOk:'Farm found: {f}',
+    joinNoPwYet:'This farm has no password yet, so you can join with just your name.',
+    joinRemoved:'You were removed from this farm. Ask your manager for the password to join again.',
+    joinFailed:'Could not join right now. Check your internet and try again.', joinWelcome:'Welcome, {n}! You are connected to {f}.',
+    connectedAs:'Connected to "{f}" as {n}', leaveFarm:'Leave this farm', leaveConfirm:'Leave this farm? You will need the farm password to join again.'
+  });
+  Object.assign(TRANSLATIONS.es, {
+    joinTitle:'Únete a tu granja', joinSub:'Escribe el nombre de la granja y la contraseña que te dio tu encargado.',
+    joinFarm:'Nombre de la granja', joinPw:'Contraseña de la granja', joinContinue:'Continuar', joinChecking:'Verificando…',
+    joinName:'Tu nombre', joinNameNote:'Tu encargado verá este nombre.', joinBtn:'Unirme a la granja', joinJoining:'Uniéndote…', joinBack:'Atrás',
+    joinNeedFarm:'Escribe el nombre de la granja.', joinNeedPw:'Escribe la contraseña de la granja.', joinNeedName:'Escribe tu nombre.',
+    joinNotFound:'No hay ninguna granja con ese nombre. Revisa cómo se escribe con tu encargado.', joinWrongPw:'La contraseña no es correcta. Pide la contraseña actual a tu encargado.',
+    joinOffline:'No se pudo conectar con la granja. Revisa tu internet e inténtalo de nuevo.', joinFarmOk:'Granja encontrada: {f}',
+    joinNoPwYet:'Esta granja aún no tiene contraseña, así que puedes unirte solo con tu nombre.',
+    joinRemoved:'Te quitaron de esta granja. Pide la contraseña a tu encargado para unirte de nuevo.',
+    joinFailed:'No se pudo unir ahora. Revisa tu internet e inténtalo de nuevo.', joinWelcome:'¡Bienvenido, {n}! Estás conectado a {f}.',
+    connectedAs:'Conectado a "{f}" como {n}', leaveFarm:'Salir de esta granja', leaveConfirm:'¿Salir de esta granja? Necesitarás la contraseña para unirte de nuevo.'
+  });
+  Object.assign(TRANSLATIONS.tl, {
+    joinTitle:'Sumali sa iyong bukid', joinSub:'Ilagay ang pangalan ng bukid at password na ibinigay ng iyong manager.',
+    joinFarm:'Pangalan ng bukid', joinPw:'Password ng bukid', joinContinue:'Magpatuloy', joinChecking:'Sinusuri…',
+    joinName:'Iyong pangalan', joinNameNote:'Makikita ng iyong manager ang pangalang ito.', joinBtn:'Sumali sa bukid', joinJoining:'Sumasali…', joinBack:'Bumalik',
+    joinNeedFarm:'Ilagay ang pangalan ng bukid.', joinNeedPw:'Ilagay ang password ng bukid.', joinNeedName:'Ilagay ang iyong pangalan.',
+    joinNotFound:'Walang bukid na may ganyang pangalan. Itanong sa iyong manager ang tamang baybay.', joinWrongPw:'Mali ang password. Hingin sa iyong manager ang kasalukuyang password.',
+    joinOffline:'Hindi maabot ang bukid. Tingnan ang internet at subukan ulit.', joinFarmOk:'Nahanap ang bukid: {f}',
+    joinNoPwYet:'Wala pang password ang bukid na ito, kaya puwede kang sumali gamit lang ang pangalan mo.',
+    joinRemoved:'Tinanggal ka sa bukid na ito. Hingin sa iyong manager ang password para makasali ulit.',
+    joinFailed:'Hindi makasali ngayon. Tingnan ang internet at subukan ulit.', joinWelcome:'Maligayang pagdating, {n}! Konektado ka na sa {f}.',
+    connectedAs:'Konektado sa "{f}" bilang {n}', leaveFarm:'Umalis sa bukid na ito', leaveConfirm:'Umalis sa bukid na ito? Kakailanganin mo ang password para makasali ulit.'
+  });
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1346,6 +1421,16 @@
     $('#farmNameNote').textContent = t('farmNameNote');
     $('#connectGithubBtn').textContent = t('connect');
     $('#syncGithubBtn').textContent = t('refreshNow');
+    $('#leaveFarmBtn').textContent = t('leaveFarm');
+    $('#joinTitle').textContent = t('joinTitle');
+    $('#joinSub').textContent = t('joinSub');
+    $('#joinFarmLabel').textContent = t('joinFarm');
+    $('#joinPwLabel').textContent = t('joinPw');
+    $('#joinContinueBtn').textContent = t('joinContinue');
+    $('#joinNameLabel').textContent = t('joinName');
+    $('#joinNameNote').textContent = t('joinNameNote');
+    $('#joinBtn').textContent = t('joinBtn');
+    $('#joinBackBtn').textContent = t('joinBack');
     $('#githubPathInput').placeholder = t('farmNamePlaceholder');
     $('#upcomingAuditsTitle').textContent = t('upcomingAudits');
     $('#overdueModalTitle').textContent = t('overdueTasks');
@@ -1377,8 +1462,11 @@
   }
   function updateGithubStatusUI(){
     const el=$('#githubStatus'); if(!el) return;
-    if(ghPath) el.textContent = `${t('connectedFarm')} "${ghFarmName}"`;
+    const me = loadMember();
+    if(ghPath && me && farmKey(me.farm) === farmKey(ghFarmName)) el.textContent = t('connectedAs').replace('{f}', ghFarmName).replace('{n}', me.name);
+    else if(ghPath) el.textContent = `${t('connectedFarm')} "${ghFarmName}"`;
     else el.textContent = t('enterFarmName');
+    const lb = $('#leaveFarmBtn'); if(lb) lb.hidden = !me;
     const p=$('#githubPathInput');
     if(p && ghFarmName) p.value=ghFarmName;
   }
@@ -1387,6 +1475,14 @@
       ghFarmName = localStorage.getItem('prodplan-viewer-gh-farmname') || null;
       ghPath = ghFarmName ? sanitizeFarmFileName(ghFarmName) : null;
     }catch(e){}
+    // A phone must have joined this farm (farm name + password + name) before it syncs.
+    const me = loadMember();
+    if(!me || !ghFarmName || farmKey(me.farm) !== farmKey(ghFarmName)){
+      ghPath = null;
+      hideLoadingOverlay();
+      showJoin(ghFarmName);
+      return false;
+    }
     updateGithubStatusUI();
     renderSyncStatus();
     if(ghPath){
@@ -1422,9 +1518,154 @@
       return true;
     } else {
       hideLoadingOverlay();
-      showLoadErrorOverlay();
+      showJoin(null);
       return false;
     }
+  }
+  // ---------- Farm membership ----------
+  // Each phone joins a farm once (farm name + password + name). The worker
+  // list and a salted hash of the password live in "<farm>-access", beside
+  // the farm file; the manager sets/resets the password and removes workers.
+  const DEVICE_ID_KEY = 'cw-viewer-device-id', MEMBER_KEY = 'cw-viewer-member';
+  function farmKey(n){ return String(n || '').trim().toLowerCase(); }
+  function deviceId(){
+    let id = null;
+    try{ id = localStorage.getItem(DEVICE_ID_KEY); }catch(e){}
+    if(!id){
+      id = crypto.randomUUID ? crypto.randomUUID() : 'd-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+      try{ localStorage.setItem(DEVICE_ID_KEY, id); }catch(e){}
+    }
+    return id;
+  }
+  function loadMember(){ try{ return JSON.parse(localStorage.getItem(MEMBER_KEY) || 'null'); }catch(e){ return null; } }
+  function saveMember(m){ try{ if(m) localStorage.setItem(MEMBER_KEY, JSON.stringify(m)); else localStorage.removeItem(MEMBER_KEY); }catch(e){} }
+  function deviceLabel(){
+    const ua = navigator.userAgent || '';
+    const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'Device';
+    const br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+    return br ? `${os} · ${br}` : os;
+  }
+  function farmFileUrl(name){ return `${WORKER_URL}/?farm=${encodeURIComponent(name)}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  async function fetchFarmFile(name){
+    const res = await fetch(farmFileUrl(name), { cache:'no-store' });
+    if(res.status === 404) return { data:null, sha:null };
+    if(!res.ok) throw new Error('Sync server responded ' + res.status);
+    const j = await res.json();
+    if(j.notFound) return { data:null, sha:null };
+    return { data: j.data || null, sha: j.sha || null };
+  }
+  function normAccess(d){
+    d = d && typeof d === 'object' ? d : {};
+    return { password: d.password || null, members: Array.isArray(d.members) ? d.members : [] };
+  }
+  async function hashFarmPassword(farm, pw, salt){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}|${farmKey(farm)}|${pw}`));
+    return [...new Uint8Array(buf)].map(b=> b.toString(16).padStart(2, '0')).join('');
+  }
+  // Read-modify-write on the access file, retrying if someone else saved at the same moment.
+  async function updateAccessFile(farm, mutate, retry){
+    retry = retry || 0;
+    const cur = await fetchFarmFile(farm + '-access');
+    const next = normAccess(JSON.parse(JSON.stringify(cur.data || {})));
+    mutate(next);
+    const res = await fetch(farmFileUrl(farm + '-access'), { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ sha: cur.sha, data: next }) });
+    if((res.status === 409 || res.status === 422) && retry < 4){ await new Promise(r=> setTimeout(r, 350 * (retry + 1))); return updateAccessFile(farm, mutate, retry + 1); }
+    if(!res.ok) throw new Error('Access save failed ' + res.status);
+    return next;
+  }
+  let joinPending = null;
+  function setJoinError(step, msg){ const el = $('#joinError' + step); if(el) el.textContent = msg || ''; }
+  function showJoin(prefillFarm, alertMsg){
+    const ov = $('#joinOverlay');
+    $('#joinStep1').hidden = false; $('#joinStep2').hidden = true;
+    setJoinError(1, ''); setJoinError(2, '');
+    $('#joinFarmInput').value = prefillFarm || '';
+    $('#joinPwInput').value = '';
+    const al = $('#joinAlert'); al.hidden = !alertMsg; al.textContent = alertMsg || '';
+    ov.classList.add('show');
+    setTimeout(()=> (prefillFarm ? $('#joinPwInput') : $('#joinFarmInput')).focus(), 80);
+  }
+  function hideJoin(){ $('#joinOverlay').classList.remove('show'); }
+  async function joinStep1(){
+    const farm = $('#joinFarmInput').value.trim().replace(/\s+/g, ' ');
+    const pw = $('#joinPwInput').value;
+    setJoinError(1, '');
+    if(!farm){ setJoinError(1, t('joinNeedFarm')); $('#joinFarmInput').focus(); return; }
+    const btn = $('#joinContinueBtn'); btn.disabled = true; btn.textContent = t('joinChecking');
+    try{
+      const main = await fetchFarmFile(farm);
+      if(!main.data){ setJoinError(1, t('joinNotFound')); return; }
+      const access = normAccess((await fetchFarmFile(farm + '-access')).data);
+      if(access.password){
+        if(!pw){ setJoinError(1, t('joinNeedPw')); $('#joinPwInput').focus(); return; }
+        const h = await hashFarmPassword(farm, pw, access.password.salt);
+        if(h !== access.password.hash){ setJoinError(1, t('joinWrongPw')); $('#joinPwInput').select(); return; }
+      }
+      joinPending = { farm };
+      $('#joinFarmOk').textContent = t('joinFarmOk').replace('{f}', farm) + (access.password ? '' : ' · ' + t('joinNoPwYet'));
+      $('#joinStep1').hidden = true; $('#joinStep2').hidden = false;
+      const prev = loadMember();
+      $('#joinNameInput').value = (prev && prev.name) || ($('#nameInput') && $('#nameInput').value) || '';
+      setTimeout(()=> $('#joinNameInput').focus(), 60);
+    }catch(e){
+      console.warn('Join check failed', e);
+      setJoinError(1, t('joinOffline'));
+    }finally{
+      btn.disabled = false; btn.textContent = t('joinContinue');
+    }
+  }
+  async function joinStep2(){
+    if(!joinPending) return;
+    const name = $('#joinNameInput').value.trim().replace(/\s+/g, ' ');
+    setJoinError(2, '');
+    if(!name){ setJoinError(2, t('joinNeedName')); $('#joinNameInput').focus(); return; }
+    const btn = $('#joinBtn'); btn.disabled = true; btn.textContent = t('joinJoining');
+    const farm = joinPending.farm, id = deviceId(), joinedAt = Date.now();
+    try{
+      await updateAccessFile(farm, (d)=>{
+        d.members = d.members.filter(m=> m && m.id !== id);
+        d.members.push({ id, name, device: deviceLabel(), joinedAt });
+      });
+      saveMember({ farm, id, name, joinedAt });
+      try{ localStorage.setItem('prodplan-viewer-gh-farmname', farm); }catch(e){}
+      if($('#nameInput') && !$('#nameInput').value) $('#nameInput').value = name;
+      joinPending = null;
+      hideJoin();
+      hideLoadErrorOverlay();
+      showToast(t('joinWelcome').replace('{n}', name).replace('{f}', farm));
+      const ok = await initGithub();
+      if(ok) renderAll();
+    }catch(e){
+      console.warn('Join failed', e);
+      setJoinError(2, t('joinFailed'));
+    }finally{
+      btn.disabled = false; btn.textContent = t('joinBtn');
+    }
+  }
+  // Signs this phone out only when the server clearly says it's no longer on the list (never on a network error).
+  let membershipCheckedAt = 0;
+  async function checkMembership(){
+    const me = loadMember();
+    if(!me || !ghFarmName || Date.now() - membershipCheckedAt < 60000) return;
+    membershipCheckedAt = Date.now();
+    try{
+      const access = normAccess((await fetchFarmFile(ghFarmName + '-access')).data);
+      if(access.members.some(m=> m && m.id === me.id)) return;
+      saveMember(null);
+      ghPath = null;
+      updateGithubStatusUI();
+      showJoin(ghFarmName, t('joinRemoved'));
+    }catch(e){}
+  }
+  async function leaveFarm(){
+    const me = loadMember();
+    if(!me || !confirm(t('leaveConfirm'))) return;
+    try{ await updateAccessFile(me.farm, (d)=>{ d.members = d.members.filter(m=> m && m.id !== me.id); }); }catch(e){}
+    saveMember(null);
+    ghPath = null;
+    updateGithubStatusUI();
+    closeOverlays();
+    showJoin(me.farm);
   }
   function showLoadingOverlay(){ const el=$('#loadingOverlay'); if(el) el.classList.add('show'); }
   function hideLoadingOverlay(){ const el=$('#loadingOverlay'); if(el) el.classList.remove('show'); }
@@ -1513,6 +1754,7 @@
       cacheData(result.data);
       applyData(JSON.stringify(result.data), silent);
       markSynced();
+      checkMembership();
       if(pendingTicks.size) scheduleTickFlush(200);
       setTimeout(flushPendingReports, 100);
       if(!silent) showToast('Refreshed from the latest data.');
@@ -2273,6 +2515,10 @@
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize=e.target.value; applySettings(); saveLocalPrefs(); });
   $('#setLanguage').addEventListener('change', (e)=>{ settings.lang=e.target.value; applySettings(); saveLocalPrefs(); updateGithubStatusUI(); renderAll(); });
   $('#connectGithubBtn').addEventListener('click', connectGithub);
+  $('#joinStep1').addEventListener('submit', (e)=>{ e.preventDefault(); joinStep1(); });
+  $('#joinStep2').addEventListener('submit', (e)=>{ e.preventDefault(); joinStep2(); });
+  $('#joinBackBtn').addEventListener('click', ()=>{ joinPending = null; $('#joinStep2').hidden = true; $('#joinStep1').hidden = false; setJoinError(2, ''); });
+  $('#leaveFarmBtn').addEventListener('click', leaveFarm);
   $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
 
   // ---------- Pull-to-refresh ----------
