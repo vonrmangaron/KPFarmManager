@@ -472,6 +472,8 @@
   .join-error:empty{ min-height:0; margin:0; }
   .join-farm-ok{ background:var(--success-soft); color:var(--success); border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; margin:0 0 4px; }
   .join-leave{ color:var(--danger); }
+  .join-confirm-q{ font-family:'Sora',sans-serif; font-weight:700; font-size:15px; line-height:1.4; text-align:center; margin:4px 0 6px; }
+  .join-confirm-sub{ text-align:center; margin:6px 0 4px; }
   .loading-overlay{
     position:fixed; inset:0; background:var(--bg); z-index:100; display:none;
     flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;
@@ -595,6 +597,13 @@
       <button type="submit" class="btn-primary" id="joinBtn">Join farm</button>
       <button type="button" class="btn-secondary" id="joinBackBtn">Back</button>
     </form>
+    <div id="joinConfirm" class="join-confirm" hidden>
+      <p class="join-confirm-q" id="joinConfirmQ"></p>
+      <button type="button" class="btn-primary" id="joinSameBtn">Yes, that's me</button>
+      <p class="field-note join-confirm-sub" id="joinSameSub"></p>
+      <button type="button" class="btn-secondary" id="joinDiffBtn">No, I'm a different person</button>
+      <p class="join-error" id="joinError3" role="alert"></p>
+    </div>
   </div>
 </div>
 
@@ -841,7 +850,18 @@
       wxNow:'Ngayon', wxHigh:'Taas', wxLow:'Baba', wx_clear:'Maaliwalas', wx_mostlyClear:'Halos maaliwalas', wx_partlyCloudy:'Bahagyang maulap', wx_overcast:'Maulap', wx_fog:'Hamog', wx_drizzle:'Ambon', wx_rain:'Ulan', wx_heavyRain:'Malakas na ulan', wx_freezingRain:'Nagyeyelong ulan', wx_snow:'Niyebe', wx_showers:'Pag-ulan', wx_thunderstorm:'Bagyong may kidlat', dcDone:'{d} sa {n} tapos', dnDay:'Araw', dnTomorrow:'Bukas', dnYesterday:'Kahapon', dnPrev:'Nakaraang araw', dnNext:'Susunod na araw', dnNoTasks:'walang gawain', dnDone:'{d}/{n} tapos', dnNoTasksOn:'Walang gawain sa {d}.', dnNextTasks:'Susunod na gawain: {d} ({n}) →', hrTitleToday:'Ngayon', hrHottest:'Pinakamainit: <b>{t}</b> sa <b>{h}</b>', hrCoolest:'Pinakamalamig: <b>{t}</b> sa <b>{h}</b>', hrRain:'Uulan mula <b>{s}</b> hanggang <b>{e}</b>', hrUpTo:'hanggang {p}%', hrAgain:'muli mula <b>{h}</b>', hrSmall:'Maliit na tsansa ng ulan — {p}% bandang <b>{h}</b>', hrDry:'Walang inaasahang ulan', hrWindiest:'Pinakamahangin: <b>{w}</b> sa <b>{h}</b>', hrLoading:'Naglo-load ng oras-oras na forecast…', hrError:'Hindi ma-load ang oras-oras na forecast — tingnan ang koneksyon.', hrMidnight:'hatinggabi', hrTap:'I-tap para sa oras-oras', wxHeat:'Init', wxFrost:'Hamog na nagyelo', wxStorm:'Bagyo', wxRainLikely:'Malamang umulan', wxWindy:'Mahangin', wxWaiting:'Panahon: hinihintay na itakda ng manager ang lokasyon ng bukid.', wxOk:'Panahon: {place}', wxErr:"Panahon: hindi ma-load — tingnan ang koneksyon."
     }
   };
-  Object.assign(TRANSLATIONS.en, { you:'you', assignedTo:'Assigned to' });
+  Object.assign(TRANSLATIONS.en, { you:'you', assignedTo:'Assigned to',
+    joinExistsQ:'A worker named "{n}" has already joined this farm. Is that you?', joinSame:"Yes, that's me", joinSameSub:'This phone will be added to {n}.',
+    joinDiff:"No, I'm a different person", joinNeedDistinct:'Add your surname or initial so your manager can tell you apart, e.g. "{n} S."',
+    joinNameTaken:'"{n}" is already used by another worker. Add your surname or initial.' });
+  Object.assign(TRANSLATIONS.es, {
+    joinExistsQ:'Ya se unió un trabajador llamado "{n}" a esta granja. ¿Eres tú?', joinSame:'Sí, soy yo', joinSameSub:'Este teléfono se agregará a {n}.',
+    joinDiff:'No, soy otra persona', joinNeedDistinct:'Agrega tu apellido o inicial para que tu encargado pueda distinguirte, por ejemplo "{n} S."',
+    joinNameTaken:'"{n}" ya lo usa otro trabajador. Agrega tu apellido o inicial.' });
+  Object.assign(TRANSLATIONS.tl, {
+    joinExistsQ:'May manggagawang nagngangalang "{n}" na sumali na sa bukid na ito. Ikaw ba iyon?', joinSame:'Oo, ako iyon', joinSameSub:'Idadagdag ang phone na ito kay {n}.',
+    joinDiff:'Hindi, ibang tao ako', joinNeedDistinct:'Idagdag ang iyong apelyido o inisyal para makilala ka ng iyong manager, halimbawa "{n} S."',
+    joinNameTaken:'Ginagamit na ng ibang manggagawa ang "{n}". Idagdag ang iyong apelyido o inisyal.' });
   Object.assign(TRANSLATIONS.es, { you:'tú', assignedTo:'Asignado a' });
   Object.assign(TRANSLATIONS.tl, { you:'ikaw', assignedTo:'Nakatalaga kay' });
   Object.assign(TRANSLATIONS.en, {
@@ -1441,6 +1461,8 @@
     $('#joinNameNote').textContent = t('joinNameNote');
     $('#joinBtn').textContent = t('joinBtn');
     $('#joinBackBtn').textContent = t('joinBack');
+    $('#joinSameBtn').textContent = t('joinSame');
+    $('#joinDiffBtn').textContent = t('joinDiff');
     $('#githubPathInput').placeholder = t('farmNamePlaceholder');
     $('#upcomingAuditsTitle').textContent = t('upcomingAudits');
     $('#overdueModalTitle').textContent = t('overdueTasks');
@@ -1600,8 +1622,8 @@
   function setJoinError(step, msg){ const el = $('#joinError' + step); if(el) el.textContent = msg || ''; }
   function showJoin(prefillFarm, alertMsg){
     const ov = $('#joinOverlay');
-    $('#joinStep1').hidden = false; $('#joinStep2').hidden = true;
-    setJoinError(1, ''); setJoinError(2, '');
+    $('#joinStep1').hidden = false; $('#joinStep2').hidden = true; $('#joinConfirm').hidden = true;
+    setJoinError(1, ''); setJoinError(2, ''); setJoinError(3, '');
     $('#joinFarmInput').value = prefillFarm || '';
     $('#joinPwInput').value = '';
     const al = $('#joinAlert'); al.hidden = !alertMsg; al.textContent = alertMsg || '';
@@ -1642,21 +1664,53 @@
     const name = $('#joinNameInput').value.trim().replace(/\s+/g, ' ');
     setJoinError(2, '');
     if(!name){ setJoinError(2, t('joinNeedName')); $('#joinNameInput').focus(); return; }
-    const btn = $('#joinBtn'); btn.disabled = true; btn.textContent = t('joinJoining');
+    const key = memberKey(name);
+    if(joinPending.takenKeys && joinPending.takenKeys.has(key)){ setJoinError(2, t('joinNameTaken').replace('{n}', name)); $('#joinNameInput').focus(); return; }
+    const btn = $('#joinBtn'); btn.disabled = true; btn.textContent = t('joinChecking');
+    let existing = null;
+    try{
+      const access = normAccess((await fetchFarmFile(joinPending.farm + '-access')).data);
+      existing = access.members.find(p=> memberKey(p.name) === key) || null;
+    }catch(e){
+      setJoinError(2, t('joinFailed'));
+      btn.disabled = false; btn.textContent = t('joinBtn');
+      return;
+    }
+    btn.disabled = false; btn.textContent = t('joinBtn');
+    // Someone already joined with this name from another phone: same person, or a different worker?
+    if(existing && !existing.devices.some(x=> x.id === deviceId())){
+      joinPending.name = name;
+      joinPending.existingName = existing.name;
+      $('#joinConfirmQ').textContent = t('joinExistsQ').replace('{n}', existing.name);
+      $('#joinSameSub').textContent = t('joinSameSub').replace('{n}', existing.name);
+      setJoinError(3, '');
+      $('#joinStep2').hidden = true; $('#joinConfirm').hidden = false;
+      setTimeout(()=> $('#joinSameBtn').focus(), 60);
+      return;
+    }
+    await registerJoin(name, 2);
+  }
+  async function registerJoin(name, errStep){
     const farm = joinPending.farm, id = deviceId(), joinedAt = Date.now();
+    const btns = ['#joinBtn', '#joinSameBtn', '#joinDiffBtn'].map(sel=> $(sel));
+    btns.forEach(b=> b.disabled = true);
+    const mainBtn = errStep === 3 ? $('#joinSameBtn') : $('#joinBtn');
+    const label = mainBtn.textContent; mainBtn.textContent = t('joinJoining');
     try{
       await updateAccessFile(farm, (d)=>{
-        // This phone belongs to whoever it joins as; a name already on the list gets this phone added, not a duplicate.
+        // This phone belongs to whoever it joins as; the same name (confirmed as the same person) gets this phone added.
         d.members.forEach(p=>{ p.devices = p.devices.filter(x=> x.id !== id); });
         d.members = d.members.filter(p=> p.devices.length);
         let person = d.members.find(p=> memberKey(p.name) === memberKey(name));
         if(!person){ person = { id: crypto.randomUUID ? crypto.randomUUID() : 'w-' + joinedAt + '-' + Math.random().toString(16).slice(2), name, joinedAt, devices: [] }; d.members.push(person); }
         person.devices.push({ id, device: deviceLabel(), joinedAt });
+        name = person.name;
       });
       saveMember({ farm, id, name, joinedAt });
       try{ localStorage.setItem('prodplan-viewer-gh-farmname', farm); }catch(e){}
       if($('#nameInput') && !$('#nameInput').value) $('#nameInput').value = name;
       joinPending = null;
+      $('#joinConfirm').hidden = true;
       hideJoin();
       hideLoadErrorOverlay();
       showToast(t('joinWelcome').replace('{n}', name).replace('{f}', farm));
@@ -1664,10 +1718,21 @@
       if(ok) renderAll();
     }catch(e){
       console.warn('Join failed', e);
-      setJoinError(2, t('joinFailed'));
+      setJoinError(errStep, t('joinFailed'));
     }finally{
-      btn.disabled = false; btn.textContent = t('joinBtn');
+      btns.forEach(b=> b.disabled = false);
+      mainBtn.textContent = label;
     }
+  }
+  function joinDifferentPerson(){
+    if(!joinPending) return;
+    (joinPending.takenKeys = joinPending.takenKeys || new Set()).add(memberKey(joinPending.name));
+    $('#joinConfirm').hidden = true; $('#joinStep2').hidden = false;
+    const inp = $('#joinNameInput');
+    inp.value = joinPending.existingName + ' ';
+    setJoinError(2, t('joinNeedDistinct').replace('{n}', joinPending.existingName));
+    inp.focus();
+    try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){}
   }
   // Signs this phone out only when the server clearly says it's no longer on the list (never on a network error).
   let membershipCheckedAt = 0;
@@ -2556,6 +2621,8 @@
   $('#joinStep1').addEventListener('submit', (e)=>{ e.preventDefault(); joinStep1(); });
   $('#joinStep2').addEventListener('submit', (e)=>{ e.preventDefault(); joinStep2(); });
   $('#joinBackBtn').addEventListener('click', ()=>{ joinPending = null; $('#joinStep2').hidden = true; $('#joinStep1').hidden = false; setJoinError(2, ''); });
+  $('#joinSameBtn').addEventListener('click', ()=>{ if(joinPending) registerJoin(joinPending.name, 3); });
+  $('#joinDiffBtn').addEventListener('click', joinDifferentPerson);
   $('#leaveFarmBtn').addEventListener('click', leaveFarm);
   $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
 
