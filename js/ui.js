@@ -1376,7 +1376,9 @@ function openLoadModal(editId,preset){
     const load=farmLoads.find(l=>l.id===editId);if(!load){showToast('Load not found.',true);return;}
     loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',plannedT:(load.plannedKg/1000).toFixed(2),splitT:{1:((Number(load.splitKg[1])||0)/1000).toFixed(2),2:((Number(load.splitKg[2])||0)/1000).toFixed(2),3:((Number(load.splitKg[3])||0)/1000).toFixed(2),4:((Number(load.splitKg[4])||0)/1000).toFixed(2)},note:load.note||''};
   }else{
-    loadModalState={mode:'add',editId:null,date:(preset&&preset.date)||todayIso(),feedType:(preset&&preset.feedType)||'',plannedT:'60.00',splitT:{1:'0.00',2:'0.00',3:'0.00',4:'0.00'},note:''};
+    // preset: {date, feedType, plannedT, splitT:{group:t}} — e.g. from a forecast row's Order
+    const p=preset||{};const sp=p.splitT||{};const t=v=>(Number(v)||0).toFixed(2);
+    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||'',plannedT:p.plannedT!=null?t(p.plannedT):'60.00',splitT:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:''};
   }
   renderLoadModal();
   const modal=document.getElementById('loadModal');const scrim=document.getElementById('syncScrim');
