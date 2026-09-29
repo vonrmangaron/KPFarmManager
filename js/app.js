@@ -93,7 +93,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     if(feedCompareState.modalOpen&&e.target.id==='compareFeedModal'){closeCompareModal();return;}
     if(e.target.closest('#compareFeedClose')){closeCompareModal();return;}
-    if(e.target.closest('#compareFeedBtn')){openCompareModal();return;}
     if(e.target.closest('#toolsCompareBtn')){openCompareModal();return;}
     const groupCard=e.target.closest('[data-compare-group]');
     if(groupCard){const g=Number(groupCard.dataset.compareGroup);if(Number.isFinite(g)&&g>=1&&g<=4)toggleCompareGroup(g);return;}

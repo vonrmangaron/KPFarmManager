@@ -72,7 +72,10 @@ function allDeliveriesForGroup(group){
 }
 function deliveriesForGroup(group){return allDeliveriesForGroup(group).filter(d=>!d.isTest);}
 function deliveriesKgOn(group,D){return loadsKgOn(group,D);}
-function deliveriesKgOnAll(group,D){return loadsKgOnAll(group,D);}
+// Real loads + session-only test loads — the forecast's "what if" view.
+// (Real-only totals use deliveriesKgOn.)
+function testKgOn(group,D){const t=iso(D);return (testDeliveries[group]||[]).reduce((s,x)=>s+(iso(x.date)===t?(Number(x.amountKg)||0):0),0);}
+function deliveriesKgOnAll(group,D){return loadsKgOnAll(group,D)+testKgOn(group,D);}
 function balanceOnEndOfDay(group,D){
   const latest=latestReading(group);if(!latest)return null;
   const latestDate=dateOnly(latest.date);const targetD=dateOnly(D);const sheds=shedsForGroup(group);
