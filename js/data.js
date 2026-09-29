@@ -4,7 +4,7 @@ function resetAllToDefaults(batchNumber){
   farmData=buildDefaultFarmData(batchNumber);
   predState.batchNumber=batchNumber||'';predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
-  testDeliveries={1:[],2:[],3:[],4:[]};farmLoads=[];
+  testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
   shedViewByGroup={...DEFAULT_VIEWS};shedRange={start:0,end:0};siloRange={start:0,end:14};inlineDeliveryState=null;activeTab='g1';dailyRangeState={...DEFAULT_DAILY_RANGE};
   feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
   loadsModalState={open:false,filter:'all',view:'table'};loadModalState=null;
@@ -76,12 +76,15 @@ function deliveriesKgOn(group,D){return loadsKgOn(group,D);}
 // (Real-only totals use deliveriesKgOn.)
 function testKgOn(group,D){const t=iso(D);return (testDeliveries[group]||[]).reduce((s,x)=>s+(iso(x.date)===t?(Number(x.amountKg)||0):0),0);}
 function deliveriesKgOnAll(group,D){return loadsKgOnAll(group,D)+testKgOn(group,D);}
-function balanceOnEndOfDay(group,D){
+// realOnly: ignore session-only test loads (used by alerts, so a
+// hypothetical load can never hide a real shortage).
+function balanceOnEndOfDay(group,D,realOnly){
   const latest=latestReading(group);if(!latest)return null;
+  const kgOn=realOnly?deliveriesKgOn:deliveriesKgOnAll;
   const latestDate=dateOnly(latest.date);const targetD=dateOnly(D);const sheds=shedsForGroup(group);
   if(targetD.getTime()===latestDate.getTime())return readingTotalKg(latest);
-  if(targetD>latestDate){let bal=readingTotalKg(latest);for(let d=addDays(latestDate,1);d<=targetD;d=addDays(d,1)){bal=bal+deliveriesKgOnAll(group,d)-groupDailyFeedOn(sheds,d);}return bal;}
-  let bal=readingTotalKg(latest);for(let d=latestDate;d>targetD;d=addDays(d,-1)){bal=bal-deliveriesKgOnAll(group,d)+groupDailyFeedOn(sheds,d);}return bal;
+  if(targetD>latestDate){let bal=readingTotalKg(latest);for(let d=addDays(latestDate,1);d<=targetD;d=addDays(d,1)){bal=bal+kgOn(group,d)-groupDailyFeedOn(sheds,d);}return bal;}
+  let bal=readingTotalKg(latest);for(let d=latestDate;d>targetD;d=addDays(d,-1)){bal=bal-kgOn(group,d)+groupDailyFeedOn(sheds,d);}return bal;
 }
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 function consumptionSinceLatestReading(group){
@@ -97,27 +100,46 @@ function deliveriesSinceLatestReading(group){
   let d=0;for(let x=addDays(latestDate,1);x<=today;x=addDays(x,1))d+=deliveriesKgOn(group,x);
   return d;
 }
-function computeSiloForecast(group,range){
+function computeSiloForecast(group,range,opts){
+  const realOnly=!!(opts&&opts.realOnly);
+  // Test pickups count only in the what-if forecast (never with realOnly).
+  const prevInclude=includeTestPickups;includeTestPickups=!realOnly;
+  try{return computeSiloForecastInner(group,range,realOnly);}finally{includeTestPickups=prevInclude;}
+}
+function computeSiloForecastInner(group,range,realOnly){
   const sheds=shedsForGroup(group);const today=dateOnly(new Date());const rows=[];
   let totalConsumption=0,totalDelivered=0;
-  const realPickupsByDay={};const predictedPickupsByDay={};
-  sheds.forEach(s=>{const eff=computeEffectivePickups(s);eff.forEach(p=>{const k=iso(p.date);if(p.__source==='predicted')predictedPickupsByDay[k]=(predictedPickupsByDay[k]||0)+(Number(p.birds)||0);else realPickupsByDay[k]=(realPickupsByDay[k]||0)+(Number(p.birds)||0);});});
+  const realPickupsByDay={};const predictedPickupsByDay={};const testPickupsByDay={};const movedAwayByDay={};
+  sheds.forEach(s=>{
+    const eff=computeEffectivePickups(s);
+    eff.forEach(p=>{const k=iso(p.date);
+      if(p.__source==='test'){(testPickupsByDay[k]=testPickupsByDay[k]||[]).push({shedId:s.id,id:p.__id,birds:Number(p.birds)||0,movedFrom:(testPickupsForShed(s.id).find(t=>t.id===p.__id)||{}).movedFromId?true:false});}
+      else if(p.__source==='predicted')predictedPickupsByDay[k]=(predictedPickupsByDay[k]||0)+(Number(p.birds)||0);
+      else realPickupsByDay[k]=(realPickupsByDay[k]||0)+(Number(p.birds)||0);});
+    if(!realOnly){
+      // Planned pickups a test has moved away — shown on their original day
+      testPickupsForShed(s.id).filter(t=>t.movedFromId).forEach(t=>{
+        const pp=(s.predictedPickups||[]).find(x=>x.id===t.movedFromId);
+        if(pp){const k=iso(dateOnly(pp.date));(movedAwayByDay[k]=movedAwayByDay[k]||[]).push({shedId:s.id,birds:Number(pp.birds)||0,to:t.date});}
+      });
+    }
+  });
   for(let off=range.start;off<=range.end;off++){
     const d=addDays(today,off);const isPast=off<0;const isToday=off===0;
-    const cons=groupDailyFeedOn(sheds,d);const del=deliveriesKgOnAll(group,d);
-    const deliveriesOnDay=allDeliveriesForGroup(group).filter(x=>iso(x.date)===iso(d));
-    const bal=balanceOnEndOfDay(group,d);
+    const cons=groupDailyFeedOn(sheds,d);const del=realOnly?deliveriesKgOn(group,d):deliveriesKgOnAll(group,d);
+    const deliveriesOnDay=allDeliveriesForGroup(group).filter(x=>iso(x.date)===iso(d)&&!(realOnly&&x.isTest));
+    const bal=balanceOnEndOfDay(group,d,realOnly);
     const liveBirds=sheds.reduce((sum,s)=>sum+liveAtStartOfDay(s,d),0);
     const key=iso(d);
     const realPickups=realPickupsByDay[key]||0;const predPickups=predictedPickupsByDay[key]||0;
     const pickupsBirds=realPickups+predPickups;const hasPredicted=predPickups>0;
     totalConsumption+=cons;totalDelivered+=del;
-    rows.push({date:d,consumption:cons,delivery:del,deliveries:deliveriesOnDay,balance:bal,liveBirds,pickupsBirds,hasPredicted,isToday,isPast,isFuture:!isPast&&!isToday,isWeekend:isWeekend(d)});
+    rows.push({date:d,consumption:cons,delivery:del,deliveries:deliveriesOnDay,balance:bal,liveBirds,pickupsBirds,hasPredicted,testPickups:testPickupsByDay[key]||[],movedAway:movedAwayByDay[key]||[],isToday,isPast,isFuture:!isPast&&!isToday,isWeekend:isWeekend(d)});
   }
   let depletedDate=null;
   for(const r of rows){if(r.balance!==null&&r.balance<=0&&r.consumption>0&&!r.isPast){depletedDate=r.date;break;}}
   const endBalance=rows.length?rows[rows.length-1].balance:null;
-  const totalStock=balanceOnEndOfDay(group,today);
+  const totalStock=balanceOnEndOfDay(group,today,realOnly);
   const shortfall=Math.max(0,totalConsumption-(totalStock||0)-totalDelivered);
   return {rows,totalStock,totalConsumption,totalDelivered,depletedDate,endBalance,shortfall};
 }
@@ -177,6 +199,53 @@ function addTestDelivery(group,dateStr,amountT){
   testDeliveries[group].sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
   render();showToast(`🚜 Test delivery of ${amountT} t added — remember to clear it when done.`);
   return true;
+}
+// ── Test pickups (session-only what-if, feed forecast only) ──
+// Open inline form: {group, dateIso, shedId}
+let inlinePickupState=null;
+// Suggestion for a shed on a date: its nearest remaining planned pickup
+// (not already moved by a test), capped at the birds alive that day.
+function suggestTestPickup(shedId,dateIso){
+  const shed=(farmData&&farmData.sheds||[]).find(s=>s.id===shedId);if(!shed)return {planned:null,birds:'',live:0};
+  const today=dateOnly(new Date());const target=dateOnly(dateIso);
+  const moved=new Set(testPickupsForShed(shedId).filter(t=>t.movedFromId).map(t=>t.movedFromId));
+  const cands=(shed.predictedPickups||[]).filter(pp=>pp.date&&dateOnly(pp.date)>=today&&!moved.has(pp.id)&&(Number(pp.birds)||0)>0);
+  cands.sort((a,b)=>Math.abs(dateOnly(a.date)-target)-Math.abs(dateOnly(b.date)-target)||dateOnly(a.date)-dateOnly(b.date));
+  const planned=cands[0]||null;
+  const prev=includeTestPickups;includeTestPickups=true;
+  let live=0;try{live=liveAtStartOfDay(shed,target);}finally{includeTestPickups=prev;}
+  // A moved pickup no longer comes out before this day, so it's available
+  const birds=planned?Math.min(Number(planned.birds)||0,live+(dateOnly(planned.date)<target?(Number(planned.birds)||0):0)):'';
+  return {planned,birds,live};
+}
+function defaultShedForTestPickup(group,dateIso){
+  const sheds=shedsForGroup(group);const target=dateOnly(dateIso);const today=dateOnly(new Date());
+  let best=null,bestGap=Infinity;
+  sheds.forEach(s=>(s.predictedPickups||[]).forEach(pp=>{if(!pp.date||dateOnly(pp.date)<today)return;const gap=Math.abs(dateOnly(pp.date)-target);if(gap<bestGap){bestGap=gap;best=s.id;}}));
+  return best||(sheds[0]&&sheds[0].id)||null;
+}
+function toggleInlinePickup(group,dateIso){
+  if(inlinePickupState&&inlinePickupState.group===group&&inlinePickupState.dateIso===dateIso){inlinePickupState=null;}
+  else{inlineDeliveryState=null;inlinePickupState={group,dateIso,shedId:defaultShedForTestPickup(group,dateIso)};}
+  render();
+}
+function submitInlinePickup(mode){
+  const st=inlinePickupState;if(!st)return;
+  const input=document.querySelector('.tp-input');const birds=Math.round(Number(input&&input.value));
+  const sug=suggestTestPickup(st.shedId,st.dateIso);
+  const max=mode==='move'&&sug.planned?sug.live+(dateOnly(sug.planned.date)<dateOnly(st.dateIso)?Number(sug.planned.birds)||0:0):sug.live;
+  if(!Number.isFinite(birds)||birds<=0){showToast('Enter how many birds to pick up.',true);input&&input.focus();return;}
+  if(birds>max){showToast(`Only ${max.toLocaleString()} birds would be in Shed ${st.shedId} that day.`,true);input&&input.focus();return;}
+  const movedFromId=mode==='move'&&sug.planned?sug.planned.id:null;
+  (testPickups[st.shedId]=testPickups[st.shedId]||[]).push({id:'tp_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:dateOnly(st.dateIso),birds,movedFromId});
+  inlinePickupState=null;render();
+  showToast(`🐔 Test pickup: ${birds.toLocaleString()} birds from Shed ${st.shedId} on ${fmtShort(dateOnly(st.dateIso))}${movedFromId?` (moved from ${fmtShort(dateOnly(sug.planned.date))})`:''} — session only.`);
+}
+function removeTestPickup(shedId,id){testPickups[shedId]=testPickupsForShed(shedId).filter(t=>t.id!==id);render();showToast('Test pickup removed.');}
+function clearTestPickups(group){
+  const n=testPickupCountForGroup(group);if(!n)return;
+  shedsForGroup(group).forEach(s=>{testPickups[s.id]=[];});inlinePickupState=null;render();
+  showToast(`🧹 Cleared ${n} test pickup${n===1?'':'s'}.`);
 }
 function removeTestDelivery(group,id){if(!testDeliveries[group])return;const before=testDeliveries[group].length;testDeliveries[group]=testDeliveries[group].filter(t=>t.id!==id);if(testDeliveries[group].length!==before){render();showToast('Test delivery removed.');}}
 function clearTestDeliveries(group){

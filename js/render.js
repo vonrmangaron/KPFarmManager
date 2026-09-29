@@ -547,7 +547,7 @@ function computeFarmAlerts() {
       // that's already been entered for tomorrow correctly postpones the
       // alert, instead of the old flat bal/dailyFeed maths which ignored
       // future loads entirely.
-      const forecast = computeSiloForecast(g, { start: 0, end: 15 });
+      const forecast = computeSiloForecast(g, { start: 0, end: 15 }, { realOnly: true });
       if (!forecast.depletedDate) return;
       const days = Math.max(0, daysBetween(today, forecast.depletedDate));
       if (days < 3) {
@@ -986,9 +986,10 @@ function render(){
     // any page, so refresh them on every render — not just on shed pages.
     if(feedCompareState.modalOpen)renderCompareModalBody();
     if(loadsModalState.open)renderLoadsModalBody();
-    if(inlineDeliveryState){
+    if(inlineDeliveryState||inlinePickupState){
       const scope=feedCompareState.modalOpen?document.getElementById('compareFeedModal'):app;
-      requestAnimationFrame(()=>{const input=scope&&scope.querySelector('.inline-del-input');if(input)input.focus();});
+      const sel=inlinePickupState?'.tp-input':'.inline-del-input';
+      requestAnimationFrame(()=>{const input=scope&&scope.querySelector(sel);if(input){input.focus({preventScroll:true});if(input.select)input.select();}});
     }
   }finally{requestAnimationFrame(updateStickyHeaderHeight);requestAnimationFrame(setupStickyTabObservers);}
 }
@@ -1185,7 +1186,8 @@ function renderFeedPlanner(group,sheds,today){
   const leftover=projectedLeftoverForGroup(group);
   const leftoverOk=leftover&&leftover.balance!==null;
   const leftoverStr=leftoverOk?`${(leftover.balance/1000).toFixed(2)} t at cleanout`:'—';
-  const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?'':' muted'}" title="Projected silo balance at this group's latest cleanout">🧺 ${leftoverStr}</span></span>`;
+  const tpCount=testPickupCountForGroup(group);
+  const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?'':' muted'}" title="Projected silo balance at this group's latest cleanout">🧺 ${leftoverStr}</span></span>`;
   return `<div class="planner-wrap">
     <div class="planner-summary">
       <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?`${Math.round(projected).toLocaleString()} kg at end of today`:'Tap ring levels below to record stock'}</div></div>
@@ -1198,6 +1200,31 @@ function renderFeedPlanner(group,sheds,today){
     <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
     ${rangeBarHtml(siloRange,'silo')}
     <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
+  </div>`;
+}
+// Inline "test pickup" form under a forecast row
+function renderTestPickupForm(group,date){
+  const st=inlinePickupState;const sheds=shedsForGroup(group);
+  const sug=suggestTestPickup(st.shedId,st.dateIso);
+  const d=dateOnly(date);const dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+  const blocked=(predState.noPickupDays||[]).includes(d.getDay());
+  const warn=blocked?`⚠ ${dayName} is one of your no-pickup days`:(isWeekend(d)?`⚠ ${dayName} is a weekend`:'');
+  const plannedSameDay=sug.planned&&iso(dateOnly(sug.planned.date))===iso(d);
+  const canMove=sug.planned&&!plannedSameDay;
+  const hint=sug.planned
+    ?(plannedSameDay?`A planned pickup of ${Number(sug.planned.birds).toLocaleString()} is already on this day`:`Suggested from the planned pickup on ${fmtShortNoYear(dateOnly(sug.planned.date))} (${Number(sug.planned.birds).toLocaleString()} birds)`)
+    :'No planned pickups left for this shed';
+  const shedBtns=sheds.map(s=>`<button type="button" class="tp-shed${s.id===st.shedId?' active':''}" data-tp-shed="${s.id}" aria-pressed="${s.id===st.shedId}">Shed ${s.id}</button>`).join('');
+  return `<div class="tp-form" role="group" aria-label="Test pickup">
+    <span class="tp-title">🐔 Test pickup · ${fmtShortNoYear(d)}</span>
+    <div class="tp-sheds">${shedBtns}</div>
+    <label class="tp-field"><input type="number" class="tp-input" min="1" step="100" value="${sug.birds===''?'':sug.birds}" placeholder="birds" aria-label="Birds to pick up" /><span>birds</span></label>
+    <div class="tp-actions">
+      ${canMove?`<button type="button" class="tp-btn primary" data-tp-add="move" title="Simulate the planned pickup happening on this day instead">↪ Move planned pickup here</button>`:''}
+      <button type="button" class="tp-btn${canMove?'':' primary'}" data-tp-add="add" title="An extra pickup on top of the plan">+ Add extra pickup</button>
+      <button type="button" class="tp-btn ghost" data-tp-cancel="1" aria-label="Cancel">✕</button>
+    </div>
+    <div class="tp-hint">${hint} · ${sug.live.toLocaleString()} birds in Shed ${st.shedId} that day · session only${warn?` · <strong class="tp-warn">${warn}</strong>`:''}</div>
   </div>`;
 }
 function renderSiloForecastTable(forecast,group,opts){
@@ -1247,11 +1274,18 @@ function renderSiloForecastTable(forecast,group,opts){
     const cells=[];
     if(c.date)cells.push(`<td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>`);
     if(c.age)cells.push(`<td class="num">${agesStr}</td>`);
-    if(c.liveBirds)cells.push(`<td class="num">${liveBirds.toLocaleString()}${pickupIndicator}</td>`);
+    if(c.liveBirds){
+      // Test pickups (session what-if) and planned pickups a test moved away
+      const tpChips=(r.testPickups||[]).map(t=>`<span class="tp-chip" title="Test pickup — session only">🐔 −${t.birds.toLocaleString()} <small>S${t.shedId}${t.movedFrom?' · moved':''}</small><button type="button" class="test-x" data-tp-remove="${t.shedId}|${t.id}" title="Remove this test pickup">✕</button></span>`).join('');
+      const movedChips=(r.movedAway||[]).map(m=>`<span class="tp-moved" title="Planned pickup moved by a test">↪ S${m.shedId} −${m.birds.toLocaleString()} → ${fmtShortNoYear(dateOnly(m.to))}</span>`).join('');
+      const tpClickable=!r.isPast;
+      cells.push(`<td class="num${tpClickable?' tp-cell':''}"${tpClickable?` data-tp-cell="${group}|${iso(r.date)}" title="Click to add a test pickup"`:''}>${liveBirds.toLocaleString()}${pickupIndicator}${tpChips||movedChips?`<div class="tp-chips">${tpChips}${movedChips}</div>`:''}</td>`);
+    }
     if(c.dailyFeed)cells.push(`<td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>`);
     if(c.delivery)cells.push(`<td>${deliveryCell}</td>`);
     if(c.endBalance)cells.push(`<td class="num ${balanceCls}">${balanceText}</td>`);
-    return `<tr class="${rowClasses}"${clickAttrs}>${cells.join('')}</tr>`;
+    const tpOpen=!!inlinePickupState&&inlinePickupState.group===group&&inlinePickupState.dateIso===iso(r.date)&&c.liveBirds&&(inModal===!!feedCompareState.modalOpen);
+    return `<tr class="${rowClasses}${tpOpen?' tp-open':''}"${clickAttrs}>${cells.join('')}</tr>${tpOpen?`<tr class="tp-form-row"><td colspan="${cells.length}">${renderTestPickupForm(group,r.date)}</td></tr>`:''}`;
   }).join('');
   const leadingCols=(c.date?1:0)+(c.age?1:0)+(c.liveBirds?1:0);
   const totalsCells=[];

@@ -152,11 +152,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     const clearTestsBtn=e.target.closest('[data-clear-tests]');
     if(clearTestsBtn){clearTestDeliveries(Number(clearTestsBtn.dataset.clearTests));return;}
 
+    // Test pickups (Live birds cell) — handled before the row's load form
+    const tpRemove=e.target.closest('[data-tp-remove]');
+    if(tpRemove){e.stopPropagation();const [sid,id]=tpRemove.dataset.tpRemove.split('|');removeTestPickup(Number(sid),id);return;}
+    const tpClear=e.target.closest('[data-tp-clear]');
+    if(tpClear){clearTestPickups(Number(tpClear.dataset.tpClear));return;}
+    const tpShed=e.target.closest('[data-tp-shed]');
+    if(tpShed){if(inlinePickupState){inlinePickupState.shedId=Number(tpShed.dataset.tpShed);render();}return;}
+    const tpAdd=e.target.closest('[data-tp-add]');
+    if(tpAdd){submitInlinePickup(tpAdd.dataset.tpAdd);return;}
+    if(e.target.closest('[data-tp-cancel]')){inlinePickupState=null;render();return;}
+    if(e.target.closest('.tp-form'))return;
+    const tpCell=e.target.closest('[data-tp-cell]');
+    if(tpCell){e.stopPropagation();const [g,dIso]=tpCell.dataset.tpCell.split('|');toggleInlinePickup(Number(g),dIso);return;}
+
     const forecastRow=e.target.closest('[data-forecast-date]');
     if(forecastRow&&!e.target.closest('.inline-del')){
       const g=Number(forecastRow.dataset.forecastGroup);
       const dIso=forecastRow.dataset.forecastDate;
       if(Number.isFinite(g)&&dIso){
+        inlinePickupState=null;
         if(inlineDeliveryState&&inlineDeliveryState.group===g&&inlineDeliveryState.dateIso===dIso)inlineDeliveryState=null;
         else inlineDeliveryState={group:g,dateIso:dIso};
         render();
@@ -213,11 +228,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       return;
     }
     const tabBtn=e.target.closest('[data-tab]');
-    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;if(feedCompareState.modalOpen)closeCompareModal();render();}return;}
+    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;inlinePickupState=null;if(feedCompareState.modalOpen)closeCompareModal();render();}return;}
   });
 
   document.addEventListener('keydown',e=>{
         if(e.key==='Escape'){
+      if(inlinePickupState){inlinePickupState=null;render();return;}
       if(inlineDeliveryState){inlineDeliveryState=null;render();return;}
       if(adjModalOpen){toggleAdjCollapse();return;}
       if(moreSheetOpen){closeMoreSheet();return;}
@@ -227,6 +243,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(settingsDrawerOpen){closeSettingsDrawer();return;}
     }
     if(e.key==='Enter'&&e.target.id==='settingsSwitchFarmInput'){e.preventDefault();submitSettingsChangeFarm();return;}
+    // Enter in the test-pickup field = the form's primary action
+    if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('tp-input')){e.preventDefault();const p=e.target.closest('.tp-form')?.querySelector('.tp-btn.primary');if(p)p.click();return;}
     if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('inline-del-input')){
       e.preventDefault();
       const form=e.target.closest('.inline-del');

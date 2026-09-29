@@ -80,12 +80,28 @@ function getShedDensitySettings(shed){
   if(useGlobal)return {maxDensity:Number.isFinite(Number(g.maxDensity))?Number(g.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(g.triggerDensity))?Number(g.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(g.targetDensity))?Number(g.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups,useGlobal:true};
   return {maxDensity:Number.isFinite(Number(o.maxDensity))?Number(o.maxDensity):g.maxDensity,triggerDensity:Number.isFinite(Number(o.triggerDensity))?Number(o.triggerDensity):g.triggerDensity,targetDensity:Number.isFinite(Number(o.targetDensity))?Number(o.targetDensity):g.targetDensity,targetPickups,useGlobal:false};
 }
+// Session-only "what if" pickups, keyed by shed id. Applied ONLY while the
+// feed forecast is computing (includeTestPickups), so they never touch
+// predictions, FCR, the dashboard or alerts.
+// {id, date, birds, movedFromId} — movedFromId: a planned pickup this
+// test replaces (a "move"); null for an extra pickup.
+let testPickups={};
+let includeTestPickups=false;
+function testPickupsForShed(shedId){return testPickups[shedId]||[];}
+function testPickupCountForGroup(g){return shedsForGroup(g).reduce((n,s)=>n+testPickupsForShed(s.id).length,0);}
 function computeEffectivePickups(shed){
   if(!shed)return [];
   const real=(shed.pickups||[]).map(p=>({...p,__source:'real'}));
   const realDates=new Set(real.map(p=>iso(p.date)));
-  const predicted=(shed.predictedPickups||[]).filter(pp=>!realDates.has(iso(pp.date))).map(pp=>({date:pp.date,birds:Number(pp.birds)||0,isFinal:!!pp.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'predicted',ageOverride:null,__source:'predicted',__id:pp.id}));
-  return [...real,...predicted].sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  let predicted=(shed.predictedPickups||[]).filter(pp=>!realDates.has(iso(pp.date))).map(pp=>({date:pp.date,birds:Number(pp.birds)||0,isFinal:!!pp.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'predicted',ageOverride:null,__source:'predicted',__id:pp.id}));
+  let tests=[];
+  if(includeTestPickups){
+    const list=testPickupsForShed(shed.id);
+    const moved=new Set(list.filter(t=>t.movedFromId).map(t=>t.movedFromId));
+    if(moved.size)predicted=predicted.filter(p=>!moved.has(p.__id));
+    tests=list.map(t=>({date:t.date,birds:Number(t.birds)||0,isFinal:false,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'test',ageOverride:null,__source:'test',__id:t.id}));
+  }
+  return [...real,...predicted,...tests].sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
 }
 function densityOnDate(shed,D,extraPredicted,excludePredictedId){
   const d=dateOnly(D);if(!shed.placementDate)return {live:0,weight:0,density:0,age:0};

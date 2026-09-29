@@ -1462,7 +1462,7 @@ function renderLoadModal(){
 /* ---------- Compare modal ---------- */
 function openCompareModal(){
   if(!isCompareAvailable()){showToast('📱 Comparison is only available on tablet and desktop screens.',true);return;}
-  closeSettingsDrawer();inlineDeliveryState=null;feedCompareState.modalOpen=true;
+  closeSettingsDrawer();inlineDeliveryState=null;inlinePickupState=null;feedCompareState.modalOpen=true;
   // Always open with nothing selected — the user picks which groups to compare.
   feedCompareState.selectedGroups=[];
   feedCompareState.layoutMode='auto';
@@ -1472,7 +1472,7 @@ function openCompareModal(){
   renderCompareModalBody();
 }
 function closeCompareModal(){
-  feedCompareState.modalOpen=false;inlineDeliveryState=null;
+  feedCompareState.modalOpen=false;inlineDeliveryState=null;inlinePickupState=null;
   const m=document.getElementById('compareFeedModal');
   if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
 }
@@ -1499,6 +1499,12 @@ function renderCompareColumnPicker(){
   const list=items.map(item=>{const checked=cols[item.id]?'checked':'';const disabled=item.locked?'disabled':'';const cls='cmp-col-toggle'+(item.locked?' locked':'');return `<label class="${cls}"><input type="checkbox" data-compare-col="${item.id}" ${checked} ${disabled} /><span>${item.label}</span></label>`;}).join('');
   return `<div class="compare-col-picker"><span class="compare-picker-label">Columns:</span><div class="cmp-col-list">${list}</div></div>`;
 }
+// "Clear tests" buttons for one compare column (only when tests exist)
+function compareTestActions(g){
+  const nl=(testDeliveries[g]||[]).length,np=testPickupCountForGroup(g);
+  if(!nl&&!np)return '';
+  return `<div class="cch-tests">${nl?`<button class="btn-clear-tests" data-clear-tests="${g}" type="button">🧹 Test loads (${nl})</button>`:''}${np?`<button class="btn-clear-tests" data-tp-clear="${g}" type="button">🧹 Test pickups (${np})</button>`:''}</div>`;
+}
 function renderCompareModalBody(){
   const body=document.getElementById('compareFeedBody');if(!body)return;
   // Determine the "current" group for highlighting — null when we're not
@@ -1519,7 +1525,7 @@ function renderCompareModalBody(){
         let statusChip='';
         if(info.hasReading){const emoji=info.daysUntil!=null?(info.daysUntil<=2?'🔴':(info.daysUntil<=7?'🟡':'🟢')):'🟢';const daysStr=info.daysUntil!=null?`runs out in ${info.daysUntil}d`:`lasts > ${siloRange.end}d`;statusChip=`${emoji} ${fmtFeed(info.balance)} · ${daysStr}`;}
         else statusChip='⚪ No reading';
-        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div></div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
+        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div>${compareTestActions(g)}</div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
       }).join('');
   body.innerHTML=`${rangeBarHtml(siloRange,'compare')}${renderCompareGroupPicker(currentGroup)}${renderCompareColumnPicker()}<div class="compare-layout-toggle"><span class="clt-label">Layout:</span><button type="button" data-compare-layout="stacked" class="${layout==='stacked'?'active':''}">☰ Stacked</button><button type="button" data-compare-layout="grid" class="${layout==='grid'?'active':''}">▦ Grid</button></div><div class="compare-tables ${layout}">${tablesHtml}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">💡 Click any future weekday row in <strong>any</strong> table to plan a load for that group. Rows with a load already scheduled show a small <strong>✎</strong> button to edit it.</div>`;
   if(inlineDeliveryState){const inp=body.querySelector('.inline-del-input');if(inp)requestAnimationFrame(()=>{try{inp.focus();}catch(e){}});}
