@@ -986,6 +986,7 @@ function render(){
     // any page, so refresh them on every render — not just on shed pages.
     if(feedCompareState.modalOpen)renderCompareModalBody();
     if(loadsModalState.open)renderLoadsModalBody();
+    if(inlinePickupState)requestAnimationFrame(sizeTestPickupForms);
     if(inlineDeliveryState||inlinePickupState){
       const scope=feedCompareState.modalOpen?document.getElementById('compareFeedModal'):app;
       const sel=inlinePickupState?'.tp-input':'.inline-del-input';
@@ -1202,6 +1203,16 @@ function renderFeedPlanner(group,sheds,today){
     <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
   </div>`;
 }
+// The forecast table can be wider than its (scrolling) wrapper — e.g. the
+// Compare Feed grid. Pin the test-pickup form to the wrapper's VISIBLE
+// width so its buttons and note wrap in view instead of running off-screen.
+function sizeTestPickupForms(){
+  document.querySelectorAll('.forecast-table-wrap').forEach(wrap=>{
+    const form=wrap.querySelector('.tp-form');if(!form)return;
+    form.style.width=wrap.clientWidth+'px';
+  });
+}
+window.addEventListener('resize',()=>{if(inlinePickupState)sizeTestPickupForms();});
 // Inline "test pickup" form under a forecast row
 function renderTestPickupForm(group,date){
   const st=inlinePickupState;const sheds=shedsForGroup(group);
