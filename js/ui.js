@@ -1501,6 +1501,10 @@ function renderCompareColumnPicker(){
   const list=items.map(item=>{const checked=cols[item.id]?'checked':'';const disabled=item.locked?'disabled':'';const cls='cmp-col-toggle'+(item.locked?' locked':'');return `<label class="${cls}"><input type="checkbox" data-compare-col="${item.id}" ${checked} ${disabled} /><span>${item.label}</span></label>`;}).join('');
   return `<div class="compare-col-picker"><span class="compare-picker-label">Columns:</span><div class="cmp-col-list">${list}</div></div>`;
 }
+// Farm-numbered silos for a pair, e.g. "Silo 4 – 5 – 6"
+function compareSiloChips(g){
+  return `<span class="cch-silos">Silo ${[1,2,3].map(n=>siloNumber(g,n)).join(' – ')}</span>`;
+}
 // "Clear tests" buttons for one compare column (only when tests exist)
 function compareTestActions(g){
   const nl=(testDeliveries[g]||[]).length,np=testPickupCountForGroup(g);
@@ -1527,7 +1531,7 @@ function renderCompareModalBody(){
         let statusChip='';
         if(info.hasReading){const emoji=info.daysUntil!=null?(info.daysUntil<=2?'🔴':(info.daysUntil<=7?'🟡':'🟢')):'🟢';const daysStr=info.daysUntil!=null?`runs out in ${info.daysUntil}d`:`lasts > ${siloRange.end}d`;statusChip=`${emoji} ${fmtFeed(info.balance)} · ${daysStr}`;}
         else statusChip='⚪ No reading';
-        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div>${compareTestActions(g)}</div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
+        return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${compareSiloChips(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div>${compareTestActions(g)}</div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
       }).join('');
   body.innerHTML=`${rangeBarHtml(siloRange,'compare')}${renderCompareGroupPicker(currentGroup)}${renderCompareColumnPicker()}<div class="compare-layout-toggle"><span class="clt-label">Layout:</span><button type="button" data-compare-layout="stacked" class="${layout==='stacked'?'active':''}">☰ Stacked</button><button type="button" data-compare-layout="grid" class="${layout==='grid'?'active':''}">▦ Grid</button></div><div class="compare-tables ${layout}">${tablesHtml}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">💡 Click any future weekday row in <strong>any</strong> table to plan a load for that group. Rows with a load already scheduled show a small <strong>✎</strong> button to edit it.</div>`;
   if(inlineDeliveryState){const inp=body.querySelector('.inline-del-input');if(inp)requestAnimationFrame(()=>{try{inp.focus();}catch(e){}});}

@@ -47,6 +47,8 @@ function setFarmDisplayName(v){
 // Groups are named by their sheds: group 2 → "Sheds 3–4".
 function pairShort(g){return `${2*g-1}–${2*g}`;}
 function pairLabel(g){return `Sheds ${pairShort(g)}`;}
+// Farm-wide silo numbering: 12 silos, 3 per pair — pair 2's silos are 4, 5, 6
+function siloNumber(g,n){return (g-1)*3+n;}
 
 // Sidebar navigation definition — used by sidebarHtml() in render.js
 const NAV_ITEMS = [
