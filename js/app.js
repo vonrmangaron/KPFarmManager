@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const tpClear=e.target.closest('[data-tp-clear]');
     if(tpClear){clearTestPickups(Number(tpClear.dataset.tpClear));return;}
     const tpShed=e.target.closest('[data-tp-shed]');
-    if(tpShed){if(inlinePickupState){inlinePickupState.shedId=Number(tpShed.dataset.tpShed);render();}return;}
+    if(tpShed){if(inlinePickupState){inlinePickupState.shedId=Number(tpShed.dataset.tpShed);inlinePickupState.userEdited=false;inlinePickupState.birdsDraft='';render();}return;}
     const tpAdd=e.target.closest('[data-tp-add]');
     if(tpAdd){submitInlinePickup(tpAdd.dataset.tpAdd);return;}
     if(e.target.closest('[data-tp-cancel]')){inlinePickupState=null;render();return;}
@@ -299,6 +299,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('input',e=>{
     if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
     if(e.target&&e.target.id==='settingsSwitchFarmInput'){settingsChangeFarmDraft=e.target.value;return;}
+    // Typing a bird count overrides the density recommendation (empty = back to auto)
+    if(e.target&&e.target.classList&&e.target.classList.contains('tp-input')&&inlinePickupState){const v=e.target.value.trim();inlinePickupState.userEdited=v!=='';inlinePickupState.birdsDraft=v;e.target.closest('.tp-form')?.querySelectorAll('.tp-btn-n').forEach(n=>n.hidden=inlinePickupState.userEdited);return;}
     const t=e.target;
     if(t.dataset&&t.dataset.mortrateShed!==undefined){const sid=t.dataset.mortrateShed;const slider=document.getElementById(`mortRateSlider_${sid}`);const num=document.getElementById(`mortRateNum_${sid}`);if(t===slider&&num)num.value=t.value;else if(t===num&&slider)slider.value=t.value;return;}
     if(t.id==='predBetaSlider'){const num=document.getElementById('predBetaNumber');if(num)num.value=Number(t.value).toFixed(3);setPredBeta(t.value);const chip=document.getElementById('adjChipBeta');if(chip)chip.innerHTML=`cFCR β <strong>${Number(t.value).toFixed(3)}</strong>`;return;}

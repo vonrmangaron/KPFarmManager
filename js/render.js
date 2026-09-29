@@ -1209,22 +1209,26 @@ function renderTestPickupForm(group,date){
   const d=dateOnly(date);const dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
   const blocked=(predState.noPickupDays||[]).includes(d.getDay());
   const warn=blocked?`⚠ ${dayName} is one of your no-pickup days`:(isWeekend(d)?`⚠ ${dayName} is a weekend`:'');
-  const plannedSameDay=sug.planned&&iso(dateOnly(sug.planned.date))===iso(d);
-  const canMove=sug.planned&&!plannedSameDay;
-  const hint=sug.planned
-    ?(plannedSameDay?`A planned pickup of ${Number(sug.planned.birds).toLocaleString()} is already on this day`:`Suggested from the planned pickup on ${fmtShortNoYear(dateOnly(sug.planned.date))} (${Number(sug.planned.birds).toLocaleString()} birds)`)
-    :'No planned pickups left for this shed';
+  const canMove=!!sug.recMove;
+  const fmtN=n=>Number(n||0).toLocaleString();
+  const moveN=sug.recMove?sug.recMove.recommendedRemove:0;const addN=sug.recAdd?sug.recAdd.recommendedRemove:0;
+  // Field shows the primary action's recommendation until the user types
+  const shown=st.userEdited?st.birdsDraft:(canMove?moveN:addN);
+  const rec=sug.recAdd;
+  const densityLine=rec?`Density ${rec.densityBefore.toFixed(1)} kg/m² that day → recommendation brings it to ${rec.targetDensity} kg/m² (same as Predictions)`:'';
+  const plannedLine=sug.planned?(canMove?`nearest planned pickup: ${fmtShortNoYear(dateOnly(sug.planned.date))}, ${fmtN(sug.planned.birds)} birds`:`a planned pickup of ${fmtN(sug.planned.birds)} is already on this day`):'no planned pickups left for this shed';
   const shedBtns=sheds.map(s=>`<button type="button" class="tp-shed${s.id===st.shedId?' active':''}" data-tp-shed="${s.id}" aria-pressed="${s.id===st.shedId}">Shed ${s.id}</button>`).join('');
+  const num=n=>st.userEdited?'':` <span class="tp-btn-n">${fmtN(n)}</span>`;
   return `<div class="tp-form" role="group" aria-label="Test pickup">
     <span class="tp-title">🐔 Test pickup · ${fmtShortNoYear(d)}</span>
     <div class="tp-sheds">${shedBtns}</div>
-    <label class="tp-field"><input type="number" class="tp-input" min="1" step="100" value="${sug.birds===''?'':sug.birds}" placeholder="birds" aria-label="Birds to pick up" /><span>birds</span></label>
+    <label class="tp-field"><input type="number" class="tp-input" min="1" step="50" value="${shown===''||shown==null?'':shown}" placeholder="birds" aria-label="Birds to pick up" /><span>birds</span></label>
     <div class="tp-actions">
-      ${canMove?`<button type="button" class="tp-btn primary" data-tp-add="move" title="Simulate the planned pickup happening on this day instead">↪ Move planned pickup here</button>`:''}
-      <button type="button" class="tp-btn${canMove?'':' primary'}" data-tp-add="add" title="An extra pickup on top of the plan">+ Add extra pickup</button>
+      ${canMove?`<button type="button" class="tp-btn primary" data-tp-add="move" title="Simulate the planned pickup happening on this day instead">↪ Move planned pickup here${num(moveN)}</button>`:''}
+      <button type="button" class="tp-btn${canMove?'':' primary'}" data-tp-add="add" title="An extra pickup on top of the plan">+ Add extra pickup${num(addN)}</button>
       <button type="button" class="tp-btn ghost" data-tp-cancel="1" aria-label="Cancel">✕</button>
     </div>
-    <div class="tp-hint">${hint} · ${sug.live.toLocaleString()} birds in Shed ${st.shedId} that day · session only${warn?` · <strong class="tp-warn">${warn}</strong>`:''}</div>
+    <div class="tp-hint">${densityLine}${densityLine?' · ':''}${plannedLine} · ${fmtN(sug.live)} birds in Shed ${st.shedId} · session only${warn?` · <strong class="tp-warn">${warn}</strong>`:''}</div>
   </div>`;
 }
 function renderSiloForecastTable(forecast,group,opts){

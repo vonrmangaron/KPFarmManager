@@ -203,20 +203,21 @@ function addTestDelivery(group,dateStr,amountT){
 // ── Test pickups (session-only what-if, feed forecast only) ──
 // Open inline form: {group, dateIso, shedId}
 let inlinePickupState=null;
-// Suggestion for a shed on a date: its nearest remaining planned pickup
-// (not already moved by a test), capped at the birds alive that day.
+// Suggestion for a shed on a date. Bird counts use the SAME density
+// recommendation as Predictions → New Predicted Pickup
+// (recommendPickupForDate: remove birds down to the target density):
+//  - move: as if the nearest remaining planned pickup happened here instead
+//  - add:  an extra pickup with the existing plan left as is
 function suggestTestPickup(shedId,dateIso){
-  const shed=(farmData&&farmData.sheds||[]).find(s=>s.id===shedId);if(!shed)return {planned:null,birds:'',live:0};
+  const shed=(farmData&&farmData.sheds||[]).find(s=>s.id===shedId);if(!shed)return {planned:null,recMove:null,recAdd:null,live:0};
   const today=dateOnly(new Date());const target=dateOnly(dateIso);
   const moved=new Set(testPickupsForShed(shedId).filter(t=>t.movedFromId).map(t=>t.movedFromId));
   const cands=(shed.predictedPickups||[]).filter(pp=>pp.date&&dateOnly(pp.date)>=today&&!moved.has(pp.id)&&(Number(pp.birds)||0)>0);
   cands.sort((a,b)=>Math.abs(dateOnly(a.date)-target)-Math.abs(dateOnly(b.date)-target)||dateOnly(a.date)-dateOnly(b.date));
   const planned=cands[0]||null;
-  const prev=includeTestPickups;includeTestPickups=true;
-  let live=0;try{live=liveAtStartOfDay(shed,target);}finally{includeTestPickups=prev;}
-  // A moved pickup no longer comes out before this day, so it's available
-  const birds=planned?Math.min(Number(planned.birds)||0,live+(dateOnly(planned.date)<target?(Number(planned.birds)||0):0)):'';
-  return {planned,birds,live};
+  const recAdd=recommendPickupForDate(shed,dateIso);
+  const recMove=planned&&iso(dateOnly(planned.date))!==iso(target)?recommendPickupForDate(shed,dateIso,{excludePredictedId:planned.id}):null;
+  return {planned,recMove,recAdd,live:recAdd?recAdd.live:0};
 }
 function defaultShedForTestPickup(group,dateIso){
   const sheds=shedsForGroup(group);const target=dateOnly(dateIso);const today=dateOnly(new Date());
@@ -231,9 +232,13 @@ function toggleInlinePickup(group,dateIso){
 }
 function submitInlinePickup(mode){
   const st=inlinePickupState;if(!st)return;
-  const input=document.querySelector('.tp-input');const birds=Math.round(Number(input&&input.value));
+  const input=document.querySelector('.tp-input');
   const sug=suggestTestPickup(st.shedId,st.dateIso);
-  const max=mode==='move'&&sug.planned?sug.live+(dateOnly(sug.planned.date)<dateOnly(st.dateIso)?Number(sug.planned.birds)||0:0):sug.live;
+  const rec=mode==='move'?sug.recMove:sug.recAdd;
+  // Untouched field → use the density recommendation for the chosen action
+  const birds=st.userEdited?Math.round(Number(input&&input.value)):(rec?rec.recommendedRemove:NaN);
+  const max=rec?rec.live:sug.live;
+  if(!st.userEdited&&rec&&rec.recommendedRemove<=0){showToast(`Density is already at or below ${rec.targetDensity} kg/m² that day — type a number to add a pickup anyway.`,true);input&&input.focus();return;}
   if(!Number.isFinite(birds)||birds<=0){showToast('Enter how many birds to pick up.',true);input&&input.focus();return;}
   if(birds>max){showToast(`Only ${max.toLocaleString()} birds would be in Shed ${st.shedId} that day.`,true);input&&input.focus();return;}
   const movedFromId=mode==='move'&&sug.planned?sug.planned.id:null;
@@ -254,7 +259,9 @@ function commitTestPickup(shedId,id){
   const moved=t.movedFromId?shed.predictedPickups.find(p=>p.id===t.movedFromId):null;
   const clash=shed.predictedPickups.find(p=>p!==moved&&p.date&&iso(dateOnly(p.date))===dIso);
   if(clash){showToast(`Shed ${shedId} already has a planned pickup on ${when} — edit it in Predictions.`,true);return;}
-  if(!moved&&shed.predictedPickups.length>=MAX_PREDICTED_PICKUPS){showToast(`Shed ${shedId} already has ${MAX_PREDICTED_PICKUPS} planned pickups — the maximum. Remove one in Predictions first.`,true);return;}
+  // Same limit as Predictions → New Predicted Pickup: real + planned ≤ target
+  const targetN=getShedDensitySettings(shed).targetPickups;const realN=(shed.pickups||[]).length;const planN=shed.predictedPickups.length;
+  if(!moved&&realN+planN>=targetN){showToast(`Shed ${shedId} already has its target of ${targetN} pickups (${realN} real + ${planN} planned). Move one instead, or change the target in Predictions → Adjust.`,true);return;}
   const birds=Math.round(Number(t.birds)||0);if(birds<=0)return;
   const dayBlocked=(predState.noPickupDays||[]).includes(dateOnly(t.date).getDay());
   const what=moved
