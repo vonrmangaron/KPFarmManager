@@ -241,6 +241,33 @@ function submitInlinePickup(mode){
   inlinePickupState=null;render();
   showToast(`🐔 Test pickup: ${birds.toLocaleString()} birds from Shed ${st.shedId} on ${fmtShort(dateOnly(st.dateIso))}${movedFromId?` (moved from ${fmtShort(dateOnly(sug.planned.date))})`:''} — session only.`);
 }
+// Turn a test pickup into a real planned (predicted) pickup.
+// A "move" updates the planned pickup it replaced; an extra pickup is
+// added, within MAX_PREDICTED_PICKUPS. Saves and syncs.
+function commitTestPickup(shedId,id){
+  const shed=(farmData&&farmData.sheds||[]).find(s=>s.id===shedId);
+  const t=testPickupsForShed(shedId).find(x=>x.id===id);
+  if(!shed||!t)return;
+  const dIso=iso(dateOnly(t.date));const when=fmtShort(dateOnly(t.date));
+  shed.predictedPickups=shed.predictedPickups||[];
+  if((shed.pickups||[]).some(p=>iso(dateOnly(p.date))===dIso)){showToast(`Shed ${shedId} already has a logged pickup on ${when}.`,true);return;}
+  const moved=t.movedFromId?shed.predictedPickups.find(p=>p.id===t.movedFromId):null;
+  const clash=shed.predictedPickups.find(p=>p!==moved&&p.date&&iso(dateOnly(p.date))===dIso);
+  if(clash){showToast(`Shed ${shedId} already has a planned pickup on ${when} — edit it in Predictions.`,true);return;}
+  if(!moved&&shed.predictedPickups.length>=MAX_PREDICTED_PICKUPS){showToast(`Shed ${shedId} already has ${MAX_PREDICTED_PICKUPS} planned pickups — the maximum. Remove one in Predictions first.`,true);return;}
+  const birds=Math.round(Number(t.birds)||0);if(birds<=0)return;
+  const dayBlocked=(predState.noPickupDays||[]).includes(dateOnly(t.date).getDay());
+  const what=moved
+    ?`Move Shed ${shedId}'s planned pickup from ${fmtShort(dateOnly(moved.date))} to ${when} (${birds.toLocaleString()} birds).`
+    :`Add a planned pickup of ${birds.toLocaleString()} birds to Shed ${shedId} on ${when}.`;
+  if(!confirm(`${what}${dayBlocked?`\n\n⚠ ${when} is one of your no-pickup days.`:''}\n\nThis updates Predictions, the dashboard and alerts, and syncs to the cloud.`))return;
+  if(moved){moved.date=dateOnly(t.date);moved.birds=birds;}
+  else shed.predictedPickups.push({id:uid('pp'),date:dateOnly(t.date),birds,isFinal:false});
+  shed.predictedPickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  testPickups[shedId]=testPickupsForShed(shedId).filter(x=>x.id!==id);
+  saveState();schedulePush();render();
+  showToast(`✓ Planned pickup ${moved?'moved to':'added on'} ${when} — ${birds.toLocaleString()} birds, Shed ${shedId}.`);
+}
 function removeTestPickup(shedId,id){testPickups[shedId]=testPickupsForShed(shedId).filter(t=>t.id!==id);render();showToast('Test pickup removed.');}
 function clearTestPickups(group){
   const n=testPickupCountForGroup(group);if(!n)return;

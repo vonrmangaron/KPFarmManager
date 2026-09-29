@@ -153,6 +153,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(clearTestsBtn){clearTestDeliveries(Number(clearTestsBtn.dataset.clearTests));return;}
 
     // Test pickups (Live birds cell) — handled before the row's load form
+    const tpCommit=e.target.closest('[data-tp-commit]');
+    if(tpCommit){e.stopPropagation();const [sid,id]=tpCommit.dataset.tpCommit.split('|');commitTestPickup(Number(sid),id);return;}
     const tpRemove=e.target.closest('[data-tp-remove]');
     if(tpRemove){e.stopPropagation();const [sid,id]=tpRemove.dataset.tpRemove.split('|');removeTestPickup(Number(sid),id);return;}
     const tpClear=e.target.closest('[data-tp-clear]');

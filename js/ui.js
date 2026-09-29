@@ -764,7 +764,7 @@ function autoFillAllSheds(){
   const eligible=placed.filter(s=>!(s.pickups||[]).some(p=>p.isFinal));
   const skipped=placed.length-eligible.length;
   if(eligible.length===0){showToast('All sheds already have their cleanout pickup recorded.',true);return;}
-  if(!confirm(`Auto-fill predicted pickups for ${eligible.length} placed shed${eligible.length===1?'':'s'}?\n\nExisting predicted pickups will be replaced.${skipped>0?`\n\n(${skipped} shed${skipped===1?'':'s'} skipped — cleanout already recorded.)`:''}`))return;
+  if(!confirm(`Auto-fill predicted pickups for ${eligible.length} placed shed${eligible.length===1?'':'s'}?\n\nExisting predicted pickups will be replaced — including any you made planned from the feed forecast.${skipped>0?`\n\n(${skipped} shed${skipped===1?'':'s'} skipped — cleanout already recorded.)`:''}`))return;
   let totalRegular=0,totalFinal=0,shedsTouched=0;
   for(const shed of eligible){const generated=autoFillPredictedPickups(shed);shed.predictedPickups=generated;totalRegular+=generated.filter(g=>!g.isFinal).length;totalFinal+=generated.filter(g=>g.isFinal).length;if(generated.length>0)shedsTouched++;}
   saveState();schedulePush();render();

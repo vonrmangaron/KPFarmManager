@@ -1276,7 +1276,7 @@ function renderSiloForecastTable(forecast,group,opts){
     if(c.age)cells.push(`<td class="num">${agesStr}</td>`);
     if(c.liveBirds){
       // Test pickups (session what-if) and planned pickups a test moved away
-      const tpChips=(r.testPickups||[]).map(t=>`<span class="tp-chip" title="Test pickup — session only">🐔 −${t.birds.toLocaleString()} <small>S${t.shedId}${t.movedFrom?' · moved':''}</small><button type="button" class="test-x" data-tp-remove="${t.shedId}|${t.id}" title="Remove this test pickup">✕</button></span>`).join('');
+      const tpChips=(r.testPickups||[]).map(t=>`<span class="tp-chip" title="Test pickup — session only">🐔 −${t.birds.toLocaleString()} <small>S${t.shedId}${t.movedFrom?' · moved':''}</small><button type="button" class="tp-commit" data-tp-commit="${t.shedId}|${t.id}" title="Save as a planned pickup (updates Predictions and syncs)">✓ Make planned</button><button type="button" class="test-x" data-tp-remove="${t.shedId}|${t.id}" title="Remove this test pickup">✕</button></span>`).join('');
       const movedChips=(r.movedAway||[]).map(m=>`<span class="tp-moved" title="Planned pickup moved by a test">↪ S${m.shedId} −${m.birds.toLocaleString()} → ${fmtShortNoYear(dateOnly(m.to))}</span>`).join('');
       const tpClickable=!r.isPast;
       cells.push(`<td class="num${tpClickable?' tp-cell':''}"${tpClickable?` data-tp-cell="${group}|${iso(r.date)}" title="Click to add a test pickup"`:''}>${liveBirds.toLocaleString()}${pickupIndicator}${tpChips||movedChips?`<div class="tp-chips">${tpChips}${movedChips}</div>`:''}</td>`);
