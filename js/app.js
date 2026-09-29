@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 
   document.addEventListener('click',e=>{
+    // Bulk select: checkboxes are handled on 'change'; buttons here
+    if(e.target.closest('.bulk-cb,[data-bulk-all],.bulk-all'))return;
+    const bulkStartBtn=e.target.closest('[data-bulk-start]');if(bulkStartBtn){bulkStart(bulkStartBtn.dataset.bulkStart);return;}
+    if(e.target.closest('[data-bulk-cancel]')){bulkCancel();return;}
+    if(e.target.closest('[data-bulk-delete]')){bulkDelete();return;}
     // Alerts bell popover — checked first so any click outside it always closes it
     const alertsPop=document.getElementById('alertsPopover');
     if(alertsPop&&alertsPop.classList.contains('open')&&!e.target.closest('.alerts-bell-wrap')){alertsPop.classList.remove('open');}
@@ -231,11 +236,12 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
       return;
     }
     const tabBtn=e.target.closest('[data-tab]');
-    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;inlinePickupState=null;if(feedCompareState.modalOpen)closeCompareModal();render();}return;}
+    if(tabBtn){const t=tabBtn.dataset.tab;if(t&&t!=='cluckwise'){activeTab=t;inlineDeliveryState=null;inlinePickupState=null;bulkSel=null;if(feedCompareState.modalOpen)closeCompareModal();render();}return;}
   });
 
   document.addEventListener('keydown',e=>{
         if(e.key==='Escape'){
+      if(bulkSel){bulkCancel();return;}
       if(inlinePickupState){inlinePickupState=null;render();return;}
       if(inlineDeliveryState){inlineDeliveryState=null;render();return;}
       if(adjModalOpen){toggleAdjCollapse();return;}
@@ -265,6 +271,9 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
 
   document.addEventListener('change',e=>{
     const t=e.target;
+    // Bulk select checkboxes
+    if(t.classList&&t.classList.contains('bulk-cb')){bulkToggle(t.dataset.bulkId,t.checked);return;}
+    if(t.dataset&&t.dataset.bulkAll){bulkToggleAll((t.dataset.bulkIds||'').split('\u001f').filter(Boolean),t.checked);return;}
     if(t.dataset&&t.dataset.compareCol){toggleCompareColumn(t.dataset.compareCol);return;}
     if(t.dataset&&t.dataset.predCycle){const bar=t.closest('.pred-daily-range-bar');if(bar){const sEl=bar.querySelector('[data-pred-cycle="start"]');const eEl=bar.querySelector('[data-pred-cycle="end"]');if(sEl&&eEl)setPredDailyCycle(sEl.value,eEl.value);}return;}
     if(t.dataset&&t.dataset.mortrateShed!==undefined){const sid=Number(t.dataset.mortrateShed);const val=Number(t.value);if(Number.isFinite(sid)&&sid>=1&&sid<=SHED_COUNT&&Number.isFinite(val))setShedMortRate(sid,val);return;}

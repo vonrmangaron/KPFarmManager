@@ -308,7 +308,8 @@ function collectShedWeightAnchors(shed){
   const tc=shed.targetCurve||{};const gridDays=new Set();
   TARGET_DAYS.forEach(day=>{const v=Number(tc[day]);if(Number.isFinite(v)&&v>0){anchors.push({t:day,w:v*bias,wgt:0.65,source:'in-yard-grid'});gridDays.add(day);}});
   (shed.inYardSamples||[]).forEach(s=>{if(!s.date||!(s.avgWeightKg>0))return;const age=sampleAge(shed,s);if(age<=0)return;if(gridDays.has(age))return;const scaled=s.isOfficial?s.avgWeightKg:(s.avgWeightKg*bias);const wgt=s.isOfficial?1.0:0.55;anchors.push({t:age,w:scaled,wgt,source:s.isOfficial?'official-sample':'in-yard-custom'});});
-  (shed.pickups||[]).forEach(p=>{const avg=pickupAvgKg(p);if(!avg||avg<=0)return;const age=pickupAge(shed,p);if(age<=0)return;anchors.push({t:age,w:avg,wgt:1.0,source:'pickup'});});
+  // Estimated (kill-sheet, not yet weighed) weights are NOT measurements — never fit to them
+  (shed.pickups||[]).forEach(p=>{if(p.weightEstimated)return;const avg=pickupAvgKg(p);if(!avg||avg<=0)return;const age=pickupAge(shed,p);if(age<=0)return;anchors.push({t:age,w:avg,wgt:1.0,source:'pickup'});});
   return anchors;
 }
 function fitLinearGompertz(anchors,k){
@@ -349,7 +350,8 @@ function getShedGompertzFit(shed){
 function gompertzWeightAt(fit,age){if(!fit)return null;if(!Number.isFinite(age)||age<0)return null;const val=fit.A*Math.exp(-fit.b*Math.exp(-fit.k*age));return (Number.isFinite(val)&&val>0)?val:null;}
 function gompertzBandFraction(fit,age){if(!fit)return MAX_UNCERTAINTY;const sigmaBase=Math.max(0.018,fit.sigma||0);const daysBeyond=Math.max(0,age-(fit.lastT||0));const extrap=0.004*daysBeyond;const total=Math.sqrt(sigmaBase*sigmaBase+extrap*extrap);return Math.min(MAX_UNCERTAINTY,total);}
 function pickupAvgKg(p){if(!p||!p.totalWeightKg||!p.birds)return null;return p.totalWeightKg/p.birds;}
-function weightedPickups(shed){return (shed.pickups||[]).filter(p=>p.totalWeightKg&&p.totalWeightKg>0&&p.birds>0).slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));}
+// Pickups with a REAL weighing (estimated kill-sheet weights excluded)
+function weightedPickups(shed){return (shed.pickups||[]).filter(p=>p.totalWeightKg&&p.totalWeightKg>0&&p.birds>0&&!p.weightEstimated).slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));}
 function lastWeightedPickup(shed){const arr=weightedPickups(shed);return arr.length?arr[arr.length-1]:null;}
 function observedDailyGain(shed){
   const arr=weightedPickups(shed);if(arr.length===0)return null;

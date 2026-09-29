@@ -1,4 +1,63 @@
-function showToast(msg,isError){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.toggle('error',!!isError);el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3200);}
+function showToast(msg,isError){const el=document.getElementById('toast');if(!el)return;el.classList.remove('has-action');el.textContent=msg;el.classList.toggle('error',!!isError);el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3200);}
+// Toast with an Undo button (stays 10 s)
+function showUndoToast(msg,undoFn){
+  const el=document.getElementById('toast');if(!el)return;
+  el.classList.remove('error');el.classList.add('has-action','show');
+  el.innerHTML=`<span>${escapeHtml(msg)}</span><button type="button" class="toast-undo">Undo</button>`;
+  el.querySelector('.toast-undo').addEventListener('click',()=>{clearTimeout(toastTimer);el.classList.remove('show','has-action');undoFn();});
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show','has-action'),10000);
+}
+
+// ── Bulk select & delete (Predicted pickups, Logged pickups, Feed loads,
+//    Silo readings). One list can be in select mode at a time.
+//    Keys: 'pp:<shed>' 'pk:<shed>' 'loads' 'rd:<group>' ──
+let bulkSel=null; // {key, ids:Set}
+function bulkActive(key){return !!bulkSel&&bulkSel.key===key;}
+function bulkRefresh(){render();if(loadsModalState&&loadsModalState.open)renderLoadsModalBody();}
+function bulkStart(key){bulkSel={key,ids:new Set()};bulkRefresh();}
+function bulkCancel(){bulkSel=null;bulkRefresh();}
+function bulkCheckbox(key,id,label){
+  if(!bulkActive(key))return '';
+  return `<input type="checkbox" class="bulk-cb" data-bulk-id="${escapeAttr(id)}" ${bulkSel.ids.has(String(id))?'checked':''} aria-label="Select ${escapeAttr(label||'row')}" />`;
+}
+// Header control: "Select" button, or the select-mode bar
+function bulkToolbar(key,allIds,noun){
+  if(!allIds.length)return '';
+  if(!bulkActive(key))return `<button type="button" class="bulk-start" data-bulk-start="${escapeAttr(key)}" title="Select several to delete">☑ Select</button>`;
+  const n=bulkSel.ids.size;const all=n>0&&allIds.every(id=>bulkSel.ids.has(String(id)));
+  return `<span class="bulk-bar"><label class="bulk-all"><input type="checkbox" data-bulk-all="${escapeAttr(key)}" data-bulk-ids="${escapeAttr(allIds.join('\u001f'))}" ${all?'checked':''} /> All</label><button type="button" class="bulk-del" data-bulk-delete="${escapeAttr(key)}" ${n?'':'disabled'}>🗑 Delete ${n||''} ${noun}</button><button type="button" class="bulk-cancel" data-bulk-cancel="1">Cancel</button></span>`;
+}
+function bulkToggle(id,on){if(!bulkSel)return;id=String(id);if(on)bulkSel.ids.add(id);else bulkSel.ids.delete(id);bulkRefresh();}
+function bulkToggleAll(ids,on){if(!bulkSel)return;ids.forEach(id=>{if(on)bulkSel.ids.add(String(id));else bulkSel.ids.delete(String(id));});bulkRefresh();}
+function bulkDelete(){
+  if(!bulkSel||!bulkSel.ids.size)return;
+  const {key}=bulkSel;const ids=[...bulkSel.ids];const n=ids.length;
+  const [kind,arg]=key.split(':');const num=Number(arg);
+  const plural=(w)=>`${n} ${w}${n===1?'':'s'}`;
+  let what,apply,snapshot,restore;
+  if(kind==='pp'||kind==='pk'){
+    const idx=num-1;const shed=farmData&&farmData.sheds[idx];if(!shed)return;
+    snapshot=structuredClone(shed);
+    restore=()=>{farmData.sheds[idx]=snapshot;saveState();};
+    if(kind==='pp'){what=`${plural('planned pickup')} from Shed ${num}`;apply=()=>{shed.predictedPickups=(shed.predictedPickups||[]).filter(pp=>!ids.includes(String(pp.id)));saveState();};}
+    else{what=`${plural('logged pickup')} from Shed ${num}`;apply=()=>{shed.pickups=(shed.pickups||[]).filter(p=>!ids.includes(iso(p.date)));reflowShedPickups(shed);reconcilePredictedPickups(shed);saveState();};}
+  }else if(kind==='loads'){
+    snapshot=structuredClone(farmLoads);
+    what=plural('feed load');
+    apply=()=>{farmLoads=farmLoads.filter(l=>!ids.includes(String(l.id)));saveFarmLoads();updateLoadsDot();};
+    restore=()=>{farmLoads=snapshot;saveFarmLoads();updateLoadsDot();};
+  }else if(kind==='rd'){
+    const s=siloData[num];if(!s)return;
+    snapshot=structuredClone(s.readings||[]);
+    what=`${plural('silo reading')} from ${pairLabel(num)}`;
+    apply=()=>{s.readings=(s.readings||[]).filter(r=>!ids.includes(String(r.date)));saveSiloData();};
+    restore=()=>{siloData[num].readings=snapshot;saveSiloData();};
+  }else return;
+  const extra=kind==='pk'?'\n\nThese are official pickup records.':kind==='rd'?'\n\nThe feed balance re-anchors on the latest remaining reading.':'';
+  if(!confirm(`Delete ${what}?${extra}\n\nYou can undo this for 10 seconds.`))return;
+  apply();schedulePush();bulkSel=null;bulkRefresh();
+  showUndoToast(`🗑️ Deleted ${what}.`,()=>{restore();schedulePush();bulkRefresh();showToast('↩ Restored.');});
+}
 function renderDeliveriesSummary(group){
   const summary=groupLoadSummary(group);const totalOrders=summary.loadCount;
   if(totalOrders===0)return `<span class="count">No loads affecting these sheds</span>`;
@@ -421,6 +480,16 @@ async function openPastBatch(targetBatchKey){
 }
 
 /* ---------- Manual pickup modal ---------- */
+// Estimated live weight on a date — same growth curve the app uses for
+// "current weight" (anchored to the last real weighing), projected to
+// that date. Used to pre-fill kill-sheet pickups before they're weighed.
+function estimatedPickupWeight(shed,dateObj){const e=dateObj?currentShedWeightEstimate(shed,dateObj):null;return e&&e.kg>0?Number(e.kg.toFixed(3)):null;}
+// Nearest planned pickup within ±3 days of a date (a logged pickup replaces it)
+function nearbyPlannedPickup(shed,dateIso){
+  const d=parseExcelDate(dateIso);if(!d)return null;let best=null,gap=Infinity;
+  (shed.predictedPickups||[]).forEach(pp=>{if(!pp.date)return;const g=Math.abs(daysBetween(dateOnly(pp.date),dateOnly(d)));if(g<=3&&g<gap){gap=g;best=pp;}});
+  return best;
+}
 function openManualPickupModal(shedId,editDateIso){
   if(!farmData)return;
   const shed=farmData.sheds[shedId-1];if(!shed)return;
@@ -428,12 +497,13 @@ function openManualPickupModal(shedId,editDateIso){
   if(editDateIso){
     const p=pickups.find(x=>iso(x.date)===editDateIso);if(!p)return;
     const avg=(p.totalWeightKg&&p.birds)?(p.totalWeightKg/p.birds):null;
-    manualPickupState={shedId,mode:'edit',originalDateIso:editDateIso,dateIso:iso(p.date),ageValue:pickupAge(shed,p),ageTouched:(p.ageOverride!=null),birds:p.birds||'',avgWeight:avg!=null?Number(avg.toFixed(3)):'',totalWeight:p.totalWeightKg!=null?Number(p.totalWeightKg.toFixed(2)):'',lastEdited:'avg',isFinal:!!p.isFinal};
+    manualPickupState={shedId,mode:'edit',originalDateIso:editDateIso,dateIso:iso(p.date),ageValue:pickupAge(shed,p),ageTouched:(p.ageOverride!=null),birds:p.birds||'',avgWeight:avg!=null?Number(avg.toFixed(3)):'',totalWeight:p.totalWeightKg!=null?Number(p.totalWeightKg.toFixed(2)):'',lastEdited:'avg',isFinal:!!p.isFinal,weightEst:!!p.weightEstimated,replaceId:null,replaceOn:false};
   }else{
     if(pickups.length>=MAX_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups (maximum).`,true);return;}
     const today=todayIso();
     const computedAge=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,dateOnly(today))):0;
-    manualPickupState={shedId,mode:'add',originalDateIso:null,dateIso:today,ageValue:computedAge,ageTouched:false,birds:'',avgWeight:'',totalWeight:'',lastEdited:'avg',isFinal:false};
+    const est=estimatedPickupWeight(shed,dateOnly(today));const near=nearbyPlannedPickup(shed,today);
+    manualPickupState={shedId,mode:'add',originalDateIso:null,dateIso:today,ageValue:computedAge,ageTouched:false,birds:near?Number(near.birds)||'':'',avgWeight:est!=null?est:'',totalWeight:'',lastEdited:'avg',isFinal:false,weightEst:est!=null,replaceId:near?near.id:null,replaceOn:!!near};
   }
   renderManualPickupModal();
   const modal=document.getElementById('manualPickupModal');const scrim=document.getElementById('syncScrim');
@@ -447,16 +517,42 @@ function renderManualPickupModal(){
   if(titleEl)titleEl.innerHTML=s.mode==='add'?`<span>📝</span> Add Pickup — Shed ${s.shedId}`:`<span>✎</span> Edit Pickup — Shed ${s.shedId}`;
   const pickupCount=(shed.pickups||[]).length;
   const canSave=s.mode==='edit'||pickupCount<MAX_PICKUPS_PER_SHED;
-  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div><div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate?fmtShort(shed.placementDate):'—'}</span></div><div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div></div><div class="mp-field"><label>Date</label><input type="date" id="mpDate" value="${s.dateIso}" /></div><div class="mp-field"><label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched?'display:none;':''}">auto</span></label><input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" /></div><div class="mp-field"><label>No. of Birds</label><input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" /></div><div class="mp-field"><label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label><input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" /></div><div class="mp-field"><label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label><input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" /></div><label class="mp-checkbox-row"><input type="checkbox" id="mpFinal" ${s.isFinal?'checked':''} /><span>This is the final pickup (sets cleanout date &amp; mortality)</span></label><div class="mp-hint">Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.</div><div class="sync-actions"><button class="btn-sync-primary" id="mpSaveBtn" ${canSave?'':'disabled'}>${s.mode==='add'?'＋ Add Pickup':'✓ Save Changes'}</button><button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button></div>`;
+  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div><div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate?fmtShort(shed.placementDate):'—'}</span></div><div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div></div><div class="mp-field"><label>Date</label><input type="date" id="mpDate" value="${s.dateIso}" /></div><div class="mp-field"><label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched?'display:none;':''}">auto</span></label><input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" /></div><div class="mp-field"><label>No. of Birds</label><input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" /></div><div class="mp-field"><label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label><input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" /></div><div class="mp-field"><label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label><input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" /></div><div class="mp-est-row" id="mpEstRow"></div><div id="mpReplaceWrap"></div><label class="mp-checkbox-row"><input type="checkbox" id="mpFinal" ${s.isFinal?'checked':''} /><span>This is the final pickup (sets cleanout date &amp; mortality)</span></label><div class="mp-hint">Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.</div><div class="sync-actions"><button class="btn-sync-primary" id="mpSaveBtn" ${canSave?'':'disabled'}>${s.mode==='add'?'＋ Add Pickup':'✓ Save Changes'}</button><button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button></div>`;
   const dateEl=document.getElementById('mpDate');const ageEl=document.getElementById('mpAge');const birdsEl=document.getElementById('mpBirds');const avgEl=document.getElementById('mpAvg');const totalEl=document.getElementById('mpTotal');const ageChipEl=document.getElementById('mpAgeChip');
   const onDateChange=()=>{s.dateIso=dateEl.value;if(s.ageTouched)return;const d=parseExcelDate(dateEl.value);if(!d)return;const a=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,d)):0;ageEl.value=a;s.ageValue=a;if(ageChipEl)ageChipEl.style.display='';};
   const onAgeChange=()=>{s.ageTouched=true;if(ageChipEl)ageChipEl.style.display='none';const a=Number(ageEl.value);if(Number.isFinite(a)&&a>=0)s.ageValue=Math.floor(a);};
   dateEl.addEventListener('input',onDateChange);dateEl.addEventListener('change',onDateChange);
   ageEl.addEventListener('input',onAgeChange);
+  // Estimated-weight row: shows while the weight is the growth-curve estimate
+  const estRow=document.getElementById('mpEstRow');const replaceWrap=document.getElementById('mpReplaceWrap');
+  const refreshEst=()=>{
+    const d=parseExcelDate(s.dateIso);const est=estimatedPickupWeight(shed,d?dateOnly(d):null);
+    if(!estRow)return;
+    if(est==null){estRow.innerHTML='';return;}
+    estRow.innerHTML=s.weightEst
+      ?`<span class="est-chip">est</span> Estimated weight for ${escapeHtml(fmtShort(dateOnly(d)))}: <strong>${est.toFixed(3)} kg</strong> from the growth curve. Saved as an <strong>estimated</strong> weight — replace it with the kill-sheet weight when it arrives.`
+      :`Using a real weight. <button type="button" class="mp-link" id="mpUseEst">Use estimated ${est.toFixed(3)} kg instead</button>`;
+    const useBtn=document.getElementById('mpUseEst');
+    if(useBtn)useBtn.addEventListener('click',()=>{s.weightEst=true;s.lastEdited='avg';avgEl.value=est.toFixed(3);refreshManualPickupCalc();refreshEst();});
+  };
+  const refreshReplace=()=>{
+    if(!replaceWrap||s.mode!=='add')return;
+    const near=nearbyPlannedPickup(shed,s.dateIso);
+    if(!near){s.replaceId=null;replaceWrap.innerHTML='';return;}
+    if(s.replaceId!==near.id){s.replaceId=near.id;s.replaceOn=true;}
+    // Kill sheet usually matches the plan — pre-fill birds if still empty
+    if(birdsEl&&birdsEl.value===''){birdsEl.value=Number(near.birds)||'';refreshManualPickupCalc();}
+    replaceWrap.innerHTML=`<label class="mp-checkbox-row"><input type="checkbox" id="mpReplace" ${s.replaceOn?'checked':''} /><span>Replaces the planned pickup on <strong>${escapeHtml(fmtShort(dateOnly(near.date)))}</strong> (${Number(near.birds).toLocaleString()} birds) — removes it so birds aren't counted twice</span></label>`;
+    document.getElementById('mpReplace').addEventListener('change',e=>{s.replaceOn=e.target.checked;});
+  };
+  const applyEstForDate=()=>{if(!s.weightEst)return;const d=parseExcelDate(s.dateIso);const est=estimatedPickupWeight(shed,d?dateOnly(d):null);if(est!=null){avgEl.value=est.toFixed(3);s.lastEdited='avg';refreshManualPickupCalc();}};
+  dateEl.addEventListener('change',()=>{applyEstForDate();refreshEst();refreshReplace();});
+  dateEl.addEventListener('input',()=>{applyEstForDate();refreshEst();refreshReplace();});
   birdsEl.addEventListener('input',()=>refreshManualPickupCalc());
-  avgEl.addEventListener('input',()=>{s.lastEdited='avg';refreshManualPickupCalc();});
-  totalEl.addEventListener('input',()=>{s.lastEdited='total';refreshManualPickupCalc();});
-  refreshManualPickupCalc();
+  // Typing a weight makes it a real (weighed) figure
+  avgEl.addEventListener('input',()=>{s.lastEdited='avg';s.weightEst=false;refreshManualPickupCalc();refreshEst();});
+  totalEl.addEventListener('input',()=>{s.lastEdited='total';s.weightEst=false;refreshManualPickupCalc();refreshEst();});
+  refreshManualPickupCalc();refreshEst();refreshReplace();
   document.getElementById('mpSaveBtn').addEventListener('click',saveManualPickup);
   document.getElementById('mpCancelBtn').addEventListener('click',closeManualPickupModal);
   setTimeout(()=>{birdsEl&&birdsEl.focus();},80);
@@ -492,13 +588,15 @@ function saveManualPickup(){
   else{if(!Number.isFinite(totalVal)||totalVal<=0){showToast('Enter a total weight or an average weight.',true);return;}total=totalVal;avg=total/birdsVal;}
   const age=(Number.isFinite(ageVal)&&ageVal>=0)?Math.floor(ageVal):0;
   const ageOverride=s.ageTouched?age:null;
-  const newPickup={date:dateObj,birds:Math.floor(birdsVal),isFinal,variance:null,totalWeightKg:total,totalWeightKgFromExcel:null,totalWeightKgManual:true,source:'manual',ageOverride};
+  const newPickup={date:dateObj,birds:Math.floor(birdsVal),isFinal,variance:null,totalWeightKg:total,totalWeightKgFromExcel:null,totalWeightKgManual:true,source:'manual',ageOverride,weightEstimated:!!s.weightEst};
   if(!shed.pickups)shed.pickups=[];
   if(s.mode==='add'){
     if(shed.pickups.length>=MAX_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups.`,true);return;}
     const dup=shed.pickups.find(p=>iso(p.date)===iso(dateObj));
     if(dup&&!confirm('A pickup already exists for this date. Add another anyway?'))return;
     shed.pickups.push(newPickup);
+    // Remove the planned pickup this logged one replaces (ticked in the form)
+    if(s.replaceId&&s.replaceOn){const before=(shed.predictedPickups||[]).length;shed.predictedPickups=(shed.predictedPickups||[]).filter(pp=>pp.id!==s.replaceId);s.__replaced=before!==shed.predictedPickups.length;}
   }else{
     const idx=shed.pickups.findIndex(p=>iso(p.date)===s.originalDateIso);
     if(idx<0){showToast('Pickup not found.',true);return;}
@@ -512,7 +610,8 @@ function saveManualPickup(){
   reflowShedPickups(shed);reconcilePredictedPickups(shed);
   saveState();schedulePush();
   closeManualPickupModal();render();
-  showToast(s.mode==='add'?'✅ Pickup added.':'✅ Pickup updated.');
+  const estNote=s.weightEst?' with an estimated weight':'';
+  showToast(s.mode==='add'?`✅ Pickup added${estNote}${s.__replaced?' — replaced the planned pickup':''}.`:`✅ Pickup updated${estNote}.`);
 }
 function reflowShedPickups(shed){
   if(!shed||!Array.isArray(shed.pickups))return;
@@ -989,8 +1088,8 @@ function setPickupTotalWeight(shedId,pickupDateIso,value){
   const shed=farmData.sheds[shedId-1];if(!shed)return;
   const pickup=(shed.pickups||[]).find(p=>iso(p.date)===pickupDateIso);if(!pickup)return;
   const v=String(value).trim();
-  if(v===''){pickup.totalWeightKg=null;pickup.totalWeightKgManual=false;}
-  else{const n=Number(v);if(!Number.isFinite(n)||n<=0)return;pickup.totalWeightKg=n;pickup.totalWeightKgManual=true;if(pickup.totalWeightKgFromExcel==null)pickup.totalWeightKgFromExcel=n;}
+  if(v===''){pickup.totalWeightKg=null;pickup.totalWeightKgManual=false;pickup.weightEstimated=false;}
+  else{const n=Number(v);if(!Number.isFinite(n)||n<=0)return;pickup.totalWeightKg=n;pickup.totalWeightKgManual=true;pickup.weightEstimated=false;if(pickup.totalWeightKgFromExcel==null)pickup.totalWeightKgFromExcel=n;}
   saveState();schedulePush();render();
 }
 function setPickupAvgWeight(shedId,pickupDateIso,value){
@@ -998,15 +1097,15 @@ function setPickupAvgWeight(shedId,pickupDateIso,value){
   const shed=farmData.sheds[shedId-1];if(!shed)return;
   const pickup=(shed.pickups||[]).find(p=>iso(p.date)===pickupDateIso);if(!pickup)return;
   const v=String(value).trim();
-  if(v===''){pickup.totalWeightKg=null;pickup.totalWeightKgManual=false;}
-  else{const n=Number(v);if(!Number.isFinite(n)||n<=0)return;const birds=Number(pickup.birds)||0;if(birds<=0)return;const total=n*birds;pickup.totalWeightKg=total;pickup.totalWeightKgManual=true;if(pickup.totalWeightKgFromExcel==null)pickup.totalWeightKgFromExcel=total;}
+  if(v===''){pickup.totalWeightKg=null;pickup.totalWeightKgManual=false;pickup.weightEstimated=false;}
+  else{const n=Number(v);if(!Number.isFinite(n)||n<=0)return;const birds=Number(pickup.birds)||0;if(birds<=0)return;const total=n*birds;pickup.totalWeightKg=total;pickup.totalWeightKgManual=true;pickup.weightEstimated=false;if(pickup.totalWeightKgFromExcel==null)pickup.totalWeightKgFromExcel=total;}
   saveState();schedulePush();render();
 }
 function revertPickupTotalWeight(shedId,pickupDateIso){
   if(!farmData)return;
   const shed=farmData.sheds[shedId-1];if(!shed)return;
   const pickup=(shed.pickups||[]).find(p=>iso(p.date)===pickupDateIso);if(!pickup)return;
-  pickup.totalWeightKg=pickup.totalWeightKgFromExcel||null;pickup.totalWeightKgManual=false;
+  pickup.totalWeightKg=pickup.totalWeightKgFromExcel||null;pickup.totalWeightKgManual=false;pickup.weightEstimated=false;
   saveState();schedulePush();render();
   showToast('↺ Weight reverted to Excel value.');
 }
@@ -1175,6 +1274,7 @@ function renderLoadsModalBody(){
     <button type="button" class="loads-chip ${filter==='upcoming'?'active':''}" data-loads-filter="upcoming">Upcoming <span class="count">${summary.upcoming}</span></button>
     <button type="button" class="loads-chip ${filter==='needs'?'active':''}" data-loads-filter="needs">Needs actual <span class="count">${summary.needsActual}</span></button>
     <button type="button" class="loads-chip ${filter==='past'?'active':''}" data-loads-filter="past">Past <span class="count">${summary.past}</span></button>
+    <span class="loads-bulk">${bulkToolbar('loads',filtered.map(l=>String(l.id)),'loads')}</span>
   </div>`;
 
   if(filtered.length===0){
@@ -1225,7 +1325,7 @@ function renderLoadsModalBody(){
       const noteStr=hasNote?escapeHtml(l.note):'no note';
       const noteCls=hasNote?'':'empty';
       return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
-        <td class="lon-num-cell"><span class="load-num-badge">#${r.loadNum}</span></td>
+        <td class="lon-num-cell">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span></td>
         <td class="lon-date">${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
         <td class="num lon-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
@@ -1261,7 +1361,7 @@ function renderLoadsModalBody(){
       const actualNeedsCls=r.needsActual?'needs':'';
       const actualPlaceholder=r.needsActual?'enter actual':'—';
       return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
-        <td class="loads-date"><span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
+        <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
         <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
         ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
