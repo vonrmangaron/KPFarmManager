@@ -672,19 +672,19 @@ function renderCleanoutDashCard(){
   let totBirds=0,totKg=0,anyFallback=false;
   const rows=sheds.map(shed=>{
     const co=shedCleanoutInfo(shed,today);
-    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="5" class="dco-none">No clean-out date or pickups planned</td></tr>`;
+    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="4" class="dco-none">No clean-out date or pickups planned</td></tr>`;
     totBirds+=co.birdsAtEnd;totKg+=co.totalKgAtEnd;
     const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
     const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
-    return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td><td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="From the '+co.endSrc+' — no clean-out date set">*</sup>':''} <span class="dco-sub">${when}</span></td><td class="num">${co.cleanAge}d</td><td class="num">${co.kgAtEnd?co.kgAtEnd.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${co.birdsAtEnd.toLocaleString()}</td><td class="num dco-total">${co.kgAtEnd?Math.round(co.totalKgAtEnd).toLocaleString():'—'} <span class="dco-sub">kg</span></td></tr>`;
+    return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td><td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="From the '+co.endSrc+' — no clean-out date set">*</sup>':''} <span class="dco-sub">${when}</span></td><td class="num">${co.cleanAge}d</td><td class="num">${co.kgAtEnd?co.kgAtEnd.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${co.kgAtEnd?Math.round(co.totalKgAtEnd).toLocaleString():'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAtEnd.toLocaleString()} birds</div></td></tr>`;
   }).join('');
   const avg=totBirds>0?totKg/totBirds:0;
   return `<div class="dash-card dash-cleanout">
-    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Bird age, weight and live weight on each shed's clean-out day</span></div>
+    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Age, weight and live weight on each shed's last day</span></div>
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
-      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Bird age</th><th class="num">Est. weight / bird</th><th class="num">Birds</th><th class="num">Est. total live weight</th></tr></thead>
+      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Age</th><th class="num">Wt / bird</th><th class="num">Est. total live wt</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avg?avg.toFixed(3):'—'} <span class="dco-sub">kg avg</span></td><td class="num">${totBirds.toLocaleString()}</td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span></td></tr></tfoot>
+      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avg?avg.toFixed(3):'—'} <span class="dco-sub">kg avg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
     </table></div>
     ${anyFallback?'<p class="dco-note">* No clean-out date set — using the shed\'s last pickup (logged or planned).</p>':''}
   </div>`;
@@ -905,9 +905,13 @@ function renderDashboardView() {
     </div>
   </div>
 
-  ${renderFarmKpiCard()}
+  <!-- Batch outlook: projected result beside clean-out plan -->
+  <div class="dash-split dash-split-half dash-outlook">
+    ${renderFarmKpiCard()}
+    ${renderCleanoutDashCard()}
+  </div>
 
-  <!-- Status: pair tiles (2x2) beside the per-shed table -->
+  <!-- Now: pair tiles (2x2) beside the per-shed table -->
   <div class="dash-split dash-split-half">
     ${renderGroupStatusGrid()}
   <div class="dash-card">
@@ -924,27 +928,22 @@ function renderDashboardView() {
   </div>
   </div>
 
-  <!-- Growth beside feed on hand -->
+  <!-- Growth beside one Feed card (on hand + next deliveries) -->
   <div class="dash-split dash-split-main">
     ${renderGrowthChartSvg()}
-    <div class="dash-card">
+    <div class="dash-card dash-feed">
       <div class="dash-card-head">
-        <h2 class="dash-card-title">Feed on hand</h2>
-        <button class="dash-card-action" id="siloFromDash" type="button">Silos</button>
+        <h2 class="dash-card-title">Feed</h2>
+        <span class="dash-feed-actions"><button class="dash-card-action" id="siloFromDash" type="button">Silos</button><button class="dash-card-action" data-open-loads-modal type="button">All loads</button></span>
       </div>
-      <div class="dash-silo-list">${siloBars}</div>
-    </div>
-  </div>
-
-  <!-- Clean-out plan beside upcoming deliveries -->
-  <div class="dash-split dash-split-main">
-    ${renderCleanoutDashCard()}
-    <div class="dash-card">
-      <div class="dash-card-head">
-        <h2 class="dash-card-title">Upcoming deliveries</h2>
-        <button class="dash-card-action" data-open-loads-modal type="button">All loads</button>
+      <div class="dash-feed-sec">
+        <div class="dash-feed-sub">On hand</div>
+        <div class="dash-silo-list">${siloBars}</div>
       </div>
-      ${deliveryRows || '<p style="font-size:13px;color:var(--muted);margin:0">No feed deliveries scheduled. Open All loads to plan one.</p>'}
+      <div class="dash-feed-sec">
+        <div class="dash-feed-sub">Upcoming deliveries</div>
+        ${deliveryRows || '<p class="dash-feed-empty">No feed deliveries scheduled. Open All loads to plan one.</p>'}
+      </div>
     </div>
   </div>
 
