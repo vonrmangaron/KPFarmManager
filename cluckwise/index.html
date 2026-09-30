@@ -1388,6 +1388,30 @@
   .wxc-rh-label{ font-size:9.5px; font-weight:800; letter-spacing:0.06em; opacity:0.65; }
   .wxc-rh-val{ font-family:'Sora',sans-serif; font-size:16px; font-weight:800; }
   .wx-card.wx-clickable::after{ content:none; }
+  /* Today's column: round "now" badge overlapping the top-left corner */
+  .kanban-column.has-now{ position:relative; }
+  .kanban-column.has-now .col-head-top{ padding-left:60px; min-height:52px; }
+  .col-now-badge{
+    position:absolute; top:6px; left:6px; z-index:2; width:56px; height:56px; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
+    border:2px solid var(--surface); box-shadow:var(--shadow-md); color:#2B2116; font-family:'Inter',sans-serif; line-height:1;
+  }
+  .col-now-badge .cnb-ic{ font-size:20px; }
+  .col-now-badge .cnb-t{ font-family:'Sora',sans-serif; font-size:14px; font-weight:800; margin-top:1px; }
+  .col-now-badge .cnb-l{ font-size:8px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; opacity:0.65; }
+  body.theme-dark .col-now-badge{ color:var(--ink); border-color:var(--bg); }
+  .col-now-badge.wx-tone-sun{ background:linear-gradient(135deg,#FFF4C7,#FFD35C); }
+  .col-now-badge.wx-tone-partly{ background:linear-gradient(135deg,#FFF3CF,#DCE5F0); }
+  .col-now-badge.wx-tone-cloud{ background:linear-gradient(135deg,#F0F2F5,#CBD3DD); }
+  .col-now-badge.wx-tone-rain{ background:linear-gradient(135deg,#DDEBFF,#A9C8F0); }
+  .col-now-badge.wx-tone-snow{ background:linear-gradient(135deg,#F4F9FF,#D4E5F7); }
+  .col-now-badge.wx-tone-storm{ background:linear-gradient(135deg,#EDE3FB,#C7B0EE); }
+  body.theme-dark .col-now-badge.wx-tone-sun{ background:linear-gradient(135deg,#5A4A1A,#7A5F16); }
+  body.theme-dark .col-now-badge.wx-tone-partly{ background:linear-gradient(135deg,#4A4630,#3A4660); }
+  body.theme-dark .col-now-badge.wx-tone-cloud{ background:#3C4659; }
+  body.theme-dark .col-now-badge.wx-tone-rain{ background:linear-gradient(135deg,#23406B,#2D5690); }
+  body.theme-dark .col-now-badge.wx-tone-snow{ background:#3A4D66; }
+  body.theme-dark .col-now-badge.wx-tone-storm{ background:linear-gradient(135deg,#3E2D66,#533C8A); }
   .wx-card-col .wxc-ic{ font-size:32px; }
   .wx-card-wide{ margin-top:0; margin-left:auto; min-width:260px; max-width:420px; }
   .wx-card-wide .wxc-ic{ font-size:40px; }
@@ -6508,6 +6532,21 @@
         }
       }
       col.appendChild(head);
+      // Today: round "now" badge over the column's top-left — live icon + temp
+      if(!isCollapsed && isToday){
+        const wNow = wxForDate(key);
+        if(wNow && wNow.current){
+          const [nIc, nLabel] = wxIconLabel(wNow.current.code, wNow.current.isDay);
+          const nb = document.createElement('span');
+          nb.className = 'col-now-badge wx-tone-' + wxTone(wNow.current.code);
+          nb.title = `Now: ${nLabel} · ${wxT(wNow.current.temp)}` + (wNow.current.hum != null ? ` · RH ${Math.round(wNow.current.hum)}%` : '');
+          nb.innerHTML = `<span class="cnb-ic"></span><span class="cnb-t"></span><span class="cnb-l">Now</span>`;
+          nb.querySelector('.cnb-ic').textContent = nIc;
+          nb.querySelector('.cnb-t').textContent = wxT(wNow.current.temp);
+          col.classList.add('has-now');
+          col.appendChild(nb);
+        }
+      }
       head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
         e.stopPropagation();
         if(isCollapsed) collapsedKanbanCols.delete(key); else collapsedKanbanCols.add(key);
