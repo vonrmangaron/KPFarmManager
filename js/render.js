@@ -907,29 +907,9 @@ function renderDashboardView() {
 
   ${renderFarmKpiCard()}
 
-  ${renderGroupStatusGrid()}
-
-  ${renderCleanoutDashCard()}
-
-  <div class="dash-grid dash-row-pair">
-    <div class="dash-card">
-      <div class="dash-card-head">
-        <h2 class="dash-card-title">Feed on hand</h2>
-        <button class="dash-card-action" id="siloFromDash" type="button">Silos</button>
-      </div>
-      <div class="dash-silo-list">${siloBars}</div>
-    </div>
-    <div class="dash-card">
-      <div class="dash-card-head">
-        <h2 class="dash-card-title">Upcoming deliveries</h2>
-        <button class="dash-card-action" data-open-loads-modal type="button">All loads</button>
-      </div>
-      ${deliveryRows || '<p style="font-size:13px;color:var(--muted);margin:0">No feed deliveries scheduled. Open All loads to plan one.</p>'}
-    </div>
-  </div>
-
-  ${renderGrowthChartSvg()}
-
+  <!-- Status: pair tiles (2x2) beside the per-shed table -->
+  <div class="dash-split dash-split-half">
+    ${renderGroupStatusGrid()}
   <div class="dash-card">
     <div class="dash-card-head">
       <h2 class="dash-card-title">Shed performance</h2>
@@ -941,6 +921,31 @@ function renderDashboardView() {
       </tr></thead>
       <tbody>${shedRows}</tbody>
     </table>
+  </div>
+  </div>
+
+  <!-- Growth beside feed on hand -->
+  <div class="dash-split dash-split-main">
+    ${renderGrowthChartSvg()}
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Feed on hand</h2>
+        <button class="dash-card-action" id="siloFromDash" type="button">Silos</button>
+      </div>
+      <div class="dash-silo-list">${siloBars}</div>
+    </div>
+  </div>
+
+  <!-- Clean-out plan beside upcoming deliveries -->
+  <div class="dash-split dash-split-main">
+    ${renderCleanoutDashCard()}
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2 class="dash-card-title">Upcoming deliveries</h2>
+        <button class="dash-card-action" data-open-loads-modal type="button">All loads</button>
+      </div>
+      ${deliveryRows || '<p style="font-size:13px;color:var(--muted);margin:0">No feed deliveries scheduled. Open All loads to plan one.</p>'}
+    </div>
   </div>
 
   </div>`;
