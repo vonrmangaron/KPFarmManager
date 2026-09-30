@@ -491,11 +491,12 @@
   .day-cell.past .day-num{ color:var(--muted); background:transparent; border-color:transparent; }
   .day-cell.muted .day-num{ opacity:0.4; }
 
+  .day-cell .event-ribbons{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; max-width:62%; min-width:0; flex-shrink:1; }
   .day-cell .event-ribbon{
     font-size:10px; font-weight:700; color:#fff; letter-spacing:0.01em;
     padding:3px 7px; border-radius:6px;
-    max-width:62%; overflow:hidden; text-overflow:ellipsis;
-    white-space:nowrap; flex-shrink:1; min-width:0;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; flex-shrink:1; min-width:0; box-sizing:border-box;
   }
 
   .batch-pill-row{
@@ -927,6 +928,19 @@
 
   .form-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:440px; max-width:92vw; max-height:82vh; background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
   .form-modal.open{display:flex;}
+  .ac-note{ font-size:12.5px; line-height:1.45; color:var(--muted); margin:0 0 4px; }
+  .ac-note strong{ color:var(--ink); }
+  .ac-card{ display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-soft); }
+  .ac-card .batch-swatch{ flex-shrink:0; }
+  .ac-card-main{ display:flex; flex-direction:column; min-width:0; font-size:12px; color:var(--muted); }
+  .ac-card-main strong{ font-size:13.5px; color:var(--ink); overflow-wrap:anywhere; }
+  #auditConflictBody .btn-app{ margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+  .ac-rec{ font-size:10px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase; background:rgba(255,255,255,0.25); padding:2px 7px; border-radius:999px; }
+  .btn-ghost-wide{ border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; padding:10px 14px; border-radius:10px; cursor:pointer; transition:background .12s ease; }
+  .btn-ghost-wide:hover{ background:var(--surface-soft); }
+  .btn-link-muted{ border:none; background:transparent; color:var(--muted); font-weight:600; font-size:12.5px; padding:6px; cursor:pointer; align-self:center; }
+  .event-clash-tag{ border:none; cursor:pointer; font-family:inherit; background:var(--danger-soft) !important; color:var(--danger) !important; text-align:left; }
+  .event-clash-tag:hover{ filter:brightness(0.96); }
   .backlog-modal{ width:560px; }
   .backlog-modal-row{ flex-wrap:wrap; }
   .backlog-modal-actions{ display:flex; gap:8px; justify-content:flex-end; }
@@ -2417,6 +2431,11 @@
   </div>
 </div>
 
+<div class="form-modal" id="auditConflictModal" role="dialog" aria-modal="true" aria-labelledby="auditConflictTitle">
+  <div class="form-modal-head"><h2 id="auditConflictTitle">Audit clash</h2><button id="closeAuditConflictModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="auditConflictBody"></div>
+</div>
+
 <div class="form-modal" id="bulkDeleteModal">
   <div class="form-modal-head"><h2>🗑️ Bulk delete tasks</h2><button id="closeBulkDeleteModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
@@ -2756,8 +2775,10 @@
   }
   function batchAgeOn(b, key){ return Math.round((toDateObj(key) - toDateObj(b.start)) / 86400000); }
   function batchesForDate(key){ return batches.filter(b => key>=b.start && key<=b.end); }
-  function eventOnDate(key){ return events.find(e=>e.date===key); }
-  function criticalEventForDate(key){ return events.find(e=>{ const cs=addDaysStr(e.date,-7), ce=addDaysStr(e.date,-1); return key>=cs && key<=ce; }); }
+  function eventsOnDate(key){ return events.filter(e=>e.date===key); }
+  function eventOnDate(key){ return eventsOnDate(key)[0]; }
+  function prepEventsForDate(key){ return events.filter(e=> key>=addDaysStr(e.date,-7) && key<=addDaysStr(e.date,-1)).sort((a,b)=> a.date.localeCompare(b.date)); }
+  function criticalEventForDate(key){ return prepEventsForDate(key)[0]; }
   function formatTimeAgo(date){
     const diff = Date.now() - date.getTime();
     const mins = Math.floor(diff / 60000);
@@ -3356,7 +3377,7 @@
     while(taskDate <= batchEndDate){
       const dayAge = week*7;
       const name = `Weight Shed ${shedNum} - (Day ${dayAge})`;
-      addTask(name, '⚖️', taskDate, { batchNumber, shedNum: String(shedNum), source: 'auto-weight' });
+      addTask(name, '⚖️', taskDate, { batchNumber, shedNum: String(shedNum), source: 'auto-weight', dayAge });
       count++; week++;
       taskDate = addDaysStr(placementDate, week*7);
     }
@@ -3370,8 +3391,30 @@
     const refreshed = [], unchanged = [], removed = [];
     function clearShedAutoTasks(shedNum){ tasks = tasks.filter(t=> !(t.source==='auto-weight' && t.batchNumber===batchNumber && t.shedNum===String(shedNum))); }
     oldByShed.forEach((placement, shedNum)=>{ if(!newByShed.has(shedNum)){ clearShedAutoTasks(shedNum); removed.push(shedNum); } });
+    // Weigh-in day age of an auto task (stored, or read from its "(Day N)" name).
+    function weighDayAge(t){ if(t.dayAge) return t.dayAge; const m = /\(Day (\d+)\)/.exec(t.name||''); return m ? Number(m[1]) : null; }
+    // Same placement, new end date: keep existing weigh tasks as-is (done ticks, assignees,
+    // moved dates) — only drop open ones past the new end and add missing weeks up to it.
+    function extendShedAutoTasks(shedNum, placement){
+      const mine = tasks.filter(t=> t.source==='auto-weight' && t.batchNumber===batchNumber && t.shedNum===String(shedNum));
+      const beyond = new Set(mine.filter(t=>{ const d = weighDayAge(t); return d && t.status!=='done' && addDaysStr(placement, d) > newEndDate; }));
+      if(beyond.size) tasks = tasks.filter(t=> !beyond.has(t));
+      const have = new Set(mine.filter(t=> !beyond.has(t)).map(weighDayAge));
+      let added = 0;
+      for(let week=1; addDaysStr(placement, week*7) <= newEndDate; week++){
+        const dayAge = week*7;
+        if(have.has(dayAge)) continue;
+        addTask(`Weight Shed ${shedNum} - (Day ${dayAge})`, '⚖️', addDaysStr(placement, dayAge), { batchNumber, shedNum: String(shedNum), source: 'auto-weight', dayAge });
+        added++;
+      }
+      return added + beyond.size;
+    }
     newByShed.forEach((placement, shedNum)=>{
-      if(!endDateChanged && oldByShed.get(shedNum) === placement){ unchanged.push(shedNum); return; }
+      if(oldByShed.get(shedNum) === placement){
+        if(endDateChanged && extendShedAutoTasks(shedNum, placement)) refreshed.push(shedNum);
+        else unchanged.push(shedNum);
+        return;
+      }
       clearShedAutoTasks(shedNum);
       generateShedWeightTasks(shedNum, placement, batchNumber, newEndDate);
       refreshed.push(shedNum);
@@ -3616,6 +3659,7 @@
     addHistory('Event added', `"${name}" scheduled for ${formatFull(dateVal)}${batchNumber ? ` (Batch #${batchNumber})` : ''} — critical prep week ${formatFull(cs)} – ${formatFull(ce)}`);
     if(withChecklist){ addPrepChecklistToBacklog(`"${name}" audit`); }
     persist(); renderAll();
+    return ev;
   }
   function deleteEvent(id){
     const ev = events.find(e=>e.id===id);
@@ -3636,6 +3680,102 @@
     ev.batchNumber = batchNumber || null;
     addHistory('Event updated', `${oldLabel} updated to "${ev.name}" (${formatFull(ev.date)})`);
     persist(); renderAll();
+  }
+
+  // ==================== AUDIT CLASHES ====================
+  // Two audits clash when they share a day, or when one falls inside the other's 7-day prep week.
+  function auditDayGap(a, b){ return Math.round((toDateObj(a) - toDateObj(b)) / 86400000); }
+  function auditConflicts(date, excludeId, ignoreAcked){
+    const self = excludeId ? events.find(e=> e.id===excludeId) : null;
+    const acked = id=> ignoreAcked && ((self && (self.ackConflicts||[]).includes(id)) || (events.find(e=> e.id===id)?.ackConflicts||[]).includes(excludeId));
+    const others = events.filter(e=> e.id!==excludeId && !acked(e.id));
+    return {
+      sameDay: others.filter(e=> e.date===date),
+      overlap: others.filter(e=> e.date!==date && Math.abs(auditDayGap(e.date, date)) <= 7).sort((a,b)=> a.date.localeCompare(b.date)),
+    };
+  }
+  // Nearest date (today or later) whose prep week clears every other audit.
+  function suggestAuditDate(date, excludeId){
+    const others = events.filter(e=> e.id!==excludeId);
+    const today = dateKey(new Date());
+    const ok = d=> d >= today && others.every(e=> Math.abs(auditDayGap(e.date, d)) >= 8);
+    for(let i=1; i<=90; i++){
+      const later = addDaysStr(date, i), earlier = addDaysStr(date, -i);
+      if(ok(later)) return later;
+      if(ok(earlier)) return earlier;
+    }
+    return null;
+  }
+  function combinedAuditName(a, b){
+    return a.trim().toLowerCase()===b.trim().toLowerCase() ? a : `${a} + ${b}`;
+  }
+  // Opens the clash dialog if `draft` clashes with another audit. Returns false when there's no clash.
+  // draft: {name, date, checklist, color, batchNumber}; editId: the audit being edited (null when adding);
+  // onSave(draft, {skipChecklist}) saves the draft as its own audit; onCancel runs when the user backs out.
+  function openAuditConflict(draft, editId, onSave, onCancel, fromList){
+    const { sameDay, overlap } = auditConflicts(draft.date, editId, true);
+    if(!sameDay.length && !overlap.length) return false;
+    const body = $('#auditConflictBody');
+    const title = $('#auditConflictTitle');
+    body.innerHTML = '';
+    const note = (html)=>{ const p = document.createElement('p'); p.className = 'ac-note'; p.innerHTML = html; body.appendChild(p); };
+    const card = (ev, label)=>{ const d = document.createElement('div'); d.className = 'ac-card'; d.innerHTML = `<span class="batch-swatch" style="background:${ev.color || DEFAULT_EVENT_COLOR}"></span><span class="ac-card-main"><strong>${escapeHtml(ev.name)}</strong><span>${escapeHtml(label)}</span></span>`; body.appendChild(d); };
+    const btn = (cls, html, fn)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.innerHTML = html; b.addEventListener('click', fn); body.appendChild(b); return b; };
+    const done = ()=>{ $('#auditConflictModal').classList.remove('open'); $('#scrim').classList.remove('show'); };
+    const draftLabel = `${formatFullWithWeekday(draft.date)}${editId ? '' : ' (new)'}`;
+    if(sameDay.length){
+      const other = sameDay[0];
+      title.textContent = 'Two audits on the same day';
+      note(`<strong>${escapeHtml(other.name)}</strong> is already on ${escapeHtml(formatFullWithWeekday(draft.date))}. Combine them so the farm preps once and the calendar shows one audit day, or keep them as two separate audits.`);
+      card(other, formatFullWithWeekday(other.date));
+      card(draft, draftLabel);
+      const merged = combinedAuditName(other.name, draft.name);
+      btn('btn-app', `Combine into “${escapeHtml(merged)}” <span class="ac-rec">Recommended</span>`, ()=>{
+        const undoSnap = captureUndo();
+        other.name = merged;
+        other.batchNumber = other.batchNumber || draft.batchNumber || null;
+        if(draft.checklist && !other.checklist && !editId) addPrepChecklistToBacklog(`"${merged}" audit`);
+        other.checklist = other.checklist || !!draft.checklist;
+        if(editId) events = events.filter(e=> e.id!==editId);
+        addHistory('Audits combined', `"${draft.name}" combined into "${merged}" on ${formatFull(draft.date)}`);
+        persist(); renderAll(); done();
+        offerUndo(`Combined into “${merged}”`, undoSnap);
+        onSave && onSave(null);
+      });
+      btn('btn-ghost-wide', 'Keep as two audits', ()=>{
+        done();
+        onSave(draft, { ack: sameDay.map(e=> e.id).concat(overlap.map(e=> e.id)) });
+      });
+    } else {
+      const other = overlap[0];
+      const gap = auditDayGap(draft.date, other.date);
+      const suggestion = suggestAuditDate(draft.date, editId);
+      title.textContent = 'Prep weeks overlap';
+      const names = overlap.map(e=> `<strong>${escapeHtml(e.name)}</strong> (${escapeHtml(formatShort(e.date))})`).join(', ');
+      note(`This audit is ${Math.abs(gap)} day${Math.abs(gap)===1?'':'s'} ${gap>0?'after':'before'} ${names}, so their 7-day prep weeks overlap and the team would be preparing for both at once.`);
+      card(other, formatFullWithWeekday(other.date));
+      card(draft, draftLabel);
+      if(suggestion){
+        btn('btn-app', `Move to ${escapeHtml(formatFullWithWeekday(suggestion))} <span class="ac-rec">Recommended</span>`, ()=>{
+          done();
+          onSave({ ...draft, date: suggestion }, {});
+        }).title = 'Nearest date that gives this audit its own full prep week';
+      }
+      const dupChecklist = !editId && draft.checklist && overlap.some(e=> e.checklist);
+      btn(suggestion ? 'btn-ghost-wide' : 'btn-app', `Keep ${escapeHtml(formatShort(draft.date))} — share one prep week`, ()=>{
+        done();
+        onSave(draft, { skipChecklist: dupChecklist, ack: overlap.map(e=> e.id) });
+      });
+      if(dupChecklist) note('Sharing the prep week skips adding a second copy of the Frequent Task Checklist — the one already in Backlog covers both audits.');
+    }
+    btn('btn-link-muted', fromList ? 'Close' : 'Back', ()=>{ done(); onCancel && onCancel(); });
+    closeOverlays();
+    openDrawer('#auditConflictModal');
+    return true;
+  }
+  function ackAuditConflicts(ev, ids){
+    if(!ev || !ids || !ids.length) return;
+    ev.ackConflicts = Array.from(new Set([...(ev.ackConflicts||[]), ...ids]));
   }
 
   function addFrequentTemplate(name, icon){
@@ -5335,8 +5475,32 @@
         const nd = row.querySelector('.edit-date').value;
         const nc = row.querySelector('.edit-color').value;
         const nb = row.querySelector('.edit-batch').value;
-        updateEvent(ev.id, nn, nd, nc, nb);
+        const save = (d, opts)=>{
+          if(!d) return; // combined
+          updateEvent(ev.id, d.name, d.date, d.color, d.batchNumber);
+          if(opts && opts.ack){ ackAuditConflicts(events.find(e=> e.id===ev.id), opts.ack); persist(); renderAll(); }
+        };
+        const draft = { name: nn || ev.name, date: nd || ev.date, checklist: ev.checklist, color: nc, batchNumber: nb };
+        if(draft.date !== ev.date && openAuditConflict(draft, ev.id, save, null)) return;
+        save(draft);
       });
+      const clash = auditConflicts(ev.date, ev.id, true);
+      if(clash.sameDay.length || clash.overlap.length){
+        const other = (clash.sameDay[0] || clash.overlap[0]);
+        const tag = document.createElement('button');
+        tag.type = 'button';
+        tag.className = 'event-checklist-tag event-clash-tag';
+        tag.textContent = clash.sameDay.length ? `⚠ Same day as ${other.name} · Combine` : `⚠ Prep overlaps ${other.name} · Fix`;
+        tag.addEventListener('click', ()=>{
+          const draft = { name: ev.name, date: ev.date, checklist: ev.checklist, color: ev.color, batchNumber: ev.batchNumber };
+          openAuditConflict(draft, ev.id, (d, opts)=>{
+            if(!d) return;
+            if(d.date !== ev.date) updateEvent(ev.id, d.name, d.date, d.color, d.batchNumber);
+            if(opts && opts.ack){ ackAuditConflicts(ev, opts.ack); persist(); renderAll(); }
+          }, null, true);
+        });
+        row.querySelector('.e-sub').after(tag);
+      }
       box.appendChild(row);
     });
   }
@@ -5425,7 +5589,7 @@
         const c = critEvent.color || DEFAULT_EVENT_COLOR;
         cell.style.background = hexToRgba(c, 0.08);
         cell.style.border = `1.5px dashed ${hexToRgba(c, 0.7)}`;
-        cell.title = `Prep week for ${critEvent.name}`;
+        cell.title = `Prep week for ${prepEventsForDate(key).map(e=>e.name).join(', ')}`;
       } else if(activeBatches.length){
         const c = colorForBatchNumber(activeBatches[0].number);
         cell.style.background = hexToRgba(c, 0.14);
@@ -5450,12 +5614,17 @@
       if(wxCell) header.appendChild(wxCell);
 
       if(exactEvent){
-        const rb = document.createElement('div');
-        rb.className = 'event-ribbon';
-        rb.style.background = exactEvent.color || DEFAULT_EVENT_COLOR;
-        rb.textContent = '🚩 ' + exactEvent.name;
-        rb.title = `Audit day: ${exactEvent.name}${exactEvent.batchNumber ? ` (Batch #${exactEvent.batchNumber})` : ''}`;
-        header.appendChild(rb);
+        const ribbons = document.createElement('div');
+        ribbons.className = 'event-ribbons';
+        eventsOnDate(key).forEach(ev=>{
+          const rb = document.createElement('div');
+          rb.className = 'event-ribbon';
+          rb.style.background = ev.color || DEFAULT_EVENT_COLOR;
+          rb.textContent = '🚩 ' + ev.name;
+          rb.title = `Audit day: ${ev.name}${ev.batchNumber ? ` (Batch #${ev.batchNumber})` : ''}`;
+          ribbons.appendChild(rb);
+        });
+        header.appendChild(ribbons);
       }
 
       cell.appendChild(header);
@@ -5504,7 +5673,7 @@
         const done = dayTasks.filter(t=> t.status === 'done').length;
         ariaParts.push(`${done} of ${dayTasks.length} done`);
       }
-      if(exactEvent) ariaParts.push(`audit: ${exactEvent.name}`);
+      if(exactEvent) ariaParts.push(`audit: ${eventsOnDate(key).map(e=>e.name).join(', ')}`);
       cell.setAttribute('aria-label', ariaParts.join(', '));
 
       cell.addEventListener('click', (e)=>{
@@ -5587,22 +5756,25 @@
     container.className = 'day-context';
 
     const activeBatches = batchesForDate(key);
-    const event = eventOnDate(key);
-    const critEvent = !event ? criticalEventForDate(key) : null;
+    const dayEvents = eventsOnDate(key);
+    const prepEvents = prepEventsForDate(key);
+    const event = dayEvents[0];
+    const critEvent = prepEvents[0];
 
-    if(event){
+    dayEvents.forEach(ev=>{
       const pill = document.createElement('div');
       pill.className = 'day-context-event';
-      pill.style.background = event.color || DEFAULT_EVENT_COLOR;
-      pill.textContent = '🚩 ' + event.name;
+      pill.style.background = ev.color || DEFAULT_EVENT_COLOR;
+      pill.textContent = '🚩 ' + ev.name;
       container.appendChild(pill);
-    } else if(critEvent){
+    });
+    prepEvents.forEach(ev=>{
       const pill = document.createElement('div');
       pill.className = 'day-context-event prep';
-      pill.style.color = critEvent.color || DEFAULT_EVENT_COLOR;
-      pill.textContent = '⏳ Prep: ' + critEvent.name;
+      pill.style.color = ev.color || DEFAULT_EVENT_COLOR;
+      pill.textContent = '⏳ Prep: ' + ev.name;
       container.appendChild(pill);
-    }
+    });
 
     activeBatches.forEach(b => {
       const pill = document.createElement('div');
@@ -7437,11 +7609,22 @@
     const color = $('#eventColorInput').value;
     const batchNumber = $('#eventBatchSelect').value;
     if(!name || !dateVal){ showToast('Enter an event name and date.', true); return; }
-    addEvent(name, dateVal, withChecklist, color, batchNumber);
-    $('#eventNameInput').value=''; $('#eventDateInput').value=''; $('#eventChecklistBox').checked=false; $('#eventBatchSelect').value='';
-    updateEventColorDefault();
-    closeOverlays();
-    showToast('Event added.');
+    const resetForm = ()=>{
+      $('#eventNameInput').value=''; $('#eventDateInput').value=''; $('#eventChecklistBox').checked=false; $('#eventBatchSelect').value='';
+      updateEventColorDefault();
+      closeOverlays();
+    };
+    const save = (d, opts)=>{
+      resetForm();
+      if(!d) return; // combined into an existing audit
+      opts = opts || {};
+      const ev = addEvent(d.name, d.date, d.checklist && !opts.skipChecklist, d.color, d.batchNumber);
+      if(opts.ack){ ackAuditConflicts(ev, opts.ack); persist(); renderAll(); }
+      showToast(d.date !== dateVal ? `Event added on ${formatShort(d.date)}.` : 'Event added.');
+    };
+    const draft = { name, date: dateVal, checklist: withChecklist, color, batchNumber };
+    if(openAuditConflict(draft, null, save, ()=> openDrawer('#eventModal'))) return;
+    save(draft);
   });
 
   function openExportModal(){
@@ -8295,6 +8478,7 @@
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
     $('#seriesDeleteModal').classList.remove('open');
+    $('#auditConflictModal').classList.remove('open');
     $('#copyModal').classList.remove('open');
     $('#wxModal').classList.remove('open');
     wxDetailKey = null;
@@ -8346,6 +8530,7 @@
   });
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openBatchModal(); });
+  $('#closeAuditConflictModal').addEventListener('click', closeOverlays);
   $('#quickAddEventBtn').addEventListener('click', ()=>{ closeOverlays(); populateEventBatchSelect(); openDrawer('#eventModal'); });
 
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
