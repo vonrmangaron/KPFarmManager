@@ -29,6 +29,7 @@ function buildCloudPayload(){
       farmFeedOverride:predState.farmFeedOverride,
       farmLeftoverKg:predState.farmLeftoverKg,
       carryoverKg:predState.carryoverKg||{1:0,2:0,3:0,4:0},
+      carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[]
     },
@@ -65,6 +66,7 @@ function applyCloudPayload(payload,options){
     if(p.targetHarvestWeightKg&&typeof p.targetHarvestWeightKg==='object'){[1,2,3,4].forEach(g=>{const n=Number(p.targetHarvestWeightKg[g]);if(Number.isFinite(n)&&n>0)predState.targetHarvestWeightKg[g]=n;});}
     if(p.farmFeedOverride!=null&&Number.isFinite(Number(p.farmFeedOverride))&&Number(p.farmFeedOverride)>0)predState.farmFeedOverride=Number(p.farmFeedOverride);
     else if(p.farmFeedOverride===null)predState.farmFeedOverride=null;
+    {const v=Number(p.carryoverFarmKg);predState.carryoverFarmKg=Number.isFinite(v)&&v>0?v:0;}
     if(p.carryoverKg&&typeof p.carryoverKg==='object'){const c={};[1,2,3,4].forEach(g=>{const v=Number(p.carryoverKg[g]);c[g]=Number.isFinite(v)&&v>0?v:0;});predState.carryoverKg=c;}
     if(p.farmLeftoverKg!=null&&Number.isFinite(Number(p.farmLeftoverKg))&&Number(p.farmLeftoverKg)>0)predState.farmLeftoverKg=Number(p.farmLeftoverKg);
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;

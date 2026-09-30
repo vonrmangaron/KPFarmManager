@@ -286,7 +286,7 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
     // Adjustments modal: per-shed 'Use global' switch (draft)
     if(t.dataset&&t.dataset.adjUseglobal&&adjDraft){const id=Number(t.dataset.adjUseglobal);if(t.checked)adjDraft.ovr[id]=null;else{const own=suggestScaleCorrection([farmData.sheds[id-1]]);adjDraft.ovr[id]=own?Math.round(own.value*1000)/10:adjDraft.scale;}refreshAdjModal(true);return;}
     // Carry-over from last batch (Feed Loads)
-    if(t.dataset&&t.dataset.carryover){const g=Number(t.dataset.carryover);setCarryover(g,t.value);if(loadsModalState.open)renderLoadsModalBody();render();showToast(`↩ Carry-over for ${pairLabel(g)}: ${(carryoverKg(g)/1000).toFixed(2)} t.`);return;}
+    if(t.dataset&&t.dataset.carryoverTotal){setCarryoverTotal(t.value);if(loadsModalState.open)renderLoadsModalBody();render();showToast(`↩ Carried over from last batch: ${(carryoverTotalKg()/1000).toFixed(2)} t.`);return;}
     // Bulk select checkboxes
     if(t.classList&&t.classList.contains('bulk-cb')){bulkToggle(t.dataset.bulkId,t.checked);return;}
     if(t.dataset&&t.dataset.bulkAll){bulkToggleAll((t.dataset.bulkIds||'').split('\u001f').filter(Boolean),t.checked);return;}

@@ -1256,12 +1256,12 @@ function renderLoadsModalBody(){
     ? `<div class="loads-feedtype-row"><span class="lbl">By feed type</span><div class="delivery-type-chips">${feedTypeChipList}</div><span class="total-chip">Total <strong>${summary.total} load${summary.total===1?'':'s'}</strong></span></div>`
     : '';
 
-  // Carry-over from last batch: per pair, no date, not a load or feed type
+  // Carry-over from last batch: one farm-wide amount, no date, not a load or feed type
   const coTotal=carryoverTotalKg();
   const carryHtml=`<div class="loads-carry">
-      <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · already in the silos · not counted by feed type</span></div>
-      <div class="lc-grid">${[1,2,3,4].map(g=>{const kg=carryoverKg(g);return `<label class="lc-item"><span class="lc-pair">${pairLabel(g)}</span><span class="lc-in"><input type="number" min="0" step="0.1" class="lc-input" data-carryover="${g}" value="${kg?(kg/1000).toFixed(2):''}" placeholder="0" aria-label="Carry-over for ${pairLabel(g)} in tonnes" /> t</span></label>`;}).join('')}</div>
-      <div class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></div>
+      <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · not counted by feed type · added to the batch's total feed from your dockets</span></div>
+      <div class="lc-row"><label class="lc-in"><input type="number" min="0" step="0.1" class="lc-input" data-carryover-total="1" value="${coTotal?(coTotal/1000).toFixed(2):''}" placeholder="0" aria-label="Feed carried over from last batch, tonnes" /> t</label>
+      <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
     </div>`;
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">

@@ -2,7 +2,7 @@ function buildDefaultShed(id){return {id,placementDate:null,initialPopulation:DE
 function buildDefaultFarmData(batchNumber){return {batchNumber:batchNumber||'',importDate:new Date().toISOString(),fileName:null,biasFactor:DEFAULT_BIAS_FACTOR,sheds:Array.from({length:SHED_COUNT},(_,i)=>buildDefaultShed(i+1))};}
 function resetAllToDefaults(batchNumber){
   farmData=buildDefaultFarmData(batchNumber);
-  predState.batchNumber=batchNumber||'';predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
+  predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
   testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
   shedViewByGroup={...DEFAULT_VIEWS};shedRange={start:0,end:0};siloRange={start:0,end:14};inlineDeliveryState=null;activeTab='g1';dailyRangeState={...DEFAULT_DAILY_RANGE};

@@ -16,7 +16,7 @@ const KEYS={shedId:['Shed','shed','ShedId','Shed ID','ShedID','Shed#','Shed No',
 let farmData=null,activeTab='dashboard',shedRange={start:0,end:0},siloRange={start:0,end:14},shedViewByGroup={...DEFAULT_VIEWS};
 let siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
 let testDeliveries={1:[],2:[],3:[],4:[]},farmLoads=[],inlineDeliveryState=null;
-let predState={carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
+let predState={carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
@@ -47,12 +47,16 @@ function setFarmDisplayName(v){
 // Groups are named by their sheds: group 2 → "Sheds 3–4".
 function pairShort(g){return `${2*g-1}–${2*g}`;}
 function pairLabel(g){return `Sheds ${pairShort(g)}`;}
-// Feed carried over from the last batch (kg per shed pair): no date, not a
-// load, not in feed-type counts. Counted in this batch's feed totals only —
-// it's already in the silos, so silo readings (not this) drive the balance.
-function carryoverKg(g){const c=predState.carryoverKg||{};const v=Number(c[g]);return Number.isFinite(v)&&v>0?v:0;}
-function carryoverTotalKg(){return [1,2,3,4].reduce((s,g)=>s+carryoverKg(g),0);}
-function setCarryover(g,tonnes){const n=Number(tonnes);if(!predState.carryoverKg)predState.carryoverKg={1:0,2:0,3:0,4:0};predState.carryoverKg[g]=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;savePredState();schedulePush();}
+// Feed carried over from the last batch: ONE farm-wide amount (kg), no
+// date, not a load, not in feed-type counts. Added to the batch's total feed
+// when that total comes from your dockets (manual override). Older per-pair
+// values (carryoverKg) are folded into the total.
+function carryoverTotalKg(){
+  const v=Number(predState.carryoverFarmKg);if(Number.isFinite(v)&&v>0)return v;
+  const c=predState.carryoverKg||{};return [1,2,3,4].reduce((s,g)=>{const x=Number(c[g]);return s+(Number.isFinite(x)&&x>0?x:0);},0);
+}
+function carryoverKg(){return 0;} // per-pair carry-over retired (one farm-wide field)
+function setCarryoverTotal(tonnes){const n=Number(tonnes);predState.carryoverFarmKg=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;predState.carryoverKg={1:0,2:0,3:0,4:0};savePredState();schedulePush();}
 // Silo reading time of day (per device): 'am' = morning (start-of-day
 // stock) or 'pm' = evening (end-of-day stock). Stamped on each reading.
 const SILO_TIME_KEY='prodwise_silo_read_time_v1';

@@ -905,32 +905,12 @@ function renderDashboardView() {
     </div>
   </div>
 
-  <!-- Batch outlook: projected result beside clean-out plan -->
-  <div class="dash-split dash-split-half dash-outlook">
-    ${renderFarmKpiCard()}
-    ${renderCleanoutDashCard()}
-  </div>
+  <!-- Featured: whole-batch projection -->
+  ${renderFarmKpiCard()}
 
-  <!-- Now: pair tiles (2x2) beside the per-shed table -->
+  <!-- Per shed pair: status tiles beside feed (on hand + deliveries) -->
   <div class="dash-split dash-split-half">
     ${renderGroupStatusGrid()}
-  <div class="dash-card">
-    <div class="dash-card-head">
-      <h2 class="dash-card-title">Shed performance</h2>
-      <button class="dash-card-action" data-tab="g1" type="button">All sheds</button>
-    </div>
-    <table class="dash-shed-table">
-      <thead><tr>
-        <th>Shed</th><th>Age</th><th>Last ALW</th><th>Days behind</th><th>Live</th><th>Mort.</th>
-      </tr></thead>
-      <tbody>${shedRows}</tbody>
-    </table>
-  </div>
-  </div>
-
-  <!-- Growth beside one Feed card (on hand + next deliveries) -->
-  <div class="dash-split dash-split-main">
-    ${renderGrowthChartSvg()}
     <div class="dash-card dash-feed">
       <div class="dash-card-head">
         <h2 class="dash-card-title">Feed</h2>
@@ -946,6 +926,26 @@ function renderDashboardView() {
       </div>
     </div>
   </div>
+
+  <!-- Per shed: performance now beside the clean-out outlook -->
+  <div class="dash-split dash-split-half">
+  <div class="dash-card">
+    <div class="dash-card-head">
+      <h2 class="dash-card-title">Shed performance</h2>
+      <button class="dash-card-action" data-tab="g1" type="button">All sheds</button>
+    </div>
+    <table class="dash-shed-table">
+      <thead><tr>
+        <th>Shed</th><th>Age</th><th>Last ALW</th><th>Days behind</th><th>Live</th><th>Mort.</th>
+      </tr></thead>
+      <tbody>${shedRows}</tbody>
+    </table>
+  </div>
+    ${renderCleanoutDashCard()}
+  </div>
+
+  <!-- Trend -->
+  ${renderGrowthChartSvg()}
 
   </div>`;
 }
@@ -1462,19 +1462,26 @@ function computeFarmTotals(){
   const weightedAge=totalBirdsAtHarvest>0?weightedAgeSum/totalBirdsAtHarvest:0;
   const livability=totalPlaced>0?((totalPlaced-totalMortalityEst)/totalPlaced)*100:0;
   const usingManualFeed=predState.farmFeedOverride!=null&&predState.farmFeedOverride>0;
-  const baseFeed=usingManualFeed?predState.farmFeedOverride:totalFeedAuto;
+  // Docket-based total (manual override) + feed carried in from last batch
+  // − feed left at clean-out. The auto estimate is bird intake, which
+  // already includes eating the carry-over, so it isn't added there.
+  const carryKg=carryoverTotalKg();
+  const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+carryKg:totalFeedAuto;
   const totalFeed=Math.max(0,baseFeed-leftoverKg);
   const fcr=totalLiveWeight>0?totalFeed/totalLiveWeight:0;
   const beta=Number(predState.beta)||0.27;
   const cfcr=fcr>0?fcr-(avgWeight-2.45)*beta:0;
   const pif=(weightedAge>0&&fcr>0)?((livability*avgWeight)/(weightedAge*fcr)*100):0;
-  return {hasData:true,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,pif,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
+  return {hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,pif,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 function farmFeedSubText(t){
-  if(t.usingManualFeed&&t.leftoverApplied)return `Manual override − leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
-  if(t.usingManualFeed)return `Manual override · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
-  if(t.leftoverApplied)return `Auto − ${Math.round(t.leftoverKg).toLocaleString()} kg leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
-  return `Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}`;
+  const co=t.carryKg>0?Math.round(t.carryKg/1000*100)/100:0;
+  if(t.usingManualFeed){
+    const parts=['Manual (dockets)'];if(co)parts.push(`+ ${co.toFixed(2)} t carried over`);if(t.leftoverApplied)parts.push(`− ${Math.round(t.leftoverKg).toLocaleString()} kg leftover`);
+    return `${parts.join(' ')} · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
+  }
+  const base=t.leftoverApplied?`Auto − ${Math.round(t.leftoverKg).toLocaleString()} kg leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`:`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}`;
+  return co?`${base} · carry-over ${co.toFixed(2)} t is already in the birds' intake`:base;
 }
 
 /* ---------- Predictions page ---------- */
