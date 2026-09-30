@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   initShedViews();
   const savedSilo=loadSiloData();if(savedSilo)siloData=savedSilo;
   const savedLoads=loadFarmLoads();if(savedLoads)farmLoads=savedLoads;
+  // Save + sync any docket weights repaired from kg-in-tonnes entries
+  if(loadUnitRepairs>0){saveFarmLoads();setTimeout(()=>{schedulePush();showToast(`Fixed ${loadUnitRepairs} docket weight${loadUnitRepairs===1?'':'s'} that were entered in kg.`);loadUnitRepairs=0;},1500);}
   migrateDeliveriesToLoads();
   loadLoadsView();
   render();

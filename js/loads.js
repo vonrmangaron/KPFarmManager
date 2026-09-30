@@ -11,6 +11,13 @@ function fmtKgAlways(kg){if(!Number.isFinite(kg)||kg===0)return '0 kg';return Ma
 function fmtTonnesAlways(kg){if(!Number.isFinite(kg)||kg===0)return '0.00 t';const t=kg/1000;return t.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' t';}
 function fmtTonnes(t){if(!Number.isFinite(t)||t===0)return '0.00 t';return t.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' t';}
 
+// Docket weights: the Actual box takes TONNES, but dockets are often in kg.
+// No single load is over MAX_LOAD_T tonnes, so anything larger is read as kg.
+const MAX_LOAD_T=500;
+function docketToKg(n){return n>MAX_LOAD_T?n:n*1000;}
+// Repair: actuals over MAX_LOAD_T tonnes were kg typed into the tonnes box
+// (stored ×1000 too big) — divide back. Counted so the app can save/sync once.
+let loadUnitRepairs=0;
 function normalizeLoad(load){
   if(!load||typeof load!=='object')return null;
   const dateObj=load.date?parseExcelDate(load.date):null;if(!dateObj)return null;
@@ -18,7 +25,8 @@ function normalizeLoad(load){
   const sr=load.splitKg||{};
   const splitKg={1:Math.max(0,Number(sr[1])||0),2:Math.max(0,Number(sr[2])||0),3:Math.max(0,Number(sr[3])||0),4:Math.max(0,Number(sr[4])||0)};
   const rawActual=load.actualKg;
-  const actualKg=(rawActual!=null&&Number.isFinite(Number(rawActual))&&Number(rawActual)>0)?Number(rawActual):null;
+  let actualKg=(rawActual!=null&&Number.isFinite(Number(rawActual))&&Number(rawActual)>0)?Number(rawActual):null;
+  if(actualKg!=null&&actualKg>MAX_LOAD_T*1000){actualKg=actualKg/1000;loadUnitRepairs++;}
   return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString())};
 }
 function serializeFarmLoads(){

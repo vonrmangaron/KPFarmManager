@@ -1377,7 +1377,7 @@ function renderLoadsModalBody(){
         <td>${feedTypeTagHtml(l.feedType)}</td>
         <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
         ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
-        <td class="loads-actual-cell"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" /></td>
+        <td class="loads-actual-cell"><span class="loads-actual-wrap"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" title="Tonnes (e.g. 30.12). Kilograms like 30120 are converted automatically." /><span class="loads-actual-unit">t</span></span></td>
         <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
       </tr>`;
     }).join('');
@@ -1393,7 +1393,7 @@ function renderLoadsModalBody(){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <div class="loads-hint">💡 Type the docket total straight into the Actual column. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
+    <div class="loads-hint">💡 Type the docket total straight into the Actual column, in <strong>tonnes</strong> (e.g. 30.12) — or in <strong>kg</strong> (e.g. 30120), which is converted automatically. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
   }
 
   body.innerHTML=sumHtml+chipsHtml+bodyHtml;
@@ -1437,7 +1437,8 @@ function handleLoadActualBlur(inp){
     setTimeout(()=>{inp.classList.remove('invalid');inp.value=currentVal;},900);
     return;
   }
-  load.actualKg=n*1000;
+  load.actualKg=docketToKg(n);
+  if(n>MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as kg → ${(load.actualKg/1000).toFixed(2)} t.`);
   saveFarmLoads();schedulePush();
   inp.value=(load.actualKg/1000).toFixed(2);
   inp.classList.remove('invalid','needs');

@@ -59,7 +59,7 @@ function applyCloudPayload(payload,options){
     if(!predState.batchNumber&&farmData.batchNumber){predState.batchNumber=sanitizeBatchNumber(farmData.batchNumber);savePredState();}
   }
   if(payload.siloData&&typeof payload.siloData==='object'){const incoming={};[1,2,3,4].forEach(g=>{const s=payload.siloData[g]||{};incoming[g]={readings:Array.isArray(s.readings)?s.readings.map(r=>({date:String(r.date||''),silo1Rings:normalizeRing(r.silo1Rings),silo2Rings:normalizeRing(r.silo2Rings),silo3Rings:normalizeRing(r.silo3Rings),time:r.time==='am'?'am':'pm'})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b)=>a.date.localeCompare(b.date)):[],deliveries:Array.isArray(s.deliveries)?s.deliveries.map(d=>({id:d.id||String(Date.now())+Math.random().toString(16).slice(2),date:d.date?dateOnly(d.date):null,amountKg:Number(d.amountKg)||0,feedType:FEED_TYPES.some(f=>f.id===d.feedType)?d.feedType:'',note:d.note||''})).filter(d=>d.date&&d.amountKg>0):[]};});siloData=incoming;saveSiloData();}
-  if(Array.isArray(payload.farmLoads)){farmLoads=payload.farmLoads.map(normalizeLoad).filter(Boolean);saveFarmLoads();}
+  if(Array.isArray(payload.farmLoads)){loadUnitRepairs=0;farmLoads=payload.farmLoads.map(normalizeLoad).filter(Boolean);saveFarmLoads();if(loadUnitRepairs>0){const n=loadUnitRepairs;loadUnitRepairs=0;setTimeout(()=>{schedulePush();showToast(`Fixed ${n} docket weight${n===1?'':'s'} that were entered in kg.`);},800);}}
   if(payload.predictions&&typeof payload.predictions==='object'){
     const p=payload.predictions;
     if(Number.isFinite(p.beta))predState.beta=Math.max(0,Math.min(0.6,p.beta));
