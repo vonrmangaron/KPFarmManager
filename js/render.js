@@ -1707,15 +1707,34 @@ function renderPredictionsShedCard(shed,group){
   const densityTone=densityVal>dsCurrent.maxDensity?'red':(densityVal>dsCurrent.triggerDensity?'amber':'');
   const densityStyle=densityTone==='red'?'color:var(--danger);':(densityTone==='amber'?'color:var(--primary-dark);':'');
   const currentMortRate=pred.initialPop>0?((pred.currentMort/pred.initialPop)*100).toFixed(2):'0.00';
-  // Age at clean-out: the shed's clean-out date, else its last (final) pickup — logged or planned
-  let endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null,endSrc='clean-out';
-  if(!endDate){const eff=computeEffectivePickups(shed);const last=eff.length?eff[eff.length-1]:null;if(last){endDate=dateOnly(last.date);endSrc=last.__source==='predicted'?'last planned pickup':'last pickup';}}
-  const cleanAge=endDate&&shed.placementDate?daysBetween(shed.placementDate,endDate):null;
-  const daysToEnd=endDate?daysBetween(today,endDate):null;
-  const cleanSub=cleanAge!=null
-    ?`Clean-out at <strong>${cleanAge}d</strong> · ${fmtShortNoYear(endDate)}${daysToEnd>0?` · ${daysToEnd} day${daysToEnd===1?'':'s'} left`:daysToEnd===0?' · today':''}${endSrc!=='clean-out'?` <span title="No clean-out date set — using the ${endSrc}">(${endSrc})</span>`:''}`
-    :'No clean-out date set';
-  const snapshotHtml=`<div class="pred-snapshot"><div class="pred-snap-item"><div class="lbl">🐥 Birds placed</div><div class="val">${pred.initialPop.toLocaleString()}</div></div><div class="pred-snap-item"><div class="lbl">📆 Current age</div><div class="val">${pred.currentAge}d</div><div class="sub">${cleanSub}</div></div><div class="pred-snap-item"><div class="lbl">⚠️ Mortality</div><div class="val"><input type="number" class="snapshot-mort-input" min="0" step="1" value="${Math.max(0,Number(shed.mortality)||0)}" data-shed="${shed.id-1}" data-field="mortality" id="snapshotMortP_${shed.id}" title="Edit actual mortality count for this shed" /></div><div class="sub">${currentMortRate}% of placed</div></div><div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div><div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${(shed.pickups||[]).length} of ${dsCurrent.targetPickups}</div></div><div class="pred-snap-item"><div class="lbl">📐 Density today</div><div class="val" style="${densityStyle}">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div><div class="sub">${pred.liveNow.toLocaleString()} × ${forecastKg.toFixed(3)} kg ÷ 3,162 m²</div></div></div>`;
+  // ── Clean-out card: the shed's clean-out date, else its last pickup
+  //    (logged or planned). Birds present that morning × forecast weight
+  //    (same growth forecast as the planned-pickup rows).
+  let endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null,endSrc='clean-out date';
+  if(!endDate){const eff=computeEffectivePickups(shed);const last=eff.length?eff[eff.length-1]:null;if(last){endDate=dateOnly(last.date);endSrc=last.__source==='predicted'?'last planned pickup':'last logged pickup';}}
+  let cleanoutCardHtml;
+  if(endDate&&shed.placementDate){
+    const cleanAge=daysBetween(shed.placementDate,endDate);
+    const daysToEnd=daysBetween(today,endDate);
+    const pickedThatDay=computeEffectivePickups(shed).filter(p=>iso(dateOnly(p.date))===iso(endDate)).reduce((n,p)=>n+(Number(p.birds)||0),0);
+    const birdsAtEnd=Math.max(0,liveAtStartOfDay(shed,endDate)+pickedThatDay);
+    const fw=forecastWeightModeAware(shed,endDate);const kgAtEnd=fw&&fw.kg?fw.kg:0;
+    const bandPct=fw&&fw.band?Math.round(fw.band*100):null;
+    const totalKgAtEnd=birdsAtEnd*kgAtEnd;
+    const whenTxt=daysToEnd>0?`in ${daysToEnd} day${daysToEnd===1?'':'s'}`:daysToEnd===0?'today':`${-daysToEnd} day${daysToEnd===-1?'':'s'} ago`;
+    cleanoutCardHtml=`<div class="pred-snap-item pred-cleanout" title="Based on the ${endSrc}">
+      <div class="pco-head"><span class="lbl">🧹 Clean-out</span><span class="pco-src">${endSrc==='clean-out date'?'':`from the ${endSrc}`}</span></div>
+      <div class="pco-grid">
+        <div><div class="pco-k">Date</div><div class="pco-v">${fmtShortNoYear(endDate)}</div><div class="pco-s">${whenTxt}</div></div>
+        <div><div class="pco-k">Bird age</div><div class="pco-v">${cleanAge}d</div><div class="pco-s">at clean-out</div></div>
+        <div><div class="pco-k">Est. live weight</div><div class="pco-v">${kgAtEnd?kgAtEnd.toFixed(3):'—'} <small>kg</small></div><div class="pco-s">per bird${bandPct?` · ±${bandPct}%`:''}</div></div>
+        <div><div class="pco-k">Est. total live weight</div><div class="pco-v">${kgAtEnd?Math.round(totalKgAtEnd).toLocaleString():'—'} <small>kg</small></div><div class="pco-s">${birdsAtEnd.toLocaleString()} birds × ${kgAtEnd?kgAtEnd.toFixed(3):'—'} kg</div></div>
+      </div>
+    </div>`;
+  }else{
+    cleanoutCardHtml=`<div class="pred-snap-item pred-cleanout empty"><div class="pco-head"><span class="lbl">🧹 Clean-out</span></div><div class="pco-s">No clean-out date or pickups planned yet — add them to see age, weight and total live weight at clean-out.</div></div>`;
+  }
+  const snapshotHtml=`<div class="pred-snapshot"><div class="pred-snap-item"><div class="lbl">🐥 Birds placed</div><div class="val">${pred.initialPop.toLocaleString()}</div></div><div class="pred-snap-item"><div class="lbl">📆 Current age</div><div class="val">${pred.currentAge}d</div></div><div class="pred-snap-item"><div class="lbl">⚠️ Mortality</div><div class="val"><input type="number" class="snapshot-mort-input" min="0" step="1" value="${Math.max(0,Number(shed.mortality)||0)}" data-shed="${shed.id-1}" data-field="mortality" id="snapshotMortP_${shed.id}" title="Edit actual mortality count for this shed" /></div><div class="sub">${currentMortRate}% of placed</div></div><div class="pred-snap-item"><div class="lbl">🐔 Live birds</div><div class="val">${pred.liveNow.toLocaleString()}</div></div><div class="pred-snap-item"><div class="lbl">🔄 Pickups done</div><div class="val">${(shed.pickups||[]).length} of ${dsCurrent.targetPickups}</div></div><div class="pred-snap-item"><div class="lbl">📐 Density today</div><div class="val" style="${densityStyle}">${densityDisplay} <span style="font-size:11px;font-weight:600;color:var(--muted);">kg/m²</span></div><div class="sub">${pred.liveNow.toLocaleString()} × ${forecastKg.toFixed(3)} kg ÷ 3,162 m²</div></div>${cleanoutCardHtml}</div>`;
   const ratePct=shedMortRate(shed);
   const rateBarHtml=`<div class="mort-rate-bar"><span class="mr-label">🩺 Daily mortality rate</span><input type="range" id="mortRateSlider_${shed.id}" min="0" max="1" step="0.01" value="${ratePct}" data-mortrate-shed="${shed.id}" /><input type="number" id="mortRateNum_${shed.id}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${ratePct.toFixed(2)}" data-mortrate-shed="${shed.id}" /><span class="mr-unit">% of live birds / day</span></div>`;
   const curvePanelHtml=renderInYardCurvePanel(shed);
