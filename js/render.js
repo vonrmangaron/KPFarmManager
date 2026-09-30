@@ -662,6 +662,33 @@ function renderGroupStatusGrid() {
   </div>`;
 }
 
+// Dashboard: clean-out outlook for every shed (same numbers as the
+// Predictions snapshot cards — shedCleanoutInfo)
+function renderCleanoutDashCard(){
+  if(!farmData)return '';
+  const today=dateOnly(new Date());
+  const sheds=(farmData.sheds||[]).filter(s=>s.placementDate);
+  if(!sheds.length)return '';
+  let totBirds=0,totKg=0,anyFallback=false;
+  const rows=sheds.map(shed=>{
+    const co=shedCleanoutInfo(shed,today);
+    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="5" class="dco-none">No clean-out date or pickups planned</td></tr>`;
+    totBirds+=co.birdsAtEnd;totKg+=co.totalKgAtEnd;
+    const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
+    const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
+    return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td><td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="From the '+co.endSrc+' — no clean-out date set">*</sup>':''} <span class="dco-sub">${when}</span></td><td class="num">${co.cleanAge}d</td><td class="num">${co.kgAtEnd?co.kgAtEnd.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${co.birdsAtEnd.toLocaleString()}</td><td class="num dco-total">${co.kgAtEnd?Math.round(co.totalKgAtEnd).toLocaleString():'—'} <span class="dco-sub">kg</span></td></tr>`;
+  }).join('');
+  const avg=totBirds>0?totKg/totBirds:0;
+  return `<div class="dash-card dash-cleanout">
+    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Bird age, weight and live weight on each shed's clean-out day</span></div>
+    <div class="dco-scroll"><table class="dash-shed-table dco-table">
+      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Bird age</th><th class="num">Est. weight / bird</th><th class="num">Birds</th><th class="num">Est. total live weight</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avg?avg.toFixed(3):'—'} <span class="dco-sub">kg avg</span></td><td class="num">${totBirds.toLocaleString()}</td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span></td></tr></tfoot>
+    </table></div>
+    ${anyFallback?'<p class="dco-note">* No clean-out date set — using the shed\'s last pickup (logged or planned).</p>':''}
+  </div>`;
+}
 function renderDashboardView() {
   if (!farmData) {
     const isConnected = !!(syncFarmName && syncConnectedAt);
@@ -881,6 +908,8 @@ function renderDashboardView() {
   ${renderFarmKpiCard()}
 
   ${renderGroupStatusGrid()}
+
+  ${renderCleanoutDashCard()}
 
   <div class="dash-grid dash-row-pair">
     <div class="dash-card">
@@ -1690,6 +1719,24 @@ if(hasRealFinal)return `<div class="pickup-plan-block"><h4><span>🎯 Predicted 
   const atTarget=(realCount+predictedCount)>=targetN;
   return `<div class="pickup-plan-block"><h4><span>🎯 Predicted Pickups <span class="pp-count-badge">${realCount + predictedCount} of ${targetN}</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn-pp-autofill" data-pp-autofill="${shed.id}" type="button" title="Auto-generate the optimal pickup plan">✨ Auto-fill</button><button class="btn-pp-add" data-pp-add="${shed.id}" type="button" ${atTarget?'disabled':''} title="${atTarget?'Target of '+targetN+' already reached':'Add a predicted pickup'}">＋ Add</button><button class="btn-pp-clear" data-pp-clear="${shed.id}" type="button" title="Remove all predicted pickups for this shed">🗑️ Clear</button>${bulkToolbar('pp:'+shed.id,pps.map(x=>String(x.id)),'planned')}</span></h4><div class="pp-list">${rows.map(r=>{const classes=['pp-row'];if(bulkActive('pp:'+shed.id))classes.push('bulk-on');if(r.isSuperseded)classes.push('pp-superseded');if(r.pp.isFinal)classes.push('pp-final');const badges=[];if(r.isSuperseded)badges.push('<span class="pp-badge">Replaced by actual</span>');if(r.pp.isFinal)badges.push('<span class="pp-badge final">FINAL CLEANOUT</span>');const badgeHtml=badges.join('');return `<div class="${classes.join(' ')}">${bulkCheckbox('pp:'+shed.id,String(r.pp.id),fmtShort(r.pp.date))}<div class="pp-info"><div class="pp-date">${fmtShort(r.pp.date)} · Day ${r.age} ${badgeHtml}</div><div class="pp-meta">Remove <strong>${(Number(r.pp.birds)||0).toLocaleString()}</strong> birds · Density ${r.densityBefore.toFixed(1)} → ${r.densityAfter.toFixed(1)} kg/m²</div></div><div class="pp-actions"><button type="button" data-pp-edit="${shed.id}|${r.pp.id}" title="Edit">✎</button><button type="button" class="danger" data-pp-delete="${shed.id}|${r.pp.id}" title="Delete">✕</button></div></div>`;}).join('')}</div><div class="pp-summary"><div>${progressHtml}</div><div><span class="lbl">Total planned removal:</span> <strong>${totalActiveRemoval.toLocaleString()}</strong> birds</div></div>${targetInputHtml}${densityOverrideHtml}</div>`;
 }
+// Clean-out outlook for a shed: the clean-out date, else its last pickup
+// (logged or planned). Birds present that morning × growth-forecast weight
+// (same forecast as the planned-pickup rows). Used by the Predictions
+// snapshot card and the Dashboard Clean-out card.
+function shedCleanoutInfo(shed,today){
+  if(!shed||!shed.placementDate)return null;
+  today=dateOnly(today||new Date());
+  let endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null,endSrc='clean-out date';
+  if(!endDate){const eff=computeEffectivePickups(shed);const last=eff.length?eff[eff.length-1]:null;if(last){endDate=dateOnly(last.date);endSrc=last.__source==='predicted'?'last planned pickup':'last logged pickup';}}
+  if(!endDate)return null;
+  const cleanAge=daysBetween(shed.placementDate,endDate);
+  const daysToEnd=daysBetween(today,endDate);
+  const pickedThatDay=computeEffectivePickups(shed).filter(p=>iso(dateOnly(p.date))===iso(endDate)).reduce((n,p)=>n+(Number(p.birds)||0),0);
+  const birdsAtEnd=Math.max(0,liveAtStartOfDay(shed,endDate)+pickedThatDay);
+  const fw=forecastWeightModeAware(shed,endDate);const kgAtEnd=fw&&fw.kg?fw.kg:0;
+  const bandPct=fw&&fw.band?Math.round(fw.band*100):null;
+  return {endDate,endSrc,cleanAge,daysToEnd,birdsAtEnd,kgAtEnd,bandPct,totalKgAtEnd:birdsAtEnd*kgAtEnd};
+}
 function renderPredictionsShedCard(shed,group){
   const pred=computePredictions(shed,group);
   const grp=computeGroupPredictions(group);
@@ -1707,20 +1754,11 @@ function renderPredictionsShedCard(shed,group){
   const densityTone=densityVal>dsCurrent.maxDensity?'red':(densityVal>dsCurrent.triggerDensity?'amber':'');
   const densityStyle=densityTone==='red'?'color:var(--danger);':(densityTone==='amber'?'color:var(--primary-dark);':'');
   const currentMortRate=pred.initialPop>0?((pred.currentMort/pred.initialPop)*100).toFixed(2):'0.00';
-  // ── Clean-out card: the shed's clean-out date, else its last pickup
-  //    (logged or planned). Birds present that morning × forecast weight
-  //    (same growth forecast as the planned-pickup rows).
-  let endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null,endSrc='clean-out date';
-  if(!endDate){const eff=computeEffectivePickups(shed);const last=eff.length?eff[eff.length-1]:null;if(last){endDate=dateOnly(last.date);endSrc=last.__source==='predicted'?'last planned pickup':'last logged pickup';}}
+  // ── Clean-out card (shared calculation: shedCleanoutInfo)
+  const co=shedCleanoutInfo(shed,today);
   let cleanoutCardHtml;
-  if(endDate&&shed.placementDate){
-    const cleanAge=daysBetween(shed.placementDate,endDate);
-    const daysToEnd=daysBetween(today,endDate);
-    const pickedThatDay=computeEffectivePickups(shed).filter(p=>iso(dateOnly(p.date))===iso(endDate)).reduce((n,p)=>n+(Number(p.birds)||0),0);
-    const birdsAtEnd=Math.max(0,liveAtStartOfDay(shed,endDate)+pickedThatDay);
-    const fw=forecastWeightModeAware(shed,endDate);const kgAtEnd=fw&&fw.kg?fw.kg:0;
-    const bandPct=fw&&fw.band?Math.round(fw.band*100):null;
-    const totalKgAtEnd=birdsAtEnd*kgAtEnd;
+  if(co){
+    const {endDate,endSrc,cleanAge,daysToEnd,birdsAtEnd,kgAtEnd,bandPct,totalKgAtEnd}=co;
     const whenTxt=daysToEnd>0?`in ${daysToEnd} day${daysToEnd===1?'':'s'}`:daysToEnd===0?'today':`${-daysToEnd} day${daysToEnd===-1?'':'s'} ago`;
     cleanoutCardHtml=`<div class="pred-snap-item pred-cleanout" title="Based on the ${endSrc}">
       <div class="pco-head"><span class="lbl">🧹 Clean-out</span><span class="pco-src">${endSrc==='clean-out date'?'':`from the ${endSrc}`}</span></div>
