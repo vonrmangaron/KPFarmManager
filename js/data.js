@@ -78,26 +78,43 @@ function testKgOn(group,D){const t=iso(D);return (testDeliveries[group]||[]).red
 function deliveriesKgOnAll(group,D){return loadsKgOnAll(group,D)+testKgOn(group,D);}
 // realOnly: ignore session-only test loads (used by alerts, so a
 // hypothetical load can never hide a real shortage).
+// A reading is either EVENING (end-of-day stock, after that day's feeding
+// and deliveries) or MORNING (start-of-day stock, before them). Everything
+// is anchored on the reading day's END balance:
+//   evening: end = reading
+//   morning: end = reading + that day's deliveries − that day's feed
+function readingIsMorning(r){return !!r&&r.time==='am';}
+function readingEndOfDayKg(group,reading,kgOn){
+  const base=readingTotalKg(reading);
+  if(!readingIsMorning(reading))return base;
+  const d=dateOnly(reading.date);
+  return base+(kgOn||deliveriesKgOnAll)(group,d)-groupDailyFeedOn(shedsForGroup(group),d);
+}
 function balanceOnEndOfDay(group,D,realOnly){
   const latest=latestReading(group);if(!latest)return null;
   const kgOn=realOnly?deliveriesKgOn:deliveriesKgOnAll;
   const latestDate=dateOnly(latest.date);const targetD=dateOnly(D);const sheds=shedsForGroup(group);
-  if(targetD.getTime()===latestDate.getTime())return readingTotalKg(latest);
-  if(targetD>latestDate){let bal=readingTotalKg(latest);for(let d=addDays(latestDate,1);d<=targetD;d=addDays(d,1)){bal=bal+kgOn(group,d)-groupDailyFeedOn(sheds,d);}return bal;}
-  let bal=readingTotalKg(latest);for(let d=latestDate;d>targetD;d=addDays(d,-1)){bal=bal-kgOn(group,d)+groupDailyFeedOn(sheds,d);}return bal;
+  const anchor=readingEndOfDayKg(group,latest,kgOn);
+  if(targetD.getTime()===latestDate.getTime())return anchor;
+  if(targetD>latestDate){let bal=anchor;for(let d=addDays(latestDate,1);d<=targetD;d=addDays(d,1)){bal=bal+kgOn(group,d)-groupDailyFeedOn(sheds,d);}return bal;}
+  let bal=anchor;for(let d=latestDate;d>targetD;d=addDays(d,-1)){bal=bal-kgOn(group,d)+groupDailyFeedOn(sheds,d);}return bal;
 }
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
+// "Since the reading": a morning reading hasn't seen its own day yet,
+// so the reading day itself is included.
 function consumptionSinceLatestReading(group){
   const latest=latestReading(group);if(!latest)return 0;
-  const latestDate=dateOnly(latest.date);const today=dateOnly(new Date());if(latestDate>=today)return 0;
+  const latestDate=dateOnly(latest.date);const today=dateOnly(new Date());
+  const start=readingIsMorning(latest)?latestDate:addDays(latestDate,1);if(start>today)return 0;
   const sheds=shedsForGroup(group);let c=0;
-  for(let d=addDays(latestDate,1);d<=today;d=addDays(d,1))c+=groupDailyFeedOn(sheds,d);
+  for(let d=start;d<=today;d=addDays(d,1))c+=groupDailyFeedOn(sheds,d);
   return c;
 }
 function deliveriesSinceLatestReading(group){
   const latest=latestReading(group);if(!latest)return 0;
-  const latestDate=dateOnly(latest.date);const today=dateOnly(new Date());if(latestDate>=today)return 0;
-  let d=0;for(let x=addDays(latestDate,1);x<=today;x=addDays(x,1))d+=deliveriesKgOn(group,x);
+  const latestDate=dateOnly(latest.date);const today=dateOnly(new Date());
+  const start=readingIsMorning(latest)?latestDate:addDays(latestDate,1);if(start>today)return 0;
+  let d=0;for(let x=start;x<=today;x=addDays(x,1))d+=deliveriesKgOn(group,x);
   return d;
 }
 function computeSiloForecast(group,range,opts){
@@ -179,6 +196,7 @@ function setSiloRingsForToday(group,siloNum,rings){
   if(!reading){const prev=s.readings.length?s.readings[s.readings.length-1]:null;reading={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null};s.readings.push(reading);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
   const key=`silo${siloNum}Rings`;
   reading[key]=(rings===null)?null:normalizeRing(rings);
+  reading.time=siloReadTime();
   saveSiloData();schedulePush();render();
 }
 function deleteSiloReading(group,dateIso){

@@ -53,6 +53,23 @@ function pairLabel(g){return `Sheds ${pairShort(g)}`;}
 function carryoverKg(g){const c=predState.carryoverKg||{};const v=Number(c[g]);return Number.isFinite(v)&&v>0?v:0;}
 function carryoverTotalKg(){return [1,2,3,4].reduce((s,g)=>s+carryoverKg(g),0);}
 function setCarryover(g,tonnes){const n=Number(tonnes);if(!predState.carryoverKg)predState.carryoverKg={1:0,2:0,3:0,4:0};predState.carryoverKg[g]=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;savePredState();schedulePush();}
+// Silo reading time of day (per device): 'am' = morning (start-of-day
+// stock) or 'pm' = evening (end-of-day stock). Stamped on each reading.
+const SILO_TIME_KEY='prodwise_silo_read_time_v1';
+function siloReadTime(){try{return localStorage.getItem(SILO_TIME_KEY)==='am'?'am':'pm';}catch(e){return 'pm';}}
+function siloReadTimeLabel(t){return t==='am'?'Morning':'Evening';}
+// Changing it also re-tags TODAY's readings (the ones being entered now)
+function setSiloReadTime(t){
+  t=t==='am'?'am':'pm';try{localStorage.setItem(SILO_TIME_KEY,t);}catch(e){}
+  const todayIso=iso(new Date());let changed=false;
+  [1,2,3,4].forEach(g=>{const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===todayIso);if(r&&r.time!==t){r.time=t;changed=true;}});
+  if(changed){saveSiloData();schedulePush();}
+}
+// Morning / Evening switch (Silo sheet + Current Silo Stock card)
+function readTimeToggleHtml(){
+  const t=siloReadTime();
+  return `<span class="rt-toggle" role="group" aria-label="Reading time"><button type="button" data-read-time="am" aria-pressed="${t==='am'}" class="${t==='am'?'active':''}" title="Start-of-day stock — before feeding and before today's delivery">🌅 Morning</button><button type="button" data-read-time="pm" aria-pressed="${t==='pm'}" class="${t==='pm'?'active':''}" title="End-of-day stock — after today's delivery">🌇 Evening</button></span>`;
+}
 // Farm-wide silo numbering: 12 silos, 3 per pair — pair 2's silos are 4, 5, 6
 function siloNumber(g,n){return (g-1)*3+n;}
 

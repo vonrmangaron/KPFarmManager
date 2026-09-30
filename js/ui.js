@@ -1964,7 +1964,8 @@ function renderSiloModalBody(){
   }).join('');
   body.innerHTML=`<div class="sms-date-bar">
       <div class="sms-date-main"><span class="sms-date-label">Recording for</span><span class="sms-date-value">${fmtShort(new Date())}</span></div>
-      <span class="sms-date-hint">Tap the ring level for each silo · saves instantly</span>
+      ${readTimeToggleHtml()}
+      <span class="sms-date-hint">${siloReadTime()==='am'?'Morning = stock <strong>before</strong> today\'s feeding and delivery':'Evening = stock at <strong>end of day</strong>, after today\'s delivery'} · tap the ring level for each silo · saves instantly</span>
     </div>
     ${groupsHtml}
     <div class="sms-grand-total"><span class="sms-gt-label">Total feed on hand</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
@@ -2021,6 +2022,7 @@ function setSiloRingFromModal(group,siloNum,rings){
     siloModalCreatedToday[group]=true;
   }
   reading[`silo${siloNum}Rings`]=(rings===null)?null:normalizeRing(rings);
+  reading.time=siloReadTime();
   siloModalTouched[group].add(siloNum);
   saveSiloData();schedulePush();
   try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
