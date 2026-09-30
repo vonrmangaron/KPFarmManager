@@ -791,7 +791,7 @@ function renderDashboardView() {
     const groups = [1,2,3,4].filter(g => (Number(l.splitKg[g])||0) > 0);
     const typeCls = FEED_TYPES.some(f => f.id === l.feedType) ? l.feedType : 'unspecified';
     const totalKg = l.actualKg != null ? l.actualKg : l.plannedKg;
-    const splitText = groups.length > 1 ? ' · ' + groups.map(g => `G${g} ${(l.splitKg[g]/1000).toFixed(1)} t`).join(', ') : '';
+    const splitText = groups.length > 1 ? ' · ' + groups.map(g => `${pairShort(g)}: ${(l.splitKg[g]/1000).toFixed(1)} t`).join(', ') : '';
     return `<div class="dash-pickup-item">
       <div class="dash-pickup-date-block">
         <span class="dash-pickup-dow">${WD2[d.getDay()]}</span>
@@ -1192,10 +1192,13 @@ function renderGroupLoadsCard(group){
 }
 function renderFeedSummary(group){
   const summary=groupLoadSummary(group);
+  const co=carryoverKg(group);
   const activeRows=['starter','grower','finisher','withdrawal','unspecified'].map(k=>summary.buckets[k]).filter(b=>b.tonnes>0);
-  if(activeRows.length===0)return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary <span class="sub">· per feed type · 1 block = 60 T · 30 T = 0.5</span></div><div class="feed-summary-empty">No loads scheduled yet — add one via 🚛 Loads to see the block count.</div></div>`;
+  if(activeRows.length===0&&!co)return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary <span class="sub">· per feed type · 1 block = 60 T · 30 T = 0.5</span></div><div class="feed-summary-empty">No loads scheduled yet — add one via 🚛 Loads to see the block count.</div></div>`;
   const rows=activeRows.map(b=>`<tr class="${b.blocks>=0.5?'has-blocks':''}"><td>${feedTypeTagHtml(b.id)}</td><td class="num">${b.tonnes.toFixed(2)} t</td><td class="num">${b.loads}</td><td class="num">${b.blocks>0?`<span class="block-count">${fmtBlocks(b.blocks)}</span>`:`<span class="block-count zero">0</span>`}</td></tr>`).join('');
-  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (these sheds' share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total</td><td class="num">${summary.totalTonnes.toFixed(2)} t</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).</div></div>`;
+  // Carry-over: counted in the total, never in the feed-type / block counts
+  const coRow=co?`<tr class="carry-row"><td><span class="carry-tag">↩ Carry-over</span> <span class="carry-sub">last batch</span></td><td class="num">${(co/1000).toFixed(2)} t</td><td class="num">—</td><td class="num">—</td></tr>`:'';
+  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (these sheds' share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}${coRow}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total${co?' incl. carry-over':''}</td><td class="num">${(summary.totalTonnes+co/1000).toFixed(2)} t</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).${co?' Carry-over from last batch is included in the total but not in feed-type blocks.':''}</div></div>`;
 }
 function renderFeedPlanner(group,sheds,today){
   const forecast=computeSiloForecast(group,siloRange);

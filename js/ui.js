@@ -1256,6 +1256,13 @@ function renderLoadsModalBody(){
     ? `<div class="loads-feedtype-row"><span class="lbl">By feed type</span><div class="delivery-type-chips">${feedTypeChipList}</div><span class="total-chip">Total <strong>${summary.total} load${summary.total===1?'':'s'}</strong></span></div>`
     : '';
 
+  // Carry-over from last batch: per pair, no date, not a load or feed type
+  const coTotal=carryoverTotalKg();
+  const carryHtml=`<div class="loads-carry">
+      <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · already in the silos · not counted by feed type</span></div>
+      <div class="lc-grid">${[1,2,3,4].map(g=>{const kg=carryoverKg(g);return `<label class="lc-item"><span class="lc-pair">${pairLabel(g)}</span><span class="lc-in"><input type="number" min="0" step="0.1" class="lc-input" data-carryover="${g}" value="${kg?(kg/1000).toFixed(2):''}" placeholder="0" aria-label="Carry-over for ${pairLabel(g)} in tonnes" /> t</span></label>`;}).join('')}</div>
+      <div class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></div>
+    </div>`;
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
@@ -1264,6 +1271,7 @@ function renderLoadsModalBody(){
       <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div><div class="sub">${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded</div></div>
     </div>
     ${feedTypeRowHtml}
+    ${carryHtml}
     <div class="loads-summary-actions">
       <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button>
       <div class="loads-view-toggle">
@@ -1316,7 +1324,7 @@ function renderLoadsModalBody(){
   if(view==='oneline'){
     const rows=filtered.map(l=>{
       const r=rowBase(l);
-      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`G${g} ${(v/1000).toFixed(1)}`:`G${g} —`;}).join(' · ');
+      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`${pairShort(g)}: ${(v/1000).toFixed(1)}`:`${pairShort(g)}: —`;}).join(' · ');
       let actualCell='';
       if(l.actualKg!=null&&Number.isFinite(Number(l.actualKg))){
         actualCell=`<span class="lon-actual filled">${(l.actualKg/1000).toFixed(2)} t ✓</span>`;
@@ -1376,10 +1384,10 @@ function renderLoadsModalBody(){
     bodyHtml=`<div class="loads-table-wrap"><table class="loads-table">
       <thead><tr>
         <th>Date</th><th>Type</th><th class="num">Planned</th>
-        <th class="split-cell" style="text-align:center;">G1</th>
-        <th class="split-cell" style="text-align:center;">G2</th>
-        <th class="split-cell" style="text-align:center;">G3</th>
-        <th class="split-cell" style="text-align:center;">G4</th>
+        <th class="split-cell" style="text-align:center;" title="${pairLabel(1)}">${pairShort(1)}</th>
+        <th class="split-cell" style="text-align:center;" title="${pairLabel(2)}">${pairShort(2)}</th>
+        <th class="split-cell" style="text-align:center;" title="${pairLabel(3)}">${pairShort(3)}</th>
+        <th class="split-cell" style="text-align:center;" title="${pairLabel(4)}">${pairShort(4)}</th>
         <th>Actual Delivery</th>
         <th style="width:80px;text-align:right;">Actions</th>
       </tr></thead>
@@ -1690,7 +1698,7 @@ function buildBatchReportHTML(){
   if(sortedLoads.length>0){
     html+=`<section><h2>Feed Deliveries</h2><table>
       <thead><tr><th>#</th><th>Date</th><th>Type</th><th class="num">Planned</th>
-        <th class="num">G1</th><th class="num">G2</th><th class="num">G3</th><th class="num">G4</th>
+        <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
         <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
       const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?(v/1000).toFixed(1):'—';};

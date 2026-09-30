@@ -54,6 +54,7 @@ function loadPredState(){
     if([1,2,3,4].includes(v.predGroup))predState.predGroup=v.predGroup;
     if(['shed1','shed2','both'].includes(v.predView))predState.predView=v.predView;
     if(v.farmFeedOverride!=null&&Number.isFinite(Number(v.farmFeedOverride))&&Number(v.farmFeedOverride)>0)predState.farmFeedOverride=Number(v.farmFeedOverride);
+    if(v.carryoverKg&&typeof v.carryoverKg==='object'){const c={};[1,2,3,4].forEach(g=>{const x=Number(v.carryoverKg[g]);c[g]=Number.isFinite(x)&&x>0?x:0;});predState.carryoverKg=c;}
     if(v.farmLeftoverKg!=null&&Number.isFinite(Number(v.farmLeftoverKg))&&Number(v.farmLeftoverKg)>0)predState.farmLeftoverKg=Number(v.farmLeftoverKg);
     if(typeof v.deliveriesOpen==='boolean')predState.deliveriesOpen=v.deliveriesOpen;
     if(typeof v.batchNumber==='string')predState.batchNumber=v.batchNumber.trim();

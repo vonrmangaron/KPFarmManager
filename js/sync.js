@@ -28,6 +28,7 @@ function buildCloudPayload(){
       targetHarvestWeightKg:predState.targetHarvestWeightKg,
       farmFeedOverride:predState.farmFeedOverride,
       farmLeftoverKg:predState.farmLeftoverKg,
+      carryoverKg:predState.carryoverKg||{1:0,2:0,3:0,4:0},
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[]
     },
@@ -64,6 +65,7 @@ function applyCloudPayload(payload,options){
     if(p.targetHarvestWeightKg&&typeof p.targetHarvestWeightKg==='object'){[1,2,3,4].forEach(g=>{const n=Number(p.targetHarvestWeightKg[g]);if(Number.isFinite(n)&&n>0)predState.targetHarvestWeightKg[g]=n;});}
     if(p.farmFeedOverride!=null&&Number.isFinite(Number(p.farmFeedOverride))&&Number(p.farmFeedOverride)>0)predState.farmFeedOverride=Number(p.farmFeedOverride);
     else if(p.farmFeedOverride===null)predState.farmFeedOverride=null;
+    if(p.carryoverKg&&typeof p.carryoverKg==='object'){const c={};[1,2,3,4].forEach(g=>{const v=Number(p.carryoverKg[g]);c[g]=Number.isFinite(v)&&v>0?v:0;});predState.carryoverKg=c;}
     if(p.farmLeftoverKg!=null&&Number.isFinite(Number(p.farmLeftoverKg))&&Number(p.farmLeftoverKg)>0)predState.farmLeftoverKg=Number(p.farmLeftoverKg);
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;
     if(p.densityGlobal&&typeof p.densityGlobal==='object'){const dg=p.densityGlobal;let tp=DEFAULT_DENSITY_GLOBAL.targetPickups;if(Number.isFinite(Number(dg.targetPickups)))tp=Number(dg.targetPickups);else if(Number.isFinite(Number(dg.minPickupsBeforeCleanout)))tp=Number(dg.minPickupsBeforeCleanout);tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,Math.floor(tp)));predState.densityGlobal={maxDensity:Number.isFinite(Number(dg.maxDensity))?Number(dg.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(dg.triggerDensity))?Number(dg.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(dg.targetDensity))?Number(dg.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups:tp};}
