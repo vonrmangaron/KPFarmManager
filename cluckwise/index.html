@@ -1381,6 +1381,13 @@
   .wxa-rain{ background:#1864AB; }
   .wxa-wind{ background:#5F6B7A; }
   .wxa-storm{ background:#6741D9; }
+  /* compact: one row — big icon · high/low · RH */
+  .wx-card{ padding:8px 12px; gap:0; }
+  .wx-card .wxc-main{ gap:10px; }
+  .wxc-rh{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; line-height:1.05; }
+  .wxc-rh-label{ font-size:9.5px; font-weight:800; letter-spacing:0.06em; opacity:0.65; }
+  .wxc-rh-val{ font-family:'Sora',sans-serif; font-size:16px; font-weight:800; }
+  .wx-card.wx-clickable::after{ content:none; }
   .wx-card-col .wxc-ic{ font-size:32px; }
   .wx-card-wide{ margin-top:0; margin-left:auto; min-width:260px; max-width:420px; }
   .wx-card-wide .wxc-ic{ font-size:40px; }
@@ -4926,39 +4933,28 @@
     card.className = `wx-card wx-card-${variant} wx-tone-${wxTone(w.code)}` + (alerts.some(x=> x[0] === 'heat') ? ' wx-hot' : '') + (w.current ? ' wx-card-today' : '');
     const mk = (tag, cls, text)=>{ const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; };
 
+    // Compact card: big icon · high / low · RH. Everything else (label,
+    // now, rain, wind, warnings) is in the tooltip and the hourly popup.
     const main = mk('div', 'wxc-main');
     main.appendChild(mk('span', 'wxc-ic', dayIcon));
     const temps = mk('span', 'wxc-temps');
     temps.appendChild(mk('span', 'wxc-hi', wxT(w.max)));
     temps.appendChild(mk('span', 'wxc-lo', '/' + wxT(w.min)));
     main.appendChild(temps);
-    if(w.current){
-      const [nowIc] = wxIconLabel(w.current.code, w.current.isDay);
-      const now = mk('span', 'wxc-now');
-      now.appendChild(mk('span', 'wxc-now-label', 'Now'));
-      now.appendChild(mk('span', 'wxc-now-temp', nowIc + ' ' + wxT(w.current.temp)));
-      main.appendChild(now);
+    const hum = w.current && w.current.hum != null ? w.current.hum : w.hum;
+    if(hum != null){
+      const rh = mk('span', 'wxc-rh');
+      rh.appendChild(mk('span', 'wxc-rh-label', 'RH'));
+      rh.appendChild(mk('span', 'wxc-rh-val', Math.round(hum) + '%'));
+      main.appendChild(rh);
     }
     card.appendChild(main);
-
-    const info = mk('div', 'wxc-info');
-    info.appendChild(mk('span', 'wxc-label', dayLabel));
-    if(w.rain != null) info.appendChild(mk('span', 'wxc-meta' + (w.rain >= 60 ? ' strong' : ''), `💧 ${Math.round(w.rain)}%`));
-    if(w.wind != null) info.appendChild(mk('span', 'wxc-meta', `💨 ${Math.round(w.wind)} ${wxWindUnit()}`));
-    const hum = w.current && w.current.hum != null ? w.current.hum : w.hum;
-    if(hum != null){ const he = mk('span', 'wxc-meta', `RH ${Math.round(hum)}%`); he.title = w.current && w.current.hum != null ? 'Humidity now' : 'Average humidity'; info.appendChild(he); }
-    card.appendChild(info);
-
-    if(alerts.length){
-      const al = mk('div', 'wxc-alerts');
-      alerts.forEach(([k, text])=> al.appendChild(mk('span', 'wxa wxa-' + k, text)));
-      card.appendChild(al);
-    }
     card.title = `${dayLabel} · High ${wxT(w.max)} · Low ${wxT(w.min)}`
       + (w.rain != null ? ` · Rain ${Math.round(w.rain)}%` : '')
       + (w.wind != null ? ` · Wind ${Math.round(w.wind)} ${wxWindUnit()}` : '')
       + (hum != null ? ` · Humidity ${Math.round(hum)}%` : '')
-      + (w.current ? ` · Now ${wxT(w.current.temp)}` : '');
+      + (w.current ? ` · Now ${wxT(w.current.temp)}` : '')
+      + (alerts.length ? ` · ${alerts.map(x=> x[1]).join(', ')}` : '');
     if(!card.classList.contains('wx-card-modal')) makeWxClickable(card, key);
     card.title += ' — tap for hourly forecast';
     return card;
