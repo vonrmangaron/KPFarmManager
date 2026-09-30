@@ -824,6 +824,14 @@ function savePredictedPickup(){
   if(!s.isFinal&&editedId)cascadePredictedPickups(shed,editedId);
   saveState();schedulePush();closePredictedPickupModal();render();
 }
+// Adopt the background auto plan as the user's planned pickups
+function adoptAutoPlan(shedId){
+  const shed=farmData&&farmData.sheds[shedId-1];if(!shed)return;
+  const autos=autoPlanForShed(shed);if(!autos.length)return;
+  if(!confirm(`Add ${autos.length} auto-planned pickup${autos.length===1?'':'s'} to Shed ${shedId}'s planned pickups?\n\nThey will then also be used in the feed forecast. You can edit or delete them any time.`))return;
+  shed.predictedPickups=(shed.predictedPickups||[]).concat(autos.map(a=>({id:uid('pp'),date:dateOnly(a.date),birds:Math.round(Number(a.birds)||0),isFinal:!!a.isFinal}))).sort((x,y)=>dateOnly(x.date)-dateOnly(y.date));
+  saveState();schedulePush();render();showToast(`✓ ${autos.length} auto pickup${autos.length===1?'':'s'} added to Shed ${shedId}'s plan.`);
+}
 function deletePredictedPickup(shedId,ppId){
   if(!farmData)return;
   const shed=farmData.sheds[shedId-1];if(!shed)return;

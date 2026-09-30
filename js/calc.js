@@ -87,6 +87,33 @@ function getShedDensitySettings(shed){
 // test replaces (a "move"); null for an extra pickup.
 let testPickups={};
 let includeTestPickups=false;
+// ── Background RESULT PLAN (projection only) ─────────────────────────
+// The projected batch result must predict the real end of the batch even
+// when the user hasn't entered planned pickups (they often don't, because
+// planned pickups also change the feed forecast they order against). So
+// the projection uses: logged pickups + the user's planned pickups + an
+// AUTO plan that fills the rest (same density rules as Auto-fill) up to
+// clean-out. Never saved; recalculated each render. Feed forecast, current
+// weights and alerts never see it (includeAutoPlan is only on inside
+// projection calculations).
+let includeAutoPlan=false;
+let autoPlanCache=new Map();
+function resultPlanEndDate(shed){
+  if(shed.cleanoutDate)return dateOnly(shed.cleanoutDate);
+  // No clean-out date: when birds reach the pair's target harvest weight
+  const g=Math.ceil(shed.id/2);const target=Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;
+  let d=addDays(dateOnly(new Date()),1);
+  for(let i=0;i<80;i++){const w=forecastWeightModeAware(shed,d);if(w&&w.kg>=target)return d;d=addDays(d,1);}
+  return addDays(dateOnly(shed.placementDate),52);
+}
+function autoPlanForShed(shed){
+  if(!shed||!shed.placementDate)return [];
+  if(autoPlanCache.has(shed.id))return autoPlanCache.get(shed.id);
+  let plan=[];
+  try{plan=autoFillPredictedPickups(shed,{keepPlanned:true,cleanout:resultPlanEndDate(shed)}).filter(p=>(Number(p.birds)||0)>0);}catch(e){plan=[];}
+  autoPlanCache.set(shed.id,plan);return plan;
+}
+function withResultPlan(fn){const prev=includeAutoPlan;includeAutoPlan=true;try{return fn();}finally{includeAutoPlan=prev;}}
 function testPickupsForShed(shedId){return testPickups[shedId]||[];}
 function testPickupCountForGroup(g){return shedsForGroup(g).reduce((n,s)=>n+testPickupsForShed(s.id).length,0);}
 function computeEffectivePickups(shed){
@@ -94,6 +121,7 @@ function computeEffectivePickups(shed){
   const real=(shed.pickups||[]).map(p=>({...p,__source:'real'}));
   const realDates=new Set(real.map(p=>iso(p.date)));
   let predicted=(shed.predictedPickups||[]).filter(pp=>!realDates.has(iso(pp.date))).map(pp=>({date:pp.date,birds:Number(pp.birds)||0,isFinal:!!pp.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'predicted',ageOverride:null,__source:'predicted',__id:pp.id}));
+  const autos=includeAutoPlan?autoPlanForShed(shed).map(a=>({date:a.date,birds:Number(a.birds)||0,isFinal:!!a.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'auto',ageOverride:null,__source:'auto',__id:a.id})):[];
   let tests=[];
   if(includeTestPickups){
     const list=testPickupsForShed(shed.id);
@@ -101,7 +129,7 @@ function computeEffectivePickups(shed){
     if(moved.size)predicted=predicted.filter(p=>!moved.has(p.__id));
     tests=list.map(t=>({date:t.date,birds:Number(t.birds)||0,isFinal:false,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'test',ageOverride:null,__source:'test',__id:t.id}));
   }
-  return [...real,...predicted,...tests].sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  return [...real,...predicted,...autos,...tests].sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
 }
 function densityOnDate(shed,D,extraPredicted,excludePredictedId){
   const d=dateOnly(D);if(!shed.placementDate)return {live:0,weight:0,density:0,age:0};
@@ -156,28 +184,38 @@ function computeLiveBirdsBefore(shed,dateObj,extraPredicted){
 // natural trigger days, the remaining slots are evenly spaced across the
 // WHOLE planning window (placement → cleanout − 2), respecting blocked days.
 // The final cleanout pickup is always emitted on the cleanout date.
-function autoFillPredictedPickups(shed){
+// opts.keepPlanned: keep the user's planned pickups and only plan AFTER
+// them ("fill the rest") — used for the background result plan.
+// opts.cleanout: end date to plan to (defaults to the shed's clean-out).
+function autoFillPredictedPickups(shed,opts){
+  opts=opts||{};
   if(!shed||!shed.placementDate)return [];
   const ds=getShedDensitySettings(shed);
   const trigger=ds.triggerDensity;
   const targetN=ds.targetPickups;
   const realPickups=shed.pickups||[];
   if(realPickups.some(p=>p.isFinal))return [];
+  const realDates=new Set(realPickups.map(p=>iso(p.date)));
+  const base=opts.keepPlanned?(shed.predictedPickups||[]).filter(pp=>pp.date&&!realDates.has(iso(pp.date))).map(pp=>({date:dateOnly(pp.date),birds:Number(pp.birds)||0,isFinal:!!pp.isFinal})):[];
+  if(base.some(pp=>pp.isFinal))return [];
   const realCount=realPickups.length;
-  const needed=targetN-realCount;
-  if(needed<=0)return [];
+  const needed=targetN-realCount-base.length;
+  if(needed<=0&&!opts.keepPlanned)return [];
 
   const regularNeeded=Math.max(0,needed-1);
   const result=[];
-  const tempShed={...shed,predictedPickups:[]};
+  const tempShed={...shed,predictedPickups:base};
   const today=dateOnly(new Date());
-  const cleanout=shed.cleanoutDate?dateOnly(shed.cleanoutDate):addDays(today,50);
+  const cleanout=opts.cleanout?dateOnly(opts.cleanout):(shed.cleanoutDate?dateOnly(shed.cleanoutDate):addDays(today,50));
   if(cleanout<=today)return [];
   const maxDay=addDays(cleanout,-2);
+  // Planning starts after the last planned pickup when keeping the user's plan
+  const lastBase=base.length?base.reduce((m,p)=>p.date>m?p.date:m,base[0].date):null;
+  const planFrom=lastBase&&addDays(lastBase,3)>addDays(today,1)?addDays(lastBase,3):addDays(today,1);
 
   // ── Phase 1: density-triggered regulars ──
   if(regularNeeded>0){
-    let searchStart=addDays(today,1);
+    let searchStart=planFrom;
     let safety=0;
     while(result.length<regularNeeded&&safety<40){
       safety++;
@@ -206,7 +244,7 @@ function autoFillPredictedPickups(shed){
     // enough open (non-blocked) days.
     const remaining=regularNeeded-result.length;
     if(remaining>0){
-      const floor=addDays(today,1);
+      const floor=planFrom;
       let windowStart=addDays(shed.placementDate,5);
       if(windowStart<floor)windowStart=floor;
       if(windowStart>maxDay)windowStart=maxDay;
@@ -241,7 +279,7 @@ function autoFillPredictedPickups(shed){
   }
 
   // ── Phase 3: final cleanout — always emitted ──
-  const finalBirds=computeLiveBirdsBefore(shed,cleanout,result);
+  const finalBirds=computeLiveBirdsBefore(shed,cleanout,base.concat(result));
   result.push({id:uid('pp'),date:cleanout,birds:Math.max(0,Math.floor(finalBirds)),isFinal:true});
   return result;
 }

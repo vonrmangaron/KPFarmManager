@@ -207,6 +207,7 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
     const ppAutofillBtn=e.target.closest('[data-pp-autofill]');if(ppAutofillBtn){autoFillPredictedPickupsForShed(Number(ppAutofillBtn.dataset.ppAutofill));return;}
     const ppClearBtn=e.target.closest('[data-pp-clear]');if(ppClearBtn){clearPredictedPickupsForShed(Number(ppClearBtn.dataset.ppClear));return;}
     const ppEditBtn=e.target.closest('[data-pp-edit]');if(ppEditBtn){const parts=ppEditBtn.dataset.ppEdit.split('|');openPredictedPickupModal(Number(parts[0]),parts[1]);return;}
+    const adoptBtn=e.target.closest('[data-pp-adopt-auto]');if(adoptBtn){adoptAutoPlan(Number(adoptBtn.dataset.ppAdoptAuto));return;}
     const ppDeleteBtn=e.target.closest('[data-pp-delete]');if(ppDeleteBtn){const parts=ppDeleteBtn.dataset.ppDelete.split('|');deletePredictedPickup(Number(parts[0]),parts[1]);return;}
 
     const cycleApply=e.target.closest('[data-pred-cycle-apply]');
