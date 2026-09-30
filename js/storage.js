@@ -15,6 +15,7 @@ function loadState(){
       const cw=Number(s.chickWeightKg);s.chickWeightKg=(Number.isFinite(cw)&&cw>0)?Math.max(MIN_CHICK_WEIGHT_KG,Math.min(MAX_CHICK_WEIGHT_KG,cw)):DEFAULT_CHICK_WEIGHT_KG;
       const tc=s.targetCurve||{};
       s.targetCurve={7:(tc[7]!=null&&Number.isFinite(Number(tc[7]))&&Number(tc[7])>0)?Number(tc[7]):null,14:(tc[14]!=null&&Number.isFinite(Number(tc[14]))&&Number(tc[14])>0)?Number(tc[14]):null,21:(tc[21]!=null&&Number.isFinite(Number(tc[21]))&&Number(tc[21])>0)?Number(tc[21]):null,28:(tc[28]!=null&&Number.isFinite(Number(tc[28]))&&Number(tc[28])>0)?Number(tc[28]):null};
+      s.scaleOverride=(s.scaleOverride!=null&&Number.isFinite(Number(s.scaleOverride))&&Number(s.scaleOverride)>0)?Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,Number(s.scaleOverride))):null;
       const mr=Number(s.mortalityRatePercent);s.mortalityRatePercent=(Number.isFinite(mr)&&mr>=0)?Math.max(0,Math.min(MAX_MORT_RATE_PCT,mr)):DEFAULT_MORT_RATE_PCT;
     });
     const bf=Number(parsed.biasFactor);parsed.biasFactor=(Number.isFinite(bf)&&bf>0)?Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,bf)):DEFAULT_BIAS_FACTOR;

@@ -302,8 +302,44 @@ function cascadePredictedPickups(shed,editedPpId){
   recalcFinalPredictedBirds(shed);
 }
 
+// Scale correction for a shed: its own override if set, else the global.
+// Applies ONLY to in-yard (shed-scale) readings — never to plant weights.
+function shedBiasFactor(shed){
+  const o=shed?shed.scaleOverride:null;
+  if(o!=null&&Number.isFinite(Number(o))&&Number(o)>0)return Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,Number(o)));
+  return currentBiasFactor();
+}
+// Scale-correction evidence from official plant weights: fit a curve to the
+// shed's in-yard readings AS ENTERED (100%), read it at each weighed
+// pickup's age, and compare: plant weight ÷ in-yard curve = the shed scale's
+// error at that pickup. Only pickups within 7 days of the last in-yard
+// reading count (further out would measure curve stretch, not the scale);
+// estimated (kill-sheet) weights never count.
+function plantScaleRatios(shed){
+  if(!shed||!shed.placementDate)return [];
+  const anchors=[{t:0,w:shedChickWeight(shed),wgt:1.0}];
+  const tc=shed.targetCurve||{};const gridDays=new Set();
+  TARGET_DAYS.forEach(day=>{const v=Number(tc[day]);if(Number.isFinite(v)&&v>0){anchors.push({t:day,w:v,wgt:0.65});gridDays.add(day);}});
+  (shed.inYardSamples||[]).forEach(s=>{if(!s.date||!(s.avgWeightKg>0)||s.isOfficial)return;const age=sampleAge(shed,s);if(age<=0||gridDays.has(age))return;anchors.push({t:age,w:s.avgWeightKg,wgt:0.55});});
+  if(anchors.length<3)return [];
+  const lastT=anchors.reduce((m,a)=>Math.max(m,a.t),0);
+  const fit=fitGompertz(anchors);if(!fit)return [];
+  return (shed.pickups||[]).filter(p=>!p.weightEstimated&&pickupAvgKg(p)>0).map(p=>{
+    const age=pickupAge(shed,p);if(age<=0||age>lastT+7)return null;
+    const w=gompertzWeightAt(fit,age);if(!(w>0))return null;
+    return {shedId:shed.id,age,ratio:pickupAvgKg(p)/w,date:p.date};
+  }).filter(Boolean);
+}
+function medianOf(arr){const a=arr.slice().sort((x,y)=>x-y);const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+// Suggested correction from a set of sheds (median — robust to one odd pickup)
+function suggestScaleCorrection(sheds){
+  const ratios=[];(sheds||[]).forEach(s=>plantScaleRatios(s).forEach(r=>ratios.push(r.ratio)));
+  if(!ratios.length)return null;
+  const clamp=v=>Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,v));
+  return {value:clamp(medianOf(ratios)),n:ratios.length,min:clamp(Math.min(...ratios)),max:clamp(Math.max(...ratios))};
+}
 function collectShedWeightAnchors(shed){
-  const anchors=[];const bias=currentBiasFactor();const chickW=shedChickWeight(shed);
+  const anchors=[];const bias=shedBiasFactor(shed);const chickW=shedChickWeight(shed);
   anchors.push({t:0,w:chickW,wgt:1.0,source:'day-old'});
   const tc=shed.targetCurve||{};const gridDays=new Set();
   TARGET_DAYS.forEach(day=>{const v=Number(tc[day]);if(Number.isFinite(v)&&v>0){anchors.push({t:day,w:v*bias,wgt:0.65,source:'in-yard-grid'});gridDays.add(day);}});

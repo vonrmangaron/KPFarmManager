@@ -17,6 +17,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',e=>{
     // Bulk select: checkboxes are handled on 'change'; buttons here
     if(e.target.closest('.bulk-cb,[data-bulk-all],.bulk-all'))return;
+    // Adjustments modal (draft — nothing applies until 'Apply changes')
+    if(e.target.closest('[data-adj-apply]')){applyAdjDraft();return;}
+    if(e.target.closest('[data-adj-cancel]')){closeAdjModal(false);return;}
+    const adjNpd=e.target.closest('[data-adj-npd]');
+    if(adjNpd&&adjDraft){const d=Number(adjNpd.dataset.adjNpd);adjDraft.npd=adjDraft.npd.includes(d)?adjDraft.npd.filter(v=>v!==d):[...adjDraft.npd,d].sort((a,b)=>a-b);refreshAdjModal(true);return;}
+    const adjSugG=e.target.closest('[data-adj-suggest-global]');
+    if(adjSugG&&adjDraft){adjDraft.scale=Number(adjSugG.dataset.adjSuggestGlobal);refreshAdjModal(true);return;}
+    const adjSugS=e.target.closest('[data-adj-suggest-shed]');
+    if(adjSugS&&adjDraft){adjDraft.ovr[Number(adjSugS.dataset.adjSuggestShed)]=Number(adjSugS.dataset.pct);refreshAdjModal(true);return;}
     const bulkStartBtn=e.target.closest('[data-bulk-start]');if(bulkStartBtn){bulkStart(bulkStartBtn.dataset.bulkStart);return;}
     if(e.target.closest('[data-bulk-cancel]')){bulkCancel();return;}
     if(e.target.closest('[data-bulk-delete]')){bulkDelete();return;}
@@ -271,6 +280,8 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
 
   document.addEventListener('change',e=>{
     const t=e.target;
+    // Adjustments modal: per-shed 'Use global' switch (draft)
+    if(t.dataset&&t.dataset.adjUseglobal&&adjDraft){const id=Number(t.dataset.adjUseglobal);if(t.checked)adjDraft.ovr[id]=null;else{const own=suggestScaleCorrection([farmData.sheds[id-1]]);adjDraft.ovr[id]=own?Math.round(own.value*1000)/10:adjDraft.scale;}refreshAdjModal(true);return;}
     // Bulk select checkboxes
     if(t.classList&&t.classList.contains('bulk-cb')){bulkToggle(t.dataset.bulkId,t.checked);return;}
     if(t.dataset&&t.dataset.bulkAll){bulkToggleAll((t.dataset.bulkIds||'').split('\u001f').filter(Boolean),t.checked);return;}
@@ -308,6 +319,15 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
 
   document.addEventListener('input',e=>{
     if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
+    // Adjustments modal fields update the draft only (no render → no re-pop)
+    if(e.target&&e.target.dataset&&e.target.dataset.adj&&adjDraft){
+      const f=e.target.dataset.adj;const v=Number(e.target.value);if(!Number.isFinite(v))return;
+      adjDraft[f]=v;
+      document.querySelectorAll(`#adjModalRoot [data-adj="${f}"]`).forEach(el=>{if(el!==e.target)el.value=f==='beta'?v.toFixed(3):v;});
+      if(f==='scale')document.querySelectorAll('#adjModalRoot .adj-shed-val.muted').forEach(el=>el.textContent=v.toFixed(1)+'%');
+      refreshAdjModal(false);return;
+    }
+    if(e.target&&e.target.dataset&&e.target.dataset.adjOverride&&adjDraft){const v=Number(e.target.value);if(Number.isFinite(v)&&v>0){adjDraft.ovr[Number(e.target.dataset.adjOverride)]=v;refreshAdjModal(false);}return;}
     if(e.target&&e.target.id==='settingsSwitchFarmInput'){settingsChangeFarmDraft=e.target.value;return;}
     // Typing a bird count overrides the density recommendation (empty = back to auto)
     if(e.target&&e.target.classList&&e.target.classList.contains('tp-input')&&inlinePickupState){const v=e.target.value.trim();inlinePickupState.userEdited=v!=='';inlinePickupState.birdsDraft=v;e.target.closest('.tp-form')?.querySelectorAll('.tp-btn-n').forEach(n=>n.hidden=inlinePickupState.userEdited);return;}

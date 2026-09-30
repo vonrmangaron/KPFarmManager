@@ -1171,12 +1171,16 @@ function liveUpdateShedMortality(shedIdx,rawValue){
   if(activeTab==='predictions')updateFarmKpiValues();
 }
 function toggleAdjCollapse(){
-  if(!adjModalOpen){adjModalOpen=true;render();return;}
-  // Play the exit animation before removing the modal.
+  if(!adjModalOpen){adjModalOpen=true;adjDraft=null;adjDraftBase='';render();return;}
+  closeAdjModal(false);
+}
+// Close the adjustments modal (asks before discarding unapplied changes)
+function closeAdjModal(skipConfirm){
+  if(!skipConfirm&&adjIsDirty()&&!confirm('Discard your unapplied changes?'))return;
+  const finish=()=>{adjModalOpen=false;adjDraft=null;adjDraftBase='';render();};
   const m=document.querySelector('#adjModalRoot .adj-modal');
-  if(!m||m.classList.contains('closing')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){adjModalOpen=false;render();return;}
-  m.classList.add('closing');
-  setTimeout(()=>{adjModalOpen=false;render();},150);
+  if(!m||m.classList.contains('closing')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return;}
+  m.classList.add('closing');setTimeout(finish,150);
 }
 function setDensityGlobal(field,value){
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};

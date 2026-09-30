@@ -998,7 +998,7 @@ function render(){
     renderSidebarBatch();
     // Adjustments modal lives at body level so it stacks above the nav
     const adjRoot=document.getElementById('adjModalRoot');
-    if(adjRoot){const show=adjModalOpen&&activeTab==='predictions'&&farmData&&shedsForGroup(predState.predGroup).length;if(!show)adjModalOpen=false;adjRoot.innerHTML=show?renderAdjustmentModal(predState.predGroup):'';}
+    if(adjRoot){const show=adjModalOpen&&activeTab==='predictions'&&farmData&&shedsForGroup(predState.predGroup).length;if(!show){adjModalOpen=false;adjDraft=null;adjRoot.innerHTML='';adjRoot.dataset.g='';}else if(!adjRoot.querySelector('.adj-modal')||adjRoot.dataset.g!==String(predState.predGroup)){adjRoot.innerHTML=renderAdjustmentModal(predState.predGroup);adjRoot.dataset.g=String(predState.predGroup);}else if(!adjIsDirty()){const fresh=adjDraftFromState(predState.predGroup);const fs=JSON.stringify(fresh);if(fs!==adjDraftBase){adjDraft=fresh;adjDraftBase=fs;}refreshAdjModal(true);}}
     updatePageHeader();
     updateAlertsBell();
     // Main content
@@ -1522,13 +1522,104 @@ function updateFarmKpiValues(){
 // Prediction adjustments — opened from the gear on the floating rail.
 // Not persisted: a reload never reopens it.
 let adjModalOpen=false;
-function renderAdjustmentModal(group){
-  const biasPct=Math.round(currentBiasFactor()*100);
-  const betaVal=predState.beta;
-  const targetKg=predState.targetHarvestWeightKg[group];
+// ── Adjustments modal works on a DRAFT: nothing is applied (or re-rendered)
+// until "Apply changes", so editing never re-pops the modal.
+let adjDraft=null,adjDraftBase='';
+function adjDraftFromState(g){
   const dg=predState.densityGlobal||{...DEFAULT_DENSITY_GLOBAL};
-  const tp=Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups;
-    return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>${pairLabel(group)}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body"><div class="adj-row"><label>📊 cFCR β factor</label><input type="range" id="predBetaSlider" min="0" max="0.6" step="0.002" value="${betaVal}" /><input type="number" id="predBetaNumber" min="0" max="0.6" step="0.002" value="${betaVal.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight.</span></div><div class="adj-row"><label>📐 Scale correction</label><input type="range" id="biasSlider" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><input type="number" id="biasNumber" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="1" value="${biasPct}" /><span class="adj-unit">%</span><span class="adj-hint">How much your shed scale reads heavier than the plant weight.</span></div><div class="adj-row"><label>🎯 Target weight at harvest</label><input type="number" id="predTargetWeight_${group}" min="0.5" max="5" step="0.01" value="${targetKg.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div><div class="density-settings-title"><span>🎯 Pickup density (global defaults)</span><span style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-global-autofill-sm" data-global-autofill="1" title="Auto-generate predicted pickups for every placed shed">✨ Auto-fill all sheds</button><button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" title="Remove all predicted pickups from every shed">🗑️ Clear all</button></span></div><div class="adj-row"><label>Trigger density</label><input type="number" id="densityTrigger" min="20" max="45" step="0.5" value="${dg.triggerDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Schedule a pickup when density is forecast to reach this.</span></div><div class="adj-row"><label>Target after pickup</label><input type="number" id="densityTarget" min="15" max="35" step="0.5" value="${dg.targetDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">What density to aim for after each pickup.</span></div><div class="adj-row"><label>Hard maximum</label><input type="number" id="densityMax" min="28" max="45" step="0.5" value="${dg.maxDensity}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div><div class="adj-row"><label>Target pickups per shed</label><input type="number" id="targetPickupsGlobal" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Total pickups per shed (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>${renderNoPickupDaysRow()}</div></div></div>`;
+  const ovr={};shedsForGroup(g).forEach(s=>{ovr[s.id]=(s.scaleOverride!=null&&Number(s.scaleOverride)>0)?Math.round(Number(s.scaleOverride)*1000)/10:null;});
+  return {group:g,beta:Number(predState.beta)||0,scale:Math.round(currentBiasFactor()*1000)/10,target:Number(predState.targetHarvestWeightKg[g])||2.65,
+    trig:Number(dg.triggerDensity),tgt:Number(dg.targetDensity),max:Number(dg.maxDensity),
+    tp:Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups,
+    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr};
+}
+// Dirty = draft differs from what the modal opened with (not from live
+// state, so a background sync never shows up as 'your' change)
+function adjIsDirty(){if(!adjDraft)return false;return JSON.stringify(adjDraft)!==adjDraftBase;}
+function adjSuggestHtml(sug,btnAttr,noun){
+  if(!sug)return `<span class="adj-sug muted">Needs a weighed pickup (with in-yard readings within 7 days of it) to suggest a value.</span>`;
+  const pct=(sug.value*100).toFixed(1);
+  const range=sug.n>1?` · range ${(sug.min*100).toFixed(1)}–${(sug.max*100).toFixed(1)}%`:'';
+  return `<span class="adj-sug">Plant weighings suggest <strong>${pct}%</strong> (from ${sug.n} ${noun}${sug.n===1?'':'s'}${range})${btnAttr?` <button type="button" class="adj-sug-btn" ${btnAttr}="${pct}">Use ${pct}%</button>`:''}</span>`;
+}
+function adjModalBodyHtml(){
+  const d=adjDraft;const g=d.group;const sheds=shedsForGroup(g);
+  const sugG=farmData?suggestScaleCorrection(farmData.sheds||[]):null;
+  const shedRows=sheds.map(sh=>{
+    const own=suggestScaleCorrection([sh]);const ov=d.ovr[sh.id];const useG=ov==null;
+    const differs=own&&own.n>=2&&Math.abs(own.value*100-d.scale)>3;
+    return `<div class="adj-shed-row">
+      <span class="adj-shed-name">Shed ${sh.id}</span>
+      <label class="adj-check"><input type="checkbox" data-adj-useglobal="${sh.id}" ${useG?'checked':''} /> Use global</label>
+      ${useG?`<span class="adj-shed-val muted">${d.scale.toFixed(1)}%</span>`:`<span class="adj-shed-val"><input type="number" class="adj-num" data-adj-override="${sh.id}" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${ov}" /> %</span>`}
+      <span class="adj-shed-sug">${own?`This shed: <strong>${(own.value*100).toFixed(1)}%</strong> (${own.n} weighing${own.n===1?'':'s'})${!useG?` <button type="button" class="adj-sug-btn" data-adj-suggest-shed="${sh.id}" data-pct="${(own.value*100).toFixed(1)}">Use</button>`:''}${differs?` <span class="adj-warn">⚠ consistently differs from global — check catching / weighing method</span>`:''}`:'<span class="muted">No plant weighing yet</span>'}</span>
+    </div>`;
+  }).join('');
+  const DAYS=[{i:1,l:'Mon'},{i:2,l:'Tue'},{i:3,l:'Wed'},{i:4,l:'Thu'},{i:5,l:'Fri'},{i:6,l:'Sat'},{i:0,l:'Sun'}];
+  const npd=DAYS.map(x=>`<button class="npd-btn${d.npd.includes(x.i)?' active':''}" type="button" data-adj-npd="${x.i}" aria-pressed="${d.npd.includes(x.i)}">${x.l}</button>`).join('');
+  let blockedCount=0;if(farmData)farmData.sheds.forEach(s=>{blockedCount+=countPredictedPickupsOnBlockedDays(s);});
+  const dirty=adjIsDirty();
+  return `
+  <section class="adj-sec">
+    <h4 class="adj-sec-title">📐 Scale correction <span>in-yard (shed-scale) readings only — plant weights are never scaled</span></h4>
+    <div class="adj-row"><label>Farm-wide (global)</label><input type="range" data-adj="scale" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${d.scale}" /><input type="number" class="adj-num" data-adj="scale" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${d.scale}" /><span class="adj-unit">%</span>${adjSuggestHtml(sugG,'data-adj-suggest-global','plant weighing')}</div>
+    <div class="adj-shed-list">${shedRows}</div>
+  </section>
+  <section class="adj-sec">
+    <h4 class="adj-sec-title">📊 Results</h4>
+    <div class="adj-row"><label>cFCR β factor</label><input type="range" data-adj="beta" min="0" max="0.6" step="0.002" value="${d.beta}" /><input type="number" class="adj-num" data-adj="beta" min="0" max="0.6" step="0.002" value="${d.beta.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight (default 0.27).</span></div>
+    <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div>
+  </section>
+  <section class="adj-sec">
+    <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
+    <div class="adj-row"><label>Trigger density</label><input type="number" class="adj-num" data-adj="trig" min="20" max="45" step="0.5" value="${d.trig}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Plan a pickup when density is forecast to reach this.</span></div>
+    <div class="adj-row"><label>Target after pickup</label><input type="number" class="adj-num" data-adj="tgt" min="15" max="35" step="0.5" value="${d.tgt}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Density to aim for after each pickup.</span></div>
+    <div class="adj-row"><label>Hard maximum</label><input type="number" class="adj-num" data-adj="max" min="28" max="45" step="0.5" value="${d.max}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div>
+    <div class="adj-row"><label>Target pickups per shed</label><input type="number" class="adj-num" data-adj="tp" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${d.tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Including the final clean-out (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>
+    <div class="adj-row"><label>No-pickup days</label><div class="no-pickup-days">${npd}</div></div>
+  </section>
+  <section class="adj-sec adj-actions-sec">
+    <h4 class="adj-sec-title">⚡ Actions <span>run now with the applied settings</span></h4>
+    ${dirty?'<p class="adj-actions-note">Apply or cancel your changes first — these actions use the applied settings.</p>':''}
+    <div class="adj-actions">
+      <button type="button" class="btn-global-autofill-sm" data-global-autofill="1" ${dirty?'disabled':''}>✨ Auto-fill all sheds</button>
+      <button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" ${dirty?'disabled':''}>🗑️ Clear all planned pickups</button>
+      ${blockedCount>0?`<button type="button" class="bdw-btn" data-replan-blocked="1" ${dirty?'disabled':''}>Re-plan ${blockedCount} pickup${blockedCount===1?'':'s'} on blocked days</button>`:''}
+    </div>
+  </section>`;
+}
+function adjFooterHtml(){
+  const dirty=adjIsDirty();
+  return `<span class="adj-dirty${dirty?' on':''}">${dirty?'● Unapplied changes':'No changes'}</span><button type="button" class="adj-btn" data-adj-cancel="1">${dirty?'Cancel':'Close'}</button><button type="button" class="adj-btn primary" data-adj-apply="1" ${dirty?'':'disabled'}>Apply changes</button>`;
+}
+// Refresh body + footer in place (keeps the panel — no re-pop animation)
+function refreshAdjModal(bodyToo){
+  const root=document.querySelector('#adjModalRoot .adj-modal');if(!root)return;
+  if(bodyToo){const body=root.querySelector('.adj-modal-body');if(body){const y=body.scrollTop;body.innerHTML=adjModalBodyHtml();body.scrollTop=y;}}
+  const foot=root.querySelector('.adj-modal-foot');if(foot)foot.innerHTML=adjFooterHtml();
+  const note=root.querySelector('.adj-actions-note');const dirty=adjIsDirty();
+  root.querySelectorAll('.adj-actions button').forEach(b=>b.disabled=dirty);
+  if(!bodyToo&&dirty&&!note){const sec=root.querySelector('.adj-actions-sec h4');if(sec)sec.insertAdjacentHTML('afterend','<p class="adj-actions-note">Apply or cancel your changes first — these actions use the applied settings.</p>');}
+  if(!dirty&&note)note.remove();
+}
+function renderAdjustmentModal(group){
+  if(!adjDraft||adjDraft.group!==group){adjDraft=adjDraftFromState(group);adjDraftBase=JSON.stringify(adjDraft);}
+  return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>${pairLabel(group)}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body">${adjModalBodyHtml()}</div><div class="adj-modal-foot">${adjFooterHtml()}</div></div></div>`;
+}
+function applyAdjDraft(){
+  const d=adjDraft;if(!d)return;
+  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,Number(v)));
+  predState.beta=cl(d.beta,0,0.6);
+  if(farmData)farmData.biasFactor=cl(d.scale/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);
+  predState.targetHarvestWeightKg[d.group]=cl(d.target,0.5,5);
+  const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};
+  dg.triggerDensity=cl(d.trig,20,45);dg.targetDensity=cl(d.tgt,15,35);dg.maxDensity=cl(d.max,28,45);dg.targetPickups=Math.round(cl(d.tp,MIN_PICKUPS_PER_SHED,MAX_PICKUPS_PER_SHED));
+  predState.densityGlobal=dg;
+  predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
+  shedsForGroup(d.group).forEach(s=>{const v=d.ovr[s.id];s.scaleOverride=(v==null||!(Number(v)>0))?null:cl(Number(v)/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);});
+  savePredState();saveState();schedulePush();
+  adjDraft=null;adjDraftBase='';closeAdjModal(true);
+  showToast('✓ Adjustments applied.');
 }
 
 function renderNoPickupDaysRow(){
@@ -1581,7 +1672,7 @@ function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};
   const fit=getShedGompertzFit(shed);const hasFit=!!fit;
   const samples=shed.inYardSamples||[];
-  const biasPct=(currentBiasFactor()*100).toFixed(0);
+  const biasPct=(shedBiasFactor(shed)*100).toFixed(0);
   const inputs=TARGET_DAYS.map(day=>{
     const v=tc[day];const filled=v!=null&&Number.isFinite(Number(v))&&Number(v)>0;
     const ref=rossWeightKg(day).toFixed(3);let warn=false;
