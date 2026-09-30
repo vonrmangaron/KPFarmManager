@@ -332,11 +332,29 @@ function fitGompertz(anchors){
   for(let k=kLo;k<=kHi;k+=0.0002){const fit=fitLinearGompertz(anchors,k);if(fit&&fit.err<best.err)best=fit;}
   return best;
 }
+// Ross 308 guide points for the weeks AFTER the last real reading.
+// With only early readings (before growth peaks) the S-curve can't tell
+// where birds level off and extrapolates wildly (e.g. 6+ kg at day 57).
+// Light points on the Ross 308 shape — scaled by how THIS shed tracks
+// Ross at its latest reading — keep the outlook realistic. Weight 0.15
+// (~¼ of a shed-scale reading), and only past the last reading, so real
+// readings and weighed pickups always win.
+const GUIDE_DAYS=[35,42,49,56],GUIDE_WEIGHT=0.15;
+function rossGuideAnchors(anchors){
+  const real=anchors.filter(a=>a.t>0&&a.w>0);if(!real.length)return [];
+  const last=real.reduce((m,a)=>a.t>m.t?a:m,real[0]);
+  const rossLast=rossWeightKg(last.t);if(!(rossLast>0))return [];
+  const ratio=last.w/rossLast;
+  return GUIDE_DAYS.filter(d=>d>last.t+6).map(d=>({t:d,w:rossWeightKg(d)*ratio,wgt:GUIDE_WEIGHT,source:'guide'}));
+}
 function computeShedGompertzFit(shed){
   if(!shed||!shed.placementDate)return null;
   const anchors=collectShedWeightAnchors(shed);if(anchors.length<3)return null;
+  // lastT = last REAL reading, so the ± band still widens beyond real data
   let lastT=0;for(const a of anchors){if(a.t>lastT)lastT=a.t;}
-  const fit=fitGompertz(anchors);if(!fit)return null;
+  const guides=rossGuideAnchors(anchors);
+  const fit=fitGompertz(anchors.concat(guides));if(!fit)return null;
+  fit.guideCount=guides.length;
   fit.lastT=lastT;fit.anchorCount=anchors.length;
   fit.pickupCount=anchors.filter(a=>a.source==='pickup').length;
   fit.sampleCount=anchors.filter(a=>a.source==='in-yard-grid'||a.source==='in-yard-custom'||a.source==='official-sample').length;
