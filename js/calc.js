@@ -112,7 +112,8 @@ function learnedThinPattern(){
     ages.push(pickupAge(s,real[0]));shares.push((Number(real[0].birds)||0)/pop);from.push(s.id);
   });
   const med=a=>{const x=a.slice().sort((p,q)=>p-q),n=x.length;return n%2?x[(n-1)/2]:(x[n/2-1]+x[n/2])/2;};
-  thinPatternCache=ages.length?{age:Math.round(med(ages)),share:med(shares),from}:{age:null,share:null,from:[]};
+  if(ages.length)thinPatternCache={age:Math.round(med(ages)),share:med(shares),from};
+  else{const h=typeof historyThinPrior==='function'?historyThinPrior():null;thinPatternCache=h?{age:h.age,share:h.share,from:[],fromHistory:h.n}:{age:null,share:null,from:[]};}
   return thinPatternCache;
 }
 function resultPlanEndDate(shed){

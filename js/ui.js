@@ -96,7 +96,7 @@ function settingsIcon(name){
 }
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
-  const sections=[renderSettingsDisplayNameCard(),renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
+  const sections=[renderSettingsDisplayNameCard(),renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsFarmHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
   body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div>';
   // Bind notification checkboxes directly — belt-and-braces alongside the
   // document-level delegated change handler.
@@ -120,6 +120,41 @@ function renderSettingsUnitsCard(){
     <div class="settings-unit-row"><span class="settings-unit-lbl">Feed amounts</span><div class="settings-seg" role="group" aria-label="Feed unit">${opt('kg','Kilograms (kg)')}${opt('t','Tonnes (t)')}</div></div>
     <p class="settings-section-note">Saved on this device only. Bird weights stay in kg.</p>
   </div>`;
+}
+// Farm history: finished batches the app learns from
+let fhFormOpen=false;
+function renderSettingsFarmHistoryCard(){
+  const rows=farmHistorySorted().map(r=>{const k=historyKpis(r);return `<div class="fh-row">
+      <div class="fh-main"><span class="fh-batch">${escapeHtml(r.batch||'Batch')}</span><span class="fh-src">${r.source==='auto'?'saved by the app':'entered by hand'}${r.endDate?' · ended '+escapeHtml(fmtShortNoYear(dateOnly(r.endDate))):''}</span></div>
+      <div class="fh-kpis">FCR <b>${k.fcr.toFixed(3)}</b> · ALW <b>${k.alw.toFixed(2)} kg</b> · age <b>${r.avgAge.toFixed(1)} d</b> · livability <b>${k.livability.toFixed(1)}%</b> · PIF <b>${Math.round(k.pif)}</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.intakePct?` · intake <b>${Math.round(r.intakePct)}%</b>`:''}</div>
+      <button type="button" class="fh-del" data-fh-del="${escapeAttr(r.id)}" aria-label="Delete ${escapeAttr(r.batch||'batch')}" title="Delete">✕</button>
+    </div>`;}).join('');
+  const f=(id,label,type,ph,extra='')=>`<label class="fh-field"><span>${label}</span><input class="settings-input" id="${id}" type="${type}" placeholder="${ph}" ${extra}/></label>`;
+  const form=fhFormOpen?`<div class="fh-form">
+      ${f('fhBatch','Batch','text','e.g. 2601','maxlength="32" autocomplete="off"')}
+      ${f('fhEnd','Last pickup date','date','')}
+      ${f('fhPlaced','Birds placed','number','421137','min="1" step="1" inputmode="numeric"')}
+      ${f('fhPicked','Birds picked up','number','387474','min="1" step="1" inputmode="numeric"')}
+      ${f('fhLive','Total live weight (kg)','number','1101060','min="1" step="1" inputmode="decimal"')}
+      ${f('fhFeed',`Total feed (${feedUnit()}, after leftover)`,'number',feedUnit()==='t'?'1888.08':'1888080',`min="0" step="${feedStep()}" inputmode="decimal"`)}
+      ${f('fhAge','Average age (days)','number','43.82','min="1" step="0.01" inputmode="decimal"')}
+      ${f('fhThinAge','First thin age (days, optional)','number','32','min="1" step="1" inputmode="numeric"')}
+      ${f('fhThinPct','First thin (% of birds, optional)','number','15','min="0" max="100" step="0.1" inputmode="decimal"')}
+      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save>Save batch</button><button class="settings-btn" type="button" data-fh-cancel>Cancel</button></div>
+    </div>`:`<div class="settings-actions"><button class="settings-btn" type="button" data-fh-add>${settingsIcon('archive')}Add a past batch</button></div>`;
+  return `<div class="settings-section">
+    <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
+    <p class="settings-section-desc">Finished batches the app learns from: first-thin timing and feed intake % until this batch has its own, plus a "vs last batch" line on the Projected card. Saved automatically when you start a new batch; add older ones by hand.</p>
+    ${rows?`<div class="fh-list">${rows}</div>`:'<p class="settings-section-note">No finished batches yet.</p>'}
+    ${form}
+  </div>`;
+}
+function saveFarmHistoryForm(){
+  const v=id=>(document.getElementById(id)||{}).value;
+  const feedKg=feedOut(v('fhFeed'));const thinPct=numOrNull(v('fhThinPct'));
+  const rec=addFarmHistoryRec({batch:(v('fhBatch')||'').trim(),endDate:v('fhEnd')||'',source:'manual',placed:v('fhPlaced'),picked:v('fhPicked'),liveWeightKg:v('fhLive'),feedKg,avgAge:v('fhAge'),firstThinAge:numOrNull(v('fhThinAge')),firstThinShare:thinPct!=null?thinPct/100:null});
+  if(!rec||!(rec.liveWeightKg>0)||!(rec.feedKg>0)||!(rec.avgAge>0)){if(rec)deleteFarmHistoryRec(rec.id);showToast('Fill in placed, picked up (≤ placed), live weight, feed and average age.',true);return;}
+  fhFormOpen=false;renderSettingsDrawerBody();render();showToast(`📚 Saved ${rec.batch||'batch'} — FCR ${historyKpis(rec).fcr.toFixed(3)}.`);
 }
 function renderSettingsNotificationsCard(){
   return `<div class="settings-section">
@@ -275,7 +310,7 @@ async function handleConnectFarm(farmName){
     if(listing.files.length===0){
       if(!confirm(`Farm "${clean}" not found in the cloud.\n\nCreate a new farm?`))return;
       syncFarmName=clean;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
-      predState.batchNumber='';savePredState();farmData=null;saveState();saveSyncState();
+      predState.batchNumber='';predState.farmHistory=[];savePredState();farmData=null;saveState();saveSyncState();
       closeSyncModal();closeSettingsDrawer();openNewBatchModal('batchNumber');
       return;
     }
@@ -400,7 +435,9 @@ async function startNewBatch(cleanBatchNumber,opts){
   // against a glitched batch creation overwriting good data.
   try { await historyAutoSnapshot('auto-newbatch', `Before batch "${clean}"`); } catch(e) { console.warn('Snapshot before new batch failed', e); }
   syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=null;syncLastSyncAt=null;
-  saveSyncState();resetAllToDefaults(clean);
+  // Keep the finished batch's results with the farm before resetting
+  let archived=null;try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}
+  saveSyncState();resetAllToDefaults(clean,{keepHistory:true});
   if(farmToKeep){
     syncFarmName=farmToKeep;syncConnectedAt=Date.now();syncLastSyncAt=null;saveSyncState();
     closeNewBatchModal();renderSettingsDrawerBody();render();
@@ -408,6 +445,7 @@ async function startNewBatch(cleanBatchNumber,opts){
   }else{closeNewBatchModal();renderSettingsDrawerBody();render();}
   if(opts.openFilePicker){showToast(`✅ Batch "${clean}" started — pick the Excel file now.`);setTimeout(()=>triggerImport(),220);}
   else showToast(`✅ Batch "${clean}" started with default sheds.`);
+  if(archived)setTimeout(()=>showToast(`📚 Last batch saved to Farm history — FCR ${historyKpis(archived).fcr.toFixed(3)}, ${archived.avgAge.toFixed(1)} d.`),2600);
 }
 function openBatchHistoryModal(){
   closeSettingsDrawer();batchHistoryPage=0;batchHistoryCache=null;

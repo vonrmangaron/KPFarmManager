@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 
   document.addEventListener('click',e=>{
+    if(e.target.closest('[data-fh-add]')){fhFormOpen=true;renderSettingsDrawerBody();return;}
+    if(e.target.closest('[data-fh-cancel]')){fhFormOpen=false;renderSettingsDrawerBody();return;}
+    if(e.target.closest('[data-fh-save]')){saveFarmHistoryForm();return;}
+    const fhDel=e.target.closest('[data-fh-del]');
+    if(fhDel){const r=farmHistory().find(x=>x.id===fhDel.dataset.fhDel);if(r&&confirm(`Delete ${r.batch||'this batch'} from Farm history?`)){deleteFarmHistoryRec(r.id);renderSettingsDrawerBody();render();}return;}
     const unitBtn=e.target.closest('[data-feed-unit]');
     if(unitBtn){const u=unitBtn.dataset.feedUnit;if(u!==feedUnit()){setFeedUnit(u);renderSettingsDrawerBody();render();if(loadsModalState.open)renderLoadsModalBody();showToast(`Feed amounts now in ${feedUnitWord()}.`);}return;}
     // Bulk select: checkboxes are handled on 'change'; buttons here

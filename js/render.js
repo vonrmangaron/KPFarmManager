@@ -1534,11 +1534,21 @@ function feedToOrderLineHtml(f){
 function learnedBasisHtml(){
   const parts=[];
   const cal=intakeCalibration();
-  if(cal.ok){const pct=Math.round(cal.factor*100);parts.push(`<span title="Feed eaten measured from dockets + carry-over − silo stock (${fmtFeed(cal.measured)}) vs the Ross intake table for the same birds and days (${fmtFeed(cal.model)}). Applied to every day for sheds without a manual Feed intake %.${cal.capped?' Limited to 85–115%; measured ratio was '+Math.round(cal.raw*100)+'%.':''}">Intake <b>${pct}%</b> of Ross · from silo readings</span>`);}
+  if(cal.ok&&cal.fromHistory){parts.push(`<span title="No usable silo readings yet this batch — starting from the average of ${cal.fromHistory} past batch${cal.fromHistory>1?'es':''} in Farm history. Switches to this batch's own readings once every pair has one.">Intake <b>${Math.round(cal.factor*100)}%</b> of Ross · from past batches</span>`);}
+  else if(cal.ok){const pct=Math.round(cal.factor*100);parts.push(`<span title="Feed eaten measured from dockets + carry-over − silo stock (${fmtFeed(cal.measured)}) vs the Ross intake table for the same birds and days (${fmtFeed(cal.model)}). Applied to every day for sheds without a manual Feed intake %.${cal.capped?' Limited to 85–115%; measured ratio was '+Math.round(cal.raw*100)+'%.':''}">Intake <b>${pct}%</b> of Ross · from silo readings</span>`);}
   else parts.push(`<span title="${escapeAttr(cal.reason||'')} — using the Ross intake table as is.">Intake 100% of Ross · ${escapeHtml((cal.reason||'').toLowerCase())}</span>`);
   const lp=learnedThinPattern();
-  if(lp.age)parts.push(`<span title="Sheds without a pickup yet get their first auto thin at this age and size — the median of the sheds already thinned this batch.">First thin <b>day ${lp.age}</b>, <b>${Math.round(lp.share*100)}%</b> of birds · learned from Shed${lp.from.length>1?'s':''} ${lp.from.join(', ')}</span>`);
+  if(lp.age&&lp.fromHistory)parts.push(`<span title="No shed thinned yet this batch — first auto thin at the median of ${lp.fromHistory} past batch${lp.fromHistory>1?'es':''} in Farm history.">First thin <b>day ${lp.age}</b>, <b>${Math.round(lp.share*100)}%</b> of birds · from past batches</span>`);
+  else if(lp.age)parts.push(`<span title="Sheds without a pickup yet get their first auto thin at this age and size — the median of the sheds already thinned this batch.">First thin <b>day ${lp.age}</b>, <b>${Math.round(lp.share*100)}%</b> of birds · learned from Shed${lp.from.length>1?'s':''} ${lp.from.join(', ')}</span>`);
   return `<div class="fk-basis fk-learned">${parts.join('<span class="fk-sep"> · </span>')}</div>`;
+}
+// "vs last batch" — the latest Farm history record against this projection
+function vsLastBatchHtml(t){
+  const r=lastHistoryRec();if(!r||!t||!t.hasData)return '';
+  const k=historyKpis(r);
+  const fpbNow=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0,fpbLast=r.feedKg/r.picked;
+  const cell=(lbl,last,now,dp,unit,lowerBetter)=>{const d=now-last;const good=lowerBetter?d<0:d>0;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':(good?' good':' bad');return `<span class="vlb-item"><span class="vlb-k">${lbl}</span> ${last.toFixed(dp)} → <b class="vlb-v${cls}">${now.toFixed(dp)}</b>${unit}</span>`;};
+  return `<div class="fk-basis fk-vs-last" title="Last batch from Farm history (Settings) vs this batch's projection. Green = better, red = worse.">vs last batch${r.batch?' '+escapeHtml(r.batch):''}: ${cell('FCR',k.fcr,t.fcr,3,'',true)}${cell('ALW',k.alw,t.avgWeight,2,' kg',false)}${cell('Age',r.avgAge,t.weightedAge,1,' d',true)}${cell('Feed/bird',fpbLast,fpbNow,2,' kg',true)}${cell('PIF',k.pif,t.pif,0,'',false)}</div>`;
 }
 function farmFeedSubText(t){
   const co=t.carryKg>0?t.carryKg:0;
@@ -1568,7 +1578,7 @@ function renderFarmKpiCard(){
   // What the projection is built on: logged + your planned + auto-planned pickups
   let nLog=0,nPlan=0,nAuto=0;
   (farmData.sheds||[]).filter(sh=>sh.placementDate).forEach(sh=>{const rd=new Set((sh.pickups||[]).map(x=>iso(x.date)));nLog+=(sh.pickups||[]).length;nPlan+=(sh.predictedPickups||[]).filter(pp=>pp.date&&!rd.has(iso(pp.date))).length;nAuto+=autoPlanForShed(sh).length;});
-  const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>${learnedBasisHtml()}`;
+  const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>${learnedBasisHtml()}${vsLastBatchHtml(t)}`;
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span>${basisHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Manual override (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>

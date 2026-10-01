@@ -36,14 +36,20 @@ function intakeCalibration(){
   try{
     if(!farmData||typeof feedEatenMeasured!=='function')return intakeCalCache;
     const m=feedEatenMeasured();
-    if(m.missing.length||!m.pairs.length)return intakeCalCache;
+    if(m.missing.length||!m.pairs.length)return intakeFromHistory();
     let manual=0,auto=0;
     m.pairs.forEach(p=>{const end=p.morning?addDays(p.date,-1):p.date;p.sheds.forEach(s=>{let d=dateOnly(s.placementDate);let sum=0;while(d<=end){sum+=shedFeedOnRaw(s,d);d=addDays(d,1);}if(hasManualFeedPct(s))manual+=sum;else auto+=sum;});});
-    if(auto<INTAKE_CAL_MIN_KG||!(m.eaten>0))return intakeCalCache;
+    if(auto<INTAKE_CAL_MIN_KG||!(m.eaten>0))return intakeFromHistory();
     const raw=(m.eaten-manual)/auto;
     const factor=Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,raw))*1000)/1000;
     intakeCalCache={factor,ok:true,raw,measured:m.eaten,model:auto+manual,asOf:m.pairs.map(p=>p.date).reduce((a,b)=>b<a?b:a),capped:raw!==factor&&Math.abs(raw-factor)>0.0005};
   }catch(e){intakeCalCache={factor:1,ok:false,reason:'Could not calculate'};}
+  return intakeCalCache;
+}
+// No usable readings yet this batch: start from the farm's past batches
+function intakeFromHistory(){
+  const h=typeof historyIntakePrior==='function'?historyIntakePrior():null;
+  if(h){const f=Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,h.factor))*1000)/1000;intakeCalCache={factor:f,ok:true,fromHistory:h.n,raw:h.factor};}
   return intakeCalCache;
 }
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}

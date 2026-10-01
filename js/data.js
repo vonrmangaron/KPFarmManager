@@ -1,7 +1,9 @@
 function buildDefaultShed(id){return {id,placementDate:null,initialPopulation:DEFAULT_SHED_POPULATION,cleanoutDate:null,mortality:0,mortalityUpdatedAt:null,customFeedKg:null,pickups:[],targetCurve:{7:null,14:null,21:null,28:null},mortalityRatePercent:DEFAULT_MORT_RATE_PCT,chickWeightKg:DEFAULT_CHICK_WEIGHT_KG,inYardSamples:[],predictedPickups:[],targetPickups:null,densitySettings:{useGlobal:true,maxDensity:null,triggerDensity:null,targetDensity:null}};}
 function buildDefaultFarmData(batchNumber){return {batchNumber:batchNumber||'',importDate:new Date().toISOString(),fileName:null,biasFactor:DEFAULT_BIAS_FACTOR,sheds:Array.from({length:SHED_COUNT},(_,i)=>buildDefaultShed(i+1))};}
-function resetAllToDefaults(batchNumber){
+function resetAllToDefaults(batchNumber,opts){
   farmData=buildDefaultFarmData(batchNumber);
+  // Farm history stays only for a new batch on the same farm
+  if(!(opts&&opts.keepHistory))predState.farmHistory=[];
   predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
   testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
@@ -117,6 +119,48 @@ function feedEatenMeasured(){
     pairs.push({g,date:D,morning,delivered,stock,sheds});eaten+=delivered-stock;
   });
   return {eaten,carry,pairs,missing};
+}
+// ── Farm history: each finished batch's results, kept with the farm
+// across batches (saved at New batch, or entered by hand). The app learns
+// from it: first-thin timing and intake % when the current batch has no
+// data of its own yet, and a "vs last batch" comparison.
+function num0(v){const n=Number(v);return Number.isFinite(n)?n:0;}
+function numOrNull(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;}
+function normalizeHistoryRec(r){
+  if(!r||typeof r!=='object')return null;
+  const rec={id:String(r.id||uid('bh')),batch:String(r.batch||'').slice(0,32),endDate:r.endDate?String(r.endDate).slice(0,10):'',source:r.source==='auto'?'auto':'manual',
+    placed:Math.round(num0(r.placed)),picked:Math.round(num0(r.picked)),liveWeightKg:num0(r.liveWeightKg),feedKg:num0(r.feedKg),avgAge:num0(r.avgAge),
+    firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),intakePct:numOrNull(r.intakePct),savedAt:num0(r.savedAt)||Date.now()};
+  return rec.placed>0&&rec.picked>0&&rec.picked<=rec.placed?rec:null;
+}
+function farmHistory(){return Array.isArray(predState.farmHistory)?predState.farmHistory:[];}
+function farmHistorySorted(){return farmHistory().slice().sort((a,b)=>(b.endDate||'').localeCompare(a.endDate||'')||b.savedAt-a.savedAt);}
+function historyKpis(r){return batchKpis({feedKg:r.feedKg,liveWeightKg:r.liveWeightKg,birds:r.picked,ageBirdSum:r.avgAge*r.picked,placed:r.placed,mortality:r.placed-r.picked,targetKg:CFCR_REF_KG});}
+function lastHistoryRec(){return farmHistorySorted()[0]||null;}
+function addFarmHistoryRec(raw){const rec=normalizeHistoryRec(raw);if(!rec)return null;predState.farmHistory=farmHistory().concat([rec]);savePredState();if(typeof schedulePush==='function')schedulePush();return rec;}
+function deleteFarmHistoryRec(id){predState.farmHistory=farmHistory().filter(r=>r.id!==id);savePredState();if(typeof schedulePush==='function')schedulePush();}
+// Priors from history (only records that carry the value)
+function historyThinPrior(){const r=farmHistory().filter(x=>x.firstThinAge>0&&x.firstThinShare>0);return r.length?{age:Math.round(medianOf(r.map(x=>x.firstThinAge))),share:medianOf(r.map(x=>x.firstThinShare)),n:r.length}:null;}
+function historyIntakePrior(){const r=farmHistory().filter(x=>x.intakePct>0);return r.length?{factor:r.reduce((s,x)=>s+x.intakePct,0)/r.length/100,n:r.length}:null;}
+// Summarise the batch on screen (called at New batch, before the reset)
+function summarizeCurrentBatch(){
+  if(!farmData)return null;
+  const sheds=(farmData.sheds||[]).filter(s=>s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return null;
+  let placed=0,picked=0,ageBirds=0,lw=0,lwBirds=0,last=null;const fa=[],fs=[],fin=[];
+  sheds.forEach(s=>{
+    const pop=num0(s.initialPopulation);placed+=pop;
+    const real=(s.pickups||[]).filter(p=>p.date&&num0(p.birds)>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    real.forEach(p=>{const b=num0(p.birds);picked+=b;ageBirds+=pickupAge(s,p)*b;const avg=pickupAvgKg(p);if(avg>0){lw+=avg*b;lwBirds+=b;}const d=dateOnly(p.date);if(!last||d>last)last=d;});
+    if(real.length&&!real[0].isFinal){fa.push(pickupAge(s,real[0]));fs.push(num0(real[0].birds)/pop);}
+    if(real.length)fin.push(num0(real[real.length-1].birds)/pop);
+  });
+  // Only a batch that has largely finished (≥ half the birds out) is worth learning from
+  if(picked<=0||lwBirds<=0||picked<placed*0.5)return null;
+  const docket=num0(predState.farmFeedOverride)>0?num0(predState.farmFeedOverride):feedOrderedKg();
+  const cal=typeof intakeCalibration==='function'?intakeCalibration():{ok:false};
+  return normalizeHistoryRec({batch:predState.batchNumber||farmData.batchNumber||'',endDate:last?iso(last):'',source:'auto',placed,picked,
+    liveWeightKg:lw*picked/lwBirds,feedKg:Math.max(0,docket+carryoverTotalKg()-num0(predState.farmLeftoverKg)),avgAge:ageBirds/picked,
+    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
 }
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 // "Since the reading": a morning reading hasn't seen its own day yet,

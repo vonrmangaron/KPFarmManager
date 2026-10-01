@@ -31,7 +31,8 @@ function buildCloudPayload(){
       carryoverKg:predState.carryoverKg||{1:0,2:0,3:0,4:0},
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
-      noPickupDays:predState.noPickupDays||[]
+      noPickupDays:predState.noPickupDays||[],
+      farmHistory:predState.farmHistory||[]
     },
     preferences:{
       shedViewByGroup,
@@ -72,6 +73,8 @@ function applyCloudPayload(payload,options){
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;
     if(p.densityGlobal&&typeof p.densityGlobal==='object'){const dg=p.densityGlobal;let tp=DEFAULT_DENSITY_GLOBAL.targetPickups;if(Number.isFinite(Number(dg.targetPickups)))tp=Number(dg.targetPickups);else if(Number.isFinite(Number(dg.minPickupsBeforeCleanout)))tp=Number(dg.minPickupsBeforeCleanout);tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,Math.floor(tp)));predState.densityGlobal={maxDensity:Number.isFinite(Number(dg.maxDensity))?Number(dg.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(dg.triggerDensity))?Number(dg.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(dg.targetDensity))?Number(dg.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups:tp};}
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
+    // The farm's history travels with every batch file; the file is the truth
+    if(Array.isArray(p.farmHistory))predState.farmHistory=p.farmHistory.map(normalizeHistoryRec).filter(Boolean);
     savePredState();
   }
   const prefs=payload.preferences||{};
