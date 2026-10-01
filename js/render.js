@@ -491,6 +491,44 @@ function shippedWeightToDate(shed, today, fallbackKg) {
     return sum + birds * kg;
   }, 0);
 }
+// Birds already shipped (pickups up to today) and Σ(age × birds) for them
+function shippedBirdsToDate(shed, today) {
+  const t = dateOnly(today);
+  let birds = 0, ageBirdSum = 0;
+  computeEffectivePickups(shed).forEach(p => {
+    if (!p.date || dateOnly(p.date) > t) return;
+    const b = Number(p.birds) || 0; if (b <= 0) return;
+    birds += b; ageBirdSum += pickupAge(shed, p) * b;
+  });
+  return { birds, ageBirdSum };
+}
+// Batch so far (today): feed to date, live weight now + shipped, birds
+// on hand + shipped, at their ages — fed into batchKpis like the projection
+function batchSoFar(sheds, today) {
+  const acc = { feedKg: 0, liveWeightKg: 0, birds: 0, ageBirdSum: 0, placed: 0, mortality: 0, targetBirdSum: 0, anyEstimated: false, withWeight: 0 };
+  sheds.forEach(shed => {
+    if (!shed.placementDate) return;
+    acc.placed += Number(shed.initialPopulation) || 0;
+    acc.mortality += Math.max(0, Number(shed.mortality) || 0);
+    // Feed only for sheds whose weight is known, so FCR compares like with like
+    const est = currentShedWeightEstimate(shed, today);
+    if (!est) return;
+    let d = dateOnly(shed.placementDate);
+    while (d <= today) { acc.feedKg += shedFeedOn(shed, d); d = addDays(d, 1); }
+    const live = liveAtStartOfDay(shed, today);
+    const sh = shippedBirdsToDate(shed, today);
+    const age = Math.max(0, daysBetween(shed.placementDate, today));
+    acc.liveWeightKg += est.kg * live + shippedWeightToDate(shed, today, est.kg);
+    acc.birds += live + sh.birds;
+    acc.ageBirdSum += age * live + sh.ageBirdSum;
+    acc.targetBirdSum += pairTargetKg(Math.ceil(shed.id / 2)) * (live + sh.birds);
+    acc.withWeight++;
+    if (est.isEstimate) acc.anyEstimated = true;
+  });
+  acc.targetKg = acc.birds > 0 ? acc.targetBirdSum / acc.birds : CFCR_REF_KG;
+  acc.kpi = batchKpis(acc);
+  return acc;
+}
 function currentShedWeightEstimate(shed, today) {
   if (!shed.placementDate) return null;
   const age = daysBetween(shed.placementDate, today);
@@ -619,20 +657,9 @@ function renderGroupStatusGrid() {
     const live = sheds.reduce((s,sh) => s + liveAtStartOfDay(sh, today), 0);
 
     // Weighted avg weight + today-consistent FCR, scoped to this group
-    let feedToDate = 0, weightNow = 0, alwCount = 0, alwSum = 0;
-    sheds.forEach(shed => {
-      if (!shed.placementDate) return;
-      let d = dateOnly(shed.placementDate);
-      while (d <= today) { feedToDate += shedFeedOn(shed, d); d = addDays(d, 1); }
-      const est = currentShedWeightEstimate(shed, today);
-      if (est) {
-        const shedLive = liveAtStartOfDay(shed, today);
-        weightNow += est.kg * shedLive + shippedWeightToDate(shed, today, est.kg);
-        alwSum += est.kg; alwCount++;
-      }
-    });
-    const avgWeight = alwCount > 0 ? alwSum / alwCount : null;
-    const fcr = weightNow > 0 ? feedToDate / weightNow : null;
+    const so = batchSoFar(sheds, dateOnly(today));
+    const avgWeight = so.withWeight > 0 && so.kpi.alw > 0 ? so.kpi.alw : null;
+    const fcr = so.kpi.fcr > 0 ? so.kpi.fcr : null;
 
     // Feed-on-hand days remaining (same calc as the Feed on hand card)
     const bal = currentBalanceKg(g);
@@ -743,39 +770,24 @@ function renderDashboardView() {
   // Current weight comes from a real pickup weighing when one
   // exists, otherwise the same Gompertz-fit estimate (from in-yard
   // samples) the rest of the app already uses for predictions.
-  let farmFeedToDate = 0, farmLiveWeightNow = 0, farmAvgAlwNow = 0, alwCount = 0, anyEstimated = false;
-  allSheds.forEach(shed => {
-    if (!shed.placementDate) return;
-    // Cumulative feed: sum shedFeedOn() from placement to today
-    let d = dateOnly(shed.placementDate);
-    while (d <= today) { farmFeedToDate += shedFeedOn(shed, d); d = addDays(d, 1); }
-    // Current live weight — best available estimate — plus the weight
-    // already shipped out, since the feed total above includes what
-    // the picked-up birds ate before they left.
-    const est = currentShedWeightEstimate(shed, today);
-    if (est) {
-      const live = liveAtStartOfDay(shed, today);
-      farmLiveWeightNow += est.kg * live + shippedWeightToDate(shed, today, est.kg);
-      farmAvgAlwNow += est.kg;
-      alwCount++;
-      if (est.isEstimate) anyEstimated = true;
-    }
-  });
-  const avgAlw = alwCount > 0 ? farmAvgAlwNow / alwCount : 0;
-  const fcrTodayVal  = farmLiveWeightNow > 0 ? farmFeedToDate / farmLiveWeightNow : 0;
-  const beta = Number(predState.beta) || 0.27;
-  const cFcrVal = fcrTodayVal > 0 ? fcrTodayVal - (avgAlw - 2.45) * beta : 0;
-  // EPEF = (livability% × avg ALW) / (batch age × FCR) × 100
-  const farmLivability = totalInit > 0 ? ((totalInit - totalMort) / totalInit * 100) : 0;
-  const epefVal = (batchAge > 0 && fcrTodayVal > 0 && avgAlw > 0)
-    ? (farmLivability * avgAlw) / (batchAge * fcrTodayVal) * 100
+  // Feed to date ÷ (live weight now + weight already shipped — the feed
+  // includes what picked-up birds ate). Same formulas as the projection.
+  const so = batchSoFar(allSheds, dateOnly(today));
+  const anyEstimated = so.anyEstimated;
+  const avgAlw = so.kpi.alw;
+  const fcrTodayVal = so.kpi.fcr;
+  const cFcrVal = so.kpi.cfcr;
+  const cFcrIndVal = so.kpi.cfcrInd;
+  // PIF/EPEF = livability × ALW ÷ (bird-weighted avg age × FCR) × 100
+  const epefVal = (so.kpi.avgAge > 0 && fcrTodayVal > 0 && avgAlw > 0)
+    ? so.kpi.pif
     : 0;
 
   // Predicted end-of-batch FCR / cFCR from the Predictions page, for
   // side-by-side comparison with today's figures.
   const farmTotals = computeFarmTotals();
   const harvestFcrHtml = farmTotals.hasData && farmTotals.fcr > 0
-    ? `<span class="dash-kpi-compare" title="Projected at the final pickup (Predictions page), at ${farmTotals.avgWeight.toFixed(2)} kg average weight."><span class="dkc-k">At harvest (est.)</span><span class="dkc-v">FCR <b>${farmTotals.fcr.toFixed(2)}</b> · cFCR <b>${farmTotals.cfcr.toFixed(2)}</b></span></span>`
+    ? `<span class="dash-kpi-compare" title="Projected at the final pickup (Predictions page), at ${farmTotals.avgWeight.toFixed(2)} kg average weight."><span class="dkc-k">At harvest (est.)</span><span class="dkc-v">FCR <b>${farmTotals.fcr.toFixed(2)}</b> · cFCR <b>${farmTotals.cfcr.toFixed(2)}</b> · Ind. <b>${farmTotals.cfcrInd.toFixed(2)}</b> · PIF <b>${Math.round(farmTotals.pif)}</b></span></span>`
     : '';
   const estChip = anyEstimated ? '<span class="est-chip" title="Some shed weights are estimates — projected from the last pickup weighing or from the growth curve fitted to in-yard samples.">est</span>' : '';
   const fcrDisplay  = fcrTodayVal > 0  ? fcrTodayVal.toFixed(2)  : '—';
@@ -796,7 +808,7 @@ function renderDashboardView() {
     const groups = [1,2,3,4].filter(g => (Number(l.splitKg[g])||0) > 0);
     const typeCls = FEED_TYPES.some(f => f.id === l.feedType) ? l.feedType : 'unspecified';
     const totalKg = l.actualKg != null ? l.actualKg : l.plannedKg;
-    const splitText = groups.length > 1 ? ' · ' + groups.map(g => `${pairShort(g)}: ${(l.splitKg[g]/1000).toFixed(1)} t`).join(', ') : '';
+    const splitText = groups.length > 1 ? ' · ' + groups.map(g => `${pairShort(g)}: ${fmtFeed(l.splitKg[g],1)}`).join(', ') : '';
     return `<div class="dash-pickup-item">
       <div class="dash-pickup-date-block">
         <span class="dash-pickup-dow">${WD2[d.getDay()]}</span>
@@ -806,7 +818,7 @@ function renderDashboardView() {
       <div class="dash-pickup-info">
         <span class="dash-pickup-kind dash-delivery-kind-${typeCls}">${escapeHtml(feedTypeLabel(l.feedType)).toUpperCase()}</span>
         <span class="dash-pickup-sheds">${groups.length ? `Sheds ${groups.map(pairShort).join(' &amp; ')}` : 'Unassigned'}</span>
-        <span class="dash-pickup-detail">${(totalKg/1000).toFixed(2)} t${splitText}${l.note ? ' · ' + escapeHtml(l.note) : ''}</span>
+        <span class="dash-pickup-detail">${fmtFeed(totalKg)}${splitText}${l.note ? ' · ' + escapeHtml(l.note) : ''}</span>
       </div>
     </div>`;
   }).join('');
@@ -895,8 +907,8 @@ function renderDashboardView() {
     <div class="dash-kpi dash-kpi-green">
       <span class="dash-kpi-icon">${dashKpiIcon('fcr')}</span>
       <span class="dash-kpi-label">FCR today${estChip}</span>
-      <span class="dash-kpi-value" title="cFCR corrects FCR to a 2.45 kg reference weight: FCR − (avg weight − 2.45) × β. Birds lighter than 2.45 kg get a cFCR above FCR.">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
-      <span class="dash-kpi-sub" title="European Production Efficiency Factor: livability % × avg weight (kg) ÷ (age in days × FCR) × 100. Higher is better.">EPEF today ${epefDisplay}</span>
+      <span class="dash-kpi-value" title="FCR = feed ÷ live weight. cFCR (Baiada) = FCR − (ALW − 2.45) × ${so.kpi.beta}. ALW = live weight ÷ birds (${avgAlw ? avgAlw.toFixed(3) : '—'} kg).">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
+      <span class="dash-kpi-sub" title="cFCR (Industry) = FCR − (ALW − ${so.targetKg.toFixed(2)} target) ÷ 3.2. PIF = livability × ALW ÷ (avg age ${so.kpi.avgAge ? so.kpi.avgAge.toFixed(1) : '—'} d × FCR) × 100. Higher PIF is better.">cFCR Ind. ${cFcrIndVal > 0 ? cFcrIndVal.toFixed(2) : '—'} · PIF today ${epefDisplay}</span>
       ${harvestFcrHtml}
     </div>
     <div class="dash-kpi dash-kpi-red">
@@ -1167,14 +1179,14 @@ function renderShedForecastTable(shed,forecast){
     const rowClasses=[weekend?'is-weekend':'',r.isPast?'is-past':'',r.isToday?'is-today':'',r.pickupsBirds>0&&!r.hasPredicted?'pickup-day':'',r.hasPredicted?'predicted-pickup-day':'',r.isFinalDay?'is-final':''].filter(Boolean).join(' ');
     const todayTag=r.isToday?' · <span style="color:var(--secondary);font-weight:700;">Today</span>':'';
     const weekendTag=weekend?' <span class="weekend-pill">Weekend</span>':'';
-    return `<tr class="${rowClasses}"><td>${fmtShort(r.date)}${todayTag}${weekendTag}</td><td class="num">${r.age}d</td><td class="num">${r.liveStart.toLocaleString()}</td><td class="num">${r.dailyFeed.toFixed(1)} kg</td><td>${forecastPickupCell(r.pickups)}</td></tr>`;
+    return `<tr class="${rowClasses}"><td>${fmtShort(r.date)}${todayTag}${weekendTag}</td><td class="num">${r.age}d</td><td class="num">${r.liveStart.toLocaleString()}</td><td class="num">${fmtFeed(r.dailyFeed)}</td><td>${forecastPickupCell(r.pickups)}</td></tr>`;
   }).join('');
-  return `<div class="forecast-block"><h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4><div class="forecast-table-wrap"><table class="forecast-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th><th class="num">Daily Feed</th><th>Pickup</th></tr></thead><tbody>${rows}<tr class="total-row"><td colspan="3">Total over range</td><td class="num">${forecast.totalFeed.toFixed(1)} kg</td><td style="font-size:12px;font-weight:600;color:var(--muted);">${(forecast.totalFeed/1000).toFixed(2)} tonnes</td></tr></tbody></table></div></div>`;
+  return `<div class="forecast-block"><h4>📈 Forecast <span class="window-label">${lbl} · ${forecast.rows.length} rows</span></h4><div class="forecast-table-wrap"><table class="forecast-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Live birds</th><th class="num">Daily Feed</th><th>Pickup</th></tr></thead><tbody>${rows}<tr class="total-row"><td colspan="3">Total over range</td><td class="num">${fmtFeed(forecast.totalFeed)}</td><td style="font-size:12px;font-weight:600;color:var(--muted);"></td></tr></tbody></table></div></div>`;
 }
 function renderSiloInput(group,siloNum,rings){
   const isOff=(rings===null||rings===undefined||rings==='');
   const kg=ringsToKg(rings);
-  return `<div class="silo-input ${isOff?'off':''}"><div class="silo-title"><span>Silo ${siloNum}</span>${isOff?`<span class="off-badge">Off</span>`:`<span class="cap">Max 50 t</span>`}</div><div class="ring-picker"><button class="ring-off ${isOff?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>${[0,1,2,3,4,5].map(r=>`<div class="ring-slot ${r===rings?'active':''}"><button class="ring-btn ${r===rings?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}" title="${r} ring${r===1?'':'s'} — ${(ringsToKg(r)/1000).toFixed(0)} t">${r}</button><span class="ring-t">${(ringsToKg(r)/1000).toFixed(0)}t</span></div>`).join('')}</div><div class="silo-total"><span class="lbl">${isOff?'Not in use':'This silo'}</span><span class="val">${isOff?'0 kg':(kg/1000).toFixed(2)+' t <span class="kg">('+kg.toLocaleString()+' kg)</span>'}</span></div></div>`;
+  return `<div class="silo-input ${isOff?'off':''}"><div class="silo-title"><span>Silo ${siloNum}</span>${isOff?`<span class="off-badge">Off</span>`:`<span class="cap">Max ${fmtFeed(50000,0)}</span>`}</div><div class="ring-picker"><button class="ring-off ${isOff?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>${[0,1,2,3,4,5].map(r=>`<div class="ring-slot ${r===rings?'active':''}"><button class="ring-btn ${r===rings?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}" title="${r} ring${r===1?'':'s'} — ${fmtFeed(ringsToKg(r),0)}">${r}</button><span class="ring-t">${fmtFeedCompact(ringsToKg(r))}</span></div>`).join('')}</div><div class="silo-total"><span class="lbl">${isOff?'Not in use':'This silo'}</span><span class="val">${isOff?fmtFeed(0):fmtFeed(kg)}</span></div></div>`;
 }
 function renderReadingHistory(group){
   const all=readingsSorted(group);
@@ -1183,15 +1195,15 @@ function renderReadingHistory(group){
   if(!arr.length)return `<details class="reading-history"><summary>🕘 Reading history (empty)</summary><div style="font-size:12.5px;color:var(--muted);padding:8px 0;">Once you tap a ring level, each reading is saved with today's date.</div></details>`;
   const todayIso=iso(new Date());
   const rk='rd:'+group;const on=bulkActive(rk);
-  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${all.length===arr.length?arr.length:`last ${arr.length} of ${all.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,arr.map(r=>r.date),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${arr.map(r=>{const total=readingTotalKg(r);const cls=r.date===todayIso?'today':'';return `<tr class="${cls}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,r.date,fmtShort(dateOnly(r.date)))}</td>`:''}<td>${fmtShort(dateOnly(r.date))} <span class="rt-chip ${r.time==='am'?'am':'pm'}" title="${r.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${r.time==='am'?'AM':'PM'}</span></td><td>${r.silo1Rings===null?'—':r.silo1Rings+'r'}</td><td>${r.silo2Rings===null?'—':r.silo2Rings+'r'}</td><td>${r.silo3Rings===null?'—':r.silo3Rings+'r'}</td><td class="num">${(total/1000).toFixed(2)} t</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" data-delete-reading="${group}|${r.date}" title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
+  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${all.length===arr.length?arr.length:`last ${arr.length} of ${all.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,arr.map(r=>r.date),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${arr.map(r=>{const total=readingTotalKg(r);const cls=r.date===todayIso?'today':'';return `<tr class="${cls}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,r.date,fmtShort(dateOnly(r.date)))}</td>`:''}<td>${fmtShort(dateOnly(r.date))} <span class="rt-chip ${r.time==='am'?'am':'pm'}" title="${r.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${r.time==='am'?'AM':'PM'}</span></td><td>${r.silo1Rings===null?'—':r.silo1Rings+'r'}</td><td>${r.silo2Rings===null?'—':r.silo2Rings+'r'}</td><td>${r.silo3Rings===null?'—':r.silo3Rings+'r'}</td><td class="num">${fmtFeed(total)}</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" data-delete-reading="${group}|${r.date}" title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
 }
 function renderGroupLoadsCard(group){
   const arr=loadsAffectingGroup(group);
   if(arr.length===0)return `<div class="group-loads-empty">No loads routed to these sheds yet — open 🚛 Loads to plan one.</div><div class="group-loads-footnote">These loads are shared across groups. <button type="button" data-open-loads-modal="1">Open 🚛 Loads</button></div>`;
   const rows=arr.map(l=>{
     const share=Number(l.splitKg[group])||0;
-    const actualStr=(l.actualKg!=null)?`✓ actual ${(l.actualKg/1000).toFixed(2)} t`:'';
-    return `<div class="group-load-row"><span class="glr-date">${fmtShort(l.date)}</span><span class="glr-type">${feedTypeTagHtml(l.feedType)}</span><span class="glr-actual">${actualStr}</span><span class="glr-share">${(share/1000).toFixed(2)} t</span><button type="button" class="glr-edit" data-load-edit="${escapeAttr(l.id)}" title="Edit this load">✎</button></div>`;
+    const actualStr=(l.actualKg!=null)?`✓ actual ${fmtFeed(l.actualKg)}`:'';
+    return `<div class="group-load-row"><span class="glr-date">${fmtShort(l.date)}</span><span class="glr-type">${feedTypeTagHtml(l.feedType)}</span><span class="glr-actual">${actualStr}</span><span class="glr-share">${fmtFeed(share)}</span><button type="button" class="glr-edit" data-load-edit="${escapeAttr(l.id)}" title="Edit this load">✎</button></div>`;
   }).join('');
   return `<div class="group-loads-list">${rows}</div><div class="group-loads-footnote">These loads are shared across groups. <button type="button" data-open-loads-modal="1">Open 🚛 Loads</button> to add or edit.</div>`;
 }
@@ -1200,10 +1212,10 @@ function renderFeedSummary(group){
   const co=carryoverKg(group);
   const activeRows=['starter','grower','finisher','withdrawal','unspecified'].map(k=>summary.buckets[k]).filter(b=>b.tonnes>0);
   if(activeRows.length===0&&!co)return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary <span class="sub">· per feed type · 1 block = 60 T · 30 T = 0.5</span></div><div class="feed-summary-empty">No loads scheduled yet — add one via 🚛 Loads to see the block count.</div></div>`;
-  const rows=activeRows.map(b=>`<tr class="${b.blocks>=0.5?'has-blocks':''}"><td>${feedTypeTagHtml(b.id)}</td><td class="num">${b.tonnes.toFixed(2)} t</td><td class="num">${b.loads}</td><td class="num">${b.blocks>0?`<span class="block-count">${fmtBlocks(b.blocks)}</span>`:`<span class="block-count zero">0</span>`}</td></tr>`).join('');
+  const rows=activeRows.map(b=>`<tr class="${b.blocks>=0.5?'has-blocks':''}"><td>${feedTypeTagHtml(b.id)}</td><td class="num">${fmtFeed(b.tonnes*1000)}</td><td class="num">${b.loads}</td><td class="num">${b.blocks>0?`<span class="block-count">${fmtBlocks(b.blocks)}</span>`:`<span class="block-count zero">0</span>`}</td></tr>`).join('');
   // Carry-over: counted in the total, never in the feed-type / block counts
-  const coRow=co?`<tr class="carry-row"><td><span class="carry-tag">↩ Carry-over</span> <span class="carry-sub">last batch</span></td><td class="num">${(co/1000).toFixed(2)} t</td><td class="num">—</td><td class="num">—</td></tr>`:'';
-  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (these sheds' share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}${coRow}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total${co?' incl. carry-over':''}</td><td class="num">${(summary.totalTonnes+co/1000).toFixed(2)} t</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).${co?' Carry-over from last batch is included in the total but not in feed-type blocks.':''}</div></div>`;
+  const coRow=co?`<tr class="carry-row"><td><span class="carry-tag">↩ Carry-over</span> <span class="carry-sub">last batch</span></td><td class="num">${fmtFeed(co)}</td><td class="num">—</td><td class="num">—</td></tr>`:'';
+  return `<div class="feed-summary"><div class="feed-summary-title">📊 Feed Summary (these sheds' share) <span class="sub">· 1 block = 60 T · 30 T = 0.5</span></div><table class="feed-summary-table"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Loads</th><th class="num">60 T blocks</th></tr></thead><tbody>${rows}${coRow}<tr style="background:var(--surface-soft);font-weight:800;font-family:'Sora',sans-serif;"><td>Total${co?' incl. carry-over':''}</td><td class="num">${fmtFeed(summary.totalTonnes*1000+co)}</td><td class="num">${activeRows.reduce((s,b)=>s+b.loads,0)}</td><td class="num">${fmtBlocks(summary.totalBlocks)}</td></tr></tbody></table><div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;">Each 60 T of the same feed type counts as <strong>1 block</strong>. Half blocks count as <strong>0.5</strong> (30 T = 0.5).${co?' Carry-over from last batch is included in the total but not in feed-type blocks.':''}</div></div>`;
 }
 function renderFeedPlanner(group,sheds,today){
   const forecast=computeSiloForecast(group,siloRange);
@@ -1229,18 +1241,18 @@ function renderFeedPlanner(group,sheds,today){
   const testCount=(testDeliveries[group]||[]).length;
   const leftover=projectedLeftoverForGroup(group);
   const leftoverOk=leftover&&leftover.balance!==null;
-  const leftoverStr=leftoverOk?(leftover.balance>=0?`${(leftover.balance/1000).toFixed(1)} t left at clean-out`:`short ${(leftover.short/1000).toFixed(1)} t to clean-out`):'—';
+  const leftoverStr=leftoverOk?(leftover.balance>=0?`${fmtFeed(leftover.balance,1)} left at clean-out`:`short ${fmtFeed(leftover.short,1)} to clean-out`):'—';
   const tpCount=testPickupCountForGroup(group);
-  const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?(leftover.balance<0?' short':''):' muted'}" title="${leftoverOk?`With expected pickups: ${leftover.balance>=0?(leftover.balance/1000).toFixed(1)+' t left at clean-out':'short '+(leftover.short/1000).toFixed(1)+' t'} · if no more pickups: short ${(leftover.safeShort/1000).toFixed(1)} t`:'No clean-out date'}">🧺 ${leftoverStr}</span></span>`;
+  const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?(leftover.balance<0?' short':''):' muted'}" title="${leftoverOk?`With expected pickups: ${leftover.balance>=0?fmtFeed(leftover.balance,1)+' left at clean-out':'short '+fmtFeed(leftover.short,1)} · if no more pickups: short ${fmtFeed(leftover.safeShort,1)}`:'No clean-out date'}">🧺 ${leftoverStr}</span></span>`;
   return `<div class="planner-wrap">
     <div class="planner-summary">
-      <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?`${Math.round(projected).toLocaleString()} kg at end of today`:'Tap ring levels below to record stock'}</div></div>
+      <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?'Expected at end of today':'Tap ring levels below to record stock'}</div></div>
       <div class="summary-card"><div class="sc-label">${depletedWithinWindow?'Depletes On':'Feed Lasts'}</div><div class="sc-value ${statusTone}">${depletedWithinWindow?fmtShort(forecast.depletedDate):(hasReading?`> ${siloRange.end} days`:'—')}</div><div class="sc-sub">${depletedWithinWindow?`${daysUntilDepletion} day${daysUntilDepletion===1?'':'s'} from now`:(hasReading?`Balance at end: ${fmtFeed(forecast.endBalance)}`:'')}</div></div>
       <div class="summary-card"><div class="sc-label">Status</div><div class="sc-value ${statusTone}">${statusText}</div><div class="sc-sub">${statusSub}</div></div>
       <div class="summary-card"><div class="sc-label">${forecast.shortfall>0?'Shortfall':'Coverage'}</div><div class="sc-value ${forecast.shortfall>0?'red':'green'}">${forecast.shortfall>0?fmtFeed(forecast.shortfall):'✅ Covered'}</div><div class="sc-sub">${forecast.shortfall>0?'Consumption exceeds supply over range':`Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div></div>
     </div>
     ${hasReading?`<div class="reading-info"><div class="ri-item"><span class="ri-label">Last reading:</span><span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span></div><div class="ri-item"><span class="ri-label">Consumed since:</span><span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>${deliveredSince>0?`<div class="ri-item"><span class="ri-label">Delivered since:</span><span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>`:''}<div class="ri-item"><span class="ri-label">Projected today:</span><span class="ri-value amber">${fmtFeed(projected)}</span></div></div>`:''}
-    <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span>${readTimeToggleHtml()}</h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?(readingTotalKg(latest)/1000).toFixed(2)+' t':'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(${readingTotalKg(latest).toLocaleString()} kg on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
+    <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span>${readTimeToggleHtml()}</h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?fmtFeed(readingTotalKg(latest)):'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
     <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
     ${rangeBarHtml(siloRange,'silo')}
     <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
@@ -1313,22 +1325,22 @@ function renderSiloForecastTable(forecast,group,opts){
       const realDels=r.deliveries.filter(d=>!d.isTest);
       const testDels=r.deliveries.filter(d=>d.isTest);
       const chunks=[];
-      realDels.forEach(rd=>{const kg=Number(rd.amountKg)||0;const typeTag=rd.feedType?feedTypeTagHtml(rd.feedType):'';chunks.push(`<span class="delivery-pill">+${(kg/1000).toFixed(1)} t</span>${typeTag}<button class="delivery-edit-btn" type="button" data-load-edit="${escapeAttr(rd.loadId||rd.id)}" title="Edit this load">✎</button>`);});
-      testDels.forEach(td=>{const kg=Number(td.amountKg)||0;chunks.push(`<span class="delivery-pill test">🚜 +${(kg/1000).toFixed(1)} t</span><button class="test-x" type="button" data-remove-test="${group}|${td.id}" title="Remove this test delivery">✕</button>`);});
+      realDels.forEach(rd=>{const kg=Number(rd.amountKg)||0;const typeTag=rd.feedType?feedTypeTagHtml(rd.feedType):'';chunks.push(`<span class="delivery-pill">+${fmtFeed(kg,1)}</span>${typeTag}<button class="delivery-edit-btn" type="button" data-load-edit="${escapeAttr(rd.loadId||rd.id)}" title="Edit this load">✎</button>`);});
+      testDels.forEach(td=>{const kg=Number(td.amountKg)||0;chunks.push(`<span class="delivery-pill test">🚜 +${fmtFeed(kg,1)}</span><button class="test-x" type="button" data-remove-test="${group}|${td.id}" title="Remove this test delivery">✕</button>`);});
       deliveryCell=chunks.join(' ');
     }
-    if(isInlineOpen){deliveryCell+=`<div class="inline-del"><input type="number" class="inline-del-input" placeholder="tonnes" min="0.1" step="0.1" value="" /><button type="button" class="inline-del-btn test" data-inline-test="${group}|${iso(r.date)}" title="Add as test delivery (session only)">🚜 Test</button><button type="button" class="inline-del-btn actual" data-inline-actual="${group}|${iso(r.date)}" title="Record this load as ordered">✅ Order</button><button type="button" class="inline-del-btn cancel" data-inline-cancel="1" title="Cancel">✕</button></div>`;}
+    if(isInlineOpen){deliveryCell+=`<div class="inline-del"><input type="number" class="inline-del-input" placeholder="${feedUnitWord()}" min="0" step="${feedStep(true)}" value="" /><button type="button" class="inline-del-btn test" data-inline-test="${group}|${iso(r.date)}" title="Add as test delivery (session only)">🚜 Test</button><button type="button" class="inline-del-btn actual" data-inline-actual="${group}|${iso(r.date)}" title="Record this load as ordered">✅ Order</button><button type="button" class="inline-del-btn cancel" data-inline-cancel="1" title="Cancel">✕</button></div>`;}
     let dateCls='';
     if(r.isToday)dateCls='fb-date-today';else if(r.isWeekend)dateCls='fb-date-weekend';
     const reading=readingOnDate(group,iso(r.date));
     let readingBadge='';
-    if(reading){const s1=reading.silo1Rings===null||reading.silo1Rings===undefined?'off':reading.silo1Rings+'r';const s2=reading.silo2Rings===null||reading.silo2Rings===undefined?'off':reading.silo2Rings+'r';const s3=reading.silo3Rings===null||reading.silo3Rings===undefined?'off':reading.silo3Rings+'r';const totalT=(readingTotalKg(reading)/1000).toFixed(2);const tip=`${reading.time==='am'?'Morning':'Evening'} reading · Silo 1: ${s1} · Silo 2: ${s2} · Silo 3: ${s3} · Total ${totalT} t — click to delete this reading`;readingBadge=`<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖</button>`;}
+    if(reading){const s1=reading.silo1Rings===null||reading.silo1Rings===undefined?'off':reading.silo1Rings+'r';const s2=reading.silo2Rings===null||reading.silo2Rings===undefined?'off':reading.silo2Rings+'r';const s3=reading.silo3Rings===null||reading.silo3Rings===undefined?'off':reading.silo3Rings+'r';const totalT=fmtFeed(readingTotalKg(reading));const tip=`${reading.time==='am'?'Morning':'Evening'} reading · Silo 1: ${s1} · Silo 2: ${s2} · Silo 3: ${s3} · Total ${totalT} — click to delete this reading`;readingBadge=`<button type="button" class="reading-badge" data-delete-reading="${group}|${reading.date}" title="${escapeAttr(tip)}">📖</button>`;}
     const ages=shedAgesAtDateForGroup(group,r.date);const agesStr=formatAgesPair(ages);
     const liveBirds=r.liveBirds||0;
     let pickupIndicator='';
     if(r.pickupsBirds>0){const pickCls=r.hasPredicted?'fb-pickup-predicted':'fb-pickup-actual';pickupIndicator=` <span class="${pickCls}">−${r.pickupsBirds.toLocaleString()}</span>`;}
     let balanceCls='';let balanceText='—';
-    if(r.balance!==null){balanceText=Math.round(r.balance).toLocaleString()+' kg';if(r.isPast)balanceCls='fb-balance-past';else if(r.balance<=0)balanceCls='fb-balance-empty';else if(r.balance<5000)balanceCls='fb-balance-low';else balanceCls='fb-balance-ok';}
+    if(r.balance!==null){balanceText=fmtFeed(r.balance);if(r.isPast)balanceCls='fb-balance-past';else if(r.balance<=0)balanceCls='fb-balance-empty';else if(r.balance<5000)balanceCls='fb-balance-low';else balanceCls='fb-balance-ok';}
     const cells=[];
     if(c.date)cells.push(`<td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>`);
     if(c.age)cells.push(`<td class="num">${agesStr}</td>`);
@@ -1339,7 +1351,7 @@ function renderSiloForecastTable(forecast,group,opts){
       const tpClickable=!r.isPast;
       cells.push(`<td class="num${tpClickable?' tp-cell':''}"${tpClickable?` data-tp-cell="${group}|${iso(r.date)}" title="Click to add a test pickup"`:''}>${liveBirds.toLocaleString()}${pickupIndicator}${tpChips||movedChips?`<div class="tp-chips">${tpChips}${movedChips}</div>`:''}</td>`);
     }
-    if(c.dailyFeed)cells.push(`<td class="num">${Math.round(r.consumption).toLocaleString()} kg</td>`);
+    if(c.dailyFeed)cells.push(`<td class="num">${fmtFeed(r.consumption)}</td>`);
     if(c.delivery)cells.push(`<td>${deliveryCell}</td>`);
     if(c.endBalance)cells.push(`<td class="num ${balanceCls}">${balanceText}</td>`);
     const tpOpen=!!inlinePickupState&&inlinePickupState.group===group&&inlinePickupState.dateIso===iso(r.date)&&c.liveBirds&&(inModal===!!feedCompareState.modalOpen);
@@ -1366,7 +1378,7 @@ function computePredictionsInner(shed,group){
   const pickups=computeEffectivePickups(shed);
   const finalAge=shed.cleanoutDate?Math.max(currentAge,ageInDays(shed,shed.cleanoutDate)):currentAge+30;
   const targetALW=Number(predState.targetHarvestWeightKg[group])||2.65;
-  const beta=Number(predState.beta)||0.27;
+  const beta=CFCR_BAIADA_BETA;
   let perfSum=0,perfCount=0;
   for(const p of pickups){if(p.weightEstimated)continue;const avg=pickupAvgKg(p);if(avg&&avg>0){const pAge=pickupAge(shed,p);const curveW=rossWeightKg(pAge);if(curveW>0){perfSum+=(avg/curveW);perfCount++;}}}
   const perfFactor=perfCount>0?(perfSum/perfCount):1.0;
@@ -1377,18 +1389,21 @@ function computePredictionsInner(shed,group){
   if(fit){const gompFinal=gompertzWeightAt(fit,finalAge);const progressT=Math.min(1,currentAge/Math.max(1,finalAge));if(gompFinal!=null)estFinalALW=gompFinal*(1-progressT*0.3)+targetALW*(progressT*0.3);else estFinalALW=(perfCount>0)?(perfAdjustedFinal*(1-progressT*0.5)+targetALW*(progressT*0.5)):targetALW;}
   else{const progressT=Math.min(1,currentAge/Math.max(1,finalAge));estFinalALW=(perfCount>0)?(perfAdjustedFinal*(1-progressT*0.5)+targetALW*(progressT*0.5)):targetALW;}
   const mortEstimate=estimateShedFinalMortality(shed,finalAge,currentAge);
-  const estFinalMort=mortEstimate.estFinalMort;const estFinalLive=mortEstimate.estFinalLive;const estLivability=mortEstimate.estLivability;
-  let totalWeightKg=0;const pickupDetails=[];let cumBirds=0;
+  let estFinalMort=mortEstimate.estFinalMort;let estFinalLive=mortEstimate.estFinalLive;let estLivability=mortEstimate.estLivability;
+  let totalWeightKg=0;const pickupDetails=[];let cumBirds=0,ageBirdSum=0;
   for(const p of pickups){
     const pAge=pickupAge(shed,p);const curveAtAge=rossWeightKg(pAge);const avgFromExcel=pickupAvgKg(p);
     const fwP=forecastWeightModeAware(shed,p.date);
     const avgUsed=(avgFromExcel&&avgFromExcel>0)?avgFromExcel:((fwP&&fwP.kg)?fwP.kg:(curveAtAge*perfFactor));
     const pickupWeightKg=Number(p.birds||0)*avgUsed;
-    totalWeightKg+=pickupWeightKg;cumBirds+=Number(p.birds||0);
+    totalWeightKg+=pickupWeightKg;cumBirds+=Number(p.birds||0);ageBirdSum+=pAge*Number(p.birds||0);
     pickupDetails.push({date:p.date,age:pAge,birds:Number(p.birds||0),avgWeightKg:avgUsed,totalWeightKg:Number(p.birds||0)*avgUsed,isFinal:!!p.isFinal,isPredicted:p.__source==='predicted'||p.__source==='auto',isAuto:p.__source==='auto',cumBirds,isEstWeight:!(avgFromExcel&&avgFromExcel>0)});
   }
   const finalLiveBirds=Math.max(0,estFinalLive-cumBirds);
-  totalWeightKg+=finalLiveBirds*estFinalALW;
+  totalWeightKg+=finalLiveBirds*estFinalALW;ageBirdSum+=finalAge*finalLiveBirds;
+  // Every bird that leaves is counted; the rest died (livability = 100 − mortality %)
+  const birdsAll=cumBirds+finalLiveBirds;
+  if(initialPop>0){estFinalLive=birdsAll;estFinalMort=Math.max(0,initialPop-birdsAll);estLivability=birdsAll/initialPop*100;}
   let totalFeedKg=0;
   if(shed.placementDate&&shed.cleanoutDate){let d=dateOnly(shed.placementDate);const end=dateOnly(shed.cleanoutDate);while(d<=end){totalFeedKg+=shedFeedOn(shed,d);d=addDays(d,1);}}
   // No clean-out date yet: project feed to the same horizon the weight uses
@@ -1404,12 +1419,11 @@ function computePredictionsInner(shed,group){
     horizon=Math.min(finalAge,Math.max(horizon,lastPickupAge));
     let d=dateOnly(shed.placementDate);const end=addDays(dateOnly(shed.placementDate),horizon);while(d<=end){totalFeedKg+=shedFeedOn(shed,d);d=addDays(d,1);}
   }
-  const fcr=totalWeightKg>0?(totalFeedKg/totalWeightKg):0;
-  const cfcr=fcr-(estFinalALW-2.45)*beta;
-  const pif=(finalAge>0&&fcr>0)?((estLivability*estFinalALW)/(finalAge*fcr)*100):0;
+  const k=batchKpis({feedKg:totalFeedKg,liveWeightKg:totalWeightKg,birds:birdsAll,ageBirdSum,placed:initialPop,mortality:estFinalMort,targetKg:targetALW});
+  const {fcr,cfcr,cfcrInd,pif,alw,avgAge}=k;
   const remainingWeightKg=liveNow*rossWeightKg(currentAge)*perfFactor;
   const confidence=computeConfidence(shed,finalAge);
-  return {initialPop,currentMort,currentAge,liveNow,pickupsCompleted:pickups.length,remainingBirds:liveNow,remainingWeightKg,finalAge,estFinalALW,estFinalMort,estFinalLive,estLivability,totalWeightKg,totalFeedKg,fcr,cfcr,pif,beta,perfFactor,confidence,pickupDetails,hasWeightData:perfCount>0,gompertzFit:fit};
+  return {initialPop,currentMort,currentAge,liveNow,pickupsCompleted:pickups.length,remainingBirds:liveNow,remainingWeightKg,finalAge,estFinalALW,estFinalMort,estFinalLive,estLivability,totalWeightKg,totalFeedKg,fcr,cfcr,cfcrInd,pif,alw,avgAge,birdsAll,ageBirdSum,targetALW,beta,perfFactor,confidence,pickupDetails,hasWeightData:perfCount>0,gompertzFit:fit};
 }
 function computeGroupPredictions(group){
   const sheds=shedsForGroup(group);
@@ -1418,21 +1432,12 @@ function computeGroupPredictions(group){
     if(!shed.placementDate)continue;
     const pred=computePredictions(shed,group);
     totalLiveWeight+=pred.totalWeightKg;totalFeedKg+=pred.totalFeedKg;totalPlaced+=pred.initialPop;totalMortalityEst+=pred.estFinalMort;
-    const harvestedBirds=pred.pickupDetails.reduce((s,p)=>s+p.birds,0);
-    const remainingBirds=Math.max(0,pred.estFinalLive-harvestedBirds);
-    const batchBirds=harvestedBirds+remainingBirds;
-    totalBirdsAtHarvest+=batchBirds;weightedAgeSum+=pred.finalAge*batchBirds;confidenceSum+=pred.confidence;shedsWithData++;
+    totalBirdsAtHarvest+=pred.birdsAll;weightedAgeSum+=pred.ageBirdSum;confidenceSum+=pred.confidence;shedsWithData++;
   }
-  if(shedsWithData===0)return {hasData:false,shedsWithData:0,shedIds:sheds.map(s=>s.id),totalLiveWeight:0,totalFeedKg:0,totalPlaced:0,totalMortalityEst:0,totalBirdsAtHarvest:0,avgWeight:0,weightedAge:0,livability:0,fcr:0,cfcr:0,pif:0,confidence:0};
-  const avgWeight=totalBirdsAtHarvest>0?totalLiveWeight/totalBirdsAtHarvest:0;
-  const weightedAge=totalBirdsAtHarvest>0?weightedAgeSum/totalBirdsAtHarvest:0;
-  const livability=totalPlaced>0?((totalPlaced-totalMortalityEst)/totalPlaced)*100:0;
-  const fcr=totalLiveWeight>0?totalFeedKg/totalLiveWeight:0;
-  const beta=Number(predState.beta)||0.27;
-  const cfcr=fcr>0?fcr-(avgWeight-2.45)*beta:0;
-  const pif=(weightedAge>0&&fcr>0)?((livability*avgWeight)/(weightedAge*fcr)*100):0;
+  if(shedsWithData===0)return {hasData:false,shedsWithData:0,shedIds:sheds.map(s=>s.id),totalLiveWeight:0,totalFeedKg:0,totalPlaced:0,totalMortalityEst:0,totalBirdsAtHarvest:0,avgWeight:0,weightedAge:0,livability:0,fcr:0,cfcr:0,cfcrInd:0,pif:0,confidence:0};
+  const k=batchKpis({feedKg:totalFeedKg,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg:pairTargetKg(group)});
   const confidence=Math.round(confidenceSum/shedsWithData);
-  return {hasData:true,shedsWithData,shedIds:sheds.map(s=>s.id),totalLiveWeight,totalFeedKg,totalPlaced,totalMortalityEst,totalBirdsAtHarvest,avgWeight,weightedAge,livability,fcr,cfcr,pif,confidence};
+  return {hasData:true,shedsWithData,shedIds:sheds.map(s=>s.id),totalLiveWeight,totalFeedKg,totalPlaced,totalMortalityEst,totalBirdsAtHarvest,avgWeight:k.alw,weightedAge:k.avgAge,livability:k.livability,fcr:k.fcr,cfcr:k.cfcr,cfcrInd:k.cfcrInd,pif:k.pif,target:k.target,cage:cAge245ForSheds(sheds.filter(s=>s.placementDate)),confidence};
 }
 function computeConfidence(shed,finalAge){
   const age=ageInDays(shed,new Date());
@@ -1452,24 +1457,18 @@ function computeConfidence(shed,finalAge){
 function confidenceLabel(pct){if(pct>=80)return {label:'High',cls:'high'};if(pct>=50)return {label:'Medium',cls:'medium'};return {label:'Low',cls:'low'};}
 function computeFarmTotals(){
   const sheds=(farmData&&farmData.sheds)?farmData.sheds:[];
-  let totalLiveWeight=0,totalFeedAuto=0,totalPlaced=0,totalMortalityEst=0,totalBirdsAtHarvest=0,weightedAgeSum=0,shedsWithData=0,totalCurrentMort=0;
+  let totalLiveWeight=0,totalFeedAuto=0,totalPlaced=0,totalMortalityEst=0,totalBirdsAtHarvest=0,weightedAgeSum=0,shedsWithData=0,totalCurrentMort=0,targetBirdSum=0;
   for(const shed of sheds){
     if(!shed.placementDate)continue;
     const g=Math.floor((shed.id-1)/2)+1;
     const pred=computePredictions(shed,g);
     totalLiveWeight+=pred.totalWeightKg;totalFeedAuto+=pred.totalFeedKg;totalPlaced+=pred.initialPop;totalMortalityEst+=pred.estFinalMort;totalCurrentMort+=Math.max(0,Number(shed.mortality)||0);
-    const harvestedBirds=pred.pickupDetails.reduce((s,p)=>s+p.birds,0);
-    const remainingBirds=Math.max(0,pred.estFinalLive-harvestedBirds);
-    const batchBirds=harvestedBirds+remainingBirds;
-    totalBirdsAtHarvest+=batchBirds;weightedAgeSum+=pred.finalAge*batchBirds;shedsWithData++;
+    totalBirdsAtHarvest+=pred.birdsAll;weightedAgeSum+=pred.ageBirdSum;targetBirdSum+=pred.targetALW*pred.birdsAll;shedsWithData++;
   }
   const autoLeftover=totalFarmLeftover();
   const leftoverKg=(predState.farmLeftoverKg!=null&&Number.isFinite(Number(predState.farmLeftoverKg))&&Number(predState.farmLeftoverKg)>0)?Number(predState.farmLeftoverKg):0;
   const leftoverApplied=leftoverKg>0;
-  if(shedsWithData===0)return {hasData:false,shedsWithData:0,totalLiveWeight:0,totalFeedAuto:0,totalFeed:0,fcr:0,cfcr:0,pif:0,avgWeight:0,livability:0,weightedAge:0,placed:0,mortality:0,birdsAtHarvest:0,usingManualFeed:false,autoLeftover:null,leftoverApplied:false,leftoverKg:0,totalCurrentMortality:0,currentMortRate:0,estMortRate:0};
-  const avgWeight=totalBirdsAtHarvest>0?totalLiveWeight/totalBirdsAtHarvest:0;
-  const weightedAge=totalBirdsAtHarvest>0?weightedAgeSum/totalBirdsAtHarvest:0;
-  const livability=totalPlaced>0?((totalPlaced-totalMortalityEst)/totalPlaced)*100:0;
+  if(shedsWithData===0)return {hasData:false,shedsWithData:0,totalLiveWeight:0,totalFeedAuto:0,totalFeed:0,fcr:0,cfcr:0,cfcrInd:0,pif:0,avgWeight:0,livability:0,weightedAge:0,placed:0,mortality:0,birdsAtHarvest:0,usingManualFeed:false,autoLeftover:null,leftoverApplied:false,leftoverKg:0,totalCurrentMortality:0,currentMortRate:0,estMortRate:0};
   const usingManualFeed=predState.farmFeedOverride!=null&&predState.farmFeedOverride>0;
   // Docket-based total (manual override) + feed carried in from last batch
   // − feed left at clean-out. The auto estimate is bird intake, which
@@ -1477,28 +1476,28 @@ function computeFarmTotals(){
   const carryKg=carryoverTotalKg();
   const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+carryKg:totalFeedAuto;
   const totalFeed=Math.max(0,baseFeed-leftoverKg);
-  const fcr=totalLiveWeight>0?totalFeed/totalLiveWeight:0;
-  const beta=Number(predState.beta)||0.27;
-  const cfcr=fcr>0?fcr-(avgWeight-2.45)*beta:0;
-  const pif=(weightedAge>0&&fcr>0)?((livability*avgWeight)/(weightedAge*fcr)*100):0;
-  return {hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,pif,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
+  const targetKg=totalBirdsAtHarvest>0?targetBirdSum/totalBirdsAtHarvest:CFCR_REF_KG;
+  const k=batchKpis({feedKg:totalFeed,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg});
+  const {fcr,cfcr,cfcrInd,pif}=k,avgWeight=k.alw,livability=k.livability,weightedAge=k.avgAge;
+  const cage=cAge245ForSheds(sheds.filter(s=>s.placementDate));
+  return {hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 // Leftover hint: with expected pickups; never a negative 'leftover'
-function autoLeftoverHint(v){if(v==null)return 'auto: —';return v>=0?`auto: ${Math.round(v).toLocaleString()}`:`auto: 0 · short ${(Math.abs(v)/1000).toFixed(1)} t`;}
+function autoLeftoverHint(v){if(v==null)return 'auto: —';return v>=0?`auto: ${fmtFeed(v,1)}`:`auto: 0 · short ${fmtFeed(Math.abs(v),1)}`;}
 // "Still to order" line: expected (with auto pickups) and safe (no future pickups)
 function feedToOrderLineHtml(f){
   if(!f)return '';
-  const t=v=>(v/1000).toLocaleString(undefined,{maximumFractionDigits:0})+' t';
+  const t=v=>fmtFeed(v,0);
   return `<div class="to-order" title="Feed still needed to clean-out, minus silo stock now and loads already booked. Expected = with the auto pickup plan (realistic). Safe = if no more pickups happen (conservative — what the feed forecast assumes).">Still to order: <b>${t(f.expected)}</b> expected <span>· ${t(f.safe)} safe</span></div>`;
 }
 function farmFeedSubText(t){
-  const co=t.carryKg>0?Math.round(t.carryKg/1000*100)/100:0;
+  const co=t.carryKg>0?t.carryKg:0;
   if(t.usingManualFeed){
-    const parts=['Manual (dockets)'];if(co)parts.push(`+ ${co.toFixed(2)} t carried over`);if(t.leftoverApplied)parts.push(`− ${Math.round(t.leftoverKg).toLocaleString()} kg leftover`);
+    const parts=['Manual (dockets)'];if(co)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
     return `${parts.join(' ')} · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
   }
-  const base=t.leftoverApplied?`Auto − ${Math.round(t.leftoverKg).toLocaleString()} kg leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`:`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}`;
-  return co?`${base} · carry-over ${co.toFixed(2)} t is already in the birds' intake`:base;
+  const base=t.leftoverApplied?`Auto − ${fmtFeed(t.leftoverKg)} leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`:`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}`;
+  return co?`${base} · carry-over ${fmtFeed(co)} is already in the birds' intake`:base;
 }
 
 /* ---------- Predictions page ---------- */
@@ -1510,10 +1509,10 @@ function farmResultTitle(){
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
   if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
-  const overrideVal=predState.farmFeedOverride!=null?predState.farmFeedOverride:'';
+  const overrideVal=feedIn(predState.farmFeedOverride);
   const overrideCls=t.usingManualFeed?'manual':'';
   const feedSub=farmFeedSubText(t);
-  const leftoverVal=(predState.farmLeftoverKg!=null&&predState.farmLeftoverKg>0)?predState.farmLeftoverKg:'';
+  const leftoverVal=(predState.farmLeftoverKg!=null&&predState.farmLeftoverKg>0)?feedIn(predState.farmLeftoverKg):'';
   const leftoverCls=t.leftoverApplied?'manual':'';
   const leftoverPlaceholder=autoLeftoverHint(t.autoLeftover);
   // What the projection is built on: logged + your planned + auto-planned pickups
@@ -1522,15 +1521,21 @@ function renderFarmKpiCard(){
   const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>`;
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span>${basisHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="100" min="0" placeholder="Manual override (kg)" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (kg)</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="1" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Manual override (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub">FCR adjusted for final weight (${t.avgWeight.toFixed(2)} kg)</div></div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><div class="fkt-sub">Overall score: weight × survival ÷ (age × FCR)</div></div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRSub">${cfcrSubText(t)}</div></div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub">${cfcrIndSubText(t)}</div></div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><div class="fkt-sub" id="kpiPIFSub">${pifSubText(t)}</div></div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. CAge 2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Age when cumulative FCR (cumulative intake ÷ weight per bird) reaches 2.45, along each shed's growth curve; farm value weighted by birds placed. Past day 60 the intake table is held at its last value.">Age cumulative FCR hits 2.45 · higher is better</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Farm average across ${t.birdsAtHarvest.toLocaleString()} birds</div><div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(3)}</b></span>`:'';}).join('')}</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div></div>
     <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
   </div></div>`;
 }
+function cfcrSubText(t){return `FCR − (ALW ${t.avgWeight.toFixed(3)} − 2.45) × ${CFCR_BAIADA_BETA}`;}
+function cfcrIndSubText(t){return `FCR − (ALW − ${t.targetKg.toFixed(2)} target) ÷ 3.2`;}
+function pifSubText(t){return `Livability ${t.livability.toFixed(1)}% × ALW ÷ (avg age ${t.weightedAge.toFixed(1)} d × FCR) × 100`;}
+function cageText(a){return a?`${a.toFixed(1)} <span style="font-size:12px;font-weight:600;color:var(--muted);">days</span>`:'—';}
 function updateFarmKpiValues(){
   const t=computeFarmTotals();
   const el=id=>document.getElementById(id);
@@ -1540,8 +1545,10 @@ function updateFarmKpiValues(){
   set('kpiFeed',fmtTonnesAlways(t.totalFeed));
   const sub=el('kpiFeedSub');if(sub)sub.textContent=farmFeedSubText(t);
   set('kpiFCR',t.fcr.toFixed(3));
-  set('kpiCFCR',t.cfcr.toFixed(3));
-  set('kpiPIF',t.pif.toFixed(2));
+  set('kpiCFCR',t.cfcr.toFixed(3));set('kpiCFCRSub',cfcrSubText(t));
+  set('kpiCFCRInd',t.cfcrInd.toFixed(3));set('kpiCFCRIndSub',cfcrIndSubText(t));
+  set('kpiPIF',t.pif.toFixed(2));set('kpiPIFSub',pifSubText(t));
+  set('kpiCAge',cageText(t.cage));
   set('kpiAvgWeight',t.avgWeight.toFixed(3)+' <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span>');
   set('kpiLivability',t.livability.toFixed(2)+'%');
   set('kpiMortality',t.mortality.toLocaleString());
@@ -1597,8 +1604,7 @@ function adjModalBodyHtml(){
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">📊 Results</h4>
-    <div class="adj-row"><label>cFCR β factor</label><input type="range" data-adj="beta" min="0" max="0.6" step="0.002" value="${d.beta}" /><input type="number" class="adj-num" data-adj="beta" min="0" max="0.6" step="0.002" value="${d.beta.toFixed(3)}" /><span class="adj-hint">How strongly cFCR is adjusted for final weight (default 0.27).</span></div>
-    <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant.</span></div>
+    <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant. Also the reference for cFCR (Industry) = FCR − (ALW − target) ÷ 3.2. cFCR (Baiada) always uses 2.45 kg × 0.27.</span></div>
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
@@ -1639,7 +1645,6 @@ function renderAdjustmentModal(group){
 function applyAdjDraft(){
   const d=adjDraft;if(!d)return;
   const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,Number(v)));
-  predState.beta=cl(d.beta,0,0.6);
   if(farmData)farmData.biasFactor=cl(d.scale/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);
   predState.targetHarvestWeightKg[d.group]=cl(d.target,0.5,5);
   const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};
@@ -1951,7 +1956,7 @@ function renderPredictionsShedCard(shed,group){
   const pickupHeaderHtml=`<h4 class="pickup-header"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span>Pickup History — edit total or avg, both auto-compute</span>${pill}</span><span style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center;">${bulkToolbar('pk:'+shed.id,(shed.pickups||[]).map(x=>iso(x.date)),'logged')}<button class="btn-pickup-add" data-pickup-add="${shed.id}" type="button" ${canAdd?'':'disabled'} title="${canAdd?'Add a pickup manually':'Maximum 5 pickups reached'}">＋ Add Actual Pickup</button></span></h4>`;
   const groupLabel=grp&&grp.hasData?`${pairLabel(group)} combined result`:`${pairLabel(group)} result`;
   const groupShedsLabel=groupSheds.map(s=>`Shed ${s.id}`).join(' + ');
-  const estimatesHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-estimates-head"><span>📊 ${groupLabel}</span><span class="sub">· ${groupShedsLabel} · batch result</span></div><div class="pred-estimates"><div class="pred-est-tile amber"><div class="lbl">Est. Final Avg Weight</div><div class="val">${grp.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div></div><div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${grp.fcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Final cFCR</div><div class="val">${grp.cfcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${grp.livability.toFixed(2)}%</div></div><div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${grp.totalMortalityEst.toLocaleString()}</div></div><div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtFeed(grp.totalLiveWeight)}</div></div><div class="pred-est-tile amber" style="grid-column: span 2;"><div class="lbl">Est. Final PIF</div><div class="val">${grp.pif.toFixed(2)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Overall score: weight × survival ÷ (age × FCR)</div></div></div>`:`<div class="pred-empty" style="margin-top:14px;"><strong>Pair estimates unlock after the first reading or pickup.</strong><br>Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.</div>`;
+  const estimatesHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-estimates-head"><span>📊 ${groupLabel}</span><span class="sub">· ${groupShedsLabel} · batch result</span></div><div class="pred-estimates"><div class="pred-est-tile amber"><div class="lbl">Est. Final Avg Weight</div><div class="val">${grp.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div></div><div class="pred-est-tile"><div class="lbl">Est. Final FCR</div><div class="val">${grp.fcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. cFCR (Baiada)</div><div class="val">${grp.cfcr.toFixed(3)}</div></div><div class="pred-est-tile green"><div class="lbl">Est. cFCR (Industry)</div><div class="val">${grp.cfcrInd.toFixed(3)}</div></div><div class="pred-est-tile"><div class="lbl">Est. Avg Age</div><div class="val">${grp.weightedAge.toFixed(1)} d</div></div><div class="pred-est-tile"><div class="lbl">Est. CAge 2.45</div><div class="val">${grp.cage?grp.cage.toFixed(1)+' d':'—'}</div></div><div class="pred-est-tile green"><div class="lbl">Est. Livability</div><div class="val">${grp.livability.toFixed(2)}%</div></div><div class="pred-est-tile"><div class="lbl">Est. Mortality</div><div class="val">${grp.totalMortalityEst.toLocaleString()}</div></div><div class="pred-est-tile"><div class="lbl">Est. Total Live Wt</div><div class="val">${fmtMass(grp.totalLiveWeight)}</div></div><div class="pred-est-tile amber" style="grid-column: span 2;"><div class="lbl">Est. Final PIF</div><div class="val">${grp.pif.toFixed(2)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Livability × ALW ÷ (avg age × FCR) × 100</div></div></div>`:`<div class="pred-empty" style="margin-top:14px;"><strong>Pair estimates unlock after the first reading or pickup.</strong><br>Enter shed scale readings at Day 7/14/21/28, or import Excel with pickup data.</div>`;
   const confidenceHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-confidence"><span style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Pair confidence</span><div class="bar"><div class="bar-fill ${groupConf.cls}" style="width:${grp.confidence}%"></div></div><span class="pct" style="color:${groupConf.cls==='low'?'var(--danger)':(groupConf.cls==='medium'?'var(--primary-dark)':'var(--success)')};">${grp.confidence}%</span><span style="font-size:11px;color:var(--muted);">${groupConf.label}</span></div>`:'';
   const daysBehindHtml=renderDaysBehind(shed);
   const dailyPerfHtml=renderDailyPerformance(shed);

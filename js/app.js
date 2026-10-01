@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 
   document.addEventListener('click',e=>{
+    const unitBtn=e.target.closest('[data-feed-unit]');
+    if(unitBtn){const u=unitBtn.dataset.feedUnit;if(u!==feedUnit()){setFeedUnit(u);renderSettingsDrawerBody();render();if(loadsModalState.open)renderLoadsModalBody();showToast(`Feed amounts now in ${feedUnitWord()}.`);}return;}
     // Bulk select: checkboxes are handled on 'change'; buttons here
     if(e.target.closest('.bulk-cb,[data-bulk-all],.bulk-all'))return;
     // Adjustments modal (draft — nothing applies until 'Apply changes')
@@ -160,9 +162,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(deleteReadingBtn){e.stopPropagation();const parts=deleteReadingBtn.dataset.deleteReading.split('|');deleteSiloReading(Number(parts[0]),parts[1]);return;}
 
     const inlineTestBtn=e.target.closest('[data-inline-test]');
-    if(inlineTestBtn){e.stopPropagation();const parts=inlineTestBtn.dataset.inlineTest.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineTestBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amt=inlineInput?Number(inlineInput.value):NaN;if(!Number.isFinite(amt)||amt<=0){showToast('Enter a positive amount in tonnes.',true);inlineInput&&inlineInput.focus();return;}const ok=addTestDelivery(g,dIso,amt);if(ok){inlineDeliveryState=null;render();}return;}
+    if(inlineTestBtn){e.stopPropagation();const parts=inlineTestBtn.dataset.inlineTest.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineTestBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amtKg=inlineInput?feedOut(inlineInput.value):NaN;const amt=amtKg/1000;if(!Number.isFinite(amt)||amt<=0){showToast(`Enter a positive amount in ${feedUnitWord()}.`,true);inlineInput&&inlineInput.focus();return;}const ok=addTestDelivery(g,dIso,amt);if(ok){inlineDeliveryState=null;render();}return;}
     const inlineActualBtn=e.target.closest('[data-inline-actual]');
-    if(inlineActualBtn){e.stopPropagation();const parts=inlineActualBtn.dataset.inlineActual.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineActualBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amt=inlineInput?Number(inlineInput.value):NaN;if(!Number.isFinite(amt)||amt<=0){showToast('Enter a positive amount in tonnes.',true);inlineInput&&inlineInput.focus();return;}// Open Add Load pre-filled (date, tonnes for this pair, last feed type used here) to confirm feed type/split/note
+    if(inlineActualBtn){e.stopPropagation();const parts=inlineActualBtn.dataset.inlineActual.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineActualBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amtKg=inlineInput?feedOut(inlineInput.value):NaN;const amt=amtKg/1000;if(!Number.isFinite(amt)||amt<=0){showToast(`Enter a positive amount in ${feedUnitWord()}.`,true);inlineInput&&inlineInput.focus();return;}// Open Add Load pre-filled (date, tonnes for this pair, last feed type used here) to confirm feed type/split/note
 const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnly(b.date)-dateOnly(a.date))[0]||{}).feedType||'';inlineDeliveryState=null;render();openLoadModal(null,{date:dIso,feedType:lastType,plannedT:amt,splitT:{[g]:amt}});return;}
     const inlineCancelBtn=e.target.closest('[data-inline-cancel]');
     if(inlineCancelBtn){e.stopPropagation();inlineDeliveryState=null;render();return;}
@@ -289,7 +291,7 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
     // Adjustments modal: per-shed 'Use global' switch (draft)
     if(t.dataset&&t.dataset.adjUseglobal&&adjDraft){const id=Number(t.dataset.adjUseglobal);if(t.checked)adjDraft.ovr[id]=null;else{const own=suggestScaleCorrection([farmData.sheds[id-1]]);adjDraft.ovr[id]=own?Math.round(own.value*1000)/10:adjDraft.scale;}refreshAdjModal(true);return;}
     // Carry-over from last batch (Feed Loads)
-    if(t.dataset&&t.dataset.carryoverTotal){setCarryoverTotal(t.value);if(loadsModalState.open)renderLoadsModalBody();render();showToast(`↩ Carried over from last batch: ${(carryoverTotalKg()/1000).toFixed(2)} t.`);return;}
+    if(t.dataset&&t.dataset.carryoverTotal){setCarryoverTotal((feedOut(t.value)||0)/1000);if(loadsModalState.open)renderLoadsModalBody();render();showToast(`↩ Carried over from last batch: ${fmtFeed(carryoverTotalKg())}.`);return;}
     // Bulk select checkboxes
     if(t.classList&&t.classList.contains('bulk-cb')){bulkToggle(t.dataset.bulkId,t.checked);return;}
     if(t.dataset&&t.dataset.bulkAll){bulkToggleAll((t.dataset.bulkIds||'').split('\u001f').filter(Boolean),t.checked);return;}

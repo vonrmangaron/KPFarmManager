@@ -21,10 +21,30 @@ const FINAL_DAY_FEED_FRACTION=7/24;
 function shedFeedOn(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}
 function groupFeedToday(sheds,today=new Date()){return groupDailyFeedOn(sheds,today);}
-function fmtFeed(kg){if(!Number.isFinite(kg)||kg===0)return '0 kg';const abs=Math.abs(kg);if(abs>=1000)return (kg/1000).toFixed(2)+' t';return Math.round(kg).toLocaleString()+' kg';}
+// ── Feed unit (Settings → Units): every feed amount shown or typed uses
+// kg or t. Stored values are always kg. Per device; default kg.
+const FEED_UNIT_KEY='prodwise_feed_unit_v1';
+let feedUnitPref=(()=>{try{return localStorage.getItem(FEED_UNIT_KEY)==='t'?'t':'kg';}catch(e){return 'kg';}})();
+function feedUnit(){return feedUnitPref;}
+function setFeedUnit(u){feedUnitPref=u==='t'?'t':'kg';try{localStorage.setItem(FEED_UNIT_KEY,feedUnitPref);}catch(e){}}
+function feedUnitWord(){return feedUnitPref==='t'?'tonnes':'kg';}
+// Number only, in the chosen unit (dp = decimals when in tonnes)
+function fmtFeedNum(kg,dp){const v=Number.isFinite(kg)?kg:0;if(feedUnitPref==='t'){const d=dp==null?2:dp;return (v/1000).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}return Math.round(v).toLocaleString('en-US');}
+function fmtFeed(kg,dp){return fmtFeedNum(kg,dp)+(feedUnitPref==='t'?' t':' kg');}
+// The same amount in the other unit (for a secondary "(…)" note)
+function fmtFeedAlt(kg){const v=Number.isFinite(kg)?kg:0;return feedUnitPref==='t'?Math.round(v).toLocaleString('en-US')+' kg':(v/1000).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' t';}
+// Tight labels (silo ring scale): "6t" or "6k"
+function fmtFeedCompact(kg){const t=Math.round(kg/1000);return feedUnitPref==='t'?t+'t':t+'k';}
+// Input value in the chosen unit, and back to kg (null = empty, NaN = bad)
+function feedIn(kg,dp){if(kg==null||kg===''||!Number.isFinite(Number(kg)))return '';const v=Number(kg);return feedUnitPref==='t'?(v/1000).toFixed(dp==null?2:dp):String(Math.round(v));}
+function feedOut(raw){const s=String(raw??'').trim();if(s==='')return null;const n=Number(s);if(!Number.isFinite(n))return NaN;return feedUnitPref==='t'?n*1000:n;}
+function feedStep(big){return feedUnitPref==='t'?(big?'0.1':'0.01'):(big?'100':'1');}
+// Feed totals (names kept from when these were tonnes-only)
+function fmtTonnesAlways(kg){return fmtFeed(kg);}
+function fmtTonnes(t){return fmtFeed((Number(t)||0)*1000);}
+// Non-feed mass (live weight): kg below 1 t, tonnes above
+function fmtMass(kg){if(!Number.isFinite(kg)||kg===0)return '0 kg';const abs=Math.abs(kg);if(abs>=1000)return (kg/1000).toFixed(2)+' t';return Math.round(kg).toLocaleString()+' kg';}
 function fmtKgAlways(kg){if(!Number.isFinite(kg)||kg===0)return '0 kg';return Math.round(kg).toLocaleString()+' kg';}
-function fmtTonnesAlways(kg){if(!Number.isFinite(kg)||kg===0)return '0.00 t';const t=kg/1000;return t.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' t';}
-function fmtTonnes(t){if(!Number.isFinite(t)||t===0)return '0.00 t';return t.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' t';}
 
 // Docket weights: the Actual box takes TONNES, but dockets are often in kg.
 // No single load is over MAX_LOAD_T tonnes, so anything larger is read as kg.

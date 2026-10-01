@@ -89,13 +89,14 @@ function settingsIcon(name){
     sync:'<path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>',
     swap:'<path d="M8 3 4 7l4 4"/><path d="M4 7h11a5 5 0 0 1 5 5v1"/><path d="m16 21 4-4-4-4"/><path d="M20 17H9a5 5 0 0 1-5-5v-1"/>',
     unplug:'<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>',
+    scale:'<path d="M12 3v18"/><path d="M7 21h10"/><path d="M5 7h14"/><path d="m5 7-3 6a3 3 0 0 0 6 0z"/><path d="m19 7-3 6a3 3 0 0 0 6 0z"/>',
     bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   };
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]||''}</svg>`;
 }
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
-  const sections=[renderSettingsDisplayNameCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
+  const sections=[renderSettingsDisplayNameCard(),renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
   body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div>';
   // Bind notification checkboxes directly — belt-and-braces alongside the
   // document-level delegated change handler.
@@ -108,6 +109,16 @@ function renderSettingsDisplayNameCard(){
     <p class="settings-section-desc">The name shown in the sidebar, page headers and the dashboard.</p>
     <input type="text" class="settings-input" id="settingsDisplayName" value="${escapeAttr(farmDisplayName)}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
     <p class="settings-section-note">${cloudId} Leave empty to use the cloud farm ID.</p>
+  </div>`;
+}
+function renderSettingsUnitsCard(){
+  const u=feedUnit();
+  const opt=(v,lbl)=>`<button type="button" class="settings-seg-opt${u===v?' active':''}" data-feed-unit="${v}" aria-pressed="${u===v}">${lbl}</button>`;
+  return `<div class="settings-section">
+    <div class="settings-section-head"><span class="settings-icon">${settingsIcon('scale')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Units</h4></div></div>
+    <p class="settings-section-desc">Unit for every feed amount you see or type: loads, dockets, silo stock, forecasts, carry-over and leftover.</p>
+    <div class="settings-unit-row"><span class="settings-unit-lbl">Feed amounts</span><div class="settings-seg" role="group" aria-label="Feed unit">${opt('kg','Kilograms (kg)')}${opt('t','Tonnes (t)')}</div></div>
+    <p class="settings-section-note">Saved on this device only. Bird weights stay in kg.</p>
   </div>`;
 }
 function renderSettingsNotificationsCard(){
@@ -1166,8 +1177,8 @@ function setPredDailyCycle(start,end){
   if(e<s)e=s;
   dailyRangeState={mode:'cycle',start:s,end:e};render();
 }
-function setFarmFeedOverride(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmFeedOverride=null;else{const n=Number(s);predState.farmFeedOverride=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
-function setFarmLeftover(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmLeftoverKg=null;else{const n=Number(s);predState.farmLeftoverKg=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
+function setFarmFeedOverride(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmFeedOverride=null;else{const n=feedOut(s);predState.farmFeedOverride=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
+function setFarmLeftover(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmLeftoverKg=null;else{const n=feedOut(s);predState.farmLeftoverKg=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
 function setBiasFactor(value){if(!farmData)return;const n=Number(value);if(!Number.isFinite(n)||n<=0)return;const v=Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,n));farmData.biasFactor=v;saveState();schedulePush();}
 function setShedMortRate(shedId,value){if(!farmData)return;const shed=farmData.sheds[shedId-1];if(!shed)return;const n=Number(value);if(!Number.isFinite(n)||n<0)return;shed.mortalityRatePercent=Math.max(0,Math.min(MAX_MORT_RATE_PCT,n));saveState();schedulePush();scheduleRender(30);}
 function liveUpdateShedMortality(shedIdx,rawValue){
@@ -1269,7 +1280,7 @@ function renderLoadsModalBody(){
   const coTotal=carryoverTotalKg();
   const carryHtml=`<div class="loads-carry">
       <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · not counted by feed type · added to the batch's total feed from your dockets</span></div>
-      <div class="lc-row"><label class="lc-in"><input type="number" min="0" step="0.1" class="lc-input" data-carryover-total="1" value="${coTotal?(coTotal/1000).toFixed(2):''}" placeholder="0" aria-label="Feed carried over from last batch, tonnes" /> t</label>
+      <div class="lc-row"><label class="lc-in"><input type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</label>
       ${feedToOrderLineHtml(farmFeedToOrder())}
       <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
     </div>`;
@@ -1334,10 +1345,10 @@ function renderLoadsModalBody(){
   if(view==='oneline'){
     const rows=filtered.map(l=>{
       const r=rowBase(l);
-      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`${pairShort(g)}: ${(v/1000).toFixed(1)}`:`${pairShort(g)}: —`;}).join(' · ');
+      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`${pairShort(g)}: ${fmtFeedNum(v,1)}`:`${pairShort(g)}: —`;}).join(' · ');
       let actualCell='';
       if(l.actualKg!=null&&Number.isFinite(Number(l.actualKg))){
-        actualCell=`<span class="lon-actual filled">${(l.actualKg/1000).toFixed(2)} t ✓</span>`;
+        actualCell=`<span class="lon-actual filled">${fmtFeed(l.actualKg)} ✓</span>`;
       } else if(r.needsActual){
         actualCell=`<span class="lon-actual needs">missing docket</span>`;
       } else {
@@ -1350,7 +1361,7 @@ function renderLoadsModalBody(){
         <td class="lon-num-cell">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span></td>
         <td class="lon-date">${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
-        <td class="num lon-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
+        <td class="num lon-planned">${fmtFeed(l.plannedKg)}</td>
         <td class="lon-split">${splitParts}</td>
         <td class="num">${actualCell}</td>
         <td class="lon-note-cell ${noteCls}">${noteStr}</td>
@@ -1377,17 +1388,17 @@ function renderLoadsModalBody(){
   } else {
     const rows=filtered.map(l=>{
       const r=rowBase(l);
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${(v/1000).toFixed(1)}</td>`;};
-      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?(l.actualKg/1000).toFixed(2):'';
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${fmtFeedNum(v,1)}</td>`;};
+      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
       const actualCls=(l.actualKg!=null)?'filled':'';
       const actualNeedsCls=r.needsActual?'needs':'';
       const actualPlaceholder=r.needsActual?'enter actual':'—';
       return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
         <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
-        <td class="num loads-planned">${(l.plannedKg/1000).toFixed(2)} t</td>
+        <td class="num loads-planned">${fmtFeed(l.plannedKg)}</td>
         ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
-        <td class="loads-actual-cell"><span class="loads-actual-wrap"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="0.01" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" title="Tonnes (e.g. 30.12). Kilograms like 30120 are converted automatically." /><span class="loads-actual-unit">t</span></span></td>
+        <td class="loads-actual-cell"><span class="loads-actual-wrap"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="${feedStep()}" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" title="${feedUnit()==='t'?'Tonnes (e.g. 30.12). Kilograms like 30120 are converted automatically.':'Kilograms (e.g. 30120). Tonnes like 30.12 are converted automatically.'}" /><span class="loads-actual-unit">${feedUnit()}</span></span></td>
         <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
       </tr>`;
     }).join('');
@@ -1403,7 +1414,7 @@ function renderLoadsModalBody(){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <div class="loads-hint">💡 Type the docket total straight into the Actual column, in <strong>tonnes</strong> (e.g. 30.12) — or in <strong>kg</strong> (e.g. 30120), which is converted automatically. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
+    <div class="loads-hint">💡 Type the docket total straight into the Actual column, in <strong>${feedUnitWord()}</strong> (${feedUnit()==='t'?'e.g. 30.12 — kg like 30120 is converted automatically':'e.g. 30120 — tonnes like 30.12 are converted automatically'}). Change the unit in Settings → Units. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
   }
 
   body.innerHTML=sumHtml+chipsHtml+bodyHtml;
@@ -1416,7 +1427,7 @@ function renderLoadsModalBody(){
     inp.addEventListener('blur',()=>handleLoadActualBlur(inp));
     inp.addEventListener('keydown',e=>{
       if(e.key==='Enter'){e.preventDefault();inp.blur();}
-      if(e.key==='Escape'){e.preventDefault();const load=farmLoads.find(l=>l.id===inp.dataset.loadActual);if(load)inp.value=(load.actualKg!=null)?(load.actualKg/1000).toFixed(2):'';inp.classList.remove('invalid');inp.blur();}
+      if(e.key==='Escape'){e.preventDefault();const load=farmLoads.find(l=>l.id===inp.dataset.loadActual);if(load)inp.value=(load.actualKg!=null)?feedIn(load.actualKg):'';inp.classList.remove('invalid');inp.blur();}
     });
   });
   requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
@@ -1425,7 +1436,7 @@ function handleLoadActualBlur(inp){
   const id=inp.dataset.loadActual;
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
   const raw=inp.value.trim();
-  const currentVal=(load.actualKg!=null)?(load.actualKg/1000).toFixed(2):'';
+  const currentVal=(load.actualKg!=null)?feedIn(load.actualKg):'';
   if(raw===currentVal)return;
   const tr=inp.closest('tr');
   if(raw===''){
@@ -1448,9 +1459,10 @@ function handleLoadActualBlur(inp){
     return;
   }
   load.actualKg=docketToKg(n);
-  if(n>MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as kg → ${(load.actualKg/1000).toFixed(2)} t.`);
+  if(feedUnit()==='t'&&n>MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as kg → ${fmtFeed(load.actualKg)}.`);
+  else if(feedUnit()==='kg'&&n<=MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as tonnes → ${fmtFeed(load.actualKg)}.`);
   saveFarmLoads();schedulePush();
-  inp.value=(load.actualKg/1000).toFixed(2);
+  inp.value=feedIn(load.actualKg);
   inp.classList.remove('invalid','needs');
   inp.classList.add('filled');
   if(tr)tr.classList.remove('load-needs-actual');
@@ -1489,7 +1501,7 @@ function updateLoadsSummaryInline(){
 }
 function confirmDeleteLoad(id){
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
-  const label=`${fmtShort(load.date)}${load.feedType?' · '+feedTypeLabel(load.feedType):''} · ${(load.plannedKg/1000).toFixed(2)} t`;
+  const label=`${fmtShort(load.date)}${load.feedType?' · '+feedTypeLabel(load.feedType):''} · ${fmtFeed(load.plannedKg)}`;
   if(!confirm(`Delete this load?\n\n${label}\n\nThis affects the feed balance forecast for the groups it was routed to.`))return;
   deleteLoad(id);updateLoadsDot();renderLoadsModalBody();render();
   showToast('🗑️ Load deleted.');
@@ -1497,11 +1509,12 @@ function confirmDeleteLoad(id){
 function openLoadModal(editId,preset){
   if(editId){
     const load=farmLoads.find(l=>l.id===editId);if(!load){showToast('Load not found.',true);return;}
-    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',plannedT:(load.plannedKg/1000).toFixed(2),splitT:{1:((Number(load.splitKg[1])||0)/1000).toFixed(2),2:((Number(load.splitKg[2])||0)/1000).toFixed(2),3:((Number(load.splitKg[3])||0)/1000).toFixed(2),4:((Number(load.splitKg[4])||0)/1000).toFixed(2)},note:load.note||''};
+    const v=g=>feedIn(Number(load.splitKg[g])||0);
+    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',planned:feedIn(load.plannedKg),split:{1:v(1),2:v(2),3:v(3),4:v(4)},note:load.note||''};
   }else{
-    // preset: {date, feedType, plannedT, splitT:{group:t}} — e.g. from a forecast row's Order
-    const p=preset||{};const sp=p.splitT||{};const t=v=>(Number(v)||0).toFixed(2);
-    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||'',plannedT:p.plannedT!=null?t(p.plannedT):'60.00',splitT:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:''};
+    // preset: {date, feedType, plannedT, splitT:{group:t}} (tonnes) — e.g. from a forecast row's Order
+    const p=preset||{};const sp=p.splitT||{};const t=v=>feedIn((Number(v)||0)*1000);
+    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||'',planned:p.plannedT!=null?t(p.plannedT):t(FEED_BLOCK_T),split:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:''};
   }
   renderLoadModal();
   const modal=document.getElementById('loadModal');const scrim=document.getElementById('syncScrim');
@@ -1515,9 +1528,9 @@ function renderLoadModal(){
   const siloNotes=[1,2,3,4].map(g=>{const bal=currentBalanceKg(g);return bal!=null?`G${g}: ${fmtFeed(bal)}`:`G${g}: no reading`;});
   body.innerHTML=`<div class="mp-field"><label>Date</label><input type="date" id="lmDate" value="${s.date}" /></div>
     <div class="mp-field"><label>Feed type</label><select id="lmType"><option value="" ${s.feedType===''?'selected':''}>— Unspecified —</option>${FEED_TYPES.map(f=>`<option value="${f.id}" ${s.feedType===f.id?'selected':''}>${f.label}</option>`).join('')}</select></div>
-    <div class="mp-field"><label>Planned total (t)</label><input type="number" id="lmPlanned" step="0.1" min="0.1" value="${s.plannedT}" /></div>
+    <div class="mp-field"><label>Planned total (${feedUnit()})</label><input type="number" id="lmPlanned" step="${feedStep(true)}" min="0" value="${s.planned}" /></div>
     <div class="load-form-section"><div class="load-form-section-title"><span>Split across groups</span><button type="button" class="btn-split-evenly" id="lmSplitEven">⚖ Split evenly</button></div>
-      <div class="split-grid">${[1,2,3,4].map(g=>`<div class="split-input-group"><label>${pairLabel(g)}</label><input type="number" min="0" step="0.1" data-lm-split="${g}" value="${s.splitT[g]}" /><span class="silo-note">${escapeHtml(siloNotes[g-1])}</span></div>`).join('')}</div>
+      <div class="split-grid">${[1,2,3,4].map(g=>`<div class="split-input-group"><label>${pairLabel(g)}</label><input type="number" min="0" step="${feedStep(true)}" data-lm-split="${g}" value="${s.split[g]}" /><span class="silo-note">${escapeHtml(siloNotes[g-1])}</span></div>`).join('')}</div>
       <div class="split-sum" id="lmSum"></div>
     </div>
     <div class="mp-field"><label>Note (optional)</label><input type="text" id="lmNote" maxlength="60" value="${escapeAttr(s.note)}" placeholder="e.g. Order #1234 — Barlow's truck" /></div>
@@ -1532,20 +1545,21 @@ function renderLoadModal(){
   const splitInputs=[1,2,3,4].map(g=>body.querySelector(`[data-lm-split="${g}"]`));
   const sumEl=document.getElementById('lmSum');
   const refreshSum=()=>{
-    const planned=Number(plannedEl.value)||0;
-    const sum=splitInputs.reduce((s,inp)=>s+(Number(inp.value)||0),0);
-    const diff=sum-planned;const ok=Math.abs(diff)<0.005;
+    const planned=Math.round(feedOut(plannedEl.value)||0);
+    const sum=splitInputs.reduce((s,inp)=>s+Math.round(feedOut(inp.value)||0),0);
+    const diff=sum-planned;const ok=diff===0;
     sumEl.className='split-sum '+(ok?'ok':'warn');
-    if(ok)sumEl.textContent=`Sum: ${sum.toFixed(2)} / ${planned.toFixed(2)} t ✓`;
-    else if(diff<0)sumEl.textContent=`Sum: ${sum.toFixed(2)} / ${planned.toFixed(2)} t ⚠ ${Math.abs(diff).toFixed(2)} t short`;
-    else sumEl.textContent=`Sum: ${sum.toFixed(2)} / ${planned.toFixed(2)} t ⚠ ${diff.toFixed(2)} t over`;
+    if(ok)sumEl.textContent=`Sum: ${fmtFeedNum(sum)} / ${fmtFeed(planned)} ✓`;
+    else if(diff<0)sumEl.textContent=`Sum: ${fmtFeedNum(sum)} / ${fmtFeed(planned)} ⚠ ${fmtFeed(Math.abs(diff))} short`;
+    else sumEl.textContent=`Sum: ${fmtFeedNum(sum)} / ${fmtFeed(planned)} ⚠ ${fmtFeed(diff)} over`;
   };
   const splitEvenly=()=>{
-    const planned=Number(plannedEl.value)||0;if(planned<=0)return;
-    let nonZero=splitInputs.filter(inp=>(Number(inp.value)||0)>0);
+    const planned=Math.round(feedOut(plannedEl.value)||0);if(planned<=0)return;
+    let nonZero=splitInputs.filter(inp=>(feedOut(inp.value)||0)>0);
     if(nonZero.length===0)nonZero=splitInputs;
-    const n=nonZero.length;const each=planned/n;
-    nonZero.forEach((inp,i)=>{const v=(i===n-1)?(planned-each*(n-1)):each;inp.value=v.toFixed(2);});
+    // Whole kg (or 10 kg = 0.01 t); the last pair takes the remainder
+    const n=nonZero.length;const q=feedUnit()==='t'?10:1;const each=Math.floor(planned/n/q)*q;
+    nonZero.forEach((inp,i)=>{const v=(i===n-1)?(planned-each*(n-1)):each;inp.value=feedIn(v);});
     refreshSum();
   };
   plannedEl.addEventListener('input',refreshSum);
@@ -1553,10 +1567,10 @@ function renderLoadModal(){
   document.getElementById('lmSplitEven').addEventListener('click',splitEvenly);
   refreshSum();
   const doSave=thenAnother=>{
-    const plannedT=Number(plannedEl.value);
-    if(!Number.isFinite(plannedT)||plannedT<=0){showToast('Enter a positive planned total.',true);return;}
-    const plannedKg=Math.round(plannedT*1000);
-    const splitKg={1:Math.round((Number(splitInputs[0].value)||0)*1000),2:Math.round((Number(splitInputs[1].value)||0)*1000),3:Math.round((Number(splitInputs[2].value)||0)*1000),4:Math.round((Number(splitInputs[3].value)||0)*1000)};
+    const plannedKg=Math.round(feedOut(plannedEl.value));
+    if(!Number.isFinite(plannedKg)||plannedKg<=0){showToast('Enter a positive planned total.',true);return;}
+    const sk=i=>Math.round(feedOut(splitInputs[i].value)||0);
+    const splitKg={1:sk(0),2:sk(1),3:sk(2),4:sk(3)};
     const sumKg=splitKg[1]+splitKg[2]+splitKg[3]+splitKg[4];
     if(sumKg!==plannedKg){showToast('Splits must add up to the planned total.',true);return;}
     const dateObj=parseExcelDate(dateEl.value);
@@ -1687,16 +1701,19 @@ function buildBatchReportHTML(){
       <tr><th>Est. Total Live Weight</th><td class="num">${fmtKgAlways(t.totalLiveWeight)}</td></tr>
       <tr><th>Est. Total Feed Consumption</th><td class="num">${fmtTonnesAlways(t.totalFeed)}</td></tr>
       <tr><th>Est. FCR</th><td class="num">${t.fcr.toFixed(3)}</td></tr>
-      <tr><th>Est. cFCR</th><td class="num">${t.cfcr.toFixed(3)}</td></tr>
+      <tr><th>Est. cFCR (Baiada)</th><td class="num">${t.cfcr.toFixed(3)}</td></tr>
+      <tr><th>Est. cFCR (Industry, target ${t.targetKg.toFixed(2)} kg)</th><td class="num">${t.cfcrInd.toFixed(3)}</td></tr>
       <tr><th>Est. PIF</th><td class="num">${t.pif.toFixed(2)}</td></tr>
+      <tr><th>Est. Average Age</th><td class="num">${t.weightedAge.toFixed(1)} days</td></tr>
+      <tr><th>Est. CAge 2.45</th><td class="num">${t.cage?t.cage.toFixed(1)+' days':'—'}</td></tr>
       <tr><th>Est. Total Average Weight</th><td class="num">${t.avgWeight.toFixed(3)} kg</td></tr>
       <tr><th>Est. Livability</th><td class="num">${t.livability.toFixed(2)}%</td></tr>
       <tr><th>Est. Total Mortality</th><td class="num">${t.mortality.toLocaleString()}</td></tr>
     </table>`;
     if(t.usingManualFeed||t.leftoverApplied){
       html+=`<div style="font-size:9pt;margin-top:4px;">`;
-      if(t.usingManualFeed)html+=`Note: Feed consumption uses a manual override (${Number(t.totalFeed).toLocaleString()} kg). `;
-      if(t.leftoverApplied)html+=`Leftover at cleanout applied: ${Math.round(t.leftoverKg).toLocaleString()} kg.`;
+      if(t.usingManualFeed)html+=`Note: Feed consumption uses a manual override (${fmtFeed(t.totalFeed)}). `;
+      if(t.leftoverApplied)html+=`Leftover at cleanout applied: ${fmtFeed(t.leftoverKg)}.`;
       html+=`</div>`;
     }
     html+=`</section>`;
@@ -1712,13 +1729,13 @@ function buildBatchReportHTML(){
         <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
         <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?(v/1000).toFixed(1):'—';};
-      const actualStr=l.actualKg!=null?(l.actualKg/1000).toFixed(2)+' t':'—';
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?fmtFeedNum(v,1):'—';};
+      const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):'—';
       html+=`<tr>
         <td class="num">#${i+1}</td>
         <td>${fmtShort(l.date)}</td>
         <td>${escapeHtml(feedTypeLabel(l.feedType))}</td>
-        <td class="num">${(l.plannedKg/1000).toFixed(2)} t</td>
+        <td class="num">${fmtFeed(l.plannedKg)}</td>
         <td class="num">${splitCell(1)}</td>
         <td class="num">${splitCell(2)}</td>
         <td class="num">${splitCell(3)}</td>
@@ -1757,9 +1774,9 @@ function buildBatchReportHTML(){
       active.forEach(([k,v])=>{
         const blocks=v.tonnes/FEED_BLOCK_T;
         tT+=v.tonnes;tL+=v.loads;tB+=blocks;
-        html+=`<tr><td>${escapeHtml(v.label)}</td><td class="num">${v.tonnes.toFixed(2)} t</td><td class="num">${v.loads}</td><td class="num">${fmtBlocks(blocks)}</td></tr>`;
+        html+=`<tr><td>${escapeHtml(v.label)}</td><td class="num">${fmtFeed(v.tonnes*1000)}</td><td class="num">${v.loads}</td><td class="num">${fmtBlocks(blocks)}</td></tr>`;
       });
-      html+=`<tr class="total-row"><td>Total</td><td class="num">${tT.toFixed(2)} t</td><td class="num">${tL}</td><td class="num">${fmtBlocks(tB)}</td></tr></tbody></table></section>`;
+      html+=`<tr class="total-row"><td>Total</td><td class="num">${fmtFeed(tT*1000)}</td><td class="num">${tL}</td><td class="num">${fmtBlocks(tB)}</td></tr></tbody></table></section>`;
     }
   }
 
@@ -1776,7 +1793,7 @@ function buildBatchReportHTML(){
       const s3=latest.silo3Rings==null?'off':latest.silo3Rings+'r';
       html+=`<div class="rpt-shed-line">Last reading: ${fmtShort(dateOnly(latest.date))}</div>
         <div class="rpt-shed-line">Rings: S1 ${s1} · S2 ${s2} · S3 ${s3}</div>
-        <div class="rpt-shed-line">Reading total: ${(readingTotalKg(latest)/1000).toFixed(2)} t</div>
+        <div class="rpt-shed-line">Reading total: ${fmtFeed(readingTotalKg(latest))}</div>
         <div class="rpt-shed-line">Projected today: ${bal!=null?fmtFeed(bal):'—'}</div>
         <div class="rpt-shed-line">Leftover at cleanout: ${lo&&lo.balance!=null?fmtFeed(lo.balance):'—'}</div>`;
     } else {
@@ -1850,7 +1867,7 @@ function buildBatchReportHTML(){
       html+=`<div class="rpt-shed-line" style="margin-top:5px;font-style:italic;">No pickups recorded.</div>`;
     }
     html+=`<div class="rpt-shed-sub">Estimates</div>
-      <div class="rpt-shed-line">Final avg weight: <strong>${pred.estFinalALW.toFixed(3)} kg</strong> · FCR: <strong>${pred.fcr.toFixed(3)}</strong> · cFCR: <strong>${pred.cfcr.toFixed(3)}</strong> · PIF: <strong>${pred.pif.toFixed(2)}</strong></div>
+      <div class="rpt-shed-line">Last pickup avg: <strong>${pred.estFinalALW.toFixed(3)} kg</strong> · ALW (all pickups): <strong>${pred.alw.toFixed(3)} kg</strong> · Avg age: <strong>${pred.avgAge.toFixed(1)} d</strong> · FCR: <strong>${pred.fcr.toFixed(3)}</strong> · cFCR (Baiada): <strong>${pred.cfcr.toFixed(3)}</strong> · cFCR (Industry): <strong>${pred.cfcrInd.toFixed(3)}</strong> · PIF: <strong>${pred.pif.toFixed(2)}</strong></div>
       <div class="rpt-shed-line">Confidence: ${pred.confidence}% ${confidenceLabel(pred.confidence).label}</div>
     </div>`;
   });
@@ -1932,7 +1949,7 @@ function siloRowHtml(g,n){
   const rings=latest?latest[`silo${n}Rings`]:null;
   const isOff=(rings===null||rings===undefined||rings==='');
   const kg=ringsToKg(rings);
-  const totalStr=isOff?'Off':(kg/1000).toFixed(2)+' t';
+  const totalStr=isOff?'Off':fmtFeed(kg);
   const carried=latest&&siloIsCarried(g,n);
   // A carried value comes from the last reading before today.
   const todayIso=iso(new Date());
@@ -1940,7 +1957,7 @@ function siloRowHtml(g,n){
   const fromDate=prior?dateOnly(prior.date):null;
   const fromLbl=carried&&fromDate?`<span class="sms-silo-from">from ${fromDate.getDate()} ${fromDate.toLocaleString('en',{month:'short'})}</span>`:(siloModalTouched[g].has(n)?'<span class="sms-silo-saved">✓ Saved</span>':'');
   const ringBtns=[0,1,2,3,4,5].map(r=>
-    `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${(ringsToKg(r)/1000).toFixed(0)} tonnes"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${(ringsToKg(r)/1000).toFixed(0)}t</span></button>`
+    `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${fmtFeed(ringsToKg(r),0)}"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${fmtFeedCompact(ringsToKg(r))}</span></button>`
   ).join('');
   return `<div class="sms-silo-row${carried?' carried':''}" id="smsRow-${g}-${n}">
     <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${fromLbl}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></div>
@@ -1968,7 +1985,7 @@ function renderSiloModalBody(){
         <span class="sms-group-caret" aria-hidden="true">▶</span>
         <span class="sms-group-titles"><span class="sms-group-name">${pairLabel(g)}</span></span>
         <span class="sms-status-wrap" id="smsStatus-${g}">${siloGroupStatusHtml(g)}</span>
-        <span class="sms-group-total" id="smsGroupTotal-${g}">${(totalKg/1000).toFixed(2)} t</span>
+        <span class="sms-group-total" id="smsGroupTotal-${g}">${fmtFeed(totalKg)}</span>
       </div>
       <div class="sms-group-body"><div id="smsSilos-${g}" class="sms-silos">${silosHtml}</div>${nextBtn}</div>
     </div>`;
@@ -1979,7 +1996,7 @@ function renderSiloModalBody(){
       <span class="sms-date-hint">${siloReadTime()==='am'?'Morning = stock <strong>before</strong> today\'s feeding and delivery':'Evening = stock at <strong>end of day</strong>, after today\'s delivery'} · tap the ring level for each silo · saves instantly</span>
     </div>
     ${groupsHtml}
-    <div class="sms-grand-total"><span class="sms-gt-label">Total feed on hand</span><span class="sms-gt-value" id="smsGrandTotal">${(grandTotalKg/1000).toFixed(2)} t</span></div>
+    <div class="sms-grand-total"><span class="sms-gt-label">Total feed on hand</span><span class="sms-gt-value" id="smsGrandTotal">${fmtFeed(grandTotalKg)}</span></div>
     <div class="sms-actions"><button type="button" class="sms-done-btn" id="siloModalDone">✓ Done</button></div>`;
   if(body.dataset.bound)return;
   body.dataset.bound='1';
@@ -2045,12 +2062,12 @@ function setSiloRingFromModal(group,siloNum,rings){
   const gTotalEl=document.getElementById(`smsGroupTotal-${group}`);
   if(gTotalEl){
     const latest=latestReading(group);
-    gTotalEl.textContent=latest?((readingTotalKg(latest)/1000).toFixed(2)+' t'):'0.00 t';
+    gTotalEl.textContent=fmtFeed(latest?readingTotalKg(latest):0);
   }
   let totalKg=0;
   [1,2,3,4].forEach(g=>{const latest=latestReading(g);if(latest)totalKg+=readingTotalKg(latest);});
   const gtEl=document.getElementById('smsGrandTotal');
-  if(gtEl)gtEl.textContent=(totalKg/1000).toFixed(2)+' t';
+  if(gtEl)gtEl.textContent=fmtFeed(totalKg);
 }
 
 /* ---------- Main render ---------- */

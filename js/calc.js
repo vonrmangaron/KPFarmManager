@@ -455,6 +455,49 @@ function computeShedGompertzFit(shed){
   fit.sampleCount=anchors.filter(a=>a.source==='in-yard-grid'||a.source==='in-yard-custom'||a.source==='official-sample').length;
   return fit;
 }
+// ── Batch KPIs: the ONE place FCR / cFCR / PIF are calculated ──
+// FCR = total feed ÷ total live weight
+// ALW = total live weight ÷ total birds picked up
+// Avg age = Σ(age × birds) ÷ total birds picked up
+// Livability = 100 − mortality %
+// cFCR (Baiada) = FCR − (ALW − 2.45) × β (0.27)
+// cFCR (Industry) = FCR − (ALW − target) ÷ 3.2 (target from Adjust)
+// PIF = livability × ALW ÷ (avg age × FCR) × 100
+const CFCR_REF_KG=2.45,CFCR_BAIADA_BETA=0.27,CFCR_INDUSTRY_DIV=3.2,CAGE_FCR=2.45;
+function batchKpis(o){
+  const feed=Number(o.feedKg)||0,lw=Number(o.liveWeightKg)||0,birds=Number(o.birds)||0,placed=Number(o.placed)||0;
+  const fcr=lw>0?feed/lw:0;
+  const alw=birds>0?lw/birds:0;
+  const avgAge=birds>0?(Number(o.ageBirdSum)||0)/birds:0;
+  const livability=placed>0?100-(Math.max(0,Number(o.mortality)||0)/placed*100):0;
+  const beta=CFCR_BAIADA_BETA;
+  const target=Number(o.targetKg)>0?Number(o.targetKg):CFCR_REF_KG;
+  const cfcr=fcr>0?fcr-(alw-CFCR_REF_KG)*beta:0;
+  const cfcrInd=fcr>0?fcr-(alw-target)/CFCR_INDUSTRY_DIV:0;
+  const pif=(avgAge>0&&fcr>0)?(livability*alw)/(avgAge*fcr)*100:0;
+  return {fcr,alw,avgAge,livability,cfcr,cfcrInd,pif,beta,target};
+}
+function pairTargetKg(g){return Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;}
+// CAge2.45: age (days) when a bird's cumulative FCR reaches 2.45 — its
+// cumulative intake ÷ its weight, along the shed's growth curve. Beyond
+// day 60 intake stays at the table's last value. null = not within 100 d.
+function shedCAge245(shed){
+  if(!shed||!shed.placementDate)return null;
+  const fit=getShedGompertzFit(shed);
+  let cum=0;
+  for(let a=1;a<=100;a++){
+    cum+=feedPerBirdKg(shed,a);
+    if(a<14)continue;
+    const w=(fit&&gompertzWeightAt(fit,a))||rossWeightKg(a);
+    if(w>0&&cum/w>=CAGE_FCR)return a;
+  }
+  return null;
+}
+function cAge245ForSheds(sheds){
+  let sum=0,n=0;
+  sheds.forEach(s=>{const a=shedCAge245(s);const b=Number(s.initialPopulation)||0;if(a&&b>0){sum+=a*b;n+=b;}});
+  return n>0?sum/n:null;
+}
 function getShedGompertzFit(shed){
   if(!shed)return null;
   if(gompertzCache.has(shed.id))return gompertzCache.get(shed.id);
