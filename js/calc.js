@@ -119,6 +119,7 @@ function learnedFinalPickup(){
 }
 let thinPatternCache=null;
 function learnedThinPattern(){
+  if(!FARM_LEARNING)return {age:null,share:null,from:[]};
   if(thinPatternCache)return thinPatternCache;
   const ages=[],shares=[],from=[];
   ((farmData&&farmData.sheds)||[]).forEach(s=>{
@@ -140,7 +141,7 @@ function learnedThinPattern(){
 // typical age. Never later than the clean-out date.
 function resultPlanEndDate(shed){
   const co=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null;
-  const lf=typeof learnedFinalPickup==='function'?learnedFinalPickup():null;
+  const lf=FARM_LEARNING&&typeof learnedFinalPickup==='function'?learnedFinalPickup():null;
   if(lf&&shed.placementDate){
     const place=dateOnly(shed.placementDate),tomorrow=addDays(dateOnly(new Date()),1);
     let age=lf.age;

@@ -16,6 +16,10 @@ const KEYS={shedId:['Shed','shed','ShedId','Shed ID','ShedID','Shed#','Shed No',
 let farmData=null,activeTab='dashboard',shedRange={start:0,end:0},siloRange={start:0,end:14},shedViewByGroup={...DEFAULT_VIEWS};
 let siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
 let testDeliveries={1:[],2:[],3:[],4:[]},farmLoads=[],inlineDeliveryState=null;
+// Projections follow the Ross 308 standard (intake by age; growth fitted
+// to your actual weighings). When true, they would also learn intake from
+// silo readings and thinning / last-pickup timing from this farm's data.
+const FARM_LEARNING=false;
 let predState={farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};

@@ -19,7 +19,7 @@ function migrateCustomFeed(shed){
 // night, kill sheet is the clean-out date), so that day is 7/24 of a feed day.
 const FINAL_DAY_FEED_FRACTION=7/24;
 function shedFeedOn(shed,D){
-  const kg=shedFeedOnRaw(shed,D);if(!(kg>0)||hasManualFeedPct(shed))return kg;
+  const kg=shedFeedOnRaw(shed,D);if(!FARM_LEARNING||!(kg>0)||hasManualFeedPct(shed))return kg;
   const cal=intakeCalibration();const cut=cal.cutoff&&cal.cutoff[Math.ceil(shed.id/2)];
   if(cal.pastScale!=null&&cut&&dateOnly(D)<=cut)return kg*cal.pastScale;
   return kg*cal.factor;
