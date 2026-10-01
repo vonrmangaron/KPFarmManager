@@ -122,14 +122,17 @@ function renderSettingsUnitsCard(){
   </div>`;
 }
 // Farm history: finished batches the app learns from
-let fhFormOpen=false;
+let fhFormOpen=false,fhEditId=null;
 function renderSettingsFarmHistoryCard(){
   const rows=farmHistorySorted().map(r=>{const k=historyKpis(r);return `<div class="fh-row">
       <div class="fh-main"><span class="fh-batch">${escapeHtml(r.batch||'Batch')}</span><span class="fh-src">${r.source==='auto'?'saved by the app':'entered by hand'}${r.endDate?' · ended '+escapeHtml(fmtShortNoYear(dateOnly(r.endDate))):''}</span></div>
-      <div class="fh-kpis">FCR <b>${k.fcr.toFixed(3)}</b> · ALW <b>${k.alw.toFixed(2)} kg</b> · age <b>${r.avgAge.toFixed(1)} d</b> · livability <b>${k.livability.toFixed(1)}%</b> · PIF <b>${Math.round(k.pif)}</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.intakePct?` · intake <b>${Math.round(r.intakePct)}%</b>`:''}</div>
+      <div class="fh-kpis">FCR <b>${k.fcr.toFixed(3)}</b> · ALW <b>${k.alw.toFixed(2)} kg</b> · age <b>${r.avgAge.toFixed(1)} d</b> · livability <b>${k.livability.toFixed(1)}%</b> · PIF <b>${Math.round(k.pif)}</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.finalAge?` · last pickup <b>d${Math.round(r.finalAge)}</b>${r.finalAvgKg?` at <b>${r.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}${r.intakePct?` · intake <b>${Math.round(r.intakePct)}%</b>`:''}</div>
+      <button type="button" class="fh-edit" data-fh-edit="${escapeAttr(r.id)}" title="Edit">Edit</button>
       <button type="button" class="fh-del" data-fh-del="${escapeAttr(r.id)}" aria-label="Delete ${escapeAttr(r.batch||'batch')}" title="Delete">✕</button>
     </div>`;}).join('');
-  const f=(id,label,type,ph,extra='')=>`<label class="fh-field"><span>${label}</span><input class="settings-input" id="${id}" type="${type}" placeholder="${ph}" ${extra}/></label>`;
+  const ed=fhEditId?farmHistory().find(r=>r.id===fhEditId):null;
+  const val={fhBatch:ed&&ed.batch,fhEnd:ed&&ed.endDate,fhPlaced:ed&&ed.placed,fhPicked:ed&&ed.picked,fhLive:ed&&Math.round(ed.liveWeightKg),fhFeed:ed&&feedIn(ed.feedKg),fhAge:ed&&ed.avgAge,fhThinAge:ed&&ed.firstThinAge,fhThinPct:ed&&ed.firstThinShare!=null?+(ed.firstThinShare*100).toFixed(1):null,fhFinalAge:ed&&ed.finalAge,fhFinalKg:ed&&ed.finalAvgKg};
+  const f=(id,label,type,ph,extra='')=>`<label class="fh-field"><span>${label}</span><input class="settings-input" id="${id}" type="${type}" placeholder="${ph}" value="${val[id]!=null?escapeAttr(String(val[id])):''}" ${extra}/></label>`;
   const form=fhFormOpen?`<div class="fh-form">
       ${f('fhBatch','Batch','text','e.g. 2601','maxlength="32" autocomplete="off"')}
       ${f('fhEnd','Last pickup date','date','')}
@@ -140,7 +143,9 @@ function renderSettingsFarmHistoryCard(){
       ${f('fhAge','Average age (days)','number','43.82','min="1" step="0.01" inputmode="decimal"')}
       ${f('fhThinAge','First thin age (days, optional)','number','32','min="1" step="1" inputmode="numeric"')}
       ${f('fhThinPct','First thin (% of birds, optional)','number','15','min="0" max="100" step="0.1" inputmode="decimal"')}
-      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save>Save batch</button><button class="settings-btn" type="button" data-fh-cancel>Cancel</button></div>
+      ${f('fhFinalAge','Last pickup age (days, optional)','number','53','min="1" step="1" inputmode="numeric"')}
+      ${f('fhFinalKg','Last pickup avg weight (kg, optional)','number','3.40','min="0" step="0.01" inputmode="decimal"')}
+      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save>${ed?'Save changes':'Save batch'}</button><button class="settings-btn" type="button" data-fh-cancel>Cancel</button></div>
     </div>`:`<div class="settings-actions"><button class="settings-btn" type="button" data-fh-add>${settingsIcon('archive')}Add a past batch</button></div>`;
   return `<div class="settings-section">
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
@@ -152,9 +157,11 @@ function renderSettingsFarmHistoryCard(){
 function saveFarmHistoryForm(){
   const v=id=>(document.getElementById(id)||{}).value;
   const feedKg=feedOut(v('fhFeed'));const thinPct=numOrNull(v('fhThinPct'));
-  const rec=addFarmHistoryRec({batch:(v('fhBatch')||'').trim(),endDate:v('fhEnd')||'',source:'manual',placed:v('fhPlaced'),picked:v('fhPicked'),liveWeightKg:v('fhLive'),feedKg,avgAge:v('fhAge'),firstThinAge:numOrNull(v('fhThinAge')),firstThinShare:thinPct!=null?thinPct/100:null});
-  if(!rec||!(rec.liveWeightKg>0)||!(rec.feedKg>0)||!(rec.avgAge>0)){if(rec)deleteFarmHistoryRec(rec.id);showToast('Fill in placed, picked up (≤ placed), live weight, feed and average age.',true);return;}
-  fhFormOpen=false;renderSettingsDrawerBody();render();showToast(`📚 Saved ${rec.batch||'batch'} — FCR ${historyKpis(rec).fcr.toFixed(3)}.`);
+  const prev=fhEditId?farmHistory().find(r=>r.id===fhEditId):null;
+  const rec=normalizeHistoryRec({...(prev||{}),id:prev?prev.id:undefined,batch:(v('fhBatch')||'').trim(),endDate:v('fhEnd')||'',source:prev?prev.source:'manual',placed:v('fhPlaced'),picked:v('fhPicked'),liveWeightKg:v('fhLive'),feedKg,avgAge:v('fhAge'),firstThinAge:numOrNull(v('fhThinAge')),firstThinShare:thinPct!=null?thinPct/100:null,finalAge:numOrNull(v('fhFinalAge')),finalAvgKg:numOrNull(v('fhFinalKg'))});
+  if(!rec||!(rec.liveWeightKg>0)||!(rec.feedKg>0)||!(rec.avgAge>0)){showToast('Fill in placed, picked up (≤ placed), live weight, feed and average age.',true);return;}
+  predState.farmHistory=farmHistory().filter(r=>!prev||r.id!==prev.id).concat([rec]);savePredState();schedulePush();
+  fhFormOpen=false;fhEditId=null;renderSettingsDrawerBody();render();showToast(`📚 Saved ${rec.batch||'batch'} — FCR ${historyKpis(rec).fcr.toFixed(3)}.`);
 }
 function renderSettingsNotificationsCard(){
   return `<div class="settings-section">

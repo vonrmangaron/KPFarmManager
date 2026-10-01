@@ -1039,7 +1039,7 @@ function render(){
       }
       lastPageKey=pageKey;
     }
-    gompertzCache=new Map();autoPlanCache=new Map();thinPatternCache=null;intakeCalCache=null;
+    gompertzCache=new Map();autoPlanCache=new Map();thinPatternCache=null;intakeCalCache=null;finalPickupCache=null;
     // Batch number field
     const batchEl=document.getElementById('batchNumber');
     if(batchEl){const want=predState.batchNumber||(farmData?farmData.batchNumber:'')||'';if(batchEl.value!==want)batchEl.value=want;batchEl.readOnly=!!want;batchEl.title=want?'Batch number is locked. Use "New Batch" to change it.':'Enter or import a batch number';}
@@ -1540,6 +1540,11 @@ function learnedBasisHtml(){
   const lp=learnedThinPattern();
   if(lp.age&&lp.fromHistory)parts.push(`<span title="No shed thinned yet this batch — first auto thin at the median of ${lp.fromHistory} past batch${lp.fromHistory>1?'es':''} in Farm history.">First thin <b>day ${lp.age}</b>, <b>${Math.round(lp.share*100)}%</b> of birds · from past batches</span>`);
   else if(lp.age)parts.push(`<span title="Sheds without a pickup yet get their first auto thin at this age and size — the median of the sheds already thinned this batch.">First thin <b>day ${lp.age}</b>, <b>${Math.round(lp.share*100)}%</b> of birds · learned from Shed${lp.from.length>1?'s':''} ${lp.from.join(', ')}</span>`);
+  const lf=learnedFinalPickup();
+  if(lf){const from=[lf.src.batch.length?`Shed${lf.src.batch.length>1?'s':''} ${lf.src.batch.join(', ')}`:'',lf.src.history?`${lf.src.history} past batch${lf.src.history>1?'es':''}`:''].filter(Boolean).join(' + ');
+    const rng=lf.min!==lf.max?` (${lf.min}–${lf.max})`:'';
+    parts.push(`<span title="The plant's clean-out date is only an estimate, so each shed's last pickup is planned ${lf.weight?`on the day its birds reach ${lf.weight.toFixed(2)} kg — the farm's usual last-pickup weight (bigger birds go earlier) — within days ${lf.min}–${lf.max}`:`at day ${lf.age}, the farm's typical last-pickup age`}, never after the clean-out date. Learned from ${from}.">Last pickup ${lf.weight?`at <b>${lf.weight.toFixed(2)} kg</b>, ${lf.min===lf.max?`by day <b>${lf.max}</b>`:`days <b>${lf.min}–${lf.max}</b>`}`:`<b>day ${lf.age}</b>${rng}`} · from ${from}</span>`);}
+  else parts.push(`<span title="No last-pickup data yet (Farm history or a finished shed) — using the plant's clean-out dates. Add the last pickup age to a past batch in Settings → Farm history.">Last pickup at clean-out date · no history yet</span>`);
   return `<div class="fk-basis fk-learned">${parts.join('<span class="fk-sep"> · </span>')}</div>`;
 }
 // "vs last batch" — the latest Farm history record against this projection

@@ -101,6 +101,22 @@ let autoPlanCache=new Map();
 // ── Learned thinning: the first pickup age and size (share of birds
 // placed) from sheds already thinned this batch — median across them.
 // Used by the auto plan for sheds not thinned yet.
+// ── Learned last pickup: age (and weight, when known) of each shed's
+// final pickup — this batch's finished sheds plus Farm history.
+let finalPickupCache=null;
+function learnedFinalPickup(){
+  if(finalPickupCache!==null)return finalPickupCache||null;
+  const ages=[],weights=[],src={batch:[],history:0};
+  ((farmData&&farmData.sheds)||[]).forEach(s=>{
+    if(!s.placementDate)return;
+    const fin=(s.pickups||[]).find(p=>p.isFinal&&p.date);if(!fin)return;
+    ages.push(pickupAge(s,fin));const avg=pickupAvgKg(fin);if(avg>0&&!fin.weightEstimated)weights.push(avg);src.batch.push(s.id);
+  });
+  (typeof farmHistory==='function'?farmHistory():[]).forEach(r=>{if(r.finalAge>0){ages.push(r.finalAge);src.history++;if(r.finalAvgKg>0)weights.push(r.finalAvgKg);}});
+  if(!ages.length){finalPickupCache=false;return null;}
+  finalPickupCache={age:Math.round(medianOf(ages)),min:Math.round(Math.min(...ages)),max:Math.round(Math.max(...ages)),weight:weights.length?medianOf(weights):null,n:ages.length,src};
+  return finalPickupCache;
+}
 let thinPatternCache=null;
 function learnedThinPattern(){
   if(thinPatternCache)return thinPatternCache;
@@ -116,8 +132,25 @@ function learnedThinPattern(){
   else{const h=typeof historyThinPrior==='function'?historyThinPrior():null;thinPatternCache=h?{age:h.age,share:h.share,from:[],fromHistory:h.n}:{age:null,share:null,from:[]};}
   return thinPatternCache;
 }
+// Projection end for a shed. The plant's clean-out date is only an
+// estimate (it moves), so when the farm has last-pickup data (Farm history
+// or sheds already finished this batch) the shed ends on the day its birds
+// reach the farm's usual last-pickup weight — bigger birds go earlier —
+// within the farm's range of last-pickup ages; with only ages known, at the
+// typical age. Never later than the clean-out date.
 function resultPlanEndDate(shed){
-  if(shed.cleanoutDate)return dateOnly(shed.cleanoutDate);
+  const co=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null;
+  const lf=typeof learnedFinalPickup==='function'?learnedFinalPickup():null;
+  if(lf&&shed.placementDate){
+    const place=dateOnly(shed.placementDate),tomorrow=addDays(dateOnly(new Date()),1);
+    let age=lf.age;
+    if(lf.weight){age=lf.max;for(let a=lf.min;a<=lf.max;a++){const w=forecastWeightModeAware(shed,addDays(place,a));if(w&&w.kg>=lf.weight){age=a;break;}}}
+    let end=addDays(place,age);
+    if(end<tomorrow)end=co&&co>=tomorrow?co:tomorrow;   // already past it and birds still in
+    if(co&&co<end)end=co;
+    return end;
+  }
+  if(co)return co;
   // No clean-out date: when birds reach the pair's target harvest weight
   const g=Math.ceil(shed.id/2);const target=Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;
   let d=addDays(dateOnly(new Date()),1);

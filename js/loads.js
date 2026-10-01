@@ -24,7 +24,10 @@ function shedFeedOn(shed,D){
   if(cal.pastScale!=null&&cut&&dateOnly(D)<=cut)return kg*cal.pastScale;
   return kg*cal.factor;
 }
-function shedFeedOnRaw(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
+function shedFeedOnRaw(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);const fin=finalPickupDate(shed);if(fin&&daysBetween(dateOnly(D),fin)===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
+// Day the last birds leave (kill-sheet date): a final pickup (logged, planned
+// or auto in projections), else the clean-out date. Silo goes off at 7am the day before.
+function finalPickupDate(shed){const f=computeEffectivePickups(shed).find(p=>p.isFinal&&p.date);if(f)return dateOnly(f.date);return shed.cleanoutDate?dateOnly(shed.cleanoutDate):null;}
 function hasManualFeedPct(shed){const p=Number(shed&&shed.feedAdjustPct);return Number.isFinite(p)&&p>0;}
 // ── Learned intake ──
 // Feed eaten is measured at every date all pairs have a silo reading:

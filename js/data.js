@@ -130,7 +130,7 @@ function normalizeHistoryRec(r){
   if(!r||typeof r!=='object')return null;
   const rec={id:String(r.id||uid('bh')),batch:String(r.batch||'').slice(0,32),endDate:r.endDate?String(r.endDate).slice(0,10):'',source:r.source==='auto'?'auto':'manual',
     placed:Math.round(num0(r.placed)),picked:Math.round(num0(r.picked)),liveWeightKg:num0(r.liveWeightKg),feedKg:num0(r.feedKg),avgAge:num0(r.avgAge),
-    firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),intakePct:numOrNull(r.intakePct),savedAt:num0(r.savedAt)||Date.now()};
+    firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),finalAge:numOrNull(r.finalAge),finalAvgKg:numOrNull(r.finalAvgKg),intakePct:numOrNull(r.intakePct),savedAt:num0(r.savedAt)||Date.now()};
   return rec.placed>0&&rec.picked>0&&rec.picked<=rec.placed?rec:null;
 }
 function farmHistory(){return Array.isArray(predState.farmHistory)?predState.farmHistory:[];}
@@ -146,13 +146,13 @@ function historyIntakePrior(){const r=farmHistory().filter(x=>x.intakePct>0);ret
 function summarizeCurrentBatch(){
   if(!farmData)return null;
   const sheds=(farmData.sheds||[]).filter(s=>s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return null;
-  let placed=0,picked=0,ageBirds=0,lw=0,lwBirds=0,last=null;const fa=[],fs=[],fin=[];
+  let placed=0,picked=0,ageBirds=0,lw=0,lwBirds=0,last=null;const fa=[],fs=[],fin=[],finAge=[],finKg=[];
   sheds.forEach(s=>{
     const pop=num0(s.initialPopulation);placed+=pop;
     const real=(s.pickups||[]).filter(p=>p.date&&num0(p.birds)>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
     real.forEach(p=>{const b=num0(p.birds);picked+=b;ageBirds+=pickupAge(s,p)*b;const avg=pickupAvgKg(p);if(avg>0){lw+=avg*b;lwBirds+=b;}const d=dateOnly(p.date);if(!last||d>last)last=d;});
     if(real.length&&!real[0].isFinal){fa.push(pickupAge(s,real[0]));fs.push(num0(real[0].birds)/pop);}
-    if(real.length)fin.push(num0(real[real.length-1].birds)/pop);
+    if(real.length){const lp=real[real.length-1];fin.push(num0(lp.birds)/pop);finAge.push(pickupAge(s,lp));const a=pickupAvgKg(lp);if(a>0&&!lp.weightEstimated)finKg.push(a);}
   });
   // Only a batch that has largely finished (≥ half the birds out) is worth learning from
   if(picked<=0||lwBirds<=0||picked<placed*0.5)return null;
@@ -160,7 +160,7 @@ function summarizeCurrentBatch(){
   const cal=typeof intakeCalibration==='function'?intakeCalibration():{ok:false};
   return normalizeHistoryRec({batch:predState.batchNumber||farmData.batchNumber||'',endDate:last?iso(last):'',source:'auto',placed,picked,
     liveWeightKg:lw*picked/lwBirds,feedKg:Math.max(0,docket+carryoverTotalKg()-num0(predState.farmLeftoverKg)),avgAge:ageBirds/picked,
-    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
+    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
 }
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 // "Since the reading": a morning reading hasn't seen its own day yet,
