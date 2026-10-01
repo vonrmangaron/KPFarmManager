@@ -18,40 +18,75 @@ function migrateCustomFeed(shed){
 // Silo is switched off at 7am the day before clean-out (birds leave that
 // night, kill sheet is the clean-out date), so that day is 7/24 of a feed day.
 const FINAL_DAY_FEED_FRACTION=7/24;
-function shedFeedOn(shed,D){const kg=shedFeedOnRaw(shed,D);return kg>0&&!hasManualFeedPct(shed)?kg*intakeCalibration().factor:kg;}
+function shedFeedOn(shed,D){
+  const kg=shedFeedOnRaw(shed,D);if(!(kg>0)||hasManualFeedPct(shed))return kg;
+  const cal=intakeCalibration();const cut=cal.cutoff&&cal.cutoff[Math.ceil(shed.id/2)];
+  if(cal.pastScale!=null&&cut&&dateOnly(D)<=cut)return kg*cal.pastScale;
+  return kg*cal.factor;
+}
 function shedFeedOnRaw(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
 function hasManualFeedPct(shed){const p=Number(shed&&shed.feedAdjustPct);return Number.isFinite(p)&&p>0;}
 // ── Learned intake ──
-// Feed actually eaten (dockets + carry-over − silo stock at each pair's
-// latest reading) ÷ what the Ross table says the same birds ate up to the
-// same moment. It scales every day's intake for sheds without a manual
-// "Feed intake %", so the forecast, to-order and projection follow how
-// this farm's birds really eat. Bounded 85–115%; 100% until there's
-// enough data (all pairs read, ≥ 20 t modelled).
+// Feed eaten is measured at every date all pairs have a silo reading:
+// carry-over + loads delivered up to the reading − silo stock. Fitting
+// eaten = fixed + rate × (Ross-table intake) across those dates gives:
+//  • rate  — how these birds really eat per day vs the Ross table. A fixed
+//            amount (feed in lines/pans, carry-over or ring-reading bias)
+//            cancels out, so it can't masquerade as "eating more".
+//  • past  — feed up to the latest reading scaled to exactly what was measured.
+// Days after a pair's latest reading use the rate; days up to it the past
+// scale. Rate bounded 85–115%; needs ≥ 3 reading dates over ≥ 6 days and
+// ≥ 100 t of intake between them, else the farm's history, else 100%.
 const INTAKE_CAL_MIN=0.85,INTAKE_CAL_MAX=1.15,INTAKE_CAL_MIN_KG=20000;
 let intakeCalCache=null;
 function intakeCalibration(){
   if(intakeCalCache)return intakeCalCache;
-  intakeCalCache={factor:1,ok:false,reason:'Not enough silo readings yet'};
+  intakeCalCache={factor:1,ok:false,pastScale:null,cutoff:{},reason:'Not enough silo readings yet'};
   try{
     if(!farmData||typeof feedEatenMeasured!=='function')return intakeCalCache;
+    const groups=[1,2,3,4].filter(g=>shedsForGroup(g).some(s=>s.placementDate));if(!groups.length)return intakeCalCache;
+    // Raw (Ross-table) intake per shed per day, cached for this pass
+    const rawCum=new Map();
+    const rawTo=(s,end)=>{let m=rawCum.get(s.id);if(!m){m=[];rawCum.set(s.id,m);}const k=iso(end);if(m[k]!=null)return m[k];let sum=0;for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))sum+=shedFeedOnRaw(s,d);m[k]=sum;return sum;};
+    // One point per date where every placed pair has a reading
+    const byDate={};groups.forEach(g=>readingsSorted(g).forEach(r=>{(byDate[r.date]=byDate[r.date]||{})[g]=r;}));
+    const pts=[];const carry=carryoverTotalKg();
+    Object.keys(byDate).sort().forEach(ds=>{
+      const rs=byDate[ds];if(groups.some(g=>!rs[g]))return;
+      let eaten=carry,manual=0,auto=0;
+      groups.forEach(g=>{const r=rs[g],D=dateOnly(r.date),morning=readingIsMorning(r),end=morning?addDays(D,-1):D;
+        farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(morning?ld>=D:ld>D)return;eaten+=loadKgToPairBefore(l,g);});
+        eaten-=readingTotalKg(r);
+        shedsForGroup(g).filter(s=>s.placementDate).forEach(s=>{const v=rawTo(s,end);if(hasManualFeedPct(s))manual+=v;else auto+=v;});});
+      pts.push({date:ds,x:auto,y:eaten-manual});
+    });
+    // Past: the latest reading per pair (feedEatenMeasured), scaled to measured
     const m=feedEatenMeasured();
-    if(m.missing.length||!m.pairs.length)return intakeFromHistory();
-    let manual=0,auto=0;
-    m.pairs.forEach(p=>{const end=p.morning?addDays(p.date,-1):p.date;p.sheds.forEach(s=>{let d=dateOnly(s.placementDate);let sum=0;while(d<=end){sum+=shedFeedOnRaw(s,d);d=addDays(d,1);}if(hasManualFeedPct(s))manual+=sum;else auto+=sum;});});
-    if(auto<INTAKE_CAL_MIN_KG||!(m.eaten>0))return intakeFromHistory();
-    const raw=(m.eaten-manual)/auto;
-    const factor=Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,raw))*1000)/1000;
-    intakeCalCache={factor,ok:true,raw,measured:m.eaten,model:auto+manual,asOf:m.pairs.map(p=>p.date).reduce((a,b)=>b<a?b:a),capped:raw!==factor&&Math.abs(raw-factor)>0.0005};
-  }catch(e){intakeCalCache={factor:1,ok:false,reason:'Could not calculate'};}
+    const cutoff={};m.pairs.forEach(p=>{cutoff[p.g]=p.morning?addDays(p.date,-1):p.date;});
+    let pastScale=null,model=0,manualPast=0;
+    if(!m.missing.length&&m.pairs.length){
+      m.pairs.forEach(p=>p.sheds.forEach(s=>{const v=rawTo(s,cutoff[p.g]);if(hasManualFeedPct(s))manualPast+=v;else model+=v;}));
+      if(model>=INTAKE_CAL_MIN_KG&&m.eaten>manualPast)pastScale=(m.eaten-manualPast)/model;
+      // A wildly different total means a reading or docket is wrong — don't trust it
+      if(pastScale!=null&&(pastScale<0.7||pastScale>1.3))pastScale=null;
+    }
+    // Rate: least-squares slope across the reading dates
+    let rate=null,fixed=null;
+    const span=pts.length>=2?daysBetween(dateOnly(pts[0].date),dateOnly(pts[pts.length-1].date)):0;
+    if(pts.length>=3&&span>=6&&pts[pts.length-1].x-pts[0].x>=100000){
+      const n=pts.length,mx=pts.reduce((a,p)=>a+p.x,0)/n,my=pts.reduce((a,p)=>a+p.y,0)/n;
+      const sxx=pts.reduce((a,p)=>a+(p.x-mx)**2,0),sxy=pts.reduce((a,p)=>a+(p.x-mx)*(p.y-my),0);
+      if(sxx>0){rate=sxy/sxx;fixed=my-rate*mx;}
+    }
+    if(rate==null){const h=typeof historyIntakePrior==='function'?historyIntakePrior():null;
+      intakeCalCache={factor:h?clampIntake(h.factor):1,ok:!!h,fromHistory:h?h.n:0,raw:h?h.factor:null,pastScale,cutoff,points:pts.length,reason:pts.length?`Needs 3 reading dates over 6+ days (has ${pts.length})`:'Not enough silo readings yet',measured:m.eaten,model:model+manualPast};
+      return intakeCalCache;}
+    const factor=clampIntake(rate);
+    intakeCalCache={factor,ok:true,raw:rate,fixed,points:pts.length,span,pastScale,cutoff,measured:m.eaten,model:model+manualPast,capped:Math.abs(rate-factor)>0.0005};
+  }catch(e){intakeCalCache={factor:1,ok:false,pastScale:null,cutoff:{},reason:'Could not calculate'};}
   return intakeCalCache;
 }
-// No usable readings yet this batch: start from the farm's past batches
-function intakeFromHistory(){
-  const h=typeof historyIntakePrior==='function'?historyIntakePrior():null;
-  if(h){const f=Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,h.factor))*1000)/1000;intakeCalCache={factor:f,ok:true,fromHistory:h.n,raw:h.factor};}
-  return intakeCalCache;
-}
+function clampIntake(v){return Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,v))*1000)/1000;}
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}
 function groupFeedToday(sheds,today=new Date()){return groupDailyFeedOn(sheds,today);}
 // ── Feed unit (Settings → Units): every feed amount shown or typed uses
