@@ -99,6 +99,25 @@ function balanceOnEndOfDay(group,D,realOnly){
   if(targetD>latestDate){let bal=anchor;for(let d=addDays(latestDate,1);d<=targetD;d=addDays(d,1)){bal=bal+kgOn(group,d)-groupDailyFeedOn(sheds,d);}return bal;}
   let bal=anchor;for(let d=latestDate;d>targetD;d=addDays(d,-1)){bal=bal-kgOn(group,d)+groupDailyFeedOn(sheds,d);}return bal;
 }
+// ── Feed actually eaten — measured, no intake model ──
+// carry-over + loads delivered up to each pair's latest silo reading
+// − feed in its silos at that reading. A docket actual scales that
+// load's planned split. Morning reading: that day's loads not in yet.
+function feedOrderedKg(){return farmLoads.reduce((s,l)=>s+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);}
+function loadKgToPairBefore(l,g){const sk=Number(l.splitKg&&l.splitKg[g])||0;if(sk<=0)return 0;const pk=Number(l.plannedKg)||0;return (l.actualKg!=null&&pk>0)?sk*Number(l.actualKg)/pk:sk;}
+function feedEatenMeasured(){
+  const carry=carryoverTotalKg();const pairs=[],missing=[];let eaten=carry;
+  [1,2,3,4].forEach(g=>{
+    const sheds=shedsForGroup(g).filter(s=>s.placementDate);if(!sheds.length)return;
+    const r=latestReading(g);if(!r){missing.push(g);return;}
+    const D=dateOnly(r.date),morning=readingIsMorning(r);
+    let delivered=0;
+    farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(morning?ld>=D:ld>D)return;delivered+=loadKgToPairBefore(l,g);});
+    const stock=readingTotalKg(r);
+    pairs.push({g,date:D,morning,delivered,stock,sheds});eaten+=delivered-stock;
+  });
+  return {eaten,carry,pairs,missing};
+}
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 // "Since the reading": a morning reading hasn't seen its own day yet,
 // so the reading day itself is included.

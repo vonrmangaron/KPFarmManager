@@ -529,6 +529,41 @@ function batchSoFar(sheds, today) {
   acc.kpi = batchKpis(acc);
   return acc;
 }
+// Today's FCR from measured feed (feedEatenMeasured): each pair is taken
+// at its latest silo reading, so feed and weight are the same moment.
+// kpi is null when a placed pair has no reading or a shed has no weight.
+function batchMeasured(today) {
+  const t = dateOnly(today);
+  const m = feedEatenMeasured();
+  const acc = { feedKg: m.eaten, liveWeightKg: 0, birds: 0, ageBirdSum: 0, placed: 0, mortality: 0, targetBirdSum: 0,
+    anyEstimated: false, onFarmKg: 0, shippedKg: 0, ordered: feedOrderedKg(), eaten: m.eaten, carry: m.carry, pairs: m.pairs, missing: m.missing.slice(), noWeight: [] };
+  (farmData.sheds || []).forEach(shed => {
+    if (!shed.placementDate) return;
+    acc.placed += Number(shed.initialPopulation) || 0;
+    acc.mortality += Math.max(0, Number(shed.mortality) || 0);
+    const est = currentShedWeightEstimate(shed, t);
+    if (!est) { acc.noWeight.push(shed.id); return; }
+    acc.onFarmKg += est.kg * liveAtStartOfDay(shed, t);
+    acc.shippedKg += shippedWeightToDate(shed, t, est.kg);
+    if (est.isEstimate) acc.anyEstimated = true;
+  });
+  m.pairs.forEach(p => {
+    // Morning reading = start of that day; evening = start of the next
+    let wd = p.morning ? p.date : addDays(p.date, 1); if (wd > t) wd = t;
+    p.sheds.forEach(shed => {
+      const est = currentShedWeightEstimate(shed, wd); if (!est) return;
+      // A pickup on day wd already left (kill-sheet date) — live excludes it, shipped includes it
+      const live = liveAtStartOfDay(shed, wd), sh = shippedBirdsToDate(shed, wd);
+      acc.liveWeightKg += est.kg * live + shippedWeightToDate(shed, wd, est.kg);
+      acc.birds += live + sh.birds;
+      acc.ageBirdSum += Math.max(0, daysBetween(shed.placementDate, wd)) * live + sh.ageBirdSum;
+      acc.targetBirdSum += pairTargetKg(p.g) * (live + sh.birds);
+    });
+  });
+  acc.targetKg = acc.birds > 0 ? acc.targetBirdSum / acc.birds : CFCR_REF_KG;
+  acc.kpi = (!acc.missing.length && !acc.noWeight.length && acc.eaten > 0 && acc.liveWeightKg > 0) ? batchKpis(acc) : null;
+  return acc;
+}
 function currentShedWeightEstimate(shed, today) {
   if (!shed.placementDate) return null;
   const age = daysBetween(shed.placementDate, today);
@@ -772,16 +807,27 @@ function renderDashboardView() {
   // samples) the rest of the app already uses for predictions.
   // Feed to date ÷ (live weight now + weight already shipped — the feed
   // includes what picked-up birds ate). Same formulas as the projection.
-  const so = batchSoFar(allSheds, dateOnly(today));
+  // Current only — no projection, no intake model: feed eaten is measured
+  // (carry-over + dockets − silo stock at the latest readings) and divided
+  // by the weight at those readings (on farm + already shipped).
+  const so = batchMeasured(today);
+  const k = so.kpi || {};
   const anyEstimated = so.anyEstimated;
-  const avgAlw = so.kpi.alw;
-  const fcrTodayVal = so.kpi.fcr;
-  const cFcrVal = so.kpi.cfcr;
-  const cFcrIndVal = so.kpi.cfcrInd;
-  // PIF/EPEF = livability × ALW ÷ (bird-weighted avg age × FCR) × 100
-  const epefVal = (so.kpi.avgAge > 0 && fcrTodayVal > 0 && avgAlw > 0)
-    ? so.kpi.pif
-    : 0;
+  const avgAlw = k.alw || 0;
+  const fcrTodayVal = k.fcr || 0;
+  const cFcrVal = k.cfcr || 0;
+  const cFcrIndVal = k.cfcrInd || 0;
+  const epefVal = (k.avgAge > 0 && fcrTodayVal > 0 && avgAlw > 0) ? k.pif : 0;
+  const readDates = so.pairs.map(p => fmtShortNoYear(p.date) + (p.morning ? ' am' : ' pm'));
+  const fcrWhy = so.missing.length ? `Needs a silo reading for ${so.missing.map(pairLabel).join(', ')}`
+    : so.noWeight.length ? `No weight yet for shed ${so.noWeight.join(', ')}`
+    : !(so.eaten > 0) ? 'Silo stock is above feed delivered — check readings and dockets' : '';
+  const fcrRows = `<div class="dash-fcr-rows">
+        <span>Feed ordered</span><b>${fmtFeed(so.ordered)}</b>
+        <span title="Carry-over ${fmtFeed(so.carry)} + dockets delivered − silo stock at the latest readings (${readDates.join(', ') || 'none'})">Eaten so far</span><b>${so.missing.length ? '—' : fmtFeed(so.eaten)}</b>
+        <span>Live weight now</span><b>${fmtKgAlways(so.onFarmKg)}</b>
+        <span>Shipped so far</span><b>${fmtKgAlways(so.shippedKg)}</b>
+      </div>`;
 
   const estChip = anyEstimated ? '<span class="est-chip" title="Some shed weights are estimates — projected from the last pickup weighing or from the growth curve fitted to in-yard samples.">est</span>' : '';
   const fcrDisplay  = fcrTodayVal > 0  ? fcrTodayVal.toFixed(2)  : '—';
@@ -901,8 +947,9 @@ function renderDashboardView() {
     <div class="dash-kpi dash-kpi-green">
       <span class="dash-kpi-icon">${dashKpiIcon('fcr')}</span>
       <span class="dash-kpi-label">FCR today${estChip}</span>
-      <span class="dash-kpi-value" title="FCR = feed ÷ live weight. cFCR (Baiada) = FCR − (ALW − 2.45) × ${so.kpi.beta}. ALW = live weight ÷ birds (${avgAlw ? avgAlw.toFixed(3) : '—'} kg).">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
-      <span class="dash-kpi-sub" title="cFCR (Industry) = FCR − (ALW − ${so.targetKg.toFixed(2)} target) ÷ 3.2. PIF = livability × ALW ÷ (avg age ${so.kpi.avgAge ? so.kpi.avgAge.toFixed(1) : '—'} d × FCR) × 100. Higher PIF is better.">cFCR Ind. ${cFcrIndVal > 0 ? cFcrIndVal.toFixed(2) : '—'} · PIF today ${epefDisplay}</span>
+      <span class="dash-kpi-value" title="FCR = feed eaten ÷ live weight (on farm + shipped) at the latest silo readings. cFCR (Baiada) = FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}. ALW = live weight ÷ birds (${avgAlw ? avgAlw.toFixed(3) : '—'} kg).">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
+      ${fcrWhy ? `<span class="dash-kpi-sub">${escapeHtml(fcrWhy)}</span>` : `<span class="dash-kpi-sub" title="cFCR (Industry) = FCR − (ALW − ${so.targetKg.toFixed(2)} target) ÷ 3.2. PIF = livability × ALW ÷ (avg age ${k.avgAge ? k.avgAge.toFixed(1) : '—'} d × FCR) × 100. Higher PIF is better.">cFCR Ind. ${cFcrIndVal > 0 ? cFcrIndVal.toFixed(2) : '—'} · PIF today ${epefDisplay}</span>`}
+      ${fcrRows}
     </div>
     <div class="dash-kpi dash-kpi-red">
       <div class="dash-kpi-top">
