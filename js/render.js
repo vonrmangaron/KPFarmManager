@@ -783,12 +783,6 @@ function renderDashboardView() {
     ? so.kpi.pif
     : 0;
 
-  // Predicted end-of-batch FCR / cFCR from the Predictions page, for
-  // side-by-side comparison with today's figures.
-  const farmTotals = computeFarmTotals();
-  const harvestFcrHtml = farmTotals.hasData && farmTotals.fcr > 0
-    ? `<span class="dash-kpi-compare" title="Projected at the final pickup (Predictions page), at ${farmTotals.avgWeight.toFixed(2)} kg average weight."><span class="dkc-k">At harvest (est.)</span><span class="dkc-v">FCR <b>${farmTotals.fcr.toFixed(2)}</b> · cFCR <b>${farmTotals.cfcr.toFixed(2)}</b> · Ind. <b>${farmTotals.cfcrInd.toFixed(2)}</b> · PIF <b>${Math.round(farmTotals.pif)}</b></span></span>`
-    : '';
   const estChip = anyEstimated ? '<span class="est-chip" title="Some shed weights are estimates — projected from the last pickup weighing or from the growth curve fitted to in-yard samples.">est</span>' : '';
   const fcrDisplay  = fcrTodayVal > 0  ? fcrTodayVal.toFixed(2)  : '—';
   const cFcrDisplay = cFcrVal > 0      ? cFcrVal.toFixed(2)       : '—';
@@ -909,7 +903,6 @@ function renderDashboardView() {
       <span class="dash-kpi-label">FCR today${estChip}</span>
       <span class="dash-kpi-value" title="FCR = feed ÷ live weight. cFCR (Baiada) = FCR − (ALW − 2.45) × ${so.kpi.beta}. ALW = live weight ÷ birds (${avgAlw ? avgAlw.toFixed(3) : '—'} kg).">${fcrDisplay} <span>/ cFCR ${cFcrDisplay}</span></span>
       <span class="dash-kpi-sub" title="cFCR (Industry) = FCR − (ALW − ${so.targetKg.toFixed(2)} target) ÷ 3.2. PIF = livability × ALW ÷ (avg age ${so.kpi.avgAge ? so.kpi.avgAge.toFixed(1) : '—'} d × FCR) × 100. Higher PIF is better.">cFCR Ind. ${cFcrIndVal > 0 ? cFcrIndVal.toFixed(2) : '—'} · PIF today ${epefDisplay}</span>
-      ${harvestFcrHtml}
     </div>
     <div class="dash-kpi dash-kpi-red">
       <div class="dash-kpi-top">
