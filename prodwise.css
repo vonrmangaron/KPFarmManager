@@ -3406,3 +3406,34 @@ body.theme-dark .adj-btn.primary { color: #1A2438; }
 .pp-adopt { border: 1px solid var(--primary); background: var(--sb-tint); color: var(--primary-dark); font: 700 11.5px Inter, sans-serif; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
 .pp-auto-row { opacity: 0.72; border-style: dashed !important; }
 .pp-badge.auto { background: var(--surface-soft); color: var(--muted); border: 1px dashed var(--muted); }
+
+/* Adjustments: shed-row override input + checkbox match the theme */
+.adj-shed-row input[type="number"] {
+  width: 84px; height: 34px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink);
+  font: 700 14px Sora, sans-serif; text-align: right; font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.adj-shed-row input[type="number"]::-webkit-outer-spin-button,
+.adj-shed-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.adj-shed-row input[type="number"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.adj-check input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none; margin: 0; flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 5px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface);
+  display: inline-grid; place-items: center; transition: background-color .12s, border-color .12s;
+}
+.adj-check input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+.adj-check input[type="checkbox"]:checked::after {
+  content: ""; width: 9px; height: 5px; margin-top: -2px;
+  border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg);
+}
+body.theme-dark .adj-check input[type="checkbox"]:checked::after { border-color: #1A2438; }
+.adj-check input[type="checkbox"]:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Native controls in the modal follow the theme */
+body.theme-dark .adj-modal { color-scheme: dark; }
+/* Est. total average weight: per shed pair */
+.fkt-pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.fkt-pairs b { color: var(--ink); font-family: Sora, sans-serif; font-variant-numeric: tabular-nums; }
+.dco-table th[title] { cursor: help; }

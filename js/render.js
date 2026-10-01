@@ -669,24 +669,29 @@ function renderCleanoutDashCard(){
   const today=dateOnly(new Date());
   const sheds=(farmData.sheds||[]).filter(s=>s.placementDate);
   if(!sheds.length)return '';
-  let totBirds=0,totKg=0,anyFallback=false;
+  let totBirds=0,totKg=0,finBirds=0,finKg=0,anyFallback=false;
   const rows=sheds.map(shed=>{
     const co=shedCleanoutInfo(shed,today);
-    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="4" class="dco-none">No clean-out date or pickups planned</td></tr>`;
-    totBirds+=co.birdsAtEnd;totKg+=co.totalKgAtEnd;
+    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="5" class="dco-none">Not enough data yet</td></tr>`;
+    totBirds+=co.birdsAll;totKg+=co.totalKgAll;finBirds+=co.finalBirds;finKg+=co.finalBirds*co.finalKg;
     const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
     const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
-    return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td><td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="From the '+co.endSrc+' — no clean-out date set">*</sup>':''} <span class="dco-sub">${when}</span></td><td class="num">${co.cleanAge}d</td><td class="num">${co.kgAtEnd?co.kgAtEnd.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${co.kgAtEnd?Math.round(co.totalKgAtEnd).toLocaleString():'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAtEnd.toLocaleString()} birds</div></td></tr>`;
+    return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td>
+      <td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="No clean-out date set — using the '+co.endSrc+'">*</sup>':''} <span class="dco-sub">${when}</span></td>
+      <td class="num">${co.cleanAge}d</td>
+      <td class="num">${co.finalKg?co.finalKg.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.finalBirds.toLocaleString()} birds</div></td>
+      <td class="num">${co.avgAll?co.avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.pickupCount} pickups</div></td>
+      <td class="num dco-total">${Math.round(co.totalKgAll).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAll.toLocaleString()} birds</div></td></tr>`;
   }).join('');
-  const avg=totBirds>0?totKg/totBirds:0;
+  const avgAll=totBirds>0?totKg/totBirds:0,avgFin=finBirds>0?finKg/finBirds:0;
   return `<div class="dash-card dash-cleanout">
-    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Age, weight and live weight on each shed's last day</span></div>
+    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Last pickup vs whole-batch weights per shed</span></div>
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
-      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Age</th><th class="num">Wt / bird</th><th class="num">Est. total live wt</th></tr></thead>
+      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Age</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avg?avg.toFixed(3):'—'} <span class="dco-sub">kg avg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
+      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
     </table></div>
-    ${anyFallback?'<p class="dco-note">* No clean-out date set — using the shed\'s last pickup (logged or planned).</p>':''}
+    <p class="dco-note">Weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' * No clean-out date set — using the shed\'s last pickup.':''}</p>
   </div>`;
 }
 function renderDashboardView() {
@@ -1512,7 +1517,7 @@ function renderFarmKpiCard(){
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub">FCR adjusted for final weight (${t.avgWeight.toFixed(2)} kg)</div></div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><div class="fkt-sub">Overall score: weight × survival ÷ (age × FCR)</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Weighted across ${t.birdsAtHarvest.toLocaleString()} birds</div></div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Farm average across ${t.birdsAtHarvest.toLocaleString()} birds</div><div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(3)}</b></span>`:'';}).join('')}</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div></div>
     <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
   </div></div>`;
@@ -1840,19 +1845,36 @@ if(hasRealFinal)return `<div class="pickup-plan-block"><h4><span>🎯 Predicted 
 // (same forecast as the planned-pickup rows). Used by the Predictions
 // snapshot card and the Dashboard Clean-out card.
 function shedCleanoutInfo(shed,today){return withResultPlan(()=>shedCleanoutInfoInner(shed,today));}
+// Built on the SAME per-shed prediction as the projection (logged + your
+// planned + auto-planned pickups): the last pickup (clean-out) and the
+// shed's whole-batch total live weight across ALL pickups.
 function shedCleanoutInfoInner(shed,today){
   if(!shed||!shed.placementDate)return null;
   today=dateOnly(today||new Date());
-  let endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null,endSrc='clean-out date';
-  if(!endDate){const eff=computeEffectivePickups(shed);const last=eff.length?eff[eff.length-1]:null;if(last){endDate=dateOnly(last.date);endSrc=last.__source==='predicted'?'last planned pickup':'last logged pickup';}}
+  const g=Math.ceil(shed.id/2);
+  const pred=computePredictionsInner(shed,g);
+  const det=(pred.pickupDetails||[]).slice().sort((x,y)=>dateOnly(x.date)-dateOnly(y.date));
+  const pickedBirds=det.reduce((n,p)=>n+(Number(p.birds)||0),0);
+  const remaining=Math.max(0,Math.round((pred.estFinalLive||0)-pickedBirds));
+  const lastDet=det.length?det[det.length-1]:null;
+  // Last pickup: the final clean-out pickup, or (if none) the birds left at the end
+  let endDate,endSrc,finalBirds,finalKg;
+  if(remaining>0||!lastDet){
+    endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):(lastDet?dateOnly(lastDet.date):null);
+    endSrc=shed.cleanoutDate?'clean-out date':'last pickup';
+    finalBirds=remaining;finalKg=pred.estFinalALW||0;
+  }else{
+    endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):dateOnly(lastDet.date);
+    endSrc=shed.cleanoutDate?'clean-out date':(lastDet.isAuto?'last auto-planned pickup':lastDet.isPredicted?'last planned pickup':'last logged pickup');
+    finalBirds=Number(lastDet.birds)||0;finalKg=Number(lastDet.avgWeightKg)||0;
+  }
   if(!endDate)return null;
-  const cleanAge=daysBetween(shed.placementDate,endDate);
-  const daysToEnd=daysBetween(today,endDate);
-  const pickedThatDay=computeEffectivePickups(shed).filter(p=>iso(dateOnly(p.date))===iso(endDate)).reduce((n,p)=>n+(Number(p.birds)||0),0);
-  const birdsAtEnd=Math.max(0,liveAtStartOfDay(shed,endDate)+pickedThatDay);
-  const fw=forecastWeightModeAware(shed,endDate);const kgAtEnd=fw&&fw.kg?fw.kg:0;
+  const birdsAll=pickedBirds+remaining;
+  const totalKgAll=Number(pred.totalWeightKg)||0;
+  const fw=forecastWeightModeAware(shed,endDate);
   const bandPct=fw&&fw.band?Math.round(fw.band*100):null;
-  return {endDate,endSrc,cleanAge,daysToEnd,birdsAtEnd,kgAtEnd,bandPct,totalKgAtEnd:birdsAtEnd*kgAtEnd};
+  return {endDate,endSrc,cleanAge:daysBetween(shed.placementDate,endDate),daysToEnd:daysBetween(today,endDate),
+    finalBirds,finalKg,bandPct,birdsAll,totalKgAll,avgAll:birdsAll>0?totalKgAll/birdsAll:0,pickupCount:det.length+(remaining>0?1:0)};
 }
 function renderPredictionsShedCard(shed,group){
   const pred=computePredictions(shed,group);
@@ -1875,15 +1897,15 @@ function renderPredictionsShedCard(shed,group){
   const co=shedCleanoutInfo(shed,today);
   let cleanoutCardHtml;
   if(co){
-    const {endDate,endSrc,cleanAge,daysToEnd,birdsAtEnd,kgAtEnd,bandPct,totalKgAtEnd}=co;
+    const {endDate,endSrc,cleanAge,daysToEnd,finalBirds,finalKg,bandPct,totalKgAll,birdsAll,avgAll,pickupCount}=co;
     const whenTxt=daysToEnd>0?`in ${daysToEnd} day${daysToEnd===1?'':'s'}`:daysToEnd===0?'today':`${-daysToEnd} day${daysToEnd===-1?'':'s'} ago`;
     cleanoutCardHtml=`<div class="pred-snap-item pred-cleanout" title="Based on the ${endSrc}">
       <div class="pco-head"><span class="lbl">🧹 Clean-out</span><span class="pco-src">${endSrc==='clean-out date'?'':`from the ${endSrc}`}</span></div>
       <div class="pco-grid">
         <div><div class="pco-k">Date</div><div class="pco-v">${fmtShortNoYear(endDate)}</div><div class="pco-s">${whenTxt}</div></div>
         <div><div class="pco-k">Bird age</div><div class="pco-v">${cleanAge}d</div><div class="pco-s">at clean-out</div></div>
-        <div><div class="pco-k">Est. live weight</div><div class="pco-v">${kgAtEnd?kgAtEnd.toFixed(3):'—'} <small>kg</small></div><div class="pco-s">per bird${bandPct?` · ±${bandPct}%`:''}</div></div>
-        <div><div class="pco-k">Est. total live weight</div><div class="pco-v">${kgAtEnd?Math.round(totalKgAtEnd).toLocaleString():'—'} <small>kg</small></div><div class="pco-s">${birdsAtEnd.toLocaleString()} birds × ${kgAtEnd?kgAtEnd.toFixed(3):'—'} kg</div></div>
+        <div><div class="pco-k">Last pickup weight</div><div class="pco-v">${finalKg?finalKg.toFixed(3):'—'} <small>kg</small></div><div class="pco-s">${finalBirds.toLocaleString()} birds${bandPct?` · ±${bandPct}%`:''}</div></div>
+        <div><div class="pco-k">Total live weight</div><div class="pco-v">${Math.round(totalKgAll).toLocaleString()} <small>kg</small></div><div class="pco-s">all ${pickupCount} pickups · avg ${avgAll?avgAll.toFixed(3):'—'} kg</div></div>
       </div>
     </div>`;
   }else{
