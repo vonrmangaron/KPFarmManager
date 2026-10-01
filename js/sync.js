@@ -32,7 +32,8 @@ function buildCloudPayload(){
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[],
-      farmHistory:predState.farmHistory||[]
+      farmHistory:predState.farmHistory||[],
+      farmHistoryDeleted:predState.farmHistoryDeleted||[]
     },
     preferences:{
       shedViewByGroup,
@@ -73,8 +74,9 @@ function applyCloudPayload(payload,options){
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;
     if(p.densityGlobal&&typeof p.densityGlobal==='object'){const dg=p.densityGlobal;let tp=DEFAULT_DENSITY_GLOBAL.targetPickups;if(Number.isFinite(Number(dg.targetPickups)))tp=Number(dg.targetPickups);else if(Number.isFinite(Number(dg.minPickupsBeforeCleanout)))tp=Number(dg.minPickupsBeforeCleanout);tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,Math.floor(tp)));predState.densityGlobal={maxDensity:Number.isFinite(Number(dg.maxDensity))?Number(dg.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(dg.triggerDensity))?Number(dg.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(dg.targetDensity))?Number(dg.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups:tp};}
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
-    // The farm's history travels with every batch file; the file is the truth
-    if(Array.isArray(p.farmHistory))predState.farmHistory=p.farmHistory.map(normalizeHistoryRec).filter(Boolean);
+    // The farm's history travels with every batch file. Merged, never replaced:
+    // a device that hadn't synced a new record can't wipe it out.
+    mergeCloudFarmHistory(p);
     savePredState();
   }
   const prefs=payload.preferences||{};
@@ -98,6 +100,37 @@ async function fetchFromCloud(){
   if(!syncFarmName)return {ok:false,reason:'no-farm'};
   try{const res=await fetch(buildSyncUrl(syncFarmName));if(res.status===404)return {ok:true,notFound:true};if(!res.ok)return {ok:false,reason:'http-'+res.status};const result=await res.json();if(result.notFound)return {ok:true,notFound:true};return {ok:true,data:result.data,sha:result.sha};}catch(e){return {ok:false,reason:e.message||'network-error'};}
 }
+// ── Farm history: its own cloud file per farm (not inside a batch file),
+// so New batch, switching batches and other devices can't lose it.
+// Always merged with this device's copy (mergeCloudFarmHistory), never replaced.
+let historySha=null,historyPushTimer=null;
+function buildHistoryUrl(farmName){return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(sanitizeUserFarmName(farmName)+'-prodwise-history')}&repo=${encodeURIComponent(SYNC_REPO)}`;}
+function historyKey(){return JSON.stringify([(predState.farmHistory||[]).map(r=>r.id+':'+r.savedAt).sort(),(predState.farmHistoryDeleted||[]).slice().sort()]);}
+async function pullFarmHistory(){
+  if(!syncFarmName)return;
+  try{
+    const res=await fetch(buildHistoryUrl(syncFarmName),{cache:'no-store'});
+    if(res.status===404){historySha=null;if(farmHistory().length)scheduleHistoryPush();return;}
+    if(!res.ok)return;
+    const j=await res.json();
+    if(j.notFound||!j.data){historySha=null;if(farmHistory().length)scheduleHistoryPush();return;}
+    historySha=j.sha||null;
+    const before=historyKey();mergeCloudFarmHistory(j.data);
+    const remote=JSON.stringify([((j.data.farmHistory)||[]).map(r=>r.id+':'+r.savedAt).sort(),((j.data.farmHistoryDeleted)||[]).slice().sort()]);
+    if(historyKey()!==before){savePredState();render();if(settingsDrawerOpen)renderSettingsDrawerBody();}
+    if(historyKey()!==remote)scheduleHistoryPush();   // this device had records the cloud didn't
+  }catch(e){}
+}
+async function pushFarmHistory(){
+  if(!syncFarmName)return;
+  const put=()=>fetch(buildHistoryUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:historySha,data:{app:SYNC_APP_TAG,kind:'farm-history',farmName:syncFarmName,updatedAt:new Date().toISOString(),farmHistory:predState.farmHistory||[],farmHistoryDeleted:predState.farmHistoryDeleted||[]}})});
+  try{
+    let res=await put();
+    if(res.status===409){const fresh=await fetch(buildHistoryUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);if(fresh){historySha=fresh.sha||null;if(fresh.data){mergeCloudFarmHistory(fresh.data);savePredState();}}res=await put();}
+    if(res.ok){const j=await res.json().catch(()=>null);if(j&&j.sha)historySha=j.sha;}
+  }catch(e){console.warn('Farm history push failed',e);}
+}
+function scheduleHistoryPush(){if(!syncFarmName)return;clearTimeout(historyPushTimer);historyPushTimer=setTimeout(pushFarmHistory,800);}
 async function pullFromCloud(silent){
   if(!syncFarmName)return false;
   syncState='pulling';renderSettingsDrawerBody();
@@ -109,6 +142,7 @@ async function pullFromCloud(silent){
   if(!ok){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
   syncLastSyncAt=Date.now();saveSyncState();
   syncState='idle';renderSettingsDrawerBody();render();
+  pullFarmHistory();
   if(!silent)showToast('Synced ✓');
   return true;
 }
@@ -118,7 +152,7 @@ async function pushToCloud(){
   try{
     const body={sha:syncSha,data:buildCloudPayload()};
     const res=await fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(res.status===409){const fresh=await fetch(buildSyncUrl(syncFarmName)).then(r=>r.json()).catch(()=>null);if(fresh&&fresh.sha){syncSha=fresh.sha;const retry=await fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:syncSha,data:buildCloudPayload()})});if(!retry.ok)throw new Error('Sync retry failed');const rr=await retry.json();if(rr&&rr.sha)syncSha=rr.sha;}else throw new Error('Could not refresh cloud state');}
+    if(res.status===409){const fresh=await fetch(buildSyncUrl(syncFarmName)).then(r=>r.json()).catch(()=>null);if(fresh&&fresh.sha){syncSha=fresh.sha;mergeCloudFarmHistory(fresh.data&&fresh.data.predictions);const retry=await fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:syncSha,data:buildCloudPayload()})});if(!retry.ok)throw new Error('Sync retry failed');const rr=await retry.json();if(rr&&rr.sha)syncSha=rr.sha;}else throw new Error('Could not refresh cloud state');}
     else if(!res.ok)throw new Error('Sync server responded '+res.status);
     else{const result=await res.json();if(result&&result.sha)syncSha=result.sha;}
     syncLastSyncAt=Date.now();saveSyncState();

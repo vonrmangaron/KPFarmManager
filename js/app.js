@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(fhEdit){fhFormOpen=true;fhEditId=fhEdit.dataset.fhEdit;renderSettingsDrawerBody();const fm=document.querySelector('.fh-form');if(fm)fm.scrollIntoView({block:'nearest'});return;}
     if(e.target.closest('[data-fh-cancel]')){fhFormOpen=false;fhEditId=null;renderSettingsDrawerBody();return;}
     if(e.target.closest('[data-fh-save]')){saveFarmHistoryForm();return;}
+    if(e.target.closest('[data-fh-save-loaded]')){saveLoadedBatchToHistory();return;}
     const fhDel=e.target.closest('[data-fh-del]');
     if(fhDel){const r=farmHistory().find(x=>x.id===fhDel.dataset.fhDel);if(r&&confirm(`Delete ${r.batch||'this batch'} from Farm history?`)){deleteFarmHistoryRec(r.id);renderSettingsDrawerBody();render();}return;}
     const unitBtn=e.target.closest('[data-feed-unit]');

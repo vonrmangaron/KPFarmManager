@@ -3,7 +3,7 @@ function buildDefaultFarmData(batchNumber){return {batchNumber:batchNumber||'',i
 function resetAllToDefaults(batchNumber,opts){
   farmData=buildDefaultFarmData(batchNumber);
   // Farm history stays only for a new batch on the same farm
-  if(!(opts&&opts.keepHistory))predState.farmHistory=[];
+  if(!(opts&&opts.keepHistory)){predState.farmHistory=[];predState.farmHistoryDeleted=[];}
   predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
   testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
@@ -133,12 +133,21 @@ function normalizeHistoryRec(r){
     firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),finalAge:numOrNull(r.finalAge),finalAvgKg:numOrNull(r.finalAvgKg),intakePct:numOrNull(r.intakePct),savedAt:num0(r.savedAt)||Date.now()};
   return rec.placed>0&&rec.picked>0&&rec.picked<=rec.placed?rec:null;
 }
+// Combine Farm history from the cloud with this device's: union by id,
+// newer edit wins, deleted ids (from either side) stay deleted.
+function mergeCloudFarmHistory(p){
+  if(!p||typeof p!=='object')return;
+  const del=new Set([...(predState.farmHistoryDeleted||[]),...(Array.isArray(p.farmHistoryDeleted)?p.farmHistoryDeleted:[])].map(String));
+  const byId=new Map();
+  [...farmHistory(),...(Array.isArray(p.farmHistory)?p.farmHistory:[])].forEach(raw=>{const r=normalizeHistoryRec(raw);if(!r||del.has(r.id))return;const cur=byId.get(r.id);if(!cur||r.savedAt>cur.savedAt)byId.set(r.id,r);});
+  predState.farmHistory=[...byId.values()];predState.farmHistoryDeleted=[...del].slice(-200);
+}
 function farmHistory(){return Array.isArray(predState.farmHistory)?predState.farmHistory:[];}
 function farmHistorySorted(){return farmHistory().slice().sort((a,b)=>(b.endDate||'').localeCompare(a.endDate||'')||b.savedAt-a.savedAt);}
 function historyKpis(r){return batchKpis({feedKg:r.feedKg,liveWeightKg:r.liveWeightKg,birds:r.picked,ageBirdSum:r.avgAge*r.picked,placed:r.placed,mortality:r.placed-r.picked,targetKg:CFCR_REF_KG});}
 function lastHistoryRec(){return farmHistorySorted()[0]||null;}
-function addFarmHistoryRec(raw){const rec=normalizeHistoryRec(raw);if(!rec)return null;predState.farmHistory=farmHistory().concat([rec]);savePredState();if(typeof schedulePush==='function')schedulePush();return rec;}
-function deleteFarmHistoryRec(id){predState.farmHistory=farmHistory().filter(r=>r.id!==id);savePredState();if(typeof schedulePush==='function')schedulePush();}
+function addFarmHistoryRec(raw){const rec=normalizeHistoryRec(raw);if(!rec)return null;predState.farmHistory=farmHistory().concat([rec]);savePredState();if(typeof schedulePush==='function')schedulePush();if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();return rec;}
+function deleteFarmHistoryRec(id){predState.farmHistory=farmHistory().filter(r=>r.id!==id);predState.farmHistoryDeleted=(predState.farmHistoryDeleted||[]).filter(x=>x!==id).concat([id]).slice(-200);savePredState();if(typeof schedulePush==='function')schedulePush();if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();}
 // Priors from history (only records that carry the value)
 function historyThinPrior(){const r=farmHistory().filter(x=>x.firstThinAge>0&&x.firstThinShare>0);return r.length?{age:Math.round(medianOf(r.map(x=>x.firstThinAge))),share:medianOf(r.map(x=>x.firstThinShare)),n:r.length}:null;}
 function historyIntakePrior(){const r=farmHistory().filter(x=>x.intakePct>0);return r.length?{factor:r.reduce((s,x)=>s+x.intakePct,0)/r.length/100,n:r.length}:null;}

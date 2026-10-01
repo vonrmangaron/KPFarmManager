@@ -150,17 +150,42 @@ function renderSettingsFarmHistoryCard(){
   return `<div class="settings-section">
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
     <p class="settings-section-desc">Finished batches the app learns from: first-thin timing and feed intake % until this batch has its own, plus a "vs last batch" line on the Projected card. Saved automatically when you start a new batch; add older ones by hand.</p>
+    ${fhSaveLoadedHtml()}
     ${rows?`<div class="fh-list">${rows}</div>`:'<p class="settings-section-note">No finished batches yet.</p>'}
     ${form}
   </div>`;
+}
+// The batch on screen looks finished and isn't in the history yet: offer to
+// save it, with everything worked out from its real pickups. Only the total
+// feed is asked for (dockets aren't always in the app for an old batch).
+function fhSaveLoadedHtml(){
+  let rec=null;try{rec=summarizeCurrentBatch();}catch(e){}
+  if(!rec)return '';
+  const b=(rec.batch||'').trim();
+  if(farmHistory().some(r=>b&&r.batch===b))return '';
+  const k=historyKpis({...rec,feedKg:rec.feedKg>0?rec.feedKg:1});
+  return `<div class="fh-loaded">
+      <div class="fh-loaded-title">Batch <b>${escapeHtml(b||'on screen')}</b> looks finished — save it to Farm history?</div>
+      <div class="fh-kpis">${rec.placed.toLocaleString()} placed · ${rec.picked.toLocaleString()} picked up · ${Math.round(rec.liveWeightKg).toLocaleString()} kg live · ALW <b>${k.alw.toFixed(2)} kg</b> · avg age <b>${rec.avgAge.toFixed(1)} d</b>${rec.firstThinAge?` · first thin <b>d${Math.round(rec.firstThinAge)}</b>`:''}${rec.finalAge?` · last pickup <b>d${Math.round(rec.finalAge)}</b>${rec.finalAvgKg?` at <b>${rec.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}</div>
+      <label class="fh-field"><span>Total feed for this batch (${feedUnit()}, after leftover)</span><input class="settings-input" id="fhLoadedFeed" type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${rec.feedKg>0?feedIn(rec.feedKg):''}" placeholder="from your dockets" /></label>
+      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save-loaded>Save to Farm history</button></div>
+    </div>`;
+}
+function saveLoadedBatchToHistory(){
+  const rec=summarizeCurrentBatch();if(!rec)return;
+  const feedKg=feedOut((document.getElementById('fhLoadedFeed')||{}).value);
+  if(!(feedKg>0)){showToast('Enter the total feed for this batch.',true);return;}
+  const saved=addFarmHistoryRec({...rec,source:'auto',feedKg});
+  if(!saved){showToast('Could not save this batch.',true);return;}
+  renderSettingsDrawerBody();render();showToast(`📚 Saved ${saved.batch||'batch'} to Farm history — FCR ${historyKpis(saved).fcr.toFixed(3)}.`);
 }
 function saveFarmHistoryForm(){
   const v=id=>(document.getElementById(id)||{}).value;
   const feedKg=feedOut(v('fhFeed'));const thinPct=numOrNull(v('fhThinPct'));
   const prev=fhEditId?farmHistory().find(r=>r.id===fhEditId):null;
-  const rec=normalizeHistoryRec({...(prev||{}),id:prev?prev.id:undefined,batch:(v('fhBatch')||'').trim(),endDate:v('fhEnd')||'',source:prev?prev.source:'manual',placed:v('fhPlaced'),picked:v('fhPicked'),liveWeightKg:v('fhLive'),feedKg,avgAge:v('fhAge'),firstThinAge:numOrNull(v('fhThinAge')),firstThinShare:thinPct!=null?thinPct/100:null,finalAge:numOrNull(v('fhFinalAge')),finalAvgKg:numOrNull(v('fhFinalKg'))});
+  const rec=normalizeHistoryRec({...(prev||{}),id:prev?prev.id:undefined,batch:(v('fhBatch')||'').trim(),endDate:v('fhEnd')||'',source:prev?prev.source:'manual',savedAt:Date.now(),placed:v('fhPlaced'),picked:v('fhPicked'),liveWeightKg:v('fhLive'),feedKg,avgAge:v('fhAge'),firstThinAge:numOrNull(v('fhThinAge')),firstThinShare:thinPct!=null?thinPct/100:null,finalAge:numOrNull(v('fhFinalAge')),finalAvgKg:numOrNull(v('fhFinalKg'))});
   if(!rec||!(rec.liveWeightKg>0)||!(rec.feedKg>0)||!(rec.avgAge>0)){showToast('Fill in placed, picked up (≤ placed), live weight, feed and average age.',true);return;}
-  predState.farmHistory=farmHistory().filter(r=>!prev||r.id!==prev.id).concat([rec]);savePredState();schedulePush();
+  predState.farmHistory=farmHistory().filter(r=>!prev||r.id!==prev.id).concat([rec]);savePredState();schedulePush();scheduleHistoryPush();
   fhFormOpen=false;fhEditId=null;renderSettingsDrawerBody();render();showToast(`📚 Saved ${rec.batch||'batch'} — FCR ${historyKpis(rec).fcr.toFixed(3)}.`);
 }
 function renderSettingsNotificationsCard(){
@@ -317,7 +342,7 @@ async function handleConnectFarm(farmName){
     if(listing.files.length===0){
       if(!confirm(`Farm "${clean}" not found in the cloud.\n\nCreate a new farm?`))return;
       syncFarmName=clean;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
-      predState.batchNumber='';predState.farmHistory=[];savePredState();farmData=null;saveState();saveSyncState();
+      predState.batchNumber='';predState.farmHistory=[];predState.farmHistoryDeleted=[];savePredState();farmData=null;saveState();saveSyncState();
       closeSyncModal();closeSettingsDrawer();openNewBatchModal('batchNumber');
       return;
     }
@@ -326,7 +351,10 @@ async function handleConnectFarm(farmName){
   }finally{if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
 }
 async function loadFarmBatchFromCloud(farmName,batchKey){
-  resetAllToDefaults(batchKey);
+  // Same farm: Farm history stays (and any pending upload finishes first)
+  const sameFarm=!!syncFarmName&&sanitizeUserFarmName(syncFarmName)===sanitizeUserFarmName(farmName);
+  if(sameFarm&&historyPushTimer){clearTimeout(historyPushTimer);historyPushTimer=null;try{await pushFarmHistory();}catch(e){}}
+  resetAllToDefaults(batchKey,{keepHistory:sameFarm});
   syncFarmName=farmName;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
   closeFarmBatchPickerModal();closeSyncModal();closeSettingsDrawer();
   syncState='pulling';renderSettingsDrawerBody();
@@ -335,6 +363,7 @@ async function loadFarmBatchFromCloud(farmName,batchKey){
   if(payload){applyCloudPayload(payload,{isFirstPull:true});syncSha=sha;syncLastSyncAt=Date.now();showToast(`✅ Loaded ${batchKey?'batch '+batchKey:'legacy batch'}.`);}
   else showToast('No data found — starting with default sheds.');
   saveSyncState();syncState='idle';renderSettingsDrawerBody();render();
+  historySha=null;pullFarmHistory();
 }
 function openFarmBatchPickerModal(farmName,files){
   const modal=document.getElementById('farmBatchPickerModal');const scrim=document.getElementById('syncScrim');
@@ -452,6 +481,7 @@ async function startNewBatch(cleanBatchNumber,opts){
   }else{closeNewBatchModal();renderSettingsDrawerBody();render();}
   if(opts.openFilePicker){showToast(`✅ Batch "${clean}" started — pick the Excel file now.`);setTimeout(()=>triggerImport(),220);}
   else showToast(`✅ Batch "${clean}" started with default sheds.`);
+  if(archived){scheduleHistoryPush();}
   if(archived)setTimeout(()=>showToast(`📚 Last batch saved to Farm history — FCR ${historyKpis(archived).fcr.toFixed(3)}, ${archived.avgAge.toFixed(1)} d.`),2600);
 }
 function openBatchHistoryModal(){
