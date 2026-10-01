@@ -15,7 +15,10 @@ function migrateCustomFeed(shed){
     shed.feedAdjustPct=Math.round(Math.max(50,Math.min(150,Number(shed.customFeedKg)/ross*100)));}
   shed.customFeedKg=null;
 }
-function shedFeedOn(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;return live*feedPerBirdKg(shed,age);}
+// Silo is switched off at 7am the day before clean-out (birds leave that
+// night, kill sheet is the clean-out date), so that day is 7/24 of a feed day.
+const FINAL_DAY_FEED_FRACTION=7/24;
+function shedFeedOn(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}
 function groupFeedToday(sheds,today=new Date()){return groupDailyFeedOn(sheds,today);}
 function fmtFeed(kg){if(!Number.isFinite(kg)||kg===0)return '0 kg';const abs=Math.abs(kg);if(abs>=1000)return (kg/1000).toFixed(2)+' t';return Math.round(kg).toLocaleString()+' kg';}

@@ -197,6 +197,8 @@ function computeLiveBirdsBefore(shed,dateObj,extraPredicted){
 // opts.keepPlanned: keep the user's planned pickups and only plan AFTER
 // them ("fill the rest") — used for the background result plan.
 // opts.cleanout: end date to plan to (defaults to the shed's clean-out).
+const DEFAULT_FINAL_PICKUP_MAX=22000;
+function finalPickupMaxBirds(){const v=Number(predState.densityGlobal&&predState.densityGlobal.finalPickupMax);return Number.isFinite(v)&&v>0?v:DEFAULT_FINAL_PICKUP_MAX;}
 function autoFillPredictedPickups(shed,opts){
   opts=opts||{};
   if(!shed||!shed.placementDate)return [];
@@ -286,6 +288,15 @@ function autoFillPredictedPickups(shed,opts){
         result.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
       }
     }
+  }
+
+  // ── Cap the final pickup (integrators leave ~18–25k for the last load):
+  // spread the excess evenly over this plan's regular pickups.
+  const cap=finalPickupMaxBirds();
+  const regs=result.filter(x=>!x.isFinal);
+  if(cap>0&&regs.length){
+    const excess=Math.floor(computeLiveBirdsBefore(shed,cleanout,base.concat(result)))-cap;
+    if(excess>0){const each=Math.ceil(excess/regs.length);regs.forEach(x=>{x.birds+=each;});}
   }
 
   // ── Phase 3: final cleanout — always emitted ──
