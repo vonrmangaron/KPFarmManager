@@ -124,12 +124,7 @@ function renderSettingsUnitsCard(){
 // Farm history: finished batches the app learns from
 let fhFormOpen=false,fhEditId=null;
 function renderSettingsFarmHistoryCard(){
-  const rows=farmHistorySorted().map(r=>{const k=historyKpis(r);return `<div class="fh-row">
-      <div class="fh-main"><span class="fh-batch">${escapeHtml(r.batch||'Batch')}</span><span class="fh-src">${r.source==='auto'?'saved by the app':'entered by hand'}${r.endDate?' · ended '+escapeHtml(fmtShortNoYear(dateOnly(r.endDate))):''}</span></div>
-      <div class="fh-kpis">FCR <b>${k.fcr.toFixed(3)}</b> · ALW <b>${k.alw.toFixed(2)} kg</b> · age <b>${r.avgAge.toFixed(1)} d</b> · livability <b>${k.livability.toFixed(1)}%</b> · PIF <b>${Math.round(k.pif)}</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.finalAge?` · last pickup <b>d${Math.round(r.finalAge)}</b>${r.finalAvgKg?` at <b>${r.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}${r.intakePct?` · intake <b>${Math.round(r.intakePct)}%</b>`:''}</div>
-      <button type="button" class="fh-edit" data-fh-edit="${escapeAttr(r.id)}" title="Edit">Edit</button>
-      <button type="button" class="fh-del" data-fh-del="${escapeAttr(r.id)}" aria-label="Delete ${escapeAttr(r.batch||'batch')}" title="Delete">✕</button>
-    </div>`;}).join('');
+  const rows=farmHistorySorted().map(fhRowHtml).join('');
   const ed=fhEditId?farmHistory().find(r=>r.id===fhEditId):null;
   const val={fhBatch:ed&&ed.batch,fhEnd:ed&&ed.endDate,fhPlaced:ed&&ed.placed,fhPicked:ed&&ed.picked,fhLive:ed&&Math.round(ed.liveWeightKg),fhFeed:ed&&feedIn(ed.feedKg),fhAge:ed&&ed.avgAge,fhThinAge:ed&&ed.firstThinAge,fhThinPct:ed&&ed.firstThinShare!=null?+(ed.firstThinShare*100).toFixed(1):null,fhFinalAge:ed&&ed.finalAge,fhFinalKg:ed&&ed.finalAvgKg};
   const f=(id,label,type,ph,extra='')=>`<label class="fh-field"><span>${label}</span><input class="settings-input" id="${id}" type="${type}" placeholder="${ph}" value="${val[id]!=null?escapeAttr(String(val[id])):''}" ${extra}/></label>`;
@@ -146,15 +141,55 @@ function renderSettingsFarmHistoryCard(){
       ${f('fhFinalAge','Last pickup age (days, optional)','number','53','min="1" step="1" inputmode="numeric"')}
       ${f('fhFinalKg','Last pickup avg weight (kg, optional)','number','3.40','min="0" step="0.01" inputmode="decimal"')}
       <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save>${ed?'Save changes':'Save batch'}</button><button class="settings-btn" type="button" data-fh-cancel>Cancel</button></div>
-    </div>`:`<div class="settings-actions"><button class="settings-btn" type="button" data-fh-add>${settingsIcon('archive')}Add a past batch</button></div>`;
+    </div>`:`<button class="fh-add-link" type="button" data-fh-add>＋ Enter a past batch by hand</button>`;
   return `<div class="settings-section">
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
-    <p class="settings-section-desc">Finished batches the app learns from: first-thin timing and feed intake % until this batch has its own, plus a "vs last batch" line on the Projected card. Saved automatically when you start a new batch; add older ones by hand.</p>
+    <p class="settings-section-desc">Finished batches, for "vs last batch" and pickup-planning suggestions. Saved automatically when you start a new batch.</p>
     ${fhSaveLoadedHtml()}
     ${fhCloudBatchesHtml()}
-    ${rows?`<div class="fh-list">${rows}</div>`:'<p class="settings-section-note">No finished batches yet.</p>'}
+    ${rows?`<div class="fh-list">${rows}</div>`:'<p class="fh-empty">No finished batches yet.</p>'}
     ${form}
   </div>`;
+}
+// One batch: a compact summary line; tap to open the details
+let fhOpenId=null;
+function fhRowHtml(r){
+  const k=historyKpis(r),open=fhOpenId===r.id;
+  const end=r.endDate?fmtShortNoYear(dateOnly(r.endDate)):'';
+  const birdsK=r.picked>=10000?Math.round(r.picked/1000)+'k':r.picked.toLocaleString();
+  const dd=(label,val)=>val==null||val===''?'':`<div class="fh-kv"><dt>${label}</dt><dd>${val}</dd></div>`;
+  const pct=v=>Math.round(v*100)+'%';
+  const detail=open?`<div class="fh-detail">
+      <dl class="fh-grid">
+        ${dd('ALW',`${k.alw.toFixed(3)} kg`)}${dd('Avg age',`${r.avgAge.toFixed(1)} d`)}
+        ${dd('Livability',`${k.livability.toFixed(1)}%`)}${dd('cFCR',k.cfcr.toFixed(3))}
+        ${dd('Placed',r.placed.toLocaleString())}${dd('Picked up',r.picked.toLocaleString())}
+        ${dd('Live weight',`${Math.round(r.liveWeightKg).toLocaleString()} kg`)}${dd('Feed',fmtFeed(r.feedKg))}
+        ${r.firstThinAge?dd('First thin',`day ${Math.round(r.firstThinAge)}${r.firstThinShare?' · '+pct(r.firstThinShare):''}`):''}
+        ${r.finalAge?dd('Last pickup',`day ${Math.round(r.finalAge)}${r.finalAvgKg?' · '+r.finalAvgKg.toFixed(2)+' kg':''}`):''}
+        ${r.densTrigger?dd('Thinned at',`${r.densTrigger.toFixed(1)} → ${r.densTarget.toFixed(1)} kg/m²`):''}
+        ${r.densMax?dd('Highest density',`${r.densMax.toFixed(1)} kg/m²`):''}${r.pickupsPerShed?dd('Pickups per shed',Math.round(r.pickupsPerShed)):''}
+      </dl>
+      <div class="fh-actions"><span class="fh-src">${r.source==='auto'?'From the app':'Entered by hand'}</span><button type="button" class="fh-btn" data-fh-edit="${escapeAttr(r.id)}">Edit</button><button type="button" class="fh-btn danger" data-fh-del="${escapeAttr(r.id)}">Delete</button></div>
+    </div>`:'';
+  return `<div class="fh-item${open?' open':''}">
+      <button type="button" class="fh-sum" data-fh-toggle="${escapeAttr(r.id)}" aria-expanded="${open}">
+        <span class="fh-id"><b>${escapeHtml(r.batch||'Batch')}</b><small>${end?escapeHtml(end)+' · ':''}${birdsK} birds</small></span>
+        <span class="fh-stat"><small>FCR</small><b>${k.fcr.toFixed(3)}</b></span>
+        <span class="fh-stat"><small>PIF</small><b>${Math.round(k.pif)}</b></span>
+        <svg class="fh-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>${detail}
+    </div>`;
+}
+// Offer to add a finished batch (on screen or found in the cloud): two lines
+// plus the one thing to confirm — its total feed.
+function fhOfferHtml(r,where,inputAttr,btnAttr){
+  const k=historyKpis({...r,feedKg:r.feedKg>0?r.feedKg:1});
+  return `<div class="fh-offer">
+      <div class="fh-offer-head"><b>${escapeHtml(r.batch||'This batch')}</b> ${where}</div>
+      <div class="fh-offer-sub">${r.picked.toLocaleString()} birds · ALW ${k.alw.toFixed(2)} kg · ${r.avgAge.toFixed(1)} d${r.finalAge?` · last pickup d${Math.round(r.finalAge)}`:''}</div>
+      <div class="fh-offer-row"><label class="fh-offer-feed"><span>Total feed (${feedUnit()})</span><input class="settings-input" ${inputAttr} type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${r.feedKg>0?feedIn(r.feedKg):''}" placeholder="after leftover" /></label><button class="settings-btn settings-btn-primary" type="button" ${btnAttr}>Add</button></div>
+    </div>`;
 }
 // The batch on screen looks finished and isn't in the history yet: offer to
 // save it, with everything worked out from its real pickups. Only the total
@@ -164,13 +199,7 @@ function fhSaveLoadedHtml(){
   if(!rec)return '';
   const b=(rec.batch||'').trim();
   if(farmHistory().some(r=>b&&r.batch===b))return '';
-  const k=historyKpis({...rec,feedKg:rec.feedKg>0?rec.feedKg:1});
-  return `<div class="fh-loaded">
-      <div class="fh-loaded-title">Batch <b>${escapeHtml(b||'on screen')}</b> looks finished — save it to Farm history?</div>
-      <div class="fh-kpis">${rec.placed.toLocaleString()} placed · ${rec.picked.toLocaleString()} picked up · ${Math.round(rec.liveWeightKg).toLocaleString()} kg live · ALW <b>${k.alw.toFixed(2)} kg</b> · avg age <b>${rec.avgAge.toFixed(1)} d</b>${rec.firstThinAge?` · first thin <b>d${Math.round(rec.firstThinAge)}</b>`:''}${rec.finalAge?` · last pickup <b>d${Math.round(rec.finalAge)}</b>${rec.finalAvgKg?` at <b>${rec.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}</div>
-      <label class="fh-field"><span>Total feed for this batch (${feedUnit()}, after leftover)</span><input class="settings-input" id="fhLoadedFeed" type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${rec.feedKg>0?feedIn(rec.feedKg):''}" placeholder="from your dockets" /></label>
-      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save-loaded>Save to Farm history</button></div>
-    </div>`;
+  return fhOfferHtml({...rec,batch:b},'is finished — add it to Farm history?','id="fhLoadedFeed"','data-fh-save-loaded');
 }
 // Finished batches sitting in the cloud (other batch files of this farm)
 // that aren't in Farm history yet — add them without switching batches.
@@ -186,6 +215,9 @@ async function findCloudBatchesForHistory(){
       if(f.batchKey===cur)continue;
       try{const res=await fetch(buildBatchUrl(syncFarmName,f.batchKey),{cache:'no-store'});if(!res.ok)continue;const j=await res.json();if(!j||!j.data)continue;
         const rec=summarizeBatchPayload(j.data);if(!rec)continue;if(!rec.batch)rec.batch=f.batchKey||'';
+        // Already in the history but saved before thinning-pattern fields existed: fill them in
+        const have=farmHistory().find(r=>r.batch&&r.batch===rec.batch);
+        if(have&&have.densTrigger==null&&rec.densTrigger!=null){const upd=normalizeHistoryRec({...have,densTrigger:rec.densTrigger,densTarget:rec.densTarget,densMax:rec.densMax,pickupsPerShed:rec.pickupsPerShed,finalAge:have.finalAge!=null?have.finalAge:rec.finalAge,finalAvgKg:have.finalAvgKg!=null?have.finalAvgKg:rec.finalAvgKg,savedAt:Date.now()});if(upd){predState.farmHistory=farmHistory().map(r=>r.id===have.id?upd:r);savePredState();scheduleHistoryPush();if(adjModalOpen)refreshAdjModal(true);}}
         items.push({key:f.batchKey||'',rec});}catch(e){}
     }
     fhCloud={state:'done',items,farm:syncFarmName};
@@ -194,17 +226,12 @@ async function findCloudBatchesForHistory(){
 }
 function fhCloudBatchesHtml(){
   if(!syncFarmName)return '';
-  if(fhCloud.farm!==syncFarmName&&fhCloud.state!=='loading'){setTimeout(findCloudBatchesForHistory,0);return '<p class="settings-section-note">Looking for finished batches in the cloud…</p>';}
-  if(fhCloud.state==='loading')return '<p class="settings-section-note">Looking for finished batches in the cloud…</p>';
+  if(fhCloud.farm!==syncFarmName&&fhCloud.state!=='loading'){setTimeout(findCloudBatchesForHistory,0);return '<p class="fh-empty">Looking for finished batches in the cloud…</p>';}
+  if(fhCloud.state==='loading')return '<p class="fh-empty">Looking for finished batches in the cloud…</p>';
   if(fhCloud.state==='error')return '<p class="settings-section-note">Could not check the cloud for finished batches. <button type="button" class="fh-link" data-fh-find>Try again</button></p>';
   const items=fhCloud.items.filter(it=>!farmHistory().some(r=>r.batch&&r.batch===it.rec.batch));
   if(!items.length)return '';
-  return items.map(it=>{const r=it.rec;const k=historyKpis({...r,feedKg:r.feedKg>0?r.feedKg:1});return `<div class="fh-loaded">
-      <div class="fh-loaded-title">Batch <b>${escapeHtml(r.batch)}</b> in the cloud is finished — add it to Farm history?</div>
-      <div class="fh-kpis">${r.placed.toLocaleString()} placed · ${r.picked.toLocaleString()} picked up · ${Math.round(r.liveWeightKg).toLocaleString()} kg live · ALW <b>${k.alw.toFixed(2)} kg</b> · avg age <b>${r.avgAge.toFixed(1)} d</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.finalAge?` · last pickup <b>d${Math.round(r.finalAge)}</b>${r.finalAvgKg?` at <b>${r.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}</div>
-      <label class="fh-field"><span>Total feed for this batch (${feedUnit()}, after leftover)</span><input class="settings-input" data-fh-cloud-feed="${escapeAttr(it.key)}" type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${r.feedKg>0?feedIn(r.feedKg):''}" placeholder="from your dockets" /></label>
-      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-add-cloud="${escapeAttr(it.key)}">Add ${escapeHtml(r.batch)} to Farm history</button></div>
-    </div>`;}).join('');
+  return items.map(it=>fhOfferHtml(it.rec,'found in the cloud — finished','data-fh-cloud-feed="'+escapeAttr(it.key)+'"','data-fh-add-cloud="'+escapeAttr(it.key)+'"')).join('');
 }
 function addCloudBatchToHistory(key){
   const it=fhCloud.items.find(x=>x.key===key);if(!it)return;

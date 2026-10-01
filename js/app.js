@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-fh-add]')){fhFormOpen=true;fhEditId=null;renderSettingsDrawerBody();return;}
+    const fhTog=e.target.closest('[data-fh-toggle]');
+    if(fhTog){const id=fhTog.dataset.fhToggle;fhOpenId=fhOpenId===id?null:id;renderSettingsDrawerBody();return;}
     const fhEdit=e.target.closest('[data-fh-edit]');
     if(fhEdit){fhFormOpen=true;fhEditId=fhEdit.dataset.fhEdit;renderSettingsDrawerBody();const fm=document.querySelector('.fh-form');if(fm)fm.scrollIntoView({block:'nearest'});return;}
     if(e.target.closest('[data-fh-cancel]')){fhFormOpen=false;fhEditId=null;renderSettingsDrawerBody();return;}
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('.bulk-cb,[data-bulk-all],.bulk-all'))return;
     // Adjustments modal (draft — nothing applies until 'Apply changes')
     if(e.target.closest('[data-adj-apply]')){applyAdjDraft();return;}
+    if(e.target.closest('[data-adj-use-history]')){const p=historyDensityPrior();if(p&&adjDraft){adjDraft.trig=p.trig;adjDraft.tgt=p.tgt;adjDraft.max=Math.max(28,p.max);if(p.tp)adjDraft.tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));refreshAdjModal(true);showToast('Filled in from your last batches — press Apply changes to use them.');}return;}
     if(e.target.closest('[data-adj-cancel]')){closeAdjModal(false);return;}
     const adjNpd=e.target.closest('[data-adj-npd]');
     if(adjNpd&&adjDraft){const d=Number(adjNpd.dataset.adjNpd);adjDraft.npd=adjDraft.npd.includes(d)?adjDraft.npd.filter(v=>v!==d):[...adjDraft.npd,d].sort((a,b)=>a-b);refreshAdjModal(true);return;}

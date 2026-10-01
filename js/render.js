@@ -1674,6 +1674,7 @@ function adjModalBodyHtml(){
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
+    ${adjHistorySuggestionHtml(d)}
     <div class="adj-row"><label>Trigger density</label><input type="number" class="adj-num" data-adj="trig" min="20" max="45" step="0.5" value="${d.trig}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Plan a pickup when density is forecast to reach this.</span></div>
     <div class="adj-row"><label>Target after pickup</label><input type="number" class="adj-num" data-adj="tgt" min="15" max="35" step="0.5" value="${d.tgt}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Density to aim for after each pickup.</span></div>
     <div class="adj-row"><label>Hard maximum</label><input type="number" class="adj-num" data-adj="max" min="28" max="45" step="0.5" value="${d.max}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div>
@@ -1695,6 +1696,20 @@ function adjFooterHtml(){
   return `<span class="adj-dirty${dirty?' on':''}">${dirty?'● Unapplied changes':'No changes'}</span><button type="button" class="adj-btn" data-adj-cancel="1">${dirty?'Cancel':'Close'}</button><button type="button" class="adj-btn primary" data-adj-apply="1" ${dirty?'':'disabled'}>Apply changes</button>`;
 }
 // Refresh body + footer in place (keeps the panel — no re-pop animation)
+// "From your last batches" — the thinning pattern of past batches in Farm
+// history (density when thins started / after them / highest, pickups per
+// shed). A suggestion only: "Use these" fills the draft; Apply saves it.
+function adjHistorySuggestionHtml(d){
+  if(typeof fhCloud!=='undefined'&&syncFarmName&&fhCloud.farm!==syncFarmName&&fhCloud.state!=='loading')setTimeout(findCloudBatchesForHistory,0);
+  const p=historyDensityPrior();
+  if(!p)return `<p class="adj-hist-note">Add finished batches to <b>Settings → Farm history</b> to get settings suggested from how you actually thinned.</p>`;
+  const same=d.trig===p.trig&&d.tgt===p.tgt&&d.max===p.max&&(!p.tp||d.tp===p.tp);
+  const src=p.batches.length?p.batches.slice(0,3).join(', ')+(p.batches.length>3?'…':''):`${p.n} batch${p.n>1?'es':''}`;
+  return `<div class="adj-hist" title="Measured from each past batch's real pickups (plant weight × birds ÷ ${FIXED_FLOOR_AREA_M2.toLocaleString()} m²): density when thins started, density after them, the highest density reached, and pickups per shed — median across batches.">
+      <div class="adj-hist-text">From your last batch${p.n>1?'es':''} <b>${escapeHtml(src)}</b>: trigger <b>${p.trig}</b> · target <b>${p.tgt}</b> · max <b>${p.max}</b> kg/m²${p.tp?` · <b>${p.tp}</b> pickups`:''}</div>
+      <button type="button" class="adj-btn adj-hist-use" data-adj-use-history ${same?'disabled':''}>${same?'In use':'Use these'}</button>
+    </div>`;
+}
 function refreshAdjModal(bodyToo){
   const root=document.querySelector('#adjModalRoot .adj-modal');if(!root)return;
   if(bodyToo){const body=root.querySelector('.adj-modal-body');if(body){const y=body.scrollTop;body.innerHTML=adjModalBodyHtml();body.scrollTop=y;}}

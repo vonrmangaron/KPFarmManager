@@ -3453,15 +3453,6 @@ body.theme-dark .adj-modal { color-scheme: dark; }
 .fk-learned .fk-sep { cursor: default; }
 
 /* Settings → Farm history */
-.fh-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.fh-row { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 9px 34px 9px 11px; background: var(--surface-soft); display: flex; flex-direction: column; gap: 3px; }
-.fh-main { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.fh-batch { font: 700 13px/1.2 Sora, sans-serif; color: var(--ink); }
-.fh-src { font-size: 11px; color: var(--muted); }
-.fh-kpis { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
-.fh-kpis b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.fh-del { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border: none; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
-.fh-del:hover { background: var(--danger-soft); color: var(--danger); }
 .fh-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; margin-top: 4px; }
 .fh-form .settings-actions { grid-column: 1 / -1; }
 .fh-field { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--muted); min-width: 0; }
@@ -3472,10 +3463,50 @@ body.theme-dark .adj-modal { color-scheme: dark; }
 .vlb-k { color: var(--muted); }
 .vlb-v.good { color: var(--success, #2f8a3e); }
 .vlb-v.bad { color: var(--danger); }
-.fh-edit { position: absolute; top: 6px; right: 34px; height: 24px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: 600 11px/1 Inter, sans-serif; cursor: pointer; }
-.fh-edit:hover { border-color: var(--primary-soft); color: var(--primary-dark); }
-.fh-row { padding-right: 96px; }
-.fh-loaded { border: 1px solid var(--primary-soft); background: var(--primary-soft); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.fh-loaded-title { font-size: 12.5px; color: var(--ink); }
-.fh-loaded .fh-kpis b { color: var(--ink); }
 .fh-link { border: none; background: none; padding: 0; color: var(--primary-dark); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+/* Adjust → Pickup planning: suggestion from past batches */
+.adj-hist { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 9px 11px; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--primary-soft); background: var(--primary-soft); }
+.adj-hist-text { font-size: 12.5px; color: var(--ink); line-height: 1.45; }
+.adj-hist-text b { font-variant-numeric: tabular-nums; }
+.adj-hist-use:disabled { opacity: .6; cursor: default; }
+.adj-hist-note { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+
+/* Farm history list — compact rows, details on tap */
+.fh-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 8px; }
+.fh-item + .fh-item { border-top: 1px solid var(--line); }
+.fh-sum { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto 16px; align-items: center; gap: 14px; padding: 10px 12px; border: none; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+.fh-sum:hover { background: var(--surface-soft); }
+.fh-item.open .fh-sum { background: var(--surface-soft); }
+.fh-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fh-id b { font: 700 14px/1.2 Sora, sans-serif; color: var(--ink); }
+.fh-id small, .fh-stat small { font-size: 11px; color: var(--muted); }
+.fh-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.fh-stat b { font: 700 14px/1.1 Sora, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fh-chev { width: 16px; height: 16px; color: var(--muted); transition: transform .18s ease; }
+.fh-item.open .fh-chev { transform: rotate(90deg); }
+.fh-detail { padding: 4px 12px 12px; background: var(--surface-soft); }
+.fh-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 0 0 10px; }
+.fh-kv { min-width: 0; }
+.fh-kv dt { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.fh-kv dd { margin: 1px 0 0; font-size: 13px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fh-actions { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.fh-src { font-size: 11px; color: var(--muted); margin-right: auto; }
+.fh-btn { height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); font: 600 12px/1 Inter, sans-serif; cursor: pointer; }
+.fh-btn:hover { border-color: var(--primary-soft); color: var(--primary-dark); }
+.fh-btn.danger { color: var(--danger); }
+.fh-btn.danger:hover { background: var(--danger-soft); border-color: var(--danger-soft); }
+.fh-empty { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+.fh-add-link { border: none; background: none; padding: 4px 0; color: var(--primary-dark); font: 600 12.5px/1.2 Inter, sans-serif; cursor: pointer; }
+.fh-add-link:hover { text-decoration: underline; }
+/* "Add this finished batch?" */
+.fh-offer { border: 1px solid var(--primary-soft); background: var(--primary-soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; }
+.fh-offer-head { font-size: 13px; color: var(--ink); }
+.fh-offer-head b { font-family: Sora, sans-serif; }
+.fh-offer-sub { font-size: 11.5px; color: var(--muted); }
+.fh-offer-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 6px; }
+.fh-offer-feed { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); min-width: 0; }
+.fh-offer-feed .settings-input { width: 100%; box-sizing: border-box; }
+.fh-offer-row .settings-btn { flex-shrink: 0; }
+.fh-offer-row .settings-btn { width: auto; flex: 0 0 auto; min-width: 84px; justify-content: center; }
+.fh-offer-feed span { white-space: nowrap; }
