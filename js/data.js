@@ -154,7 +154,21 @@ function historyIntakePrior(){const r=farmHistory().filter(x=>x.intakePct>0);ret
 // Summarise the batch on screen (called at New batch, before the reset)
 function summarizeCurrentBatch(){
   if(!farmData)return null;
-  const sheds=(farmData.sheds||[]).filter(s=>s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return null;
+  const cal=typeof intakeCalibration==='function'?intakeCalibration():{ok:false};
+  return summarizeBatchData({sheds:farmData.sheds||[],batch:predState.batchNumber||farmData.batchNumber||'',docketKg:num0(predState.farmFeedOverride)>0?num0(predState.farmFeedOverride):feedOrderedKg(),
+    carryKg:carryoverTotalKg(),leftoverKg:num0(predState.farmLeftoverKg),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
+}
+// Summarise a batch file from the cloud without loading it
+function summarizeBatchPayload(payload){
+  if(!payload||!payload.farmData||!Array.isArray(payload.farmData.sheds))return null;
+  const pr=payload.predictions||{};
+  const loads=Array.isArray(payload.farmLoads)?payload.farmLoads:[];
+  const loadsKg=loads.reduce((s,l)=>s+(l&&l.actualKg!=null?num0(l.actualKg):num0(l&&l.plannedKg)),0);
+  const carry=num0(pr.carryoverFarmKg)>0?num0(pr.carryoverFarmKg):Object.values(pr.carryoverKg||{}).reduce((s,v)=>s+num0(v),0);
+  return summarizeBatchData({sheds:payload.farmData.sheds,batch:String(payload.batchNumber||payload.farmData.batchNumber||''),docketKg:num0(pr.farmFeedOverride)>0?num0(pr.farmFeedOverride):loadsKg,carryKg:carry,leftoverKg:num0(pr.farmLeftoverKg),intakePct:null});
+}
+function summarizeBatchData(o){
+  const sheds=(o.sheds||[]).filter(s=>s&&s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return null;
   let placed=0,picked=0,ageBirds=0,lw=0,lwBirds=0,last=null;const fa=[],fs=[],fin=[],finAge=[],finKg=[];
   sheds.forEach(s=>{
     const pop=num0(s.initialPopulation);placed+=pop;
@@ -165,11 +179,9 @@ function summarizeCurrentBatch(){
   });
   // Only a batch that has largely finished (≥ half the birds out) is worth learning from
   if(picked<=0||lwBirds<=0||picked<placed*0.5)return null;
-  const docket=num0(predState.farmFeedOverride)>0?num0(predState.farmFeedOverride):feedOrderedKg();
-  const cal=typeof intakeCalibration==='function'?intakeCalibration():{ok:false};
-  return normalizeHistoryRec({batch:predState.batchNumber||farmData.batchNumber||'',endDate:last?iso(last):'',source:'auto',placed,picked,
-    liveWeightKg:lw*picked/lwBirds,feedKg:Math.max(0,docket+carryoverTotalKg()-num0(predState.farmLeftoverKg)),avgAge:ageBirds/picked,
-    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
+  return normalizeHistoryRec({batch:o.batch||'',endDate:last?iso(last):'',source:'auto',placed,picked,
+    liveWeightKg:lw*picked/lwBirds,feedKg:Math.max(0,num0(o.docketKg)+num0(o.carryKg)-num0(o.leftoverKg)),avgAge:ageBirds/picked,
+    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:o.intakePct});
 }
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 // "Since the reading": a morning reading hasn't seen its own day yet,

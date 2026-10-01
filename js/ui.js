@@ -151,6 +151,7 @@ function renderSettingsFarmHistoryCard(){
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
     <p class="settings-section-desc">Finished batches the app learns from: first-thin timing and feed intake % until this batch has its own, plus a "vs last batch" line on the Projected card. Saved automatically when you start a new batch; add older ones by hand.</p>
     ${fhSaveLoadedHtml()}
+    ${fhCloudBatchesHtml()}
     ${rows?`<div class="fh-list">${rows}</div>`:'<p class="settings-section-note">No finished batches yet.</p>'}
     ${form}
   </div>`;
@@ -170,6 +171,49 @@ function fhSaveLoadedHtml(){
       <label class="fh-field"><span>Total feed for this batch (${feedUnit()}, after leftover)</span><input class="settings-input" id="fhLoadedFeed" type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${rec.feedKg>0?feedIn(rec.feedKg):''}" placeholder="from your dockets" /></label>
       <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save-loaded>Save to Farm history</button></div>
     </div>`;
+}
+// Finished batches sitting in the cloud (other batch files of this farm)
+// that aren't in Farm history yet — add them without switching batches.
+let fhCloud={state:'idle',items:[],farm:''};
+async function findCloudBatchesForHistory(){
+  if(!syncFarmName||fhCloud.state==='loading')return;
+  fhCloud={state:'loading',items:[],farm:syncFarmName};if(settingsDrawerOpen)renderSettingsDrawerBody();
+  try{
+    const listing=await listFarmBatches(syncFarmName);
+    if(!listing.ok)throw new Error(listing.reason||'listing');
+    const cur=currentBatchKey();const items=[];
+    for(const f of listing.files){
+      if(f.batchKey===cur)continue;
+      try{const res=await fetch(buildBatchUrl(syncFarmName,f.batchKey),{cache:'no-store'});if(!res.ok)continue;const j=await res.json();if(!j||!j.data)continue;
+        const rec=summarizeBatchPayload(j.data);if(!rec)continue;if(!rec.batch)rec.batch=f.batchKey||'';
+        items.push({key:f.batchKey||'',rec});}catch(e){}
+    }
+    fhCloud={state:'done',items,farm:syncFarmName};
+  }catch(e){fhCloud={state:'error',items:[],farm:syncFarmName};}
+  if(settingsDrawerOpen)renderSettingsDrawerBody();
+}
+function fhCloudBatchesHtml(){
+  if(!syncFarmName)return '';
+  if(fhCloud.farm!==syncFarmName&&fhCloud.state!=='loading'){setTimeout(findCloudBatchesForHistory,0);return '<p class="settings-section-note">Looking for finished batches in the cloud…</p>';}
+  if(fhCloud.state==='loading')return '<p class="settings-section-note">Looking for finished batches in the cloud…</p>';
+  if(fhCloud.state==='error')return '<p class="settings-section-note">Could not check the cloud for finished batches. <button type="button" class="fh-link" data-fh-find>Try again</button></p>';
+  const items=fhCloud.items.filter(it=>!farmHistory().some(r=>r.batch&&r.batch===it.rec.batch));
+  if(!items.length)return '';
+  return items.map(it=>{const r=it.rec;const k=historyKpis({...r,feedKg:r.feedKg>0?r.feedKg:1});return `<div class="fh-loaded">
+      <div class="fh-loaded-title">Batch <b>${escapeHtml(r.batch)}</b> in the cloud is finished — add it to Farm history?</div>
+      <div class="fh-kpis">${r.placed.toLocaleString()} placed · ${r.picked.toLocaleString()} picked up · ${Math.round(r.liveWeightKg).toLocaleString()} kg live · ALW <b>${k.alw.toFixed(2)} kg</b> · avg age <b>${r.avgAge.toFixed(1)} d</b>${r.firstThinAge?` · first thin <b>d${Math.round(r.firstThinAge)}</b>`:''}${r.finalAge?` · last pickup <b>d${Math.round(r.finalAge)}</b>${r.finalAvgKg?` at <b>${r.finalAvgKg.toFixed(2)} kg</b>`:''}`:''}</div>
+      <label class="fh-field"><span>Total feed for this batch (${feedUnit()}, after leftover)</span><input class="settings-input" data-fh-cloud-feed="${escapeAttr(it.key)}" type="number" min="0" step="${feedStep()}" inputmode="decimal" value="${r.feedKg>0?feedIn(r.feedKg):''}" placeholder="from your dockets" /></label>
+      <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-add-cloud="${escapeAttr(it.key)}">Add ${escapeHtml(r.batch)} to Farm history</button></div>
+    </div>`;}).join('');
+}
+function addCloudBatchToHistory(key){
+  const it=fhCloud.items.find(x=>x.key===key);if(!it)return;
+  const inp=document.querySelector(`[data-fh-cloud-feed="${CSS.escape(key)}"]`);
+  const feedKg=feedOut(inp&&inp.value);
+  if(!(feedKg>0)){showToast('Enter the total feed for this batch.',true);if(inp)inp.focus();return;}
+  const saved=addFarmHistoryRec({...it.rec,feedKg,savedAt:Date.now()});
+  if(!saved){showToast('Could not save this batch.',true);return;}
+  renderSettingsDrawerBody();render();showToast(`📚 Added ${saved.batch} to Farm history — FCR ${historyKpis(saved).fcr.toFixed(3)}.`);
 }
 function saveLoadedBatchToHistory(){
   const rec=summarizeCurrentBatch();if(!rec)return;
