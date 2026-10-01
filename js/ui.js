@@ -1070,6 +1070,7 @@ function updateShedField(shedIdx,key,rawValue){
     if(key==='cleanoutDate'){const fp=finalPickupOf(shed);if(fp)shed.cleanoutDate=dateOnly(fp.date);reconcilePredictedPickups(shed);}
   }else if(key==='initialPopulation'){const n=Number(rawValue);shed.initialPopulation=Number.isFinite(n)&&n>=0?Math.floor(n):0;}
   else if(key==='mortality'){const n=Number(rawValue);shed.mortality=Number.isFinite(n)&&n>=0?Math.floor(n):0;shed.mortalityUpdatedAt=dateOnly(new Date());}
+  else if(key==='feedAdjustPct'){const s=String(rawValue??'').trim();const n=Number(s);shed.feedAdjustPct=(s===''||!Number.isFinite(n)||n<=0)?null:Math.max(50,Math.min(150,Math.round(n)));shed.customFeedKg=null;}
   else if(key==='customFeedKg'){const s=String(rawValue??'').trim();if(s==='')shed.customFeedKg=null;else{const n=Number(s);shed.customFeedKg=(Number.isFinite(n)&&n>0)?n:null;}}
   else if(key==='mortalityRatePercent'){const n=Number(rawValue);if(Number.isFinite(n)&&n>=0)shed.mortalityRatePercent=Math.max(0,Math.min(MAX_MORT_RATE_PCT,n));}
   else if(key==='chickWeightGrams'){const n=Number(rawValue);if(Number.isFinite(n)&&n>0){const kg=n/1000;if(kg>=MIN_CHICK_WEIGHT_KG&&kg<=MAX_CHICK_WEIGHT_KG)shed.chickWeightKg=kg;}}
@@ -1269,6 +1270,7 @@ function renderLoadsModalBody(){
   const carryHtml=`<div class="loads-carry">
       <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · not counted by feed type · added to the batch's total feed from your dockets</span></div>
       <div class="lc-row"><label class="lc-in"><input type="number" min="0" step="0.1" class="lc-input" data-carryover-total="1" value="${coTotal?(coTotal/1000).toFixed(2):''}" placeholder="0" aria-label="Feed carried over from last batch, tonnes" /> t</label>
+      ${feedToOrderLineHtml(farmFeedToOrder())}
       <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
     </div>`;
   const sumHtml=`<div class="loads-summary">
@@ -1798,12 +1800,12 @@ function buildBatchReportHTML(){
     const mortPct=shed.initialPopulation>0?(Number(shed.mortality||0)/shed.initialPopulation)*100:0;
     const livPct=100-mortPct;
     const chickG=Math.round(shedChickWeight(shed)*1000);
-    const customFeedStr=(shed.customFeedKg!=null&&shed.customFeedKg>0)?shed.customFeedKg.toFixed(3)+' kg/bird':'— (standard)';
+    const customFeedStr=`${shedFeedPct(shed)}% of Ross intake`;
     html+=`<div class="rpt-shed">
       <div class="rpt-shed-title">Shed ${shed.id}</div>
       <div class="rpt-shed-line">Placed: <strong>${shed.initialPopulation.toLocaleString()}</strong> birds · Placement: ${fmtShort(shed.placementDate)} · Age ${age}d</div>
       <div class="rpt-shed-line">Live: <strong>${live.toLocaleString()}</strong> · Mortality: ${Number(shed.mortality||0).toLocaleString()} (${mortPct.toFixed(2)}%) · Livability: ${livPct.toFixed(2)}%</div>
-      <div class="rpt-shed-line">Chick weight: ${chickG} g · Custom feed: ${escapeHtml(customFeedStr)}</div>`;
+      <div class="rpt-shed-line">Chick weight: ${chickG} g · Feed intake: ${escapeHtml(customFeedStr)}</div>`;
     const hasGrid=TARGET_DAYS.some(d=>shed.targetCurve&&shed.targetCurve[d]>0);
     const hasSamples=(shed.inYardSamples||[]).length>0;
     if(hasGrid||hasSamples){

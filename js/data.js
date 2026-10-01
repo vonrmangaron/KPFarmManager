@@ -170,15 +170,39 @@ function formatAgesPair(ages){
   if(valid.every(a=>a===valid[0]))return valid[0]+'d';
   return ages.map(a=>a===null?'—':a+'d').join(' / ');
 }
-function projectedLeftoverForGroup(group){
-  const sheds=shedsForGroup(group);
-  const cleanouts=sheds.map(s=>s.cleanoutDate).filter(Boolean);
-  if(cleanouts.length===0)return null;
-  const latest=cleanouts.reduce((a,b)=>a>b?a:b);
-  const bal=balanceOnEndOfDay(group,latest);
-  return {date:latest,balance:bal};
+// Feed still to order up to clean-out, two ways:
+//  safe     = your plan only (no future pickups unless you entered them) — the
+//             conservative figure the feed forecast uses
+//  expected = with the background auto pickup plan — the realistic figure
+// need − stock now − loads already booked; leftover = stock + booked − need.
+function pairEndDate(g){const ds=shedsForGroup(g).filter(s=>s.placementDate).map(s=>resultPlanEndDate(s)).filter(Boolean);return ds.length?ds.reduce((m,x)=>x>m?x:m,ds[0]):null;}
+function feedToOrderForGroup(g){
+  const sheds=shedsForGroup(g).filter(s=>s.placementDate);if(!sheds.length)return null;
+  const end=pairEndDate(g);const today=dateOnly(new Date());
+  if(!end||end<=today)return null;
+  let needSafe=0,needExp=0,booked=0;
+  for(let d=addDays(today,1);d<=end;d=addDays(d,1)){
+    needSafe+=groupDailyFeedOn(sheds,d);
+    needExp+=withResultPlan(()=>groupDailyFeedOn(sheds,d));
+    booked+=deliveriesKgOn(g,d);
+  }
+  const bal=balanceOnEndOfDay(g,today,true);const stock=bal==null?0:bal;
+  return {group:g,end,needSafe,needExp,stock,booked,hasReading:bal!=null,
+    safe:Math.max(0,needSafe-stock-booked),expected:Math.max(0,needExp-stock-booked),
+    leftoverSafe:stock+booked-needSafe,leftoverExp:stock+booked-needExp};
 }
-function totalFarmLeftover(){let sum=0;let any=false;[1,2,3,4].forEach(g=>{const lo=projectedLeftoverForGroup(g);if(lo&&lo.balance!==null){sum+=lo.balance;any=true;}});return any?sum:null;}
+function farmFeedToOrder(){
+  const per=[1,2,3,4].map(feedToOrderForGroup).filter(Boolean);if(!per.length)return null;
+  const sum=k=>per.reduce((s,x)=>s+x[k],0);
+  return {per,safe:sum('safe'),expected:sum('expected'),stock:sum('stock'),booked:sum('booked'),needSafe:sum('needSafe'),needExp:sum('needExp'),leftoverExp:sum('leftoverExp')};
+}
+// Leftover at clean-out WITH expected pickups (negative = short). Replaces
+// the old no-pickup balance that showed nonsense like −1,212,470 kg.
+function projectedLeftoverForGroup(group){
+  const f=feedToOrderForGroup(group);if(!f)return null;
+  return {date:f.end,balance:f.leftoverExp,short:f.expected,safeShort:f.safe};
+}
+function totalFarmLeftover(){const f=farmFeedToOrder();return f?f.leftoverExp:null;}
 function groupStatusSummary(g){
   const latest=latestReading(g);if(!latest)return {hasReading:false,balance:null,daysUntil:null};
   const bal=balanceOnEndOfDay(g,new Date());

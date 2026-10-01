@@ -2,7 +2,19 @@ function totalPicked(shed){return (shed.pickups||[]).reduce((s,p)=>s+(Number(p.b
 function mortalityRate(shed){if(!shed.initialPopulation)return 0;return (Number(shed.mortality||0)/shed.initialPopulation)*100;}
 function finalPickupOf(shed){return (shed.pickups||[]).find(p=>p.isFinal);}
 function shedsForGroup(g){if(!farmData)return [];const a=farmData.sheds[(g-1)*2];const b=farmData.sheds[(g-1)*2+1];return [a,b].filter(Boolean);}
-function feedPerBirdKg(shed,ageDays){if(shed.customFeedKg!=null&&shed.customFeedKg>0)return shed.customFeedKg;if(ageDays<=0)return 0;const age=Math.min(60,Math.max(1,Math.floor(ageDays)));return (ROSS_308_FEED_INTAKE[age]||234)/1000;}
+// Daily feed per bird: Ross 308 intake for the age × the shed's intake %
+// (feedAdjustPct, default 100). A flat kg/bird override is no longer used —
+// it applied one number to every age (day 1 to clean-out).
+function shedFeedPct(shed){migrateCustomFeed(shed);const p=Number(shed.feedAdjustPct);return Number.isFinite(p)&&p>0?Math.max(50,Math.min(150,p)):100;}
+function feedPerBirdKg(shed,ageDays){if(ageDays<=0)return 0;const age=Math.min(60,Math.max(1,Math.floor(ageDays)));return (ROSS_308_FEED_INTAKE[age]||234)/1000*shedFeedPct(shed)/100;}
+// Old 'Custom feed (kg/bird)' → % of Ross at the shed's current age
+function migrateCustomFeed(shed){
+  if(!shed||shed.customFeedKg==null||!(Number(shed.customFeedKg)>0))return;
+  const a=ageInDays(shed,new Date());
+  if(a>0){const ross=(ROSS_308_FEED_INTAKE[Math.min(60,Math.floor(a))]||234)/1000;
+    shed.feedAdjustPct=Math.round(Math.max(50,Math.min(150,Number(shed.customFeedKg)/ross*100)));}
+  shed.customFeedKg=null;
+}
 function shedFeedOn(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;return live*feedPerBirdKg(shed,age);}
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}
 function groupFeedToday(sheds,today=new Date()){return groupDailyFeedOn(sheds,today);}

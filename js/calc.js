@@ -151,6 +151,16 @@ function recommendPickupForDate(shed,dateIso,opts){
   const afterBirds=Math.max(0,info.live-remove);const afterDensity=(afterBirds*info.weight)/FIXED_FLOOR_AREA_M2;
   return {age:info.age,live:info.live,weight:info.weight,densityBefore:info.density,targetDensity:ds.targetDensity,recommendedRemove:Math.max(0,remove),densityAfter:afterDensity,maxDensity:ds.maxDensity,triggerDensity:ds.triggerDensity};
 }
+// Recorded deaths are a running total as of the mortality update date.
+// Before that date, spread them evenly from placement (they didn't all die
+// on day 1) — otherwise past feed is undercounted.
+function mortalityByDate(shed,d,anchor){
+  const total=Number(shed.mortality||0);if(!(total>0)||!shed.placementDate)return total;
+  const end=anchor||dateOnly(new Date());
+  const span=daysBetween(shed.placementDate,end);if(span<=0)return total;
+  const frac=Math.max(0,Math.min(1,daysBetween(shed.placementDate,d)/span));
+  return Math.round(total*frac);
+}
 function liveAtStartOfDay(shed,D){
   const d=dateOnly(D);if(!shed.placementDate)return 0;if(d<dateOnly(shed.placementDate))return 0;if(shed.cleanoutDate&&d>dateOnly(shed.cleanoutDate))return 0;
   const effective=computeEffectivePickups(shed);
@@ -158,7 +168,7 @@ function liveAtStartOfDay(shed,D){
   const sumPickupsOn=date=>{const targetIso=iso(date);let total=0;for(const p of effective){if(iso(p.date)===targetIso)total+=Number(p.birds)||0;}return total;};
   const anchor=shed.mortalityUpdatedAt?dateOnly(shed.mortalityUpdatedAt):null;
   const recordedMort=Number(shed.mortality||0);const initPop=Number(shed.initialPopulation)||0;
-  if(!anchor||d<=anchor)return Math.max(0,initPop-recordedMort-sumPickupsOnOrBefore(d));
+  if(!anchor||d<=anchor)return Math.max(0,initPop-mortalityByDate(shed,d,anchor)-sumPickupsOnOrBefore(d));
   let live=Math.max(0,initPop-recordedMort-sumPickupsOnOrBefore(anchor));
   const rate=shedMortRate(shed)/100;let cursor=addDays(anchor,1);
   while(cursor<=d){live=live*(1-rate);live=Math.max(0,live-sumPickupsOn(cursor));live=Math.round(live);cursor=addDays(cursor,1);}
@@ -172,7 +182,7 @@ function computeLiveBirdsBefore(shed,dateObj,extraPredicted){
   const sumPickupsOn=date=>{const targetIso=iso(date);let total=0;for(const p of realPickups){if(iso(p.date)===targetIso)total+=Number(p.birds)||0;}for(const p of extras){if(iso(p.date)===targetIso)total+=Number(p.birds)||0;}return total;};
   const anchor=shed.mortalityUpdatedAt?dateOnly(shed.mortalityUpdatedAt):null;
   const recordedMort=Number(shed.mortality||0);const initPop=Number(shed.initialPopulation)||0;
-  if(!anchor||d<=anchor)return Math.max(0,initPop-recordedMort-sumPickupsBeforeExclusive(d));
+  if(!anchor||d<=anchor)return Math.max(0,initPop-mortalityByDate(shed,d,anchor)-sumPickupsBeforeExclusive(d));
   let live=Math.max(0,initPop-recordedMort-sumPickupsOnOrBefore(anchor));
   const rate=shedMortRate(shed)/100;const lastWalkDay=addDays(d,-1);let cursor=addDays(anchor,1);
   while(cursor<=lastWalkDay){live=live*(1-rate);live=Math.max(0,live-sumPickupsOn(cursor));live=Math.round(live);cursor=addDays(cursor,1);}
