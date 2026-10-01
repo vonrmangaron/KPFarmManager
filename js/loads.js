@@ -18,7 +18,34 @@ function migrateCustomFeed(shed){
 // Silo is switched off at 7am the day before clean-out (birds leave that
 // night, kill sheet is the clean-out date), so that day is 7/24 of a feed day.
 const FINAL_DAY_FEED_FRACTION=7/24;
-function shedFeedOn(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
+function shedFeedOn(shed,D){const kg=shedFeedOnRaw(shed,D);return kg>0&&!hasManualFeedPct(shed)?kg*intakeCalibration().factor:kg;}
+function shedFeedOnRaw(shed,D){const age=ageInDays(shed,D);const live=liveAtStartOfDay(shed,D);if(age<=0||live<=0)return 0;const kg=live*feedPerBirdKg(shed,age);if(shed.cleanoutDate&&daysBetween(dateOnly(D),dateOnly(shed.cleanoutDate))===1)return kg*FINAL_DAY_FEED_FRACTION;return kg;}
+function hasManualFeedPct(shed){const p=Number(shed&&shed.feedAdjustPct);return Number.isFinite(p)&&p>0;}
+// ── Learned intake ──
+// Feed actually eaten (dockets + carry-over − silo stock at each pair's
+// latest reading) ÷ what the Ross table says the same birds ate up to the
+// same moment. It scales every day's intake for sheds without a manual
+// "Feed intake %", so the forecast, to-order and projection follow how
+// this farm's birds really eat. Bounded 85–115%; 100% until there's
+// enough data (all pairs read, ≥ 20 t modelled).
+const INTAKE_CAL_MIN=0.85,INTAKE_CAL_MAX=1.15,INTAKE_CAL_MIN_KG=20000;
+let intakeCalCache=null;
+function intakeCalibration(){
+  if(intakeCalCache)return intakeCalCache;
+  intakeCalCache={factor:1,ok:false,reason:'Not enough silo readings yet'};
+  try{
+    if(!farmData||typeof feedEatenMeasured!=='function')return intakeCalCache;
+    const m=feedEatenMeasured();
+    if(m.missing.length||!m.pairs.length)return intakeCalCache;
+    let manual=0,auto=0;
+    m.pairs.forEach(p=>{const end=p.morning?addDays(p.date,-1):p.date;p.sheds.forEach(s=>{let d=dateOnly(s.placementDate);let sum=0;while(d<=end){sum+=shedFeedOnRaw(s,d);d=addDays(d,1);}if(hasManualFeedPct(s))manual+=sum;else auto+=sum;});});
+    if(auto<INTAKE_CAL_MIN_KG||!(m.eaten>0))return intakeCalCache;
+    const raw=(m.eaten-manual)/auto;
+    const factor=Math.round(Math.max(INTAKE_CAL_MIN,Math.min(INTAKE_CAL_MAX,raw))*1000)/1000;
+    intakeCalCache={factor,ok:true,raw,measured:m.eaten,model:auto+manual,asOf:m.pairs.map(p=>p.date).reduce((a,b)=>b<a?b:a),capped:raw!==factor&&Math.abs(raw-factor)>0.0005};
+  }catch(e){intakeCalCache={factor:1,ok:false,reason:'Could not calculate'};}
+  return intakeCalCache;
+}
 function groupDailyFeedOn(sheds,D){return sheds.reduce((sum,s)=>sum+shedFeedOn(s,D),0);}
 function groupFeedToday(sheds,today=new Date()){return groupDailyFeedOn(sheds,today);}
 // ── Feed unit (Settings → Units): every feed amount shown or typed uses

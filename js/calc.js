@@ -98,6 +98,23 @@ let includeTestPickups=false;
 // projection calculations).
 let includeAutoPlan=false;
 let autoPlanCache=new Map();
+// ── Learned thinning: the first pickup age and size (share of birds
+// placed) from sheds already thinned this batch — median across them.
+// Used by the auto plan for sheds not thinned yet.
+let thinPatternCache=null;
+function learnedThinPattern(){
+  if(thinPatternCache)return thinPatternCache;
+  const ages=[],shares=[],from=[];
+  ((farmData&&farmData.sheds)||[]).forEach(s=>{
+    if(!s.placementDate)return;const pop=Number(s.initialPopulation)||0;if(pop<=0)return;
+    const real=(s.pickups||[]).filter(p=>p.date&&(Number(p.birds)||0)>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    if(!real.length||real[0].isFinal)return;
+    ages.push(pickupAge(s,real[0]));shares.push((Number(real[0].birds)||0)/pop);from.push(s.id);
+  });
+  const med=a=>{const x=a.slice().sort((p,q)=>p-q),n=x.length;return n%2?x[(n-1)/2]:(x[n/2-1]+x[n/2])/2;};
+  thinPatternCache=ages.length?{age:Math.round(med(ages)),share:med(shares),from}:{age:null,share:null,from:[]};
+  return thinPatternCache;
+}
 function resultPlanEndDate(shed){
   if(shed.cleanoutDate)return dateOnly(shed.cleanoutDate);
   // No clean-out date: when birds reach the pair's target harvest weight
@@ -225,9 +242,25 @@ function autoFillPredictedPickups(shed,opts){
   const lastBase=base.length?base.reduce((m,p)=>p.date>m?p.date:m,base[0].date):null;
   const planFrom=lastBase&&addDays(lastBase,3)>addDays(today,1)?addDays(lastBase,3):addDays(today,1);
 
+  // ── Phase 0: first thin at the age/size learned from sheds already
+  // thinned this batch (only for a shed with no pickups of its own yet)
+  let learnedFirst=null;
+  if(regularNeeded>0&&realCount===0&&base.length===0){
+    const lp=learnedThinPattern();
+    if(lp.age){
+      let d=nextAllowedPickupDate(addDays(dateOnly(shed.placementDate),lp.age));
+      if(d<planFrom)d=nextAllowedPickupDate(planFrom);
+      if(d<=maxDay){
+        const live=Math.floor(computeLiveBirdsBefore(shed,d,result));
+        const birds=Math.max(0,Math.min(live,Math.round((Number(shed.initialPopulation)||0)*lp.share)));
+        if(birds>0){learnedFirst={id:uid('pp'),date:d,birds,isFinal:false,learned:true};result.push(learnedFirst);}
+      }
+    }
+  }
+
   // ── Phase 1: density-triggered regulars ──
   if(regularNeeded>0){
-    let searchStart=planFrom;
+    let searchStart=learnedFirst?addDays(learnedFirst.date,3):planFrom;
     let safety=0;
     while(result.length<regularNeeded&&safety<40){
       safety++;
@@ -256,7 +289,8 @@ function autoFillPredictedPickups(shed,opts){
     // enough open (non-blocked) days.
     const remaining=regularNeeded-result.length;
     if(remaining>0){
-      const floor=planFrom;
+      // After a learned first thin, the rest of the plan comes after it
+      const floor=learnedFirst?addDays(learnedFirst.date,3):planFrom;
       let windowStart=addDays(shed.placementDate,5);
       if(windowStart<floor)windowStart=floor;
       if(windowStart>maxDay)windowStart=maxDay;
