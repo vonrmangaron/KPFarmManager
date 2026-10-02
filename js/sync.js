@@ -33,6 +33,7 @@ function buildCloudPayload(){
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[],
       projectionLog:predState.projectionLog||[],
+      finalUpliftPct:predState.finalUpliftPct,
       siloConfidencePct:predState.siloConfidencePct,
       safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
@@ -82,6 +83,7 @@ function applyCloudPayload(payload,options){
     {const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     mergeCloudFarmHistory(p);
     mergeProjectionLog(p.projectionLog);
+    {const u=Number(p.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     savePredState();
   }
   const prefs=payload.preferences||{};

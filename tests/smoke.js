@@ -23,7 +23,7 @@ console.log('2. Required functions exist');
 ['batchKpis','computeFarmTotals','computeGroupPredictions','computePredictions','computeSiloForecast','computeFarmAlerts','measuredFeedToDate','feedEatenMeasured',
  'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner',
  'siloSettingsBarHtml','renderSettingsFarmHistoryCard','fhRowHtml','summarizeBatchData','mergeCloudFarmHistory','siloReadTime','siloConfidence','siloSafetyDays',
- 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml']
+ 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor']
  .forEach(n=>ok(run('typeof '+n,`typeof ${n}`)==='function','missing function: '+n));
 
 console.log('3. Formulas (batchKpis)');
@@ -65,6 +65,10 @@ console.log('5. Rendered cards have no NaN / undefined');
 const html={kpi:'renderFarmKpiCard()',planner:'renderFeedPlanner(1,shedsForGroup(1),T)',siloBar:'siloSettingsBarHtml()',history:'renderSettingsFarmHistoryCard()',
   pairSwitch:'pairSwitchHtml(1,"pred")',fhRow:'fhRowHtml(predState.farmHistory[0])'};
 for(const [n,c] of Object.entries(html)){const h=run('render '+n,c);if(h!=null){const txt=String(h).replace(/<[^>]+>/g,' ');ok(!/\bNaN\b|\bundefined\b|Infinity/.test(txt),n+' renders without NaN/undefined');}}
+
+console.log('5b. Final pickup uplift');
+const up=run('uplift',`(()=>{predState.finalUpliftPct=0;autoPlanCache=new Map();const a=computeFarmTotals();predState.finalUpliftPct=8;autoPlanCache=new Map();const b=computeFarmTotals();return [a.totalLiveWeight,b.totalLiveWeight,a.totalFeed,b.totalFeed,b.cfcr<a.cfcr];})()`);
+if(up){ok(up[1]>up[0],'+8% raises projected live weight');ok(near(up[2],up[3],1),'uplift does not change feed');ok(up[4],'uplift lowers cFCR');}
 
 console.log('6. Projection log');
 const pl=run('projection log',`(()=>{predState.projectionLog=[{d:'2026-01-01',feed:1,fcr:1.7,cfcr:1.6,alw:2.7,age:44,liv:95,m:'old',at:1}];

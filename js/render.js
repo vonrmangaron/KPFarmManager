@@ -1058,9 +1058,12 @@ function render(){
     if(moreSheetOpen)renderMoreSheet();
     renderSyncPill();
     renderSidebarBatch();
+    // Adjustments: one floating button on every page (bottom-right)
+    const adjFab=document.getElementById('adjFab');
+    if(adjFab){adjFab.hidden=!farmData;if(!adjFab.firstChild)adjFab.innerHTML=navIcon('gear');adjFab.classList.toggle('active',!!adjModalOpen);adjFab.setAttribute('aria-expanded',String(!!adjModalOpen));}
     // Adjustments modal lives at body level so it stacks above the nav
     const adjRoot=document.getElementById('adjModalRoot');
-    if(adjRoot){const show=adjModalOpen&&activeTab==='predictions'&&farmData&&shedsForGroup(predState.predGroup).length;if(!show){adjModalOpen=false;adjDraft=null;adjRoot.innerHTML='';adjRoot.dataset.g='';}else if(!adjRoot.querySelector('.adj-modal')||adjRoot.dataset.g!==String(predState.predGroup)){adjRoot.innerHTML=renderAdjustmentModal(predState.predGroup);adjRoot.dataset.g=String(predState.predGroup);}else if(!adjIsDirty()){const fresh=adjDraftFromState(predState.predGroup);const fs=JSON.stringify(fresh);if(fs!==adjDraftBase){adjDraft=fresh;adjDraftBase=fs;}refreshAdjModal(true);}}
+    if(adjRoot){const show=adjModalOpen&&farmData&&shedsForGroup(predState.predGroup).length;if(!show){adjModalOpen=false;adjDraft=null;adjRoot.innerHTML='';adjRoot.dataset.g='';}else if(!adjRoot.querySelector('.adj-modal')||adjRoot.dataset.g!==String(predState.predGroup)){adjRoot.innerHTML=renderAdjustmentModal(predState.predGroup);adjRoot.dataset.g=String(predState.predGroup);}else if(!adjIsDirty()){const fresh=adjDraftFromState(predState.predGroup);const fs=JSON.stringify(fresh);if(fs!==adjDraftBase){adjDraft=fresh;adjDraftBase=fs;}refreshAdjModal(true);}}
     updatePageHeader();
     updateAlertsBell();
     // Main content
@@ -1440,13 +1443,15 @@ function computePredictionsInner(shed,group){
   for(const p of pickups){
     const pAge=pickupAge(shed,p);const curveAtAge=rossWeightKg(pAge);const avgFromExcel=pickupAvgKg(p);
     const fwP=forecastWeightModeAware(shed,p.date);
-    const avgUsed=(avgFromExcel&&avgFromExcel>0)?avgFromExcel:((fwP&&fwP.kg)?fwP.kg:(curveAtAge*perfFactor));
+    let avgUsed=(avgFromExcel&&avgFromExcel>0)?avgFromExcel:((fwP&&fwP.kg)?fwP.kg:(curveAtAge*perfFactor));
+    // Final pickup not weighed yet: final birds run heavier than the thin-weighted curve
+    if(p.isFinal&&!(avgFromExcel>0))avgUsed*=finalUpliftFactor();
     const pickupWeightKg=Number(p.birds||0)*avgUsed;
     totalWeightKg+=pickupWeightKg;cumBirds+=Number(p.birds||0);ageBirdSum+=pAge*Number(p.birds||0);
     pickupDetails.push({date:p.date,age:pAge,birds:Number(p.birds||0),avgWeightKg:avgUsed,totalWeightKg:Number(p.birds||0)*avgUsed,isFinal:!!p.isFinal,isPredicted:p.__source==='predicted'||p.__source==='auto',isAuto:p.__source==='auto',cumBirds,isEstWeight:!(avgFromExcel&&avgFromExcel>0)});
   }
   const finalLiveBirds=Math.max(0,estFinalLive-cumBirds);
-  totalWeightKg+=finalLiveBirds*estFinalALW;ageBirdSum+=finalAge*finalLiveBirds;
+  totalWeightKg+=finalLiveBirds*estFinalALW*finalUpliftFactor();ageBirdSum+=finalAge*finalLiveBirds;
   // Every bird that leaves is counted; the rest died (livability = 100 − mortality %)
   const birdsAll=cumBirds+finalLiveBirds;
   if(initialPop>0){estFinalLive=birdsAll;estFinalMort=Math.max(0,initialPop-birdsAll);estLivability=birdsAll/initialPop*100;}
@@ -1548,7 +1553,7 @@ function feedToOrderLineHtml(f){
 function learnedBasisHtml(t){
   if(!FARM_LEARNING){const fm=t&&t.feedMeasured;
     const feedPart=fm?`<span title="Feed already eaten is measured: carry-over + docket loads − silo stock${fm.fitted?`, smoothed over ${fm.points} reading dates so one odd reading can't swing it`:''} (${fmtFeed(fm.eaten)}; the Ross table would have said ${fmtFeed(fm.modelPast)}). Days after use the Ross 308 intake table.">Feed: <b>measured to ${fmtShortNoYear(fm.asOf)}</b> + <b>Ross 308 intake</b> after</span>`:`<span title="Daily feed per bird from the Ross 308 intake table (or a shed's own Feed intake %). Record a silo reading for every pair to use measured feed for the days already passed.">Feed: <b>Ross 308 intake</b></span>`;
-    return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b></span></div>`;}
+    return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b>, <b>${Math.round((finalUpliftFactor()-1)*100)}%</b> heavier than thins</span></div>`;}
   const parts=[];
   const cal=intakeCalibration();
   if(cal.ok&&cal.fromHistory){parts.push(`<span title="No usable silo readings yet this batch — starting from the average of ${cal.fromHistory} past batch${cal.fromHistory>1?'es':''} in Farm history. Switches to this batch's own readings once every pair has one.">Intake <b>${Math.round(cal.factor*100)}%</b> of Ross · from past batches</span>`);}
@@ -1678,7 +1683,7 @@ function adjDraftFromState(g){
   return {group:g,beta:Number(predState.beta)||0,scale:Math.round(currentBiasFactor()*1000)/10,target:Number(predState.targetHarvestWeightKg[g])||2.65,
     trig:Number(dg.triggerDensity),tgt:Number(dg.targetDensity),max:Number(dg.maxDensity),
     tp:Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups,
-    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr};
+    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr,uplift:Math.round((finalUpliftFactor()-1)*100)};
 }
 // Dirty = draft differs from what the modal opened with (not from live
 // state, so a background sync never shows up as 'your' change)
@@ -1715,6 +1720,7 @@ function adjModalBodyHtml(){
   <section class="adj-sec">
     <h4 class="adj-sec-title">📊 Results</h4>
     <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant. Also the reference for cFCR (Industry) = FCR − (ALW − target) ÷ 3.2. cFCR (Baiada) always uses 2.45 kg × 0.27.</span></div>
+    <div class="adj-row"><label>Final pickup weight vs thins</label><input type="number" class="adj-num" data-adj="uplift" min="0" max="15" step="1" value="${d.uplift}" /><span class="adj-unit">% heavier</span><span class="adj-hint">Final birds weigh more than thinned birds compared with the Ross standard — thins take lighter birds and the rest grow on with more room. Your 2606 and 2607 batches: +8–10%. 0% = use the growth curve as is.</span></div>
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
@@ -1776,6 +1782,7 @@ function applyAdjDraft(){
   dg.triggerDensity=cl(d.trig,20,45);dg.targetDensity=cl(d.tgt,15,35);dg.maxDensity=cl(d.max,28,45);dg.targetPickups=Math.round(cl(d.tp,MIN_PICKUPS_PER_SHED,MAX_PICKUPS_PER_SHED));
   predState.densityGlobal=dg;
   predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
+  predState.finalUpliftPct=Math.round(cl(d.uplift,0,15));
   shedsForGroup(d.group).forEach(s=>{const v=d.ovr[s.id];s.scaleOverride=(v==null||!(Number(v)>0))?null:cl(Number(v)/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);});
   savePredState();saveState();schedulePush();
   adjDraft=null;adjDraftBase='';closeAdjModal(true);
@@ -1814,8 +1821,6 @@ function predRailHtml(g,view,sheds){
   return `<nav class="pred-rail" aria-label="Prediction view">
     ${sheds.length>1?btn('both','homes','Both','Show both sheds side by side'):''}
     ${shedBtns}
-    <span class="pred-rail-sep" aria-hidden="true"></span>
-    <button type="button" class="pred-rail-btn pred-rail-settings${adjModalOpen?' active':''}" data-toggle-adjustments="1" aria-haspopup="dialog" title="Prediction adjustments">${navIcon('gear')}<span>Adjust</span></button>
   </nav>`;
 }
 function renderPredictionsView(){

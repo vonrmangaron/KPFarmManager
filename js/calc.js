@@ -548,6 +548,7 @@ function batchKpis(o){
   const pif=(avgAge>0&&fcr>0)?(livability*alw)/(avgAge*fcr)*100:0;
   return {fcr,alw,avgAge,livability,cfcr,cfcrInd,pif,beta,target};
 }
+function finalUpliftFactor(){const v=Number(predState.finalUpliftPct);return 1+(Number.isFinite(v)&&v>=0&&v<=20?v:DEFAULT_FINAL_UPLIFT_PCT)/100;}
 function pairTargetKg(g){return Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;}
 // CAge2.45: age (days) when a bird's cumulative FCR reaches 2.45 — its
 // cumulative intake ÷ its weight, along the shed's growth curve. Beyond
