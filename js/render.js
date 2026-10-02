@@ -1518,7 +1518,7 @@ function computeFarmTotals(){
     if(m){let modelPast=0;
       withResultPlan(()=>Object.keys(m.cut).forEach(g=>{const end=m.cut[g];shedsForGroup(Number(g)).filter(s=>s.placementDate).forEach(s=>{for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))modelPast+=shedFeedOn(s,d);});}));
       feedMeasured={eaten:m.eaten,modelPast,asOf:m.asOf,fitted:m.fitted,points:m.points};totalFeedAuto=totalFeedAuto-modelPast+m.eaten;}
-  }catch(e){feedMeasured=null;}
+  }catch(e){console.warn('Measured feed-to-date failed',e);feedMeasured=null;}
   const autoLeftover=totalFarmLeftover();
   const leftoverKg=(predState.farmLeftoverKg!=null&&Number.isFinite(Number(predState.farmLeftoverKg))&&Number(predState.farmLeftoverKg)>0)?Number(predState.farmLeftoverKg):0;
   const leftoverApplied=leftoverKg>0;
@@ -1564,14 +1564,6 @@ function learnedBasisHtml(t){
   else parts.push(`<span title="No last-pickup data yet (Farm history or a finished shed) — using the plant's clean-out dates. Add the last pickup age to a past batch in Settings → Farm history.">Last pickup at clean-out date · no history yet</span>`);
   return `<div class="fk-basis fk-learned">${parts.join('<span class="fk-sep"> · </span>')}</div>`;
 }
-// "vs last batch" — the latest Farm history record against this projection
-function vsLastBatchHtml(t){
-  const r=lastHistoryRec();if(!r||!t||!t.hasData)return '';
-  const k=historyKpis(r);
-  const fpbNow=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0,fpbLast=r.feedKg/r.picked;
-  const cell=(lbl,last,now,dp,unit,lowerBetter)=>{const d=now-last;const good=lowerBetter?d<0:d>0;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':(good?' good':' bad');return `<span class="vlb-item"><span class="vlb-k">${lbl}</span> ${last.toFixed(dp)} → <b class="vlb-v${cls}">${now.toFixed(dp)}</b>${unit}</span>`;};
-  return `<div class="fk-basis fk-vs-last" title="Last batch from Farm history (Settings) vs this batch's projection. Green = better, red = worse.">vs last batch${r.batch?' '+escapeHtml(r.batch):''}: ${cell('FCR',k.fcr,t.fcr,3,'',true)}${cell('ALW',k.alw,t.avgWeight,2,' kg',false)}${cell('Age',r.avgAge,t.weightedAge,1,' d',true)}${cell('Feed/bird',fpbLast,fpbNow,2,' kg',true)}${cell('PIF',k.pif,t.pif,0,'',false)}</div>`;
-}
 function farmFeedSubText(t){
   const co=t.carryKg>0?t.carryKg:0;
   if(t.usingManualFeed){
@@ -1588,6 +1580,7 @@ function farmResultTitle(){
   const farm=displayFarmName()?escapeHtml(String(displayFarmName())):'';
   return farm?`${farm} <span class="farm-kpi-title-sep">·</span> Projected batch result`:'Projected batch result';
 }
+let fkHowOpen=false,fkFeedOpen=false;
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
   if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
@@ -1601,17 +1594,23 @@ function renderFarmKpiCard(){
   // What the projection is built on: logged + your planned + auto-planned pickups
   let nLog=0,nPlan=0,nAuto=0;
   (farmData.sheds||[]).filter(sh=>sh.placementDate).forEach(sh=>{const rd=new Set((sh.pickups||[]).map(x=>iso(x.date)));nLog+=(sh.pickups||[]).length;nPlan+=(sh.predictedPickups||[]).filter(pp=>pp.date&&!rd.has(iso(pp.date))).length;nAuto+=autoPlanForShed(sh).length;});
-  const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>${learnedBasisHtml(t)}${vsLastBatchHtml(t)}`;
-  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span>${basisHtml}</div><div class="farm-kpi-grid">
+  const howHtml=fkHowOpen?`<div class="fk-how-body"><div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Pickups: <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned</div>${learnedBasisHtml(t)}<div class="fk-basis">Ranges: last pickups up to ${PROJ_EARLY_DAYS} days before the plant's clean-out dates · ${escapeHtml(farmFeedSubText(t))}</div></div>`:'';
+  // Last batch, shown inside each tile instead of a separate line
+  const lr=lastHistoryRec(),lk=lr?historyKpis(lr):null;
+  const vs=(now,last,dp,unit,lowerBetter)=>{if(last==null)return '';const d=now-last;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':((lowerBetter?d<0:d>0)?' good':' bad');return `<div class="fkt-last${cls}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">last batch ${last.toFixed(dp)}${unit}</div>`;};
+  const fpb=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0;
+  const feedPanelOpen=fkFeedOpen||t.usingManualFeed||t.leftoverApplied;
+  const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Docket total (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
+  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">${t.shedsWithData} of ${SHED_COUNT} sheds</span><button type="button" class="fk-how-toggle" data-fk-toggle="how" aria-expanded="${fkHowOpen}">How it's calculated ${fkHowOpen?'▴':'▾'}</button>${howHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Manual override (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><span id="kpiFCRRange">${rg.fcr}</span><div class="fkt-sub">Feed ÷ total live weight</div></div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRSub">${cfcrSubText(t)}</div></div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub">${cfcrIndSubText(t)}</div></div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><span id="kpiPIFRange">${rg.pif}</span><div class="fkt-sub" id="kpiPIFSub">${pifSubText(t)}</div></div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. CAge 2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Age when cumulative FCR (cumulative intake ÷ weight per bird) reaches 2.45, along each shed's growth curve; farm value weighted by birds placed. Past day 60 the intake table is held at its last value.">Age cumulative FCR hits 2.45 · higher is better</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Farm average across ${t.birdsAtHarvest.toLocaleString()} birds</div><div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(3)}</b></span>`:'';}).join('')}</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div></div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub">${fpb.toFixed(2)} kg per bird</div>${lr?vs(fpb,lr.feedKg/lr.picked,2,' kg/bird',true):''}<button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button>${feedPanel}</div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><span id="kpiFCRRange">${rg.fcr}</span>${lk?vs(t.fcr,lk.fcr,3,'',true):''}</div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRSub" title="FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}">${cfcrSubText(t)}</div></div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub" title="FCR − (ALW − target) ÷ 3.2">${cfcrIndSubText(t)}</div></div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(0)}</div><span id="kpiPIFRange">${rg.pif}</span>${lk?vs(t.pif,lk.pif,0,'',false):''}</div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. CAge 2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Age when cumulative FCR (cumulative intake ÷ weight per bird) reaches 2.45, along each shed's growth curve; farm value weighted by birds placed. Past day 60 the intake table is held at its last value.">Higher is better</div></div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub" id="kpiPIFSub">avg age ${t.weightedAge.toFixed(1)} d</div>${lk?vs(t.avgWeight,lk.alw,2,' kg',false):''}<div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(2)}</b></span>`:'';}).join('')}</div></div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed</div>${lk?vs(t.livability,lk.livability,1,'%',false):''}</div>
     <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
   </div></div>`;
 }
@@ -1633,9 +1632,9 @@ function kpiRanges(t){
     fcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.fcr,t.fcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
     pif:`<div class="fkt-range" ${tip}>Range ${rangeText(e.pif,t.pif,(lo,hi)=>`${lo.toFixed(0)}–${hi.toFixed(0)}`)}</div>`};
 }
-function cfcrSubText(t){return `FCR − (ALW ${t.avgWeight.toFixed(3)} − 2.45) × ${CFCR_BAIADA_BETA}`;}
-function cfcrIndSubText(t){return `FCR − (ALW − ${t.targetKg.toFixed(2)} target) ÷ 3.2`;}
-function pifSubText(t){return `Livability ${t.livability.toFixed(1)}% × ALW ÷ (avg age ${t.weightedAge.toFixed(1)} d × FCR) × 100`;}
+function cfcrSubText(t){return `vs 2.45 kg reference`;}
+function cfcrIndSubText(t){return `vs ${t.targetKg.toFixed(2)} kg target`;}
+function pifSubText(t){return `avg age ${t.weightedAge.toFixed(1)} d`;}
 function cageText(a){return a?`${a.toFixed(1)} <span style="font-size:12px;font-weight:600;color:var(--muted);">days</span>`:'—';}
 function updateFarmKpiValues(){
   const t=computeFarmTotals();
@@ -1649,7 +1648,7 @@ function updateFarmKpiValues(){
   set('kpiFCR',t.fcr.toFixed(3));
   set('kpiCFCR',t.cfcr.toFixed(3));set('kpiCFCRSub',cfcrSubText(t));
   set('kpiCFCRInd',t.cfcrInd.toFixed(3));set('kpiCFCRIndSub',cfcrIndSubText(t));
-  set('kpiPIF',t.pif.toFixed(2));set('kpiPIFSub',pifSubText(t));
+  set('kpiPIF',t.pif.toFixed(0));set('kpiPIFSub',pifSubText(t));
   set('kpiCAge',cageText(t.cage));
   set('kpiAvgWeight',t.avgWeight.toFixed(3)+' <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span>');
   set('kpiLivability',t.livability.toFixed(2)+'%');

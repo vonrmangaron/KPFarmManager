@@ -198,6 +198,32 @@ function summarizeBatchData(o){
     firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:o.intakePct,
     densTrigger:dBefore.length?medianOf(dBefore):null,densTarget:dAfter.length?medianOf(dAfter):null,densMax:dAll.length?Math.max(...dAll):null,pickupsPerShed:perShed.length?medianOf(perShed):null});
 }
+// Feed eaten so far, smoothed over every date all pairs were read: fit
+// eaten = fixed + rate × (Ross model) and take the fitted value at the
+// latest such date, so one odd reading can't swing the total. Fewer than
+// 3 dates: the raw figure at the latest one. Pair cut-offs come with it.
+function measuredFeedToDate(){
+  if(!farmData)return null;
+  const groups=[1,2,3,4].filter(g=>shedsForGroup(g).some(s=>s.placementDate));if(!groups.length)return null;
+  const byDate={};groups.forEach(g=>readingsSorted(g).forEach(r=>{(byDate[r.date]=byDate[r.date]||{})[g]=r;}));
+  const carry=carryoverTotalKg();const pts=[];
+  Object.keys(byDate).sort().forEach(ds=>{
+    const rs=byDate[ds];if(groups.some(g=>!rs[g]))return;
+    let eaten=carry,model=0;const cut={};
+    groups.forEach(g=>{const r=rs[g],D=dateOnly(r.date),morning=readingIsMorning(r),end=morning?addDays(D,-1):D;cut[g]=end;
+      farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(morning?ld>=D:ld>D)return;eaten+=loadKgToPairBefore(l,g);});
+      eaten-=readingTotalKg(r);
+      shedsForGroup(g).filter(s=>s.placementDate).forEach(s=>{for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))model+=shedFeedOnRaw(s,d);});});
+    pts.push({date:dateOnly(ds),x:model,y:eaten,cut});
+  });
+  if(!pts.length)return null;
+  const last=pts[pts.length-1];let eaten=last.y,fitted=false;
+  if(pts.length>=3){const n=pts.length,mx=pts.reduce((a,p)=>a+p.x,0)/n,my=pts.reduce((a,p)=>a+p.y,0)/n;
+    const sxx=pts.reduce((a,p)=>a+(p.x-mx)**2,0),sxy=pts.reduce((a,p)=>a+(p.x-mx)*(p.y-my),0);
+    if(sxx>0){const k=sxy/sxx;eaten=(my-k*mx)+k*last.x;fitted=true;}}
+  if(!(eaten>0))return null;
+  return {asOf:last.date,eaten,raw:last.y,modelAtDate:last.x,cut:last.cut,points:pts.length,fitted};
+}
 function currentBalanceKg(group){return balanceOnEndOfDay(group,new Date());}
 // "Since the reading": a morning reading hasn't seen its own day yet,
 // so the reading day itself is included.
