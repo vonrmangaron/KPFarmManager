@@ -1039,7 +1039,7 @@ function render(){
       }
       lastPageKey=pageKey;
     }
-    gompertzCache=new Map();autoPlanCache=new Map();thinPatternCache=null;intakeCalCache=null;finalPickupCache=null;
+    gompertzCache=new Map();autoPlanCache=new Map();farmRangeCache=null;thinPatternCache=null;intakeCalCache=null;finalPickupCache=null;
     // Batch number field
     const batchEl=document.getElementById('batchNumber');
     if(batchEl){const want=predState.batchNumber||(farmData?farmData.batchNumber:'')||'';if(batchEl.value!==want)batchEl.value=want;batchEl.readOnly=!!want;batchEl.title=want?'Batch number is locked. Use "New Batch" to change it.':'Enter or import a batch number';}
@@ -1286,8 +1286,8 @@ function renderFeedPlanner(group,sheds,today){
   const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?(leftover.balance<0?' short':''):' muted'}" title="${leftoverOk?`With expected pickups: ${leftover.balance>=0?fmtFeed(leftover.balance,1)+' left at clean-out':'short '+fmtFeed(leftover.short,1)} · if no more pickups: short ${fmtFeed(leftover.safeShort,1)}`:'No clean-out date'}">🧺 ${leftoverStr}</span></span>`;
   return `<div class="planner-wrap">
     <div class="planner-summary">
-      <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?'Expected at end of today':'Tap ring levels below to record stock'}</div></div>
-      <div class="summary-card"><div class="sc-label">${depletedWithinWindow?'Depletes On':'Feed Lasts'}</div><div class="sc-value ${statusTone}">${depletedWithinWindow?fmtShort(forecast.depletedDate):(hasReading?`> ${siloRange.end} days`:'—')}</div><div class="sc-sub">${depletedWithinWindow?`${daysUntilDepletion} day${daysUntilDepletion===1?'':'s'} from now`:(hasReading?`Balance at end: ${fmtFeed(forecast.endBalance)}`:'')}</div></div>
+      <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?`Expected at end of today${siloConfidence()<1?` · planning with ${Math.round(siloConfidence()*100)}% of your reading`:''}`:'Tap ring levels below to record stock'}</div></div>
+      <div class="summary-card"><div class="sc-label">${depletedWithinWindow?(siloSafetyDays()>0?'Below Safety Stock':'Depletes On'):'Feed Lasts'}</div><div class="sc-value ${statusTone}">${depletedWithinWindow?fmtShort(forecast.depletedDate):(hasReading?`> ${siloRange.end} days`:'—')}</div><div class="sc-sub">${depletedWithinWindow?`${daysUntilDepletion} day${daysUntilDepletion===1?'':'s'} from now${siloSafetyDays()>0?` · keeps ${siloSafetyDays()} day${siloSafetyDays()===1?'':'s'} of feed`:''}`:(hasReading?`Balance at end: ${fmtFeed(forecast.endBalance)}`:'')}</div></div>
       <div class="summary-card"><div class="sc-label">Status</div><div class="sc-value ${statusTone}">${statusText}</div><div class="sc-sub">${statusSub}</div></div>
       <div class="summary-card"><div class="sc-label">${forecast.shortfall>0?'Shortfall':'Coverage'}</div><div class="sc-value ${forecast.shortfall>0?'red':'green'}">${forecast.shortfall>0?fmtFeed(forecast.shortfall):'✅ Covered'}</div><div class="sc-sub">${forecast.shortfall>0?'Consumption exceeds supply over range':`Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div></div>
     </div>
@@ -1380,7 +1380,7 @@ function renderSiloForecastTable(forecast,group,opts){
     let pickupIndicator='';
     if(r.pickupsBirds>0){const pickCls=r.hasPredicted?'fb-pickup-predicted':'fb-pickup-actual';pickupIndicator=` <span class="${pickCls}">−${r.pickupsBirds.toLocaleString()}</span>`;}
     let balanceCls='';let balanceText='—';
-    if(r.balance!==null){balanceText=fmtFeed(r.balance);if(r.isPast)balanceCls='fb-balance-past';else if(r.balance<=0)balanceCls='fb-balance-empty';else if(r.balance<5000)balanceCls='fb-balance-low';else balanceCls='fb-balance-ok';}
+    if(r.balance!==null){balanceText=fmtFeed(r.balance);if(r.isPast)balanceCls='fb-balance-past';else if(r.balance<=0)balanceCls='fb-balance-empty';else if(r.safety>0&&r.balance<r.safety*1.5)balanceCls='fb-balance-low';else balanceCls='fb-balance-ok';}
     const cells=[];
     if(c.date)cells.push(`<td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>`);
     if(c.age)cells.push(`<td class="num">${agesStr}</td>`);
@@ -1505,6 +1505,14 @@ function computeFarmTotals(){
     totalLiveWeight+=pred.totalWeightKg;totalFeedAuto+=pred.totalFeedKg;totalPlaced+=pred.initialPop;totalMortalityEst+=pred.estFinalMort;totalCurrentMort+=Math.max(0,Number(shed.mortality)||0);
     totalBirdsAtHarvest+=pred.birdsAll;weightedAgeSum+=pred.ageBirdSum;targetBirdSum+=pred.targetALW*pred.birdsAll;shedsWithData++;
   }
+  // Feed eaten so far = measured (dockets + carry-over − silo stock), smoothed
+  // over all readings; the Ross model only covers the days after.
+  let feedMeasured=null;
+  try{const m=measuredFeedToDate();
+    if(m){let modelPast=0;
+      withResultPlan(()=>Object.keys(m.cut).forEach(g=>{const end=m.cut[g];shedsForGroup(Number(g)).filter(s=>s.placementDate).forEach(s=>{for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))modelPast+=shedFeedOn(s,d);});}));
+      feedMeasured={eaten:m.eaten,modelPast,asOf:m.asOf,fitted:m.fitted,points:m.points};totalFeedAuto=totalFeedAuto-modelPast+m.eaten;}
+  }catch(e){feedMeasured=null;}
   const autoLeftover=totalFarmLeftover();
   const leftoverKg=(predState.farmLeftoverKg!=null&&Number.isFinite(Number(predState.farmLeftoverKg))&&Number(predState.farmLeftoverKg)>0)?Number(predState.farmLeftoverKg):0;
   const leftoverApplied=leftoverKg>0;
@@ -1520,7 +1528,7 @@ function computeFarmTotals(){
   const k=batchKpis({feedKg:totalFeed,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg});
   const {fcr,cfcr,cfcrInd,pif}=k,avgWeight=k.alw,livability=k.livability,weightedAge=k.avgAge;
   const cage=cAge245ForSheds(sheds.filter(s=>s.placementDate));
-  return {hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
+  return {feedMeasured,hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 // Leftover hint: with expected pickups; never a negative 'leftover'
 function autoLeftoverHint(v){if(v==null)return 'auto: —';return v>=0?`auto: ${fmtFeed(v,1)}`:`auto: 0 · short ${fmtFeed(Math.abs(v),1)}`;}
@@ -1531,8 +1539,10 @@ function feedToOrderLineHtml(f){
   return `<div class="to-order" title="Feed still needed to clean-out, minus silo stock now and loads already booked. Expected = with the auto pickup plan (realistic). Safe = if no more pickups happen (conservative — what the feed forecast assumes).">Still to order: <b>${t(f.expected)}</b> expected <span>· ${t(f.safe)} safe</span></div>`;
 }
 // What the projection has learned from this batch's own data
-function learnedBasisHtml(){
-  if(!FARM_LEARNING)return `<div class="fk-basis fk-learned"><span title="Daily feed per bird from the Ross 308 intake table (or a shed's own Feed intake %). Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings. First thin from your density rules; last pickup at the clean-out date.">Feed: <b>Ross 308 intake</b> · Growth: <b>Ross 308 fitted to your weighings</b> · Last pickup: <b>clean-out date</b></span></div>`;
+function learnedBasisHtml(t){
+  if(!FARM_LEARNING){const fm=t&&t.feedMeasured;
+    const feedPart=fm?`<span title="Feed already eaten is measured: carry-over + docket loads − silo stock${fm.fitted?`, smoothed over ${fm.points} reading dates so one odd reading can't swing it`:''} (${fmtFeed(fm.eaten)}; the Ross table would have said ${fmtFeed(fm.modelPast)}). Days after use the Ross 308 intake table.">Feed: <b>measured to ${fmtShortNoYear(fm.asOf)}</b> + <b>Ross 308 intake</b> after</span>`:`<span title="Daily feed per bird from the Ross 308 intake table (or a shed's own Feed intake %). Record a silo reading for every pair to use measured feed for the days already passed.">Feed: <b>Ross 308 intake</b></span>`;
+    return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b></span></div>`;}
   const parts=[];
   const cal=intakeCalibration();
   if(cal.ok&&cal.fromHistory){parts.push(`<span title="No usable silo readings yet this batch — starting from the average of ${cal.fromHistory} past batch${cal.fromHistory>1?'es':''} in Farm history. Switches to this batch's own readings once every pair has one.">Intake <b>${Math.round(cal.factor*100)}%</b> of Ross · from past batches</span>`);}
@@ -1575,6 +1585,7 @@ function farmResultTitle(){
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
   if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
+  const rg=kpiRanges(t);
   const overrideVal=feedIn(predState.farmFeedOverride);
   const overrideCls=t.usingManualFeed?'manual':'';
   const feedSub=farmFeedSubText(t);
@@ -1584,19 +1595,37 @@ function renderFarmKpiCard(){
   // What the projection is built on: logged + your planned + auto-planned pickups
   let nLog=0,nPlan=0,nAuto=0;
   (farmData.sheds||[]).filter(sh=>sh.placementDate).forEach(sh=>{const rd=new Set((sh.pickups||[]).map(x=>iso(x.date)));nLog+=(sh.pickups||[]).length;nPlan+=(sh.predictedPickups||[]).filter(pp=>pp.date&&!rd.has(iso(pp.date))).length;nAuto+=autoPlanForShed(sh).length;});
-  const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>${learnedBasisHtml()}${vsLastBatchHtml(t)}`;
+  const basisHtml=`<div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Based on <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned pickup${nAuto===1?'':'s'}</div>${learnedBasisHtml(t)}${vsLastBatchHtml(t)}`;
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across ${t.shedsWithData} placed shed${t.shedsWithData===1?'':'s'} of ${SHED_COUNT}</span>${basisHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Manual override (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><div class="fkt-sub">Feed ÷ total live weight</div></div>
+    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Manual override (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><span id="kpiFCRRange">${rg.fcr}</span><div class="fkt-sub">Feed ÷ total live weight</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRSub">${cfcrSubText(t)}</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub">${cfcrIndSubText(t)}</div></div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><div class="fkt-sub" id="kpiPIFSub">${pifSubText(t)}</div></div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(2)}</div><span id="kpiPIFRange">${rg.pif}</span><div class="fkt-sub" id="kpiPIFSub">${pifSubText(t)}</div></div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. CAge 2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Age when cumulative FCR (cumulative intake ÷ weight per bird) reaches 2.45, along each shed's growth curve; farm value weighted by birds placed. Past day 60 the intake table is held at its last value.">Age cumulative FCR hits 2.45 · higher is better</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub">Farm average across ${t.birdsAtHarvest.toLocaleString()} birds</div><div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(3)}</b></span>`:'';}).join('')}</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed · ${t.mortality.toLocaleString()} est. mort</div></div>
     <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
   </div></div>`;
+}
+// Range: the same projection with every last pickup PROJ_EARLY_DAYS before
+// the plant's clean-out date (plants usually take the last birds early)
+const PROJ_EARLY_DAYS=4;let farmRangeCache=null;
+function farmTotalsEarly(){
+  if(farmRangeCache)return farmRangeCache;
+  let t=null;projEndShiftDays=PROJ_EARLY_DAYS;autoPlanCache=new Map();
+  try{t=computeFarmTotals();}catch(e){t=null;}finally{projEndShiftDays=0;autoPlanCache=new Map();}
+  farmRangeCache=t;return t;
+}
+function rangeText(a,b,fmt){if(a==null||b==null)return '';const lo=Math.min(a,b),hi=Math.max(a,b);return fmt(lo,hi);}
+function kpiRanges(t){
+  const e=farmTotalsEarly();if(!e||!e.hasData||!t.hasData)return {feed:'',fcr:'',pif:''};
+  const tip=`title="Low end if every shed's last pickup is ${PROJ_EARLY_DAYS} days before the plant's clean-out date; high end at the clean-out date."`;
+  return {
+    feed:t.usingManualFeed?'':`<div class="fkt-range" ${tip}>Range ${rangeText(e.totalFeed,t.totalFeed,(lo,hi)=>`${fmtFeedNum(lo,0)}–${fmtFeed(hi,0)}`)}</div>`,
+    fcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.fcr,t.fcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
+    pif:`<div class="fkt-range" ${tip}>Range ${rangeText(e.pif,t.pif,(lo,hi)=>`${lo.toFixed(0)}–${hi.toFixed(0)}`)}</div>`};
 }
 function cfcrSubText(t){return `FCR − (ALW ${t.avgWeight.toFixed(3)} − 2.45) × ${CFCR_BAIADA_BETA}`;}
 function cfcrIndSubText(t){return `FCR − (ALW − ${t.targetKg.toFixed(2)} target) ÷ 3.2`;}
@@ -1610,6 +1639,7 @@ function updateFarmKpiValues(){
   set('kpiLiveWeight',fmtKgAlways(t.totalLiveWeight));
   set('kpiFeed',fmtTonnesAlways(t.totalFeed));
   const sub=el('kpiFeedSub');if(sub)sub.textContent=farmFeedSubText(t);
+  farmRangeCache=null;const rg=kpiRanges(t);set('kpiFeedRange',rg.feed);set('kpiFCRRange',rg.fcr);set('kpiPIFRange',rg.pif);
   set('kpiFCR',t.fcr.toFixed(3));
   set('kpiCFCR',t.cfcr.toFixed(3));set('kpiCFCRSub',cfcrSubText(t));
   set('kpiCFCRInd',t.cfcrInd.toFixed(3));set('kpiCFCRIndSub',cfcrIndSubText(t));
@@ -1634,7 +1664,7 @@ function adjDraftFromState(g){
   return {group:g,beta:Number(predState.beta)||0,scale:Math.round(currentBiasFactor()*1000)/10,target:Number(predState.targetHarvestWeightKg[g])||2.65,
     trig:Number(dg.triggerDensity),tgt:Number(dg.targetDensity),max:Number(dg.maxDensity),
     tp:Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups,
-    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr};
+    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr,conf:Math.round(siloConfidence()*100),safety:siloSafetyDays()};
 }
 // Dirty = draft differs from what the modal opened with (not from live
 // state, so a background sync never shows up as 'your' change)
@@ -1671,6 +1701,11 @@ function adjModalBodyHtml(){
   <section class="adj-sec">
     <h4 class="adj-sec-title">📊 Results</h4>
     <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant. Also the reference for cFCR (Industry) = FCR − (ALW − target) ÷ 3.2. cFCR (Baiada) always uses 2.45 kg × 0.27.</span></div>
+  </section>
+  <section class="adj-sec">
+    <h4 class="adj-sec-title">🛢 Silo readings <span>feed balance forecast</span></h4>
+    <div class="adj-row"><label>How true are my readings</label><input type="number" class="adj-num" data-adj="conf" min="50" max="100" step="5" value="${d.conf}" /><span class="adj-unit">%</span><span class="adj-hint">Plan as if the silos hold this share of what you read — 80% turns a 50 t reading into 40 t. 100% takes readings as they are.</span></div>
+    <div class="adj-row"><label>Safety stock</label><input type="number" class="adj-num" data-adj="safety" min="0" max="3" step="0.5" value="${d.safety}" /><span class="adj-unit">day${d.safety===1?'':'s'} of feed</span><span class="adj-hint">"Runs out" is flagged when the silos would drop below this much feed — your buffer for late or short loads.</span></div>
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
@@ -1732,6 +1767,7 @@ function applyAdjDraft(){
   dg.triggerDensity=cl(d.trig,20,45);dg.targetDensity=cl(d.tgt,15,35);dg.maxDensity=cl(d.max,28,45);dg.targetPickups=Math.round(cl(d.tp,MIN_PICKUPS_PER_SHED,MAX_PICKUPS_PER_SHED));
   predState.densityGlobal=dg;
   predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
+  predState.siloConfidencePct=Math.round(cl(d.conf,50,100));predState.safetyDays=cl(d.safety,0,3);
   shedsForGroup(d.group).forEach(s=>{const v=d.ovr[s.id];s.scaleOverride=(v==null||!(Number(v)>0))?null:cl(Number(v)/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);});
   savePredState();saveState();schedulePush();
   adjDraft=null;adjDraftBase='';closeAdjModal(true);

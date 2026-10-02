@@ -139,6 +139,8 @@ function learnedThinPattern(){
 // reach the farm's usual last-pickup weight — bigger birds go earlier —
 // within the farm's range of last-pickup ages; with only ages known, at the
 // typical age. Never later than the clean-out date.
+// Range scenario: last pickups this many days before the plant's clean-out date
+let projEndShiftDays=0;
 function resultPlanEndDate(shed){
   const co=shed.cleanoutDate?dateOnly(shed.cleanoutDate):null;
   const lf=FARM_LEARNING&&typeof learnedFinalPickup==='function'?learnedFinalPickup():null;
@@ -151,7 +153,7 @@ function resultPlanEndDate(shed){
     if(co&&co<end)end=co;
     return end;
   }
-  if(co)return co;
+  if(co){if(projEndShiftDays>0){const tomorrow=addDays(dateOnly(new Date()),1);const e=addDays(co,-projEndShiftDays);return e<tomorrow?(co<tomorrow?co:tomorrow):e;}return co;}
   // No clean-out date: when birds reach the pair's target harvest weight
   const g=Math.ceil(shed.id/2);const target=Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;
   let d=addDays(dateOnly(new Date()),1);

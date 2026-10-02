@@ -62,6 +62,7 @@ function loadPredState(){
     if(typeof v.adjOpen==='boolean')predState.adjOpen=v.adjOpen;
     if(v.densityGlobal&&typeof v.densityGlobal==='object'){const dg=v.densityGlobal;let tp=DEFAULT_DENSITY_GLOBAL.targetPickups;if(Number.isFinite(Number(dg.targetPickups)))tp=Number(dg.targetPickups);else if(Number.isFinite(Number(dg.minPickupsBeforeCleanout)))tp=Number(dg.minPickupsBeforeCleanout);tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,Math.floor(tp)));predState.densityGlobal={maxDensity:Number.isFinite(Number(dg.maxDensity))?Number(dg.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(dg.triggerDensity))?Number(dg.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(dg.targetDensity))?Number(dg.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups:tp};}
     if(Array.isArray(v.noPickupDays))predState.noPickupDays=v.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
+    {const c=Number(v.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(v.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     if(Array.isArray(v.farmHistory))predState.farmHistory=v.farmHistory.map(normalizeHistoryRec).filter(Boolean);
     if(Array.isArray(v.farmHistoryDeleted))predState.farmHistoryDeleted=v.farmHistoryDeleted.map(String).slice(-200);
   }catch(e){}

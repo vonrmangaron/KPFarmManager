@@ -86,8 +86,12 @@ function deliveriesKgOnAll(group,D){return loadsKgOnAll(group,D)+testKgOn(group,
 //   evening: end = reading
 //   morning: end = reading + that day's deliveries − that day's feed
 function readingIsMorning(r){return !!r&&r.time==='am';}
+// How true are my readings (Adjust): plan as if the silos hold this share of
+// what was read. Measured feed (FCR, projection) always uses the raw reading.
+function siloConfidence(){const v=Number(predState.siloConfidencePct);return Number.isFinite(v)&&v>=50&&v<=100?v/100:1;}
+function siloSafetyDays(){const v=Number(predState.safetyDays);return Number.isFinite(v)&&v>=0&&v<=3?v:1;}
 function readingEndOfDayKg(group,reading,kgOn){
-  const base=readingTotalKg(reading);
+  const base=readingTotalKg(reading)*siloConfidence();
   if(!readingIsMorning(reading))return base;
   const d=dateOnly(reading.date);
   return base+(kgOn||deliveriesKgOnAll)(group,d)-groupDailyFeedOn(shedsForGroup(group),d);
@@ -248,8 +252,11 @@ function computeSiloForecastInner(group,range,realOnly){
     totalConsumption+=cons;totalDelivered+=del;
     rows.push({date:d,consumption:cons,delivery:del,deliveries:deliveriesOnDay,balance:bal,liveBirds,pickupsBirds,hasPredicted,testPickups:testPickupsByDay[key]||[],movedAway:movedAwayByDay[key]||[],isToday,isPast,isFuture:!isPast&&!isToday,isWeekend:isWeekend(d)});
   }
+  // "Runs out" = stock drops below the safety stock (Adjust: days of feed)
+  const safeDays=siloSafetyDays();
+  rows.forEach((r,i)=>{const next=rows[i+1];r.safety=safeDays*(next?next.consumption:r.consumption);});
   let depletedDate=null;
-  for(const r of rows){if(r.balance!==null&&r.balance<=0&&r.consumption>0&&!r.isPast){depletedDate=r.date;break;}}
+  for(const r of rows){if(r.balance!==null&&r.consumption>0&&!r.isPast&&r.balance<=r.safety){depletedDate=r.date;break;}}
   const endBalance=rows.length?rows[rows.length-1].balance:null;
   const totalStock=balanceOnEndOfDay(group,today,realOnly);
   const shortfall=Math.max(0,totalConsumption-(totalStock||0)-totalDelivered);

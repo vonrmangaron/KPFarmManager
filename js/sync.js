@@ -32,6 +32,8 @@ function buildCloudPayload(){
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[],
+      siloConfidencePct:predState.siloConfidencePct,
+      safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
       farmHistoryDeleted:predState.farmHistoryDeleted||[]
     },
@@ -76,6 +78,7 @@ function applyCloudPayload(payload,options){
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
     // The farm's history travels with every batch file. Merged, never replaced:
     // a device that hadn't synced a new record can't wipe it out.
+    {const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     mergeCloudFarmHistory(p);
     savePredState();
   }
