@@ -20,10 +20,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-fh-add]')){fhFormOpen=true;fhEditId=null;renderSettingsDrawerBody();return;}
     const fkTog=e.target.closest('[data-fk-toggle]');
     if(fkTog){if(fkTog.dataset.fkToggle==='how')fkHowOpen=!fkHowOpen;else fkFeedOpen=!fkFeedOpen;render();return;}
-    const fpTruck=e.target.closest('[data-fp-truck]');
-    if(fpTruck){let sp={};try{sp=JSON.parse(fpTruck.dataset.fpSplit||'{}');}catch(err){}const tot=Object.values(sp).reduce((s,v)=>s+Number(v||0),0);openLoadModal(null,{date:todayIso(),feedType:fpTruck.dataset.fpTruck,plannedT:tot,splitT:sp});return;}
-    const fpMode=e.target.closest('[data-fp-mode]');
-    if(fpMode){predState.truckSplitMode=fpMode.dataset.fpMode==='any15'?'any15':'simple';savePredState();schedulePush();refreshLoadsViews();return;}
     const ssBtn=e.target.closest('[data-silo-set]');
     if(ssBtn){changeSiloSetting(ssBtn.dataset.siloSet,Number(ssBtn.dataset.step));return;}
     const fhTog=e.target.closest('[data-fh-toggle]');
@@ -85,7 +81,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={moreLoads:openLoadsModal,moreFeedPlan:openFeedPlanModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
+      const actions={moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
@@ -124,9 +120,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#settingsBatchHistoryBtn')){openBatchHistoryModal();return;}
     if(e.target.closest('#settingsReportBtn')){generateBatchReport();return;}
 
-    if(e.target.closest('#feedPlanBtn')||e.target.closest('[data-open-feed-plan]')){openFeedPlanModal();return;}
-    if(e.target.closest('#feedPlanClose')){closeFeedPlanModal();return;}
-    if(feedPlanModalOpen&&e.target.id==='feedPlanModal'){closeFeedPlanModal();return;}
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
     if(loadsModalState.open&&e.target.id==='loadsModal'){closeLoadsModal();return;}
@@ -289,7 +282,6 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
       if(adjModalOpen){toggleAdjCollapse();return;}
       if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
-      if(feedPlanModalOpen){closeFeedPlanModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}
       if(feedCompareState.modalOpen){closeCompareModal();return;}
       if(settingsDrawerOpen){closeSettingsDrawer();return;}
@@ -313,7 +305,6 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
   });
 
   document.addEventListener('change',e=>{
-    if(e.target&&e.target.dataset&&e.target.dataset.fpQuota){const k=e.target.dataset.fpQuota;const n=Number(e.target.value);if(Number.isFinite(n)&&n>=0&&n<=5){predState.feedQuota={...DEFAULT_FEED_QUOTA,...(predState.feedQuota||{}),[k]:n};savePredState();schedulePush();refreshLoadsViews();}return;}
     const t=e.target;
     // Adjustments modal: per-shed 'Use global' switch (draft)
     if(t.dataset&&t.dataset.adjUseglobal&&adjDraft){const id=Number(t.dataset.adjUseglobal);if(t.checked)adjDraft.ovr[id]=null;else{const own=suggestScaleCorrection([farmData.sheds[id-1]]);adjDraft.ovr[id]=own?Math.round(own.value*1000)/10:adjDraft.scale;}refreshAdjModal(true);return;}

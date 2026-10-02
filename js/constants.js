@@ -109,7 +109,6 @@ const NAV_ITEMS = [
   { id: 'predictions', label: 'Predictions', icon: 'chart' },
   { section: 'TOOLS' },
   { id: 'feedloads', label: 'Feed Loads', icon: 'loads', modalBtnId: 'loadsBtn' },
-  { id: 'feedplan', label: 'Feed Plan', icon: 'plan', modalBtnId: 'feedPlanBtn' },
   { id: 'siloreadings', label: 'Silo Readings', icon: 'silo', modalBtnId: 'siloBtn' },
   { id: 'comparefeed', label: 'Compare Feed', icon: 'compare', modalBtnId: 'toolsCompareBtn' },
   { id: 'history', label: 'History', icon: 'history' },

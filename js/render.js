@@ -149,7 +149,6 @@ function navIcon(type) {
     chart: '<path d="M3 20h18"/><path d="m4 16 5-5 4 3 7-8"/><path d="M15 6h5v5"/>',
     cluckwise: '<circle cx="11" cy="14" r="6"/><circle cx="14" cy="8" r="4"/><path d="m18 8 3 1-3 1"/>',
     loads: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
-    plan: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6"/><path d="M9 16h4"/>',
     silo: '<path d="M6 4h12v11l-6 5-6-5z"/><path d="M6 9h12"/>',
     compare: '<path d="M8 3 4 7l4 4"/><path d="M4 7h11a5 5 0 0 1 5 5v1"/><path d="m16 21 4-4-4-4"/><path d="M20 17H9a5 5 0 0 1-5-5v-1"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
@@ -393,7 +392,6 @@ function renderMoreSheet() {
       <div class="more-grip" aria-hidden="true"></div>
       <div class="more-group">
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
-        ${row('moreFeedPlan', 'plan', 'Feed plan', 'Quota and trucks still to order')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
         ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}

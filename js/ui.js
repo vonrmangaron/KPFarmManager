@@ -1380,25 +1380,7 @@ function closeLoadsModal(){
   const m=document.getElementById('loadsModal');
   if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
 }
-let feedPlanModalOpen=false;
-function refreshLoadsViews(){if(loadsModalState.open)renderLoadsModalBody();if(feedPlanModalOpen)renderFeedPlanModalBody();}
-function openFeedPlanModal(){
-  closeSettingsDrawer();if(loadsModalState.open)closeLoadsModal();feedPlanModalOpen=true;
-  const m=document.getElementById('feedPlanModal');
-  if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
-  renderFeedPlanModalBody();
-}
-function closeFeedPlanModal(){
-  feedPlanModalOpen=false;
-  const m=document.getElementById('feedPlanModal');
-  if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
-}
-function renderFeedPlanModalBody(){
-  const body=document.getElementById('feedPlanBody');if(!body)return;
-  const prevScroll=body.scrollTop;
-  body.innerHTML=feedPlanHtml()||'<p class="fp-note">Add a batch with birds placed to see the feed plan.</p>';
-  requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
-}
+function refreshLoadsViews(){if(loadsModalState.open)renderLoadsModalBody();}
 function setLoadsFilter(f){loadsModalState.filter=f;renderLoadsModalBody();}
 function setLoadsView(v){
   if(v!=='table'&&v!=='oneline')return;
@@ -1417,36 +1399,25 @@ function updateLoadsDot(){
   const btn=document.getElementById('loadsBtn');
   if(btn)btn.title=summary.needsActual>0?`Feed loads — ${summary.needsActual} need an actual`:'Feed loads';
 }
-// Feed plan: quota vs ordered per pair and feed type, plus the trucks still
-// to order (whole 60 t, split your way). Tap a truck to add it as a load.
+// Loads to order for the batch, per feed type: whole 60 t loads to reach the
+// integrator quota (starter/grower/finisher) and what the birds need to
+// clean-out (withdrawal). Just the count — the manager picks the pairs.
 const FEED_PLAN_LABEL={starter:'Starter',grower:'Grower',finisher:'Finisher',withdrawal:'Withdrawal'};
 function feedPlanHtml(){
   let p=null;try{p=feedPlan();}catch(e){console.warn('Feed plan failed',e);}
   if(!p)return '';
-  const t1=v=>fmtFeed(v,0);
-  const head=p.pairs.map(g=>`<th class="num">${pairShort(g)}</th>`).join('')+'<th class="num fp-farm">Farm</th>';
-  const rows=FEED_PLAN_TYPES.map(t=>{
-    const cells=p.pairs.map(g=>{const r=p.rows[g][t];
-      if(t==='withdrawal')return `<td class="num"><b>${t1(r.ordered)}</b><div class="fp-sub ${r.still>0?'due':'ok'}">${r.still>0?`needs ${t1(r.still)}`:'covered'}</div></td>`;
-      return `<td class="num"><b>${t1(r.ordered)}</b> <span class="fp-of">/ ${t1(r.quota)}</span><div class="fp-sub ${r.still>0?'due':'ok'}">${r.still>0?`${t1(r.still)} to order`:'✓ done'}</div></td>`;}).join('');
-    const f=p.farm[t];
-    const farmCell=t==='withdrawal'?`<td class="num fp-farm"><b>${t1(f.ordered)}</b>${p.carry>0?`<div class="fp-sub">incl. ${t1(p.carry)} carry-over</div>`:''}<div class="fp-sub ${f.still>0?'due':'ok'}">${f.still>0?`needs ${t1(f.still)}`:'covered'}</div></td>`:`<td class="num fp-farm"><b>${t1(f.ordered)}</b> <span class="fp-of">/ ${t1(f.quota)}</span><div class="fp-sub ${f.still>0?'due':'ok'}">${f.still>0?`${t1(f.still)} to order`:'✓ done'}</div></td>`;
-    return `<tr><th>${FEED_PLAN_LABEL[t]}${t!=='withdrawal'?`<span class="fp-k">${feedQuotaPerBird(t)} kg/bird</span>`:'<span class="fp-k">until clean-out</span>'}</th>${cells}${farmCell}</tr>`;}).join('');
-  const unspec=p.pairs.reduce((s,g)=>s+p.rows[g].unspecified,0);
-  const truckLists=FEED_PLAN_TYPES.filter(t=>p.trucks[t].length).map(t=>{
-    const chips=p.trucks[t].map(sp=>{const parts=Object.entries(sp).map(([g,v])=>`${pairShort(+g)} ${v/1000}`);const st=JSON.stringify(Object.fromEntries(Object.entries(sp).map(([g,v])=>[g,v/1000])));
-      return `<button type="button" class="fp-truck" data-fp-truck="${escapeAttr(t)}" data-fp-split='${escapeAttr(st)}' title="Add this truck as a ${FEED_PLAN_LABEL[t].toLowerCase()} load">🚛 ${parts.join(' · ')} t</button>`;}).join('');
-    return `<div class="fp-trucks"><span class="fp-trucks-lbl">${FEED_PLAN_LABEL[t]}: <b>${p.trucks[t].length} truck${p.trucks[t].length===1?'':'s'}</b></span>${chips}</div>`;}).join('');
-  const mode=predState.truckSplitMode==='any15'?'any15':'simple';
-  const q=k=>`<label class="fp-q">${FEED_PLAN_LABEL[k]} <input type="number" min="0" max="5" step="0.05" data-fp-quota="${k}" value="${feedQuotaPerBird(k)}" /></label>`;
+  const n=v=>{const r=Math.round(v*10)/10;return Number.isInteger(r)?String(r):r.toFixed(1);};
+  let totOrd=0,totLeft=0;
+  const tiles=FEED_PLAN_TYPES.map(t=>{
+    const own=p.farm[t].ordered-(t==='withdrawal'?p.carry:0);
+    const ordered=own/TRUCK_KG;
+    const left=Math.ceil(p.pairs.reduce((s,g)=>s+Math.ceil(Math.max(0,p.rows[g][t].still)/SPLIT_STEP_KG-1e-9)*SPLIT_STEP_KG,0)/TRUCK_KG-1e-9);
+    totOrd+=ordered;totLeft+=left;
+    return `<div class="fp-tile ${left>0?'due':'ok'}"><span class="fp-t">${FEED_PLAN_LABEL[t]}</span><span class="fp-n">${n(ordered+left)}</span><span class="fp-s">${n(ordered)} ordered</span><span class="fp-l">${left>0?`${left} to order`:'✓ done'}</span></div>`;}).join('');
   return `<div class="feed-plan">
-    <p class="fp-note">Quota = birds placed × kg/bird. It's a minimum, rounded up to whole 60 t trucks.</p>
-    <div class="fp-table-wrap"><table class="fp-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    ${unspec>0?`<p class="fp-note">${t1(unspec)} of loads have no feed type and aren't counted above.</p>`:''}
-    ${truckLists?`<div class="fp-suggest"><div class="fp-suggest-lbl">Still to order — tap a truck to add it as a load (you set the date):</div>${truckLists}</div>`:'<p class="fp-note">Every quota is ordered and the birds\' needs to clean-out are covered.</p>'}
-    <div class="fp-settings">${q('starter')}${q('grower')}${q('finisher')}
-      <span class="fp-mode" role="group" aria-label="Truck splits"><span>Truck splits</span><button type="button" data-fp-mode="simple" class="${mode==='simple'?'active':''}" title="60 to one pair, 30/30, or 15/15/15/15">Simple</button><button type="button" data-fp-mode="any15" class="${mode==='any15'?'active':''}" title="Any 15 t steps, e.g. 45/15">Any 15 t</button></span>
-    </div>
+    <div class="fp-head"><span class="fp-title">Loads for this batch</span><span class="fp-tot">${n(totOrd+totLeft)} loads · ${n(totOrd)} ordered · <b>${totLeft} to order</b></span></div>
+    <div class="fp-tiles">${tiles}</div>
+    <p class="fp-note">60 t loads to clean-out${p.carry>0?` · withdrawal already counts the ${fmtFeed(p.carry,0)} carry-over`:''}</p>
   </div>`;
 }
 function renderLoadsModalBody(){
@@ -1483,7 +1454,7 @@ function renderLoadsModalBody(){
       ${feedToOrderLineHtml(farmFeedToOrder())}
       <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
     </div>`;
-  const planHtml=`<button type="button" class="fp-open-link" data-open-feed-plan="1">📋 Feed plan — quota and trucks still to order →</button>`;
+  const planHtml=feedPlanHtml();
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
