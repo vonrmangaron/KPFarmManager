@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-fh-add]')){fhFormOpen=true;fhEditId=null;renderSettingsDrawerBody();return;}
+    const ssBtn=e.target.closest('[data-silo-set]');
+    if(ssBtn){changeSiloSetting(ssBtn.dataset.siloSet,Number(ssBtn.dataset.step));return;}
     const fhTog=e.target.closest('[data-fh-toggle]');
     if(fhTog){const id=fhTog.dataset.fhToggle;fhOpenId=fhOpenId===id?null:id;renderSettingsDrawerBody();return;}
     const fhEdit=e.target.closest('[data-fh-edit]');

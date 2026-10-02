@@ -1794,6 +1794,26 @@ function compareTestActions(g){
   if(!nl&&!np)return '';
   return `<div class="cch-tests">${nl?`<button class="btn-clear-tests" data-clear-tests="${g}" type="button">🧹 Test loads (${nl})</button>`:''}${np?`<button class="btn-clear-tests" data-tp-clear="${g}" type="button">🧹 Test pickups (${np})</button>`:''}</div>`;
 }
+// Silo planning settings — where they're used: the Silo reading sheet and
+// Compare Feed (ordering). Reading accuracy scales each reading for the
+// forecast; safety stock is when "runs out" is flagged.
+function siloSettingsBarHtml(){
+  const conf=Math.round(siloConfidence()*100),safety=siloSafetyDays();
+  const step=(k,d,lbl,dis)=>`<button type="button" class="ss-btn" data-silo-set="${k}" data-step="${d}" aria-label="${lbl}" ${dis?'disabled':''}>${d>0?'+':'−'}</button>`;
+  return `<div class="silo-set" role="group" aria-label="Silo planning">
+      <div class="ss-item" title="Plan as if the silos hold this share of what you read — 80% turns a 50 t reading into 40 t. Feed eaten (FCR) still uses the real reading."><span class="ss-lbl">Reading accuracy</span><span class="ss-step">${step('conf',-5,'Lower reading accuracy',conf<=50)}<b>${conf}%</b>${step('conf',5,'Raise reading accuracy',conf>=100)}</span></div>
+      <div class="ss-item" title="'Runs out' and the feed alerts trigger when the silos would drop below this much feed."><span class="ss-lbl">Safety stock</span><span class="ss-step">${step('safety',-0.5,'Less safety stock',safety<=0)}<b>${safety} day${safety===1?'':'s'}</b>${step('safety',0.5,'More safety stock',safety>=3)}</span></div>
+    </div>`;
+}
+function changeSiloSetting(key,delta){
+  if(key==='conf')predState.siloConfidencePct=Math.max(50,Math.min(100,Math.round(siloConfidence()*100)+delta));
+  else if(key==='safety')predState.safetyDays=Math.max(0,Math.min(3,Math.round((siloSafetyDays()+delta)*2)/2));
+  else return;
+  savePredState();schedulePush();
+  if(document.getElementById('siloModal')?.classList.contains('open'))renderSiloModalBody();
+  if(feedCompareState.modalOpen)renderCompareModalBody();
+  render();
+}
 function renderCompareModalBody(){
   const body=document.getElementById('compareFeedBody');if(!body)return;
   // Determine the "current" group for highlighting — null when we're not
@@ -1816,7 +1836,7 @@ function renderCompareModalBody(){
         else statusChip='⚪ No reading';
         return `<div class="compare-col"><div class="compare-col-head ${isCurrent?'current':''}"><span class="cch-name">${pairLabel(g)}${compareSiloChips(g)}${isCurrent?' <span class="cth-tag">Current</span>':''}</span><span class="cch-status">${escapeHtml(statusChip)}</span><div class="cch-deliveries">${renderDeliveriesSummary(g)}</div>${compareTestActions(g)}</div>${renderSiloForecastTable(forecast,g,{inModal:true,columns:cols})}</div>`;
       }).join('');
-  body.innerHTML=`${rangeBarHtml(siloRange,'compare')}${renderCompareGroupPicker(currentGroup)}${renderCompareColumnPicker()}<div class="compare-layout-toggle"><span class="clt-label">Layout:</span><button type="button" data-compare-layout="stacked" class="${layout==='stacked'?'active':''}">☰ Stacked</button><button type="button" data-compare-layout="grid" class="${layout==='grid'?'active':''}">▦ Grid</button></div><div class="compare-tables ${layout}">${tablesHtml}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">💡 Click any future weekday row in <strong>any</strong> table to plan a load for that group. Rows with a load already scheduled show a small <strong>✎</strong> button to edit it.</div>`;
+  body.innerHTML=`${siloSettingsBarHtml()}${rangeBarHtml(siloRange,'compare')}${renderCompareGroupPicker(currentGroup)}${renderCompareColumnPicker()}<div class="compare-layout-toggle"><span class="clt-label">Layout:</span><button type="button" data-compare-layout="stacked" class="${layout==='stacked'?'active':''}">☰ Stacked</button><button type="button" data-compare-layout="grid" class="${layout==='grid'?'active':''}">▦ Grid</button></div><div class="compare-tables ${layout}">${tablesHtml}</div><div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;">💡 Click any future weekday row in <strong>any</strong> table to plan a load for that group. Rows with a load already scheduled show a small <strong>✎</strong> button to edit it.</div>`;
   if(inlineDeliveryState){const inp=body.querySelector('.inline-del-input');if(inp)requestAnimationFrame(()=>{try{inp.focus();}catch(e){}});}
 }
 
@@ -2141,6 +2161,7 @@ function renderSiloModalBody(){
       ${readTimeToggleHtml()}
       <span class="sms-date-hint">${siloReadTime()==='am'?'Morning = stock <strong>before</strong> today\'s feeding and delivery':'Evening = stock at <strong>end of day</strong>, after today\'s delivery'} · tap the ring level for each silo · saves instantly</span>
     </div>
+    ${siloSettingsBarHtml()}
     ${groupsHtml}
     <div class="sms-grand-total"><span class="sms-gt-label">Total feed on hand</span><span class="sms-gt-value" id="smsGrandTotal">${fmtFeed(grandTotalKg)}</span></div>
     <div class="sms-actions"><button type="button" class="sms-done-btn" id="siloModalDone">✓ Done</button></div>`;

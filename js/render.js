@@ -1134,7 +1134,7 @@ function groupViewHtml(g){
   const view=shedViewByGroup[g]||'planner';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
-  const groupSwitch=`<div class="group-switch-mobile" role="tablist" aria-label="Shed pair">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" data-tab="g${gi}" aria-selected="${gi===g}">${pairShort(gi)}</button>`).join('')}</div>`;
+  const groupSwitch=pairSwitchHtml(g,'sheds');
   return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairLabel(g)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
@@ -1290,6 +1290,7 @@ function renderFeedPlanner(group,sheds,today){
   const tpCount=testPickupCountForGroup(group);
   const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?(leftover.balance<0?' short':''):' muted'}" title="${leftoverOk?`With expected pickups: ${leftover.balance>=0?fmtFeed(leftover.balance,1)+' left at clean-out':'short '+fmtFeed(leftover.short,1)} · if no more pickups: short ${fmtFeed(leftover.safeShort,1)}`:'No clean-out date'}">🧺 ${leftoverStr}</span></span>`;
   return `<div class="planner-wrap">
+    ${siloSettingsBarHtml()}
     <div class="planner-summary">
       <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?`Expected at end of today${siloConfidence()<1?` · planning with ${Math.round(siloConfidence()*100)}% of your reading`:''}`:'Tap ring levels below to record stock'}</div></div>
       <div class="summary-card"><div class="sc-label">${depletedWithinWindow?(siloSafetyDays()>0?'Below Safety Stock':'Depletes On'):'Feed Lasts'}</div><div class="sc-value ${statusTone}">${depletedWithinWindow?fmtShort(forecast.depletedDate):(hasReading?`> ${siloRange.end} days`:'—')}</div><div class="sc-sub">${depletedWithinWindow?`${daysUntilDepletion} day${daysUntilDepletion===1?'':'s'} from now${siloSafetyDays()>0?` · keeps ${siloSafetyDays()} day${siloSafetyDays()===1?'':'s'} of feed`:''}`:(hasReading?`Balance at end: ${fmtFeed(forecast.endBalance)}`:'')}</div></div>
@@ -1669,7 +1670,7 @@ function adjDraftFromState(g){
   return {group:g,beta:Number(predState.beta)||0,scale:Math.round(currentBiasFactor()*1000)/10,target:Number(predState.targetHarvestWeightKg[g])||2.65,
     trig:Number(dg.triggerDensity),tgt:Number(dg.targetDensity),max:Number(dg.maxDensity),
     tp:Number.isFinite(Number(dg.targetPickups))?Number(dg.targetPickups):DEFAULT_DENSITY_GLOBAL.targetPickups,
-    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr,conf:Math.round(siloConfidence()*100),safety:siloSafetyDays()};
+    npd:[...(predState.noPickupDays||[])].sort((a,b)=>a-b),ovr};
 }
 // Dirty = draft differs from what the modal opened with (not from live
 // state, so a background sync never shows up as 'your' change)
@@ -1706,11 +1707,6 @@ function adjModalBodyHtml(){
   <section class="adj-sec">
     <h4 class="adj-sec-title">📊 Results</h4>
     <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant. Also the reference for cFCR (Industry) = FCR − (ALW − target) ÷ 3.2. cFCR (Baiada) always uses 2.45 kg × 0.27.</span></div>
-  </section>
-  <section class="adj-sec">
-    <h4 class="adj-sec-title">🛢 Silo readings <span>feed balance forecast</span></h4>
-    <div class="adj-row"><label>How true are my readings</label><input type="number" class="adj-num" data-adj="conf" min="50" max="100" step="5" value="${d.conf}" /><span class="adj-unit">%</span><span class="adj-hint">Plan as if the silos hold this share of what you read — 80% turns a 50 t reading into 40 t. 100% takes readings as they are.</span></div>
-    <div class="adj-row"><label>Safety stock</label><input type="number" class="adj-num" data-adj="safety" min="0" max="3" step="0.5" value="${d.safety}" /><span class="adj-unit">day${d.safety===1?'':'s'} of feed</span><span class="adj-hint">"Runs out" is flagged when the silos would drop below this much feed — your buffer for late or short loads.</span></div>
   </section>
   <section class="adj-sec">
     <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
@@ -1772,7 +1768,6 @@ function applyAdjDraft(){
   dg.triggerDensity=cl(d.trig,20,45);dg.targetDensity=cl(d.tgt,15,35);dg.maxDensity=cl(d.max,28,45);dg.targetPickups=Math.round(cl(d.tp,MIN_PICKUPS_PER_SHED,MAX_PICKUPS_PER_SHED));
   predState.densityGlobal=dg;
   predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
-  predState.siloConfidencePct=Math.round(cl(d.conf,50,100));predState.safetyDays=cl(d.safety,0,3);
   shedsForGroup(d.group).forEach(s=>{const v=d.ovr[s.id];s.scaleOverride=(v==null||!(Number(v)>0))?null:cl(Number(v)/100,MIN_BIAS_FACTOR,MAX_BIAS_FACTOR);});
   savePredState();saveState();schedulePush();
   adjDraft=null;adjDraftBase='';closeAdjModal(true);
@@ -1823,7 +1818,12 @@ function renderPredictionsView(){
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
   const groupNames={1:pairLabel(1),2:pairLabel(2),3:pairLabel(3),4:pairLabel(4)};
-  return `<div class="pred-layout"><div class="predictions-head"><h1>📊 ${groupNames[g]} Prediction</h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div><div class="pred-group-mobile">${[1,2,3,4].map(gi=>`<button class="stab ${predState.predGroup===gi?'active':''}" data-predgroup="${gi}">${groupNames[gi]}</button>`).join('')}</div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+  return `${pairSwitchHtml(g,'pred')}<div class="pred-layout"><div class="predictions-head"><h1>📊 ${groupNames[g]} Prediction</h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+}
+// Shed-pair switcher — the same segmented bar on the Sheds and Predictions
+// pages; sticks to the top while scrolling on phones and tablets
+function pairSwitchHtml(g,ctx){
+  return `<div class="group-switch-mobile" role="tablist" aria-label="Shed pair">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" ${ctx==='pred'?`data-predgroup="${gi}"`:`data-tab="g${gi}"`} aria-selected="${gi===g}">${pairShort(gi)}</button>`).join('')}</div>`;
 }
 function renderInYardCurvePanel(shed){
   const tc=shed.targetCurve||{};

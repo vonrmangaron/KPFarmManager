@@ -2615,14 +2615,6 @@ body.theme-dark .history-toolbar .btn-primary{color:#1A2438;}
 }
 .mob-nav-btn.active .mob-nav-pill { background: var(--primary-soft); }
 
-/* Mobile-only fallback for the Predictions group switcher — on desktop
-   this lives in the sidebar subnav instead (sidebar is hidden below). */
-.pred-group-mobile {
-  display: none;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
 
 @media (max-width: 768px) {
   .sidebar { display: none; }
@@ -2639,7 +2631,6 @@ body.theme-dark .history-toolbar .btn-primary{color:#1A2438;}
   .dash-row-mid, .dash-row-triple { grid-template-columns: 1fr; }
   .dash-wrap { gap: 14px; }
   .batch-input { display: none; }
-  .pred-group-mobile { display: flex; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2765,17 +2756,6 @@ body.theme-dark .mob-nav-fab { color: #1A2438; box-shadow: 0 6px 16px rgba(0,0,0
   .page-title, .page-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .app-footer { font-size: 10.5px; padding-block: 8px; }
 
-  .group-switch-mobile {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
-    padding: 4px; margin-bottom: 12px;
-    background: var(--surface-soft); border: 1px solid var(--line); border-radius: 12px;
-  }
-  .gsm-btn {
-    min-height: 40px; border: none; border-radius: 9px;
-    background: transparent; color: var(--muted);
-    font: 700 14px Sora, sans-serif; cursor: pointer;
-  }
-  .gsm-btn.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
 
   /* Silo sheet: sticky Done bar, bigger targets */
   #siloBody { padding-bottom: 0; }
@@ -3513,3 +3493,31 @@ body.theme-dark .adj-modal { color-scheme: dark; }
 
 .fkt-range { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; cursor: help; }
 .rt-auto { align-self: center; margin-left: 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .03em; color: var(--muted); text-transform: uppercase; cursor: help; }
+
+/* Shed-pair switcher (Sheds + Predictions): phones and tablets, sticky */
+@media (max-width: 1100px) {
+  .group-switch-mobile {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    padding: 4px; margin-bottom: 12px;
+    background: var(--surface-soft); border: 1px solid var(--line); border-radius: 12px;
+    position: sticky; top: 0; z-index: 40;
+    /* solid backdrop to the screen edges so content can't show beside or above it */
+    box-shadow: 0 -8px 0 16px var(--bg), 0 22px 16px -14px rgba(0,0,0,.35);
+  }
+  .gsm-btn {
+    min-height: 40px; border: none; border-radius: 9px;
+    background: transparent; color: var(--muted);
+    font: 700 14px Sora, sans-serif; cursor: pointer;
+  }
+  .gsm-btn.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+}
+
+/* Silo planning settings bar (Silo reading sheet + Compare Feed) */
+.silo-set { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 12px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+.ss-item { display: flex; align-items: center; gap: 12px; flex: 1 1 200px; max-width: 340px; justify-content: space-between; }
+.ss-lbl { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.ss-step { display: inline-flex; align-items: center; gap: 6px; }
+.ss-step b { min-width: 58px; text-align: center; font: 700 14px Sora, sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ss-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 18px/1 Inter, sans-serif; cursor: pointer; display: grid; place-items: center; }
+.ss-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-dark); }
+.ss-btn:disabled { opacity: .35; cursor: default; }
