@@ -2070,10 +2070,11 @@ function renderPredictionsShedCard(shed,group){
     const isManualWeight=!!stored.totalWeightKgManual;
     const hasExcelFrom=stored.totalWeightKgFromExcel!=null;
     const isManualSource=stored.source==='manual';
-    const totalValue=(stored.totalWeightKg!=null)?stored.totalWeightKg:'';
+    // Whole kg / 3 decimals on screen (estimated kill-sheet weights are birds × an average)
+    const totalValue=(stored.totalWeightKg!=null)?Math.round(stored.totalWeightKg):'';
     const warn=totalValue&&(totalValue<100||totalValue>40000);
     const avgRaw=(stored.totalWeightKg!=null&&stored.birds>0)?(stored.totalWeightKg/stored.birds):null;
-    const avgInputVal=(avgRaw!=null)?Number(avgRaw.toFixed(5)):'';
+    const avgInputVal=(avgRaw!=null)?Number(avgRaw.toFixed(3)):'';
     const avgWarn=(avgRaw!=null)&&(avgRaw<0.3||avgRaw>5);
     const estAvg=p.avgWeightKg?p.avgWeightKg.toFixed(3):'';
     const avgPlaceholder=(avgRaw==null&&estAvg)?estAvg:'kg/bird';

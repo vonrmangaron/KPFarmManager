@@ -276,8 +276,11 @@ function autoFillPredictedPickups(shed,opts){
   if(cleanout<=today)return [];
   const maxDay=addDays(cleanout,-2);
   // Planning starts after the last planned pickup when keeping the user's plan
-  const lastBase=base.length?base.reduce((m,p)=>p.date>m?p.date:m,base[0].date):null;
-  const planFrom=lastBase&&addDays(lastBase,3)>addDays(today,1)?addDays(lastBase,3):addDays(today,1);
+  // Plan only after the last KNOWN pickup — your planned ones and logged ones
+  // dated ahead (e.g. the plant's kill sheet for next week)
+  const known=base.map(p=>p.date).concat(realPickups.map(p=>dateOnly(p.date)));
+  const lastKnown=known.length?known.reduce((m,d)=>d>m?d:m,known[0]):null;
+  const planFrom=lastKnown&&addDays(lastKnown,3)>addDays(today,1)?addDays(lastKnown,3):addDays(today,1);
 
   // ── Phase 0: first thin at the age/size learned from sheds already
   // thinned this batch (only for a shed with no pickups of its own yet)
@@ -340,9 +343,11 @@ function autoFillPredictedPickups(shed,opts){
         cc=addDays(cc,1);
       }
 
-      // Exclude days already used by density pickups
-      const used=new Set(result.map(x=>iso(x.date)));
-      const free=candidates.filter(d=>!used.has(iso(d)));
+      // Exclude days already used — by this plan or by a logged pickup
+      const used=new Set(result.map(x=>iso(x.date)).concat([...realDates]));
+      // …and keep at least 3 days from any other pickup (the plant doesn't thin on back-to-back days)
+      const taken=[...used].map(x=>dateOnly(x));
+      const free=candidates.filter(d=>!used.has(iso(d))&&taken.every(x=>Math.abs(daysBetween(x,d))>=3));
 
       if(free.length>0){
         const n=Math.min(remaining,free.length);
@@ -350,7 +355,7 @@ function autoFillPredictedPickups(shed,opts){
         for(let i=0;i<n;i++){
           const idx=Math.min(free.length-1,Math.floor((i+0.5)*step));
           const slot=free[idx];
-          if(!slot||used.has(iso(slot)))continue;
+          if(!slot||used.has(iso(slot))||[...used].some(x=>Math.abs(daysBetween(dateOnly(x),slot))<3))continue;
           used.add(iso(slot));
           const rec=recommendPickupForDate(tempShed,iso(slot),{extraPredicted:result});
           const remove=(rec&&rec.recommendedRemove>0)?rec.recommendedRemove:0;

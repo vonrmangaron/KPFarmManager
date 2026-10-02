@@ -70,6 +70,13 @@ console.log('5b. Final pickup uplift');
 const up=run('uplift',`(()=>{predState.finalUpliftPct=0;autoPlanCache=new Map();const a=computeFarmTotals();predState.finalUpliftPct=8;autoPlanCache=new Map();const b=computeFarmTotals();return [a.totalLiveWeight,b.totalLiveWeight,a.totalFeed,b.totalFeed,b.cfcr<a.cfcr];})()`);
 if(up){ok(up[1]>up[0],'+8% raises projected live weight');ok(near(up[2],up[3],1),'uplift does not change feed');ok(up[4],'uplift lowers cFCR');}
 
+console.log('5c. Auto plan respects logged (kill-sheet) pickups');
+const ap=run('auto plan',`(()=>{const s=farmData.sheds[3];s.pickups=[{date:addDays(T,2),birds:6000,isFinal:false,totalWeightKg:6000*2,weightEstimated:true,source:'manual'},{date:addDays(T,4),birds:7000,isFinal:false,totalWeightKg:7000*2.1,weightEstimated:true,source:'manual'}];
+  autoPlanCache=new Map();const plan=autoPlanForShed(s);const last=addDays(T,4);
+  const regs=plan.filter(x=>!x.isFinal).map(x=>dateOnly(x.date)).sort((a,b)=>a-b);
+  return [plan.every(x=>dateOnly(x.date)>last),regs.every((d,i)=>!i||daysBetween(regs[i-1],d)>=3),Math.round(Number(fhRowHtml&&1))];})()`);
+if(ap){ok(ap[0],'auto plan starts after the last logged pickup');ok(ap[1],'auto pickups are at least 3 days apart');}
+
 console.log('6. Projection log');
 const pl=run('projection log',`(()=>{predState.projectionLog=[{d:'2026-01-01',feed:1,fcr:1.7,cfcr:1.6,alw:2.7,age:44,liv:95,m:'old',at:1}];
   recordProjectionSnapshot(computeFarmTotals());const n1=predState.projectionLog.length;recordProjectionSnapshot(computeFarmTotals());const n2=predState.projectionLog.length;
