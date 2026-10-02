@@ -34,6 +34,8 @@ function buildCloudPayload(){
       noPickupDays:predState.noPickupDays||[],
       projectionLog:predState.projectionLog||[],
       finalUpliftPct:predState.finalUpliftPct,
+      feedQuota:predState.feedQuota,
+      truckSplitMode:predState.truckSplitMode,
       siloConfidencePct:predState.siloConfidencePct,
       safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
@@ -83,6 +85,8 @@ function applyCloudPayload(payload,options){
     {const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     mergeCloudFarmHistory(p);
     mergeProjectionLog(p.projectionLog);
+    if(p.feedQuota&&typeof p.feedQuota==='object'){const q={};Object.keys(DEFAULT_FEED_QUOTA).forEach(k=>{const n=Number(p.feedQuota[k]);q[k]=Number.isFinite(n)&&n>=0&&n<=10?n:DEFAULT_FEED_QUOTA[k];});predState.feedQuota=q;}
+    if(p.truckSplitMode==='any15'||p.truckSplitMode==='simple')predState.truckSplitMode=p.truckSplitMode;
     {const u=Number(p.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     savePredState();
   }

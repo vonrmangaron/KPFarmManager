@@ -23,7 +23,7 @@ console.log('2. Required functions exist');
 ['batchKpis','computeFarmTotals','computeGroupPredictions','computePredictions','computeSiloForecast','computeFarmAlerts','measuredFeedToDate','feedEatenMeasured',
  'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner',
  'siloSettingsBarHtml','renderSettingsFarmHistoryCard','fhRowHtml','summarizeBatchData','mergeCloudFarmHistory','siloReadTime','siloConfidence','siloSafetyDays',
- 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor']
+ 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue']
  .forEach(n=>ok(run('typeof '+n,`typeof ${n}`)==='function','missing function: '+n));
 
 console.log('3. Formulas (batchKpis)');
@@ -63,7 +63,7 @@ run('readings confidence',`(()=>{const r=siloData[1].readings[siloData[1].readin
 
 console.log('5. Rendered cards have no NaN / undefined');
 const html={kpi:'renderFarmKpiCard()',planner:'renderFeedPlanner(1,shedsForGroup(1),T)',siloBar:'siloSettingsBarHtml()',history:'renderSettingsFarmHistoryCard()',
-  pairSwitch:'pairSwitchHtml(1,"pred")',fhRow:'fhRowHtml(predState.farmHistory[0])'};
+  pairSwitch:'pairSwitchHtml(1,"pred")',feedPlan:'feedPlanHtml()',fhRow:'fhRowHtml(predState.farmHistory[0])'};
 for(const [n,c] of Object.entries(html)){const h=run('render '+n,c);if(h!=null){const txt=String(h).replace(/<[^>]+>/g,' ');ok(!/\bNaN\b|\bundefined\b|Infinity/.test(txt),n+' renders without NaN/undefined');}}
 
 console.log('5b. Final pickup uplift');
@@ -76,6 +76,23 @@ const ap=run('auto plan',`(()=>{const s=farmData.sheds[3];s.pickups=[{date:addDa
   const regs=plan.filter(x=>!x.isFinal).map(x=>dateOnly(x.date)).sort((a,b)=>a-b);
   return [plan.every(x=>dateOnly(x.date)>last),regs.every((d,i)=>!i||daysBetween(regs[i-1],d)>=3),Math.round(Number(fhRowHtml&&1))];})()`);
 if(ap){ok(ap[0],'auto plan starts after the last logged pickup');ok(ap[1],'auto pickups are at least 3 days apart');}
+
+console.log('5c2. Leftover only comes off the docket total');
+const lo=run('leftover',`(()=>{predState.farmLeftoverKg=null;predState.farmFeedOverride=null;const a=computeFarmTotals().totalFeed;predState.farmLeftoverKg=30000;const b=computeFarmTotals().totalFeed;
+  predState.farmFeedOverride=1500000;const c=computeFarmTotals().totalFeed;predState.farmLeftoverKg=null;predState.farmFeedOverride=null;return [a,b,c];})()`);
+if(lo){ok(near(lo[0],lo[1],1),'auto estimate ignores the leftover');ok(near(lo[2],1500000+20000-30000,1),'docket total = docket + carry-over − leftover');}
+
+console.log('5d. Feed plan + 60 t trucks');
+const pk=run('packTrucks',`(()=>{const sum=tr=>{const per={};tr.forEach(t=>Object.entries(t).forEach(([g,v])=>per[g]=(per[g]||0)+v));return per;};
+  const st=packTrucks({1:31281,2:31139,3:31410,4:30970},'simple'),gr=packTrucks({1:104270,2:103795,3:104700,4:103232},'simple'),fi=packTrucks({1:0,2:0,3:0,4:56000},'simple'),an=packTrucks({1:40000,2:20000,3:0,4:70000},'any15');
+  const all60=[st,gr,fi,an].every(L=>L.every(t=>Object.values(t).reduce((a,v)=>a+v,0)===60000));
+  return [st.length,JSON.stringify(sum(st)),gr.length,JSON.stringify(sum(gr)),fi.length,all60,Object.entries(sum(an)).every(([g,v])=>v>={1:40000,2:20000,3:0,4:70000}[g])];})()`);
+if(pk){ok(pk[0]===3&&pk[1]==='{"1":45000,"2":45000,"3":45000,"4":45000}','starter: 3 trucks, 45 t per pair');ok(pk[2]===7&&pk[3]==='{"1":105000,"2":105000,"3":105000,"4":105000}','grower: 7 trucks, 105 t per pair');
+  ok(pk[4]===1,'one finisher truck for one pair');ok(pk[5],'every truck is exactly 60 t');ok(pk[6],'never below what each pair needs');}
+const fp=run('feedPlan',`(()=>{const p=feedPlan();return p&&FEED_PLAN_TYPES.every(t=>p.pairs.every(g=>Number.isFinite(p.rows[g][t].ordered)&&Number.isFinite(p.rows[g][t].still)));})()`);
+ok(fp===true,'feed plan numbers are finite');
+const fc2=run('carry',`(()=>{const p=feedPlan();return p.farm.withdrawal.ordered-p.pairs.reduce((s,g)=>s+p.rows[g].withdrawal.ordered,0);})()`);
+ok(fc2===20000,'carry-over counts as withdrawal in the farm total');
 
 console.log('6. Projection log');
 const pl=run('projection log',`(()=>{predState.projectionLog=[{d:'2026-01-01',feed:1,fcr:1.7,cfcr:1.6,alw:2.7,age:44,liv:95,m:'old',at:1}];

@@ -167,6 +167,70 @@ function mergeProjectionLog(remote){
   [...(predState.projectionLog||[]),...remote].map(normalizeSnap).filter(Boolean).forEach(x=>{if(!by[x.d]||x.at>by[x.d].at)by[x.d]=x;});
   predState.projectionLog=Object.values(by).sort((a,b)=>a.d.localeCompare(b.d)).slice(-120);
 }
+// ── Feed plan (per pair × feed type) ──
+// Quota = birds placed × kg/bird (starter, grower, finisher; a minimum —
+// orders round UP to whole 60 t trucks). Withdrawal = what the birds still
+// need until clean-out (from the projection) once the other quotas are met.
+const FEED_PLAN_TYPES=['starter','grower','finisher','withdrawal'];
+function feedQuotaPerBird(type){const q=predState.feedQuota||{};const v=Number(q[type]);return Number.isFinite(v)&&v>=0?v:(DEFAULT_FEED_QUOTA[type]||0);}
+function pairPlacedBirds(g){return shedsForGroup(g).filter(s=>s.placementDate).reduce((n,s)=>n+(Number(s.initialPopulation)||0),0);}
+function orderedByPairType(){
+  const out={};[1,2,3,4].forEach(g=>{out[g]={};FEED_PLAN_TYPES.concat(['']).forEach(t=>out[g][t]=0);});
+  farmLoads.forEach(l=>{const t=FEED_PLAN_TYPES.includes(l.feedType)?l.feedType:'';[1,2,3,4].forEach(g=>{out[g][t]+=loadKgToPairBefore(l,g);});});
+  return out;
+}
+function feedPlan(){
+  if(!farmData)return null;
+  const ord=orderedByPairType();const pairs=[1,2,3,4].filter(g=>pairPlacedBirds(g)>0);if(!pairs.length)return null;
+  const rows={};
+  pairs.forEach(g=>{
+    const placed=pairPlacedBirds(g);rows[g]={placed,unspecified:ord[g]['']};
+    let fixedStill=0;
+    ['starter','grower','finisher'].forEach(t=>{const quota=placed*feedQuotaPerBird(t);const still=Math.max(0,quota-ord[g][t]);fixedStill+=still;rows[g][t]={quota,ordered:ord[g][t],still};});
+    // Withdrawal: the rest of what the birds need to clean-out
+    const f=typeof feedToOrderForGroup==='function'?feedToOrderForGroup(g):null;
+    const need=f?Math.max(0,f.expected-fixedStill):0;
+    rows[g].withdrawal={quota:null,ordered:ord[g].withdrawal,still:need};
+  });
+  const trucks={};FEED_PLAN_TYPES.forEach(t=>{const need={};pairs.forEach(g=>need[g]=rows[g][t].still);trucks[t]=packTrucks(need,predState.truckSplitMode);});
+  // Farm totals per type; the carry-over from last batch is always withdrawal feed
+  const carry=carryoverTotalKg();const farm={};
+  FEED_PLAN_TYPES.forEach(t=>{farm[t]={ordered:pairs.reduce((s,g)=>s+rows[g][t].ordered,0)+(t==='withdrawal'?carry:0),quota:t==='withdrawal'?null:pairs.reduce((s,g)=>s+rows[g][t].quota,0),still:pairs.reduce((s,g)=>s+rows[g][t].still,0)};});
+  // Next type due per pair: the first one with something still to order
+  const next={};pairs.forEach(g=>{next[g]=FEED_PLAN_TYPES.find(t=>rows[g][t].still>=SPLIT_STEP_KG/2)||'withdrawal';});
+  return {pairs,rows,trucks,next,farm,carry};
+}
+// Pack per-pair needs (kg) into whole 60 t trucks; never below the need.
+// simple: full 60 to one pair, then 30/30, then one 15/15/15/15.
+// any15: any 15 t steps, filling trucks in turn. Spare room goes to the pair
+// with the most still to come.
+function packTrucks(need,mode){
+  const S=SPLIT_STEP_KG,T=TRUCK_KG;const pairs=Object.keys(need).map(Number);
+  const a={};pairs.forEach(g=>{a[g]=Math.ceil(Math.max(0,need[g]||0)/S-1e-9)*S;});
+  const trucks=[];const add=sp=>trucks.push(sp);
+  if(mode==='any15'){
+    let cur={},room=T;
+    pairs.slice().sort((x,y)=>a[y]-a[x]).forEach(g=>{let left=a[g];while(left>0){const take=Math.min(left,room);cur[g]=(cur[g]||0)+take;left-=take;room-=take;if(room===0){add(cur);cur={};room=T;}}});
+    if(room<T){const g=pairs.slice().sort((x,y)=>(need[y]||0)-(need[x]||0))[0];cur[g]=(cur[g]||0)+room;add(cur);}
+    return trucks;
+  }
+  pairs.forEach(g=>{while(a[g]>=T){add({[g]:T});a[g]-=T;}});
+  // what's left per pair is 0/15/30/45: halves (30) and a quarter (15)
+  const halves=[],quarters=[];
+  pairs.forEach(g=>{if(a[g]>=30000){halves.push(g);a[g]-=30000;}if(a[g]>=S){quarters.push(g);a[g]-=S;}});
+  // 30/30 trucks; an odd half pairs with the neediest other pair
+  halves.sort((x,y)=>x-y);   // neighbours share a truck: 1–2 with 3–4, 5–6 with 7–8
+  while(halves.length>=2){const g1=halves.shift(),g2=halves.shift();add({[g1]:30000,[g2]:30000});}
+  if(halves.length===1){
+    const g1=halves[0];
+    if(quarters.length>=2&&quarters.filter(g=>g!==g1).length>=2){const q=quarters.filter(g=>g!==g1).slice(0,2);add({[g1]:30000,[q[0]]:S,[q[1]]:S});q.forEach(g=>quarters.splice(quarters.indexOf(g),1));}
+    else{const other=pairs.filter(g=>g!==g1&&(need[g]||0)>0).sort((x,y)=>(need[y]||0)-(need[x]||0))[0];add(other!=null?{[g1]:30000,[other]:30000}:{[g1]:T});}
+  }
+  // quarters: one 15/15/15/15 truck covers every pair
+  if(quarters.length){const sp={};pairs.forEach(g=>sp[g]=S);if(pairs.length<4){const g=pairs.slice().sort((x,y)=>(need[y]||0)-(need[x]||0))[0];sp[g]+=T-S*pairs.length;}add(sp);}
+  return trucks;
+}
+function nextFeedTypeDue(g){try{const p=feedPlan();return p&&p.next[g]?p.next[g]:'';}catch(e){return '';}}
 function farmHistory(){return Array.isArray(predState.farmHistory)?predState.farmHistory:[];}
 function farmHistorySorted(){return farmHistory().slice().sort((a,b)=>(b.endDate||'').localeCompare(a.endDate||'')||b.savedAt-a.savedAt);}
 function historyKpis(r){return batchKpis({feedKg:r.feedKg,liveWeightKg:r.liveWeightKg,birds:r.picked,ageBirdSum:r.avgAge*r.picked,placed:r.placed,mortality:r.placed-r.picked,targetKg:CFCR_REF_KG});}

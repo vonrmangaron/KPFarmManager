@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-fh-add]')){fhFormOpen=true;fhEditId=null;renderSettingsDrawerBody();return;}
     const fkTog=e.target.closest('[data-fk-toggle]');
     if(fkTog){if(fkTog.dataset.fkToggle==='how')fkHowOpen=!fkHowOpen;else fkFeedOpen=!fkFeedOpen;render();return;}
+    const fpTruck=e.target.closest('[data-fp-truck]');
+    if(fpTruck){let sp={};try{sp=JSON.parse(fpTruck.dataset.fpSplit||'{}');}catch(err){}const tot=Object.values(sp).reduce((s,v)=>s+Number(v||0),0);openLoadModal(null,{date:todayIso(),feedType:fpTruck.dataset.fpTruck,plannedT:tot,splitT:sp});return;}
+    const fpMode=e.target.closest('[data-fp-mode]');
+    if(fpMode){predState.truckSplitMode=fpMode.dataset.fpMode==='any15'?'any15':'simple';savePredState();schedulePush();if(loadsModalState.open)renderLoadsModalBody();return;}
     const ssBtn=e.target.closest('[data-silo-set]');
     if(ssBtn){changeSiloSetting(ssBtn.dataset.siloSet,Number(ssBtn.dataset.step));return;}
     const fhTog=e.target.closest('[data-fh-toggle]');
@@ -183,7 +187,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(inlineTestBtn){e.stopPropagation();const parts=inlineTestBtn.dataset.inlineTest.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineTestBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amtKg=inlineInput?feedOut(inlineInput.value):NaN;const amt=amtKg/1000;if(!Number.isFinite(amt)||amt<=0){showToast(`Enter a positive amount in ${feedUnitWord()}.`,true);inlineInput&&inlineInput.focus();return;}const ok=addTestDelivery(g,dIso,amt);if(ok){inlineDeliveryState=null;render();}return;}
     const inlineActualBtn=e.target.closest('[data-inline-actual]');
     if(inlineActualBtn){e.stopPropagation();const parts=inlineActualBtn.dataset.inlineActual.split('|');const g=Number(parts[0]);const dIso=parts[1];const inlineInput=inlineActualBtn.closest('.inline-del')?.querySelector('.inline-del-input');const amtKg=inlineInput?feedOut(inlineInput.value):NaN;const amt=amtKg/1000;if(!Number.isFinite(amt)||amt<=0){showToast(`Enter a positive amount in ${feedUnitWord()}.`,true);inlineInput&&inlineInput.focus();return;}// Open Add Load pre-filled (date, tonnes for this pair, last feed type used here) to confirm feed type/split/note
-const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnly(b.date)-dateOnly(a.date))[0]||{}).feedType||'';inlineDeliveryState=null;render();openLoadModal(null,{date:dIso,feedType:lastType,plannedT:amt,splitT:{[g]:amt}});return;}
+const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnly(b.date)-dateOnly(a.date))[0]||{}).feedType||'';inlineDeliveryState=null;render();openLoadModal(null,{date:dIso,feedType:lastType,plannedT:amt,splitT:{[g]:amt}});return;}
     const inlineCancelBtn=e.target.closest('[data-inline-cancel]');
     if(inlineCancelBtn){e.stopPropagation();inlineDeliveryState=null;render();return;}
 
@@ -305,6 +309,7 @@ const lastType=(loadsAffectingGroup(g).filter(l=>l.feedType).sort((a,b)=>dateOnl
   });
 
   document.addEventListener('change',e=>{
+    if(e.target&&e.target.dataset&&e.target.dataset.fpQuota){const k=e.target.dataset.fpQuota;const n=Number(e.target.value);if(Number.isFinite(n)&&n>=0&&n<=5){predState.feedQuota={...DEFAULT_FEED_QUOTA,...(predState.feedQuota||{}),[k]:n};savePredState();schedulePush();if(loadsModalState.open)renderLoadsModalBody();}return;}
     const t=e.target;
     // Adjustments modal: per-shed 'Use global' switch (draft)
     if(t.dataset&&t.dataset.adjUseglobal&&adjDraft){const id=Number(t.dataset.adjUseglobal);if(t.checked)adjDraft.ovr[id]=null;else{const own=suggestScaleCorrection([farmData.sheds[id-1]]);adjDraft.ovr[id]=own?Math.round(own.value*1000)/10:adjDraft.scale;}refreshAdjModal(true);return;}

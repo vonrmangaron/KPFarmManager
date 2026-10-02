@@ -64,6 +64,8 @@ function loadPredState(){
     if(Array.isArray(v.noPickupDays))predState.noPickupDays=v.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
     {const c=Number(v.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(v.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     if(Array.isArray(v.farmHistory))predState.farmHistory=v.farmHistory.map(normalizeHistoryRec).filter(Boolean);
+    if(v.feedQuota&&typeof v.feedQuota==='object'){const q={};Object.keys(DEFAULT_FEED_QUOTA).forEach(k=>{const n=Number(v.feedQuota[k]);q[k]=Number.isFinite(n)&&n>=0&&n<=10?n:DEFAULT_FEED_QUOTA[k];});predState.feedQuota=q;}
+    if(v.truckSplitMode==='any15'||v.truckSplitMode==='simple')predState.truckSplitMode=v.truckSplitMode;
     {const u=Number(v.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     if(Array.isArray(v.projectionLog))predState.projectionLog=v.projectionLog.map(normalizeSnap).filter(Boolean).slice(-120);
     if(Array.isArray(v.farmHistoryDeleted))predState.farmHistoryDeleted=v.farmHistoryDeleted.map(String).slice(-200);

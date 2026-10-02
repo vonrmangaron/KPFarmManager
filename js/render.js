@@ -1534,7 +1534,9 @@ function computeFarmTotals(){
   // already includes eating the carry-over, so it isn't added there.
   const carryKg=carryoverTotalKg();
   const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+carryKg:totalFeedAuto;
-  const totalFeed=Math.max(0,baseFeed-leftoverKg);
+  // Leftover only comes off the docket total (delivered + carry-over − leftover).
+  // The auto estimate is feed the birds eat, so the leftover was never in it.
+  const totalFeed=Math.max(0,usingManualFeed?baseFeed-leftoverKg:baseFeed);
   const targetKg=totalBirdsAtHarvest>0?targetBirdSum/totalBirdsAtHarvest:CFCR_REF_KG;
   const k=batchKpis({feedKg:totalFeed,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg});
   const {fcr,cfcr,cfcrInd,pif}=k,avgWeight=k.alw,livability=k.livability,weightedAge=k.avgAge;
@@ -1575,7 +1577,7 @@ function farmFeedSubText(t){
     const parts=['Manual (dockets)'];if(co)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
     return `${parts.join(' ')} · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
   }
-  const base=t.leftoverApplied?`Auto − ${fmtFeed(t.leftoverKg)} leftover · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`:`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}`;
+  const base=`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}${t.leftoverApplied?` · ${fmtFeed(t.leftoverKg)} leftover not deducted (the birds didn't eat it)`:''}`;
   return co?`${base} · carry-over ${fmtFeed(co)} is already in the birds' intake`:base;
 }
 
