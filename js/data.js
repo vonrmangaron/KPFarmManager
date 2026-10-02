@@ -4,6 +4,7 @@ function resetAllToDefaults(batchNumber,opts){
   farmData=buildDefaultFarmData(batchNumber);
   // Farm history stays only for a new batch on the same farm
   if(!(opts&&opts.keepHistory)){predState.farmHistory=[];predState.farmHistoryDeleted=[];}
+  predState.projectionLog=[];
   predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
   testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
@@ -145,6 +146,26 @@ function mergeCloudFarmHistory(p){
   const byId=new Map();
   [...farmHistory(),...(Array.isArray(p.farmHistory)?p.farmHistory:[])].forEach(raw=>{const r=normalizeHistoryRec(raw);if(!r||del.has(r.id))return;const cur=byId.get(r.id);if(!cur||r.savedAt>cur.savedAt)byId.set(r.id,r);});
   predState.farmHistory=[...byId.values()];predState.farmHistoryDeleted=[...del].slice(-200);
+}
+// ── Projection log: one snapshot of the projected result per day ──
+// Saved locally and sent with the next normal sync (viewing never pushes);
+// merged by day across devices.
+function normalizeSnap(x){if(!x||typeof x!=='object'||!/^\d{4}-\d{2}-\d{2}$/.test(String(x.d)))return null;
+  const n=v=>Number.isFinite(Number(v))?Number(v):null;
+  return {d:String(x.d),feed:n(x.feed),fcr:n(x.fcr),cfcr:n(x.cfcr),alw:n(x.alw),age:n(x.age),liv:n(x.liv),m:String(x.m||''),at:n(x.at)||0};}
+function recordProjectionSnapshot(t){
+  if(!t||!t.hasData||!Number.isFinite(t.cfcr))return;
+  const d=iso(new Date());const log=Array.isArray(predState.projectionLog)?predState.projectionLog:[];
+  const snap={d,feed:Math.round(t.totalFeed),fcr:+t.fcr.toFixed(4),cfcr:+t.cfcr.toFixed(4),alw:+t.avgWeight.toFixed(4),age:+t.weightedAge.toFixed(2),liv:+t.livability.toFixed(2),m:MODEL_VERSION,at:Date.now()};
+  const i=log.findIndex(x=>x.d===d);const prev=i>=0?log[i]:null;
+  if(prev&&prev.m===snap.m&&prev.feed===snap.feed&&prev.cfcr===snap.cfcr&&prev.alw===snap.alw)return;
+  if(i>=0)log[i]=snap;else log.push(snap);
+  log.sort((a,b)=>a.d.localeCompare(b.d));predState.projectionLog=log.slice(-120);savePredState();
+}
+function mergeProjectionLog(remote){
+  if(!Array.isArray(remote))return;const by={};
+  [...(predState.projectionLog||[]),...remote].map(normalizeSnap).filter(Boolean).forEach(x=>{if(!by[x.d]||x.at>by[x.d].at)by[x.d]=x;});
+  predState.projectionLog=Object.values(by).sort((a,b)=>a.d.localeCompare(b.d)).slice(-120);
 }
 function farmHistory(){return Array.isArray(predState.farmHistory)?predState.farmHistory:[];}
 function farmHistorySorted(){return farmHistory().slice().sort((a,b)=>(b.endDate||'').localeCompare(a.endDate||'')||b.savedAt-a.savedAt);}

@@ -32,6 +32,7 @@ function buildCloudPayload(){
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
       noPickupDays:predState.noPickupDays||[],
+      projectionLog:predState.projectionLog||[],
       siloConfidencePct:predState.siloConfidencePct,
       safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
@@ -80,6 +81,7 @@ function applyCloudPayload(payload,options){
     // a device that hadn't synced a new record can't wipe it out.
     {const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     mergeCloudFarmHistory(p);
+    mergeProjectionLog(p.projectionLog);
     savePredState();
   }
   const prefs=payload.preferences||{};

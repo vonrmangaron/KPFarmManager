@@ -1585,6 +1585,7 @@ function renderFarmKpiCard(){
   const t=computeFarmTotals();
   if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
   const rg=kpiRanges(t);
+  try{recordProjectionSnapshot(t);}catch(e){console.warn('Projection snapshot failed',e);}
   const overrideVal=feedIn(predState.farmFeedOverride);
   const overrideCls=t.usingManualFeed?'manual':'';
   const feedSub=farmFeedSubText(t);
@@ -1594,7 +1595,7 @@ function renderFarmKpiCard(){
   // What the projection is built on: logged + your planned + auto-planned pickups
   let nLog=0,nPlan=0,nAuto=0;
   (farmData.sheds||[]).filter(sh=>sh.placementDate).forEach(sh=>{const rd=new Set((sh.pickups||[]).map(x=>iso(x.date)));nLog+=(sh.pickups||[]).length;nPlan+=(sh.predictedPickups||[]).filter(pp=>pp.date&&!rd.has(iso(pp.date))).length;nAuto+=autoPlanForShed(sh).length;});
-  const howHtml=fkHowOpen?`<div class="fk-how-body"><div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Pickups: <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned</div>${learnedBasisHtml(t)}<div class="fk-basis">Ranges: last pickups up to ${PROJ_EARLY_DAYS} days before the plant's clean-out dates · ${escapeHtml(farmFeedSubText(t))}</div></div>`:'';
+  const howHtml=fkHowOpen?`<div class="fk-how-body"><div class="fk-basis" title="Auto-planned pickups follow your density rules, target pickups, no-pickup days and clean-out dates. They're used only for this projection — never for the feed forecast.">Pickups: <b>${nLog}</b> logged · <b>${nPlan}</b> your-planned · <b>${nAuto}</b> auto-planned</div>${learnedBasisHtml(t)}<div class="fk-basis">Ranges: last pickups up to ${PROJ_EARLY_DAYS} days before the plant's clean-out dates · ${escapeHtml(farmFeedSubText(t))}</div>${projectionLogHtml()}</div>`:'';
   // Last batch, shown inside each tile instead of a separate line
   const lr=lastHistoryRec(),lk=lr?historyKpis(lr):null;
   const vs=(now,last,dp,unit,lowerBetter)=>{if(last==null)return '';const d=now-last;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':((lowerBetter?d<0:d>0)?' good':' bad');return `<div class="fkt-last${cls}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">last batch ${last.toFixed(dp)}${unit}</div>`;};
@@ -1632,6 +1633,13 @@ function kpiRanges(t){
     fcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.fcr,t.fcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
     cfcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.cfcr,t.cfcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
     pif:`<div class="fkt-range" ${tip}>Range ${rangeText(e.pif,t.pif,(lo,hi)=>`${lo.toFixed(0)}–${hi.toFixed(0)}`)}</div>`};
+}
+// Last week of the projection, so any change can be traced (data or model)
+function projectionLogHtml(){
+  const log=(predState.projectionLog||[]).slice(-7);if(log.length<2)return '';
+  const rows=log.map((x,i)=>{const p=i?log[i-1]:null;const changed=p&&p.m!==x.m;
+    return `<tr><td>${escapeHtml(fmtShortNoYear(dateOnly(x.d)))}</td><td class="num">${x.feed!=null?fmtFeed(x.feed,0):'—'}</td><td class="num">${x.fcr!=null?x.fcr.toFixed(3):'—'}</td><td class="num">${x.cfcr!=null?x.cfcr.toFixed(3):'—'}</td><td class="num">${x.alw!=null?x.alw.toFixed(2):'—'}</td><td>${changed?`<span class="pl-model" title="${escapeAttr(MODEL_NOTES[x.m]||'')}">model updated</span>`:''}</td></tr>`;}).join('');
+  return `<div class="fk-plog"><div class="fk-plog-title">Projection by day</div><div class="fk-plog-wrap"><table><thead><tr><th>Day</th><th class="num">Feed</th><th class="num">FCR</th><th class="num">cFCR</th><th class="num">ALW</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="fk-plog-note">Model: ${escapeHtml(MODEL_NOTES[MODEL_VERSION]||MODEL_VERSION)}</div></div>`;
 }
 function cfcrSubText(t){return `vs 2.45 kg reference`;}
 function cfcrIndSubText(t){return `vs ${t.targetKg.toFixed(2)} kg target`;}

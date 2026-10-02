@@ -20,7 +20,11 @@ let testDeliveries={1:[],2:[],3:[],4:[]},farmLoads=[],inlineDeliveryState=null;
 // to your actual weighings). When true, they would also learn intake from
 // silo readings and thinning / last-pickup timing from this farm's data.
 const FARM_LEARNING=false;
-let predState={siloConfidencePct:100,safetyDays:1,farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
+// Projection model version — bump with a note whenever the maths behind the
+// projected result changes, so a jump in the numbers is never a mystery.
+const MODEL_VERSION='2026-10-02';
+const MODEL_NOTES={'2026-10-02':'Feed already eaten is measured (dockets + carry-over − silo stock), Ross 308 intake after'};
+let predState={projectionLog:[],siloConfidencePct:100,safetyDays:1,farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
