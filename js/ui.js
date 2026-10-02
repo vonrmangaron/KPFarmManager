@@ -269,7 +269,7 @@ function renderSettingsNotificationsCard(){
     </label>
     <label class="settings-toggle-row">
       <input type="checkbox" id="notifFeedBalance" ${notifPrefs.feedBalance?'checked':''} />
-      <span class="settings-toggle-text"><strong>Feed balance</strong><br><span class="settings-toggle-sub">Warns when a group has under 3 days of feed left, or when feed will run out on a weekend.</span></span>
+      <span class="settings-toggle-text"><strong>Feed balance</strong><br><span class="settings-toggle-sub">Warns when a pair's silos will drop below the safety stock within the next 8 days (your ordering week), and when a silo reading is 3+ days old.</span></span>
     </label>
   </div>`;
 }

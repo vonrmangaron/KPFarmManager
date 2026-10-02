@@ -608,33 +608,38 @@ function daysBehindSeverity(daysVar) {
   return 'ok';
 }
 
+// Feed alerts look this far ahead (feed is ordered ~a week out); a reading
+// this old gets a reminder
+const FEED_ALERT_DAYS=8,FEED_READING_STALE_DAYS=3;
 function computeFarmAlerts() {
   if (!farmData) return [];
   const today = new Date();
   const allSheds = farmData.sheds || [];
   const alerts = [];
   if (notifPrefs.feedBalance) {
+    // Feed is ordered about a week ahead, so warn across that horizon.
+    // "Runs out" = drops below the safety stock (Adjust → Silo readings).
+    const todayD = dateOnly(today);
     [1,2,3,4].forEach(g => {
-      // Walk the balance day-by-day through today's reading plus any
-      // deliveries already scheduled in the future. This means a load
-      // that's already been entered for tomorrow correctly postpones the
-      // alert, instead of the old flat bal/dailyFeed maths which ignored
-      // future loads entirely.
-      const forecast = computeSiloForecast(g, { start: 0, end: 15 }, { realOnly: true });
-      if (!forecast.depletedDate) return;
-      const days = Math.max(0, daysBetween(today, forecast.depletedDate));
-      if (days < 3) {
-        alerts.push({ kind: days < 1.5 ? 'error' : 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — ${days} day${days===1?'':'s'} of feed remaining`, tab: 'g'+g, feedGroup: g });
-      } else if (days <= 8) {
-        // Not urgent by day-count alone, but if the depletion date itself
-        // lands on a weekend, an emergency delivery is much harder to get —
-        // worth flagging even when there'd otherwise be no alert yet.
-        const dow = forecast.depletedDate.getDay();
-        if (dow === 0 || dow === 6) {
-          const dayName = dow === 0 ? 'Sunday' : 'Saturday';
-          alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — feed runs out ${dayName} (${days} day${days===1?'':'s'}), a weekend`, tab: 'g'+g, feedGroup: g });
-        }
+      if (!shedsForGroup(g).some(s => s.placementDate)) return;
+      const latest = latestReading(g);
+      if (!latest) {
+        alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — no silo reading yet, so the feed forecast can't warn you`, tab: 'g'+g, feedGroup: g });
+        return;
       }
+      const forecast = computeSiloForecast(g, { start: 0, end: FEED_ALERT_DAYS }, { realOnly: true });
+      const age = daysBetween(dateOnly(latest.date), todayD);
+      if (forecast.depletedDate) {
+        const days = Math.max(0, daysBetween(todayD, forecast.depletedDate));
+        const row = forecast.rows.find(r => iso(r.date) === iso(forecast.depletedDate));
+        const left = row && row.balance != null ? Math.max(0, row.balance) : null;
+        const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `${fmtShortNoYear(forecast.depletedDate)} (${days} days)`;
+        const safe = siloSafetyDays() > 0 ? 'below safety stock' : 'runs out';
+        const leftTxt = left != null ? `, ${fmtFeed(left, 0)} left` : '';
+        if (days <= 2) alerts.push({ kind: 'error', msg: `<strong>${pairLabel(g)} silos</strong> — ${safe} ${when}${leftTxt} · order now or check the next delivery`, tab: 'g'+g, feedGroup: g });
+        else alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — ${safe} ${when}${leftTxt} · add a load to this week's order`, tab: 'g'+g, feedGroup: g });
+      }
+      if (age >= FEED_READING_STALE_DAYS) alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — last reading ${age} days ago · the forecast may be off`, tab: 'g'+g, feedGroup: g });
     });
   }
   if (notifPrefs.shedPerformance) {

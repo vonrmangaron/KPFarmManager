@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(adjSugS&&adjDraft){adjDraft.ovr[Number(adjSugS.dataset.adjSuggestShed)]=Number(adjSugS.dataset.pct);refreshAdjModal(true);return;}
     // Silo reading time: Morning / Evening
     const rtBtn=e.target.closest('[data-read-time]');
-    if(rtBtn){setSiloReadTime(rtBtn.dataset.readTime);if(document.getElementById('siloModal')?.classList.contains('open'))renderSiloModalBody();render();showToast(`Silo readings now recorded as ${siloReadTimeLabel(siloReadTime()).toLowerCase()} stock.`);return;}
+    if(rtBtn){setSiloReadTime(rtBtn.dataset.readTime);if(document.getElementById('siloModal')?.classList.contains('open'))renderSiloModalBody();render();showToast(`Today's readings: ${siloReadTimeLabel(siloReadTime()).toLowerCase()} stock — automatic again tomorrow.`);return;}
     const bulkStartBtn=e.target.closest('[data-bulk-start]');if(bulkStartBtn){bulkStart(bulkStartBtn.dataset.bulkStart);return;}
     if(e.target.closest('[data-bulk-cancel]')){bulkCancel();return;}
     if(e.target.closest('[data-bulk-delete]')){bulkDelete();return;}

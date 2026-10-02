@@ -61,14 +61,17 @@ function carryoverTotalKg(){
 }
 function carryoverKg(){return 0;} // per-pair carry-over retired (one farm-wide field)
 function setCarryoverTotal(tonnes){const n=Number(tonnes);predState.carryoverFarmKg=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;predState.carryoverKg={1:0,2:0,3:0,4:0};savePredState();schedulePush();}
-// Silo reading time of day (per device): 'am' = morning (start-of-day
-// stock) or 'pm' = evening (end-of-day stock). Stamped on each reading.
-const SILO_TIME_KEY='prodwise_silo_read_time_v1';
-function siloReadTime(){try{return localStorage.getItem(SILO_TIME_KEY)==='am'?'am':'pm';}catch(e){return 'pm';}}
+// Silo reading time of day: 'am' = morning (start-of-day stock) or 'pm' =
+// evening (end-of-day stock), stamped on each reading. Auto from the clock
+// (before noon = morning); tapping Morning/Evening overrides it for today only.
+const SILO_TIME_KEY='prodwise_silo_read_time_v2',SILO_AUTO_NOON=12;
+function siloReadTimeOverride(){try{const v=JSON.parse(localStorage.getItem(SILO_TIME_KEY)||'null');return v&&v.date===iso(new Date())&&(v.t==='am'||v.t==='pm')?v.t:null;}catch(e){return null;}}
+function siloReadTimeAuto(){return new Date().getHours()<SILO_AUTO_NOON?'am':'pm';}
+function siloReadTime(){return siloReadTimeOverride()||siloReadTimeAuto();}
 function siloReadTimeLabel(t){return t==='am'?'Morning':'Evening';}
 // Changing it also re-tags TODAY's readings (the ones being entered now)
 function setSiloReadTime(t){
-  t=t==='am'?'am':'pm';try{localStorage.setItem(SILO_TIME_KEY,t);}catch(e){}
+  t=t==='am'?'am':'pm';try{localStorage.setItem(SILO_TIME_KEY,JSON.stringify({t,date:iso(new Date())}));}catch(e){}
   const todayIso=iso(new Date());let changed=false;
   [1,2,3,4].forEach(g=>{const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===todayIso);if(r&&r.time!==t){r.time=t;changed=true;}});
   if(changed){saveSiloData();schedulePush();}
@@ -76,7 +79,7 @@ function setSiloReadTime(t){
 // Morning / Evening switch (Silo sheet + Current Silo Stock card)
 function readTimeToggleHtml(){
   const t=siloReadTime();
-  return `<span class="rt-toggle" role="group" aria-label="Reading time"><button type="button" data-read-time="am" aria-pressed="${t==='am'}" class="${t==='am'?'active':''}" title="Start-of-day stock — before feeding and before today's delivery">🌅 Morning</button><button type="button" data-read-time="pm" aria-pressed="${t==='pm'}" class="${t==='pm'?'active':''}" title="End-of-day stock — after today's delivery">🌇 Evening</button></span>`;
+  return `<span class="rt-toggle" role="group" aria-label="Reading time"><button type="button" data-read-time="am" aria-pressed="${t==='am'}" class="${t==='am'?'active':''}" title="Start-of-day stock — before feeding and before today's delivery">🌅 Morning</button><button type="button" data-read-time="pm" aria-pressed="${t==='pm'}" class="${t==='pm'?'active':''}" title="End-of-day stock — after today's delivery">🌇 Evening</button><span class="rt-auto" title="${siloReadTimeOverride()?'You picked this for today — back to automatic tomorrow.':'Set from the clock: before noon = Morning, from noon = Evening. Tap to change it for today.'}">${siloReadTimeOverride()?'set for today':'auto'}</span></span>`;
 }
 // Farm-wide silo numbering: 12 silos, 3 per pair — pair 2's silos are 4, 5, 6
 function siloNumber(g,n){return (g-1)*3+n;}
