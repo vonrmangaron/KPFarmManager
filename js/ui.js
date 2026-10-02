@@ -13,7 +13,7 @@ function showUndoToast(msg,undoFn){
 //    Keys: 'pp:<shed>' 'pk:<shed>' 'loads' 'rd:<group>' ──
 let bulkSel=null; // {key, ids:Set}
 function bulkActive(key){return !!bulkSel&&bulkSel.key===key;}
-function bulkRefresh(){render();if(loadsModalState&&loadsModalState.open)renderLoadsModalBody();}
+function bulkRefresh(){render();refreshLoadsViews();}
 function bulkStart(key){bulkSel={key,ids:new Set()};bulkRefresh();}
 function bulkCancel(){bulkSel=null;bulkRefresh();}
 function bulkCheckbox(key,id,label){
@@ -1380,6 +1380,25 @@ function closeLoadsModal(){
   const m=document.getElementById('loadsModal');
   if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
 }
+let feedPlanModalOpen=false;
+function refreshLoadsViews(){if(loadsModalState.open)renderLoadsModalBody();if(feedPlanModalOpen)renderFeedPlanModalBody();}
+function openFeedPlanModal(){
+  closeSettingsDrawer();if(loadsModalState.open)closeLoadsModal();feedPlanModalOpen=true;
+  const m=document.getElementById('feedPlanModal');
+  if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
+  renderFeedPlanModalBody();
+}
+function closeFeedPlanModal(){
+  feedPlanModalOpen=false;
+  const m=document.getElementById('feedPlanModal');
+  if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+}
+function renderFeedPlanModalBody(){
+  const body=document.getElementById('feedPlanBody');if(!body)return;
+  const prevScroll=body.scrollTop;
+  body.innerHTML=feedPlanHtml()||'<p class="fp-note">Add a batch with birds placed to see the feed plan.</p>';
+  requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
+}
 function setLoadsFilter(f){loadsModalState.filter=f;renderLoadsModalBody();}
 function setLoadsView(v){
   if(v!=='table'&&v!=='oneline')return;
@@ -1421,7 +1440,7 @@ function feedPlanHtml(){
   const mode=predState.truckSplitMode==='any15'?'any15':'simple';
   const q=k=>`<label class="fp-q">${FEED_PLAN_LABEL[k]} <input type="number" min="0" max="5" step="0.05" data-fp-quota="${k}" value="${feedQuotaPerBird(k)}" /></label>`;
   return `<div class="feed-plan">
-    <div class="fp-head"><span class="fp-title">📋 Feed plan <span>quota = birds placed × kg/bird · a minimum, rounded up to whole 60 t trucks</span></span></div>
+    <p class="fp-note">Quota = birds placed × kg/bird. It's a minimum, rounded up to whole 60 t trucks.</p>
     <div class="fp-table-wrap"><table class="fp-table"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     ${unspec>0?`<p class="fp-note">${t1(unspec)} of loads have no feed type and aren't counted above.</p>`:''}
     ${truckLists?`<div class="fp-suggest"><div class="fp-suggest-lbl">Still to order — tap a truck to add it as a load (you set the date):</div>${truckLists}</div>`:'<p class="fp-note">Every quota is ordered and the birds\' needs to clean-out are covered.</p>'}
@@ -1464,7 +1483,7 @@ function renderLoadsModalBody(){
       ${feedToOrderLineHtml(farmFeedToOrder())}
       <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
     </div>`;
-  const planHtml=feedPlanHtml();
+  const planHtml=`<button type="button" class="fp-open-link" data-open-feed-plan="1">📋 Feed plan — quota and trucks still to order →</button>`;
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
@@ -1767,7 +1786,7 @@ function renderLoadModal(){
       closeLoadModal();renderLoadsModalBody();
       setTimeout(()=>openLoadModal(null,{date:d,feedType:typeEl.value}),80);
     }else{
-      closeLoadModal();if(loadsModalState.open)renderLoadsModalBody();render();
+      closeLoadModal();refreshLoadsViews();render();
       showToast(s.mode==='add'?'✅ Load added.':'✅ Load updated.');
     }
   };
@@ -1775,7 +1794,7 @@ function renderLoadModal(){
   const sa=document.getElementById('lmSaveAnotherBtn');if(sa)sa.addEventListener('click',()=>doSave(true));
   const del=document.getElementById('lmDeleteBtn');if(del)del.addEventListener('click',()=>{
     if(!confirm('Delete this load permanently?'))return;
-    deleteLoad(s.editId);updateLoadsDot();closeLoadModal();if(loadsModalState.open)renderLoadsModalBody();render();showToast('🗑️ Load deleted.');
+    deleteLoad(s.editId);updateLoadsDot();closeLoadModal();refreshLoadsViews();render();showToast('🗑️ Load deleted.');
   });
   document.getElementById('lmCancelBtn').addEventListener('click',closeLoadModal);
   setTimeout(()=>plannedEl.focus(),80);

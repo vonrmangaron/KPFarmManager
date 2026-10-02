@@ -23,7 +23,7 @@ console.log('2. Required functions exist');
 ['batchKpis','computeFarmTotals','computeGroupPredictions','computePredictions','computeSiloForecast','computeFarmAlerts','measuredFeedToDate','feedEatenMeasured',
  'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner',
  'siloSettingsBarHtml','renderSettingsFarmHistoryCard','fhRowHtml','summarizeBatchData','mergeCloudFarmHistory','siloReadTime','siloConfidence','siloSafetyDays',
- 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue','leftoverNoteText','projLeftoverText']
+ 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue','renderFeedPlanModalBody','openFeedPlanModal','refreshLoadsViews','leftoverNoteText','projLeftoverText']
  .forEach(n=>ok(run('typeof '+n,`typeof ${n}`)==='function','missing function: '+n));
 
 console.log('3. Formulas (batchKpis)');
