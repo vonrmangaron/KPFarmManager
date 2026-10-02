@@ -162,7 +162,8 @@ function fhRowHtml(r){
   const detail=open?`<div class="fh-detail">
       <dl class="fh-grid">
         ${dd('ALW',`${k.alw.toFixed(3)} kg`)}${dd('Avg age',`${r.avgAge.toFixed(1)} d`)}
-        ${dd('Livability',`${k.livability.toFixed(1)}%`)}${dd('cFCR',k.cfcr.toFixed(3))}
+        ${dd('cFCR (Baiada)',k.cfcr.toFixed(3))}${dd('cFCR (Industry)',k.cfcrInd.toFixed(3))}
+        ${dd('Livability',`${k.livability.toFixed(1)}%`)}${dd('PIF',Math.round(k.pif))}
         ${dd('Placed',r.placed.toLocaleString())}${dd('Picked up',r.picked.toLocaleString())}
         ${dd('Live weight',`${Math.round(r.liveWeightKg).toLocaleString()} kg`)}${dd('Feed',fmtFeed(r.feedKg))}
         ${r.firstThinAge?dd('First thin',`day ${Math.round(r.firstThinAge)}${r.firstThinShare?' · '+pct(r.firstThinShare):''}`):''}
@@ -176,6 +177,7 @@ function fhRowHtml(r){
       <button type="button" class="fh-sum" data-fh-toggle="${escapeAttr(r.id)}" aria-expanded="${open}">
         <span class="fh-id"><b>${escapeHtml(r.batch||'Batch')}</b><small>${end?escapeHtml(end)+' · ':''}${birdsK} birds</small></span>
         <span class="fh-stat"><small>FCR</small><b>${k.fcr.toFixed(3)}</b></span>
+        <span class="fh-stat" title="cFCR (Baiada): FCR − (ALW − 2.45) × 0.27"><small>cFCR</small><b>${k.cfcr.toFixed(3)}</b></span>
         <span class="fh-stat"><small>PIF</small><b>${Math.round(k.pif)}</b></span>
         <svg class="fh-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </button>${detail}

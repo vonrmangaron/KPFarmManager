@@ -1605,7 +1605,7 @@ function renderFarmKpiCard(){
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub">${fpb.toFixed(2)} kg per bird</div>${lr?vs(fpb,lr.feedKg/lr.picked,2,' kg/bird',true):''}<button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button>${feedPanel}</div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><span id="kpiFCRRange">${rg.fcr}</span>${lk?vs(t.fcr,lk.fcr,3,'',true):''}</div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRSub" title="FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}">${cfcrSubText(t)}</div></div>
+    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Baiada)</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><span id="kpiCFCRRange">${rg.cfcr}</span>${lk?vs(t.cfcr,lk.cfcr,3,'',true):''}<div class="fkt-sub" id="kpiCFCRSub" title="FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}">${cfcrSubText(t)}</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub" title="FCR − (ALW − target) ÷ 3.2">${cfcrIndSubText(t)}</div></div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(0)}</div><span id="kpiPIFRange">${rg.pif}</span>${lk?vs(t.pif,lk.pif,0,'',false):''}</div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. CAge 2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Age when cumulative FCR (cumulative intake ÷ weight per bird) reaches 2.45, along each shed's growth curve; farm value weighted by birds placed. Past day 60 the intake table is held at its last value.">Higher is better</div></div>
@@ -1625,11 +1625,12 @@ function farmTotalsEarly(){
 }
 function rangeText(a,b,fmt){if(a==null||b==null)return '';const lo=Math.min(a,b),hi=Math.max(a,b);return fmt(lo,hi);}
 function kpiRanges(t){
-  const e=farmTotalsEarly();if(!e||!e.hasData||!t.hasData)return {feed:'',fcr:'',pif:''};
+  const e=farmTotalsEarly();if(!e||!e.hasData||!t.hasData)return {feed:'',fcr:'',cfcr:'',pif:''};
   const tip=`title="Low end if every shed's last pickup is ${PROJ_EARLY_DAYS} days before the plant's clean-out date; high end at the clean-out date."`;
   return {
     feed:t.usingManualFeed?'':`<div class="fkt-range" ${tip}>Range ${rangeText(e.totalFeed,t.totalFeed,(lo,hi)=>`${fmtFeedNum(lo,0)}–${fmtFeed(hi,0)}`)}</div>`,
     fcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.fcr,t.fcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
+    cfcr:`<div class="fkt-range" ${tip}>Range ${rangeText(e.cfcr,t.cfcr,(lo,hi)=>`${lo.toFixed(3)}–${hi.toFixed(3)}`)}</div>`,
     pif:`<div class="fkt-range" ${tip}>Range ${rangeText(e.pif,t.pif,(lo,hi)=>`${lo.toFixed(0)}–${hi.toFixed(0)}`)}</div>`};
 }
 function cfcrSubText(t){return `vs 2.45 kg reference`;}
@@ -1644,7 +1645,7 @@ function updateFarmKpiValues(){
   set('kpiLiveWeight',fmtKgAlways(t.totalLiveWeight));
   set('kpiFeed',fmtTonnesAlways(t.totalFeed));
   const sub=el('kpiFeedSub');if(sub)sub.textContent=farmFeedSubText(t);
-  farmRangeCache=null;const rg=kpiRanges(t);set('kpiFeedRange',rg.feed);set('kpiFCRRange',rg.fcr);set('kpiPIFRange',rg.pif);
+  farmRangeCache=null;const rg=kpiRanges(t);set('kpiFeedRange',rg.feed);set('kpiFCRRange',rg.fcr);set('kpiCFCRRange',rg.cfcr);set('kpiPIFRange',rg.pif);
   set('kpiFCR',t.fcr.toFixed(3));
   set('kpiCFCR',t.cfcr.toFixed(3));set('kpiCFCRSub',cfcrSubText(t));
   set('kpiCFCRInd',t.cfcrInd.toFixed(3));set('kpiCFCRIndSub',cfcrIndSubText(t));
