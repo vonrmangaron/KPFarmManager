@@ -1544,7 +1544,6 @@ function computeFarmTotals(){
   return {feedMeasured,hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 // Leftover hint: with expected pickups; never a negative 'leftover'
-function autoLeftoverHint(v){if(v==null)return 'auto: —';return v>=0?`auto: ${fmtFeed(v,1)}`:`auto: 0 · short ${fmtFeed(Math.abs(v),1)}`;}
 // "Still to order" line: expected (with auto pickups) and safe (no future pickups)
 function feedToOrderLineHtml(f){
   if(!f)return '';
@@ -1598,7 +1597,6 @@ function renderFarmKpiCard(){
   const feedSub=farmFeedSubText(t);
   const leftoverVal=(predState.farmLeftoverKg!=null&&predState.farmLeftoverKg>0)?feedIn(predState.farmLeftoverKg):'';
   const leftoverCls=t.leftoverApplied?'manual':'';
-  const leftoverPlaceholder=autoLeftoverHint(t.autoLeftover);
   // What the projection is built on: logged + your planned + auto-planned pickups
   let nLog=0,nPlan=0,nAuto=0;
   (farmData.sheds||[]).filter(sh=>sh.placementDate).forEach(sh=>{const rd=new Set((sh.pickups||[]).map(x=>iso(x.date)));nLog+=(sh.pickups||[]).length;nPlan+=(sh.predictedPickups||[]).filter(pp=>pp.date&&!rd.has(iso(pp.date))).length;nAuto+=autoPlanForShed(sh).length;});
@@ -1608,7 +1606,7 @@ function renderFarmKpiCard(){
   const vs=(now,last,dp,unit,lowerBetter)=>{if(last==null)return '';const d=now-last;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':((lowerBetter?d<0:d>0)?' good':' bad');return `<div class="fkt-last${cls}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">last batch ${last.toFixed(dp)}${unit}</div>`;};
   const fpb=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0;
   const feedPanelOpen=fkFeedOpen||t.usingManualFeed||t.leftoverApplied;
-  const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="Docket total (${feedUnit()})" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at cleanout (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="${leftoverPlaceholder}" value="${leftoverVal}" />${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
+  const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><label class="farm-leftover-label" for="farmFeedOverride">🧾 Docket total (${feedUnit()})</label><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="all dockets for the batch" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at clean-out (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="0" value="${leftoverVal}" /><div class="fkt-note" id="kpiLeftoverNote">${leftoverNoteText(t)}</div><div class="fkt-proj" id="kpiProjLeftover">${projLeftoverText(t)}</div>${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">${t.shedsWithData} of ${SHED_COUNT} sheds</span><button type="button" class="fk-how-toggle" data-fk-toggle="how" aria-expanded="${fkHowOpen}">How it's calculated ${fkHowOpen?'▴':'▾'}</button>${howHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub">${fpb.toFixed(2)} kg per bird</div>${lr?vs(fpb,lr.feedKg/lr.picked,2,' kg/bird',true):''}<button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button>${feedPanel}</div>
@@ -1648,6 +1646,15 @@ function projectionLogHtml(){
     return `<tr><td>${escapeHtml(fmtShortNoYear(dateOnly(x.d)))}</td><td class="num">${x.feed!=null?fmtFeed(x.feed,0):'—'}</td><td class="num">${x.fcr!=null?x.fcr.toFixed(3):'—'}</td><td class="num">${x.cfcr!=null?x.cfcr.toFixed(3):'—'}</td><td class="num">${x.alw!=null?x.alw.toFixed(2):'—'}</td><td>${changed?`<span class="pl-model" title="${escapeAttr(MODEL_NOTES[x.m]||'')}">model updated</span>`:''}</td></tr>`;}).join('');
   return `<div class="fk-plog"><div class="fk-plog-title">Projection by day</div><div class="fk-plog-wrap"><table><thead><tr><th>Day</th><th class="num">Feed</th><th class="num">FCR</th><th class="num">cFCR</th><th class="num">ALW</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="fk-plog-note">Model: ${escapeHtml(MODEL_NOTES[MODEL_VERSION]||MODEL_VERSION)}</div></div>`;
 }
+// Leftover only comes off the docket total; say so where it's typed
+function leftoverNoteText(t){
+  if(t.usingManualFeed)return `Total = docket total + ${fmtFeed(t.carryKg||0)} carry-over − leftover`;
+  return `Only used with the docket total — the estimate above already counts just what the birds eat.`;
+}
+function projLeftoverText(t){
+  const v=t.autoLeftover;if(v==null)return '';
+  return `Projected leftover with loads booked so far: <b>${v>=0?fmtFeed(v,1):'0'}</b>${v<0?` · short ${fmtFeed(-v,1)}`:''}`;
+}
 function cfcrSubText(t){return `vs 2.45 kg reference`;}
 function cfcrIndSubText(t){return `vs ${t.targetKg.toFixed(2)} kg target`;}
 function pifSubText(t){return `avg age ${t.weightedAge.toFixed(1)} d`;}
@@ -1671,7 +1678,8 @@ function updateFarmKpiValues(){
   set('kpiMortality',t.mortality.toLocaleString());
   const msub=el('kpiMortalitySub');if(msub)msub.textContent=`${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed`;
   const lo=el('farmLeftoverInput');
-  if(lo){const want=autoLeftoverHint(t.autoLeftover);if(lo.placeholder!==want)lo.placeholder=want;}
+  if(lo)lo.classList.toggle('manual',t.leftoverApplied);
+  set('kpiLeftoverNote',leftoverNoteText(t));set('kpiProjLeftover',projLeftoverText(t));
 }
 // Prediction adjustments — opened from the gear on the floating rail.
 // Not persisted: a reload never reopens it.
