@@ -1409,15 +1409,15 @@ function feedPlanHtml(){
   const n=v=>{const r=Math.round(v*10)/10;return Number.isInteger(r)?String(r):r.toFixed(1);};
   let totOrd=0,totLeft=0;
   const tiles=FEED_PLAN_TYPES.map(t=>{
-    const own=p.farm[t].ordered-(t==='withdrawal'?p.carry:0);
-    const ordered=own/TRUCK_KG;
+    // count trucks (planned 60 t each), not docket kg — dockets run a bit over 60 t
+    const ordered=farmLoads.filter(l=>l.feedType===t).reduce((s2,l)=>s2+(Number(l.plannedKg)||0),0)/TRUCK_KG;
     const left=Math.ceil(p.pairs.reduce((s,g)=>s+Math.ceil(Math.max(0,p.rows[g][t].still)/SPLIT_STEP_KG-1e-9)*SPLIT_STEP_KG,0)/TRUCK_KG-1e-9);
     totOrd+=ordered;totLeft+=left;
     return `<div class="fp-tile ${left>0?'due':'ok'}"><span class="fp-t">${FEED_PLAN_LABEL[t]}</span><span class="fp-n">${n(ordered+left)}</span><span class="fp-s">${n(ordered)} ordered</span><span class="fp-l">${left>0?`${left} to order`:'✓ done'}</span></div>`;}).join('');
   return `<div class="feed-plan">
     <div class="fp-head"><span class="fp-title">Loads for this batch</span><span class="fp-tot">${n(totOrd+totLeft)} loads · ${n(totOrd)} ordered · <b>${totLeft} to order</b></span></div>
     <div class="fp-tiles">${tiles}</div>
-    <p class="fp-note">60 t loads to clean-out${p.carry>0?` · withdrawal already counts the ${fmtFeed(p.carry,0)} carry-over`:''}</p>
+    <p class="fp-note">60 t loads to clean-out${p.carry>0?' · withdrawal includes carry-over':''}</p>
   </div>`;
 }
 function renderLoadsModalBody(){
@@ -1436,34 +1436,17 @@ function renderLoadsModalBody(){
   const dateCounts={};
   all.forEach(l=>{const k=iso(l.date);dateCounts[k]=(dateCounts[k]||0)+1;});
 
-  const feedTypeCounts=farmLoadsByFeedType();
-  const feedTypeChipList=['starter','grower','finisher','withdrawal','unspecified']
-    .map(k=>feedTypeCounts[k])
-    .filter(b=>b.loads>0)
-    .map(b=>`<span class="chip ${b.id}">${b.label} <span class="num">${b.loads} ${b.loads===1?'load':'loads'}</span></span>`)
-    .join('');
-  const feedTypeRowHtml=feedTypeChipList
-    ? `<div class="loads-feedtype-row"><span class="lbl">By feed type</span><div class="delivery-type-chips">${feedTypeChipList}</div><span class="total-chip">Total <strong>${summary.total} load${summary.total===1?'':'s'}</strong></span></div>`
-    : '';
-
-  // Carry-over from last batch: one farm-wide amount, no date, not a load or feed type
+  // Carry-over from last batch: one farm-wide amount, no date; always withdrawal feed
   const coTotal=carryoverTotalKg();
-  const carryHtml=`<div class="loads-carry">
-      <div class="lc-head"><span class="lbl">↩ Carried over from last batch</span><span class="lc-note">no date · counted as withdrawal feed · added to the batch's total feed from your dockets</span></div>
-      <div class="lc-row"><label class="lc-in"><input type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</label>
-      ${feedToOrderLineHtml(farmFeedToOrder())}
-      <span class="lc-total">Batch feed supply: <strong>${fmtTonnesAlways(summary.plannedKg)}</strong> in loads + <strong>${fmtTonnesAlways(coTotal)}</strong> carried over = <strong>${fmtTonnesAlways(summary.plannedKg+coTotal)}</strong></span></div>
-    </div>`;
   const planHtml=feedPlanHtml();
   const sumHtml=`<div class="loads-summary">
     <div class="loads-summary-grid">
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
-      <div class="loads-summary-item"><div class="lbl">With actual</div><div class="val ok">${summary.withActual}</div><div class="sub">${summary.needsActual>0?`${summary.needsActual} still need one`:'all caught up'}</div></div>
-      <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div><div class="sub">${summary.total} docket${summary.total===1?'':'s'}</div></div>
-      <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div><div class="sub">${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded</div></div>
+      <div class="loads-summary-item"><div class="lbl">With actual</div><div class="val ok">${summary.withActual}</div><div class="sub">${summary.needsActual>0?`${summary.needsActual} to record`:'all caught up'}</div></div>
+      <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div></div>
+      <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div></div>
+      <div class="loads-summary-item"><label class="lbl" for="loadsCarryInput">↩ Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
     </div>
-    ${feedTypeRowHtml}
-    ${carryHtml}
     <div class="loads-summary-actions">
       <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button>
       <div class="loads-view-toggle">
