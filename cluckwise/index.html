@@ -2114,6 +2114,29 @@
     #calendarWrap .kanban-dots, #calendarWrap .kanban-nav, #calendarWrap .kanban-fade{ display:none !important; }
     #calendarWrap .col-empty{ padding:18px 4px; text-align:center; }
   }
+
+  /* ---------- Floating Report button + New report form ---------- */
+  .fab-report{ position:fixed; bottom:24px; right:228px; z-index:45; width:56px; height:56px; border-radius:50%; border:none; background:linear-gradient(135deg, #D9822B, #B85E1A); color:#fff; cursor:pointer; box-shadow:var(--shadow-lg); display:flex; align-items:center; justify-content:center; }
+  .fab-report:hover{ filter:brightness(1.08); transform:scale(1.06); }
+  .fab-report:active{ transform:scale(.96); }
+  @media (max-width: 760px){ .fab-report{ right:152px; bottom:74px; z-index:37; } }
+  #newReportModal{ width:480px; }
+  .nr-opt{ font-weight:500; color:var(--muted); }
+  .nr-photo{ display:flex; align-items:center; justify-content:center; min-height:120px; max-height:220px; border:2px dashed var(--line); border-radius:12px; background:var(--surface-soft); cursor:pointer; overflow:hidden; }
+  .nr-photo-empty{ font-size:14px !important; font-weight:600; color:var(--muted); }
+  .nr-photo img{ width:100%; height:100%; max-height:216px; object-fit:cover; display:block; }
+  .nr-photo img[hidden], #nrOtherInput[hidden], #nrShedInput[hidden], #nrPlaceInput[hidden]{ display:none; }
+  .nr-types{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .nr-type{ display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; text-align:left; }
+  .nr-type span{ font-size:17px; }
+  .nr-type.nr-other{ grid-column:1 / -1; }
+  .nr-type.selected{ border-color:var(--primary); background:var(--primary-soft); }
+  .nr-seg{ display:flex; gap:4px; padding:3px; border-radius:11px; background:var(--surface-soft); border:1px solid var(--line); }
+  .nr-seg button{ flex:1; padding:9px 6px; border:none; border-radius:8px; background:transparent; color:var(--muted); font-family:inherit; font-weight:700; font-size:13px; cursor:pointer; }
+  .nr-seg button.active{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
+  #nrUrgSeg button.active[data-urgent="1"]{ background:var(--danger); color:#fff; }
+  #nrNotesInput{ border:1px solid var(--line); background:var(--surface-soft); border-radius:10px; padding:10px 12px; font-size:15px; width:100%; color:var(--ink); font-family:inherit; resize:vertical; box-sizing:border-box; }
+  .nr-hint{ margin:2px 0 0; font-size:12.5px; color:var(--danger); font-weight:600; min-height:16px; }
 </style>
 </head>
 <body>
@@ -2261,6 +2284,7 @@
 <button class="fab-viewer" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
 <button class="fab-delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
 <button class="fab-notif" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
+<button class="fab-report" id="fabReportBtn" title="New report" aria-label="New report"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></button>
 <button class="fab-add" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
 
 <section class="mlog-page" id="mlogPage" aria-label="Routine Tracker">
@@ -2832,6 +2856,45 @@
       <input type="date" id="copyDateInput">
     </div>
     <button class="btn-app" id="confirmCopyBtn" style="margin-top:10px;">Copy</button>
+  </div>
+</div>
+
+<div class="form-modal" id="newReportModal">
+  <div class="form-modal-head"><h2>New report</h2><button id="closeNewReportModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body nr-body">
+    <label>Photo <span class="nr-opt">(optional)</span></label>
+    <label class="nr-photo" id="nrPhotoBox">
+      <input type="file" accept="image/*" capture="environment" id="nrPhotoInput" hidden>
+      <span class="nr-photo-empty" id="nrPhotoEmpty">📷 Tap to add a photo</span>
+      <img id="nrPhotoPreview" alt="" hidden>
+    </label>
+    <label>What's the problem?</label>
+    <div class="nr-types" id="nrTypes">
+      <button type="button" class="nr-type" data-type="Feed Spill"><span>🌾</span>Feed spill</button>
+      <button type="button" class="nr-type" data-type="Feeder Line/Auger"><span>⚙️</span>Feeder line / auger</button>
+      <button type="button" class="nr-type" data-type="Water Leak"><span>💧</span>Water leak</button>
+      <button type="button" class="nr-type" data-type="Fan"><span>🌬️</span>Fan</button>
+      <button type="button" class="nr-type" data-type="Pop Door"><span>🚪</span>Pop door</button>
+      <button type="button" class="nr-type" data-type="Silo"><span>🛢️</span>Silo</button>
+      <button type="button" class="nr-type" data-type="Safety"><span>⚠️</span>Safety</button>
+      <button type="button" class="nr-type" data-type="Lighting"><span>💡</span>Lighting</button>
+      <button type="button" class="nr-type" data-type="Electricity"><span>⚡</span>Electricity</button>
+      <button type="button" class="nr-type" data-type="Biosecurity"><span>🛡️</span>Biosecurity</button>
+      <button type="button" class="nr-type nr-other" data-type="Other"><span>❓</span>Others</button>
+    </div>
+    <input type="text" id="nrOtherInput" maxlength="40" placeholder="Type the problem, e.g. Broken gate" hidden>
+    <label>How urgent?</label>
+    <div class="nr-seg" id="nrUrgSeg"><button type="button" class="active" data-urgent="0">Can wait</button><button type="button" data-urgent="1">🔴 Urgent</button></div>
+    <label>Where is it?</label>
+    <div class="nr-seg" id="nrLocSeg"><button type="button" class="active" data-loc="shed">In a shed</button><button type="button" data-loc="farm">Around the farm</button></div>
+    <input type="number" id="nrShedInput" inputmode="numeric" min="1" max="99" placeholder="Shed number, e.g. 3">
+    <input type="text" id="nrPlaceInput" maxlength="40" placeholder="Place, e.g. Pump house" hidden>
+    <label for="nrNotesInput">Note <span class="nr-opt">(optional)</span></label>
+    <textarea id="nrNotesInput" rows="2" maxlength="200" placeholder="e.g. Back left corner, near feeder line 2"></textarea>
+    <label for="nrByInput">Reported by</label>
+    <input type="text" id="nrByInput" maxlength="40" placeholder="Your name">
+    <p class="nr-hint" id="nrHint"></p>
+    <button class="btn-app" id="nrSaveBtn" disabled>Save report</button>
   </div>
 </div>
 
@@ -8905,6 +8968,7 @@
     $('#batchModal').classList.remove('open');
     $('#eventModal').classList.remove('open');
     $('#reportModal').classList.remove('open');
+    $('#newReportModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -9184,6 +9248,101 @@
     if(t.hasAttribute('data-rp-delcancel')){ confirmRow.hidden = true; delBtn.hidden = false; return; }
     if(t.hasAttribute('data-rp-delyes')){ deleteReportConfirmed(id); return; }
   });
+
+  // ---------- New report from the main app (same fields as the Viewer) ----------
+  const PHOTO_WORKER_URL = 'https://cluckwise-photos.vonrmangaron.workers.dev';
+  const NR_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let nr = { type:null, urgent:false, loc:'shed', file:null };
+  function nrFarmSlug(){ return ghFarmName ? sanitizeFarmFileName(ghFarmName).replace('.json','') : 'farm'; }
+  function nrUpdate(){
+    const other = ($('#nrOtherInput').value || '').trim();
+    const place = nr.loc === 'shed' ? ($('#nrShedInput').value || '').trim() : ($('#nrPlaceInput').value || '').trim();
+    const by = ($('#nrByInput').value || '').trim();
+    const miss = [];
+    if(!nr.type || (nr.type === 'Other' && !other)) miss.push(nr.type === 'Other' ? 'what the problem is' : 'problem type');
+    if(!place) miss.push('where it is');
+    if(!by) miss.push('your name');
+    $('#nrSaveBtn').disabled = miss.length > 0;
+    $('#nrHint').textContent = miss.length ? 'Still needed: ' + miss.join(', ') : '';
+  }
+  function openNewReport(){
+    closeOverlays();
+    nr = { type:null, urgent:false, loc:'shed', file:null };
+    document.querySelectorAll('#nrTypes .nr-type').forEach(b=> b.classList.remove('selected'));
+    $('#nrOtherInput').value = ''; $('#nrOtherInput').hidden = true;
+    document.querySelectorAll('#nrUrgSeg button').forEach(b=> b.classList.toggle('active', b.dataset.urgent === '0'));
+    document.querySelectorAll('#nrLocSeg button').forEach(b=> b.classList.toggle('active', b.dataset.loc === 'shed'));
+    $('#nrShedInput').hidden = false; $('#nrPlaceInput').hidden = true; $('#nrShedInput').value = ''; $('#nrPlaceInput').value = '';
+    $('#nrNotesInput').value = '';
+    let by = ''; try{ by = localStorage.getItem('cluckwise-report-by') || ''; }catch(e){}
+    $('#nrByInput').value = by || 'Manager';
+    $('#nrPhotoInput').value = ''; $('#nrPhotoPreview').hidden = true; $('#nrPhotoPreview').removeAttribute('src'); $('#nrPhotoEmpty').hidden = false;
+    nrUpdate();
+    openDrawer('#newReportModal');
+  }
+  function nrShrink(file){
+    return new Promise((resolve, reject)=>{
+      const img = new Image(); const src = URL.createObjectURL(file);
+      img.onload = ()=>{
+        URL.revokeObjectURL(src);
+        const enc = (side, q)=> new Promise(res=>{ const k = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight)); const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); c.toBlob(b=> res(b), 'image/jpeg', q); });
+        (async ()=>{ let b = await enc(1280, 0.72); if(b && b.size > 600*1024) b = await enc(1024, 0.6); if(b && b.size > 780*1024) b = await enc(800, 0.5); b ? resolve(b) : reject(new Error('shrink failed')); })();
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(src); reject(new Error('read failed')); };
+      img.src = src;
+    });
+  }
+  async function saveNewReport(){
+    const other = ($('#nrOtherInput').value || '').trim().replace(/\s+/g, ' ');
+    const shed = nr.loc === 'shed' ? ($('#nrShedInput').value || '').trim() : '';
+    const location = nr.loc === 'farm' ? ($('#nrPlaceInput').value || '').trim().replace(/\s+/g, ' ') : '';
+    const by = ($('#nrByInput').value || '').trim();
+    if(!nr.type || (nr.type === 'Other' && !other) || !(shed || location) || !by) return;
+    try{ localStorage.setItem('cluckwise-report-by', by); }catch(e){}
+    let code = ''; for(let i=0;i<4;i++) code += NR_CODE_CHARS.charAt(Math.floor(Math.random() * NR_CODE_CHARS.length));
+    const id = 'rpt-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)));
+    const now = new Date().toISOString();
+    const report = { id, code: `${nrFarmSlug()}-rpt-${code.toLowerCase()}`, createdAt: now, createdBy: by, shed, location,
+      problemType: nr.type === 'Other' ? `Other — ${other}` : nr.type, notes: ($('#nrNotesInput').value || '').trim(),
+      photoUrls: [], status: 'Open', urgent: nr.urgent, updatedAt: now, resolvedAt: null, managerNotes: '', resolutionNotes: '' };
+    const file = nr.file;
+    if(file && ghFarmName) report.photoUrls = [`${PHOTO_WORKER_URL}/photo/${nrFarmSlug()}/${id}.jpg`];
+    reports.unshift(report);
+    markReportSeen(id);
+    addHistory('Report added', `${report.code} (${reportPlace(report)} · ${report.problemType})`);
+    scheduleReportsPush();
+    closeOverlays();
+    renderAll();
+    showToast('Report saved.');
+    if(report.photoUrls.length){
+      try{
+        const blob = await nrShrink(file);
+        const res = await fetch(report.photoUrls[0], { method:'PUT', headers:{ 'Content-Type':'image/jpeg' }, body: blob });
+        if(!res.ok && res.status !== 409) throw new Error('upload ' + res.status);
+      }catch(e){
+        report.photoUrls = []; report.updatedAt = new Date().toISOString(); scheduleReportsPush(); renderAll();
+        showToast('Report saved, but the photo could not be uploaded.', true);
+      }
+    }
+  }
+  $('#fabReportBtn').addEventListener('click', openNewReport);
+  $('#closeNewReportModal').addEventListener('click', closeOverlays);
+  $('#nrTypes').addEventListener('click', (e)=>{
+    const b = e.target.closest('.nr-type'); if(!b) return;
+    nr.type = nr.type === b.dataset.type ? null : b.dataset.type;
+    document.querySelectorAll('#nrTypes .nr-type').forEach(x=> x.classList.toggle('selected', x.dataset.type === nr.type));
+    $('#nrOtherInput').hidden = nr.type !== 'Other'; if(nr.type === 'Other') $('#nrOtherInput').focus();
+    nrUpdate();
+  });
+  $('#nrUrgSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.urgent = b.dataset.urgent === '1'; document.querySelectorAll('#nrUrgSeg button').forEach(x=> x.classList.toggle('active', x === b)); });
+  $('#nrLocSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.loc = b.dataset.loc; document.querySelectorAll('#nrLocSeg button').forEach(x=> x.classList.toggle('active', x === b)); $('#nrShedInput').hidden = nr.loc !== 'shed'; $('#nrPlaceInput').hidden = nr.loc !== 'farm'; nrUpdate(); });
+  ['#nrOtherInput','#nrShedInput','#nrPlaceInput','#nrByInput'].forEach(sel=> $(sel).addEventListener('input', nrUpdate));
+  $('#nrPhotoInput').addEventListener('change', (e)=>{
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    nr.file = f; const p = $('#nrPhotoPreview'); p.src = URL.createObjectURL(f); p.hidden = false; $('#nrPhotoEmpty').hidden = true;
+  });
+  $('#nrSaveBtn').addEventListener('click', saveNewReport);
+
   $('#reportsDrawer').addEventListener('change', (e)=>{
     if(!currentReportId) return;
     if(e.target.id === 'rpdManagerNotes') saveReportNote(currentReportId, 'managerNotes', e.target.value);

@@ -490,6 +490,7 @@
     position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--surface);
     border-radius:22px 22px 0 0; box-shadow:var(--shadow-lg); max-height:85vh; overflow-y:auto;
     transform:translateY(100%); transition:transform .22s ease; padding-bottom:env(safe-area-inset-bottom);
+    overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
   }
   .sheet.open{ transform:translateY(0); }
   @media (min-width:720px){
@@ -3239,7 +3240,9 @@
     const THRESHOLD = 64, MAX_PULL = 100;
     containerEl.addEventListener('touchstart', (e)=>{
       if(refreshing) return;
-      pulling = window.scrollY <= 0;
+      // Only the page itself pulls to refresh — never a touch inside an open form, sheet or pop-up
+      const inOverlay = e.target.closest && e.target.closest('.sheet, .modal, .join-overlay, .loading-overlay, .scrim');
+      pulling = !inOverlay && !document.querySelector('.sheet.open, .modal.open') && window.scrollY <= 0;
       startY = e.touches[0].clientY;
     }, {passive:true});
     containerEl.addEventListener('touchmove', (e)=>{
