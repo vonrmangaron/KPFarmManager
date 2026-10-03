@@ -2157,7 +2157,30 @@
   .rp-item-row .rp-item-sub{ flex:1; min-width:0; font-size:13px; }
   .rp-item-row .rp-item-tags{ flex-shrink:0; margin:0; flex-wrap:nowrap; }
   .rp-item-note{ font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-style:italic; }
+
+  /* ---------- Standard tab bar: 50px row of icon + label, colour-only active state, home-bar space on iPhone ---------- */
+  @media (max-width: 760px){
+    .bottom-nav{ padding:0 2px; min-height:52px; }
+    html.has-home-bar .bottom-nav{ padding-bottom:30px; }
+    .bottom-nav button{ gap:3px; padding:7px 2px 5px; border-radius:0; font-size:10.5px; font-weight:600; }
+    .bottom-nav .bn-svg{ width:24px; height:24px; }
+    .bottom-nav button.active{ background:none; color:var(--primary); }
+    .bottom-nav button.active::after{ display:none; }
+    html.has-home-bar .shell{ padding-bottom:86px; }
+    html.has-home-bar .fab-add, html.has-home-bar .fab-notif, html.has-home-bar .fab-report{ bottom:100px; }
+  }
 </style>
+<script>
+// iPhone home-screen app with a home bar: leave the standard space under the tab bar
+(function(){
+  try{
+    var ios = /iPhone|iPod/.test(navigator.userAgent);
+    var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    var tall = Math.max(screen.width, screen.height) >= 812;
+    if(ios && standalone && tall) document.documentElement.classList.add('has-home-bar');
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 

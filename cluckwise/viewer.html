@@ -715,7 +715,30 @@
   .type-btn .pt-l{ flex-shrink:1; min-width:0; font-size:16px; line-height:1.2; overflow-wrap:anywhere; }
   .type-btn.selected{ border-color:var(--primary); background:var(--primary-soft); }
   .type-btn:active{ transform:scale(0.98); }
+
+  /* ---------- Standard tab bar: 50px row, colour-only active state, home-bar space on iPhone ---------- */
+  @media (max-width:899px){
+    .v-tabbar{ padding:0 2px; min-height:52px; }
+    html.has-home-bar .v-tabbar{ padding-bottom:30px; }
+    .v-tabbar button{ gap:3px; padding:7px 2px 5px; border-radius:0; font-size:10.5px; font-weight:600; }
+    .v-tabbar .vt-svg{ width:24px; height:24px; }
+    .v-tabbar button.active{ background:none; color:var(--primary); }
+    .v-tabbar button.active::after{ display:none; }
+    .v-tabbar button[data-tab="report"] .vt-svg{ width:42px; height:42px; padding:10px; margin-top:-16px; }
+    html.has-home-bar .dashboard{ padding-bottom:120px; }
+  }
 </style>
+<script>
+// iPhone home-screen app with a home bar: leave the standard space under the tab bar
+(function(){
+  try{
+    var ios = /iPhone|iPod/.test(navigator.userAgent);
+    var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    var tall = Math.max(screen.width, screen.height) >= 812;
+    if(ios && standalone && tall) document.documentElement.classList.add('has-home-bar');
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 
