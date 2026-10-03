@@ -886,6 +886,11 @@
   .rd-status-btn:hover{ border-color:var(--primary); }
   .rd-status-btn.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
   .rd-info{ background:var(--surface-soft); border-radius:12px; padding:4px 14px; margin-bottom:12px; }
+  .rd-photo{ display:block; margin-bottom:12px; border-radius:12px; overflow:hidden; background:var(--surface-soft); border:1px solid var(--line); text-decoration:none; }
+  .rd-photo[hidden]{ display:none; }
+  .rd-photo img{ display:block; width:100%; max-height:320px; object-fit:contain; background:#000; }
+  .rd-photo img[hidden], .rd-photo-note[hidden]{ display:none; }
+  .rd-photo-note{ display:block; padding:12px 14px; font-size:13px; font-weight:600; color:var(--muted); }
   .rd-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
   .rd-row:last-child{ border-bottom:none; }
   .rd-label{ color:var(--muted); font-weight:700; flex-shrink:0; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px; }
@@ -2616,6 +2621,7 @@
       <button class="rd-status-btn" data-status="In Progress" type="button">In Progress</button>
       <button class="rd-status-btn" data-status="Resolved" type="button">Resolved</button>
     </div>
+    <a class="rd-photo" id="rdPhotoWrap" target="_blank" rel="noopener" hidden><img id="rdPhoto" alt="Report photo"><span class="rd-photo-note" id="rdPhotoNote" hidden>📷 Photo not available yet — it uploads when the worker's phone has signal.</span></a>
     <div class="rd-info">
       <div class="rd-row"><span class="rd-label">Location</span><span class="rd-value" id="rdShed"></span></div>
       <div class="rd-row"><span class="rd-label">Type</span><span class="rd-value" id="rdType"></span></div>
@@ -4043,7 +4049,7 @@
     card.className = 'report-card ' + statusClass;
 
     const statusPillClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
-    const linkedBadge = r.linkedTaskId ? '<span class="report-card-linked">📋 Task linked</span>' : '';
+    const linkedBadge = (r.linkedTaskId ? '<span class="report-card-linked">📋 Task linked</span>' : '') + ((r.photoUrls || []).length ? '<span class="report-card-linked">📷 Photo</span>' : '');
 
     card.innerHTML = `
       <div class="report-card-head">
@@ -4100,6 +4106,15 @@
     $('#rdBy').textContent = r.createdBy || '';
     $('#rdAt').textContent = r.createdAt ? fmtDateTime12(new Date(r.createdAt), {month:'short',day:'numeric',year:'numeric'}) : '';
     $('#rdNotes').textContent = r.notes || '';
+    // Photo from the CluckWise photo server (R2), if the report has one
+    const photoUrl = (r.photoUrls || [])[0] || '';
+    const pWrap = $('#rdPhotoWrap'), pImg = $('#rdPhoto'), pNote = $('#rdPhotoNote');
+    pWrap.hidden = !photoUrl;
+    if(photoUrl){
+      pWrap.href = photoUrl; pImg.hidden = false; pNote.hidden = true;
+      pImg.onerror = ()=>{ pImg.hidden = true; pNote.hidden = false; pWrap.removeAttribute('href'); };
+      pImg.src = photoUrl;
+    } else { pImg.removeAttribute('src'); }
     $('#rdManagerNotes').value = r.managerNotes || '';
     $('#rdResolutionNotes').value = r.resolutionNotes || '';
 
@@ -4175,6 +4190,8 @@
         persist();
       }
     }
+    // Remove its photo from the photo server too (best effort)
+    (r.photoUrls || []).forEach(u=>{ if(/^https:\/\/cluckwise-photos\./.test(u)) fetch(u, { method:'DELETE' }).catch(()=>{}); });
     reports = reports.filter(x => x.id !== id);
     deletedReportIds.add(id);
     saveDeletedReportIds();

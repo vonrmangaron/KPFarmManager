@@ -1043,6 +1043,7 @@
   const BATCH_PALETTE = ['#4C7A3B','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const DEFAULT_EVENT_COLOR = '#000000';
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
+  const PHOTO_WORKER_URL = 'https://cluckwise-photos.vonrmangaron.workers.dev';
   const HARDCODED_REPO = 'vonrmangaron/farmdata';
   const REPORT_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I L O 0 1
 
@@ -2189,6 +2190,7 @@
   }
   async function flushPendingReports(){
     if(!ghPath) return;
+    flushReportPhotos();
     const pending = loadPendingReports();
     if(pending.length === 0) return;
     const success = await pushReportsToGithub(pending, 1);
@@ -2341,6 +2343,78 @@
     $('#photoCapture').classList.add('has-photo');
     updateSubmitState();
   }
+  // ---------- Report photos (Cloudflare R2, via the photo worker) ----------
+  // The photo is shrunk to a JPEG of ~150–300 KB, kept on the phone (IndexedDB)
+  // until it's uploaded, and retried whenever reports are flushed. The report
+  // carries the photo link from the start, so the manager sees it once it lands.
+  function reportPhotoUrl(reportId){ return `${PHOTO_WORKER_URL}/photo/${getFarmSlug()}/${reportId}.jpg`; }
+  function shrinkPhoto(file){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      const src = URL.createObjectURL(file);
+      img.onload = ()=>{
+        URL.revokeObjectURL(src);
+        const encode = (maxSide, q)=> new Promise(res=>{
+          const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(b=> res(b), 'image/jpeg', q);
+        });
+        (async ()=>{
+          let blob = await encode(1280, 0.72);
+          if(blob && blob.size > 600 * 1024) blob = await encode(1024, 0.6);
+          if(blob && blob.size > 780 * 1024) blob = await encode(800, 0.5);
+          blob ? resolve(blob) : reject(new Error('could not shrink photo'));
+        })();
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(src); reject(new Error('could not read photo')); };
+      img.src = src;
+    });
+  }
+  function photoDb(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open('cluckwise-viewer-photos', 1);
+      req.onupgradeneeded = ()=> req.result.createObjectStore('pending', { keyPath:'id' });
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+  async function photoStore(mode, fn){
+    const db = await photoDb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction('pending', mode);
+      const out = fn(tx.objectStore('pending'));
+      tx.oncomplete = ()=>{ db.close(); resolve(out && 'result' in out ? out.result : undefined); };
+      tx.onerror = ()=>{ db.close(); reject(tx.error); };
+    });
+  }
+  async function queueReportPhoto(reportId, url, file){
+    try{
+      const blob = await shrinkPhoto(file);
+      await photoStore('readwrite', st=> st.put({ id: reportId, url, blob }));
+    }catch(e){ console.warn('Photo not queued', e); }
+    flushReportPhotos();
+  }
+  let photoFlushInFlight = false;
+  async function flushReportPhotos(){
+    if(photoFlushInFlight || !navigator.onLine || !window.indexedDB) return;
+    photoFlushInFlight = true;
+    try{
+      const items = await photoStore('readonly', st=> st.getAll()) || [];
+      for(const it of items){
+        try{
+          const res = await fetch(it.url, { method:'PUT', headers:{ 'Content-Type':'image/jpeg' }, body: it.blob });
+          // 409 = already saved; 4xx other than 408/429 won't succeed on retry either
+          if(res.ok || res.status === 409 || (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429)){
+            await photoStore('readwrite', st=> st.delete(it.id));
+          }
+        }catch(e){ /* no signal or server down — keep it for next time */ }
+      }
+    }catch(e){ console.warn('Photo upload failed', e); }
+    finally{ photoFlushInFlight = false; }
+  }
+
   async function shareReportViaWhatsApp(report, photoFile){
     const message = buildWhatsAppMessage(report);
     if(photoFile && navigator.canShare && navigator.canShare({ files: [photoFile] })){
@@ -2389,6 +2463,8 @@
       sharedViaWhatsApp: false
     };
 
+    report.photoUrls = [reportPhotoUrl(report.id)];
+    queueReportPhoto(report.id, report.photoUrls[0], photoFile);
     reports.unshift(report);
     addPendingReport(report);
 
