@@ -9622,13 +9622,24 @@
 (function(){
   const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   if(!standalone) return;
+  // The page comes out shorter by the status-bar height (the top safe area), so the
+  // bar is pushed down by that much — never more than the measured shortfall.
+  function safeTop(){
+    const p = document.createElement('div');
+    p.style.cssText = 'position:fixed;top:0;left:0;width:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px)';
+    document.body.appendChild(p);
+    const v = parseFloat(getComputedStyle(p).paddingTop) || 0;
+    p.remove();
+    return v;
+  }
   function fit(){
     const bar = document.querySelector('#bottomNav');
-    if(!bar) return;
+    if(!bar || !document.body) return;
     const portrait = window.innerHeight >= window.innerWidth;
     const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const gap = Math.round(screenH - window.innerHeight);
-    bar.style.bottom = (gap > 0 && gap < 160) ? (-gap) + 'px' : '';
+    const short = Math.round(screenH - window.innerHeight);
+    const shift = short > 8 ? Math.min(short, Math.round(safeTop())) : 0;
+    bar.style.bottom = shift > 0 ? (-shift) + 'px' : '';
   }
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
