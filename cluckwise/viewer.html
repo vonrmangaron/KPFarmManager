@@ -594,6 +594,7 @@
   .type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .type-btn.type-other{ grid-column:1 / -1; }
   #otherTypeInput{ margin-top:8px; }
+  .urg-seg .loc-opt.selected[data-urgent="1"]{ background:var(--danger); color:#fff; }
   .type-btn{
     display:flex; align-items:center; gap:8px;
     padding:12px 12px; border-radius:12px;
@@ -787,6 +788,12 @@
     </div>
     <input type="text" id="otherTypeInput" maxlength="40" placeholder="Type the problem" aria-label="Type the problem" hidden>
 
+    <span class="field-label" id="urgLabel">How urgent?</span>
+    <div class="loc-seg urg-seg" role="radiogroup" aria-labelledby="urgLabel">
+      <button type="button" class="loc-opt selected" data-urgent="0" role="radio" aria-checked="true" id="urgNormalBtn">Can wait</button>
+      <button type="button" class="loc-opt" data-urgent="1" role="radio" aria-checked="false" id="urgUrgentBtn">🔴 Urgent — fix now</button>
+    </div>
+
     <span class="field-label" id="shedLabel">Where is it?</span>
     <div class="loc-seg" role="radiogroup" aria-labelledby="shedLabel">
       <button type="button" class="loc-opt selected" data-loc="shed" role="radio" aria-checked="true" id="locShedBtn">In a shed</button>
@@ -807,7 +814,7 @@
     <input type="text" id="nameInput" maxlength="40" placeholder="Your name">
 
     <button class="btn-primary" id="submitReportBtn" disabled>Submit Report</button>
-    <p class="field-note" id="submitHint" style="text-align:center;">Fill all fields to submit. Report will open WhatsApp so you can attach the photo.</p>
+    <p class="field-note" id="submitHint" style="text-align:center;">Fill in the photo, problem and place to send.</p>
   </div>
 </div>
 
@@ -1036,6 +1043,10 @@
   Object.assign(TRANSLATIONS.es, {"notesPh": "ej. Esquina trasera izquierda, cerca de la línea 2"});
   Object.assign(TRANSLATIONS.tl, {"notesPh": "hal. Likod na kaliwang sulok, malapit sa feeder line 2"});
   Object.assign(TRANSLATIONS.id, {"notesPh": "mis. Pojok kiri belakang, dekat jalur pakan 2"});
+  Object.assign(TRANSLATIONS.en, {"urgLabel": "How urgent?", "urgNormal": "Can wait", "urgUrgent": "Urgent — fix now", "submitHint": "Ready. Tap Submit to send it to your manager.", "reportSubmitted": "Report sent to your manager"});
+  Object.assign(TRANSLATIONS.es, {"urgLabel": "¿Qué tan urgente?", "urgNormal": "Puede esperar", "urgUrgent": "Urgente — arreglar ya", "submitHint": "Listo. Toca Enviar para mandarlo a tu encargado.", "reportSubmitted": "Reporte enviado a tu encargado"});
+  Object.assign(TRANSLATIONS.tl, {"urgLabel": "Gaano kaapurahan?", "urgNormal": "Puwedeng maghintay", "urgUrgent": "Apurahan — ayusin ngayon", "submitHint": "Handa na. I-tap ang Submit para maipadala sa manager.", "reportSubmitted": "Naipadala na ang report sa manager"});
+  Object.assign(TRANSLATIONS.id, {"urgLabel": "Seberapa mendesak?", "urgNormal": "Bisa menunggu", "urgUrgent": "Mendesak — perbaiki sekarang", "submitHint": "Siap. Ketuk Kirim untuk mengirim ke manajer Anda.", "reportSubmitted": "Laporan terkirim ke manajer"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1608,6 +1619,7 @@
     $('#reportFabLabel').textContent = t('report');
     document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.k); });
     $('#notesInput').placeholder = t('notesPh');
+    $('#urgLabel').textContent = t('urgLabel'); $('#urgNormalBtn').textContent = t('urgNormal'); $('#urgUrgentBtn').textContent = '🔴 ' + t('urgUrgent');
     $('#otherTypeInput').placeholder = t('otherPh'); $('#otherTypeInput').setAttribute('aria-label', t('otherPh'));
     $('#notesOptional').textContent = t('optional');
     $('#nameInput').placeholder = t('yourName');
@@ -2250,6 +2262,11 @@
   // ---------- Report Problem form ----------
   let pendingPhotoFile = null;
   let selectedType = null;
+  let reportUrgent = false;
+  function setReportUrgent(on){
+    reportUrgent = !!on;
+    document.querySelectorAll('.urg-seg .loc-opt').forEach(b=>{ const sel = (b.dataset.urgent === '1') === reportUrgent; b.classList.toggle('selected', sel); b.setAttribute('aria-checked', String(sel)); });
+  }
 
   function generateReportCode(){
     let code = '';
@@ -2274,15 +2291,6 @@
     const cur = ($('#placeInput').value || '').trim();
     const places = (TRANSLATIONS[settings.lang || 'en'] || TRANSLATIONS.en).places || TRANSLATIONS.en.places;
     box.innerHTML = places.map(p=> `<button type="button" class="loc-chip${p === cur ? ' selected' : ''}" data-place="${escapeHtml(p)}" aria-pressed="${p === cur}">${escapeHtml(p)}</button>`).join('');
-  }
-  function buildWhatsAppMessage(report){
-    return [
-      `🚩 ${report.code}`,
-      `${reportPlaceLabel(report)} · ${report.problemType}`,
-      report.notes,
-      '',
-      `— ${report.createdBy}`
-    ].filter((line, i)=> !(i === 2 && !line)).join('\n');
   }
   function updateSubmitState(){
     const hasPhoto = !!pendingPhotoFile;
@@ -2311,6 +2319,7 @@
     $('#photoInput').value = '';
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
     $('#otherTypeInput').value = ''; $('#otherTypeInput').hidden = true;
+    setReportUrgent(false);
     $('#shedInput').value = '';
     $('#placeInput').value = '';
     renderPlaceChips();
@@ -2415,20 +2424,6 @@
     finally{ photoFlushInFlight = false; }
   }
 
-  async function shareReportViaWhatsApp(report, photoFile){
-    const message = buildWhatsAppMessage(report);
-    if(photoFile && navigator.canShare && navigator.canShare({ files: [photoFile] })){
-      try{
-        await navigator.share({ files: [photoFile], text: message });
-        return 'shared';
-      }catch(err){
-        if(err && err.name === 'AbortError') return 'cancelled';
-      }
-    }
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, '_blank');
-    return 'text-only';
-  }
   async function submitReportProblem(){
     if(!ghPath){ showToast(t('connectFirst'), true); return; }
     const shed = reportLocMode === 'shed' ? ($('#shedInput').value || '').trim() : '';
@@ -2460,7 +2455,7 @@
       resolvedAt: null,
       managerNotes: '',
       resolutionNotes: '',
-      sharedViaWhatsApp: false
+      urgent: reportUrgent
     };
 
     report.photoUrls = [reportPhotoUrl(report.id)];
@@ -2470,13 +2465,7 @@
 
     closeOverlays();
 
-    const sharePromise = shareReportViaWhatsApp(report, photoFile);
     flushPendingReports();
-
-    const shareResult = await sharePromise;
-    if(shareResult === 'shared' || shareResult === 'text-only'){
-      report.sharedViaWhatsApp = true;
-    }
 
     if(navigator.onLine){
       showToast(t('reportSubmitted'));
@@ -2938,6 +2927,7 @@
   $('#placeInput').addEventListener('input', ()=>{ renderPlaceChips(); updateSubmitState(); });
   $('#notesInput').addEventListener('input', updateSubmitState);
   $('#otherTypeInput').addEventListener('input', updateSubmitState);
+  document.querySelectorAll('.urg-seg .loc-opt').forEach(b=> b.addEventListener('click', ()=> setReportUrgent(b.dataset.urgent === '1')));
   $('#nameInput').addEventListener('input', updateSubmitState);
   $('#submitReportBtn').addEventListener('click', submitReportProblem);
 

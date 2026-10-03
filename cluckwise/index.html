@@ -850,61 +850,118 @@
   .history-item .h-detail{font-size:13.5px;color:var(--ink);margin:3px 0;overflow-wrap:break-word;}
   .history-item .h-time{font-size:11.5px;color:var(--muted);}
 
-  #reportsDrawer{ width:400px; }
-  .reports-toolbar{ padding:12px 18px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
-  .reports-filter-row{ display:flex; gap:6px; flex-wrap:wrap; }
-  .reports-filter-row button{ flex:1; min-width:0; padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; font-family:'Sora',sans-serif; }
-  .reports-filter-row button.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
+  /* ---------- Reports window: list on the left, details on the right ---------- */
+  .reports-modal{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(1060px, 94vw); height:min(780px, 88vh); background:var(--surface); border-radius:18px; box-shadow:var(--shadow-lg); z-index:50; display:none; flex-direction:column; overflow:hidden; }
+  .reports-modal.open{ display:flex; }
+  .rp-head{ display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line); }
+  .rp-head-text{ flex:1; min-width:0; }
+  .rp-head h2{ font-family:'Sora',sans-serif; font-size:19px; font-weight:800; margin:0; color:var(--ink); }
+  .rp-summary{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12.5px; color:var(--muted); margin-top:3px; }
+  .rp-summary b{ font-family:'Sora',sans-serif; color:var(--ink); }
+  .rp-summary .u b{ color:var(--danger); }
+  .rp-alert-btn{ flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:999px; padding:8px 13px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .rp-alert-btn.on{ background:var(--success-soft); color:var(--success); border-color:transparent; cursor:default; }
+  .rp-close{ flex-shrink:0; width:38px; height:38px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--ink); font-size:16px; cursor:pointer; }
+  .rp-body{ flex:1; min-height:0; display:grid; grid-template-columns:minmax(320px, 380px) 1fr; }
+  .rp-list-pane{ display:flex; flex-direction:column; min-height:0; min-width:0; border-right:1px solid var(--line); }
+  .rp-detail-pane{ display:flex; flex-direction:column; min-height:0; min-width:0; background:var(--bg); }
+  .reports-toolbar{ padding:12px 14px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+  .reports-filter-row{ display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; padding:3px; background:var(--surface-soft); border-radius:999px; }
+  .reports-filter-row button{ flex:1 1 auto; min-width:0; padding:7px 8px; border-radius:999px; border:none; background:transparent; color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; font-family:'Sora',sans-serif; }
+  .reports-filter-row button.active{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
   .reports-search-row{ display:flex; gap:6px; }
   .reports-search-row input{ flex:1; min-width:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 10px; font-size:13px; color:var(--ink); }
-  .reports-search-row select{ flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px 8px; font-size:12.5px; color:var(--ink); max-width:120px; }
-  .reports-list{ overflow-y:auto; padding:12px 18px; display:flex; flex-direction:column; gap:10px; flex:1; min-height:0; }
-
-  .report-card{ background:var(--surface-soft); border:1px solid var(--line); border-left:3px solid var(--muted); border-radius:12px; padding:12px 14px; cursor:pointer; box-shadow:var(--shadow-sm); transition:box-shadow .12s ease; }
-  .report-card:hover{ box-shadow:var(--shadow-md); }
-  .report-card.status-open{ border-left-color:var(--danger); }
-  .report-card.status-progress{ border-left-color:var(--primary); }
-  .report-card.status-resolved{ border-left-color:var(--success); opacity:0.72; }
-  .report-card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
-  .report-card-code{ font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; color:var(--primary-dark); word-break:break-all; }
-  .report-card-status{ font-size:10px; font-weight:800; padding:3px 9px; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; }
-  .report-card-status.open{ background:var(--danger-soft); color:var(--danger); }
-  .report-card-status.progress{ background:var(--primary-soft); color:var(--primary-dark); }
-  .report-card-status.resolved{ background:var(--success-soft); color:var(--success); }
-  .report-card-sub{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:3px; }
-  .report-card-note{ font-size:12.5px; color:var(--muted); margin-bottom:3px; overflow-wrap:break-word; }
-  .report-card-meta{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .report-card-linked{ font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; background:var(--secondary-soft); color:var(--secondary); text-transform:uppercase; letter-spacing:0.03em; }
-
-  #reportDetailModal{ width:480px; }
-  .rd-code-wrap{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .rd-code{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--primary-dark); word-break:break-all; flex:1; min-width:0; }
-  .rd-copy-btn{ flex-shrink:0; width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--surface-soft); color:var(--muted); font-size:14px; cursor:pointer; }
-  .rd-copy-btn:hover{ background:var(--primary-soft); color:var(--primary-dark); }
-  .rd-status-row{ display:flex; gap:6px; margin-bottom:14px; }
-  .rd-status-btn{ flex:1; padding:10px 8px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--muted); font-weight:700; font-size:12.5px; cursor:pointer; transition:all .12s ease; font-family:'Sora',sans-serif; }
-  .rd-status-btn:hover{ border-color:var(--primary); }
-  .rd-status-btn.active{ background:var(--primary); color:#241A08; border-color:var(--primary); }
-  .rd-info{ background:var(--surface-soft); border-radius:12px; padding:4px 14px; margin-bottom:12px; }
-  .rd-photo{ display:block; margin-bottom:12px; border-radius:12px; overflow:hidden; background:var(--surface-soft); border:1px solid var(--line); text-decoration:none; }
-  .rd-photo[hidden]{ display:none; }
-  .rd-photo img{ display:block; width:100%; max-height:320px; object-fit:contain; background:#000; }
-  .rd-photo img[hidden], .rd-photo-note[hidden]{ display:none; }
-  .rd-photo-note{ display:block; padding:12px 14px; font-size:13px; font-weight:600; color:var(--muted); }
-  .rd-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
-  .rd-row:last-child{ border-bottom:none; }
-  .rd-label{ color:var(--muted); font-weight:700; flex-shrink:0; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; padding-top:2px; }
-  .rd-value{ color:var(--ink); font-weight:600; text-align:right; word-break:break-word; min-width:0; }
-  .rd-note-section{ background:var(--primary-soft); border:1px solid var(--primary); border-radius:12px; padding:12px 14px; margin-bottom:12px; }
-  body.theme-dark .rd-note-section{ background:#3D3320; border-color:#8A6A1F; }
-  .rd-note-label{ font-size:11px; font-weight:800; color:var(--primary-dark); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
-  .rd-note-text{ font-size:13.5px; color:var(--ink); white-space:pre-wrap; line-height:1.5; }
-  .rd-photo-note{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
-  .rd-wa-btn{ display:inline-flex; align-items:center; gap:7px; border:none; border-radius:999px; background:#1FA855; color:#fff; font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:8px 14px; cursor:pointer; }
-  .rd-wa-btn:hover{ background:#178C46; }
-  .rd-photo-note{ background:var(--surface-soft); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--muted); margin-bottom:12px; }
-  .rd-input-label{ font-size:12px; font-weight:600; color:var(--muted); display:block; margin:8px 0 4px; }
-  #rdManagerNotes, #rdResolutionNotes{ border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:14px;width:100%;color:var(--ink);font-family:inherit;resize:vertical; }
+  .reports-search-row select{ flex-shrink:0; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:8px; font-size:12.5px; color:var(--ink); max-width:118px; }
+  .reports-list{ overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:4px; flex:1; min-height:0; }
+  .rp-item:focus-visible{ outline:2px solid var(--primary); outline-offset:1px; }
+  .rp-item{ flex-shrink:0; display:flex; gap:12px; box-sizing:border-box; align-items:flex-start; width:100%; text-align:left; padding:10px; border-radius:12px; border:1px solid transparent; border-left:3px solid transparent; background:transparent; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .rp-item:hover{ background:var(--surface-soft); }
+  .rp-item.selected{ background:var(--primary-soft); border-color:var(--primary); }
+  .rp-item.urgent{ border-left-color:var(--danger); }
+  .rp-item.status-resolved{ opacity:.66; }
+  .rp-thumb{ width:52px; height:52px; flex-shrink:0; border-radius:10px; overflow:hidden; background:var(--surface-soft); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .rp-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .rp-item-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .rp-item-top{ display:flex; align-items:center; gap:6px; }
+  .rp-item-type{ font-family:'Sora',sans-serif; font-weight:700; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rp-item-time{ margin-left:auto; flex-shrink:0; font-size:11.5px; color:var(--muted); }
+  .rp-item-sub{ font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rp-item-tags{ display:flex; gap:4px; flex-wrap:wrap; margin-top:2px; }
+  .rp-new{ flex-shrink:0; font-size:9.5px; font-weight:800; letter-spacing:.05em; color:#fff; background:var(--secondary); padding:2px 6px; border-radius:999px; }
+  .rp-pill{ font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
+  .rp-pill.st-open{ background:var(--danger-soft); color:var(--danger); }
+  .rp-pill.st-progress{ background:var(--primary-soft); color:var(--primary-dark); }
+  .rp-pill.st-resolved{ background:var(--success-soft); color:var(--success); }
+  .rp-pill.urgent{ background:var(--danger); color:#fff; }
+  .rp-pill.task{ background:var(--secondary-soft); color:var(--secondary); }
+  .rp-empty-list{ padding:28px 16px; text-align:center; color:var(--muted); font-size:13px; }
+  .rpd-empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); font-size:13.5px; font-weight:600; }
+  .rpd-empty-icon{ font-size:34px; opacity:.6; }
+  .rpd-scroll{ flex:1; min-height:0; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+  .rpd-back{ display:none; align-self:flex-start; border:none; background:transparent; color:var(--primary-dark); font-weight:800; font-size:14px; padding:0; cursor:pointer; font-family:'Sora',sans-serif; }
+  .rpd-title-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .rpd-type{ font-family:'Sora',sans-serif; font-size:21px; font-weight:800; margin:0; color:var(--ink); }
+  .rpd-sub{ font-size:13.5px; color:var(--muted); margin-top:4px; }
+  .rpd-sub b{ color:var(--ink); }
+  .rpd-code-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .rpd-code{ font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; color:var(--primary-dark); background:var(--primary-soft); padding:3px 9px; border-radius:7px; word-break:break-all; }
+  .rpd-copy{ border:1px solid var(--line); background:var(--surface); color:var(--muted); border-radius:7px; padding:3px 9px; font-size:11.5px; font-weight:700; cursor:pointer; }
+  .rpd-controls{ display:grid; grid-template-columns:1.5fr 1fr; gap:12px; }
+  .rpd-field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .rpd-lbl{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .rpd-lbl span{ text-transform:none; letter-spacing:0; font-weight:600; }
+  .rpd-seg{ display:flex; gap:4px; padding:3px; background:var(--surface); border:1px solid var(--line); border-radius:12px; }
+  .rpd-seg-btn{ flex:1; min-width:0; padding:9px 6px; border-radius:9px; border:none; background:transparent; color:var(--muted); font-weight:700; font-size:12.5px; cursor:pointer; font-family:'Sora',sans-serif; white-space:nowrap; }
+  .rpd-seg-btn:hover{ color:var(--ink); }
+  .rpd-seg-btn.active[data-rp-status="Open"]{ background:var(--danger-soft); color:var(--danger); }
+  .rpd-seg-btn.active[data-rp-status="In Progress"]{ background:var(--primary); color:#241A08; }
+  .rpd-seg-btn.active[data-rp-status="Resolved"]{ background:var(--success); color:#fff; }
+  .rpd-seg-btn.active[data-rp-urgent="0"]{ background:var(--surface-soft); color:var(--ink); }
+  .rpd-seg-btn.active[data-rp-urgent="1"]{ background:var(--danger); color:#fff; }
+  .rpd-photo{ display:block; border-radius:14px; overflow:hidden; background:#000; border:1px solid var(--line); }
+  .rpd-photo img{ display:block; width:100%; max-height:360px; object-fit:contain; cursor:zoom-in; }
+  .rpd-photo-note{ display:block; padding:14px; font-size:13px; font-weight:600; color:var(--muted); background:var(--surface-soft); }
+  .rpd-block{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .rpd-note{ font-size:14px; color:var(--ink); white-space:pre-wrap; line-height:1.5; }
+  .rpd-task-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .rpd-task-name{ font-weight:700; font-size:14px; color:var(--ink); flex:1; min-width:0; }
+  .rpd-task-meta{ font-size:12.5px; color:var(--muted); }
+  .rpd-btn{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:10px; padding:9px 14px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Sora',sans-serif; }
+  .rpd-btn.primary{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .rpd-hint{ font-size:12px; color:var(--muted); }
+  .rpd-textarea{ border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:10px 12px; font-size:14px; width:100%; box-sizing:border-box; color:var(--ink); font-family:inherit; resize:vertical; }
+  .rpd-saved{ font-size:12px; color:var(--success); font-weight:700; min-height:16px; margin-top:-8px; }
+  .rpd-foot{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 24px; border-top:1px solid var(--line); background:var(--surface); }
+  .rpd-delete{ border:none; background:transparent; color:var(--danger); font-weight:700; font-size:13px; cursor:pointer; padding:6px 0; font-family:inherit; }
+  .rpd-confirm{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--ink); }
+  .rpd-confirm[hidden]{ display:none; }
+  .rpd-confirm .rpd-btn.danger{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  #reportsBtn.has-new .notif-badge{ animation:rpPulse 1.4s ease-in-out infinite; }
+  @keyframes rpPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.25); } }
+  .report-alert{ position:fixed; top:calc(14px + env(safe-area-inset-top, 0px)); left:50%; transform:translate(-50%,-16px); opacity:0; pointer-events:none; z-index:120; display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-left:4px solid var(--primary); border-radius:14px; box-shadow:var(--shadow-lg); padding:10px 10px 10px 14px; max-width:min(560px, 92vw); font-weight:700; font-size:13.5px; transition:opacity .2s ease, transform .2s ease; }
+  .report-alert.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .report-alert.urgent{ border-left-color:var(--danger); }
+  .report-alert .ra-msg{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .report-alert .ra-view{ flex-shrink:0; border:none; background:var(--primary); color:#241A08; font-weight:800; font-size:12.5px; padding:7px 14px; border-radius:999px; cursor:pointer; font-family:'Sora',sans-serif; }
+  .report-alert .ra-x{ flex-shrink:0; border:none; background:transparent; color:var(--muted); font-size:15px; cursor:pointer; padding:4px 6px; }
+  @media (max-width: 760px){
+    .reports-modal{ top:0; left:0; transform:none; width:100%; height:100%; border-radius:0; }
+    .rp-head{ padding:12px 14px; padding-top:max(12px, env(safe-area-inset-top)); }
+    .rp-alert-btn{ padding:7px 10px; font-size:12px; }
+    .rp-alert-btn .rp-ab-long{ display:none; }
+    .rp-body{ grid-template-columns:1fr; }
+    .rp-list-pane{ border-right:none; }
+    .reports-search-row{ flex-wrap:wrap; }
+    .reports-search-row input{ flex:1 1 100%; }
+    .reports-search-row select{ flex:1 1 0; max-width:none; }
+    .rp-detail-pane{ display:none; }
+    .reports-modal.show-detail .rp-list-pane{ display:none; }
+    .reports-modal.show-detail .rp-detail-pane{ display:flex; }
+    .rpd-back{ display:block; }
+    .rpd-scroll{ padding:16px; }
+    .rpd-controls{ grid-template-columns:1fr; }
+    .rpd-foot{ padding:12px 16px; padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+  }
 
   .scrim{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:46;display:none;}
   .loading-overlay{ position:fixed; inset:0; z-index:100; background:var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
@@ -1030,7 +1087,6 @@
     .nav-group .icon-btn{ width:24px; height:24px; font-size:12px; }
     .toolbar-label{ font-size:11.5px; min-width:auto; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
     .toolbar{ flex-wrap:wrap; justify-content:flex-end; row-gap:8px; }
-    #reportsDrawer{ width:340px; }
   }
 
   @media (max-width: 760px){
@@ -1074,7 +1130,6 @@
     .day-cell{ cursor:pointer; }
     .form-modal{ top:0; left:0; right:0; bottom:0; width:100%; height:100%; max-width:100%; max-height:100%; transform:none; border-radius:0; }
     .history-drawer{ width:100%; }
-    #reportsDrawer{ width:100%; }
   }
 
   @media (max-width: 480px){
@@ -2128,28 +2183,38 @@
   <div class="history-list" id="historyList"></div>
 </div>
 
-<div class="history-drawer" id="reportsDrawer">
-  <div class="history-head">
-    <h2>Reports</h2>
-    <button id="closeReports" aria-label="Close">✕</button>
-  </div>
-  <div class="reports-toolbar">
-    <div class="reports-filter-row" id="reportsFilterRow">
-      <button data-status="all" class="active">All</button>
-      <button data-status="Open">Open</button>
-      <button data-status="In Progress">In Progress</button>
-      <button data-status="Resolved">Resolved</button>
+<div class="reports-modal" id="reportsDrawer" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+  <div class="rp-head">
+    <div class="rp-head-text">
+      <h2 id="rpTitle">Reports</h2>
+      <div class="rp-summary" id="rpSummary"></div>
     </div>
-    <div class="reports-search-row">
-      <input type="text" id="reportsSearchInput" placeholder="Search code, shed, name...">
-      <select id="reportsShedFilter"><option value="">All sheds</option></select>
-      <select id="reportsSortSelect">
-        <option value="newest">Newest</option>
-        <option value="oldest">Oldest</option>
-      </select>
-    </div>
+    <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>🔔 Alerts on this device</button>
+    <button type="button" class="rp-close" id="closeReports" aria-label="Close">✕</button>
   </div>
-  <div class="reports-list" id="reportsList"></div>
+  <div class="rp-body">
+    <section class="rp-list-pane" aria-label="Report list">
+      <div class="reports-toolbar">
+        <div class="reports-filter-row" id="reportsFilterRow">
+          <button type="button" data-status="active" class="active">Active</button>
+          <button type="button" data-status="Open">Open</button>
+          <button type="button" data-status="In Progress">In progress</button>
+          <button type="button" data-status="Resolved">Resolved</button>
+          <button type="button" data-status="all">All</button>
+        </div>
+        <div class="reports-search-row">
+          <input type="search" id="reportsSearchInput" placeholder="Search…" aria-label="Search reports by code, place, problem or name">
+          <select id="reportsShedFilter"><option value="">All places</option></select>
+          <select id="reportsSortSelect">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="reports-list" id="reportsList"></div>
+    </section>
+    <section class="rp-detail-pane" id="rpDetail" aria-label="Report details"></section>
+  </div>
 </div>
 
 <div class="history-drawer settings-drawer" id="settingsDrawer" aria-label="Settings">
@@ -2609,48 +2674,6 @@
   </div>
 </div>
 
-<div class="form-modal" id="reportDetailModal">
-  <div class="form-modal-head"><h2>Report Details</h2><button id="closeReportDetailModal" aria-label="Close">✕</button></div>
-  <div class="form-modal-body">
-    <div class="rd-code-wrap">
-      <span class="rd-code" id="rdCode"></span>
-      <button class="rd-copy-btn" id="rdCopyBtn" type="button" title="Copy code">📋</button>
-    </div>
-    <div class="rd-status-row" id="rdStatusRow">
-      <button class="rd-status-btn" data-status="Open" type="button">Open</button>
-      <button class="rd-status-btn" data-status="In Progress" type="button">In Progress</button>
-      <button class="rd-status-btn" data-status="Resolved" type="button">Resolved</button>
-    </div>
-    <a class="rd-photo" id="rdPhotoWrap" target="_blank" rel="noopener" hidden><img id="rdPhoto" alt="Report photo"><span class="rd-photo-note" id="rdPhotoNote" hidden>📷 Photo not available yet — it uploads when the worker's phone has signal.</span></a>
-    <div class="rd-info">
-      <div class="rd-row"><span class="rd-label">Location</span><span class="rd-value" id="rdShed"></span></div>
-      <div class="rd-row"><span class="rd-label">Type</span><span class="rd-value" id="rdType"></span></div>
-      <div class="rd-row"><span class="rd-label">Reported by</span><span class="rd-value" id="rdBy"></span></div>
-      <div class="rd-row"><span class="rd-label">Reported</span><span class="rd-value" id="rdAt"></span></div>
-    </div>
-    <div class="rd-note-section">
-      <div class="rd-note-label">Location note</div>
-      <div class="rd-note-text" id="rdNotes"></div>
-    </div>
-    <div class="rd-note-section" id="rdResolutionSection" style="display:none; background:var(--success-soft); border-color:var(--success);">
-      <div class="rd-note-label" style="color:var(--success);">Resolution</div>
-      <div class="rd-note-text" id="rdResolution"></div>
-    </div>
-    <div class="rd-photo-note">
-      <span>📷 Photo shared via WhatsApp — search the group for this code to view.</span>
-      <button type="button" class="rd-wa-btn" id="rdWhatsAppBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Open WhatsApp</button>
-    </div>
-    <label class="rd-input-label" for="rdManagerNotes">Manager Notes (internal)</label>
-    <textarea id="rdManagerNotes" rows="2" maxlength="500" placeholder="Internal notes..."></textarea>
-    <label class="rd-input-label" id="rdResolutionLabel" for="rdResolutionNotes" style="display:none;">Resolution Notes (worker sees this)</label>
-    <textarea id="rdResolutionNotes" rows="2" maxlength="500" placeholder="What fixed it?" style="display:none;"></textarea>
-    <button class="btn-app" id="rdSaveBtn" style="margin-top:10px;">Save changes</button>
-    <button class="btn-app secondary-action" id="rdConvertBtn" style="margin-top:8px;">➕ Convert to task</button>
-    <button class="btn-app secondary-action" id="rdViewTaskBtn" style="margin-top:8px; display:none;">📋 View linked task</button>
-    <button class="btn-danger-outline" id="rdDeleteBtn" style="margin-top:8px;">Delete report</button>
-  </div>
-</div>
-
 <div class="form-modal" id="wxModal">
   <div class="form-modal-head"><h2 id="wxModalTitle">Weather</h2><button id="closeWxModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body" id="wxModalBody"></div>
@@ -2744,7 +2767,7 @@
   let deleteAllPending = false;
   let overdueModalOpen = false;
 
-  let reportsFilterStatus = 'all';
+  let reportsFilterStatus = 'active';
   let reportsSortMode = 'newest';
   let reportsSearchQuery = '';
   let reportsShedFilter = '';
@@ -3251,8 +3274,9 @@
       const serverIds = new Set(serverReports.map(r => r.id));
       const localOnly = reports.filter(r => !serverIds.has(r.id));
       reports = serverReports.concat(localOnly);
+      checkNewReports();
       updateReportsBadge();
-      if($('#reportsDrawer').classList.contains('open')) renderReportsList();
+      renderReportsView();
     }catch(e){
       console.error('Reports pull failed', e);
       if(!silent) showToast('Could not refresh reports.', true);
@@ -3981,18 +4005,89 @@
   }
 
   // ---------- REPORTS MODULE ----------
+  // ---------- Reports window: list + details, new-report alerts ----------
+  const SEEN_REPORTS_KEY = 'cluckwise-seen-report-ids';
+  const RP_STATUS_LABEL = { 'Open':'Open', 'In Progress':'In progress', 'Resolved':'Resolved' };
+  function rpStatusClass(r){ return r.status === 'Resolved' ? 'resolved' : r.status === 'In Progress' ? 'progress' : 'open'; }
   function getOpenReportsCount(){
     return reports.filter(r => r.status === 'Open' || r.status === 'In Progress').length;
   }
+  function seenReportIds(){
+    try{ const v = JSON.parse(localStorage.getItem(SEEN_REPORTS_KEY) || 'null'); return Array.isArray(v) ? new Set(v) : null; }catch(e){ return null; }
+  }
+  function saveSeenReportIds(set){ try{ localStorage.setItem(SEEN_REPORTS_KEY, JSON.stringify([...set].slice(-1000))); }catch(e){} }
+  function unseenReports(){
+    const seen = seenReportIds();
+    return seen ? reports.filter(r => !seen.has(r.id) && r.status !== 'Resolved') : [];
+  }
+  function markReportSeen(id){
+    const seen = seenReportIds() || new Set();
+    if(seen.has(id)) return;
+    seen.add(id); saveSeenReportIds(seen); updateReportsBadge();
+  }
+  // Called after every reports pull. The first run on a device marks everything
+  // as seen, so only reports logged from then on count as new.
+  const notifiedReportIds = new Set();
+  function checkNewReports(){
+    if(!seenReportIds()){ saveSeenReportIds(new Set(reports.map(r => r.id))); return; }
+    const fresh = unseenReports().filter(r => !notifiedReportIds.has(r.id));
+    if(!fresh.length) return;
+    fresh.forEach(r => notifiedReportIds.add(r.id));
+    const one = fresh.length === 1 ? fresh[0] : null;
+    const urgent = fresh.some(r => r.urgent);
+    const msg = one ? `${one.urgent ? 'Urgent report' : 'New report'}: ${one.problemType} · ${reportPlace(one)}${one.createdBy ? ' · ' + one.createdBy : ''}`
+                    : `${fresh.length} new reports${urgent ? ' — some are urgent' : ''}`;
+    showReportAlert((urgent ? '🔴 ' : '🚩 ') + msg, one ? one.id : null, urgent);
+    if(document.hidden && 'Notification' in window && Notification.permission === 'granted'){
+      try{
+        const n = new Notification('CluckWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-report' });
+        n.onclick = ()=>{ window.focus(); openReportsDrawer(one ? one.id : null); n.close(); };
+      }catch(e){}
+    }
+  }
+  function showReportAlert(msg, reportId, urgent){
+    let el = $('#reportAlert');
+    if(!el){
+      el = document.createElement('div'); el.id = 'reportAlert'; el.className = 'report-alert'; el.setAttribute('role', 'status');
+      el.innerHTML = '<span class="ra-msg"></span><button type="button" class="ra-view">View</button><button type="button" class="ra-x" aria-label="Dismiss">✕</button>';
+      document.body.appendChild(el);
+      el.querySelector('.ra-x').addEventListener('click', ()=> el.classList.remove('show'));
+      el.querySelector('.ra-view').addEventListener('click', ()=>{ el.classList.remove('show'); openReportsDrawer(el.dataset.id || null); });
+    }
+    el.querySelector('.ra-msg').textContent = msg;
+    el.dataset.id = reportId || '';
+    el.classList.toggle('urgent', !!urgent);
+    el.classList.add('show');
+    clearTimeout(showReportAlert._t);
+    showReportAlert._t = setTimeout(()=> el.classList.remove('show'), 15000);
+  }
   function updateReportsBadge(){
     const count = getOpenReportsCount();
+    const fresh = unseenReports().length;
     const badge = $('#reportsBadge');
     if(badge){
       badge.textContent = count > 99 ? '99+' : count;
       badge.classList.toggle('hidden', count === 0);
     }
+    const btn = $('#reportsBtn');
+    if(btn){ btn.classList.toggle('has-new', fresh > 0); btn.title = fresh ? `Reports — ${fresh} new` : 'Reports'; }
     const moreCount = $('#moreReportsCount');
     if(moreCount){ moreCount.textContent = count > 0 ? `(${count})` : ''; }
+  }
+  function renderReportsSummary(){
+    const el = $('#rpSummary'); if(!el) return;
+    const open = reports.filter(r => r.status === 'Open').length;
+    const prog = reports.filter(r => r.status === 'In Progress').length;
+    const urgent = reports.filter(r => r.urgent && r.status !== 'Resolved').length;
+    el.innerHTML = `<span><b>${open}</b> open</span><span><b>${prog}</b> in progress</span>${urgent ? `<span class="u"><b>${urgent}</b> urgent</span>` : ''}`;
+    const ab = $('#rpAlertBtn');
+    if(ab){
+      const supported = 'Notification' in window;
+      ab.hidden = !supported || Notification.permission === 'denied';
+      const on = supported && Notification.permission === 'granted';
+      ab.classList.toggle('on', on);
+      ab.innerHTML = on ? '🔔 Alerts on' : '🔔 Alerts<span class="rp-ab-long"> on this device</span>';
+    }
   }
   function renderReportsList(){
     const list = $('#reportsList');
@@ -4012,10 +4107,8 @@
     }
 
     let filtered = reports.slice();
-
-    if(reportsFilterStatus !== 'all'){
-      filtered = filtered.filter(r => r.status === reportsFilterStatus);
-    }
+    if(reportsFilterStatus === 'active') filtered = filtered.filter(r => r.status !== 'Resolved');
+    else if(reportsFilterStatus !== 'all') filtered = filtered.filter(r => r.status === reportsFilterStatus);
     if(reportsShedFilter){
       filtered = filtered.filter(r => reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter));
     }
@@ -4023,162 +4116,169 @@
       const q = reportsSearchQuery.toLowerCase();
       filtered = filtered.filter(r =>
         (r.code || '').toLowerCase().includes(q) ||
-        (r.shed || '').toLowerCase().includes(q) ||
+        String(r.shed || '').toLowerCase().includes(q) ||
         (r.location || '').toLowerCase().includes(q) ||
         (r.problemType || '').toLowerCase().includes(q) ||
         (r.notes || '').toLowerCase().includes(q) ||
         (r.createdBy || '').toLowerCase().includes(q)
       );
     }
-
-    filtered.sort((a, b) => reportsSortMode === 'oldest'
+    // Urgent, unresolved reports always sit on top
+    const pin = r => (r.urgent && r.status !== 'Resolved') ? 0 : 1;
+    filtered.sort((a, b) => pin(a) - pin(b) || (reportsSortMode === 'oldest'
       ? (a.createdAt || '').localeCompare(b.createdAt || '')
-      : (b.createdAt || '').localeCompare(a.createdAt || '')
-    );
+      : (b.createdAt || '').localeCompare(a.createdAt || '')));
 
     if(filtered.length === 0){
-      list.innerHTML = '<div class="empty-note">No reports match your filters.</div>';
+      list.innerHTML = `<div class="rp-empty-list">${reports.length ? 'No reports match these filters.' : 'No reports yet. Workers send them from the CluckWise Viewer.'}</div>`;
       return;
     }
-
     filtered.forEach(r => list.appendChild(buildReportCard(r)));
   }
   function buildReportCard(r){
-    const card = document.createElement('div');
-    const statusClass = r.status === 'Open' ? 'status-open' : r.status === 'In Progress' ? 'status-progress' : 'status-resolved';
-    card.className = 'report-card ' + statusClass;
-
-    const statusPillClass = r.status === 'Open' ? 'open' : r.status === 'In Progress' ? 'progress' : 'resolved';
-    const linkedBadge = (r.linkedTaskId ? '<span class="report-card-linked">📋 Task linked</span>' : '') + ((r.photoUrls || []).length ? '<span class="report-card-linked">📷 Photo</span>' : '');
-
-    card.innerHTML = `
-      <div class="report-card-head">
-        <span class="report-card-code"></span>
-        <span class="report-card-status ${statusPillClass}"></span>
+    const sc = rpStatusClass(r);
+    const urgent = r.urgent && sc !== 'resolved';
+    const seen = seenReportIds();
+    const isNew = !!seen && !seen.has(r.id) && sc !== 'resolved';
+    const photo = (r.photoUrls || [])[0];
+    const el = document.createElement('div');
+    el.setAttribute('role', 'button'); el.tabIndex = 0;
+    el.className = `rp-item status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
+    el.innerHTML = `<span class="rp-thumb">${photo ? '<img loading="lazy" alt="">' : '🚩'}</span>
+      <span class="rp-item-main">
+        <span class="rp-item-top"><span class="rp-item-type"></span>${isNew ? '<span class="rp-new">NEW</span>' : ''}<span class="rp-item-time"></span></span>
+        <span class="rp-item-sub"></span>
+        <span class="rp-item-tags"><span class="rp-pill st-${sc}"></span>${urgent ? '<span class="rp-pill urgent">Urgent</span>' : ''}${r.linkedTaskId ? '<span class="rp-pill task">Task</span>' : ''}</span>
+      </span>`;
+    if(photo){ const img = el.querySelector('img'); img.onerror = ()=>{ img.parentNode.textContent = '🚩'; }; img.src = photo; }
+    el.querySelector('.rp-item-type').textContent = r.problemType || 'Report';
+    el.querySelector('.rp-item-time').textContent = r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : '';
+    el.querySelector('.rp-item-sub').textContent = [reportPlace(r), r.createdBy].filter(Boolean).join(' · ');
+    el.querySelector('.rp-pill.st-' + sc).textContent = RP_STATUS_LABEL[r.status] || r.status || 'Open';
+    el.addEventListener('click', () => openReportDetailModal(r.id));
+    el.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openReportDetailModal(r.id); } });
+    return el;
+  }
+  function renderReportDetail(){
+    const pane = $('#rpDetail'); if(!pane) return;
+    const r = reports.find(x => x.id === currentReportId);
+    $('#reportsDrawer').classList.toggle('show-detail', !!r);
+    if(!r){
+      pane.innerHTML = `<div class="rpd-empty"><div class="rpd-empty-icon">🚩</div><div>${reports.length ? 'Select a report to see the details' : 'No reports yet'}</div></div>`;
+      return;
+    }
+    const photo = (r.photoUrls || [])[0];
+    const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
+    const st = (v) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}">${RP_STATUS_LABEL[v]}</button>`;
+    pane.innerHTML = `
+      <div class="rpd-scroll">
+        <div>
+          <button type="button" class="rpd-back" data-rp-back>‹ All reports</button>
+          <div class="rpd-title-row"><h3 class="rpd-type"></h3>${r.urgent && r.status !== 'Resolved' ? '<span class="rp-pill urgent">Urgent</span>' : ''}</div>
+          <div class="rpd-sub"></div>
+          <div class="rpd-code-row"><span class="rpd-code"></span><button type="button" class="rpd-copy" data-rp-copy>Copy code</button></div>
+        </div>
+        <div class="rpd-controls">
+          <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open')}${st('In Progress')}${st('Resolved')}</div></div>
+          <div class="rpd-field"><span class="rpd-lbl">Priority</span><div class="rpd-seg"><button type="button" class="rpd-seg-btn${!r.urgent ? ' active' : ''}" data-rp-urgent="0">Normal</button><button type="button" class="rpd-seg-btn${r.urgent ? ' active' : ''}" data-rp-urgent="1">Urgent</button></div></div>
+        </div>
+        ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>📷 Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
+        ${r.notes ? `<div class="rpd-block"><span class="rpd-lbl">Worker's note</span><div class="rpd-note" data-rp-text="notes"></div></div>` : ''}
+        <div class="rpd-block">
+          <span class="rpd-lbl">Task</span>
+          ${task ? `<div class="rpd-task-row"><span class="rpd-task-name"></span><span class="rpd-task-meta"></span><button type="button" class="rpd-btn" data-rp-viewtask>Open task</button></div>`
+                 : `<div class="rpd-task-row"><button type="button" class="rpd-btn primary" data-rp-assign>＋ Assign as task</button><span class="rpd-hint">Adds a high-priority task to the Backlog and sets the report to In progress.</span></div>`}
+        </div>
+        <div class="rpd-field">
+          <label class="rpd-lbl" for="rpdManagerNotes">Manager notes <span>(only you see this)</span></label>
+          <textarea class="rpd-textarea" id="rpdManagerNotes" rows="3" maxlength="500" placeholder="Internal notes…"></textarea>
+        </div>
+        ${r.status === 'Resolved' ? `<div class="rpd-field"><label class="rpd-lbl" for="rpdResolutionNotes">What fixed it? <span>(the worker sees this)</span></label><textarea class="rpd-textarea" id="rpdResolutionNotes" rows="2" maxlength="500" placeholder="e.g. Replaced the valve"></textarea></div>` : ''}
+        <div class="rpd-saved" id="rpdSaved" aria-live="polite"></div>
       </div>
-      <div class="report-card-sub"></div>
-      <div class="report-card-note"></div>
-      <div class="report-card-meta">${linkedBadge}</div>
-    `;
-    card.querySelector('.report-card-code').textContent = r.code || '';
-    card.querySelector('.report-card-status').textContent = r.status || 'Open';
-    card.querySelector('.report-card-sub').textContent = `${reportPlace(r)} · ${r.problemType} · ${formatTimeAgo(new Date(r.createdAt))}`;
-    card.querySelector('.report-card-note').textContent = r.notes || '';
-    const meta = card.querySelector('.report-card-meta');
-    const metaText = document.createElement('span');
-    metaText.textContent = `By ${r.createdBy}${r.resolvedAt ? ' · Resolved ' + formatTimeAgo(new Date(r.resolvedAt)) : ''}`;
-    meta.insertBefore(metaText, meta.firstChild);
-    card.addEventListener('click', () => openReportDetailModal(r.id));
-    return card;
+      <div class="rpd-foot">
+        <button type="button" class="rpd-delete" data-rp-delete>Delete report</button>
+        <div class="rpd-confirm" hidden><span>${r.status !== 'Resolved' ? "This report isn't resolved yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
+      </div>`;
+    pane.querySelector('.rpd-type').textContent = r.problemType || 'Report';
+    const sub = pane.querySelector('.rpd-sub');
+    const when = r.createdAt ? fmtDateTime12(new Date(r.createdAt), { month:'short', day:'numeric', year:'numeric' }) : '';
+    sub.innerHTML = `<b></b>${r.createdBy ? ' · reported by <b></b>' : ''}${when ? ' · <span></span>' : ''}`;
+    const bs = sub.querySelectorAll('b'); bs[0].textContent = reportPlace(r); if(r.createdBy) bs[1].textContent = r.createdBy;
+    if(when) sub.querySelector('span').textContent = when;
+    pane.querySelector('.rpd-code').textContent = r.code || '';
+    const noteEl = pane.querySelector('[data-rp-text="notes"]'); if(noteEl) noteEl.textContent = r.notes;
+    if(photo){
+      const a = pane.querySelector('.rpd-photo'), img = a.querySelector('img'), note = a.querySelector('.rpd-photo-note');
+      a.href = photo;
+      img.onerror = ()=>{ img.hidden = true; note.hidden = false; a.removeAttribute('href'); };
+      img.src = photo;
+    }
+    if(task){
+      pane.querySelector('.rpd-task-name').textContent = task.name;
+      pane.querySelector('.rpd-task-meta').textContent = task.status === 'done' ? '✓ Done' : task.date ? 'Scheduled ' + formatFull(task.date) : 'In Backlog — not scheduled yet';
+    }
+    pane.querySelector('#rpdManagerNotes').value = r.managerNotes || '';
+    const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
   }
-  // Copies the report code (to paste into the group search) and opens the WhatsApp app.
-  // If the app doesn't take over within a moment, it probably isn't installed: offer WhatsApp Web.
-  async function openWhatsAppForReport(){
-    const r = reports.find(x=> x.id === currentReportId);
-    const code = r ? r.code : '';
-    let copied = false;
-    if(code){ try{ await navigator.clipboard.writeText(code); copied = true; }catch(e){} }
-    let left = false;
-    const onLeave = ()=>{ left = true; };
-    window.addEventListener('blur', onLeave);
-    document.addEventListener('visibilitychange', onLeave);
-    window.location.href = 'whatsapp://send';   // opens the app at the chat list; the code is on the clipboard for the group search
-    if(copied) showToast(`Code ${code} copied. Paste it in the group search.`);
-    setTimeout(()=>{
-      window.removeEventListener('blur', onLeave);
-      document.removeEventListener('visibilitychange', onLeave);
-      if(left || document.hidden || !document.hasFocus()) return;
-      if(confirm("WhatsApp didn't open. It may not be installed on this device.\n\nOpen WhatsApp Web in the browser instead?")) window.open('https://web.whatsapp.com/', '_blank', 'noopener');
-    }, 2500);
-  }
-  function openReportsDrawer(){
+  // Re-render without wiping a note the manager is typing
+  function renderReportsView(){
+    if(!$('#reportsDrawer').classList.contains('open')) return;
+    renderReportsSummary();
     renderReportsList();
+    const ae = document.activeElement;
+    if(!(ae && ae.tagName === 'TEXTAREA' && ae.closest('#rpDetail'))) renderReportDetail();
+  }
+  function openReportsDrawer(selectId){
+    currentReportId = selectId || null;
+    if(selectId) markReportSeen(selectId);
     openDrawer('#reportsDrawer');
+    renderReportsView();
   }
   function openReportDetailModal(id){
-    const r = reports.find(x => x.id === id);
-    if(!r) return;
+    if(!reports.some(x => x.id === id)) return;
+    if(!$('#reportsDrawer').classList.contains('open')){ openReportsDrawer(id); return; }
     currentReportId = id;
-
-    $('#rdCode').textContent = r.code || '';
-    $('#rdShed').textContent = reportPlace(r);
-    $('#rdType').textContent = r.problemType || '';
-    $('#rdBy').textContent = r.createdBy || '';
-    $('#rdAt').textContent = r.createdAt ? fmtDateTime12(new Date(r.createdAt), {month:'short',day:'numeric',year:'numeric'}) : '';
-    $('#rdNotes').textContent = r.notes || '';
-    // Photo from the CluckWise photo server (R2), if the report has one
-    const photoUrl = (r.photoUrls || [])[0] || '';
-    const pWrap = $('#rdPhotoWrap'), pImg = $('#rdPhoto'), pNote = $('#rdPhotoNote');
-    pWrap.hidden = !photoUrl;
-    if(photoUrl){
-      pWrap.href = photoUrl; pImg.hidden = false; pNote.hidden = true;
-      pImg.onerror = ()=>{ pImg.hidden = true; pNote.hidden = false; pWrap.removeAttribute('href'); };
-      pImg.src = photoUrl;
-    } else { pImg.removeAttribute('src'); }
-    $('#rdManagerNotes').value = r.managerNotes || '';
-    $('#rdResolutionNotes').value = r.resolutionNotes || '';
-
-    document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.status === r.status);
-    });
-
-    if(r.status === 'Resolved'){
-      $('#rdResolutionSection').style.display = 'block';
-      $('#rdResolution').textContent = r.resolutionNotes || '(No resolution notes yet)';
-      $('#rdResolutionLabel').style.display = 'block';
-      $('#rdResolutionNotes').style.display = 'block';
-    } else {
-      $('#rdResolutionSection').style.display = 'none';
-      $('#rdResolutionLabel').style.display = 'none';
-      $('#rdResolutionNotes').style.display = 'none';
-    }
-
-    const convertBtn = $('#rdConvertBtn');
-    const viewTaskBtn = $('#rdViewTaskBtn');
-    if(r.linkedTaskId){
-      convertBtn.style.display = 'none';
-      viewTaskBtn.style.display = 'block';
-    } else {
-      convertBtn.style.display = 'block';
-      viewTaskBtn.style.display = 'none';
-    }
-
-    const delBtn = $('#rdDeleteBtn');
-    delBtn.dataset.pending = '';
-    delBtn.dataset.warned = '';
-    delBtn.textContent = 'Delete report';
-    delBtn.classList.remove('confirm');
-
-    openDrawer('#reportDetailModal');
+    markReportSeen(id);
+    renderReportsView();
+    const sc = $('#rpDetail .rpd-scroll'); if(sc) sc.scrollTop = 0;
   }
-  function saveReportChanges(){
-    const r = reports.find(x => x.id === currentReportId);
-    if(!r){ closeReportDetailOnly(); return; }
-
-    const oldStatus = r.status;
-    const activeStatus = document.querySelector('#rdStatusRow .rd-status-btn.active');
-    const newStatus = activeStatus ? activeStatus.dataset.status : r.status;
-
-    r.managerNotes = $('#rdManagerNotes').value.trim();
-    r.resolutionNotes = $('#rdResolutionNotes').value.trim();
-
-    if(newStatus !== r.status){
-      r.status = newStatus;
-      if(newStatus === 'Resolved'){
-        r.resolvedAt = new Date().toISOString();
-      } else {
-        r.resolvedAt = null;
-      }
-      addHistory('Report updated', `${r.code} status: ${oldStatus} → ${newStatus}`);
-    } else {
-      addHistory('Report updated', `${r.code} notes updated`);
-    }
+  function closeReportDetailOnly(){
+    currentReportId = null;
+    renderReportsView();
+  }
+  function touchReport(r, what){
     r.updatedAt = new Date().toISOString();
-
+    addHistory('Report updated', `${r.code} ${what}`);
     scheduleReportsPush();
     renderAll();
-    closeReportDetailOnly();
-    showToast('Report saved.');
+  }
+  function setReportStatus(id, status){
+    const r = reports.find(x => x.id === id);
+    if(!r || r.status === status) return;
+    const old = r.status;
+    r.status = status;
+    r.resolvedAt = status === 'Resolved' ? new Date().toISOString() : null;
+    r.autoResolved = false;
+    touchReport(r, `status: ${old} → ${status}`);
+    showToast(`Report ${RP_STATUS_LABEL[status].toLowerCase()}.`);
+  }
+  function setReportUrgent(id, urgent){
+    const r = reports.find(x => x.id === id);
+    if(!r || !!r.urgent === urgent) return;
+    r.urgent = urgent;
+    touchReport(r, urgent ? 'marked urgent' : 'marked normal priority');
+  }
+  function saveReportNote(id, field, value){
+    const r = reports.find(x => x.id === id);
+    if(!r) return;
+    value = (value || '').trim();
+    if((r[field] || '') === value) return;
+    r[field] = value;
+    r.updatedAt = new Date().toISOString();
+    addHistory('Report updated', `${r.code} notes updated`);
+    scheduleReportsPush();
+    const s = $('#rpdSaved'); if(s){ s.textContent = '✓ Saved'; clearTimeout(saveReportNote._t); saveReportNote._t = setTimeout(()=>{ if($('#rpdSaved')) $('#rpdSaved').textContent = ''; }, 2000); }
   }
   function deleteReportConfirmed(id){
     const r = reports.find(x => x.id === id);
@@ -4197,16 +4297,9 @@
     saveDeletedReportIds();
     addHistory('Report deleted', `${r.code} (${reportPlace(r)} · ${r.problemType}) deleted`);
     scheduleReportsPush();
-    renderAll();
-    closeReportDetailOnly();
-    showToast('Report deleted.');
-  }
-  function closeReportDetailOnly(){
-    $('#reportDetailModal').classList.remove('open');
-    if(!$('#reportsDrawer').classList.contains('open')){
-      $('#scrim').classList.remove('show');
-    }
     currentReportId = null;
+    renderAll();
+    showToast('Report deleted.');
   }
   function escapeHtml(s){
     return String(s == null ? '' : s)
@@ -6874,7 +6967,7 @@
     if(overdueModalOpen) refreshOverdueList();
     updateOverdueBadge();
     updateReportsBadge();
-    if($('#reportsDrawer').classList.contains('open')) renderReportsList();
+    renderReportsView();
     animateViewChange();
     renderMlog();
     if(mlogHistId) renderMlogHistory();
@@ -8608,7 +8701,6 @@
     $('#copyModal').classList.remove('open');
     $('#wxModal').classList.remove('open');
     wxDetailKey = null;
-    $('#reportDetailModal').classList.remove('open');
     $('#searchModal').classList.remove('open');
     $('#restoreModal').classList.remove('open');
     document.querySelector('.sidebar').classList.remove('open');
@@ -8670,7 +8762,7 @@
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
 
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
-  $('#reportsBtn').addEventListener('click', openReportsDrawer);
+  $('#reportsBtn').addEventListener('click', ()=> openReportsDrawer());
   $('#closeReports').addEventListener('click', closeOverlays);
   $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
@@ -8834,81 +8926,42 @@
     reportsSortMode = e.target.value;
     renderReportsList();
   });
-  $('#closeReportDetailModal').addEventListener('click', closeReportDetailOnly);
-  document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#rdStatusRow .rd-status-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if(btn.dataset.status === 'Resolved'){
-        $('#rdResolutionLabel').style.display = 'block';
-        $('#rdResolutionNotes').style.display = 'block';
-      } else {
-        $('#rdResolutionLabel').style.display = 'none';
-        $('#rdResolutionNotes').style.display = 'none';
-      }
-    });
-  });
-  $('#rdSaveBtn').addEventListener('click', saveReportChanges);
-  $('#rdWhatsAppBtn').addEventListener('click', openWhatsAppForReport);
-  $('#rdConvertBtn').addEventListener('click', ()=>{
-    if(!currentReportId) return;
-    convertReportToTask(currentReportId);
-  });
-  $('#rdViewTaskBtn').addEventListener('click', ()=>{
-    const r = reports.find(x => x.id === currentReportId);
-    if(!r || !r.linkedTaskId) return;
-    const taskId = r.linkedTaskId;
-    closeReportDetailOnly();
-    closeOverlays();
-    openTaskDetailModal(taskId);
-  });
-  $('#rdCopyBtn').addEventListener('click', async ()=>{
-    const code = $('#rdCode').textContent || '';
-    try{
-      await navigator.clipboard.writeText(code);
-      showToast('Code copied.');
-    }catch(e){
-      const tmp = document.createElement('textarea');
-      tmp.value = code;
-      document.body.appendChild(tmp);
-      tmp.select();
-      try{ document.execCommand('copy'); showToast('Code copied.'); }
-      catch(err){ showToast('Copy failed.', true); }
-      document.body.removeChild(tmp);
-    }
-  });
-  $('#rdDeleteBtn').addEventListener('click', function(){
-    if(!currentReportId) return;
-    const r = reports.find(x => x.id === currentReportId);
-    if(!r) return;
-    if(r.status !== 'Resolved' && !this.dataset.warned){
-      this.dataset.warned = 'true';
-      const oldText = this.textContent;
-      this.textContent = 'Not resolved — click again to delete';
-      this.classList.add('confirm');
-      clearTimeout(this._t);
-      this._t = setTimeout(()=>{
-        this.dataset.warned = '';
-        this.textContent = oldText;
-        this.classList.remove('confirm');
-      }, 3500);
+  // Reports window: one click handler for the detail pane and header
+  $('#reportsDrawer').addEventListener('click', async (e)=>{
+    const id = currentReportId;
+    const t = e.target.closest('button, [data-rp-back]');
+    if(!t) return;
+    if(t.id === 'rpAlertBtn'){
+      if(!('Notification' in window)) return;
+      try{ await Notification.requestPermission(); }catch(err){}
+      renderReportsSummary();
+      if(Notification.permission === 'granted') showToast('Alerts on — you will be notified of new reports on this device.');
       return;
     }
-    if(!this.dataset.pending){
-      this.dataset.pending = 'true';
-      this.classList.add('confirm');
-      this.textContent = 'Click again to confirm delete';
-      clearTimeout(this._t);
-      this._t = setTimeout(()=>{
-        this.dataset.pending = '';
-        this.classList.remove('confirm');
-        this.textContent = 'Delete report';
-        this.dataset.warned = '';
-      }, 3500);
+    if(t.hasAttribute('data-rp-back')){ closeReportDetailOnly(); return; }
+    if(!id) return;
+    if(t.dataset.rpStatus){ setReportStatus(id, t.dataset.rpStatus); return; }
+    if(t.dataset.rpUrgent){ setReportUrgent(id, t.dataset.rpUrgent === '1'); return; }
+    if(t.hasAttribute('data-rp-assign')){ convertReportToTask(id); return; }
+    if(t.hasAttribute('data-rp-viewtask')){
+      const r = reports.find(x => x.id === id);
+      if(!r || !r.linkedTaskId) return;
+      closeOverlays(); openTaskDetailModal(r.linkedTaskId); return;
+    }
+    if(t.hasAttribute('data-rp-copy')){
+      const r = reports.find(x => x.id === id); const code = r ? r.code : '';
+      try{ await navigator.clipboard.writeText(code); showToast('Code copied.'); }catch(err){ showToast('Copy failed.', true); }
       return;
     }
-    clearTimeout(this._t);
-    deleteReportConfirmed(currentReportId);
+    const confirmRow = $('#rpDetail .rpd-confirm'), delBtn = $('#rpDetail .rpd-delete');
+    if(t.hasAttribute('data-rp-delete')){ confirmRow.hidden = false; delBtn.hidden = true; return; }
+    if(t.hasAttribute('data-rp-delcancel')){ confirmRow.hidden = true; delBtn.hidden = false; return; }
+    if(t.hasAttribute('data-rp-delyes')){ deleteReportConfirmed(id); return; }
+  });
+  $('#reportsDrawer').addEventListener('change', (e)=>{
+    if(!currentReportId) return;
+    if(e.target.id === 'rpdManagerNotes') saveReportNote(currentReportId, 'managerNotes', e.target.value);
+    if(e.target.id === 'rpdResolutionNotes') saveReportNote(currentReportId, 'resolutionNotes', e.target.value);
   });
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
@@ -9166,7 +9219,8 @@
 
   document.addEventListener('keydown', (e)=>{
     if(e.key==='Escape'){
-      if($('#reportDetailModal').classList.contains('open')){
+      // In the Reports window on a phone, Esc goes back from a report to the list
+      if($('#reportsDrawer').classList.contains('open') && currentReportId && window.innerWidth <= 760){
         closeReportDetailOnly();
         return;
       }
@@ -9305,6 +9359,16 @@
   });
   window.addEventListener('offline', renderSyncStatus);
   setInterval(renderSyncStatus, 30000);
+  // Check for new problem reports every minute (every 3 minutes in the background,
+  // only when device alerts are on).
+  let reportsPollTick = 0;
+  setInterval(()=>{
+    if(!ghPath) return;
+    reportsPollTick++;
+    const alertsOn = 'Notification' in window && Notification.permission === 'granted';
+    if(document.hidden && !(alertsOn && reportsPollTick % 3 === 0)) return;
+    pullReportsFromGithub(true);
+  }, 60000);
   document.addEventListener('keydown', (e)=>{
     const tag = (e.target && e.target.tagName) || '';
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable);
