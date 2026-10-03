@@ -564,6 +564,45 @@
     transition:transform .12s ease, filter .12s ease;
   }
   .report-fab:hover{ filter:brightness(1.08); }
+  /* ---------- Tab bar (dark, line icons, bar under the active tab) ---------- */
+  .v-tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:36; display:flex; background:#2B2116; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(0,0,0,0.18); }
+  body.theme-dark .v-tabbar{ background:#111827; }
+  .v-tabbar button{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; border:none; background:none; color:rgba(255,255,255,0.62); font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; padding:9px 2px 10px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .v-tabbar .vt-svg{ width:23px; height:23px; display:block; }
+  .v-tabbar button.active{ color:#fff; background:rgba(255,255,255,0.07); }
+  .v-tabbar button.active::after{ content:''; position:absolute; left:28%; right:28%; bottom:2px; height:3px; border-radius:3px; background:var(--primary); }
+  .v-tabbar button:active{ transform:scale(0.96); }
+  @media (min-width:900px){
+    .v-tabbar{ left:50%; right:auto; bottom:16px; transform:translateX(-50%); width:440px; border-radius:18px; padding:4px; }
+  }
+  /* ---------- Batch page ---------- */
+  .bp-hero{ border-radius:18px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08; padding:16px 18px; box-shadow:0 6px 18px rgba(43,33,22,0.14); display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .bp-hero-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .bp-chip{ display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:999px; background:rgba(255,255,255,0.55); font-weight:800; font-size:13.5px; }
+  .bp-day{ font-family:'Sora',sans-serif; font-weight:800; font-size:40px; line-height:1; }
+  .bp-day small{ font-size:15px; font-weight:700; opacity:.8; margin-left:6px; }
+  .bp-left{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; background:rgba(0,0,0,0.12); padding:6px 11px; border-radius:999px; white-space:nowrap; }
+  .bp-bar{ height:9px; border-radius:999px; background:rgba(255,255,255,0.5); overflow:hidden; }
+  .bp-bar span{ display:block; height:100%; background:#2B2116; border-radius:999px; }
+  .bp-dates{ display:flex; justify-content:space-between; gap:10px; font-size:13px; font-weight:700; opacity:.85; }
+  .bp-sec{ margin:22px 0 10px; font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .bp-sheds{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; }
+  .bp-shed{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:3px; box-shadow:var(--shadow-sm); }
+  .bp-shed b{ font-family:'Sora',sans-serif; font-size:15px; color:var(--ink); }
+  .bp-shed .bp-sd{ font-family:'Sora',sans-serif; font-weight:800; font-size:20px; color:var(--ink); }
+  .bp-shed span{ font-size:13px; color:var(--muted); }
+  .bp-shed.done{ opacity:.6; }
+  .bp-shed .bp-sl{ font-weight:700; color:var(--primary-dark); }
+  .bp-shed .bp-sl:empty{ display:none; }
+  .bp-list{ display:flex; flex-direction:column; gap:8px; }
+  .bp-row{ display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:11px 14px; box-shadow:var(--shadow-sm); }
+  .bp-when{ flex-shrink:0; min-width:74px; font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:var(--primary-dark); }
+  .bp-what{ flex:1; min-width:0; font-size:15px; font-weight:600; color:var(--ink); }
+  .bp-row.audit .bp-what::before{ content:'📝 '; }
+  .bp-stat{ font-size:14px; color:var(--muted); margin-top:4px; }
+  .bp-stat b{ color:var(--ink); }
+  .bp-empty{ text-align:center; color:var(--muted); font-size:15px; padding:40px 16px; line-height:1.6; }
+  .bp-empty .bp-empty-icon{ font-size:38px; display:block; margin-bottom:8px; }
   .report-fab:active{ transform:scale(0.96); }
   .report-fab-icon{ font-size:20px; line-height:1; }
   .opt-tag{ font-weight:600; color:var(--muted); text-transform:none; letter-spacing:0; }
@@ -701,7 +740,18 @@
   <footer class="app-footer"><span id="footerText">CluckWise.vm Viewer — mark tasks done, report</span> • Made by Von Mangaron</footer>
 </main>
 
-<button class="report-fab" id="reportProblemBtn" title="Report" aria-label="Report">
+<main class="dashboard batch-page" id="batchPage" hidden>
+  <div id="batchPageBody"></div>
+</main>
+
+<nav class="v-tabbar" id="vTabbar" aria-label="Main">
+  <button type="button" class="active" data-tab="today"><svg class="vt-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m9 15 2 2 4-4"/></svg><span id="navTodayLbl">Today</span></button>
+  <button type="button" data-tab="batch"><svg class="vt-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l9-6 9 6v11"/><path d="M9 21v-6h6v6"/></svg><span id="navBatchLbl">Batch</span></button>
+  <button type="button" data-tab="report"><svg class="vt-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg><span id="navReportLbl">Report</span></button>
+  <button type="button" data-tab="menu"><svg class="vt-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span id="navMenuLbl">Menu</span></button>
+</nav>
+
+<button class="report-fab" id="reportProblemBtn" title="Report" aria-label="Report" hidden>
   <span class="report-fab-icon">📸</span>
   <span id="reportFabLabel">Report</span>
 </button>
@@ -1047,6 +1097,10 @@
   Object.assign(TRANSLATIONS.es, {"urgLabel": "¿Qué tan urgente?", "urgNormal": "Puede esperar", "urgUrgent": "Urgente — arreglar ya", "submitHint": "Listo. Toca Enviar para mandarlo a tu encargado.", "reportSubmitted": "Reporte enviado a tu encargado"});
   Object.assign(TRANSLATIONS.tl, {"urgLabel": "Gaano kaapurahan?", "urgNormal": "Puwedeng maghintay", "urgUrgent": "Apurahan — ayusin ngayon", "submitHint": "Handa na. I-tap ang Submit para maipadala sa manager.", "reportSubmitted": "Naipadala na ang report sa manager"});
   Object.assign(TRANSLATIONS.id, {"urgLabel": "Seberapa mendesak?", "urgNormal": "Bisa menunggu", "urgUrgent": "Mendesak — perbaiki sekarang", "submitHint": "Siap. Ketuk Kirim untuk mengirim ke manajer Anda.", "reportSubmitted": "Laporan terkirim ke manajer"});
+  Object.assign(TRANSLATIONS.en, {"navBatch": "Batch", "navMenu": "Menu", "bpNone": "No batch is running right now.", "bpNext": "Next: batch #{b} starts {d}.", "bpLastDay": "Last day", "bpDaysLeft": "{n} days left", "bpOf": "of {n}", "bpPlaced": "Placed", "bpCleanout": "Clean-out", "bpSheds": "Sheds", "bpShed": "Shed", "bpCleaned": "Cleaned out", "bpComingUp": "Coming up in this batch", "bpNothing": "Nothing else scheduled for this batch.", "bpTasksDone": "{d} of {n} batch tasks done"});
+  Object.assign(TRANSLATIONS.es, {"navBatch": "Lote", "navMenu": "Menú", "bpNone": "No hay ningún lote activo ahora.", "bpNext": "Próximo: lote #{b} empieza el {d}.", "bpLastDay": "Último día", "bpDaysLeft": "faltan {n} días", "bpOf": "de {n}", "bpPlaced": "Ingreso", "bpCleanout": "Limpieza", "bpSheds": "Galpones", "bpShed": "Galpón", "bpCleaned": "Limpio", "bpComingUp": "Próximamente en este lote", "bpNothing": "No hay nada más programado para este lote.", "bpTasksDone": "{d} de {n} tareas del lote hechas"});
+  Object.assign(TRANSLATIONS.tl, {"navBatch": "Batch", "navMenu": "Menu", "bpNone": "Walang batch na tumatakbo ngayon.", "bpNext": "Susunod: batch #{b} sa {d}.", "bpLastDay": "Huling araw", "bpDaysLeft": "{n} araw pa", "bpOf": "sa {n}", "bpPlaced": "Inilagay", "bpCleanout": "Clean-out", "bpSheds": "Mga kulungan", "bpShed": "Kulungan", "bpCleaned": "Tapos na ang clean-out", "bpComingUp": "Paparating sa batch na ito", "bpNothing": "Wala nang iba pang naka-schedule sa batch na ito.", "bpTasksDone": "{d} sa {n} gawain ng batch ang tapos"});
+  Object.assign(TRANSLATIONS.id, {"navBatch": "Batch", "navMenu": "Menu", "bpNone": "Tidak ada batch yang berjalan saat ini.", "bpNext": "Berikutnya: batch #{b} mulai {d}.", "bpLastDay": "Hari terakhir", "bpDaysLeft": "{n} hari lagi", "bpOf": "dari {n}", "bpPlaced": "Masuk", "bpCleanout": "Bersih kandang", "bpSheds": "Kandang", "bpShed": "Kandang", "bpCleaned": "Sudah dibersihkan", "bpComingUp": "Akan datang di batch ini", "bpNothing": "Tidak ada jadwal lain untuk batch ini.", "bpTasksDone": "{d} dari {n} tugas batch selesai"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1617,6 +1671,7 @@
     $('#dismissOverdueTransfer').textContent = t('gotIt');
     $('#reportProblemTitle').textContent = t('reportProblem');
     $('#reportFabLabel').textContent = t('report');
+    $('#navTodayLbl').textContent = t('today'); $('#navBatchLbl').textContent = t('navBatch'); $('#navReportLbl').textContent = t('report'); $('#navMenuLbl').textContent = t('navMenu');
     document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.k); });
     $('#notesInput').placeholder = t('notesPh');
     $('#urgLabel').textContent = t('urgLabel'); $('#urgNormalBtn').textContent = t('urgNormal'); $('#urgUrgentBtn').textContent = '🔴 ' + t('urgUrgent');
@@ -2849,11 +2904,105 @@
       wrap.appendChild(card);
     });
   }
+  // ---------- Tabs: Today / Batch / Report / Menu ----------
+  let currentTab = 'today';
+  function showTab(tab){
+    if(tab === 'report'){ openReportProblem(); return; }
+    if(tab === 'menu'){ renderWeatherStatusNote(); openSheet('#settingsSheet'); return; }
+    currentTab = tab;
+    $('#dashboardWrap').hidden = tab !== 'today';
+    $('#batchPage').hidden = tab !== 'batch';
+    document.querySelectorAll('#vTabbar button').forEach(b=> b.classList.toggle('active', b.dataset.tab === tab));
+    if(tab === 'batch') renderBatchPage();
+    window.scrollTo(0, 0);
+  }
+  function batchDayLeft(b, todayKey){ return Math.max(0, Math.round((toDateObj(b.end) - toDateObj(todayKey)) / 86400000)); }
+  function renderBatchPage(){
+    const wrap = $('#batchPageBody'); if(!wrap) return;
+    const todayKey = dateKey(new Date());
+    const active = batches.filter(b=> b.start && b.end && todayKey >= b.start && todayKey <= b.end).sort((a,b)=> a.start.localeCompare(b.start));
+    wrap.innerHTML = '';
+    if(!active.length){
+      const next = batches.filter(b=> b.start && b.start > todayKey).sort((a,b)=> a.start.localeCompare(b.start))[0];
+      const el = document.createElement('div'); el.className = 'bp-empty';
+      el.innerHTML = '<span class="bp-empty-icon">🐣</span><span class="bp-e1"></span><br><b class="bp-e2"></b>';
+      el.querySelector('.bp-e1').textContent = t('bpNone');
+      if(next) el.querySelector('.bp-e2').textContent = t('bpNext').replace('{b}', next.number).replace('{d}', formatFull(next.start));
+      wrap.appendChild(el);
+      return;
+    }
+    active.forEach(b=>{
+      const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
+      const day = Math.round((toDateObj(todayKey) - toDateObj(b.start)) / 86400000);
+      const left = batchDayLeft(b, todayKey);
+      const hero = document.createElement('div'); hero.className = 'bp-hero';
+      hero.innerHTML = `<div class="bp-hero-top"><span class="bp-chip"><span class="dc-dot"></span><span class="bp-num"></span></span><span class="bp-left"></span></div>
+        <div class="bp-day"><span class="bp-dn"></span><small class="bp-dt"></small></div>
+        <div class="bp-bar"><span style="width:${Math.min(100, Math.round(day / total * 100))}%"></span></div>
+        <div class="bp-dates"><span class="bp-p"></span><span class="bp-c"></span></div>`;
+      hero.querySelector('.dc-dot').style.background = colorForBatchNumber(b.number);
+      hero.querySelector('.bp-num').textContent = `${t('batch')} #${b.number}`;
+      hero.querySelector('.bp-left').textContent = left === 0 ? t('bpLastDay') : t('bpDaysLeft').replace('{n}', left);
+      hero.querySelector('.bp-dn').textContent = `${t('day')} ${day}`;
+      hero.querySelector('.bp-dt').textContent = t('bpOf').replace('{n}', total);
+      hero.querySelector('.bp-p').textContent = `${t('bpPlaced')} ${formatFull(b.start)}`;
+      hero.querySelector('.bp-c').textContent = `${t('bpCleanout')} ${formatFull(b.end)}`;
+      wrap.appendChild(hero);
+
+      const sheds = (b.sheds || []).filter(sh=> sh.placement).slice().sort((x,y)=> String(x.shed).localeCompare(String(y.shed), undefined, { numeric:true }));
+      if(sheds.length){
+        const h = document.createElement('div'); h.className = 'bp-sec'; h.textContent = t('bpSheds'); wrap.appendChild(h);
+        const grid = document.createElement('div'); grid.className = 'bp-sheds';
+        sheds.forEach(sh=>{
+          const co = sh.cleanout || b.end;
+          const done = todayKey > co;
+          const notYet = todayKey < sh.placement;
+          const d = Math.round((toDateObj(todayKey) - toDateObj(sh.placement)) / 86400000);
+          const tile = document.createElement('div'); tile.className = 'bp-shed' + (done ? ' done' : '');
+          tile.innerHTML = '<b></b><span class="bp-sd"></span><span class="bp-sc"></span><span class="bp-sl"></span>';
+          tile.querySelector('b').textContent = `${t('bpShed')} ${sh.shed}`;
+          tile.querySelector('.bp-sd').textContent = done ? '✓' : notYet ? '—' : `${t('day')} ${d}`;
+          const coLeft = Math.round((toDateObj(co) - toDateObj(todayKey)) / 86400000);
+          tile.querySelector('.bp-sc').textContent = done ? t('bpCleaned') : notYet ? `${t('bpPlaced')} ${formatShort(sh.placement)}` : `${t('bpCleanout')} ${formatShort(co)}`;
+          tile.querySelector('.bp-sl').textContent = done || notYet ? '' : t('bpDaysLeft').replace('{n}', coLeft);
+          grid.appendChild(tile);
+        });
+        wrap.appendChild(grid);
+      }
+
+      // Coming up in this batch: audits/events and the batch's open tasks (weigh-ins etc.)
+      const items = [];
+      events.filter(ev=> ev.date >= todayKey && ev.date <= b.end).forEach(ev=> items.push({ date: ev.date, name: ev.name, audit: true }));
+      const bTasks = tasks.filter(tk=> String(tk.batchNumber || '') === String(b.number));
+      bTasks.filter(tk=> tk.status !== 'done' && tk.date && tk.date >= todayKey).forEach(tk=> items.push({ date: tk.date, name: tk.name }));
+      items.sort((x,y)=> x.date.localeCompare(y.date));
+      const h2 = document.createElement('div'); h2.className = 'bp-sec'; h2.textContent = t('bpComingUp'); wrap.appendChild(h2);
+      const list = document.createElement('div'); list.className = 'bp-list';
+      if(!items.length){ const n = document.createElement('div'); n.className = 'empty-note'; n.textContent = t('bpNothing'); list.appendChild(n); }
+      items.slice(0, 6).forEach(it=>{
+        const row = document.createElement('div'); row.className = 'bp-row' + (it.audit ? ' audit' : '');
+        row.innerHTML = '<span class="bp-when"></span><span class="bp-what"></span>';
+        row.querySelector('.bp-when').textContent = dayName(it.date) === t('today') || dayName(it.date) === t('dnTomorrow') ? dayName(it.date) : toDateObj(it.date).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+        row.querySelector('.bp-what').textContent = it.name;
+        list.appendChild(row);
+      });
+      wrap.appendChild(list);
+      if(bTasks.length){
+        const st = document.createElement('div'); st.className = 'bp-stat';
+        st.innerHTML = '<b></b>';
+        st.querySelector('b').textContent = t('bpTasksDone').replace('{d}', bTasks.filter(tk=> tk.status === 'done').length).replace('{n}', bTasks.length);
+        wrap.appendChild(st);
+      }
+    });
+  }
+  document.querySelectorAll('#vTabbar button').forEach(b=> b.addEventListener('click', ()=> showTab(b.dataset.tab)));
+
   function renderAll(){
     renderHero();
     renderAuditBars();
     renderList();
     renderAudits();
+    if(currentTab === 'batch') renderBatchPage();
     updateOverdueBadge();
     renderSyncStatus();
     if($('#overdueTransferModal').classList.contains('open')) renderOverdueList();
