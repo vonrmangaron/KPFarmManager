@@ -3580,3 +3580,29 @@ body.theme-dark .adj-modal { color-scheme: dark; }
 .loads-summary-item .lc-input { width: 110px; height: 30px; }
 label.lbl { display: block; }
 @media (max-width: 560px) { .loads-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   Phone tab bar — same style as CluckWise: dark bar, line icons,
+   colour-only active tab; Silo reading raised in a curved notch
+   ═══════════════════════════════════════════════════════════════ */
+.settings-credit { margin-top: 4px; opacity: .8; }
+@media (max-width: 768px) {
+  .mobile-bottom-nav { background: transparent; border-top: none; filter: drop-shadow(0 -3px 10px rgba(0,0,0,0.18)); }
+  .mobile-bottom-nav::before {
+    content: ''; position: absolute; inset: 0; background: #2B2116;
+    -webkit-mask: radial-gradient(circle 39px at 50% 2px, transparent 38px, #000 39px);
+            mask: radial-gradient(circle 39px at 50% 2px, transparent 38px, #000 39px);
+  }
+  body.theme-dark .mobile-bottom-nav::before { background: #111827; }
+  .mobile-bottom-nav .mob-nav-inner { position: relative; }
+  .mob-nav-btn { height: 55px; gap: 3px; font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.62); }
+  .mob-nav-btn svg { width: 24px; height: 24px; }
+  .mob-nav-pill { width: auto; height: auto; background: none !important; }
+  .mob-nav-btn.active { color: var(--primary); }
+  .mob-nav-dot { border-color: #2B2116; }
+  body.theme-dark .mob-nav-dot { border-color: #111827; }
+  .mob-nav-silo { color: rgba(255,255,255,0.85); padding-bottom: 6px; }
+  .mob-nav-fab { top: -28px; width: 60px; height: 60px; border: none; color: #2B2116; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
+  body.theme-dark .mob-nav-fab { color: #1A2438; }
+  .mob-nav-fab svg { width: 26px; height: 26px; }
+}

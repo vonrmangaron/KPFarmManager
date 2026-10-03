@@ -97,7 +97,7 @@ function settingsIcon(name){
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
   const sections=[renderSettingsDisplayNameCard(),renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsFarmHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
-  body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div>';
+  body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div><div class="settings-foot settings-credit">Made by Von Mangaron · Personal use only · Not for commercial use</div>';
   // Bind notification checkboxes directly — belt-and-braces alongside the
   // document-level delegated change handler.
   if(typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();
