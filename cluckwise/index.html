@@ -2080,9 +2080,10 @@
     .sb-mobile-close{ width:38px; height:38px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; }
     /* Header: logo + date only; sync status lives in the Menu */
     .topbar .toolbar{ display:none; }
-    .topbar .brand{ font-size:0; gap:0; }
-    .topbar .brand .accent{ display:none; }
-    .topbar .brand .brand-icon{ width:30px; height:30px; border-radius:8px; }
+    .topbar .brand{ font-size:17px; gap:0; flex-shrink:0; }
+    .topbar .brand .brand-icon{ width:30px; height:30px; border-radius:8px; margin-right:8px; }
+    .topbar .nav-group{ min-width:0; }
+    .topbar .toolbar-label{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px !important; }
     .topbar .nav-group{ flex:1; justify-content:space-between; margin-left:10px; padding-left:10px; }
     .topbar .toolbar-label{ max-width:none; flex:1; font-size:15px; }
     .topbar-left{ flex:1; min-width:0; }
@@ -6994,6 +6995,12 @@
       const sun = new Date(mon); sun.setDate(mon.getDate()+6);
       const startStr = mon.toLocaleDateString(undefined,{month:'short',day:'numeric'});
       const endStr = sun.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+      if(window.innerWidth <= 760){
+        // Phones: compact "28 Sep–4 Oct" / "5–11 Oct" so the arrows stay on screen
+        const m = d => d.toLocaleDateString(undefined, { month:'short' });
+        label.textContent = mon.getMonth() === sun.getMonth() ? `${mon.getDate()}–${sun.getDate()} ${m(sun)}` : `${mon.getDate()} ${m(mon)}–${sun.getDate()} ${m(sun)}`;
+        return;
+      }
       label.textContent = `${startStr} – ${endStr}`;
       return;
     }
@@ -9616,37 +9623,5 @@
 </script>
 
 
-<script>
-// iOS home-screen apps can lay the page out shorter than the screen, leaving a gap
-// under a bottom-fixed bar. Measure the gap and push the bar down into it.
-(function(){
-  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  if(!standalone) return;
-  // The page comes out shorter by the status-bar height (the top safe area), so the
-  // bar is pushed down by that much — never more than the measured shortfall.
-  function safeTop(){
-    const p = document.createElement('div');
-    p.style.cssText = 'position:fixed;top:0;left:0;width:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px)';
-    document.body.appendChild(p);
-    const v = parseFloat(getComputedStyle(p).paddingTop) || 0;
-    p.remove();
-    return v;
-  }
-  function fit(){
-    const bar = document.querySelector('#bottomNav');
-    if(!bar || !document.body) return;
-    const portrait = window.innerHeight >= window.innerWidth;
-    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const short = Math.round(screenH - window.innerHeight);
-    const shift = short > 8 ? Math.min(short, Math.round(safeTop())) : 0;
-    bar.style.bottom = shift > 0 ? (-shift) + 'px' : '';
-  }
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
-  window.addEventListener('pageshow', fit);
-  document.addEventListener('DOMContentLoaded', fit);
-  fit();
-})();
-</script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Size lock: the viewer is drawn at its own CSS sizes, not the phone's settings.
      1) text-scale "scale": Chrome/Android 146+ stops enlarging the page from the
         phone's font-size setting and turns off "text autosizing". All viewer sizes
@@ -21,9 +21,9 @@
       var landscape = window.screen.width > window.screen.height;
       if(!landscape && w > 0 && w < DESIGN_WIDTH){
         var scale = (w / DESIGN_WIDTH).toFixed(4);
-        meta.setAttribute('content', 'width=' + DESIGN_WIDTH + ', initial-scale=' + scale + ', viewport-fit=cover');
+        meta.setAttribute('content', 'width=' + DESIGN_WIDTH + ', initial-scale=' + scale);
       } else {
-        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+        meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
       }
     }
     lockViewport();
@@ -278,9 +278,10 @@
   .dc-wx{ display:none !important; }
   /* Round "now" weather badge floating over the Today card's corner (same look as the Board in the main app) */
   .day-card{ position:relative; }
-  .day-card.has-now .dc-top{ padding-right:46px; }
+  .day-card.has-now{ margin-top:6px; }
+  .day-card.has-now .dc-top{ padding-left:62px; }
   .day-card.has-now .dc-sub{ white-space:normal; }
-  .wx-now-btn{ position:absolute; top:-16px; right:-10px; z-index:3; width:64px; height:64px; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; border:3px solid var(--bg); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#2B2116; background:linear-gradient(135deg,#FFF4C7,#FFD35C); -webkit-tap-highlight-color:transparent; }
+  .wx-now-btn{ position:absolute; top:-18px; left:-12px; z-index:3; width:78px; height:78px; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; border:3px solid var(--bg); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#2B2116; background:linear-gradient(135deg,#FFF4C7,#FFD35C); -webkit-tap-highlight-color:transparent; }
   .wx-now-btn:active{ transform:scale(0.94); }
   .wx-now-btn.wx-tone-partly{ background:linear-gradient(135deg,#FFF3CF,#DCE5F0); }
   .wx-now-btn.wx-tone-cloud{ background:linear-gradient(135deg,#F0F2F5,#CBD3DD); }
@@ -294,8 +295,8 @@
   body.theme-dark .wx-now-btn.wx-tone-rain{ background:linear-gradient(135deg,#23406B,#2D5690); }
   body.theme-dark .wx-now-btn.wx-tone-snow{ background:#3A4D66; }
   body.theme-dark .wx-now-btn.wx-tone-storm{ background:linear-gradient(135deg,#3E2D66,#533C8A); }
-  .wnb-ic{ font-size:22px; }
-  .wnb-t{ font-family:'Sora',sans-serif; font-weight:800; font-size:17px; margin-top:1px; }
+  .wnb-ic{ font-size:28px; }
+  .wnb-t{ font-family:'Sora',sans-serif; font-weight:800; font-size:19px; margin-top:1px; }
   .wnb-l{ font-size:8.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; opacity:.65; margin-top:1px; }
   .dc-wx:active{ transform:scale(0.97); }
   .dc-wx.wet{ background:rgba(228,240,255,0.92); color:#1E4E86; }
@@ -3347,37 +3348,5 @@
 </script>
 
 
-<script>
-// iOS home-screen apps can lay the page out shorter than the screen, leaving a gap
-// under a bottom-fixed bar. Measure the gap and push the bar down into it.
-(function(){
-  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  if(!standalone) return;
-  // The page comes out shorter by the status-bar height (the top safe area), so the
-  // bar is pushed down by that much — never more than the measured shortfall.
-  function safeTop(){
-    const p = document.createElement('div');
-    p.style.cssText = 'position:fixed;top:0;left:0;width:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px)';
-    document.body.appendChild(p);
-    const v = parseFloat(getComputedStyle(p).paddingTop) || 0;
-    p.remove();
-    return v;
-  }
-  function fit(){
-    const bar = document.querySelector('#vTabbar');
-    if(!bar || !document.body) return;
-    const portrait = window.innerHeight >= window.innerWidth;
-    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const short = Math.round(screenH - window.innerHeight);
-    const shift = short > 8 ? Math.min(short, Math.round(safeTop())) : 0;
-    bar.style.bottom = shift > 0 ? (-shift) + 'px' : '';
-  }
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
-  window.addEventListener('pageshow', fit);
-  document.addEventListener('DOMContentLoaded', fit);
-  fit();
-})();
-</script>
 </body>
 </html>
