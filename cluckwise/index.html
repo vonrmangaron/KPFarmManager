@@ -2048,6 +2048,71 @@
     .toolbar .tb-group #reportsBtn .tb-label{ display:none; }
     .toolbar .tb-group #reportsBtn{ padding:0 9px !important; }
   }
+
+  /* ---------- Phones: Menu sheet, Manage panel, Board, header ---------- */
+  .menu-head, .menu-manage, .menu-grid, .menu-rows, .sb-mobile-head{ display:none; }
+  @media (max-width: 760px){
+    .menu-panel{ gap:12px; padding-left:14px; padding-right:14px; }
+    .menu-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:0 4px; }
+    .menu-head .sheet-title{ font-size:17px; margin:0; }
+    .menu-sync{ font-size:12px; font-weight:600; color:var(--muted); }
+    .menu-sync.ok{ color:var(--success); } .menu-sync.error{ color:var(--danger); }
+    .mi-svg{ width:22px; height:22px; display:block; flex-shrink:0; }
+    .mi-chev{ width:18px; height:18px; margin-left:auto; color:var(--muted); flex-shrink:0; }
+    .menu-manage{ display:flex; align-items:center; gap:12px; width:100%; padding:14px; border-radius:14px; border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); text-align:left; cursor:pointer; font-family:inherit; }
+    .mm-ic{ width:40px; height:40px; border-radius:11px; background:var(--primary); color:#241A08; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .mm-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .mm-text b{ font-family:'Sora',sans-serif; font-size:15px; }
+    .mm-text small{ font-size:12.5px; color:var(--muted); }
+    .menu-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+    .menu-tile{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:76px; padding:10px 6px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:12.5px; font-weight:600; cursor:pointer; text-align:center; }
+    .menu-tile .mi-svg{ color:var(--muted); }
+    .menu-tile.danger .mi-svg, .menu-tile.danger{ color:var(--danger); }
+    .menu-tile:active, .menu-manage:active, .menu-row:active{ transform:scale(0.97); }
+    .menu-rows{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+    .menu-row{ display:flex; align-items:center; gap:12px; padding:13px 14px; border:none; background:var(--surface); color:var(--ink); font-family:inherit; font-size:14px; font-weight:600; text-align:left; cursor:pointer; }
+    .menu-row + .menu-row{ border-top:1px solid var(--line); }
+    .menu-row .mi-svg{ color:var(--muted); }
+    /* Manage panel = the sidebar as a full-screen page with a title bar */
+    .sidebar{ width:100% !important; max-width:100% !important; padding-top:0 !important; }
+    .sb-mobile-head{ display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:4; margin:0 -14px 12px; padding:calc(12px + env(safe-area-inset-top, 0px)) 14px 12px; background:var(--surface); border-bottom:1px solid var(--line); }
+    .sb-mobile-head h2{ margin:0; padding:0; border:none; font-family:'Sora',sans-serif; font-size:18px; font-weight:800; color:var(--ink); }
+    .sb-mobile-close{ width:38px; height:38px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    /* Header: logo + date only; sync status lives in the Menu */
+    .topbar .toolbar{ display:none; }
+    .topbar .brand{ font-size:0; gap:0; }
+    .topbar .brand .accent{ display:none; }
+    .topbar .brand .brand-icon{ width:30px; height:30px; border-radius:8px; }
+    .topbar .nav-group{ flex:1; justify-content:space-between; margin-left:10px; padding-left:10px; }
+    .topbar .toolbar-label{ max-width:none; flex:1; font-size:15px; }
+    .topbar-left{ flex:1; min-width:0; }
+    /* Board: a day strip + one clean day at a time */
+    .kb-daystrip{ display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; margin:0 0 12px; }
+    .kb-day{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 0 6px; border-radius:12px; border:1px solid transparent; background:transparent; color:var(--muted); font-family:inherit; cursor:pointer; }
+    .kb-dn{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+    .kb-dd{ font-family:'Sora',sans-serif; font-size:17px; font-weight:800; color:var(--ink); }
+    .kb-dc{ min-width:18px; height:16px; padding:0 5px; border-radius:999px; font-size:10.5px; font-weight:800; line-height:16px; background:var(--surface-soft); color:var(--ink); }
+    .kb-dc:empty{ background:transparent; }
+    .kb-day.done .kb-dc{ background:var(--success-soft); color:var(--success); }
+    .kb-day.today .kb-dd{ color:var(--primary-dark); }
+    .kb-day.active{ background:var(--surface); border-color:var(--line); box-shadow:var(--shadow-sm); }
+    .kb-day.active .kb-dn{ color:var(--ink); }
+    #calendarWrap .kanban-board{ gap:12px; scroll-snap-type:x mandatory; }
+    #calendarWrap .kanban-column{ width:calc(100vw - 32px); flex:0 0 auto; scroll-snap-align:start; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:0; box-shadow:var(--shadow-sm); filter:none; opacity:1; }
+    #calendarWrap .kanban-column .col-head{ background:transparent; border-top:none; border-bottom:1px solid var(--line); border-radius:16px 16px 0 0; margin:0; padding:14px 16px 12px; box-shadow:none; }
+    #calendarWrap .kanban-column .col-head .dtitle{ font-size:17px; font-weight:800; color:var(--ink); }
+    #calendarWrap .kanban-column .col-head .dfraction{ font-size:11px; }
+    #calendarWrap .kanban-column .col-head .dbar > span{ background:var(--primary); }
+    #calendarWrap .kanban-column .col-toggle-btn, #calendarWrap .kanban-column .doverdue{ display:none; }
+    #calendarWrap .kanban-cards{ padding:10px 12px 4px; gap:8px; }
+    #calendarWrap .kanban-column > .inline-add-wrap{ padding:0 12px 10px; }
+    #calendarWrap .kcard{ border-radius:12px; box-shadow:none; }
+    #calendarWrap .kcard .kstrip{ display:none; }
+    #calendarWrap .kcard .kbody{ padding:12px; min-height:28px; }
+    #calendarWrap .kcard .kname{ font-size:15px; }
+    #calendarWrap .kanban-dots, #calendarWrap .kanban-nav, #calendarWrap .kanban-fade{ display:none !important; }
+    #calendarWrap .col-empty{ padding:18px 4px; text-align:center; }
+  }
 </style>
 </head>
 <body>
@@ -2110,6 +2175,7 @@
 
   <div class="main">
     <aside class="sidebar">
+      <div class="sb-mobile-head"><h2>Manage farm</h2><button type="button" class="sb-mobile-close" id="sbMobileClose" aria-label="Close"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <div class="sb-brand">
         <img class="brand-icon" src="icons/icon-192.png" alt="">
         <span class="sb-brand-name">CluckWise<span class="accent">.vm</span></span>
@@ -2185,7 +2251,7 @@
 <nav class="bottom-nav" id="bottomNav">
   <button id="navAgendaBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg></span>Agenda</button>
   <button id="navMonthBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>Calendar</button>
-  <button id="navManageBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></span>Manage</button>
+  <button id="navBoardBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg></span>Board</button>
   <button id="navReportsBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg><span class="bn-badge hidden" id="navReportsBadge">0</span></span>Reports</button>
   <button id="navMoreBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Menu</button>
 </nav>
@@ -2244,19 +2310,23 @@
 </div>
 
 <div class="sheet-overlay hidden" id="moreSheet">
-  <div class="sheet-panel">
+  <div class="sheet-panel menu-panel">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">More</div>
-    <button class="sheet-option" id="moreSearchBtn"><span class="s-ic" style="background:#3E7CB1;">🔍</span>Search</button>
-    <button class="sheet-option" id="moreYearBtn"><span class="s-ic" style="background:var(--primary);">🗓️</span>Year view</button>
-    <button class="sheet-option" id="moreKanbanBtn"><span class="s-ic" style="background:#3E7CB1;">🗂️</span>Board view</button>
-    <button class="sheet-option" id="moreHistoryBtn"><span class="s-ic" style="background:var(--secondary);">🕓</span>History</button>
-    <button class="sheet-option" id="moreReportsBtn"><span class="s-ic" style="background:var(--danger);">🚩</span>Reports <span id="moreReportsCount" style="margin-left:auto;font-weight:800;color:var(--danger);"></span></button>
-    <button class="sheet-option" id="moreMlogBtn"><span class="s-ic" style="background:var(--success);">🔁</span>Routine Tracker</button>
-    <button class="sheet-option" id="moreBulkDeleteBtn"><span class="s-ic" style="background:var(--danger);">🗑️</span>Bulk delete</button>
-    <button class="sheet-option" id="moreViewerBtn"><span class="s-ic" style="background:var(--secondary);">👁️</span>Open Viewer Mode</button>
-    <button class="sheet-option" id="moreThemeToggleBtn"><span class="s-ic" style="background:var(--secondary);">🌙</span><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
-    <button class="sheet-option" id="moreSettingsBtn"><span class="s-ic" style="background:#6E6E6E;">⚙</span>Settings</button>
+    <div class="menu-head"><span class="sheet-title">Menu</span><span class="menu-sync" id="menuSyncLine"></span></div>
+    <button class="menu-manage" id="moreManageBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><span class="mm-text"><b>Manage farm</b><small>Batches, audits, frequent tasks, backlog</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <div class="menu-grid">
+      <button class="menu-tile" id="moreSearchBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
+      <button class="menu-tile" id="moreYearBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><span>Year view</span></button>
+      <button class="menu-tile" id="moreHistoryBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span>History</span></button>
+      <button class="menu-tile" id="moreMlogBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>Routines</span></button>
+      <button class="menu-tile" id="moreViewerBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Viewer mode</span></button>
+      <button class="menu-tile danger" id="moreBulkDeleteBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg><span>Bulk delete</span></button>
+    </div>
+    <div class="menu-rows">
+      <button class="menu-row" id="moreThemeToggleBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
+      <button class="menu-row" id="moreSettingsBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    </div>
+    <button hidden id="moreKanbanBtn"></button><button hidden id="moreReportsBtn"><span id="moreReportsCount"></span></button>
   </div>
 </div>
 
@@ -2359,17 +2429,6 @@
             <option value="list">Agenda / List</option>
             <option value="kanban">Board</option>
           </select>
-        </div>
-      </div>
-    </section>
-
-    <section class="st-section" id="stProdwise">
-      <div class="st-section-head"><span class="st-ic">🐔</span><div><h3>ProdWise link</h3></div></div>
-      <div class="st-card">
-        <div class="st-row st-row-stack">
-          <label class="st-label" for="setProdwiseFarm">ProdWise farm name</label>
-          <input type="text" id="setProdwiseFarm" class="st-select" placeholder="e.g. kiripark1" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <p class="st-hint">Workers' Batch page in the Viewer then shows birds placed, birds now and mortality from ProdWise for the current batch. Read-only.</p>
         </div>
       </div>
     </section>
@@ -3000,7 +3059,6 @@
     if(si) si.checked = settings.showIcons;
     if(bs) bs.value = settings.batchBadgeStyle;
     if(dv) dv.value = settings.defaultView || 'auto';
-    const pwf = $('#setProdwiseFarm'); if(pwf && document.activeElement !== pwf) pwf.value = settings.prodwiseFarm || '';
     if(tb) tb.innerHTML = settings.theme==='dark' ? TB_SUN_ICON : TB_MOON_ICON;
     if(tb) tb.title = settings.theme==='dark' ? 'Switch to light mode' : 'Switch to dark mode';
     const mtl = $('#moreThemeToggleLabel');
@@ -6692,12 +6750,15 @@
   }
 
   let kanbanEdgeFadeUpdater = null;
+  let kanbanLandOn = null;
   function renderKanban(){
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
     const board = document.createElement('div');
     board.className = 'kanban-board';
     const monday = getMonday(currentDate);
+    const kbPhone = window.matchMedia('(max-width: 760px)').matches;
+    const kbChips = [];
     const todayKey = dateKey(new Date());
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const dayClasses = ['col-mon','col-tue','col-wed','col-thu','col-fri','col-sat','col-sun'];
@@ -6712,7 +6773,7 @@
       const doneCount = dayTasks.filter(t=>t.status==='done').length;
       const openCount = dayTasks.length - doneCount;
       const allDone = dayTasks.length>0 && openCount===0;
-      const isCollapsed = collapsedKanbanCols.has(key);
+      const isCollapsed = !kbPhone && collapsedKanbanCols.has(key);
       col.className = 'kanban-column ' + dayClasses[i] + (isToday?' today':'') + (isWeekend?' weekend':'') + (allDone?' all-done':'') + (isCollapsed?' collapsed':'');
       const pct = dayTasks.length ? Math.round((doneCount/dayTasks.length)*100) : 0;
       const showOverdueFlag = isPast && openCount>0;
@@ -6750,7 +6811,8 @@
       }
       col.appendChild(head);
       // Today: round "now" badge over the column's top-left — live icon + temp
-      if(!isCollapsed && isToday){
+      if(kbPhone){ kbChips.push({ key, label: dayNames[i], date: d.getDate(), isToday, open: openCount, total: dayTasks.length }); }
+      if(!kbPhone && !isCollapsed && isToday){
         const wNow = wxForDate(key);
         if(wNow && wNow.current){
           const [nIc, nLabel] = wxIconLabel(wNow.current.code, wNow.current.isDay);
@@ -6784,6 +6846,33 @@
     const canvas = document.createElement('div');
     canvas.className = 'kanban-canvas';
     canvas.appendChild(board);
+    // Phones: a day strip to jump between days; swiping past Sunday/Monday changes the week
+    let strip = null;
+    if(kbPhone){
+      strip = document.createElement('div');
+      strip.className = 'kb-daystrip';
+      kbChips.forEach((c, i)=>{
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'kb-day' + (c.isToday ? ' today' : '') + (c.total && !c.open ? ' done' : '');
+        b.innerHTML = `<span class="kb-dn"></span><span class="kb-dd"></span><span class="kb-dc"></span>`;
+        b.querySelector('.kb-dn').textContent = c.label;
+        b.querySelector('.kb-dd').textContent = c.date;
+        b.querySelector('.kb-dc').textContent = c.total ? (c.open ? c.open : '✓') : '';
+        b.addEventListener('click', ()=>{ const col = board.children[i]; if(col) board.scrollTo({ left: col.offsetLeft - board.firstElementChild.offsetLeft, behavior:'smooth' }); });
+        strip.appendChild(b);
+      });
+      wrap.appendChild(strip);
+      let sx = 0, sy = 0, startLeft = 0;
+      board.addEventListener('touchstart', (e)=>{ const t = e.touches[0]; sx = t.clientX; sy = t.clientY; startLeft = board.scrollLeft; }, { passive:true });
+      board.addEventListener('touchend', (e)=>{
+        const t = e.changedTouches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
+        if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        const max = board.scrollWidth - board.clientWidth;
+        if(dx < 0 && startLeft >= max - 4){ kanbanLandOn = 'first'; $('#nextBtn').click(); }
+        else if(dx > 0 && startLeft <= 4){ kanbanLandOn = 'last'; $('#prevBtn').click(); }
+      }, { passive:true });
+    }
     const fadeLeft = document.createElement('div');
     fadeLeft.className = 'kanban-fade kanban-fade-left';
     const fadeRight = document.createElement('div');
@@ -6809,7 +6898,7 @@
     wrap.appendChild(canvas);
     const wrapStyle = getComputedStyle(wrap);
     const wrapPadding = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
-    const availableHeight = wrap.clientHeight - wrapPadding;
+    const availableHeight = wrap.clientHeight - wrapPadding - (strip ? strip.offsetHeight + 12 : 0);
     if(availableHeight > 0){ board.style.height = availableHeight + 'px'; board.style.minHeight = availableHeight + 'px'; }
     const dots = document.createElement('div');
     dots.className = 'kanban-dots';
@@ -6819,13 +6908,23 @@
       dots.appendChild(dot);
     }
     wrap.appendChild(dots);
+    if(kbPhone){
+      const todayIdx = kbChips.findIndex(c=> c.isToday);
+      const idx = kanbanLandOn === 'first' ? 0 : kanbanLandOn === 'last' ? 6 : (todayIdx >= 0 ? todayIdx : 0);
+      kanbanLandOn = null;
+      requestAnimationFrame(()=>{
+        const col = board.children[idx]; if(col) board.scrollLeft = col.offsetLeft - board.firstElementChild.offsetLeft;
+        strip.querySelectorAll('.kb-day').forEach((d,i)=> d.classList.toggle('active', i===idx));
+      });
+    }
     let scrollTimer = null;
     board.addEventListener('scroll', ()=>{
       clearTimeout(scrollTimer);
       scrollTimer = setTimeout(()=>{
-        const colWidth = board.firstElementChild ? board.firstElementChild.getBoundingClientRect().width + 15 : 1;
+        const colWidth = board.firstElementChild ? board.firstElementChild.getBoundingClientRect().width + (kbPhone ? 12 : 15) : 1;
         const idx = Math.round(board.scrollLeft / colWidth);
         dots.querySelectorAll('.kdotpage').forEach((d,i)=> d.classList.toggle('active', i===idx));
+        if(strip) strip.querySelectorAll('.kb-day').forEach((d,i)=> d.classList.toggle('active', i===idx));
       }, 80);
     });
     board.addEventListener('wheel', (e)=>{
@@ -6932,6 +7031,7 @@
     $('#nextBtn').classList.toggle('nav-btn-hidden', viewMode==='list' && agendaFilter!=='today');
     $('#navAgendaBtn').classList.toggle('active', viewMode==='list');
     $('#navMonthBtn').classList.toggle('active', isCalendar);
+    $('#navBoardBtn').classList.toggle('active', viewMode==='kanban');
     updateViewDropdown();
   }
 
@@ -8839,8 +8939,9 @@
   }
   try{ if(localStorage.getItem('cluckwise-sb-collapsed') === '1') document.body.classList.add('sb-collapsed'); }catch(e){}
   $('#sbCollapseBtn').addEventListener('click', ()=> setSidebarCollapsed(true));
+  $('#sbMobileClose').addEventListener('click', closeOverlays);
   $('#sbExpandBtn').addEventListener('click', ()=> setSidebarCollapsed(false));
-  $('#navManageBtn').addEventListener('click', toggleSidebar);
+  $('#navBoardBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
 
   $('#navAgendaBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
   $('#navMonthBtn').addEventListener('click', ()=>{
@@ -8852,6 +8953,8 @@
   $('#navReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#navMoreBtn').addEventListener('click', ()=>{
     closeOverlays();
+    const sl = $('#menuSyncLine'), si = $('#saveIndicator');
+    if(sl && si){ sl.textContent = (si.querySelector('.sync-label') || si).textContent.trim(); sl.className = 'menu-sync ' + si.className.replace('sync-status', '').trim(); }
     $('#moreSheet').classList.remove('hidden');
     $('#scrim').classList.add('show');
   });
@@ -8866,6 +8969,7 @@
   $('#closeAuditConflictModal').addEventListener('click', closeOverlays);
   $('#quickAddEventBtn').addEventListener('click', ()=> openEventModal());
 
+  $('#moreManageBtn').addEventListener('click', ()=>{ closeOverlays(); toggleSidebar(); });
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
@@ -9103,7 +9207,6 @@
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
   $('#setDefaultView').addEventListener('change', (e)=>{ settings.defaultView = e.target.value; persist(); });
-  $('#setProdwiseFarm').addEventListener('change', (e)=>{ settings.prodwiseFarm = e.target.value.trim().toLowerCase(); e.target.value = settings.prodwiseFarm; persist(); showToast(settings.prodwiseFarm ? 'ProdWise linked — workers see bird numbers on the Batch page.' : 'ProdWise link removed.'); });
   $('#setWeatherUnit').addEventListener('change', (e)=>{ settings.weatherUnit = e.target.value; weatherData = null; applySettings(); persist(); renderAll(); });
   $('#setShowWeather').addEventListener('change', (e)=>{ settings.showWeather = e.target.checked; applySettings(); persist(); renderAll(); });
   function setWeatherLocation(loc){

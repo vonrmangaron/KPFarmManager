@@ -275,7 +275,15 @@
   .dc-chips{ display:flex; gap:6px; flex-wrap:wrap; }
   .dc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:none; background:rgba(255,255,255,0.5); color:#241A08; font-size:13px; font-weight:700; white-space:nowrap; font-family:inherit; }
   .dc-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
-  .dc-wx{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .dc-wx{ display:none !important; }
+  .wx-now-btn{ width:50px; height:50px; flex-shrink:0; border-radius:50%; border:none; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; background:radial-gradient(circle at 50% 35%, #FFE9A8, #E9B949); color:#2B2116; box-shadow:0 2px 8px rgba(43,33,22,0.18); -webkit-tap-highlight-color:transparent; }
+  .wx-now-btn.wet{ background:radial-gradient(circle at 50% 35%, #E4F0FF, #9CC3EE); color:#1E4E86; }
+  body.theme-dark .wx-now-btn{ background:radial-gradient(circle at 50% 35%, #6B5A2E, #4A3D1E); color:#FFE9A8; }
+  body.theme-dark .wx-now-btn.wet{ background:radial-gradient(circle at 50% 35%, #2C4C78, #1E3556); color:#CFE3FF; }
+  .wx-now-btn:active{ transform:scale(0.94); }
+  .wnb-ic{ font-size:15px; }
+  .wnb-t{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; margin-top:1px; }
+  .wnb-l{ font-size:8.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; opacity:.75; margin-top:1px; }
   .dc-wx:active{ transform:scale(0.97); }
   .dc-wx.wet{ background:rgba(228,240,255,0.92); color:#1E4E86; }
   .dc-chev{ opacity:0.55; font-size:15px; margin-left:1px; }
@@ -728,6 +736,7 @@
   </div>
   <div class="header-actions">
     <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span><span class="sync-short" id="syncShort"></span></button>
+    <button class="wx-now-btn" id="wxNowBtn" type="button" hidden><span class="wnb-ic"></span><span class="wnb-t"></span><span class="wnb-l"></span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings" hidden>⚙</button>
   </div>
@@ -1347,7 +1356,7 @@
     chips.querySelectorAll('.dc-wx, .dc-warn').forEach(el=> el.remove());
     const key = agendaDayKey();
     const w = wxForDate(key);
-    if(!w){ chips.style.display = chips.children.length ? 'flex' : 'none'; return; }
+    if(!w){ const nb0 = $('#wxNowBtn'); if(nb0) nb0.hidden = true; chips.style.display = chips.children.length ? 'flex' : 'none'; return; }
     const F = syncedDisplay.weatherUnit === 'fahrenheit';
     const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
     const kind = wxKindForCode(w.code);
@@ -1369,7 +1378,19 @@
       + (hum != null ? ` · RH ${Math.round(hum)}%` : '') + ` — ${t('hrTap')}`;
     btn.setAttribute('aria-label', btn.title);
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); openWeatherDetail(key); });
-    chips.appendChild(btn);
+    // Round "now" button in the header (the old bar is no longer shown)
+    const nb = $('#wxNowBtn');
+    if(nb){
+      const isNow = !!w.current && key === dateKey(new Date());
+      nb.hidden = false;
+      nb.className = 'wx-now-btn' + (wet ? ' wet' : '');
+      nb.querySelector('.wnb-ic').textContent = icon;
+      nb.querySelector('.wnb-t').textContent = isNow ? wxT(w.current.temp) : wxT(w.max);
+      nb.querySelector('.wnb-l').textContent = isNow ? t('wxNow') : t('wxHigh');
+      nb.title = (isNow ? `${t('wxNow')}: ${label} · ${wxT(w.current.temp)}` : `${label} · ${t('wxHigh')} ${wxT(w.max)} · ${t('wxLow')} ${wxT(w.min)}`) + (hum != null ? ` · RH ${Math.round(hum)}%` : '');
+      nb.setAttribute('aria-label', nb.title + ' — ' + t('hrTap'));
+      nb.onclick = (e)=>{ e.stopPropagation(); openWeatherDetail(key); };
+    }
     const warn = [];
     if(w.max != null && w.max >= (F ? 95 : 35)) warn.push(['heat', '🔥 ' + t('wxHeat')]);
     if(w.min != null && w.min <= (F ? 36 : 2)) warn.push(['frost', '🥶 ' + t('wxFrost')]);
@@ -2950,16 +2971,23 @@
   // Bird numbers come read-only from the farm's ProdWise batch file, when the
   // manager has linked ProdWise in CluckWise settings.
   const pwCache = new Map();
-  function pwCacheKey(no){ return `cw-viewer-pw-${syncedDisplay.prodwiseFarm}-${no}`; }
+  function pwFarm(){ return syncedDisplay.prodwiseFarm || (ghFarmName || '').trim(); }
+  function pwCacheKey(no){ return `cw-viewer-pw-${pwFarm()}-${no}`; }
   async function loadProdwiseBatch(no){
-    const pw = syncedDisplay.prodwiseFarm;
+    const pw = pwFarm();
     if(!pw || !no) return null;
     const hit = pwCache.get(no);
     if(hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
     try{
-      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(pw + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      if(!res.ok) throw new Error('ProdWise ' + res.status);
-      const j = await res.json();
+      // ProdWise saves under the same farm name; try it as typed, then in lower case
+      let j = null;
+      for(const name of [...new Set([pw, pw.toLowerCase()])]){
+        const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(name + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+        if(!res.ok) continue;
+        const r = await res.json();
+        if(r && r.data && r.data.farmData){ j = r; break; }
+      }
+      if(!j) throw new Error('ProdWise batch not found');
       const data = j && j.data && j.data.farmData ? j.data : null;
       pwCache.set(no, { at: Date.now(), data });
       try{ if(data) localStorage.setItem(pwCacheKey(no), JSON.stringify({ farmData: { sheds: data.farmData.sheds.map(sh=> ({ placementDate: sh.placementDate, cleanoutDate: sh.cleanoutDate, initialPopulation: sh.initialPopulation, mortality: sh.mortality, mortalityUpdatedAt: sh.mortalityUpdatedAt, pickups: (sh.pickups || []).map(p=> ({ date: p.date, birds: p.birds })) })) } })); }catch(e){}
@@ -3022,7 +3050,7 @@
       const s = birdStats(data, todayKey);
       if(!s){
         stats.innerHTML = '<div class="bp-note"></div>';
-        stats.querySelector('.bp-note').textContent = syncedDisplay.prodwiseFarm ? t('bpNoBirds') : t('bpNotLinked');
+        stats.querySelector('.bp-note').textContent = t('bpNoBirds');
         return;
       }
       stats.innerHTML = `<div class="bp-tile"><span class="bp-tl"></span><span class="bp-tv"></span><span class="bp-ts"></span></div>
@@ -3034,7 +3062,7 @@
       set(1, t('bpBirdsNow'), fmtInt(s.now), s.picked ? t('bpPicked').replace('{n}', fmtInt(s.picked)) : t('bpOnFarm'));
       set(2, t('bpMortality'), s.pct.toFixed(1) + '%', t('bpMortBirds').replace('{n}', fmtInt(s.mort)) + (s.updated ? ' · ' + t('bpUpdated').replace('{d}', formatShort(s.updated)) : ''));
     };
-    if(syncedDisplay.prodwiseFarm){
+    if(pwFarm()){
       stats.innerHTML = '<div class="bp-note"></div>'; stats.querySelector('.bp-note').textContent = t('bpLoading');
       loadProdwiseBatch(b.number).then(d=>{ if(stats.isConnected) paintStats(d); });
     } else paintStats(null);
