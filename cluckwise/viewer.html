@@ -567,6 +567,8 @@
   /* ---------- Tab bar (dark, line icons, bar under the active tab) ---------- */
   .v-tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:36; display:flex; background:#2B2116; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(0,0,0,0.18); }
   body.theme-dark .v-tabbar{ background:#111827; }
+  /* iOS home-screen apps can leave a strip under fixed bars: paint the bar's colour down to the screen edge */
+  .v-tabbar::after{ content:''; position:absolute; left:0; right:0; top:100%; height:240px; background:inherit; pointer-events:none; }
   .v-tabbar button{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; border:none; background:none; color:rgba(255,255,255,0.62); font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; padding:9px 2px 10px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .v-tabbar .vt-svg{ width:23px; height:23px; display:block; }
   .v-tabbar button.active{ color:#fff; background:rgba(255,255,255,0.07); }
@@ -574,6 +576,7 @@
   .v-tabbar button:active{ transform:scale(0.96); }
   @media (min-width:900px){
     .v-tabbar{ left:50%; right:auto; bottom:16px; transform:translateX(-50%); width:440px; border-radius:18px; padding:4px; }
+    .v-tabbar::after{ display:none; }
   }
   /* ---------- Batch page ---------- */
   .bp-hero{ border-radius:18px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08; padding:16px 18px; box-shadow:0 6px 18px rgba(43,33,22,0.14); display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
@@ -586,6 +589,27 @@
   .bp-bar span{ display:block; height:100%; background:#2B2116; border-radius:999px; }
   .bp-dates{ display:flex; justify-content:space-between; gap:10px; font-size:13px; font-weight:700; opacity:.85; }
   .bp-sec{ margin:22px 0 10px; font-size:13px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .bp-stats{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-bottom:6px; }
+  .bp-tile{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:2px; min-width:0; box-shadow:var(--shadow-sm); }
+  .bp-tl{ font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); }
+  .bp-tv{ font-family:'Sora',sans-serif; font-weight:800; font-size:21px; color:var(--ink); overflow-wrap:anywhere; }
+  .bp-ts{ font-size:12.5px; color:var(--muted); }
+  .bp-mort .bp-tv{ color:var(--danger); }
+  .bp-note{ grid-column:1 / -1; background:var(--surface-soft); border:1px dashed var(--line); border-radius:14px; padding:14px; font-size:14px; color:var(--muted); text-align:center; }
+  @media (max-width:420px){ .bp-stats{ grid-template-columns:1fr 1fr; } .bp-mort{ grid-column:1 / -1; } }
+  .bp-table{ background:var(--surface); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); }
+  .bp-tr{ display:grid; grid-template-columns:64px 1fr 1.3fr; align-items:center; gap:8px; padding:11px 14px; border-top:1px solid var(--line); font-size:15px; color:var(--ink); }
+  .bp-tr:first-child{ border-top:none; }
+  .bp-th{ background:var(--surface-soft); font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:9px 14px; }
+  .bp-s{ font-family:'Sora',sans-serif; font-weight:800; font-size:16px; }
+  .bp-a{ font-weight:700; }
+  .bp-o{ display:flex; flex-direction:column; text-align:right; }
+  .bp-o b{ font-weight:700; }
+  .bp-o small{ font-size:12.5px; color:var(--primary-dark); font-weight:700; }
+  .bp-tr.done{ opacity:.55; }
+  .bp-row .bp-what{ display:flex; flex-direction:column; gap:2px; }
+  .bp-row .bp-what b{ font-weight:700; }
+  .bp-row .bp-what small{ font-size:13px; color:var(--muted); font-weight:600; }
   .bp-sheds{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; }
   .bp-shed{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:3px; box-shadow:var(--shadow-sm); }
   .bp-shed b{ font-family:'Sora',sans-serif; font-size:15px; color:var(--ink); }
@@ -705,7 +729,7 @@
   <div class="header-actions">
     <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span><span class="sync-short" id="syncShort"></span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
-    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings" hidden>⚙</button>
   </div>
 </header>
 
@@ -1101,6 +1125,10 @@
   Object.assign(TRANSLATIONS.es, {"navBatch": "Lote", "navMenu": "Menú", "bpNone": "No hay ningún lote activo ahora.", "bpNext": "Próximo: lote #{b} empieza el {d}.", "bpLastDay": "Último día", "bpDaysLeft": "faltan {n} días", "bpOf": "de {n}", "bpPlaced": "Ingreso", "bpCleanout": "Limpieza", "bpSheds": "Galpones", "bpShed": "Galpón", "bpCleaned": "Limpio", "bpComingUp": "Próximamente en este lote", "bpNothing": "No hay nada más programado para este lote.", "bpTasksDone": "{d} de {n} tareas del lote hechas"});
   Object.assign(TRANSLATIONS.tl, {"navBatch": "Batch", "navMenu": "Menu", "bpNone": "Walang batch na tumatakbo ngayon.", "bpNext": "Susunod: batch #{b} sa {d}.", "bpLastDay": "Huling araw", "bpDaysLeft": "{n} araw pa", "bpOf": "sa {n}", "bpPlaced": "Inilagay", "bpCleanout": "Clean-out", "bpSheds": "Mga kulungan", "bpShed": "Kulungan", "bpCleaned": "Tapos na ang clean-out", "bpComingUp": "Paparating sa batch na ito", "bpNothing": "Wala nang iba pang naka-schedule sa batch na ito.", "bpTasksDone": "{d} sa {n} gawain ng batch ang tapos"});
   Object.assign(TRANSLATIONS.id, {"navBatch": "Batch", "navMenu": "Menu", "bpNone": "Tidak ada batch yang berjalan saat ini.", "bpNext": "Berikutnya: batch #{b} mulai {d}.", "bpLastDay": "Hari terakhir", "bpDaysLeft": "{n} hari lagi", "bpOf": "dari {n}", "bpPlaced": "Masuk", "bpCleanout": "Bersih kandang", "bpSheds": "Kandang", "bpShed": "Kandang", "bpCleaned": "Sudah dibersihkan", "bpComingUp": "Akan datang di batch ini", "bpNothing": "Tidak ada jadwal lain untuk batch ini.", "bpTasksDone": "{d} dari {n} tugas batch selesai"});
+  Object.assign(TRANSLATIONS.en, {"bpBirdsTotal": "Birds placed", "bpPlacedLbl": "at placement", "bpBirdsNow": "Birds now", "bpPicked": "{n} picked up", "bpOnFarm": "on the farm", "bpMortality": "Mortality", "bpMortBirds": "{n} birds", "bpUpdated": "updated {d}", "bpNotLinked": "Bird numbers show here once your manager links ProdWise in CluckWise settings.", "bpNoBirds": "Bird numbers aren't available for this batch yet.", "bpLoading": "Loading bird numbers…", "bpShedsTitle": "Shed age & clean-out", "bpAge": "Age", "bpAudits": "Audits & events", "bpNoEvents": "No audits or events coming up."});
+  Object.assign(TRANSLATIONS.es, {"bpBirdsTotal": "Aves ingresadas", "bpPlacedLbl": "al ingreso", "bpBirdsNow": "Aves ahora", "bpPicked": "{n} retiradas", "bpOnFarm": "en la granja", "bpMortality": "Mortalidad", "bpMortBirds": "{n} aves", "bpUpdated": "actualizado {d}", "bpNotLinked": "Las cifras de aves aparecen cuando tu encargado vincula ProdWise en CluckWise.", "bpNoBirds": "Aún no hay cifras de aves para este lote.", "bpLoading": "Cargando cifras de aves…", "bpShedsTitle": "Edad y limpieza por galpón", "bpAge": "Edad", "bpAudits": "Auditorías y eventos", "bpNoEvents": "No hay auditorías ni eventos próximos."});
+  Object.assign(TRANSLATIONS.tl, {"bpBirdsTotal": "Mga ibong inilagay", "bpPlacedLbl": "sa simula", "bpBirdsNow": "Mga ibon ngayon", "bpPicked": "{n} nakuha na", "bpOnFarm": "nasa bukid", "bpMortality": "Namatay", "bpMortBirds": "{n} ibon", "bpUpdated": "na-update {d}", "bpNotLinked": "Lalabas ang bilang ng ibon kapag na-link ng manager ang ProdWise sa CluckWise.", "bpNoBirds": "Wala pang bilang ng ibon para sa batch na ito.", "bpLoading": "Nilo-load ang bilang ng ibon…", "bpShedsTitle": "Edad at clean-out ng kulungan", "bpAge": "Edad", "bpAudits": "Mga audit at event", "bpNoEvents": "Walang paparating na audit o event."});
+  Object.assign(TRANSLATIONS.id, {"bpBirdsTotal": "Ayam masuk", "bpPlacedLbl": "saat masuk", "bpBirdsNow": "Ayam sekarang", "bpPicked": "{n} sudah dipanen", "bpOnFarm": "di peternakan", "bpMortality": "Kematian", "bpMortBirds": "{n} ekor", "bpUpdated": "diperbarui {d}", "bpNotLinked": "Jumlah ayam muncul di sini setelah manajer menautkan ProdWise di CluckWise.", "bpNoBirds": "Jumlah ayam untuk batch ini belum tersedia.", "bpLoading": "Memuat jumlah ayam…", "bpShedsTitle": "Umur & bersih kandang", "bpAge": "Umur", "bpAudits": "Audit & acara", "bpNoEvents": "Tidak ada audit atau acara mendatang."});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -2017,7 +2045,8 @@
           showIcons: parsed.settings.showIcons !== false,
           showWeather: parsed.settings.showWeather !== false,
           weatherUnit: parsed.settings.weatherUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius',
-          weatherLocation: parsed.settings.weatherLocation || null
+          weatherLocation: parsed.settings.weatherLocation || null,
+          prodwiseFarm: String(parsed.settings.prodwiseFarm || '').trim()
         };
         setTimeout(()=> refreshWeather(false), 0);
       }
@@ -2917,83 +2946,141 @@
     window.scrollTo(0, 0);
   }
   function batchDayLeft(b, todayKey){ return Math.max(0, Math.round((toDateObj(b.end) - toDateObj(todayKey)) / 86400000)); }
+  // ---------- Batch page: day, birds, mortality, shed age & clean-out, audits ----------
+  // Bird numbers come read-only from the farm's ProdWise batch file, when the
+  // manager has linked ProdWise in CluckWise settings.
+  const pwCache = new Map();
+  function pwCacheKey(no){ return `cw-viewer-pw-${syncedDisplay.prodwiseFarm}-${no}`; }
+  async function loadProdwiseBatch(no){
+    const pw = syncedDisplay.prodwiseFarm;
+    if(!pw || !no) return null;
+    const hit = pwCache.get(no);
+    if(hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
+    try{
+      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(pw + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+      if(!res.ok) throw new Error('ProdWise ' + res.status);
+      const j = await res.json();
+      const data = j && j.data && j.data.farmData ? j.data : null;
+      pwCache.set(no, { at: Date.now(), data });
+      try{ if(data) localStorage.setItem(pwCacheKey(no), JSON.stringify({ farmData: { sheds: data.farmData.sheds.map(sh=> ({ placementDate: sh.placementDate, cleanoutDate: sh.cleanoutDate, initialPopulation: sh.initialPopulation, mortality: sh.mortality, mortalityUpdatedAt: sh.mortalityUpdatedAt, pickups: (sh.pickups || []).map(p=> ({ date: p.date, birds: p.birds })) })) } })); }catch(e){}
+      return data;
+    }catch(e){
+      try{ const c = JSON.parse(localStorage.getItem(pwCacheKey(no)) || 'null'); if(c) return c; }catch(err){}
+      return null;
+    }
+  }
+  function birdStats(data, todayKey){
+    const sheds = (data && data.farmData && data.farmData.sheds) || [];
+    let placed = 0, mort = 0, picked = 0, updated = '';
+    sheds.forEach(sh=>{
+      placed += Number(sh.initialPopulation) || 0;
+      mort += Number(sh.mortality) || 0;
+      (sh.pickups || []).forEach(p=>{ if(p && p.date && String(p.date).slice(0, 10) <= todayKey) picked += Number(p.birds) || 0; });
+      const u = String(sh.mortalityUpdatedAt || '').slice(0, 10); if(u > updated) updated = u;
+    });
+    if(!placed) return null;
+    return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
+  }
+  const fmtInt = n => Math.round(n).toLocaleString();
   function renderBatchPage(){
     const wrap = $('#batchPageBody'); if(!wrap) return;
     const todayKey = dateKey(new Date());
-    const active = batches.filter(b=> b.start && b.end && todayKey >= b.start && todayKey <= b.end).sort((a,b)=> a.start.localeCompare(b.start));
+    const b = batches.filter(x=> x.start && x.end && todayKey >= x.start && todayKey <= x.end).sort((x,y)=> y.start.localeCompare(x.start))[0];
     wrap.innerHTML = '';
-    if(!active.length){
-      const next = batches.filter(b=> b.start && b.start > todayKey).sort((a,b)=> a.start.localeCompare(b.start))[0];
+    if(!b){
+      const next = batches.filter(x=> x.start && x.start > todayKey).sort((x,y)=> x.start.localeCompare(y.start))[0];
       const el = document.createElement('div'); el.className = 'bp-empty';
       el.innerHTML = '<span class="bp-empty-icon">🐣</span><span class="bp-e1"></span><br><b class="bp-e2"></b>';
       el.querySelector('.bp-e1').textContent = t('bpNone');
       if(next) el.querySelector('.bp-e2').textContent = t('bpNext').replace('{b}', next.number).replace('{d}', formatFull(next.start));
       wrap.appendChild(el);
+      renderBatchEvents(wrap, todayKey, null);
       return;
     }
-    active.forEach(b=>{
-      const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
-      const day = Math.round((toDateObj(todayKey) - toDateObj(b.start)) / 86400000);
-      const left = batchDayLeft(b, todayKey);
-      const hero = document.createElement('div'); hero.className = 'bp-hero';
-      hero.innerHTML = `<div class="bp-hero-top"><span class="bp-chip"><span class="dc-dot"></span><span class="bp-num"></span></span><span class="bp-left"></span></div>
-        <div class="bp-day"><span class="bp-dn"></span><small class="bp-dt"></small></div>
-        <div class="bp-bar"><span style="width:${Math.min(100, Math.round(day / total * 100))}%"></span></div>
-        <div class="bp-dates"><span class="bp-p"></span><span class="bp-c"></span></div>`;
-      hero.querySelector('.dc-dot').style.background = colorForBatchNumber(b.number);
-      hero.querySelector('.bp-num').textContent = `${t('batch')} #${b.number}`;
-      hero.querySelector('.bp-left').textContent = left === 0 ? t('bpLastDay') : t('bpDaysLeft').replace('{n}', left);
-      hero.querySelector('.bp-dn').textContent = `${t('day')} ${day}`;
-      hero.querySelector('.bp-dt').textContent = t('bpOf').replace('{n}', total);
-      hero.querySelector('.bp-p').textContent = `${t('bpPlaced')} ${formatFull(b.start)}`;
-      hero.querySelector('.bp-c').textContent = `${t('bpCleanout')} ${formatFull(b.end)}`;
-      wrap.appendChild(hero);
+    // 1. Day of the batch and days left
+    const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
+    const day = Math.round((toDateObj(todayKey) - toDateObj(b.start)) / 86400000);
+    const left = batchDayLeft(b, todayKey);
+    const hero = document.createElement('div'); hero.className = 'bp-hero';
+    hero.innerHTML = `<div class="bp-hero-top"><span class="bp-chip"><span class="dc-dot"></span><span class="bp-num"></span></span><span class="bp-left"></span></div>
+      <div class="bp-day"><span class="bp-dn"></span><small class="bp-dt"></small></div>
+      <div class="bp-bar"><span style="width:${Math.min(100, Math.round(day / total * 100))}%"></span></div>
+      <div class="bp-dates"><span class="bp-p"></span><span class="bp-c"></span></div>`;
+    hero.querySelector('.dc-dot').style.background = colorForBatchNumber(b.number);
+    hero.querySelector('.bp-num').textContent = `${t('batch')} #${b.number}`;
+    hero.querySelector('.bp-left').textContent = left === 0 ? t('bpLastDay') : t('bpDaysLeft').replace('{n}', left);
+    hero.querySelector('.bp-dn').textContent = `${t('day')} ${day}`;
+    hero.querySelector('.bp-dt').textContent = t('bpOf').replace('{n}', total);
+    hero.querySelector('.bp-p').textContent = `${t('bpPlaced')} ${formatFull(b.start)}`;
+    hero.querySelector('.bp-c').textContent = `${t('bpCleanout')} ${formatFull(b.end)}`;
+    wrap.appendChild(hero);
 
-      const sheds = (b.sheds || []).filter(sh=> sh.placement).slice().sort((x,y)=> String(x.shed).localeCompare(String(y.shed), undefined, { numeric:true }));
-      if(sheds.length){
-        const h = document.createElement('div'); h.className = 'bp-sec'; h.textContent = t('bpSheds'); wrap.appendChild(h);
-        const grid = document.createElement('div'); grid.className = 'bp-sheds';
-        sheds.forEach(sh=>{
-          const co = sh.cleanout || b.end;
-          const done = todayKey > co;
-          const notYet = todayKey < sh.placement;
-          const d = Math.round((toDateObj(todayKey) - toDateObj(sh.placement)) / 86400000);
-          const tile = document.createElement('div'); tile.className = 'bp-shed' + (done ? ' done' : '');
-          tile.innerHTML = '<b></b><span class="bp-sd"></span><span class="bp-sc"></span><span class="bp-sl"></span>';
-          tile.querySelector('b').textContent = `${t('bpShed')} ${sh.shed}`;
-          tile.querySelector('.bp-sd').textContent = done ? '✓' : notYet ? '—' : `${t('day')} ${d}`;
-          const coLeft = Math.round((toDateObj(co) - toDateObj(todayKey)) / 86400000);
-          tile.querySelector('.bp-sc').textContent = done ? t('bpCleaned') : notYet ? `${t('bpPlaced')} ${formatShort(sh.placement)}` : `${t('bpCleanout')} ${formatShort(co)}`;
-          tile.querySelector('.bp-sl').textContent = done || notYet ? '' : t('bpDaysLeft').replace('{n}', coLeft);
-          grid.appendChild(tile);
-        });
-        wrap.appendChild(grid);
+    // 2–3. Birds and mortality (from ProdWise)
+    const stats = document.createElement('div'); stats.className = 'bp-stats';
+    wrap.appendChild(stats);
+    const paintStats = (data)=>{
+      const s = birdStats(data, todayKey);
+      if(!s){
+        stats.innerHTML = '<div class="bp-note"></div>';
+        stats.querySelector('.bp-note').textContent = syncedDisplay.prodwiseFarm ? t('bpNoBirds') : t('bpNotLinked');
+        return;
       }
+      stats.innerHTML = `<div class="bp-tile"><span class="bp-tl"></span><span class="bp-tv"></span><span class="bp-ts"></span></div>
+        <div class="bp-tile"><span class="bp-tl"></span><span class="bp-tv"></span><span class="bp-ts"></span></div>
+        <div class="bp-tile bp-mort"><span class="bp-tl"></span><span class="bp-tv"></span><span class="bp-ts"></span></div>`;
+      const tiles = stats.querySelectorAll('.bp-tile');
+      const set = (i, l, v, sub)=>{ tiles[i].querySelector('.bp-tl').textContent = l; tiles[i].querySelector('.bp-tv').textContent = v; tiles[i].querySelector('.bp-ts').textContent = sub; };
+      set(0, t('bpBirdsTotal'), fmtInt(s.placed), t('bpPlacedLbl'));
+      set(1, t('bpBirdsNow'), fmtInt(s.now), s.picked ? t('bpPicked').replace('{n}', fmtInt(s.picked)) : t('bpOnFarm'));
+      set(2, t('bpMortality'), s.pct.toFixed(1) + '%', t('bpMortBirds').replace('{n}', fmtInt(s.mort)) + (s.updated ? ' · ' + t('bpUpdated').replace('{d}', formatShort(s.updated)) : ''));
+    };
+    if(syncedDisplay.prodwiseFarm){
+      stats.innerHTML = '<div class="bp-note"></div>'; stats.querySelector('.bp-note').textContent = t('bpLoading');
+      loadProdwiseBatch(b.number).then(d=>{ if(stats.isConnected) paintStats(d); });
+    } else paintStats(null);
 
-      // Coming up in this batch: audits/events and the batch's open tasks (weigh-ins etc.)
-      const items = [];
-      events.filter(ev=> ev.date >= todayKey && ev.date <= b.end).forEach(ev=> items.push({ date: ev.date, name: ev.name, audit: true }));
-      const bTasks = tasks.filter(tk=> String(tk.batchNumber || '') === String(b.number));
-      bTasks.filter(tk=> tk.status !== 'done' && tk.date && tk.date >= todayKey).forEach(tk=> items.push({ date: tk.date, name: tk.name }));
-      items.sort((x,y)=> x.date.localeCompare(y.date));
-      const h2 = document.createElement('div'); h2.className = 'bp-sec'; h2.textContent = t('bpComingUp'); wrap.appendChild(h2);
-      const list = document.createElement('div'); list.className = 'bp-list';
-      if(!items.length){ const n = document.createElement('div'); n.className = 'empty-note'; n.textContent = t('bpNothing'); list.appendChild(n); }
-      items.slice(0, 6).forEach(it=>{
-        const row = document.createElement('div'); row.className = 'bp-row' + (it.audit ? ' audit' : '');
-        row.innerHTML = '<span class="bp-when"></span><span class="bp-what"></span>';
-        row.querySelector('.bp-when').textContent = dayName(it.date) === t('today') || dayName(it.date) === t('dnTomorrow') ? dayName(it.date) : toDateObj(it.date).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
-        row.querySelector('.bp-what').textContent = it.name;
-        list.appendChild(row);
+    // 4. Shed age and clean-out
+    const sheds = (b.sheds || []).filter(sh=> sh.placement).slice().sort((x,y)=> String(x.shed).localeCompare(String(y.shed), undefined, { numeric:true }));
+    if(sheds.length){
+      const h = document.createElement('div'); h.className = 'bp-sec'; h.textContent = t('bpShedsTitle'); wrap.appendChild(h);
+      const tbl = document.createElement('div'); tbl.className = 'bp-table';
+      tbl.innerHTML = `<div class="bp-tr bp-th"><span></span><span></span><span></span></div>`;
+      const th = tbl.querySelectorAll('.bp-th span'); th[0].textContent = t('bpShed'); th[1].textContent = t('bpAge'); th[2].textContent = t('bpCleanout');
+      sheds.forEach(sh=>{
+        const co = sh.cleanout || b.end;
+        const done = todayKey > co, notYet = todayKey < sh.placement;
+        const age = Math.round((toDateObj(todayKey) - toDateObj(sh.placement)) / 86400000);
+        const coLeft = Math.round((toDateObj(co) - toDateObj(todayKey)) / 86400000);
+        const row = document.createElement('div'); row.className = 'bp-tr' + (done ? ' done' : '');
+        row.innerHTML = '<span class="bp-s"></span><span class="bp-a"></span><span class="bp-o"><b></b><small></small></span>';
+        row.querySelector('.bp-s').textContent = sh.shed;
+        row.querySelector('.bp-a').textContent = done ? '✓' : notYet ? '—' : `${t('day')} ${age}`;
+        row.querySelector('.bp-o b').textContent = formatShort(co);
+        row.querySelector('.bp-o small').textContent = done ? t('bpCleaned') : t('bpDaysLeft').replace('{n}', coLeft);
+        tbl.appendChild(row);
       });
-      wrap.appendChild(list);
-      if(bTasks.length){
-        const st = document.createElement('div'); st.className = 'bp-stat';
-        st.innerHTML = '<b></b>';
-        st.querySelector('b').textContent = t('bpTasksDone').replace('{d}', bTasks.filter(tk=> tk.status === 'done').length).replace('{n}', bTasks.length);
-        wrap.appendChild(st);
-      }
+      wrap.appendChild(tbl);
+    }
+
+    // 5. Audits and events
+    renderBatchEvents(wrap, todayKey, b);
+  }
+  function renderBatchEvents(wrap, todayKey){
+    const h = document.createElement('div'); h.className = 'bp-sec'; h.textContent = t('bpAudits'); wrap.appendChild(h);
+    const list = document.createElement('div'); list.className = 'bp-list';
+    const upcoming = events.filter(ev=> ev.date >= todayKey).sort((x,y)=> x.date.localeCompare(y.date)).slice(0, 8);
+    if(!upcoming.length){ const n = document.createElement('div'); n.className = 'empty-note'; n.textContent = t('bpNoEvents'); list.appendChild(n); }
+    upcoming.forEach(ev=>{
+      const d = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+      const row = document.createElement('div'); row.className = 'bp-row';
+      row.innerHTML = '<span class="dc-dot"></span><span class="bp-what"><b></b><small></small></span><span class="audit-when"></span>';
+      row.querySelector('.dc-dot').style.background = ev.color || DEFAULT_EVENT_COLOR;
+      row.querySelector('.bp-what b').textContent = ev.batchNumber ? `${ev.name} · #${ev.batchNumber}` : ev.name;
+      row.querySelector('.bp-what small').textContent = toDateObj(ev.date).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+      row.querySelector('.audit-when').textContent = d === 0 ? t('abToday') : d === 1 ? t('abTomorrow') : t('inDays').replace('{n}', d);
+      list.appendChild(row);
     });
+    wrap.appendChild(list);
   }
   document.querySelectorAll('#vTabbar button').forEach(b=> b.addEventListener('click', ()=> showTab(b.dataset.tab)));
 
