@@ -384,6 +384,20 @@
   .audit-body{ flex:1; min-width:0; }
   .audit-name{ font-weight:700; font-size:14.5px; color:var(--ink); margin-bottom:2px; }
   .audit-sub{ font-size:12.5px; color:var(--muted); }
+  .audit-when{ flex-shrink:0; align-self:center; padding:4px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:800; font-size:12px; white-space:nowrap; }
+  /* Phones: upcoming audits/events sit right under the day card as a swipe row */
+  @media (max-width:899px){
+    .wide-grid{ display:flex; flex-direction:column; }
+    #auditsCol{ order:-1; margin:0 0 16px; }
+    #auditsCol.is-empty{ display:none; }
+    #auditsCol .section-head{ margin:0 0 8px; }
+    #auditsSection{ display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding-bottom:4px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none; }
+    #auditsSection::-webkit-scrollbar{ display:none; }
+    #auditsSection .audit-card{ flex:0 0 auto; width:min(280px, 82%); margin:0; scroll-snap-align:start; }
+    #auditsSection .audit-card:only-child{ width:100%; }
+    #auditsSection .audit-prep{ display:none; }
+    #auditsSection .audit-card{ padding-top:12px; padding-bottom:12px; }
+  }
   .audit-card.audit-today{ border-color:var(--primary); border-width:1.5px; background:var(--primary-soft); }
   .audit-today-badge{
     align-self:flex-start; flex-shrink:0; background:var(--primary); color:#241A08; font-size:10px; font-weight:800;
@@ -647,7 +661,7 @@
       <div class="agenda-filter" id="agendaFilterBar"></div>
       <div id="taskListSection"></div>
     </div>
-    <div>
+    <div id="auditsCol">
       <div class="section-head"><h2 id="upcomingAuditsTitle">Upcoming Audits</h2></div>
       <div id="auditsSection"></div>
     </div>
@@ -656,9 +670,9 @@
   <footer class="app-footer">CluckWise.vm Viewer — mark tasks done, report problems • Made by Von Mangaron</footer>
 </main>
 
-<button class="report-fab" id="reportProblemBtn" title="Report a problem">
+<button class="report-fab" id="reportProblemBtn" title="Report" aria-label="Report">
   <span class="report-fab-icon">📸</span>
-  <span>Report Problem</span>
+  <span id="reportFabLabel">Report</span>
 </button>
 
 <div class="scrim" id="scrim"></div>
@@ -689,6 +703,7 @@
       <option value="en">English</option>
       <option value="es">Español</option>
       <option value="tl">Tagalog</option>
+      <option value="id">Bahasa Indonesia</option>
     </select>
 
     <span class="field-label" id="farmConnLabel">Farm connection</span>
@@ -922,6 +937,61 @@
     joinFailed:'Hindi makasali ngayon. Tingnan ang internet at subukan ulit.', joinWelcome:'Maligayang pagdating, {n}! Konektado ka na sa {f}.',
     connectedAs:'Konektado sa "{f}" bilang {n}', leaveFarm:'Umalis sa bukid na ito', leaveConfirm:'Umalis sa bukid na ito? Kakailanganin mo ang password para makasali ulit.'
   });
+  Object.assign(TRANSLATIONS.en, { reportProblem:'Report', report:'Report', inDays:'in {n} days', prepWeek:'prep week' });
+  Object.assign(TRANSLATIONS.es, { reportProblem:'Reportar', report:'Reportar', inDays:'en {n} días', prepWeek:'semana de preparación' });
+  Object.assign(TRANSLATIONS.tl, { reportProblem:'Mag-report', report:'Mag-report', inDays:'{n} araw pa', prepWeek:'linggo ng paghahanda' });
+  TRANSLATIONS.id = {
+    today:'Hari ini', thisWeek:'Minggu ini', upcoming:'Mendatang',
+    nothingToday:'Tidak ada jadwal hari ini.', enjoyQuiet:'Selamat bersantai.',
+    allDone:'Semua selesai hari ini!', hereWhatsOn:'Ini jadwal hari ini.',
+    tasksComplete:'tugas selesai', auditToday:'Audit hari ini',
+    noTasksToday:'Tidak ada tugas hari ini.', noTasksWeek:'Tidak ada tugas minggu ini.',
+    noTasksUpcoming:'Tidak ada tugas mendatang.', noAudits:'Tidak ada audit mendatang.',
+    upcomingAudits:'Audit Mendatang', settings:'Pengaturan', taskTextSize:'Ukuran teks tugas',
+    small:'Kecil', medium:'Sedang', large:'Besar',
+    settingsNote:'Ini hanya mengubah tampilan di perangkat ini. Warna dan tema mengikuti pengaturan manajer di aplikasi utama.',
+    language:'Bahasa', farmConnection:'Koneksi peternakan', connect:'Hubungkan', refreshNow:'Muat ulang',
+    farmNamePlaceholder:'mis. Peternakan Riverside', farmNameNote:'⚠️ Masukkan nama peternakan persis seperti yang diberikan pemilik.',
+    overdueTasks:'Tugas terlambat', gotIt:'Mengerti', synced:'Tersinkron', loadingTasks:'Memuat tugas hari ini…',
+    connectedFarm:'Terhubung — peternakan', enterFarmName:'Masukkan nama peternakan yang diberikan pemilik.',
+    reportProblem:'Lapor', report:'Lapor', photo:'Foto',
+    whatsTheProblem:'Apa masalahnya?', shedNumber:'Nomor kandang',
+    whereInShed:'Di bagian mana kandang?', yourName:'Nama Anda', submitReport:'Kirim Laporan',
+    tapToPhoto:'Ketuk untuk ambil foto', retake:'Ulangi', submitHint:'Isi semua kolom untuk mengirim. Laporan akan membuka WhatsApp agar Anda bisa melampirkan foto.',
+    reportSubmitted:'Laporan terkirim', reportSavedOffline:'Laporan disimpan. Akan disinkronkan saat online.',
+    connectFirst:'Hubungkan ke peternakan dulu (Pengaturan).', fillAllFields:'Harap isi semua kolom.',
+    abToday:'Hari ini', abTomorrow:'Besok', abDays:'hari', abPrepDone:'persiapan selesai',
+    abAllDone:'Semua tugas persiapan selesai 🎉', abNoTasks:'Belum ada tugas persiapan.',
+    abMore:'lagi — lihat Minggu ini', abOverdue:'Terlambat',
+    markedDone:'Ditandai selesai', reopenedTask:'Dibuka lagi', undo:'Batalkan',
+    justNow:'baru saja', agoMin:'{n} mnt lalu', agoHour:'{n} jam lalu',
+    saving:'Menyimpan…', offline:'Offline', offlineWaiting:'Offline — {n} menunggu sinkron',
+    notSavedRetry:'Belum tersimpan — mencoba lagi', connecting:'Menghubungkan…', notConnected:'Tidak terhubung',
+    savedOnPhone:'Tidak ada sinyal — disimpan di HP ini. Akan disinkronkan saat online lagi.',
+    showingSaved:'Tidak ada koneksi — menampilkan data terakhir yang tersimpan.',
+    batch:'Batch', day:'Hari',
+    wxNow:'Sekarang', wxHigh:'Maks', wxLow:'Min', wx_clear:'Cerah', wx_mostlyClear:'Sebagian besar cerah', wx_partlyCloudy:'Berawan sebagian', wx_overcast:'Mendung', wx_fog:'Kabut', wx_drizzle:'Gerimis', wx_rain:'Hujan', wx_heavyRain:'Hujan lebat', wx_freezingRain:'Hujan beku', wx_snow:'Salju', wx_showers:'Hujan lokal', wx_thunderstorm:'Badai petir',
+    dcDone:'{d} dari {n} selesai', dnDay:'Hari', dnTomorrow:'Besok', dnYesterday:'Kemarin', dnPrev:'Hari sebelumnya', dnNext:'Hari berikutnya', dnNoTasks:'tidak ada tugas', dnDone:'{d}/{n} selesai', dnNoTasksOn:'Tidak ada tugas pada {d}.', dnNextTasks:'Tugas berikutnya: {d} ({n}) →',
+    hrTitleToday:'Hari ini', hrHottest:'Terpanas: <b>{t}</b> pukul <b>{h}</b>', hrCoolest:'Terdingin: <b>{t}</b> pukul <b>{h}</b>', hrRain:'Hujan dari <b>{s}</b> sampai <b>{e}</b>', hrUpTo:'hingga {p}%', hrAgain:'lagi mulai <b>{h}</b>', hrSmall:'Sedikit kemungkinan hujan — {p}% sekitar <b>{h}</b>', hrDry:'Tidak ada hujan', hrWindiest:'Angin terkencang: <b>{w}</b> pukul <b>{h}</b>', hrLoading:'Memuat prakiraan per jam…', hrError:'Tidak dapat memuat prakiraan per jam — periksa koneksi Anda.', hrMidnight:'tengah malam', hrTap:'Ketuk untuk prakiraan per jam',
+    wxHeat:'Panas', wxFrost:'Embun beku', wxStorm:'Badai', wxRainLikely:'Kemungkinan hujan', wxWindy:'Berangin', wxWaiting:'Cuaca: menunggu manajer mengatur lokasi peternakan.', wxOk:'Cuaca: {place}', wxErr:'Cuaca: tidak dapat dimuat — periksa koneksi Anda.',
+    locWhere:'Di mana?', locShed:'Di kandang', locFarm:'Di sekitar peternakan', shedNumPh:'Nomor kandang, mis. 3', placePh:'Atau ketik tempatnya, mis. Rumah pompa', whereExactly:'Tepatnya di mana?',
+    places:['Silo pakan','Tangki air','Genset','Gerbang & pagar','Kantor','Jalan & halaman','Insinerator'],
+    you:'Anda', assignedTo:'Ditugaskan ke',
+    joinExistsQ:'Pekerja bernama "{n}" sudah bergabung di peternakan ini. Apakah itu Anda?', joinSame:'Ya, itu saya', joinSameSub:'HP ini akan ditambahkan ke {n}.',
+    joinDiff:'Bukan, saya orang lain', joinNeedDistinct:'Tambahkan nama belakang atau inisial agar manajer bisa membedakan Anda, mis. "{n} S."',
+    joinNameTaken:'"{n}" sudah dipakai pekerja lain. Tambahkan nama belakang atau inisial.',
+    joinTitle:'Gabung ke peternakan', joinSub:'Masukkan nama peternakan dan kata sandi dari manajer Anda.',
+    joinFarm:'Nama peternakan', joinPw:'Kata sandi peternakan', joinContinue:'Lanjut', joinChecking:'Memeriksa…',
+    joinName:'Nama Anda', joinNameNote:'Manajer Anda akan melihat nama ini.', joinBtn:'Gabung', joinJoining:'Bergabung…', joinBack:'Kembali',
+    joinNeedFarm:'Masukkan nama peternakan.', joinNeedPw:'Masukkan kata sandi peternakan.', joinNeedName:'Masukkan nama Anda.',
+    joinNotFound:'Tidak ada peternakan dengan nama itu. Cek ejaannya dengan manajer Anda.', joinWrongPw:'Kata sandi salah. Minta kata sandi terbaru ke manajer Anda.',
+    joinOffline:'Tidak dapat terhubung ke peternakan. Periksa internet dan coba lagi.', joinFarmOk:'Peternakan ditemukan: {f}',
+    joinNoPwYet:'Peternakan ini belum punya kata sandi, jadi Anda bisa bergabung hanya dengan nama.',
+    joinRemoved:'Anda telah dikeluarkan dari peternakan ini. Minta kata sandi ke manajer untuk bergabung lagi.',
+    joinFailed:'Tidak dapat bergabung sekarang. Periksa internet dan coba lagi.', joinWelcome:'Selamat datang, {n}! Anda terhubung ke {f}.',
+    connectedAs:'Terhubung ke "{f}" sebagai {n}', leaveFarm:'Keluar dari peternakan ini', leaveConfirm:'Keluar dari peternakan ini? Anda perlu kata sandi untuk bergabung lagi.',
+    inDays:'{n} hari lagi', prepWeek:'minggu persiapan'
+  };
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1490,6 +1560,8 @@
     $('#overdueModalTitle').textContent = t('overdueTasks');
     $('#dismissOverdueTransfer').textContent = t('gotIt');
     $('#reportProblemTitle').textContent = t('reportProblem');
+    $('#reportFabLabel').textContent = t('report');
+    $('#reportProblemBtn').title = t('report'); $('#reportProblemBtn').setAttribute('aria-label', t('report'));
     $('#photoLabel').textContent = t('photo');
     $('#problemTypeLabel').textContent = t('whatsTheProblem');
     $('#shedLabel').textContent = t('locWhere');
@@ -2579,6 +2651,7 @@
     const wrap = $('#auditsSection'); wrap.innerHTML = '';
     const todayKey = dateKey(new Date());
     const upcoming = events.filter(e=> e.date >= todayKey).sort((a,b)=> a.date.localeCompare(b.date));
+    const col = $('#auditsCol'); if(col) col.classList.toggle('is-empty', upcoming.length===0);
     if(upcoming.length===0){
       wrap.innerHTML = `<div class="empty-note">${t('noAudits')}</div>`;
       return;
@@ -2587,9 +2660,15 @@
       const cs=addDaysStr(ev.date,-7), ce=addDaysStr(ev.date,-1);
       const isToday = ev.date===todayKey;
       const card = document.createElement('div'); card.className='audit-card'+(isToday?' audit-today':'');
-      card.innerHTML = `<span class="audit-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>${isToday?'<span class="audit-today-badge">TODAY</span>':''}`;
-      card.querySelector('.audit-name').textContent = ev.batchNumber ? `${ev.name} (Batch #${ev.batchNumber})` : ev.name;
-      card.querySelector('.audit-sub').textContent = `${formatFull(ev.date)} • prep week ${formatFull(cs)}–${formatFull(ce)}`;
+      const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+      card.innerHTML = `<span class="audit-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>${isToday?'<span class="audit-today-badge"></span>':'<span class="audit-when"></span>'}`;
+      card.querySelector('.audit-name').textContent = ev.batchNumber ? `${ev.name} (${t('batch')} #${ev.batchNumber})` : ev.name;
+      const sub = card.querySelector('.audit-sub');
+      sub.innerHTML = '<span class="audit-date"></span><span class="audit-prep"></span>';
+      sub.querySelector('.audit-date').textContent = formatFull(ev.date);
+      sub.querySelector('.audit-prep').textContent = ` • ${t('prepWeek')} ${formatFull(cs)}–${formatFull(ce)}`;
+      if(isToday) card.querySelector('.audit-today-badge').textContent = t('abToday').toUpperCase();
+      else card.querySelector('.audit-when').textContent = daysLeft === 1 ? t('abTomorrow') : t('inDays').replace('{n}', daysLeft);
       wrap.appendChild(card);
     });
   }
