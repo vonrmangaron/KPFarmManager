@@ -49,7 +49,7 @@
     --surface-soft:#F6F1E8;
     --line:#E8DFD1;
     --ink:#2B2116;
-    --muted:#8C7B68;
+    --muted:#76654F;
     --primary:#FFC812;
     --primary-dark:#966E00;
     --primary-soft:#FFF4CC;
@@ -130,7 +130,7 @@
   .sync-status{
     display:flex; align-items:center; gap:6px; height:42px; min-width:42px; justify-content:center;
     padding:0 12px; border-radius:999px; border:none; background:var(--surface-soft);
-    color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+    color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
     -webkit-tap-highlight-color:transparent;
   }
   .sync-status .sync-dot{ width:10px; height:10px; border-radius:50%; background:var(--success); flex-shrink:0; }
@@ -138,10 +138,29 @@
   .sync-status.offline .sync-dot{ background:var(--muted); }
   .sync-status.error .sync-dot{ background:var(--danger); }
   .sync-status.local .sync-dot{ background:var(--line); }
-  .sync-count{ font-family:'Sora',sans-serif; font-weight:800; font-size:12.5px; color:var(--ink); }
+  .sync-count{ font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:var(--ink); }
   .sync-count:empty{ display:none; }
   .sync-label{ display:none; white-space:nowrap; }
-  @media (min-width:720px){ .sync-label{ display:inline; } }
+  .sync-short{ white-space:nowrap; font-size:13px; color:var(--ink); }
+  .sync-short:empty{ display:none; }
+  .sync-status.local .sync-short, .sync-status.offline .sync-short{ color:var(--muted); }
+  .sync-status.error .sync-short{ color:var(--danger); }
+  .sync-status.ok .sync-short{ color:var(--success); }
+  @media (min-width:720px){ .sync-label{ display:inline; } .sync-short{ display:none; } }
+  @media (max-width:719px){
+    .app-header{ padding-left:14px; padding-right:14px; gap:8px; }
+    .header-actions{ gap:6px; }
+    .icon-btn{ width:40px; height:40px; }
+    .sync-status{ padding:0 10px; height:40px; }
+    .sync-status .sync-dot{ display:none; }
+    .sync-status.local .sync-dot, .sync-status.syncing .sync-dot{ display:block; }
+  }
+  @media (max-width:430px){
+    .brand{ gap:8px; }
+    .brand-icon{ width:32px; height:32px; }
+    .brand-text .name, .brand-text .accent{ font-size:16px; }
+    .sync-short{ font-size:12px; }
+  }
   @keyframes dotpulse{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
 
   /* ---------- Undo toast ---------- */
@@ -177,7 +196,7 @@
   .hero-batches{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 10px; }
   .hero-batch-chip{
     display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
-    background:rgba(255,255,255,0.4); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px;
+    background:rgba(255,255,255,0.4); font-family:'Sora',sans-serif; font-weight:700; font-size:13px;
   }
   .hero-weather{
     display:flex; align-items:center; gap:10px; width:fit-content; max-width:100%;
@@ -185,11 +204,11 @@
   }
   .hw-ic{ font-size:30px; line-height:1; flex-shrink:0; }
   .hw-now{ font-family:'Sora',sans-serif; font-weight:800; font-size:26px; line-height:1; flex-shrink:0; }
-  .hw-meta{ display:flex; flex-direction:column; gap:2px; font-size:12.5px; font-weight:700; min-width:0; }
+  .hw-meta{ display:flex; flex-direction:column; gap:2px; font-size:13px; font-weight:700; min-width:0; }
   .hw-meta .hw-label{ opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hw-meta .hw-extra{ font-size:12px; opacity:0.85; white-space:nowrap; }
-  .hw-meta .hw-warn{ align-self:flex-start; margin-top:3px; font-size:11.5px; font-weight:800; color:#fff; background:#C1502E; padding:2px 8px; border-radius:999px; }
-  .wx-date{ display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; color:var(--ink); margin-right:8px; white-space:nowrap; }
+  .hw-meta .hw-extra{ font-size:13px; opacity:0.85; white-space:nowrap; }
+  .hw-meta .hw-warn{ align-self:flex-start; margin-top:3px; font-size:13px; font-weight:800; color:#fff; background:#C1502E; padding:2px 8px; border-radius:999px; }
+  .wx-date{ display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:700; color:var(--ink); margin-right:8px; white-space:nowrap; }
   .wx-date .wx-lo{ color:var(--muted); }
   .hero-weather{ cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .1s ease; }
   .hero-weather:active{ transform:scale(0.98); }
@@ -226,14 +245,14 @@
   .wxh-hour.hot{ border-color:#D9480F; box-shadow:inset 0 0 0 1px #D9480F; }
   .wxh-hour.now{ border-color:var(--primary-dark); box-shadow:inset 0 0 0 1.5px var(--primary-dark); }
   body.theme-dark .wxh-hour.rain{ background:rgba(90,150,230,0.18); border-color:rgba(110,165,235,0.55); }
-  .wxh-time{ font-size:12px; font-weight:800; color:var(--muted); white-space:nowrap; }
+  .wxh-time{ font-size:13px; font-weight:800; color:var(--muted); white-space:nowrap; }
   .wxh-hour.now .wxh-time{ color:var(--primary-dark); }
   .wxh-ic{ font-size:22px; line-height:1; }
   .wxh-temp{ font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:var(--ink); }
-  .wxh-prob{ font-size:11.5px; font-weight:700; color:#1864AB; white-space:nowrap; }
+  .wxh-prob{ font-size:13px; font-weight:700; color:#1864AB; white-space:nowrap; }
   body.theme-dark .wxh-prob{ color:#8FC1FF; }
   .wxh-hum{ font-size:10px; font-weight:600; color:var(--muted); white-space:nowrap; }
-  .wxh-loc{ font-size:11.5px; color:var(--muted); text-align:right; }
+  .wxh-loc{ font-size:13px; color:var(--muted); text-align:right; }
   /* ---------- Compact day card ---------- */
   .day-card{
     border-radius:18px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08;
@@ -247,13 +266,14 @@
   .dc-center{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
   .dc-title-row{ display:flex; align-items:center; gap:8px; min-width:0; }
   .dc-main{ font-family:'Sora',sans-serif; font-weight:800; font-size:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .dc-today{ flex-shrink:0; height:30px; padding:0 12px; border-radius:999px; border:none; background:rgba(36,26,8,0.88); color:#FFE9A6; font-family:'Sora',sans-serif; font-weight:700; font-size:12px; cursor:pointer; }
+  .dc-today{ flex-shrink:0; height:30px; padding:0 12px; border-radius:999px; border:none; background:rgba(36,26,8,0.88); color:#FFE9A6; font-family:'Sora',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
   .dc-today[hidden]{ display:none; }
-  .dc-sub{ font-size:12.5px; font-weight:700; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  [hidden]{ display:none !important; }
+  .dc-sub{ font-size:13px; font-weight:700; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .dc-ring{ width:46px; height:46px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-  .dc-ring-inner{ width:36px; height:36px; border-radius:50%; background:#F7D25E; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:12.5px; color:#241A08; }
+  .dc-ring-inner{ width:36px; height:36px; border-radius:50%; background:#F7D25E; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:#241A08; }
   .dc-chips{ display:flex; gap:6px; flex-wrap:wrap; }
-  .dc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:none; background:rgba(255,255,255,0.5); color:#241A08; font-size:12.5px; font-weight:700; white-space:nowrap; font-family:inherit; }
+  .dc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:none; background:rgba(255,255,255,0.5); color:#241A08; font-size:13px; font-weight:700; white-space:nowrap; font-family:inherit; }
   .dc-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .dc-wx{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .dc-wx:active{ transform:scale(0.97); }
@@ -266,6 +286,11 @@
   .dc-warn-storm{ background:#6741D9; }
   .dc-warn-wind{ background:#4B5563; }
   #auditBarSection:empty{ display:none; }
+  .dc-upcoming{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px; }
+  .dc-upcoming-lbl{ font-size:13px; font-weight:800; color:#5C4A2E; }
+  .dc-up-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; background:rgba(255,255,255,0.55); color:#241A08; font-size:13px; font-weight:700; }
+  .dc-up-chip b{ font-family:'Sora',sans-serif; font-weight:800; color:#7A4E00; }
+  @media (min-width:900px){ .dc-upcoming{ display:none; } }
   .day-card .audit-bar{ margin:0; background:rgba(255,255,255,0.55); border:none; border-radius:12px; color:#241A08; }
   .day-card .audit-bar + .audit-bar{ margin-top:6px; }
   .day-card .audit-bar-head{ min-height:48px; color:#241A08; }
@@ -277,7 +302,7 @@
   .dn-arrow:active{ transform:scale(0.92); background:var(--primary-soft); }
   .dn-center{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; }
   .dn-main{ font-family:'Sora',sans-serif; font-weight:800; font-size:17px; color:var(--ink); }
-  .dn-sub{ font-size:12.5px; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .dn-sub{ font-size:13px; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   .dn-today{ flex-shrink:0; border:none; background:var(--primary); color:#241A08; font-family:'Sora',sans-serif; font-weight:800; font-size:13px; padding:10px 14px; border-radius:999px; cursor:pointer; }
   body.theme-dark .dn-today{ color:#1A1300; }
   .dn-next{ display:block; width:100%; margin:12px 0 22px; padding:15px 14px; border-radius:14px; border:1.5px dashed var(--primary-dark); background:var(--primary-soft); color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; cursor:pointer; }
@@ -289,7 +314,7 @@
   .hero-progress-text strong{ font-family:'Sora',sans-serif; font-size:15px; }
   .hero-audit-banner{
     margin-top:14px; padding:9px 12px; border-radius:12px; background:rgba(0,0,0,0.12);
-    font-size:12.5px; font-weight:700; color:inherit;
+    font-size:13px; font-weight:700; color:inherit;
   }
 
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:26px 0 12px; }
@@ -308,8 +333,12 @@
   .list-group{ margin-bottom:18px; }
   .list-date{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; padding:0 2px; }
   .list-date-main{ font-family:'Sora',sans-serif; font-weight:700; font-size:15px; color:var(--ink); }
-  .list-date-sub{ font-size:12.5px; font-weight:700; color:var(--muted); }
+  .list-date-sub{ font-size:13px; font-weight:700; color:var(--muted); }
   .list-tasks{ display:flex; flex-direction:column; gap:10px; }
+  .done-toggle{ display:block; width:100%; margin:12px 0 10px; padding:12px 14px; border-radius:14px; border:1px dashed var(--line); background:transparent; color:var(--success); font-family:'Sora',sans-serif; font-weight:800; font-size:14px; text-align:left; cursor:pointer; }
+  .done-toggle:active{ transform:scale(0.99); }
+  .all-done-card{ display:flex; align-items:center; gap:12px; margin:0 0 12px; padding:16px 18px; border-radius:var(--radius-card); background:var(--success-soft); color:var(--success); font-family:'Sora',sans-serif; font-weight:800; font-size:16px; }
+  .adc-icon{ font-size:26px; line-height:1; }
 
   .task-card{
     background:var(--surface); border:1px solid var(--line); border-radius:16px;
@@ -344,7 +373,7 @@
   .task-name{ font-size:var(--task-font-size); font-weight:600; color:var(--ink); word-break:break-word; }
   .task-card.done .task-name{ text-decoration:line-through; color:var(--muted); }
   .task-people{ display:flex; flex-wrap:wrap; gap:4px 6px; margin-top:5px; }
-  .task-person{ display:inline-flex; align-items:center; gap:5px; max-width:100%; padding:2px 8px 2px 2px; border-radius:999px; background:var(--surface-soft); border:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; }
+  .task-person{ display:inline-flex; align-items:center; gap:5px; max-width:100%; padding:2px 8px 2px 2px; border-radius:999px; background:var(--surface-soft); border:1px solid var(--line); font-size:13px; font-weight:600; color:var(--ink); line-height:1.3; }
   .task-person.me{ background:var(--primary-soft); border-color:var(--primary); }
   .tp-dot{ width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:9.5px; font-weight:800; font-family:'Sora',sans-serif; }
   .tp-name{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -353,7 +382,7 @@
   .task-avatars{ display:flex; margin-right:2px; flex-shrink:0; }
   .task-avatar{
     width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    color:#fff; font-size:11px; font-weight:800; font-family:'Sora',sans-serif;
+    color:#fff; font-size:13px; font-weight:800; font-family:'Sora',sans-serif;
     border:2px solid var(--surface); margin-left:-8px;
   }
   .task-avatar:first-child{ margin-left:0; }
@@ -383,20 +412,15 @@
   .audit-swatch{ width:10px; height:10px; border-radius:50%; margin-top:6px; flex-shrink:0; }
   .audit-body{ flex:1; min-width:0; }
   .audit-name{ font-weight:700; font-size:14.5px; color:var(--ink); margin-bottom:2px; }
-  .audit-sub{ font-size:12.5px; color:var(--muted); }
-  .audit-when{ flex-shrink:0; align-self:center; padding:4px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:800; font-size:12px; white-space:nowrap; }
+  .audit-sub{ font-size:13px; color:var(--muted); }
+  .audit-when{ flex-shrink:0; align-self:center; padding:4px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:800; font-size:13px; white-space:nowrap; }
   /* Phones: upcoming audits/events sit right under the day card as a swipe row */
   @media (max-width:899px){
     .wide-grid{ display:flex; flex-direction:column; }
     #auditsCol{ order:-1; margin:0 0 16px; }
     #auditsCol.is-empty{ display:none; }
     #auditsCol .section-head{ margin:0 0 8px; }
-    #auditsSection{ display:flex; gap:8px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding-bottom:4px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none; }
-    #auditsSection::-webkit-scrollbar{ display:none; }
-    #auditsSection .audit-card{ flex:0 0 auto; width:min(280px, 82%); margin:0; scroll-snap-align:start; }
-    #auditsSection .audit-card:only-child{ width:100%; }
-    #auditsSection .audit-prep{ display:none; }
-    #auditsSection .audit-card{ padding-top:12px; padding-bottom:12px; }
+    #auditsCol{ display:none; }
   }
   .audit-card.audit-today{ border-color:var(--primary); border-width:1.5px; background:var(--primary-soft); }
   .audit-today-badge{
@@ -424,18 +448,18 @@
   body.theme-dark .ab-bar{ background:rgba(255,255,255,0.12); }
   .ab-bar > span{ display:block; height:100%; background:var(--success); border-radius:99px; transition:width .3s ease; }
   .ab-right{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
-  .ab-days{ font-family:'Sora',sans-serif; font-weight:800; font-size:11px; color:#fff; background:var(--danger); padding:2px 8px; border-radius:999px; white-space:nowrap; }
-  .ab-count{ font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap; }
-  .ab-chevron{ font-size:12px; color:var(--muted); flex-shrink:0; transition:transform .18s ease; }
+  .ab-days{ font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:#fff; background:var(--danger); padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .ab-count{ font-size:13px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .ab-chevron{ font-size:13px; color:var(--muted); flex-shrink:0; transition:transform .18s ease; }
   .audit-bar.open .ab-chevron{ transform:rotate(180deg); }
   .audit-bar-body{ display:none; flex-direction:column; gap:8px; padding:0 10px 12px; }
   .audit-bar.open .audit-bar-body{ display:flex; }
-  .ab-task-date{ font-size:11px; font-weight:700; color:var(--muted); margin:2px 4px -4px; }
+  .ab-task-date{ font-size:13px; font-weight:700; color:var(--muted); margin:2px 4px -4px; }
   .ab-task-date.overdue{ color:var(--danger); }
   .ab-empty{ font-size:13px; font-weight:600; color:var(--muted); padding:4px; }
   .ab-more{
     align-self:flex-start; border:none; background:transparent; padding:6px 4px;
-    color:var(--danger); font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit;
+    color:var(--danger); font-weight:700; font-size:13px; cursor:pointer; font-family:inherit;
   }
 
   .scrim{ position:fixed; inset:0; background:rgba(20,15,8,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity .18s ease; }
@@ -456,14 +480,14 @@
   .sheet-head h2{ font-size:17px; font-weight:800; }
   .sheet-head button{ width:34px; height:34px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--muted); font-size:16px; cursor:pointer; }
   .sheet-body{ padding:18px 20px 24px; }
-  .field-label{ font-size:12.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; display:block; margin:16px 0 6px; }
+  .field-label{ font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.02em; display:block; margin:16px 0 6px; }
   .field-label:first-child{ margin-top:0; }
   select, input[type="text"], input[type="password"], input[type="number"], textarea{
     width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
     background:var(--surface-soft); color:var(--ink); font-size:16px; font-family:inherit;
   }
   textarea{ resize:vertical; min-height:56px; }
-  .field-note{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .field-note{ font-size:13px; color:var(--muted); margin-top:6px; line-height:1.5; }
   .btn-primary, .btn-secondary{
     width:100%; padding:14px; border-radius:14px; border:none; cursor:pointer;
     font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; margin-top:10px;
@@ -527,7 +551,7 @@
   .pr-spinner{ width:26px; height:26px; border-radius:50%; border:3px solid var(--surface-soft); border-top-color:var(--primary); background:var(--surface); box-shadow:var(--shadow-sm); }
   .pull-refresh-indicator.loading .pr-spinner{ animation:spin .7s linear infinite; }
 
-  footer.app-footer{ text-align:center; font-size:11.5px; color:var(--muted); padding:8px 16px 4px; }
+  footer.app-footer{ text-align:center; font-size:13px; color:var(--muted); padding:8px 16px 4px; }
 
   /* ---------- Report Problem FAB ---------- */
   .report-fab{
@@ -542,6 +566,8 @@
   .report-fab:hover{ filter:brightness(1.08); }
   .report-fab:active{ transform:scale(0.96); }
   .report-fab-icon{ font-size:20px; line-height:1; }
+  .opt-tag{ font-weight:600; color:var(--muted); text-transform:none; letter-spacing:0; }
+  #submitHint.need{ color:var(--danger); font-weight:700; }
 
   /* ---------- Photo capture ---------- */
   .photo-capture{
@@ -561,7 +587,7 @@
   .photo-retake{
     position:absolute; bottom:10px; right:10px;
     padding:8px 14px; border-radius:999px; border:none;
-    background:rgba(0,0,0,0.7); color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
+    background:rgba(0,0,0,0.7); color:#fff; font-size:13px; font-weight:700; cursor:pointer;
   }
 
   /* ---------- Problem type grid ---------- */
@@ -588,8 +614,8 @@
 
 <div class="loading-overlay" id="loadErrorOverlay">
   <div class="error-icon">⚠️</div>
-  <h2 style="font-size:17px;">Couldn't load your data</h2>
-  <div class="loading-text" style="max-width:320px;">Check your internet connection, or that your farm name is still correct.</div>
+  <h2 style="font-size:17px;" id="loadErrTitle">Couldn't load your data</h2>
+  <div class="loading-text" style="max-width:320px;" id="loadErrText">Check your internet connection, or that your farm name is still correct.</div>
   <button class="btn-primary" id="retryLoadBtn" style="max-width:220px;">Try again</button>
   <button class="btn-secondary" id="openSettingsFromErrorBtn" style="max-width:220px;">Open Settings</button>
 </div>
@@ -633,7 +659,7 @@
     <div class="brand-text"><span class="name">CluckWise</span><span class="accent">.vm</span></div>
   </div>
   <div class="header-actions">
-    <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span></button>
+    <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span><span class="sync-short" id="syncShort"></span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -667,7 +693,7 @@
     </div>
   </div>
 
-  <footer class="app-footer">CluckWise.vm Viewer — mark tasks done, report problems • Made by Von Mangaron</footer>
+  <footer class="app-footer"><span id="footerText">CluckWise.vm Viewer — mark tasks done, report</span> • Made by Von Mangaron</footer>
 </main>
 
 <button class="report-fab" id="reportProblemBtn" title="Report" aria-label="Report">
@@ -680,7 +706,7 @@
 <div class="modal" id="overdueTransferModal">
   <div class="modal-head"><h2 id="overdueModalTitle">Overdue tasks</h2><button id="closeOverdueTransferModal" aria-label="Close">✕</button></div>
   <div class="modal-body">
-    <p style="font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.6;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open. Mark them done below if they're finished, or let your manager know so they can reschedule them.</p>
+    <p id="overdueIntro" style="font-size:13.5px;color:var(--muted);margin:0 0 14px;line-height:1.6;">You have <strong id="overdueTransferCount">0</strong> task(s) from past days still open. Mark them done below if they're finished, or let your manager know so they can reschedule them.</p>
     <div id="overdueTransferList"></div>
     <button class="btn-secondary" id="dismissOverdueTransfer" style="margin-top:14px;">Got it</button>
   </div>
@@ -743,16 +769,16 @@
 
     <span class="field-label" id="problemTypeLabel">What's the problem?</span>
     <div class="type-grid" id="typeGrid">
-      <button class="type-btn" type="button" data-type="Feed"><span>🌾</span>Feed</button>
-      <button class="type-btn" type="button" data-type="Water"><span>💧</span>Water</button>
-      <button class="type-btn" type="button" data-type="Fan"><span>🌬️</span>Fan</button>
-      <button class="type-btn" type="button" data-type="Cooling"><span>❄️</span>Cooling</button>
-      <button class="type-btn" type="button" data-type="Curtain"><span>🪟</span>Curtain</button>
-      <button class="type-btn" type="button" data-type="Lighting"><span>💡</span>Lighting</button>
-      <button class="type-btn" type="button" data-type="Equipment"><span>🔧</span>Equipment</button>
-      <button class="type-btn" type="button" data-type="Safety"><span>⚠️</span>Safety</button>
-      <button class="type-btn" type="button" data-type="Biosecurity"><span>🛡️</span>Biosecurity</button>
-      <button class="type-btn" type="button" data-type="Other"><span>❓</span>Other</button>
+      <button class="type-btn" type="button" data-type="Feed"><span>🌾</span><span class="pt-l">Feed</span></button>
+      <button class="type-btn" type="button" data-type="Water"><span>💧</span><span class="pt-l">Water</span></button>
+      <button class="type-btn" type="button" data-type="Fan"><span>🌬️</span><span class="pt-l">Fan</span></button>
+      <button class="type-btn" type="button" data-type="Cooling"><span>❄️</span><span class="pt-l">Cooling</span></button>
+      <button class="type-btn" type="button" data-type="Curtain"><span>🪟</span><span class="pt-l">Curtain</span></button>
+      <button class="type-btn" type="button" data-type="Lighting"><span>💡</span><span class="pt-l">Lighting</span></button>
+      <button class="type-btn" type="button" data-type="Equipment"><span>🔧</span><span class="pt-l">Equipment</span></button>
+      <button class="type-btn" type="button" data-type="Safety"><span>⚠️</span><span class="pt-l">Safety</span></button>
+      <button class="type-btn" type="button" data-type="Biosecurity"><span>🛡️</span><span class="pt-l">Biosecurity</span></button>
+      <button class="type-btn" type="button" data-type="Other"><span>❓</span><span class="pt-l">Other</span></button>
     </div>
 
     <span class="field-label" id="shedLabel">Where is it?</span>
@@ -768,7 +794,7 @@
       <input type="text" id="placeInput" maxlength="40" placeholder="Or type the place, e.g. Pump house" aria-label="Place on the farm">
     </div>
 
-    <span class="field-label" id="notesLabel">Where in the shed?</span>
+    <span class="field-label"><span id="notesLabel">Where in the shed?</span> <span class="opt-tag" id="notesOptional">(optional)</span></span>
     <textarea id="notesInput" rows="2" maxlength="200" placeholder="e.g. Back left corner, near feeder line 2"></textarea>
 
     <span class="field-label" id="nameLabel">Your Name</span>
@@ -781,7 +807,7 @@
 
 <script>
 (function(){
-  const DEFAULT_SETTINGS = { fontSize:'medium', lang:'en' };
+  const DEFAULT_SETTINGS = { fontSize:'large', lang:'en' };
   const FONT_SIZE_MAP = { small:'13px', medium:'15px', large:'17px' };
   const TRANSLATIONS = {
     en: {
@@ -992,6 +1018,10 @@
     connectedAs:'Terhubung ke "{f}" sebagai {n}', leaveFarm:'Keluar dari peternakan ini', leaveConfirm:'Keluar dari peternakan ini? Anda perlu kata sandi untuk bergabung lagi.',
     inDays:'{n} hari lagi', prepWeek:'minggu persiapan'
   };
+  Object.assign(TRANSLATIONS.en, {"ssOk": "✓ Saved", "ssSaving": "Saving…", "ssOffline": "Offline", "ssError": "Retrying", "ssLocal": "Not connected", "comingUp": "Coming up", "optional": "(optional)", "needPrefix": "Still needed:", "needPhoto": "photo", "needType": "problem type", "needPlace": "where it is", "needName": "your name", "submitHint": "Ready. Tap Submit — WhatsApp opens so you can send it to your manager.", "doneCount": "{n} done", "allDone": "All done for today!", "overdueIntro": "You have {n} task(s) from past days still open. Mark them done below if they're finished, or tell your manager so they can move them.", "footer": "CluckWise.vm Viewer — mark tasks done, report", "loadErrTitle": "Couldn't load your data", "loadErrText": "Check your internet connection, or that your farm name is still correct.", "tryAgain": "Try again", "openSettings": "Open Settings", "version": "version", "readFail": "Could not read that data.", "noDataYet": "No data found for that farm name yet.", "refreshed": "Refreshed from the latest data.", "refreshFail": "Could not refresh — check your connection.", "connectToSave": "Connect in Settings to save changes.", "highPriority": "High priority", "pt_Feed": "Feed", "pt_Water": "Water", "pt_Fan": "Fan", "pt_Cooling": "Cooling", "pt_Curtain": "Curtain", "pt_Lighting": "Lighting", "pt_Equipment": "Equipment", "pt_Safety": "Safety", "pt_Biosecurity": "Biosecurity", "pt_Other": "Other"});
+  Object.assign(TRANSLATIONS.es, {"ssOk": "✓ Guardado", "ssSaving": "Guardando…", "ssOffline": "Sin conexión", "ssError": "Reintentando", "ssLocal": "Sin conectar", "comingUp": "Próximamente", "optional": "(opcional)", "needPrefix": "Falta:", "needPhoto": "foto", "needType": "tipo de problema", "needPlace": "dónde está", "needName": "tu nombre", "submitHint": "Listo. Toca Enviar — se abre WhatsApp para mandarlo a tu encargado.", "doneCount": "{n} hechas", "allDone": "¡Todo listo por hoy!", "overdueIntro": "Tienes {n} tarea(s) de días pasados sin terminar. Márcalas abajo si ya están hechas, o avisa a tu encargado para que las mueva.", "footer": "CluckWise.vm Viewer — marca tareas, reporta", "loadErrTitle": "No se pudieron cargar tus datos", "loadErrText": "Revisa tu conexión a internet o que el nombre de la granja sea correcto.", "tryAgain": "Intentar de nuevo", "openSettings": "Abrir ajustes", "version": "versión", "readFail": "No se pudieron leer los datos.", "noDataYet": "Aún no hay datos para esa granja.", "refreshed": "Actualizado con los datos más recientes.", "refreshFail": "No se pudo actualizar — revisa tu conexión.", "connectToSave": "Conéctate en Ajustes para guardar cambios.", "highPriority": "Prioridad alta", "pt_Feed": "Alimento", "pt_Water": "Agua", "pt_Fan": "Ventilador", "pt_Cooling": "Enfriamiento", "pt_Curtain": "Cortina", "pt_Lighting": "Luces", "pt_Equipment": "Equipo", "pt_Safety": "Seguridad", "pt_Biosecurity": "Bioseguridad", "pt_Other": "Otro"});
+  Object.assign(TRANSLATIONS.tl, {"ssOk": "✓ Na-save", "ssSaving": "Sine-save…", "ssOffline": "Offline", "ssError": "Sinusubukan ulit", "ssLocal": "Hindi konektado", "comingUp": "Paparating", "optional": "(opsyonal)", "needPrefix": "Kulang pa:", "needPhoto": "litrato", "needType": "uri ng problema", "needPlace": "kung saan", "needName": "iyong pangalan", "submitHint": "Handa na. I-tap ang Submit — magbubukas ang WhatsApp para maipadala mo sa manager.", "doneCount": "{n} tapos", "allDone": "Tapos na lahat ngayong araw!", "overdueIntro": "May {n} gawain ka mula sa mga nakaraang araw na hindi pa tapos. Markahan sa ibaba kung tapos na, o sabihan ang manager para mailipat.", "footer": "CluckWise.vm Viewer — markahan ang gawain, mag-report", "loadErrTitle": "Hindi ma-load ang data mo", "loadErrText": "Tingnan ang internet, o kung tama pa ang pangalan ng bukid.", "tryAgain": "Subukan ulit", "openSettings": "Buksan ang Settings", "version": "bersyon", "readFail": "Hindi mabasa ang data.", "noDataYet": "Wala pang data para sa bukid na iyan.", "refreshed": "Na-refresh na.", "refreshFail": "Hindi ma-refresh — tingnan ang koneksyon.", "connectToSave": "Kumonekta sa Settings para ma-save.", "highPriority": "Mahalaga", "pt_Feed": "Pakain", "pt_Water": "Tubig", "pt_Fan": "Bentilador", "pt_Cooling": "Pampalamig", "pt_Curtain": "Kurtina", "pt_Lighting": "Ilaw", "pt_Equipment": "Kagamitan", "pt_Safety": "Kaligtasan", "pt_Biosecurity": "Biosecurity", "pt_Other": "Iba pa"});
+  Object.assign(TRANSLATIONS.id, {"ssOk": "✓ Tersimpan", "ssSaving": "Menyimpan…", "ssOffline": "Offline", "ssError": "Mencoba lagi", "ssLocal": "Belum terhubung", "comingUp": "Akan datang", "optional": "(opsional)", "needPrefix": "Masih perlu:", "needPhoto": "foto", "needType": "jenis masalah", "needPlace": "lokasinya", "needName": "nama Anda", "submitHint": "Siap. Ketuk Kirim — WhatsApp terbuka agar Anda bisa mengirimnya ke manajer.", "doneCount": "{n} selesai", "allDone": "Semua selesai hari ini!", "overdueIntro": "Ada {n} tugas dari hari sebelumnya yang belum selesai. Tandai di bawah jika sudah selesai, atau beri tahu manajer agar dipindahkan.", "footer": "CluckWise.vm Viewer — tandai tugas, lapor", "loadErrTitle": "Data tidak dapat dimuat", "loadErrText": "Periksa koneksi internet, atau pastikan nama peternakan masih benar.", "tryAgain": "Coba lagi", "openSettings": "Buka Pengaturan", "version": "versi", "readFail": "Data tidak dapat dibaca.", "noDataYet": "Belum ada data untuk peternakan itu.", "refreshed": "Diperbarui dengan data terbaru.", "refreshFail": "Tidak dapat memperbarui — periksa koneksi.", "connectToSave": "Hubungkan di Pengaturan untuk menyimpan.", "highPriority": "Prioritas tinggi", "pt_Feed": "Pakan", "pt_Water": "Air", "pt_Fan": "Kipas", "pt_Cooling": "Pendingin", "pt_Curtain": "Tirai", "pt_Lighting": "Lampu", "pt_Equipment": "Peralatan", "pt_Safety": "Keselamatan", "pt_Biosecurity": "Biosekuriti", "pt_Other": "Lainnya"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1483,14 +1513,14 @@
   }
   function renderOverdueList(){
     const overdue = getOverdueTasks();
-    $('#overdueTransferCount').textContent = overdue.length;
+    $('#overdueIntro').innerHTML = escapeHtml(t('overdueIntro')).replace('{n}', `<strong id="overdueTransferCount">${overdue.length}</strong>`);
     const list = $('#overdueTransferList');
     list.innerHTML = '';
     overdue.forEach(tk=>{
       const wrap = document.createElement('div');
       wrap.style.marginBottom = '10px';
       const label = document.createElement('div');
-      label.style.cssText = 'font-size:11px;color:var(--danger);font-weight:700;margin-bottom:5px;';
+      label.style.cssText = 'font-size:13px;color:var(--danger);font-weight:700;margin-bottom:5px;';
       label.textContent = formatFullWithWeekday(tk.date);
       wrap.appendChild(label);
       wrap.appendChild(buildReadOnlyTaskCard(tk));
@@ -1561,6 +1591,18 @@
     $('#dismissOverdueTransfer').textContent = t('gotIt');
     $('#reportProblemTitle').textContent = t('reportProblem');
     $('#reportFabLabel').textContent = t('report');
+    document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.type); });
+    $('#notesOptional').textContent = t('optional');
+    $('#nameInput').placeholder = t('yourName');
+    $('#footerText').textContent = t('footer');
+    $('#loadErrTitle').textContent = t('loadErrTitle');
+    $('#loadErrText').textContent = t('loadErrText');
+    $('#retryLoadBtn').textContent = t('tryAgain');
+    $('#openSettingsFromErrorBtn').textContent = t('openSettings');
+    $('#overdueBtn').title = t('overdueTasks'); $('#overdueBtn').setAttribute('aria-label', t('overdueTasks'));
+    $('#settingsBtn').title = t('settings'); $('#settingsBtn').setAttribute('aria-label', t('settings'));
+    $('#appVersion').textContent = 'CluckWise.vm viewer · ' + t('version') + ' ' + APP_VERSION;
+    updateSubmitState();
     $('#reportProblemBtn').title = t('report'); $('#reportProblemBtn').setAttribute('aria-label', t('report'));
     $('#photoLabel').textContent = t('photo');
     $('#problemTypeLabel').textContent = t('whatsTheProblem');
@@ -1865,7 +1907,7 @@
   function hideLoadErrorOverlay(){ const el=$('#loadErrorOverlay'); if(el) el.classList.remove('show'); }
   async function connectGithub(){
     const name=$('#githubPathInput').value.trim();
-    if(!name){ showToast('Enter the farm name.', true); return; }
+    if(!name){ showToast(t('joinNeedFarm'), true); return; }
     ghFarmName=name; ghPath=sanitizeFarmFileName(name);
     try{ localStorage.setItem('prodplan-viewer-gh-farmname', ghFarmName); }catch(e){}
     loadPendingTicks();
@@ -1898,7 +1940,7 @@
       applySettings();
       renderAll();
       checkOverdueOnLoad();
-    }catch(e){ if(!silent) showToast('Could not read that data.', true); }
+    }catch(e){ if(!silent) showToast(t('readFail'), true); }
   }
   // ---------- Sync status dot ----------
   let syncState = 'idle';
@@ -1915,14 +1957,15 @@
     const el = $('#syncIndicator');
     if(!el) return;
     const waiting = pendingTicks.size + loadPendingReports().length;
-    let cls, text;
-    if(!ghPath){ cls = 'local'; text = t('notConnected'); }
-    else if(!navigator.onLine){ cls = 'offline'; text = waiting ? t('offlineWaiting').replace('{n}', waiting) : t('offline'); }
-    else if(syncState === 'syncing' || tickFlushInFlight){ cls = 'syncing'; text = t('saving'); }
-    else if(syncState === 'error'){ cls = 'error'; text = t('notSavedRetry'); }
-    else if(waiting){ cls = 'syncing'; text = t('saving'); }
-    else if(lastSyncAt){ cls = 'ok'; text = `${t('synced')} · ${timeAgo(lastSyncAt)}`; }
-    else { cls = 'syncing'; text = t('connecting'); }
+    let cls, text, short;
+    if(!ghPath){ cls = 'local'; text = t('notConnected'); short = t('ssLocal'); }
+    else if(!navigator.onLine){ cls = 'offline'; text = waiting ? t('offlineWaiting').replace('{n}', waiting) : t('offline'); short = t('ssOffline'); }
+    else if(syncState === 'syncing' || tickFlushInFlight){ cls = 'syncing'; text = t('saving'); short = t('ssSaving'); }
+    else if(syncState === 'error'){ cls = 'error'; text = t('notSavedRetry'); short = t('ssError'); }
+    else if(waiting){ cls = 'syncing'; text = t('saving'); short = t('ssSaving'); }
+    else if(lastSyncAt){ cls = 'ok'; text = `${t('synced')} · ${timeAgo(lastSyncAt)}`; short = t('ssOk'); }
+    else { cls = 'syncing'; text = t('connecting'); short = t('ssSaving'); }
+    $('#syncShort').textContent = short;
     el.className = 'sync-status ' + cls;
     $('#syncCount').textContent = waiting ? String(waiting) : '';
     $('#syncLabel').textContent = text;
@@ -1941,7 +1984,7 @@
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
       if(!res.ok && res.status!==404) throw new Error('Sync server responded '+res.status);
       const result = await res.json();
-      if(res.status===404 || result.notFound){ if(!silent) showToast('No data found for that farm name yet.', true); return false; }
+      if(res.status===404 || result.notFound){ if(!silent) showToast(t('noDataYet'), true); return false; }
       ghSha = result.sha;
       cacheData(result.data);
       applyData(JSON.stringify(result.data), silent);
@@ -1949,12 +1992,12 @@
       checkMembership();
       if(pendingTicks.size) scheduleTickFlush(200);
       setTimeout(flushPendingReports, 100);
-      if(!silent) showToast('Refreshed from the latest data.');
+      if(!silent) showToast(t('refreshed'));
       return true;
     }catch(e){
       console.error(e);
       renderSyncStatus();
-      if(!silent) showToast('Could not refresh — check your connection.', true);
+      if(!silent) showToast(t('refreshFail'), true);
       return false;
     }
   }
@@ -2221,16 +2264,23 @@
       report.notes,
       '',
       `— ${report.createdBy}`
-    ].join('\n');
+    ].filter((line, i)=> !(i === 2 && !line)).join('\n');
   }
   function updateSubmitState(){
     const hasPhoto = !!pendingPhotoFile;
     const hasType = !!selectedType;
     const hasShed = reportLocMode === 'shed' ? ($('#shedInput').value || '').trim().length > 0 : ($('#placeInput').value || '').trim().length > 0;
-    const hasNotes = ($('#notesInput').value || '').trim().length > 0;
     const hasName = ($('#nameInput').value || '').trim().length > 0;
     const btn = $('#submitReportBtn');
-    if(btn) btn.disabled = !(hasPhoto && hasType && hasShed && hasNotes && hasName);
+    const ready = hasPhoto && hasType && hasShed && hasName;
+    if(btn) btn.disabled = !ready;
+    // Say exactly what's still missing instead of a greyed-out button
+    const hint = $('#submitHint');
+    if(hint){
+      const miss = [[hasPhoto,'needPhoto'],[hasType,'needType'],[hasShed,'needPlace'],[hasName,'needName']].filter(x=> !x[0]).map(x=> t(x[1]));
+      hint.textContent = ready ? t('submitHint') : `${t('needPrefix')} ${miss.join(', ')}`;
+      hint.classList.toggle('need', !ready);
+    }
   }
   function resetReportForm(){
     pendingPhotoFile = null;
@@ -2247,7 +2297,11 @@
     renderPlaceChips();
     setReportLocMode('shed');
     $('#notesInput').value = '';
-    $('#nameInput').value = '';
+    // The worker's name: from joining the farm, else the last report
+    let lastName = '';
+    try{ lastName = localStorage.getItem('prodplan-viewer-reporter') || ''; }catch(e){}
+    const me = loadMember();
+    $('#nameInput').value = (me && me.name) || lastName;
     updateSubmitState();
   }
   function openReportProblem(){
@@ -2293,10 +2347,11 @@
     const problemType = selectedType;
     const photoFile = pendingPhotoFile;
 
-    if(!(shed || location) || !notes || !createdBy || !problemType || !photoFile){
+    if(!(shed || location) || !createdBy || !problemType || !photoFile){
       showToast(t('fillAllFields'), true);
       return;
     }
+    try{ localStorage.setItem('prodplan-viewer-reporter', createdBy); }catch(e){}
 
     const report = {
       id: 'rpt-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(16).slice(2))),
@@ -2377,14 +2432,14 @@
     const isHighPriority = tk.priority === 'high' && tk.status!=='done';
     card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'');
     card.dataset.id = tk.id;
-    card.innerHTML = `<div class="task-card-row">${isHighPriority ? '<span class="priority-flag" title="High priority">🔥</span>' : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     card.querySelector('.task-name').textContent = tk.name;
     if(tk.notes) card.querySelector('.tnc-text').textContent = tk.notes;
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
-      if(!ghPath){ showToast('Connect in Settings to save changes.', true); return; }
+      if(!ghPath){ showToast(t('connectToSave'), true); return; }
       toggleTaskDoneInViewer(tk.id);
     });
     return card;
@@ -2599,8 +2654,27 @@
       bar.appendChild(body);
       wrap.appendChild(bar);
     });
+    // Phones: audits/events outside their prep week, as one short line (desktop has the side list)
+    const shown = new Set(activeAuditPrepEvents().map(ev=> ev.id));
+    const later = events.filter(ev=> ev.date >= todayKey && !shown.has(ev.id)).sort((a,b)=> a.date.localeCompare(b.date)).slice(0, 3);
+    if(later.length){
+      const line = document.createElement('div');
+      line.className = 'dc-upcoming';
+      const lbl = document.createElement('span'); lbl.className = 'dc-upcoming-lbl'; lbl.textContent = t('comingUp');
+      line.appendChild(lbl);
+      later.forEach(ev=>{
+        const d = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
+        const chip = document.createElement('span'); chip.className = 'dc-up-chip';
+        const dot = document.createElement('span'); dot.className = 'dc-dot'; dot.style.background = ev.color || DEFAULT_EVENT_COLOR;
+        const nm = document.createElement('span'); nm.textContent = ev.name;
+        const when = document.createElement('b'); when.textContent = d === 0 ? t('abToday') : d === 1 ? t('abTomorrow') : t('inDays').replace('{n}', d);
+        chip.append(dot, nm, when); line.appendChild(chip);
+      });
+      wrap.appendChild(line);
+    }
   }
 
+  let showDoneTasks = false;
   function renderList(){
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
@@ -2629,9 +2703,29 @@
     }
     const groups={}; dated.forEach(tk=>{ (groups[tk.date]=groups[tk.date]||[]).push(tk); });
     if(agendaFilter==='today'){
+      const open = dated.filter(tk=> tk.status!=='done'), done = dated.filter(tk=> tk.status==='done');
+      if(!open.length){
+        const fin = document.createElement('div'); fin.className = 'all-done-card';
+        fin.innerHTML = '<span class="adc-icon">🎉</span><span class="adc-text"></span>';
+        fin.querySelector('.adc-text').textContent = t('allDone');
+        wrap.appendChild(fin);
+      }
       const listEl=document.createElement('div'); listEl.className='list-tasks';
-      dated.forEach(tk=> listEl.appendChild(buildReadOnlyTaskCard(tk)));
+      open.forEach(tk=> listEl.appendChild(buildReadOnlyTaskCard(tk)));
       wrap.appendChild(listEl);
+      if(done.length){
+        const tog = document.createElement('button'); tog.type = 'button';
+        tog.className = 'done-toggle' + (showDoneTasks ? ' open' : '');
+        tog.setAttribute('aria-expanded', String(showDoneTasks));
+        tog.textContent = `✓ ${t('doneCount').replace('{n}', done.length)} ${showDoneTasks ? '▴' : '▾'}`;
+        tog.addEventListener('click', ()=>{ showDoneTasks = !showDoneTasks; renderList(); });
+        wrap.appendChild(tog);
+        if(showDoneTasks){
+          const doneEl=document.createElement('div'); doneEl.className='list-tasks';
+          done.forEach(tk=> doneEl.appendChild(buildReadOnlyTaskCard(tk)));
+          wrap.appendChild(doneEl);
+        }
+      }
       return;
     }
     Object.keys(groups).sort().forEach(key=>{
@@ -2639,7 +2733,7 @@
       const doneCount=groups[key].filter(tk=>tk.status==='done').length;
       groupEl.innerHTML=`<div class="list-date"><span class="list-date-main"></span><span class="list-date-sub"></span></div>`;
       groupEl.querySelector('.list-date-main').textContent=formatFullWithWeekday(key);
-      groupEl.querySelector('.list-date-sub').textContent=`${doneCount}/${groups[key].length} done`;
+      groupEl.querySelector('.list-date-sub').textContent=t('dnDone').replace('{d}', doneCount).replace('{n}', groups[key].length);
       const wxChip = buildDateWxChip(key);
       if(wxChip) groupEl.querySelector('.list-date-sub').prepend(wxChip);
       const listEl=document.createElement('div'); listEl.className='list-tasks';
@@ -2760,7 +2854,7 @@
   $('#joinSameBtn').addEventListener('click', ()=>{ if(joinPending) registerJoin(joinPending.name, 3); });
   $('#joinDiffBtn').addEventListener('click', joinDifferentPerson);
   $('#leaveFarmBtn').addEventListener('click', leaveFarm);
-  $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast('Connect first.', true); return; } pullFromGithub(); });
+  $('#syncGithubBtn').addEventListener('click', ()=>{ if(!ghPath){ showToast(t('connectFirst'), true); return; } pullFromGithub(); });
 
   // ---------- Pull-to-refresh ----------
   function initPullToRefresh(containerEl, indicatorEl, onRefresh){
@@ -2815,7 +2909,7 @@
     }, { passive:true }));
   })();
   initPullToRefresh(document.body, $('#pullRefreshIndicator'), async ()=>{
-    if(ghPath){ await pullFromGithub(); } else { showToast('Connect in Settings to enable syncing.', true); }
+    if(ghPath){ await pullFromGithub(); } else { showToast(t('connectFirst'), true); }
   });
 
   document.addEventListener('visibilitychange', ()=>{
