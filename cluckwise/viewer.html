@@ -279,14 +279,25 @@
   /* Round "now" weather badge floating over the Today card's corner (same look as the Board in the main app) */
   .day-card{ position:relative; }
   .day-card.has-now{ margin-top:6px; }
-  .day-card.has-now .dc-top{ padding-left:62px; }
-  .day-card.has-now .dc-sub{ white-space:normal; }
-  /* With the weather badge on the corner: no ring (progress is in the subtitle), the
-     "Today" jump button sits under the day name, so the name is never cut off */
-  .day-card.has-now .dc-ring{ display:none; }
-  .day-card.has-now .dc-title-row{ flex-wrap:wrap; row-gap:4px; }
-  .day-card.has-now .dc-main{ font-size:19px; overflow:visible; }
-  .day-card.has-now .dc-today{ height:26px; padding:0 10px; font-size:12px; order:3; }
+  /* Today card layout: date label, day name, progress; arrows paired on the right; "Back to today" as a real button */
+  .day-card .dc-top{ display:flex; align-items:flex-start; gap:10px; padding:6px 4px 0; }
+  .day-card.has-now .dc-top{ padding-left:68px; }
+  .day-card .dc-center{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .day-card .dc-eyebrow{ font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; opacity:.7; }
+  .day-card .dc-main{ font-family:'Sora',sans-serif; font-size:25px; font-weight:800; line-height:1.1; white-space:normal; overflow:visible; overflow-wrap:anywhere; }
+  .day-card .dc-progress{ display:flex; align-items:center; gap:10px; margin-top:4px; }
+  .day-card .dc-sub{ font-size:13px; font-weight:700; opacity:.85; white-space:nowrap; }
+  .day-card .dc-pbar{ flex:1; max-width:120px; height:6px; border-radius:999px; background:rgba(255,255,255,0.5); overflow:hidden; }
+  .day-card .dc-pbar > span{ display:block; height:100%; width:0; border-radius:999px; background:#2B2116; transition:width .3s ease; }
+  .day-card .dc-nav{ display:flex; gap:6px; flex-shrink:0; }
+  .day-card .dc-arrow{ width:42px; height:42px; border-radius:12px; font-size:24px; }
+  .day-card .dc-ring{ display:none !important; }
+  .day-card .dc-meta{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .day-card .dc-meta:has(.dc-chips[style*="none"]):has(.dc-today[hidden]){ display:none; }
+  .day-card .dc-today{ display:inline-flex; align-items:center; gap:6px; height:34px; margin-left:auto; padding:0 14px; border-radius:999px; border:1.5px solid rgba(36,26,8,0.6); background:rgba(255,255,255,0.4); color:#241A08; font-family:'Sora',sans-serif; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
+  .day-card .dc-today span:first-child{ font-size:16px; }
+  .day-card .dc-today:active{ transform:scale(0.96); }
+  .day-card .dc-today[hidden]{ display:none; }
   .wx-now-btn{ position:absolute; top:-18px; left:-12px; z-index:3; width:78px; height:78px; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; border:3px solid var(--bg); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#2B2116; background:linear-gradient(135deg,#FFF4C7,#FFD35C); -webkit-tap-highlight-color:transparent; }
   .wx-now-btn:active{ transform:scale(0.94); }
   .wx-now-btn.wx-tone-partly{ background:linear-gradient(135deg,#FFF3CF,#DCE5F0); }
@@ -772,15 +783,21 @@
   <div class="day-card" id="dayCard">
     <button class="wx-now-btn" id="wxNowBtn" type="button" hidden><span class="wnb-ic"></span><span class="wnb-t"></span><span class="wnb-l"></span></button>
     <div class="dc-top">
-      <button class="dc-arrow" id="dcPrev" type="button" aria-label="Previous day">‹</button>
       <div class="dc-center">
-        <div class="dc-title-row"><span class="dc-main" id="dcMain">Today</span><button class="dc-today" id="dcToday" type="button" hidden>Today</button></div>
-        <span class="dc-sub" id="dcSub"></span>
+        <span class="dc-eyebrow" id="dcEyebrow"></span>
+        <span class="dc-main" id="dcMain">Today</span>
+        <div class="dc-progress"><span class="dc-sub" id="dcSub"></span><span class="dc-pbar" aria-hidden="true"><span id="dcPbar"></span></span></div>
       </div>
-      <div class="dc-ring" id="dcRing" aria-hidden="true"><span class="dc-ring-inner" id="dcRingText">0/0</span></div>
-      <button class="dc-arrow" id="dcNext" type="button" aria-label="Next day">›</button>
+      <div class="dc-nav">
+        <button class="dc-arrow" id="dcPrev" type="button" aria-label="Previous day">‹</button>
+        <button class="dc-arrow" id="dcNext" type="button" aria-label="Next day">›</button>
+      </div>
+      <div class="dc-ring" id="dcRing" aria-hidden="true" hidden><span class="dc-ring-inner" id="dcRingText">0/0</span></div>
     </div>
-    <div class="dc-chips" id="dcChips"></div>
+    <div class="dc-meta">
+      <div class="dc-chips" id="dcChips"></div>
+      <button class="dc-today" id="dcToday" type="button" hidden><span aria-hidden="true">↺</span><span id="dcTodayLbl">Back to today</span></button>
+    </div>
     <div id="auditBarSection"></div>
   </div>
 
@@ -1163,6 +1180,10 @@
   Object.assign(TRANSLATIONS.es, {"bpBirdsTotal": "Aves ingresadas", "bpPlacedLbl": "al ingreso", "bpBirdsNow": "Aves ahora", "bpPicked": "{n} retiradas", "bpOnFarm": "en la granja", "bpMortality": "Mortalidad", "bpMortBirds": "{n} aves", "bpUpdated": "actualizado {d}", "bpNotLinked": "Las cifras de aves aparecen cuando tu encargado vincula ProdWise en CluckWise.", "bpNoBirds": "Aún no hay cifras de aves para este lote.", "bpLoading": "Cargando cifras de aves…", "bpShedsTitle": "Edad y limpieza por galpón", "bpAge": "Edad", "bpAudits": "Auditorías y eventos", "bpNoEvents": "No hay auditorías ni eventos próximos."});
   Object.assign(TRANSLATIONS.tl, {"bpBirdsTotal": "Mga ibong inilagay", "bpPlacedLbl": "sa simula", "bpBirdsNow": "Mga ibon ngayon", "bpPicked": "{n} nakuha na", "bpOnFarm": "nasa bukid", "bpMortality": "Namatay", "bpMortBirds": "{n} ibon", "bpUpdated": "na-update {d}", "bpNotLinked": "Lalabas ang bilang ng ibon kapag na-link ng manager ang ProdWise sa CluckWise.", "bpNoBirds": "Wala pang bilang ng ibon para sa batch na ito.", "bpLoading": "Nilo-load ang bilang ng ibon…", "bpShedsTitle": "Edad at clean-out ng kulungan", "bpAge": "Edad", "bpAudits": "Mga audit at event", "bpNoEvents": "Walang paparating na audit o event."});
   Object.assign(TRANSLATIONS.id, {"bpBirdsTotal": "Ayam masuk", "bpPlacedLbl": "saat masuk", "bpBirdsNow": "Ayam sekarang", "bpPicked": "{n} sudah dipanen", "bpOnFarm": "di peternakan", "bpMortality": "Kematian", "bpMortBirds": "{n} ekor", "bpUpdated": "diperbarui {d}", "bpNotLinked": "Jumlah ayam muncul di sini setelah manajer menautkan ProdWise di CluckWise.", "bpNoBirds": "Jumlah ayam untuk batch ini belum tersedia.", "bpLoading": "Memuat jumlah ayam…", "bpShedsTitle": "Umur & bersih kandang", "bpAge": "Umur", "bpAudits": "Audit & acara", "bpNoEvents": "Tidak ada audit atau acara mendatang."});
+  Object.assign(TRANSLATIONS.en, {"backToToday": "Back to today"});
+  Object.assign(TRANSLATIONS.es, {"backToToday": "Volver a hoy"});
+  Object.assign(TRANSLATIONS.tl, {"backToToday": "Bumalik sa ngayon"});
+  Object.assign(TRANSLATIONS.id, {"backToToday": "Kembali ke hari ini"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -2751,10 +2772,12 @@
     const total = dayTasks.length;
     $('#dcMain').textContent = dayName(key);
     $('#dcToday').hidden = key === todayKey;
-    $('#dcToday').textContent = t('today');
-    $('#dcSub').textContent = toDateObj(key).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' })
-      + ' · ' + (total ? t('dcDone').replace('{d}', done).replace('{n}', total) : t('dnNoTasks'));
+    $('#dcTodayLbl').textContent = t('backToToday');
+    $('#dcEyebrow').textContent = toDateObj(key).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+    $('#dcSub').textContent = total ? t('dcDone').replace('{d}', done).replace('{n}', total) : t('dnNoTasks');
     const pct = total ? Math.round(done / total * 100) : 0;
+    $('#dcPbar').style.width = pct + '%';
+    $('#dcPbar').parentElement.style.display = total ? '' : 'none';
     $('#dcRing').style.background = `conic-gradient(#2B2116 0 ${pct}%, rgba(255,255,255,0.5) ${pct}% 100%)`;
     $('#dcRingText').textContent = `${done}/${total}`;
     $('#dcPrev').setAttribute('aria-label', t('dnPrev'));
