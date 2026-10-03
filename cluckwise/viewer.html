@@ -592,6 +592,8 @@
 
   /* ---------- Problem type grid ---------- */
   .type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .type-btn.type-other{ grid-column:1 / -1; }
+  #otherTypeInput{ margin-top:8px; }
   .type-btn{
     display:flex; align-items:center; gap:8px;
     padding:12px 12px; border-radius:12px;
@@ -601,6 +603,8 @@
     transition:border-color .12s ease, background .12s ease, transform .1s ease;
   }
   .type-btn span{ font-size:18px; flex-shrink:0; }
+  .type-btn{ min-width:0; }
+  .type-btn .pt-l{ flex-shrink:1; min-width:0; font-size:16px; line-height:1.2; overflow-wrap:anywhere; }
   .type-btn.selected{ border-color:var(--primary); background:var(--primary-soft); }
   .type-btn:active{ transform:scale(0.98); }
 </style>
@@ -769,17 +773,19 @@
 
     <span class="field-label" id="problemTypeLabel">What's the problem?</span>
     <div class="type-grid" id="typeGrid">
-      <button class="type-btn" type="button" data-type="Feed"><span>🌾</span><span class="pt-l">Feed</span></button>
-      <button class="type-btn" type="button" data-type="Water"><span>💧</span><span class="pt-l">Water</span></button>
-      <button class="type-btn" type="button" data-type="Fan"><span>🌬️</span><span class="pt-l">Fan</span></button>
-      <button class="type-btn" type="button" data-type="Cooling"><span>❄️</span><span class="pt-l">Cooling</span></button>
-      <button class="type-btn" type="button" data-type="Curtain"><span>🪟</span><span class="pt-l">Curtain</span></button>
-      <button class="type-btn" type="button" data-type="Lighting"><span>💡</span><span class="pt-l">Lighting</span></button>
-      <button class="type-btn" type="button" data-type="Equipment"><span>🔧</span><span class="pt-l">Equipment</span></button>
-      <button class="type-btn" type="button" data-type="Safety"><span>⚠️</span><span class="pt-l">Safety</span></button>
-      <button class="type-btn" type="button" data-type="Biosecurity"><span>🛡️</span><span class="pt-l">Biosecurity</span></button>
-      <button class="type-btn" type="button" data-type="Other"><span>❓</span><span class="pt-l">Other</span></button>
+      <button class="type-btn" type="button" data-type="Feed Spill" data-k="feedSpill"><span>🌾</span><span class="pt-l">Feed Spill</span></button>
+      <button class="type-btn" type="button" data-type="Feeder Line/Auger" data-k="feederLine"><span>⚙️</span><span class="pt-l">Feeder Line/Auger</span></button>
+      <button class="type-btn" type="button" data-type="Water Leak" data-k="waterLeak"><span>💧</span><span class="pt-l">Water Leak</span></button>
+      <button class="type-btn" type="button" data-type="Fan" data-k="fan"><span>🌬️</span><span class="pt-l">Fan</span></button>
+      <button class="type-btn" type="button" data-type="Pop Door" data-k="popDoor"><span>🚪</span><span class="pt-l">Pop Door</span></button>
+      <button class="type-btn" type="button" data-type="Silo" data-k="silo"><span>🛢️</span><span class="pt-l">Silo</span></button>
+      <button class="type-btn" type="button" data-type="Safety" data-k="safety"><span>⚠️</span><span class="pt-l">Safety</span></button>
+      <button class="type-btn" type="button" data-type="Lighting" data-k="lighting"><span>💡</span><span class="pt-l">Lighting</span></button>
+      <button class="type-btn" type="button" data-type="Electricity" data-k="electricity"><span>⚡</span><span class="pt-l">Electricity</span></button>
+      <button class="type-btn" type="button" data-type="Biosecurity" data-k="biosecurity"><span>🛡️</span><span class="pt-l">Biosecurity</span></button>
+      <button class="type-btn type-other" type="button" data-type="Other" data-k="other"><span>❓</span><span class="pt-l">Other</span></button>
     </div>
+    <input type="text" id="otherTypeInput" maxlength="40" placeholder="Type the problem" aria-label="Type the problem" hidden>
 
     <span class="field-label" id="shedLabel">Where is it?</span>
     <div class="loc-seg" role="radiogroup" aria-labelledby="shedLabel">
@@ -1022,6 +1028,14 @@
   Object.assign(TRANSLATIONS.es, {"ssOk": "✓ Guardado", "ssSaving": "Guardando…", "ssOffline": "Sin conexión", "ssError": "Reintentando", "ssLocal": "Sin conectar", "comingUp": "Próximamente", "optional": "(opcional)", "needPrefix": "Falta:", "needPhoto": "foto", "needType": "tipo de problema", "needPlace": "dónde está", "needName": "tu nombre", "submitHint": "Listo. Toca Enviar — se abre WhatsApp para mandarlo a tu encargado.", "doneCount": "{n} hechas", "allDone": "¡Todo listo por hoy!", "overdueIntro": "Tienes {n} tarea(s) de días pasados sin terminar. Márcalas abajo si ya están hechas, o avisa a tu encargado para que las mueva.", "footer": "CluckWise.vm Viewer — marca tareas, reporta", "loadErrTitle": "No se pudieron cargar tus datos", "loadErrText": "Revisa tu conexión a internet o que el nombre de la granja sea correcto.", "tryAgain": "Intentar de nuevo", "openSettings": "Abrir ajustes", "version": "versión", "readFail": "No se pudieron leer los datos.", "noDataYet": "Aún no hay datos para esa granja.", "refreshed": "Actualizado con los datos más recientes.", "refreshFail": "No se pudo actualizar — revisa tu conexión.", "connectToSave": "Conéctate en Ajustes para guardar cambios.", "highPriority": "Prioridad alta", "pt_Feed": "Alimento", "pt_Water": "Agua", "pt_Fan": "Ventilador", "pt_Cooling": "Enfriamiento", "pt_Curtain": "Cortina", "pt_Lighting": "Luces", "pt_Equipment": "Equipo", "pt_Safety": "Seguridad", "pt_Biosecurity": "Bioseguridad", "pt_Other": "Otro"});
   Object.assign(TRANSLATIONS.tl, {"ssOk": "✓ Na-save", "ssSaving": "Sine-save…", "ssOffline": "Offline", "ssError": "Sinusubukan ulit", "ssLocal": "Hindi konektado", "comingUp": "Paparating", "optional": "(opsyonal)", "needPrefix": "Kulang pa:", "needPhoto": "litrato", "needType": "uri ng problema", "needPlace": "kung saan", "needName": "iyong pangalan", "submitHint": "Handa na. I-tap ang Submit — magbubukas ang WhatsApp para maipadala mo sa manager.", "doneCount": "{n} tapos", "allDone": "Tapos na lahat ngayong araw!", "overdueIntro": "May {n} gawain ka mula sa mga nakaraang araw na hindi pa tapos. Markahan sa ibaba kung tapos na, o sabihan ang manager para mailipat.", "footer": "CluckWise.vm Viewer — markahan ang gawain, mag-report", "loadErrTitle": "Hindi ma-load ang data mo", "loadErrText": "Tingnan ang internet, o kung tama pa ang pangalan ng bukid.", "tryAgain": "Subukan ulit", "openSettings": "Buksan ang Settings", "version": "bersyon", "readFail": "Hindi mabasa ang data.", "noDataYet": "Wala pang data para sa bukid na iyan.", "refreshed": "Na-refresh na.", "refreshFail": "Hindi ma-refresh — tingnan ang koneksyon.", "connectToSave": "Kumonekta sa Settings para ma-save.", "highPriority": "Mahalaga", "pt_Feed": "Pakain", "pt_Water": "Tubig", "pt_Fan": "Bentilador", "pt_Cooling": "Pampalamig", "pt_Curtain": "Kurtina", "pt_Lighting": "Ilaw", "pt_Equipment": "Kagamitan", "pt_Safety": "Kaligtasan", "pt_Biosecurity": "Biosecurity", "pt_Other": "Iba pa"});
   Object.assign(TRANSLATIONS.id, {"ssOk": "✓ Tersimpan", "ssSaving": "Menyimpan…", "ssOffline": "Offline", "ssError": "Mencoba lagi", "ssLocal": "Belum terhubung", "comingUp": "Akan datang", "optional": "(opsional)", "needPrefix": "Masih perlu:", "needPhoto": "foto", "needType": "jenis masalah", "needPlace": "lokasinya", "needName": "nama Anda", "submitHint": "Siap. Ketuk Kirim — WhatsApp terbuka agar Anda bisa mengirimnya ke manajer.", "doneCount": "{n} selesai", "allDone": "Semua selesai hari ini!", "overdueIntro": "Ada {n} tugas dari hari sebelumnya yang belum selesai. Tandai di bawah jika sudah selesai, atau beri tahu manajer agar dipindahkan.", "footer": "CluckWise.vm Viewer — tandai tugas, lapor", "loadErrTitle": "Data tidak dapat dimuat", "loadErrText": "Periksa koneksi internet, atau pastikan nama peternakan masih benar.", "tryAgain": "Coba lagi", "openSettings": "Buka Pengaturan", "version": "versi", "readFail": "Data tidak dapat dibaca.", "noDataYet": "Belum ada data untuk peternakan itu.", "refreshed": "Diperbarui dengan data terbaru.", "refreshFail": "Tidak dapat memperbarui — periksa koneksi.", "connectToSave": "Hubungkan di Pengaturan untuk menyimpan.", "highPriority": "Prioritas tinggi", "pt_Feed": "Pakan", "pt_Water": "Air", "pt_Fan": "Kipas", "pt_Cooling": "Pendingin", "pt_Curtain": "Tirai", "pt_Lighting": "Lampu", "pt_Equipment": "Peralatan", "pt_Safety": "Keselamatan", "pt_Biosecurity": "Biosekuriti", "pt_Other": "Lainnya"});
+  Object.assign(TRANSLATIONS.en, {"pt_feedSpill": "Feed spill", "pt_feederLine": "Feeder line / auger", "pt_waterLeak": "Water leak", "pt_fan": "Fan", "pt_popDoor": "Pop door", "pt_silo": "Silo", "pt_safety": "Safety", "pt_lighting": "Lighting", "pt_electricity": "Electricity", "pt_biosecurity": "Biosecurity", "pt_other": "Others", "otherPh": "Type the problem, e.g. Broken gate", "needOther": "what the problem is"});
+  Object.assign(TRANSLATIONS.es, {"pt_feedSpill": "Alimento derramado", "pt_feederLine": "Línea de comederos / sinfín", "pt_waterLeak": "Fuga de agua", "pt_fan": "Ventilador", "pt_popDoor": "Trampilla", "pt_silo": "Silo", "pt_safety": "Seguridad", "pt_lighting": "Luces", "pt_electricity": "Electricidad", "pt_biosecurity": "Bioseguridad", "pt_other": "Otros", "otherPh": "Escribe el problema, ej. Portón roto", "needOther": "cuál es el problema"});
+  Object.assign(TRANSLATIONS.tl, {"pt_feedSpill": "Natapong pakain", "pt_feederLine": "Feeder line / auger", "pt_waterLeak": "Tagas ng tubig", "pt_fan": "Bentilador", "pt_popDoor": "Pop door", "pt_silo": "Silo", "pt_safety": "Kaligtasan", "pt_lighting": "Ilaw", "pt_electricity": "Kuryente", "pt_biosecurity": "Biosecurity", "pt_other": "Iba pa", "otherPh": "I-type ang problema, hal. Sirang gate", "needOther": "kung ano ang problema"});
+  Object.assign(TRANSLATIONS.id, {"pt_feedSpill": "Pakan tumpah", "pt_feederLine": "Jalur pakan / auger", "pt_waterLeak": "Air bocor", "pt_fan": "Kipas", "pt_popDoor": "Pop door", "pt_silo": "Silo", "pt_safety": "Keselamatan", "pt_lighting": "Lampu", "pt_electricity": "Listrik", "pt_biosecurity": "Biosekuriti", "pt_other": "Lainnya", "otherPh": "Ketik masalahnya, mis. Gerbang rusak", "needOther": "apa masalahnya"});
+  Object.assign(TRANSLATIONS.en, {"notesPh": "e.g. Back left corner, near feeder line 2"});
+  Object.assign(TRANSLATIONS.es, {"notesPh": "ej. Esquina trasera izquierda, cerca de la línea 2"});
+  Object.assign(TRANSLATIONS.tl, {"notesPh": "hal. Likod na kaliwang sulok, malapit sa feeder line 2"});
+  Object.assign(TRANSLATIONS.id, {"notesPh": "mis. Pojok kiri belakang, dekat jalur pakan 2"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -1591,7 +1605,9 @@
     $('#dismissOverdueTransfer').textContent = t('gotIt');
     $('#reportProblemTitle').textContent = t('reportProblem');
     $('#reportFabLabel').textContent = t('report');
-    document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.type); });
+    document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.k); });
+    $('#notesInput').placeholder = t('notesPh');
+    $('#otherTypeInput').placeholder = t('otherPh'); $('#otherTypeInput').setAttribute('aria-label', t('otherPh'));
     $('#notesOptional').textContent = t('optional');
     $('#nameInput').placeholder = t('yourName');
     $('#footerText').textContent = t('footer');
@@ -2268,7 +2284,7 @@
   }
   function updateSubmitState(){
     const hasPhoto = !!pendingPhotoFile;
-    const hasType = !!selectedType;
+    const hasType = !!selectedType && (selectedType !== 'Other' || ($('#otherTypeInput').value || '').trim().length > 0);
     const hasShed = reportLocMode === 'shed' ? ($('#shedInput').value || '').trim().length > 0 : ($('#placeInput').value || '').trim().length > 0;
     const hasName = ($('#nameInput').value || '').trim().length > 0;
     const btn = $('#submitReportBtn');
@@ -2277,7 +2293,7 @@
     // Say exactly what's still missing instead of a greyed-out button
     const hint = $('#submitHint');
     if(hint){
-      const miss = [[hasPhoto,'needPhoto'],[hasType,'needType'],[hasShed,'needPlace'],[hasName,'needName']].filter(x=> !x[0]).map(x=> t(x[1]));
+      const miss = [[hasPhoto,'needPhoto'],[hasType, selectedType === 'Other' ? 'needOther' : 'needType'],[hasShed,'needPlace'],[hasName,'needName']].filter(x=> !x[0]).map(x=> t(x[1]));
       hint.textContent = ready ? t('submitHint') : `${t('needPrefix')} ${miss.join(', ')}`;
       hint.classList.toggle('need', !ready);
     }
@@ -2292,6 +2308,7 @@
     $('#photoCapture').classList.remove('has-photo');
     $('#photoInput').value = '';
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    $('#otherTypeInput').value = ''; $('#otherTypeInput').hidden = true;
     $('#shedInput').value = '';
     $('#placeInput').value = '';
     renderPlaceChips();
@@ -2344,7 +2361,8 @@
     const location = reportLocMode === 'farm' ? ($('#placeInput').value || '').trim().replace(/\s+/g, ' ') : '';
     const notes = ($('#notesInput').value || '').trim();
     const createdBy = ($('#nameInput').value || '').trim();
-    const problemType = selectedType;
+    const otherText = ($('#otherTypeInput').value || '').trim().replace(/\s+/g, ' ');
+    const problemType = selectedType === 'Other' ? (otherText ? `Other — ${otherText}` : '') : selectedType;
     const photoFile = pendingPhotoFile;
 
     if(!(shed || location) || !createdBy || !problemType || !photoFile){
@@ -2830,6 +2848,8 @@
       selectedType = btn.dataset.type;
       btn.classList.add('selected');
     }
+    const oi = $('#otherTypeInput'); oi.hidden = selectedType !== 'Other';
+    if(!oi.hidden) oi.focus();
     updateSubmitState();
   });
   $('#shedInput').addEventListener('input', updateSubmitState);
@@ -2841,6 +2861,7 @@
   });
   $('#placeInput').addEventListener('input', ()=>{ renderPlaceChips(); updateSubmitState(); });
   $('#notesInput').addEventListener('input', updateSubmitState);
+  $('#otherTypeInput').addEventListener('input', updateSubmitState);
   $('#nameInput').addEventListener('input', updateSubmitState);
   $('#submitReportBtn').addEventListener('click', submitReportProblem);
 
