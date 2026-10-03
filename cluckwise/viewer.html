@@ -276,14 +276,27 @@
   .dc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; border:none; background:rgba(255,255,255,0.5); color:#241A08; font-size:13px; font-weight:700; white-space:nowrap; font-family:inherit; }
   .dc-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.7); }
   .dc-wx{ display:none !important; }
-  .wx-now-btn{ width:50px; height:50px; flex-shrink:0; border-radius:50%; border:none; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; background:radial-gradient(circle at 50% 35%, #FFE9A8, #E9B949); color:#2B2116; box-shadow:0 2px 8px rgba(43,33,22,0.18); -webkit-tap-highlight-color:transparent; }
-  .wx-now-btn.wet{ background:radial-gradient(circle at 50% 35%, #E4F0FF, #9CC3EE); color:#1E4E86; }
-  body.theme-dark .wx-now-btn{ background:radial-gradient(circle at 50% 35%, #6B5A2E, #4A3D1E); color:#FFE9A8; }
-  body.theme-dark .wx-now-btn.wet{ background:radial-gradient(circle at 50% 35%, #2C4C78, #1E3556); color:#CFE3FF; }
+  /* Round "now" weather badge floating over the Today card's corner (same look as the Board in the main app) */
+  .day-card{ position:relative; }
+  .day-card.has-now .dc-top{ padding-right:46px; }
+  .day-card.has-now .dc-sub{ white-space:normal; }
+  .wx-now-btn{ position:absolute; top:-16px; right:-10px; z-index:3; width:64px; height:64px; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1; border:3px solid var(--bg); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#2B2116; background:linear-gradient(135deg,#FFF4C7,#FFD35C); -webkit-tap-highlight-color:transparent; }
   .wx-now-btn:active{ transform:scale(0.94); }
-  .wnb-ic{ font-size:15px; }
-  .wnb-t{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; margin-top:1px; }
-  .wnb-l{ font-size:8.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; opacity:.75; margin-top:1px; }
+  .wx-now-btn.wx-tone-partly{ background:linear-gradient(135deg,#FFF3CF,#DCE5F0); }
+  .wx-now-btn.wx-tone-cloud{ background:linear-gradient(135deg,#F0F2F5,#CBD3DD); }
+  .wx-now-btn.wx-tone-rain{ background:linear-gradient(135deg,#DDEBFF,#A9C8F0); }
+  .wx-now-btn.wx-tone-snow{ background:linear-gradient(135deg,#F4F9FF,#D4E5F7); }
+  .wx-now-btn.wx-tone-storm{ background:linear-gradient(135deg,#EDE3FB,#C7B0EE); }
+  body.theme-dark .wx-now-btn{ color:var(--ink); }
+  body.theme-dark .wx-now-btn.wx-tone-sun{ background:linear-gradient(135deg,#5A4A1A,#7A5F16); }
+  body.theme-dark .wx-now-btn.wx-tone-partly{ background:linear-gradient(135deg,#4A4630,#3A4660); }
+  body.theme-dark .wx-now-btn.wx-tone-cloud{ background:#3C4659; }
+  body.theme-dark .wx-now-btn.wx-tone-rain{ background:linear-gradient(135deg,#23406B,#2D5690); }
+  body.theme-dark .wx-now-btn.wx-tone-snow{ background:#3A4D66; }
+  body.theme-dark .wx-now-btn.wx-tone-storm{ background:linear-gradient(135deg,#3E2D66,#533C8A); }
+  .wnb-ic{ font-size:22px; }
+  .wnb-t{ font-family:'Sora',sans-serif; font-weight:800; font-size:17px; margin-top:1px; }
+  .wnb-l{ font-size:8.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; opacity:.65; margin-top:1px; }
   .dc-wx:active{ transform:scale(0.97); }
   .dc-wx.wet{ background:rgba(228,240,255,0.92); color:#1E4E86; }
   .dc-chev{ opacity:0.55; font-size:15px; margin-left:1px; }
@@ -736,7 +749,6 @@
   </div>
   <div class="header-actions">
     <button class="sync-status local" id="syncIndicator" type="button" aria-label="Sync status"><span class="sync-dot"></span><span class="sync-count" id="syncCount"></span><span class="sync-label" id="syncLabel"></span><span class="sync-short" id="syncShort"></span></button>
-    <button class="wx-now-btn" id="wxNowBtn" type="button" hidden><span class="wnb-ic"></span><span class="wnb-t"></span><span class="wnb-l"></span></button>
     <button class="icon-btn" id="overdueBtn" title="Overdue tasks" aria-label="Overdue tasks">🔔<span class="notif-badge hidden" id="overdueBadge">0</span></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings" hidden>⚙</button>
   </div>
@@ -746,6 +758,7 @@
 
 <main class="dashboard" id="dashboardWrap">
   <div class="day-card" id="dayCard">
+    <button class="wx-now-btn" id="wxNowBtn" type="button" hidden><span class="wnb-ic"></span><span class="wnb-t"></span><span class="wnb-l"></span></button>
     <div class="dc-top">
       <button class="dc-arrow" id="dcPrev" type="button" aria-label="Previous day">‹</button>
       <div class="dc-center">
@@ -1350,13 +1363,22 @@
     return Object.assign({}, d, { current: isToday ? weatherData.current : null });
   }
   function wxT(v){ return (v == null || isNaN(v)) ? '–' : Math.round(v) + '°'; }
+  function wxTone(code){
+    const k = wxKindForCode(code);
+    if(k === 'clear' || k === 'mostlyClear') return 'sun';
+    if(k === 'partlyCloudy') return 'partly';
+    if(k === 'overcast' || k === 'fog') return 'cloud';
+    if(k === 'snow') return 'snow';
+    if(k === 'thunderstorm') return 'storm';
+    return 'rain';
+  }
   function renderHeroWeather(){
     const chips = $('#dcChips');
     if(!chips) return;
     chips.querySelectorAll('.dc-wx, .dc-warn').forEach(el=> el.remove());
     const key = agendaDayKey();
     const w = wxForDate(key);
-    if(!w){ const nb0 = $('#wxNowBtn'); if(nb0) nb0.hidden = true; chips.style.display = chips.children.length ? 'flex' : 'none'; return; }
+    if(!w){ const nb0 = $('#wxNowBtn'); if(nb0) nb0.hidden = true; $('#dayCard').classList.remove('has-now'); chips.style.display = chips.children.length ? 'flex' : 'none'; return; }
     const F = syncedDisplay.weatherUnit === 'fahrenheit';
     const [icon, label] = w.current ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
     const kind = wxKindForCode(w.code);
@@ -1383,7 +1405,8 @@
     if(nb){
       const isNow = !!w.current && key === dateKey(new Date());
       nb.hidden = false;
-      nb.className = 'wx-now-btn' + (wet ? ' wet' : '');
+      nb.className = 'wx-now-btn wx-tone-' + wxTone(w.current ? w.current.code : w.code);
+      $('#dayCard').classList.add('has-now');
       nb.querySelector('.wnb-ic').textContent = icon;
       nb.querySelector('.wnb-t').textContent = isNow ? wxT(w.current.temp) : wxT(w.max);
       nb.querySelector('.wnb-l').textContent = isNow ? t('wxNow') : t('wxHigh');
@@ -3323,5 +3346,27 @@
   }
 </script>
 
+
+<script>
+// iOS home-screen apps can lay the page out shorter than the screen, leaving a gap
+// under a bottom-fixed bar. Measure the gap and push the bar down into it.
+(function(){
+  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if(!standalone) return;
+  function fit(){
+    const bar = document.querySelector('#vTabbar');
+    if(!bar) return;
+    const portrait = window.innerHeight >= window.innerWidth;
+    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const gap = Math.round(screenH - window.innerHeight);
+    bar.style.bottom = (gap > 0 && gap < 160) ? (-gap) + 'px' : '';
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
+  window.addEventListener('pageshow', fit);
+  document.addEventListener('DOMContentLoaded', fit);
+  fit();
+})();
+</script>
 </body>
 </html>

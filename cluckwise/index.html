@@ -9615,5 +9615,27 @@
   }
 </script>
 
+
+<script>
+// iOS home-screen apps can lay the page out shorter than the screen, leaving a gap
+// under a bottom-fixed bar. Measure the gap and push the bar down into it.
+(function(){
+  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if(!standalone) return;
+  function fit(){
+    const bar = document.querySelector('#bottomNav');
+    if(!bar) return;
+    const portrait = window.innerHeight >= window.innerWidth;
+    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const gap = Math.round(screenH - window.innerHeight);
+    bar.style.bottom = (gap > 0 && gap < 160) ? (-gap) + 'px' : '';
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
+  window.addEventListener('pageshow', fit);
+  document.addEventListener('DOMContentLoaded', fit);
+  fit();
+})();
+</script>
 </body>
 </html>
