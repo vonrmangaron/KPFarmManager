@@ -356,8 +356,8 @@ function mobileNavHtml() {
   const summary = typeof farmLoadsSummary === 'function' ? farmLoadsSummary() : { needsActual: 0 };
   const moreDot = summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : '';
   return `<div class="mob-nav-inner">
-    ${tab('dashboard', 'Home', 'grid', activeTab === 'dashboard')}
-    ${tab(inGroup ? activeTab : 'g1', 'Sheds', 'home', inGroup)}
+    <button class="mob-nav-btn" data-batch-info type="button"><span class="mob-nav-pill">${navIcon('home')}</span>Batch</button>
+    ${tab(inGroup ? activeTab : 'g1', 'Sheds', 'grid', inGroup)}
     <button class="mob-nav-btn mob-nav-silo" id="siloBtnMob" type="button" aria-label="Record silo reading">
       <span class="mob-nav-fab">${navIcon('silo')}</span>Silo reading
     </button>
@@ -392,7 +392,7 @@ function renderMoreSheet() {
     <div class="more-panel" role="dialog" aria-modal="true" aria-label="More">
       <div class="more-grip" aria-hidden="true"></div>
       <div class="more-group">
-        ${farmData ? row('moreBatch', 'home', 'Current batch', 'Birds, mortality, shed ages, audits') : ''}
+        ${row('moreHome', 'grid', 'Dashboard', 'Farm overview and projections')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}

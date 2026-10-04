@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v114';
+const CACHE_NAME = 'prodwise-v115';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -51,7 +51,9 @@ self.addEventListener('fetch', (event) => {
 
   if (isHtml || isCode) {
     event.respondWith(
-      fetch(req)
+      // no-cache: always check with the server, so a new version shows on the next open
+      // instead of waiting out the browser's 10-minute cache
+      (req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(req, { cache: 'no-cache' }))
         .then(res => {
           if (res && res.ok) {
             const clone = res.clone();

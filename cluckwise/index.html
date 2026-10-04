@@ -2252,6 +2252,21 @@
   #batchInfoModal{ width:560px; }
   #sbActiveBatch{ margin-bottom:12px; }
   .cur-batch .batch-swatch{ display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:2px; }
+
+  /* ---------- Bell: issue notifications; Menu: Reports card ---------- */
+  .notif-issues{ display:flex; flex-direction:column; gap:8px; }
+  .notif-issues:empty{ display:none; }
+  .notif-issue{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:inherit; text-align:left; cursor:pointer; }
+  .notif-issue.urgent{ border-color:var(--danger); background:var(--danger-soft); }
+  .notif-issue .ni-ic{ font-size:20px; }
+  .notif-issue .ni-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .notif-issue b{ font-family:'Sora',sans-serif; font-size:15px; }
+  .notif-issue.urgent b{ color:var(--danger); }
+  .notif-issue small{ font-size:12.5px; color:var(--muted); }
+  .notif-issue .ni-go{ font-size:22px; color:var(--muted); }
+  .menu-reports .mm-ic{ background:linear-gradient(135deg, #E8913A, #C2621C) !important; color:#fff !important; }
+  .mr-count{ display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:4px; border-radius:999px; background:var(--danger); color:#fff; font-size:11.5px; font-weight:800; vertical-align:middle; }
+  .mr-count:empty{ display:none; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2401,7 +2416,7 @@
   <button id="navAgendaBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg></span>Agenda</button>
   <button id="navMonthBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>Calendar</button>
   <button id="navBoardBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg></span>Board</button>
-  <button id="navReportsBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg><span class="bn-badge hidden" id="navReportsBadge">0</span></span>Reports</button>
+  <button id="navBatchBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l9-6 9 6v11"/><path d="M9 21v-6h6v6"/></svg></span>Batch</button>
   <button id="navMoreBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Menu</button>
 </nav>
 
@@ -2463,8 +2478,9 @@
   <div class="sheet-panel menu-panel">
     <div class="sheet-handle"></div>
     <div class="menu-head"><span class="sheet-title">Menu</span><span class="menu-sync" id="menuSyncLine"></span></div>
+    <button class="menu-manage menu-reports" id="moreReportsBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></span><span class="mm-text"><b>Reports <span class="mr-count" id="moreReportsCount"></span></b><small id="moreReportsSub">Problems sent in by workers</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <button class="menu-manage" id="moreManageBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><span class="mm-text"><b>Manage farm</b><small>Batches, audits, frequent tasks, backlog</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
-    <button class="menu-manage menu-batch" id="moreBatchBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l9-6 9 6v11"/><path d="M9 21v-6h6v6"/></svg></span><span class="mm-text"><b id="moreBatchTitle">Current batch</b><small id="moreBatchSub">Day, birds, sheds, audits</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+
     <div class="menu-grid">
       <button class="menu-tile" id="moreSearchBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
       <button class="menu-tile" id="moreYearBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><span>Year view</span></button>
@@ -2477,7 +2493,7 @@
       <button class="menu-row" id="moreThemeToggleBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span id="moreThemeToggleLabel">Switch to dark mode</span></button>
       <button class="menu-row" id="moreSettingsBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     </div>
-    <button hidden id="moreKanbanBtn"></button><button hidden id="moreReportsBtn"><span id="moreReportsCount"></span></button>
+    <button hidden id="moreKanbanBtn"></button>
   </div>
 </div>
 
@@ -2685,9 +2701,10 @@
 </div>
 
 <div class="form-modal" id="overdueModal">
-  <div class="form-modal-head"><h2>⚠️ Overdue tasks</h2><button id="closeOverdueModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-head"><h2>🔔 Notifications</h2><button id="closeOverdueModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;">You have <strong id="overdueCount">0</strong> task(s) from past days still marked open.</p>
+    <div class="notif-issues" id="notifIssues"></div>
+    <p id="overdueIntroLine" style="font-size:12.5px;color:var(--muted);margin:0 0 4px;">You have <strong id="overdueCount">0</strong> task(s) from past days still marked open.</p>
     <button class="btn-app" id="moveOverdueToTodayBtn" style="background:linear-gradient(135deg, var(--secondary), #5E2E22); margin:6px 0 4px;">Move all to today</button>
     <div id="overdueList" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
     <button class="btn-app" id="closeOverdueBtn" style="margin-top:12px;">Got it</button>
@@ -4452,7 +4469,10 @@
     const nb = $('#navReportsBadge');
     if(nb){ nb.textContent = count > 99 ? '99+' : count; nb.classList.toggle('hidden', count === 0); }
     const moreCount = $('#moreReportsCount');
-    if(moreCount){ moreCount.textContent = count > 0 ? `(${count})` : ''; }
+    if(moreCount){ moreCount.textContent = count > 0 ? String(count) : ''; }
+    const urgentN = reports.filter(r=> r.urgent && r.status !== 'Resolved').length;
+    const ms = $('#moreReportsSub'); if(ms) ms.textContent = count ? `${count} open${urgentN ? ` · ${urgentN} urgent` : ''}` : 'Problems sent in by workers';
+    if(typeof updateOverdueBadge === 'function') updateOverdueBadge();
   }
   function renderReportsSummary(){
     const el = $('#rpSummary'); if(!el) return;
@@ -5009,10 +5029,12 @@
     const overdue = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey);
     const list = $('#overdueList');
     list.innerHTML = '';
+    renderIssueNotifications();
     $('#overdueCount').textContent = overdue.length;
+    $('#overdueIntroLine').style.display = overdue.length ? '' : 'none';
     const moveBtn = $('#moveOverdueToTodayBtn');
     if(moveBtn) moveBtn.style.display = overdue.length===0 ? 'none' : 'block';
-    if(overdue.length===0){ list.innerHTML = '<div class="empty-note">No more overdue tasks — nice work.</div>'; return; }
+    if(overdue.length===0){ list.innerHTML = '<div class="empty-note">No past-due tasks — nice work.</div>'; return; }
     overdue.sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
       const wrap = document.createElement('div');
       const label = document.createElement('div');
@@ -5034,9 +5056,31 @@
     offerUndo(`Moved ${overdue.length} overdue task(s) to today`, undoSnap);
     return overdue.length;
   }
+  function issueCounts(){
+    const active = reports.filter(r=> r.status !== 'Resolved');
+    const urgent = active.filter(r=> r.urgent).length;
+    return { urgent, open: active.length - urgent };
+  }
+  function renderIssueNotifications(){
+    const box = $('#notifIssues'); if(!box) return;
+    const iss = issueCounts();
+    box.innerHTML = '';
+    const add = (cls, icon, title, sub)=>{
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'notif-issue ' + cls;
+      b.innerHTML = '<span class="ni-ic"></span><span class="ni-text"><b></b><small></small></span><span class="ni-go">›</span>';
+      b.querySelector('.ni-ic').textContent = icon; b.querySelector('b').textContent = title; b.querySelector('small').textContent = sub;
+      b.addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
+      box.appendChild(b);
+    };
+    if(iss.urgent) add('urgent', '🔴', `${iss.urgent} urgent issue${iss.urgent === 1 ? '' : 's'}`, 'Needs attention now — tap to open Reports');
+    if(iss.open) add('open', '🚩', `${iss.open} open issue${iss.open === 1 ? '' : 's'}`, 'Reported by workers — tap to open Reports');
+  }
   function updateOverdueBadge(){
     const todayKey = dateKey(new Date());
-    const count = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).length;
+    const overdueN = tasks.filter(t=> t.status!=='done' && t.date && t.date < todayKey).length;
+    const iss = issueCounts();
+    // one notification per past-due task, plus one for open issues and a separate one for urgent issues
+    const count = overdueN + (iss.open ? 1 : 0) + (iss.urgent ? 1 : 0);
     const badge = $('#overdueBadge');
     if(badge){ badge.textContent = count > 99 ? '99+' : count; badge.classList.toggle('hidden', count===0); }
     const fabBadge = $('#fabNotifBadge');
@@ -9207,11 +9251,9 @@
     }
     syncViewButtons(); renderAll();
   });
-  $('#navReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
+  $('#navBatchBtn').addEventListener('click', ()=>{ const cb = currentOrNextBatch(); if(cb) openBatchInfo(cb.number); else { closeOverlays(); showToast('No batch yet — add one in Manage farm.'); } });
   $('#navMoreBtn').addEventListener('click', ()=>{
     closeOverlays();
-    { const cb = currentOrNextBatch(); const mb = $('#moreBatchBtn'); mb.hidden = !cb;
-      if(cb){ const td = dateKey(new Date()); $('#moreBatchTitle').textContent = `Batch #${cb.number}` + (td >= cb.start ? ` · Day ${batchAgeOn(cb, td)}` : ''); $('#moreBatchSub').textContent = 'Birds, mortality, shed ages, audits'; } }
     const sl = $('#menuSyncLine'), si = $('#saveIndicator');
     if(sl && si){ sl.textContent = (si.querySelector('.sync-label') || si).textContent.trim(); sl.className = 'menu-sync ' + si.className.replace('sync-status', '').trim(); }
     $('#moreSheet').classList.remove('hidden');
@@ -9432,7 +9474,6 @@
     biLoadBirds(b.number).then(v=>{ info.birds = v; if($('#batchInfoModal').classList.contains('open')) $('#biBody').innerHTML = batchInfoHtml(info); });
   }
   $('#closeBatchInfo').addEventListener('click', closeOverlays);
-  $('#moreBatchBtn').addEventListener('click', ()=>{ const cb = currentOrNextBatch(); closeOverlays(); if(cb) openBatchInfo(cb.number); });
   $('#quickAddFabBtn').addEventListener('click', ()=> openAddTasks(viewingDayKey()));
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=> openBatchModal());
