@@ -2355,6 +2355,16 @@
   .g-head-actions{ display:flex; align-items:center; gap:8px; }
   .g-edit-btn{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:999px; padding:7px 13px; font-family:'Sora',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
   .g-edit-btn.on{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .year-month-title[role="button"]{ cursor:pointer; }
+  .year-month-title[role="button"]:hover{ color:var(--primary-dark); }
+  @media (max-width: 760px){
+    .year-grid{ grid-template-columns:repeat(2, minmax(0,1fr)) !important; gap:10px !important; }
+    .year-month-card{ padding:10px 8px !important; border-radius:12px; }
+    .year-month-title{ font-size:13px !important; margin-bottom:6px !important; }
+    .year-mini-grid{ gap:1px !important; }
+    .year-mini-grid > div{ font-size:11px !important; min-height:20px; display:flex; align-items:center; justify-content:center; padding:0 !important; }
+    .year-mini-grid .ymd-wx{ display:none; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -6690,6 +6700,9 @@
       const title = document.createElement('div');
       title.className = 'year-month-title';
       title.textContent = monthDate.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+      // tap the month name to open that month
+      title.setAttribute('role', 'button'); title.tabIndex = 0; title.title = 'Open ' + title.textContent;
+      title.addEventListener('click', ()=>{ currentDate = new Date(monthDate); viewMode = 'month'; syncViewButtons(); renderAll(); });
       card.appendChild(title);
       const mgrid = document.createElement('div');
       mgrid.className = 'year-mini-grid';
@@ -9358,7 +9371,8 @@
   $('#navAgendaBtn').addEventListener('click', ()=>{ viewMode='list'; syncViewButtons(); renderAll(); });
   $('#navMonthBtn').addEventListener('click', ()=>{
     if(viewMode!=='month' && viewMode!=='year' && viewMode!=='day'){
-      viewMode = window.innerWidth < 760 ? 'day' : (settings.calendarDensity === 'day' ? 'day' : 'month');
+      // Phones open the Calendar on the Year view (tap a month to go into it)
+      viewMode = window.innerWidth < 760 ? 'year' : (settings.calendarDensity === 'day' ? 'day' : 'month');
     }
     syncViewButtons(); renderAll();
   });
