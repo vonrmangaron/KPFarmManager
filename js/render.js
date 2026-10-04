@@ -2137,6 +2137,6 @@ function groupDockHtml(g,ctx){
     <div class="gdock-items">${[1,2,3,4].map(item).join('')}
       <button type="button" class="gdock-item gdock-adj" data-toggle-adjustments="1" data-label="Adjustments">${navIcon('gear')}</button>
     </div>
-    <button type="button" class="gdock-toggle" id="gdockToggle" aria-expanded="${groupDockOpen}" aria-label="Change shed pair"><span class="gdock-cur">${pairShort(g)}</span><small>${ctx==='pred'?'Predict':'Sheds'}</small></button>
+    <button type="button" class="gdock-toggle" id="gdockToggle" aria-expanded="${groupDockOpen}" aria-label="Change shed pair"><svg class="gdock-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg><span class="gdock-cur">${pairShort(g)}</span><small>${ctx==='pred'?'Predict':'Sheds'}</small></button>
   </div>`;
 }
