@@ -1104,7 +1104,7 @@
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #mlogBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #mlogBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn, .toolbar #guideBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     /* Dark tab bar: line icons + labels, a bar under the active tab */
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:#2B2116; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(0,0,0,0.18); }
@@ -1597,8 +1597,12 @@
      Rows = tracked tasks, columns = days. Completions come from done
      calendar tasks with the same name.
      ============================================================ */
-  #mlogBtn{ border:1px solid var(--success); background:var(--success-soft); color:var(--success); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
-  #mlogBtn:hover{ background:var(--success); color:#fff; }
+  #mlogBtn, columns = days. Completions come from done
+     calendar tasks with the same name.
+     ============================================================ */
+  #guideBtn{ border:1px solid var(--success); background:var(--success-soft); color:var(--success); font-weight:700;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; font-family:'Sora',sans-serif; }
+  #mlogBtn:hover,
+  #guideBtn:hover{ background:var(--success); color:#fff; }
   :root{ --mlog-ok:var(--success); --mlog-ok-soft:var(--success-soft); --mlog-soon:#E0A020; --mlog-soon-ink:#8A5F00; --mlog-soon-soft:#FFF1CF; --mlog-over:var(--danger); --mlog-over-soft:var(--danger-soft); --mlog-none:#A89A89; --mlog-none-soft:var(--surface-soft); }
   body.theme-dark{ --mlog-soon:#F0B040; --mlog-soon-ink:#FFC876; --mlog-soon-soft:#3D3320; --mlog-none:#7C88A2; }
   .mlog-page{ position:fixed; inset:0; z-index:45; background:var(--bg); display:none; flex-direction:column; color:var(--ink); }
@@ -2019,9 +2023,9 @@
     .topbar .toolbar #searchBtn.tb-search:hover{ border-color:var(--muted); color:var(--ink); }
     .tb-kbd{ display:inline-flex; margin-left:auto; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 5px; border-radius:5px; border:1px solid var(--line); background:var(--surface); font:700 11px 'Inter',sans-serif; color:var(--muted); }
     .tb-group{ display:inline-flex; align-items:center; gap:2px; padding:3px; border:1px solid var(--line); border-radius:11px; background:var(--surface-soft); }
-    .topbar .toolbar .tb-group #historyBtn, .topbar .toolbar .tb-group #mlogBtn, .topbar .toolbar .tb-group #reportsBtn{ display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 12px; border-radius:8px; border:none; background:transparent; color:var(--ink); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; box-shadow:none; }
-    .topbar .toolbar .tb-group #historyBtn .tb-ic, .topbar .toolbar .tb-group #mlogBtn .tb-ic, .topbar .toolbar .tb-group #reportsBtn .tb-ic{ color:var(--muted); }
-    .topbar .toolbar .tb-group #historyBtn:hover, .topbar .toolbar .tb-group #mlogBtn:hover, .topbar .toolbar .tb-group #reportsBtn:hover{ background:var(--surface); box-shadow:var(--shadow-sm); }
+    .topbar .toolbar .tb-group #historyBtn, .topbar .toolbar .tb-group #mlogBtn, .topbar .toolbar .tb-group #reportsBtn, .topbar .toolbar .tb-group #guideBtn{ display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 12px; border-radius:8px; border:none; background:transparent; color:var(--ink); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; box-shadow:none; }
+    .topbar .toolbar .tb-group #historyBtn .tb-ic, .topbar .toolbar .tb-group #mlogBtn .tb-ic, .topbar .toolbar .tb-group #reportsBtn .tb-ic, .topbar .toolbar .tb-group #guideBtn .tb-ic{ color:var(--muted); }
+    .topbar .toolbar .tb-group #historyBtn:hover, .topbar .toolbar .tb-group #mlogBtn:hover, .topbar .toolbar .tb-group #reportsBtn:hover, .topbar .toolbar .tb-group #guideBtn:hover{ background:var(--surface); box-shadow:var(--shadow-sm); }
     .topbar .toolbar #reportsBtn .notif-badge{ position:static; margin-left:2px; border:none; min-width:18px; height:18px; font-size:10.5px; }
     .topbar .toolbar .tb-group #reportsBtn.has-new .tb-ic{ color:var(--danger); }
     .tb-divider{ display:block; width:1px; height:22px; background:var(--line); margin:0 4px; }
@@ -2035,8 +2039,8 @@
   @container tbar (max-width: 1080px){
     .toolbar #searchBtn.tb-search{ min-width:0 !important; padding:0 9px !important; }
     .toolbar #searchBtn .tb-label, .toolbar .tb-kbd{ display:none; }
-    .toolbar .tb-group #historyBtn .tb-label, .toolbar .tb-group #mlogBtn .tb-label{ display:none; }
-    .toolbar .tb-group #historyBtn, .toolbar .tb-group #mlogBtn{ padding:0 9px !important; }
+    .toolbar .tb-group #historyBtn .tb-label, .toolbar .tb-group #mlogBtn .tb-label, .toolbar .tb-group #guideBtn .tb-label{ display:none; }
+    .toolbar .tb-group #historyBtn, .toolbar .tb-group #mlogBtn, .toolbar .tb-group #guideBtn{ padding:0 9px !important; }
   }
   @container tbar (max-width: 980px){
     .brand{ font-size:0; gap:0; }
@@ -2267,6 +2271,45 @@
   .menu-reports .mm-ic{ background:linear-gradient(135deg, #E8913A, #C2621C) !important; color:#fff !important; }
   .mr-count{ display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px; margin-left:4px; border-radius:999px; background:var(--danger); color:#fff; font-size:11.5px; font-weight:800; vertical-align:middle; }
   .mr-count:empty{ display:none; }
+  /* ---------- Farm guide ---------- */
+  .g-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-radius:16px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08; }
+  .g-eyebrow{ font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; opacity:.75; }
+  .g-age{ font-family:'Sora',sans-serif; font-weight:800; font-size:30px; line-height:1.1; }
+  .g-step{ display:flex; gap:6px; }
+  .g-step button{ width:44px; height:44px; border-radius:12px; border:none; background:rgba(255,255,255,0.55); color:#241A08; font-size:24px; font-weight:800; cursor:pointer; }
+  .g-step button:active{ transform:scale(0.94); }
+  .g-hint{ margin:10px 2px 0; font-size:13px; color:var(--muted); }
+  .g-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .g-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; box-shadow:var(--shadow-sm); }
+  .g-card-h{ font-family:'Sora',sans-serif; font-weight:800; font-size:14.5px; color:var(--ink); }
+  .g-card-b{ font-size:13.5px; line-height:1.45; color:var(--ink); }
+  .g-svg{ width:100%; height:auto; max-height:130px; display:block; border-radius:10px; background:var(--surface-soft); }
+  .g-spread{ max-height:110px; margin:8px 0 4px; }
+  .g-big{ font-family:'Sora',sans-serif; font-weight:800; font-size:30px; color:var(--ink); line-height:1.1; }
+  .g-big small{ font-size:15px; margin-left:2px; opacity:.7; }
+  .g-note{ margin:8px 2px 0; font-size:12px; color:var(--muted); font-style:italic; }
+  .g-sec{ margin:20px 2px 8px; font-size:12.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .g-checks{ display:flex; flex-direction:column; gap:8px; }
+  .g-check{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:0 14px; box-shadow:var(--shadow-sm); }
+  .g-check summary{ display:flex; align-items:center; gap:10px; min-height:52px; font-family:'Sora',sans-serif; font-weight:700; font-size:15px; color:var(--ink); cursor:pointer; list-style:none; }
+  .g-check summary::-webkit-details-marker{ display:none; }
+  .g-check summary::after{ content:'›'; margin-left:auto; font-size:22px; color:var(--muted); transition:transform .15s ease; }
+  .g-check[open] summary::after{ transform:rotate(90deg); }
+  .g-ic{ font-size:22px; }
+  .g-check p{ margin:0 0 10px; font-size:14px; line-height:1.5; color:var(--ink); }
+  .g-check p b{ color:var(--muted); font-weight:800; }
+  @media (max-width:420px){ .g-grid{ grid-template-columns:1fr 1fr; gap:8px; } .g-card{ padding:10px; } .g-card-b{ font-size:13px; } .g-big{ font-size:26px; } }
+
+  #guideModal{ width:640px; }
+  #guideModal .form-modal-body{ gap:0; }
+  .menu-guide .mm-ic{ background:#3E7CB1 !important; color:#fff !important; }
+  .gs-card{ padding:12px 14px; display:flex; flex-direction:column; gap:14px; }
+  .gs-h{ font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:6px; }
+  .gs-row{ display:grid; grid-template-columns:auto 64px auto 1fr auto auto; align-items:center; gap:6px; margin-bottom:6px; font-size:12.5px; color:var(--muted); }
+  .gs-row input{ width:100%; min-width:0; box-sizing:border-box; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface-soft); color:var(--ink); font-size:14px; }
+  .gs-del{ border:none; background:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px; }
+  .gs-add{ border:none; background:none; color:var(--primary-dark); font-weight:700; font-size:12.5px; cursor:pointer; padding:2px 0; }
+  .gs-foot{ border-top:1px solid var(--line); padding-top:10px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2327,6 +2370,7 @@
       <div class="tb-group" role="group" aria-label="Farm tools">
         <button class="btn-history" id="historyBtn" title="History of changes"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span class="tb-label">History</span></button>
         <button class="btn-history" id="mlogBtn" title="Routine Tracker: plan and log recurring farm jobs"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span class="tb-label">Routines</span></button>
+        <button class="btn-history" id="guideBtn" title="Farm guide: targets for the batch age and quick checks"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg><span class="tb-label">Guide</span></button>
         <button class="btn-history notif-btn" id="reportsBtn" title="Reports"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg><span class="tb-label">Reports</span><span class="notif-badge hidden" id="reportsBadge">0</span></button>
       </div>
       <span class="tb-divider" aria-hidden="true"></span>
@@ -2480,6 +2524,7 @@
     <div class="menu-head"><span class="sheet-title">Menu</span><span class="menu-sync" id="menuSyncLine"></span></div>
     <button class="menu-manage menu-reports" id="moreReportsBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></span><span class="mm-text"><b>Reports <span class="mr-count" id="moreReportsCount"></span></b><small id="moreReportsSub">Problems sent in by workers</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <button class="menu-manage" id="moreManageBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><span class="mm-text"><b>Manage farm</b><small>Batches, audits, frequent tasks, backlog</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <button class="menu-manage menu-guide" id="moreGuideBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg></span><span class="mm-text"><b>Farm guide</b><small id="moreGuideSub">Targets for the batch age, quick checks</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
 
     <div class="menu-grid">
       <button class="menu-tile" id="moreSearchBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
@@ -2598,6 +2643,11 @@
           </select>
         </div>
       </div>
+    </section>
+
+    <section class="st-section" id="stGuide">
+      <div class="st-section-head"><span class="st-ic">📘</span><div><h3>Farm guide targets</h3><p>Shown to workers in the Viewer's Guide. Starts from Ross 308 guidance — set them to your integrator's numbers.</p></div></div>
+      <div class="st-card gs-card" id="guideSettings"></div>
     </section>
 
     <section class="st-section" id="stWeather">
@@ -3065,6 +3115,11 @@
   <div class="form-modal-body" id="biBody"></div>
 </div>
 
+<div class="form-modal" id="guideModal">
+  <div class="form-modal-head"><h2>Farm guide</h2><button id="closeGuideModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="guideModalBody"></div>
+</div>
+
 <div class="form-modal" id="wxModal">
   <div class="form-modal-head"><h2 id="wxModalTitle">Weather</h2><button id="closeWxModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body" id="wxModalBody"></div>
@@ -3270,6 +3325,7 @@
   }
   function normalizeDensity(v){ return v === 'day' ? 'day' : 'month'; }
   function applySettings(){
+    try{ const gs = document.getElementById('guideSettings'); if(gs && !gs.contains(document.activeElement)) renderGuideSettings(); }catch(e){ /* guide code not loaded yet on first run */ }
     settings.batchBadgeStyle = normalizeBatchStyle(settings.batchBadgeStyle);
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
@@ -9199,6 +9255,7 @@
     $('#newReportModal').classList.remove('open');
     $('#addTasksSheet').classList.remove('open');
     $('#batchInfoModal').classList.remove('open');
+    $('#guideModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -9474,6 +9531,221 @@
     biLoadBirds(b.number).then(v=>{ info.birds = v; if($('#batchInfoModal').classList.contains('open')) $('#biBody').innerHTML = batchInfoHtml(info); });
   }
   $('#closeBatchInfo').addEventListener('click', closeOverlays);
+  // ---------- Farm guide (shared by CluckWise and the Viewer) ----------
+  // Starting values follow general Ross 308 broiler guidance; the manager can edit
+  // them in CluckWise Settings (saved in settings.guide and synced to the Viewer).
+  const GUIDE_DEFAULTS = {
+    temp: [[0,30],[3,28],[6,27],[9,26],[12,25],[15,24],[18,23],[21,22],[24,21],[27,20]],
+    rh:   [[0,'60–70'],[7,'50–70']],
+    dark: [[0,1],[7,6]]
+  };
+  const GUIDE_TEXT = {
+    en: {
+      g_title:'Farm guide', g_now:'Right now', g_day:'Day {n}', g_noBatch:'No batch running — showing day {n}. Use − / + to look at any age.',
+      g_drink_t:'Drinker line', g_drink_0:"Nipple at the chicks' eye level. Chicks drink with the head slightly up.",
+      g_drink_1:'Nipple just above the head. Birds reach up a little to drink, feet flat.',
+      g_drink_2:'Raise the line as birds grow: birds stretch up to drink, feet flat on the litter — never on tip-toes or crouching.',
+      g_feed_t:'Feeder pans', g_feed_0:'Pans down on the litter, flooded with feed. Extra feed on paper near the drinkers.',
+      g_feed_1:"Lip of the pan level with the birds' backs. Raise the line as they grow.",
+      g_temp_t:'Shed temperature', g_temp_v:'Target {t} °C', g_rh:'Humidity {rh} %',
+      g_light_t:'Lighting', g_light_v:'{d} h dark each day', g_light_n:'Keep the dark hours in one block.',
+      g_checks:'Quick checks',
+      g_good_t:'Birds comfortable', g_good_s:'Spread evenly, eating, drinking and resting.', g_good_a:'All good — keep checking every walk.',
+      g_hot_t:'Too hot', g_hot_s:'Panting, wings held out, birds along the walls or under the drinkers.', g_hot_a:'More air: raise ventilation or tunnel mode. Check water is flowing. Tell the manager.',
+      g_cold_t:'Too cold', g_cold_s:'Huddling in groups, loud chirping, birds not eating.', g_cold_a:'Check heaters and the set point. Close drafts. Tell the manager.',
+      g_litter_t:'Litter check', g_litter_s:'Squeeze a handful: it should stick together, then break apart.', g_litter_a:'Stays in a wet ball → too wet: report it. Dusty → too dry.',
+      g_ratio_t:'Water : feed', g_ratio_s:'Birds drink about 1.6–2 times what they eat.', g_ratio_a:'Big jump or drop in water use? Check for leaks, heat or sick birds — report it.',
+      g_sick_t:'Sick bird signs', g_sick_s:'Dull, fluffed up, eyes closed, not moving, wet or coloured droppings.', g_sick_a:'Note the shed and spot, take a photo and send a Report.',
+      g_bio_t:'Biosecurity at the door', g_bio_s:'Change boots, wash or sanitise hands, use the footbath, sign the log.', g_bio_a:'No visitors without the manager’s OK.',
+      g_signs:'Signs', g_do:'What to do', g_note:'Targets set by your farm manager.'
+    },
+    es: {
+      g_title:'Guía de granja', g_now:'Ahora mismo', g_day:'Día {n}', g_noBatch:'No hay lote activo — mostrando el día {n}. Usa − / + para ver cualquier edad.',
+      g_drink_t:'Línea de bebederos', g_drink_0:'Niple a la altura de los ojos de los pollitos. Beben con la cabeza un poco hacia arriba.',
+      g_drink_1:'Niple justo encima de la cabeza. Las aves se estiran un poco para beber, con los pies planos.',
+      g_drink_2:'Sube la línea a medida que crecen: se estiran para beber con los pies planos — nunca de puntillas ni agachadas.',
+      g_feed_t:'Comederos', g_feed_0:'Platos en la cama, llenos de alimento. Alimento extra en papel cerca de los bebederos.',
+      g_feed_1:'El borde del plato a la altura del lomo de las aves. Súbelos a medida que crecen.',
+      g_temp_t:'Temperatura del galpón', g_temp_v:'Objetivo {t} °C', g_rh:'Humedad {rh} %',
+      g_light_t:'Iluminación', g_light_v:'{d} h de oscuridad al día', g_light_n:'Mantén las horas de oscuridad en un solo bloque.',
+      g_checks:'Revisiones rápidas',
+      g_good_t:'Aves cómodas', g_good_s:'Repartidas, comiendo, bebiendo y descansando.', g_good_a:'Todo bien — sigue revisando en cada recorrido.',
+      g_hot_t:'Demasiado calor', g_hot_s:'Jadeo, alas abiertas, aves en las paredes o bajo los bebederos.', g_hot_a:'Más aire: sube la ventilación o modo túnel. Revisa que corra el agua. Avisa al encargado.',
+      g_cold_t:'Demasiado frío', g_cold_s:'Amontonadas, piando fuerte, sin comer.', g_cold_a:'Revisa calefactores y la temperatura fijada. Cierra corrientes. Avisa al encargado.',
+      g_litter_t:'Revisión de cama', g_litter_s:'Aprieta un puñado: debe quedar unido y luego deshacerse.', g_litter_a:'Si queda una bola mojada → muy húmeda: repórtalo. Polvorienta → muy seca.',
+      g_ratio_t:'Agua : alimento', g_ratio_s:'Las aves beben unas 1,6–2 veces lo que comen.', g_ratio_a:'¿Cambio grande en el consumo de agua? Busca fugas, calor o aves enfermas — repórtalo.',
+      g_sick_t:'Señales de ave enferma', g_sick_s:'Decaída, plumas erizadas, ojos cerrados, quieta, heces húmedas o de color.', g_sick_a:'Anota el galpón y el lugar, toma una foto y envía un Reporte.',
+      g_bio_t:'Bioseguridad en la puerta', g_bio_s:'Cambia de botas, lava o desinfecta las manos, usa el pediluvio, firma el registro.', g_bio_a:'Sin visitas sin permiso del encargado.',
+      g_signs:'Señales', g_do:'Qué hacer', g_note:'Objetivos fijados por el encargado.'
+    },
+    tl: {
+      g_title:'Gabay sa bukid', g_now:'Ngayon', g_day:'Araw {n}', g_noBatch:'Walang tumatakbong batch — ipinapakita ang araw {n}. Gamitin ang − / + para sa ibang edad.',
+      g_drink_t:'Linya ng inuman', g_drink_0:'Nipple ay kapantay ng mata ng sisiw. Umiinom ang sisiw nang bahagyang nakatingala.',
+      g_drink_1:'Nipple ay bahagyang nasa itaas ng ulo. Bahagyang tumitingala ang ibon, patag ang paa.',
+      g_drink_2:'Itaas ang linya habang lumalaki: tumitingala ang ibon para uminom, patag ang paa — hindi nakatingkayad o nakayuko.',
+      g_feed_t:'Pakainan', g_feed_0:'Nakababa ang pan sa sapin, puno ng pakain. Dagdag na pakain sa papel malapit sa inuman.',
+      g_feed_1:'Ang gilid ng pan ay kapantay ng likod ng ibon. Itaas habang lumalaki.',
+      g_temp_t:'Temperatura ng kulungan', g_temp_v:'Target {t} °C', g_rh:'Halumigmig {rh} %',
+      g_light_t:'Ilaw', g_light_v:'{d} oras na dilim bawat araw', g_light_n:'Isang tuloy-tuloy na bloke ang dilim.',
+      g_checks:'Mabilisang tsek',
+      g_good_t:'Komportable ang ibon', g_good_s:'Pantay ang kalat, kumakain, umiinom at nagpapahinga.', g_good_a:'Ayos — patuloy na tumingin sa bawat ikot.',
+      g_hot_t:'Masyadong mainit', g_hot_s:'Humihingal, nakabuka ang pakpak, nasa pader o ilalim ng inuman.', g_hot_a:'Dagdag hangin: taasan ang bentilasyon o tunnel. Tingnan kung umaagos ang tubig. Sabihan ang manager.',
+      g_cold_t:'Masyadong malamig', g_cold_s:'Nagkukumpulan, malakas ang huni, hindi kumakain.', g_cold_a:'Tingnan ang heater at setting. Isara ang hangin na pumapasok. Sabihan ang manager.',
+      g_litter_t:'Tsek ng sapin', g_litter_s:'Pisilin ang isang dakot: dumidikit muna, saka nabubuhaghag.', g_litter_a:'Kung basang bola → sobrang basa: i-report. Kung maalikabok → sobrang tuyo.',
+      g_ratio_t:'Tubig : pakain', g_ratio_s:'Umiinom ang ibon ng mga 1.6–2 beses ng kinakain nito.', g_ratio_a:'Biglang taas o baba ng tubig? Tingnan ang tagas, init o may sakit — i-report.',
+      g_sick_t:'Senyales ng may sakit', g_sick_s:'Matamlay, nakabuhaghag ang balahibo, nakapikit, hindi gumagalaw, basa o may kulay ang dumi.', g_sick_a:'Tandaan ang kulungan at lugar, kumuha ng litrato at mag-Report.',
+      g_bio_t:'Biosecurity sa pinto', g_bio_s:'Magpalit ng bota, maghugas o mag-sanitize ng kamay, gamitin ang footbath, pumirma sa log.', g_bio_a:'Walang bisita nang walang pahintulot ng manager.',
+      g_signs:'Senyales', g_do:'Gagawin', g_note:'Mga target na itinakda ng manager.'
+    },
+    id: {
+      g_title:'Panduan kandang', g_now:'Saat ini', g_day:'Hari {n}', g_noBatch:'Tidak ada batch berjalan — menampilkan hari {n}. Pakai − / + untuk umur lain.',
+      g_drink_t:'Jalur minum', g_drink_0:'Nipple setinggi mata anak ayam. Anak ayam minum dengan kepala sedikit mendongak.',
+      g_drink_1:'Nipple sedikit di atas kepala. Ayam sedikit menjulur untuk minum, kaki rata.',
+      g_drink_2:'Naikkan jalur seiring pertumbuhan: ayam menjulur ke atas untuk minum, kaki rata di litter — jangan berjinjit atau menunduk.',
+      g_feed_t:'Tempat pakan', g_feed_0:'Piring pakan di litter, penuh pakan. Pakan tambahan di kertas dekat tempat minum.',
+      g_feed_1:'Bibir piring setinggi punggung ayam. Naikkan seiring pertumbuhan.',
+      g_temp_t:'Suhu kandang', g_temp_v:'Target {t} °C', g_rh:'Kelembapan {rh} %',
+      g_light_t:'Pencahayaan', g_light_v:'{d} jam gelap per hari', g_light_n:'Jam gelap dalam satu blok.',
+      g_checks:'Cek cepat',
+      g_good_t:'Ayam nyaman', g_good_s:'Tersebar rata, makan, minum dan istirahat.', g_good_a:'Bagus — terus cek setiap keliling.',
+      g_hot_t:'Terlalu panas', g_hot_s:'Terengah-engah, sayap terbuka, ayam di dinding atau di bawah tempat minum.', g_hot_a:'Tambah udara: naikkan ventilasi atau mode tunnel. Cek air mengalir. Beri tahu manajer.',
+      g_cold_t:'Terlalu dingin', g_cold_s:'Bergerombol, berciap keras, tidak makan.', g_cold_a:'Cek pemanas dan setelan suhu. Tutup angin masuk. Beri tahu manajer.',
+      g_litter_t:'Cek litter', g_litter_s:'Remas segenggam: menyatu sebentar lalu terurai.', g_litter_a:'Tetap bola basah → terlalu basah: laporkan. Berdebu → terlalu kering.',
+      g_ratio_t:'Air : pakan', g_ratio_s:'Ayam minum sekitar 1,6–2 kali dari yang dimakan.', g_ratio_a:'Pemakaian air naik/turun tajam? Cek bocor, panas atau ayam sakit — laporkan.',
+      g_sick_t:'Tanda ayam sakit', g_sick_s:'Lesu, bulu mengembang, mata tertutup, diam, kotoran basah atau berwarna.', g_sick_a:'Catat kandang dan lokasinya, ambil foto dan kirim Laporan.',
+      g_bio_t:'Biosekuriti di pintu', g_bio_s:'Ganti sepatu bot, cuci atau sanitasi tangan, pakai footbath, isi buku tamu.', g_bio_a:'Tidak ada tamu tanpa izin manajer.',
+      g_signs:'Tanda', g_do:'Yang dilakukan', g_note:'Target ditetapkan oleh manajer kandang.'
+    }
+  };
+  function guideT(lang, key, vars){
+    const s = (GUIDE_TEXT[lang] && GUIDE_TEXT[lang][key]) || GUIDE_TEXT.en[key] || key;
+    return Object.keys(vars || {}).reduce((str, k)=> str.split('{' + k + '}').join(vars[k]), s);
+  }
+  function guideCfg(c){
+    const ok = a => Array.isArray(a) && a.length && a.every(r=> Array.isArray(r) && r.length === 2 && isFinite(+r[0]));
+    c = c || {};
+    return { temp: ok(c.temp) ? c.temp : GUIDE_DEFAULTS.temp, rh: ok(c.rh) ? c.rh : GUIDE_DEFAULTS.rh, dark: ok(c.dark) ? c.dark : GUIDE_DEFAULTS.dark };
+  }
+  // value for an age from rows [[fromAge, value], ...] (the last row at or below the age)
+  function guideAt(rows, age){
+    let v = rows[0][1];
+    rows.slice().sort((a,b)=> a[0]-b[0]).forEach(r=>{ if(age >= +r[0]) v = r[1]; });
+    return v;
+  }
+  function guideEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+  // Simple drawings: drinker line at the right height for the age, and a feeder pan at back height
+  function guideDrinkerSvg(stage){
+    const bird = stage === 0
+      ? '<ellipse cx="60" cy="98" rx="16" ry="12" fill="#F5C842"/><circle cx="72" cy="80" r="9" fill="#F5C842"/><circle cx="75" cy="78" r="1.6" fill="#2B2116"/><path d="M80 80l6 2-6 2z" fill="#E07B22"/>'
+      : stage === 1
+      ? '<ellipse cx="58" cy="92" rx="24" ry="17" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="76" cy="64" r="9" fill="#F4F1EA" stroke="#C9B89A"/><path d="M70 72l-6 10" stroke="#C9B89A" stroke-width="6" stroke-linecap="round"/><circle cx="79" cy="62" r="1.6" fill="#2B2116"/><path d="M84 63l6-3-1 6z" fill="#E07B22"/>'
+      : '<ellipse cx="56" cy="86" rx="30" ry="22" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="80" cy="44" r="10" fill="#F4F1EA" stroke="#C9B89A"/><path d="M74 54l-8 18" stroke="#C9B89A" stroke-width="8" stroke-linecap="round"/><circle cx="83" cy="42" r="1.8" fill="#2B2116"/><path d="M88 42l7-4-1 7z" fill="#E07B22"/><path d="M80 34l3-5 3 5z" fill="#D9442B"/>';
+    const nippleY = stage === 0 ? 74 : stage === 1 ? 52 : 30;
+    const lineY = nippleY - 10;
+    const legs = stage === 0 ? '' : `<path d="M50 ${stage === 1 ? 106 : 104}v10M62 ${stage === 1 ? 106 : 104}v10" stroke="#E07B22" stroke-width="3"/>`;
+    return `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/>
+      <rect x="0" y="${lineY - 4}" width="160" height="8" rx="4" fill="#8A9BB0"/><rect x="86" y="${lineY + 3}" width="6" height="${nippleY - lineY - 3}" fill="#5F6E80"/><circle cx="89" cy="${nippleY}" r="3" fill="#3A8DDE"/>
+      ${legs}${bird}<path d="M100 ${nippleY}h40" stroke="#3A8DDE" stroke-dasharray="3 3"/></svg>`;
+  }
+  function guideFeederSvg(stage){
+    return stage === 0
+      ? `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/><path d="M40 116l8-14h64l8 14z" fill="#B0B7C2"/><path d="M50 104q30-10 60 0" fill="#D9A441"/><ellipse cx="128" cy="106" rx="10" ry="8" fill="#F5C842"/><circle cx="136" cy="96" r="6" fill="#F5C842"/></svg>`
+      : `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/><rect x="78" y="0" width="6" height="60" fill="#8A9BB0"/><path d="M58 76l6-16h34l6 16z" fill="#B0B7C2"/><path d="M64 70q17-6 34 0" fill="#D9A441"/>
+        <ellipse cx="34" cy="86" rx="28" ry="20" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="52" cy="58" r="9" fill="#F4F1EA" stroke="#C9B89A"/><path d="M46 66l-4 8" stroke="#C9B89A" stroke-width="7" stroke-linecap="round"/><path d="M30 104v12M40 104v12" stroke="#E07B22" stroke-width="3"/>
+        <path d="M6 66h150" stroke="#3A8DDE" stroke-dasharray="3 3"/></svg>`;
+  }
+  function guideSpreadSvg(kind){
+    const W = 150, H = 80; let dots = '';
+    const rnd = (i, m)=> ((Math.sin(i * 12.9898 + m) * 43758.5453) % 1 + 1) % 1;
+    for(let i = 0; i < 46; i++){
+      let x, y;
+      if(kind === 'good'){ x = 10 + rnd(i, 1) * (W - 20); y = 10 + rnd(i, 2) * (H - 20); }
+      else if(kind === 'cold'){ const g = i % 3, cx = [45, 95, 75][g], cy = [30, 38, 58][g]; x = cx + (rnd(i, 3) - .5) * 26; y = cy + (rnd(i, 4) - .5) * 18; }
+      else { const side = i % 4; x = side === 0 ? 9 + rnd(i,5)*8 : side === 1 ? W - 9 - rnd(i,5)*8 : 10 + rnd(i,6) * (W - 20); y = side >= 2 ? (side === 2 ? 9 + rnd(i,7)*8 : H - 9 - rnd(i,7)*8) : 10 + rnd(i,8) * (H - 20); }
+      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="#F5C842" stroke="#B8901F" stroke-width=".6"/>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="g-svg g-spread" aria-hidden="true"><rect x="2" y="2" width="${W-4}" height="${H-4}" rx="8" fill="#E9DCC3" stroke="#B9A27C" stroke-width="2"/>${dots}</svg>`;
+  }
+  // The whole guide for one age. lang picks the language; cfg = settings.guide (or defaults)
+  function guideHtml(age, cfg, lang, opts){
+    opts = opts || {};
+    const T = (k, v)=> guideT(lang, k, v);
+    const c = guideCfg(cfg);
+    const stage = age <= 3 ? 0 : age <= 14 ? 1 : 2;
+    const temp = guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
+    const card = (cls, title, svg, body)=> `<div class="g-card ${cls}"><div class="g-card-h">${title}</div>${svg || ''}<div class="g-card-b">${body}</div></div>`;
+    const check = (k, icon, svg)=> `<details class="g-check"><summary><span class="g-ic">${icon}</span><span>${guideEsc(T('g_' + k + '_t'))}</span></summary>${svg || ''}<p><b>${guideEsc(T('g_signs'))}:</b> ${guideEsc(T('g_' + k + '_s'))}</p><p><b>${guideEsc(T('g_do'))}:</b> ${guideEsc(T('g_' + k + '_a'))}</p></details>`;
+    let h = `<div class="g-head"><div><div class="g-eyebrow">${guideEsc(T('g_now'))}</div><div class="g-age">${guideEsc(T('g_day', { n: age }))}</div></div>
+      <div class="g-step"><button type="button" data-g-age="-1" aria-label="Previous day">−</button><button type="button" data-g-age="1" aria-label="Next day">+</button></div></div>`;
+    if(opts.noBatch) h += `<p class="g-hint">${guideEsc(T('g_noBatch', { n: age }))}</p>`;
+    h += `<div class="g-grid">
+      ${card('g-drink', guideEsc(T('g_drink_t')), guideDrinkerSvg(stage), guideEsc(T('g_drink_' + stage)))}
+      ${card('g-feed', guideEsc(T('g_feed_t')), guideFeederSvg(stage === 0 ? 0 : 1), guideEsc(T(stage === 0 ? 'g_feed_0' : 'g_feed_1')))}
+      ${card('g-temp', guideEsc(T('g_temp_t')), `<div class="g-big">🌡️ ${guideEsc(String(temp))}<small>°C</small></div>`, guideEsc(T('g_rh', { rh })))}
+      ${card('g-light', guideEsc(T('g_light_t')), `<div class="g-big">🌙 ${guideEsc(String(dark))}<small>h</small></div>`, guideEsc(T('g_light_v', { d: dark })) + '<br>' + guideEsc(T('g_light_n')))}
+    </div>
+    <p class="g-note">${guideEsc(T('g_note'))}</p>
+    <div class="g-sec">${guideEsc(T('g_checks'))}</div>
+    <div class="g-checks">
+      ${check('good', '✅', guideSpreadSvg('good'))}
+      ${check('hot', '🥵', guideSpreadSvg('hot'))}
+      ${check('cold', '🥶', guideSpreadSvg('cold'))}
+      ${check('litter', '🤲')}
+      ${check('ratio', '💧')}
+      ${check('sick', '🤒')}
+      ${check('bio', '🧼')}
+    </div>`;
+    return h;
+  }
+
+  let mainGuideAge = null;
+  function openGuide(){
+    closeOverlays();
+    const cb = currentOrNextBatch(), td = dateKey(new Date());
+    if(mainGuideAge == null) mainGuideAge = cb && td >= cb.start ? batchAgeOn(cb, td) : 21;
+    renderMainGuide();
+    openDrawer('#guideModal');
+  }
+  function renderMainGuide(){
+    const cb = currentOrNextBatch(), td = dateKey(new Date());
+    $('#guideModalBody').innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start) });
+  }
+  $('#guideModalBody').addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-g-age]'); if(!b) return;
+    mainGuideAge = Math.max(0, Math.min(70, mainGuideAge + Number(b.dataset.gAge)));
+    renderMainGuide();
+  });
+  $('#closeGuideModal').addEventListener('click', closeOverlays);
+  $('#guideBtn').addEventListener('click', ()=>{ mainGuideAge = null; openGuide(); });
+  $('#moreGuideBtn').addEventListener('click', ()=>{ mainGuideAge = null; openGuide(); });
+  // Settings: edit the guide's targets (rows of "from day → value")
+  const GUIDE_FIELDS = [['temp', 'Shed temperature', '°C', 'number'], ['rh', 'Humidity', '%', 'text'], ['dark', 'Hours of dark', 'h', 'number']];
+  function renderGuideSettings(){
+    const box = $('#guideSettings'); if(!box) return;
+    const c = guideCfg(settings.guide);
+    box.innerHTML = GUIDE_FIELDS.map(([k, label, unit, type])=> `<div class="gs-block" data-gs="${k}"><div class="gs-h">${label}</div>
+      ${c[k].slice().sort((a,b)=> a[0]-b[0]).map((r, i)=> `<div class="gs-row"><span>From day</span><input type="number" min="0" max="70" class="gs-age" value="${escapeHtmlAttr(r[0])}"><span>→</span><input type="${type}" class="gs-val" value="${escapeHtmlAttr(r[1])}"><span class="gs-unit">${unit}</span><button type="button" class="gs-del" aria-label="Remove row">✕</button></div>`).join('')}
+      <button type="button" class="gs-add">+ Add row</button></div>`).join('') + `<div class="gs-foot"><button type="button" class="st-btn" id="gsReset">Reset to Ross 308 defaults</button></div>`;
+  }
+  function saveGuideSettings(){
+    const out = {};
+    document.querySelectorAll('#guideSettings .gs-block').forEach(bl=>{
+      const k = bl.dataset.gs, num = k !== 'rh';
+      const rows = [...bl.querySelectorAll('.gs-row')].map(r=> [Number(r.querySelector('.gs-age').value), num ? Number(r.querySelector('.gs-val').value) : r.querySelector('.gs-val').value.trim()])
+        .filter(r=> isFinite(r[0]) && r[0] >= 0 && (num ? isFinite(r[1]) : r[1]));
+      if(rows.length) out[k] = rows.sort((a,b)=> a[0]-b[0]);
+    });
+    settings.guide = out;
+    persist();
+  }
+  $('#guideSettings').addEventListener('change', (e)=>{ if(e.target.matches('input')) saveGuideSettings(); });
+  $('#guideSettings').addEventListener('click', (e)=>{
+    if(e.target.closest('.gs-del')){ e.target.closest('.gs-row').remove(); saveGuideSettings(); renderGuideSettings(); return; }
+    const add = e.target.closest('.gs-add');
+    if(add){ const bl = add.closest('.gs-block'); const k = bl.dataset.gs; const c = guideCfg(settings.guide); settings.guide = Object.assign({}, c, { [k]: c[k].concat([[ (c[k][c[k].length-1] || [0])[0] + 7, c[k][c[k].length-1][1] ]]) }); persist(); renderGuideSettings(); return; }
+    if(e.target.closest('#gsReset')){ settings.guide = null; persist(); renderGuideSettings(); showToast('Guide targets reset to Ross 308 defaults.'); }
+  });
+  renderGuideSettings();
   $('#quickAddFabBtn').addEventListener('click', ()=> openAddTasks(viewingDayKey()));
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=> openBatchModal());
