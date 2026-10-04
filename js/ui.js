@@ -1315,7 +1315,7 @@ function openFeedForecast(g){
     el.classList.add('flash-target');setTimeout(()=>el.classList.remove('flash-target'),1600);
   });
 }
-function setPredGroup(g){predState.predGroup=g;savePredState();render();}
+function setPredGroup(g){predState.predGroup=g;predState.predView='shed1';groupDockOpen=false;savePredState();render();}
 function setPredView(v){if(!['shed1','shed2','both'].includes(v))return;predState.predView=v;savePredState();render();}
 function setPredDailyPreset(start,end){dailyRangeState={mode:'today',start,end};render();}
 function setPredDailyCycle(start,end){

@@ -248,6 +248,10 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     closeAllPickupActionsMenus();
 
     const pg=e.target.closest('[data-predgroup]');if(pg){if(pg.closest('.sidebar')){activeTab='predictions';sbPredOpen=true;}setPredGroup(Number(pg.dataset.predgroup));return;}
+    const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){activeTab='predictions';setPredGroup(Number(gpg.dataset.gotoPredgroup));window.scrollTo(0,0);return;}
+    if(e.target.closest('#gdockToggle')){groupDockOpen=!groupDockOpen;const d=document.getElementById('gdock');if(d)d.classList.toggle('open',groupDockOpen);e.target.closest('#gdockToggle').setAttribute('aria-expanded',String(groupDockOpen));return;}
+    if(groupDockOpen&&(!e.target.closest('#gdock')||e.target.closest('[data-gdock-close]'))){groupDockOpen=false;const d=document.getElementById('gdock');if(d)d.classList.remove('open');}
+    if(e.target.closest('.gdock-item')){groupDockOpen=false;}
     const pv=e.target.closest('[data-predview]');if(pv){setPredView(pv.dataset.predview);return;}
     const toggleDel=e.target.closest('[data-toggle-deliveries]');
     if(toggleDel){predState.deliveriesOpen=!(predState.deliveriesOpen!==false);savePredState();schedulePush();render();return;}

@@ -999,12 +999,12 @@ function renderDashboardView() {
       <h2 class="dash-card-title">Shed performance</h2>
       <button class="dash-card-action" data-tab="g1" type="button">All sheds</button>
     </div>
-    <table class="dash-shed-table">
+    <div class="dash-table-scroll"><table class="dash-shed-table dash-perf-table">
       <thead><tr>
         <th>Shed</th><th>Age</th><th>Last ALW</th><th>Days behind</th><th>Live</th><th>Mort.</th>
       </tr></thead>
       <tbody>${shedRows}</tbody>
-    </table>
+    </table></div>
   </div>
     ${renderCleanoutDashCard()}
   </div>
@@ -1060,6 +1060,10 @@ function render(){
     if(moreSheetOpen)renderMoreSheet();
     renderSyncPill();
     renderSidebarBatch();
+    // Phones/tablets: the shed-pair switcher is one floating button that expands upwards
+    const gdRoot=document.getElementById('groupDockRoot');
+    if(gdRoot){const gm=/^g([1-4])$/.exec(activeTab);const ctx=gm?'sheds':activeTab==='predictions'?'pred':null;const g=gm?Number(gm[1]):predState.predGroup;
+      gdRoot.innerHTML=farmData&&ctx?groupDockHtml(g,ctx):'';document.body.classList.toggle('has-gdock',!!(farmData&&ctx));}
     // Adjustments: one floating button on every page (bottom-right)
     const adjFab=document.getElementById('adjFab');
     if(adjFab){adjFab.hidden=!farmData;if(!adjFab.firstChild)adjFab.innerHTML=navIcon('gear');adjFab.classList.toggle('active',!!adjModalOpen);adjFab.setAttribute('aria-expanded',String(!!adjModalOpen));}
@@ -1151,6 +1155,7 @@ function shedTabsHtml(g,view,sheds){
     ${btn('both','homes','Both','Show both sheds side by side')}
     <span class="pred-rail-sep" aria-hidden="true"></span>
     ${btn('planner','silo','Feed & Silo','Feed and silo planner')}
+    <button type="button" class="pred-rail-btn" data-goto-predgroup="${g}" title="Predictions for ${pairLabel(g)}">${navIcon('chart')}<span>Predict</span></button>
   </nav>`;
 }
 function rangeBarHtml(range,ctx,extraHtml){
@@ -1831,8 +1836,8 @@ function predRailHtml(g,view,sheds){
   const btn=(v,icon,label,title)=>`<button type="button" class="pred-rail-btn${view===v?' active':''}" data-predview="${v}" aria-pressed="${view===v}" title="${title}">${navIcon(icon)}<span>${label}</span></button>`;
   const shedBtns=sheds.map((s,i)=>btn(i===0?'shed1':'shed2','home',`Shed ${s.id}`,`Show shed ${s.id} only`)).join('');
   return `<nav class="pred-rail" aria-label="Prediction view">
-    ${sheds.length>1?btn('both','homes','Both','Show both sheds side by side'):''}
     ${shedBtns}
+    ${sheds.length>1?btn('both','homes','Both','Show both sheds side by side'):''}
   </nav>`;
 }
 function renderPredictionsView(){
@@ -2122,3 +2127,16 @@ function openPickupActionsMenu(wrap){
 }
 
 /* ---------- DOMContentLoaded ---------- */
+
+// Floating shed-pair switcher for phones and tablets (Sheds and Predict pages).
+// Tap to expand upwards: Sheds 1–2 … 7–8, plus Adjustments.
+let groupDockOpen=false;
+function groupDockHtml(g,ctx){
+  const item=gi=>`<button type="button" class="gdock-item${gi===g?' active':''}" ${ctx==='pred'?`data-predgroup="${gi}"`:`data-tab="g${gi}"`} data-label="${escapeAttr(pairLabel(gi))}"><span>${pairShort(gi)}</span></button>`;
+  return `<div class="gdock${groupDockOpen?' open':''}" id="gdock"><div class="gdock-scrim" data-gdock-close></div>
+    <div class="gdock-items">${[1,2,3,4].map(item).join('')}
+      <button type="button" class="gdock-item gdock-adj" data-toggle-adjustments="1" data-label="Adjustments">${navIcon('gear')}</button>
+    </div>
+    <button type="button" class="gdock-toggle" id="gdockToggle" aria-expanded="${groupDockOpen}" aria-label="Change shed pair"><span class="gdock-cur">${pairShort(g)}</span><small>${ctx==='pred'?'Predict':'Sheds'}</small></button>
+  </div>`;
+}
