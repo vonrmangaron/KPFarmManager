@@ -1068,7 +1068,7 @@ function render(){
     // Phones/tablets: the shed-pair switcher is one floating button that expands upwards
     const gdRoot=document.getElementById('groupDockRoot');
     if(gdRoot){const gm=/^g([1-4])$/.exec(activeTab);const ctx=gm?'sheds':activeTab==='predictions'?'pred':null;const g=gm?Number(gm[1]):predState.predGroup;
-      gdRoot.innerHTML=farmData&&ctx?groupDockHtml(g,ctx):'';document.body.classList.toggle('has-gdock',!!(farmData&&ctx));}
+      gdRoot.innerHTML='';document.body.classList.remove('has-gdock');}
     // Adjustments: one floating button on every page (bottom-right)
     const adjFab=document.getElementById('adjFab');
     if(adjFab){adjFab.hidden=!farmData;if(!adjFab.firstChild)adjFab.innerHTML=navIcon('gear');adjFab.classList.toggle('active',!!adjModalOpen);adjFab.setAttribute('aria-expanded',String(!!adjModalOpen));}
@@ -1844,6 +1844,8 @@ function predRailHtml(g,view,sheds){
   return `<nav class="pred-rail" aria-label="Prediction view">
     ${shedBtns}
     ${sheds.length>1?btn('both','homes','Both','Show both sheds side by side'):''}
+    <span class="pred-rail-sep" aria-hidden="true"></span>
+    <button type="button" class="pred-rail-btn" data-goto-shedgroup="${g}" title="Back to ${pairLabel(g)}">${navIcon('grid')}<span>Sheds</span></button>
   </nav>`;
 }
 function renderPredictionsView(){

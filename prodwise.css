@@ -3674,8 +3674,6 @@ label.lbl { display: block; }
 /* Floating shed-pair switcher (phones + tablets) */
 .gdock { display: none; }
 @media (max-width: 1100px) {
-  .group-switch-mobile { display: none !important; }
-  body.has-gdock .adj-fab { display: none !important; }
   .gdock { position: fixed; right: 22px; bottom: 24px; z-index: 170; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
   .gdock-items { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
   .gdock:not(.open) .gdock-items { visibility: hidden; pointer-events: none; }
@@ -3745,3 +3743,13 @@ label.lbl { display: block; }
 .gdock, .vdock, .gdock-items, .vdock-items { pointer-events: none; }
 .gdock-toggle, .vdock-toggle { pointer-events: auto; }
 .gdock.open .gdock-items, .gdock.open .gdock-item, .vdock.open .vdock-items, .vdock.open .vdock-item { pointer-events: auto; }
+
+/* Phones: the view button is a small, quiet pill (Silo reading stays the one loud button) */
+@media (max-width: 768px) {
+  .vdock-toggle { height: 44px; padding: 0 14px 0 12px; gap: 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--primary-dark); box-shadow: var(--shadow-md); font-size: 13px; }
+  body.theme-dark .vdock-toggle { background: var(--surface); color: var(--primary); border-color: var(--line); }
+  .vdock-ic svg { width: 18px; height: 18px; }
+  .vdock-chev { width: 13px; height: 13px; }
+  .vdock { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .pred-layout, #app { padding-bottom: 72px; }
+}

@@ -248,6 +248,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     closeAllPickupActionsMenus();
 
     const pg=e.target.closest('[data-predgroup]');if(pg){if(pg.closest('.sidebar')){activeTab='predictions';sbPredOpen=true;}setPredGroup(Number(pg.dataset.predgroup));return;}
+    const gsg=e.target.closest('[data-goto-shedgroup]');if(gsg){const g=Number(gsg.dataset.gotoShedgroup);const v=['shed1','shed2','both'].includes(predState.predView)?predState.predView:'shed1';shedViewByGroup[g]=v;saveShedViews();activeTab='g'+g;render();window.scrollTo(0,0);return;}
     const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){activeTab='predictions';setPredGroup(Number(gpg.dataset.gotoPredgroup));window.scrollTo(0,0);return;}
     if(e.target.closest('#vdockToggle')){viewDockOpen=!viewDockOpen;groupDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.toggle('open',viewDockOpen);const g=document.getElementById('gdock');if(g)g.classList.remove('open');return;}
     if(viewDockOpen&&(!e.target.closest('#vdock')||e.target.closest('[data-vdock-close]'))){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}
