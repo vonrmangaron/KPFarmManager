@@ -796,6 +796,23 @@
   .iss-urgent .iss-pill{ background:var(--danger); color:#fff; }
   .iss-fix{ font-size:14px; color:var(--success); font-weight:600; }
   .iss-fix[hidden]{ display:none; }
+
+  .g-edit{ width:100%; box-sizing:border-box; border:1.5px dashed var(--primary); border-radius:10px; background:var(--primary-soft); color:var(--ink); font-family:inherit; font-size:13.5px; line-height:1.45; padding:8px 10px; resize:vertical; }
+  .g-edit:focus{ outline:none; border-style:solid; background:var(--surface); }
+  .g-edit-t{ flex:1; min-width:0; font-family:'Sora',sans-serif; font-weight:700; font-size:14px; padding:6px 10px; }
+  .g-editing summary{ gap:8px; cursor:default; }
+  .g-editing summary::after{ display:none; }
+  .g-editing p{ margin:8px 0 4px; }
+  .g-editing textarea{ margin-bottom:8px; }
+  .g-show{ display:flex; align-items:center; gap:5px; flex-shrink:0; font-size:12.5px; font-weight:700; color:var(--muted); }
+  .g-hidden{ opacity:.55; }
+  .g-own{ padding:10px 14px; }
+  .g-own-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .g-own-ic{ width:52px; flex:0 0 52px; text-align:center; font-size:18px; padding:6px 4px; }
+  .g-own-del{ border:none; background:none; color:var(--danger); font-size:16px; cursor:pointer; padding:4px 6px; }
+  .g-own-body{ white-space:pre-wrap; }
+  .g-add-card{ width:100%; margin-top:10px; padding:12px; border-radius:12px; border:1.5px dashed var(--primary); background:transparent; color:var(--primary-dark); font-family:'Sora',sans-serif; font-weight:800; font-size:14px; cursor:pointer; }
+  .g-edit-hint{ background:var(--primary-soft); border-radius:10px; padding:8px 10px; color:var(--ink) !important; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3379,7 +3396,8 @@
   function guideCfg(c){
     const ok = a => Array.isArray(a) && a.length && a.every(r=> Array.isArray(r) && r.length === 2 && isFinite(+r[0]));
     c = c || {};
-    return { temp: ok(c.temp) ? c.temp : GUIDE_DEFAULTS.temp, rh: ok(c.rh) ? c.rh : GUIDE_DEFAULTS.rh, dark: ok(c.dark) ? c.dark : GUIDE_DEFAULTS.dark };
+    return { temp: ok(c.temp) ? c.temp : GUIDE_DEFAULTS.temp, rh: ok(c.rh) ? c.rh : GUIDE_DEFAULTS.rh, dark: ok(c.dark) ? c.dark : GUIDE_DEFAULTS.dark,
+      text: (c.text && typeof c.text === 'object') ? c.text : {}, hidden: Array.isArray(c.hidden) ? c.hidden : [], custom: Array.isArray(c.custom) ? c.custom.filter(x=> x && x.id) : [] };
   }
   // value for an age from rows [[fromAge, value], ...] (the last row at or below the age)
   function guideAt(rows, age){
@@ -3421,35 +3439,44 @@
     }
     return `<svg viewBox="0 0 ${W} ${H}" class="g-svg g-spread" aria-hidden="true"><rect x="2" y="2" width="${W-4}" height="${H-4}" rx="8" fill="#E9DCC3" stroke="#B9A27C" stroke-width="2"/>${dots}</svg>`;
   }
-  // The whole guide for one age. lang picks the language; cfg = settings.guide (or defaults)
+  // The whole guide for one age. lang picks the language; cfg = settings.guide (or defaults).
+  // Text the manager typed (cfg.text) is shown as typed; otherwise the built-in, translated text.
+  // opts.edit = the manager's edit mode in CluckWise (text boxes, show/hide, own cards).
+  const GUIDE_CHECKS = [['good','✅','good'],['hot','🥵','hot'],['cold','🥶','cold'],['litter','🤲'],['ratio','💧'],['sick','🤒'],['bio','🧼']];
   function guideHtml(age, cfg, lang, opts){
     opts = opts || {};
+    const c = guideCfg(cfg), E = !!opts.edit;
     const T = (k, v)=> guideT(lang, k, v);
-    const c = guideCfg(cfg);
+    const X = (k)=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); };
+    const box = (k, rows)=> `<textarea class="g-edit" rows="${rows || 3}" data-gkey="${k.replace(/^g_/, '')}" placeholder="${guideEsc(guideT('en', k))}">${guideEsc(c.text[k.replace(/^g_/, '')] || '')}</textarea>`;
+    const say = (k, rows)=> E ? box(k, rows) : guideEsc(X(k));
     const stage = age <= 3 ? 0 : age <= 14 ? 1 : 2;
     const temp = guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
     const card = (cls, title, svg, body)=> `<div class="g-card ${cls}"><div class="g-card-h">${title}</div>${svg || ''}<div class="g-card-b">${body}</div></div>`;
-    const check = (k, icon, svg)=> `<details class="g-check"><summary><span class="g-ic">${icon}</span><span>${guideEsc(T('g_' + k + '_t'))}</span></summary>${svg || ''}<p><b>${guideEsc(T('g_signs'))}:</b> ${guideEsc(T('g_' + k + '_s'))}</p><p><b>${guideEsc(T('g_do'))}:</b> ${guideEsc(T('g_' + k + '_a'))}</p></details>`;
+    const check = ([k, icon, sp])=>{
+      const hidden = c.hidden.includes(k);
+      if(hidden && !E) return '';
+      const svg = sp ? guideSpreadSvg(sp) : '';
+      if(E) return `<details class="g-check g-editing${hidden ? ' g-hidden' : ''}" open><summary><span class="g-ic">${icon}</span><input class="g-edit g-edit-t" data-gkey="${k}_t" value="${guideEsc(c.text[k + '_t'] || '')}" placeholder="${guideEsc(guideT('en', 'g_' + k + '_t'))}"><label class="g-show"><input type="checkbox" data-ghide="${k}"${hidden ? '' : ' checked'}> Show</label></summary>${svg}<p><b>${guideEsc(T('g_signs'))}:</b></p>${box('g_' + k + '_s', 2)}<p><b>${guideEsc(T('g_do'))}:</b></p>${box('g_' + k + '_a', 2)}</details>`;
+      return `<details class="g-check"><summary><span class="g-ic">${icon}</span><span>${guideEsc(X('g_' + k + '_t'))}</span></summary>${svg}<p><b>${guideEsc(T('g_signs'))}:</b> ${guideEsc(X('g_' + k + '_s'))}</p><p><b>${guideEsc(T('g_do'))}:</b> ${guideEsc(X('g_' + k + '_a'))}</p></details>`;
+    };
+    const own = (o)=> E
+      ? `<div class="g-check g-own g-editing"><div class="g-own-row"><input class="g-edit g-own-ic" data-gc="${guideEsc(o.id)}:icon" value="${guideEsc(o.icon || '')}" placeholder="📌" maxlength="4"><input class="g-edit g-edit-t" data-gc="${guideEsc(o.id)}:title" value="${guideEsc(o.title || '')}" placeholder="Card title, e.g. Tunnel mode steps"><button type="button" class="g-own-del" data-gc-del="${guideEsc(o.id)}" aria-label="Delete card">✕</button></div><textarea class="g-edit" rows="4" data-gc="${guideEsc(o.id)}:body" placeholder="What workers should know or do…">${guideEsc(o.body || '')}</textarea></div>`
+      : (o.title || o.body) ? `<details class="g-check"><summary><span class="g-ic">${guideEsc(o.icon || '📌')}</span><span>${guideEsc(o.title || '')}</span></summary><p class="g-own-body">${guideEsc(o.body || '')}</p></details>` : '';
     let h = `<div class="g-head"><div><div class="g-eyebrow">${guideEsc(T('g_now'))}</div><div class="g-age">${guideEsc(T('g_day', { n: age }))}</div></div>
       <div class="g-step"><button type="button" data-g-age="-1" aria-label="Previous day">−</button><button type="button" data-g-age="1" aria-label="Next day">+</button></div></div>`;
-    if(opts.noBatch) h += `<p class="g-hint">${guideEsc(T('g_noBatch', { n: age }))}</p>`;
+    if(E) h += `<p class="g-hint g-edit-hint">Editing for workers. Leave a box empty to use the built-in text (translated for each worker). Text you type is shown as typed. Drinker and feeder text changes with age — use − / + to edit the other stages.</p>`;
+    else if(opts.noBatch) h += `<p class="g-hint">${guideEsc(T('g_noBatch', { n: age }))}</p>`;
     h += `<div class="g-grid">
-      ${card('g-drink', guideEsc(T('g_drink_t')), guideDrinkerSvg(stage), guideEsc(T('g_drink_' + stage)))}
-      ${card('g-feed', guideEsc(T('g_feed_t')), guideFeederSvg(stage === 0 ? 0 : 1), guideEsc(T(stage === 0 ? 'g_feed_0' : 'g_feed_1')))}
+      ${card('g-drink', guideEsc(T('g_drink_t')), guideDrinkerSvg(stage), say('g_drink_' + stage))}
+      ${card('g-feed', guideEsc(T('g_feed_t')), guideFeederSvg(stage === 0 ? 0 : 1), say(stage === 0 ? 'g_feed_0' : 'g_feed_1'))}
       ${card('g-temp', guideEsc(T('g_temp_t')), `<div class="g-big">🌡️ ${guideEsc(String(temp))}<small>°C</small></div>`, guideEsc(T('g_rh', { rh })))}
-      ${card('g-light', guideEsc(T('g_light_t')), `<div class="g-big">🌙 ${guideEsc(String(dark))}<small>h</small></div>`, guideEsc(T('g_light_v', { d: dark })) + '<br>' + guideEsc(T('g_light_n')))}
+      ${card('g-light', guideEsc(T('g_light_t')), `<div class="g-big">🌙 ${guideEsc(String(dark))}<small>h</small></div>`, guideEsc(T('g_light_v', { d: dark })) + '<br>' + say('g_light_n', 2))}
     </div>
     <p class="g-note">${guideEsc(T('g_note'))}</p>
     <div class="g-sec">${guideEsc(T('g_checks'))}</div>
-    <div class="g-checks">
-      ${check('good', '✅', guideSpreadSvg('good'))}
-      ${check('hot', '🥵', guideSpreadSvg('hot'))}
-      ${check('cold', '🥶', guideSpreadSvg('cold'))}
-      ${check('litter', '🤲')}
-      ${check('ratio', '💧')}
-      ${check('sick', '🤒')}
-      ${check('bio', '🧼')}
-    </div>`;
+    <div class="g-checks">${GUIDE_CHECKS.map(check).join('')}${c.custom.map(own).join('')}</div>`;
+    if(E) h += `<button type="button" class="g-add-card" data-gc-add>＋ Add your own card</button>`;
     return h;
   }
 
