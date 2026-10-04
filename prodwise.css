@@ -3714,3 +3714,34 @@ label.lbl { display: block; }
   .gdock-toggle:active { transform: scale(0.95); }
   .gdock.open .gdock-chev { transform: rotate(180deg); }
 }
+
+/* Phones: view bar collapses into a button bottom-left that expands upwards */
+.vdock { display: none; }
+@media (max-width: 768px) {
+  body.has-vdock .pred-rail { display: none !important; }
+  .vdock { position: fixed; left: 16px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 170; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .vdock-items { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .vdock:not(.open) .vdock-items { visibility: hidden; pointer-events: none; }
+  .vdock-item { position: relative; width: 50px; height: 50px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lg); cursor: pointer; display: grid; place-items: center; opacity: 0; transform: translateY(12px) scale(.92); transition: opacity .15s ease, transform .18s ease; }
+  .vdock.open .vdock-item { opacity: 1; transform: none; }
+  .vdock-item svg { width: 22px; height: 22px; }
+  .vdock-item.active { background: var(--primary); border-color: var(--primary); color: #1A2438; }
+  .vdock-item::after { content: attr(data-label); position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); white-space: nowrap; padding: 6px 11px; border-radius: 999px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow-md); font: 700 13px Sora, sans-serif; pointer-events: none; }
+  .vdock-toggle { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 16px 0 14px; border-radius: 18px; border: 2px solid rgba(255,255,255,0.85); background: #2B2116; color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,0.45), 0 0 0 4px rgba(245,166,35,0.35); font: 800 14px Sora, sans-serif; cursor: pointer; }
+  body.theme-dark .vdock-toggle { background: var(--primary); color: #1A2438; border-color: #1A2438; }
+  .vdock-toggle:active { transform: scale(0.96); }
+  .vdock-ic svg { width: 20px; height: 20px; display: block; }
+  .vdock-lbl { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vdock-chev { width: 15px; height: 15px; }
+  .vdock.open .vdock-chev { transform: rotate(180deg); }
+  .pred-layout { padding-bottom: 40px; }
+}
+@media (max-width: 768px) {
+  .vdock.open .gdock-scrim { opacity: 1; pointer-events: auto; }
+  .vdock-item::after { left: calc(100% + 12px); }
+}
+/* The dock wrappers are taller than their buttons (room for the folded menu): let touches
+   pass through them so the page still scrolls; only the buttons themselves take taps */
+.gdock, .vdock, .gdock-items, .vdock-items { pointer-events: none; }
+.gdock-toggle, .vdock-toggle { pointer-events: auto; }
+.gdock.open .gdock-items, .gdock.open .gdock-item, .vdock.open .vdock-items, .vdock.open .vdock-item { pointer-events: auto; }

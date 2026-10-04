@@ -1033,6 +1033,11 @@ function currentPageKey(){
   if(/^g[1-4]$/.test(activeTab))return `${activeTab}:${shedViewByGroup[Number(activeTab.slice(1))]||''}`;
   return activeTab;
 }
+function renderViewDock(){
+  // Phones: the view bar (Shed 1 · Shed 2 · Both · …) collapses into one button bottom-left
+  const vdRoot=document.getElementById('viewDockRoot');
+  if(vdRoot){const rail=document.querySelector('#app .pred-rail');vdRoot.innerHTML=rail?viewDockHtml(rail):'';document.body.classList.toggle('has-vdock',!!rail);}
+}
 function render(){
   try{
     const pageKey=currentPageKey();
@@ -1089,6 +1094,7 @@ function render(){
     }
     // Pop-ups opened from the sidebar (Compare feed, Feed loads) can sit over
     // any page, so refresh them on every render — not just on shed pages.
+    renderViewDock();
     if(feedCompareState.modalOpen)renderCompareModalBody();
     refreshLoadsViews();
     if(inlinePickupState)requestAnimationFrame(sizeTestPickupForms);
@@ -2138,5 +2144,20 @@ function groupDockHtml(g,ctx){
       <button type="button" class="gdock-item gdock-adj" data-toggle-adjustments="1" data-label="Adjustments">${navIcon('gear')}</button>
     </div>
     <button type="button" class="gdock-toggle" id="gdockToggle" aria-expanded="${groupDockOpen}" aria-label="Change shed pair"><svg class="gdock-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg><span class="gdock-cur">${pairShort(g)}</span><small>${ctx==='pred'?'Predict':'Sheds'}</small></button>
+  </div>`;
+}
+
+// Phones: the Sheds/Predict view bar as one button that expands upwards (bottom-left).
+// Items are copies of the bar's own buttons, so the normal click handlers apply.
+let viewDockOpen=false;
+function viewDockHtml(rail){
+  const btns=[...rail.querySelectorAll('.pred-rail-btn')];
+  const active=btns.find(b=>b.classList.contains('active'))||btns[0];
+  const item=b=>{const c=b.cloneNode(true);c.className='vdock-item'+(b===active?' active':'');c.removeAttribute('aria-pressed');const lbl=(b.querySelector('span')||b).textContent.trim();c.setAttribute('data-label',lbl);const sp=c.querySelector('span');if(sp)sp.remove();return c.outerHTML;};
+  const actIcon=active?(active.querySelector('svg')||{}).outerHTML||'':'';
+  const actLbl=active?(active.querySelector('span')||active).textContent.trim():'View';
+  return `<div class="vdock${viewDockOpen?' open':''}" id="vdock"><div class="gdock-scrim" data-vdock-close></div>
+    <div class="vdock-items">${btns.map(item).join('')}</div>
+    <button type="button" class="vdock-toggle" id="vdockToggle" aria-expanded="${viewDockOpen}" aria-label="Change view"><span class="vdock-ic">${actIcon}</span><span class="vdock-lbl">${escapeHtml(actLbl)}</span><svg class="vdock-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
   </div>`;
 }
