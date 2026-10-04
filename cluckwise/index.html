@@ -2169,6 +2169,44 @@
     html.has-home-bar .shell{ padding-bottom:86px; }
     html.has-home-bar .fab-add, html.has-home-bar .fab-notif, html.has-home-bar .fab-report{ bottom:100px; }
   }
+
+  /* ---------- Add tasks sheet: pick a day, tap frequent/backlog tasks, add in one go ---------- */
+  #addTasksSheet{ width:520px; max-height:88vh; }
+  #addTasksSheet .at-body{ gap:10px; padding-bottom:8px; }
+  .at-days{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .at-day{ height:36px; padding:0 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
+  .at-day.active{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .at-date{ height:36px; border:1.5px solid var(--line) !important; border-radius:999px !important; padding:0 12px !important; font-size:13px !important; width:auto !important; background:var(--surface-soft); color:var(--ink); }
+  .at-date.active{ border-color:var(--primary) !important; background:var(--primary-soft) !important; }
+  .at-new{ display:flex; gap:6px; }
+  .at-new input{ flex:1; min-width:0; }
+  .at-new button{ flex-shrink:0; padding:0 16px; border-radius:10px; border:none; background:var(--primary); color:#241A08; font-family:'Sora',sans-serif; font-weight:800; font-size:14px; cursor:pointer; }
+  .at-new button:disabled{ opacity:.45; cursor:default; }
+  .at-more{ align-self:flex-start; border:none; background:none; padding:0; color:var(--primary-dark); font-size:12.5px; font-weight:700; cursor:pointer; }
+  .at-sec{ display:flex; align-items:baseline; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .at-sec small{ font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; }
+  .at-freq{ display:flex; flex-wrap:wrap; gap:6px; }
+  .at-chip{ display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:0 12px 0 10px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+  .at-chip .task-icon{ width:20px; height:20px; font-size:14px; }
+  .at-chip .at-tick{ display:none; font-weight:900; color:#241A08; }
+  .at-chip.sel{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .at-chip.sel .at-tick{ display:inline; }
+  .at-chip.on-day{ opacity:.45; }
+  .at-backlog{ display:flex; flex-direction:column; gap:6px; }
+  .at-bl{ display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:14px; font-weight:600; text-align:left; cursor:pointer; }
+  .at-bl .at-box{ width:20px; height:20px; border-radius:6px; border:2px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; color:#241A08; }
+  .at-bl.sel{ border-color:var(--primary); background:var(--primary-soft); }
+  .at-bl.sel .at-box{ background:var(--primary); border-color:var(--primary); }
+  .at-bl .at-hi{ margin-left:auto; font-size:10px; font-weight:800; color:var(--danger); text-transform:uppercase; }
+  .at-empty{ font-size:13px; color:var(--muted); padding:4px 2px; }
+  .at-also{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--muted); }
+  .at-also button{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:999px; padding:7px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .at-foot{ padding:10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--line); background:var(--surface); }
+  .at-foot .btn-app{ width:100%; margin:0; }
+  .at-foot .btn-app:disabled{ opacity:.5; cursor:default; }
+  @media (max-width: 760px){
+    #addTasksSheet{ top:auto !important; bottom:0 !important; height:auto !important; max-height:90vh !important; border-radius:20px 20px 0 0 !important; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2939,6 +2977,24 @@
     <p class="nr-hint" id="nrHint"></p>
     <button class="btn-app" id="nrSaveBtn" disabled>Save report</button>
   </div>
+</div>
+
+<div class="form-modal" id="addTasksSheet" aria-labelledby="atTitle">
+  <div class="form-modal-head"><h2 id="atTitle">Add tasks</h2><button id="closeAddTasksSheet" aria-label="Close">✕</button></div>
+  <div class="form-modal-body at-body">
+    <div class="at-days" id="atDays"></div>
+    <div class="at-new">
+      <input type="text" id="atNewInput" maxlength="50" placeholder="Type a new task, or search…" autocomplete="off">
+      <button type="button" id="atNewAddBtn" disabled>Add</button>
+    </div>
+    <button type="button" class="at-more" id="atMoreBtn">More options — notes, people, repeat</button>
+    <div class="at-sec"><span>Frequent tasks</span><small>tap to select</small></div>
+    <div class="at-freq" id="atFreq"></div>
+    <div class="at-sec"><span>Backlog <b id="atBacklogCount"></b></span><small>tap to schedule</small></div>
+    <div class="at-backlog" id="atBacklog"></div>
+    <div class="at-also"><span>Also:</span><button type="button" id="atNewBatchBtn">＋ New batch</button><button type="button" id="atNewAuditBtn">＋ New audit</button></div>
+  </div>
+  <div class="at-foot"><button type="button" class="btn-app" id="atAddBtn" disabled>Select tasks to add</button></div>
 </div>
 
 <div class="form-modal" id="wxModal">
@@ -3926,7 +3982,10 @@
     wrap.className = 'inline-add-wrap';
     function renderClosed(){
       wrap.innerHTML = `<button class="inline-add-trigger" type="button">+ Add task</button>`;
-      wrap.querySelector('.inline-add-trigger').addEventListener('click', ()=>{ activeInlineAddKey = key; renderOpen(); });
+      wrap.querySelector('.inline-add-trigger').addEventListener('click', ()=>{
+        if(dateVal && useAddTasksSheet()){ openAddTasks(dateVal); return; }
+        activeInlineAddKey = key; renderOpen();
+      });
     }
     function renderOpen(){
       wrap.innerHTML = `
@@ -5137,6 +5196,11 @@
       </div>`;
     renderTaskIcon(card.querySelector('.task-icon'), item.name, item.icon);
     card.querySelector('.task-name').textContent = item.name;
+    card.addEventListener('click', (e)=>{
+      if(suppressNextClick || !useAddTasksSheet()) return;
+      if(e.target.closest('.task-menu-btn, .task-menu-popup, .freq-edit-row')) return;
+      openAddTasks(viewingDayKey(), ['f:' + item.id]);
+    });
     const menuBtn = card.querySelector('.task-menu-btn');
     const popup = card.querySelector('.task-menu-popup');
     popup.dataset.taskId = item.id;
@@ -9042,6 +9106,7 @@
     $('#eventModal').classList.remove('open');
     $('#reportModal').classList.remove('open');
     $('#newReportModal').classList.remove('open');
+    $('#addTasksSheet').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -9103,11 +9168,121 @@
     $('#scrim').classList.add('show');
   });
 
-  $('#quickAddFabBtn').addEventListener('click', ()=>{
+
+  // ---------- Add tasks sheet (phones & tablets): pick a day, then tap frequent and backlog tasks ----------
+  let atDay = null, atSel = new Set();
+  function viewingDayKey(){
+    const today = dateKey(new Date());
+    if(viewMode === 'list') return agendaDayKey();
+    if(viewMode === 'day') return dateKey(currentDate);
+    if(viewMode === 'kanban'){
+      const mon = getMonday(currentDate); const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      return (today >= dateKey(mon) && today <= dateKey(sun)) ? today : dateKey(mon);
+    }
+    return today;
+  }
+  function useAddTasksSheet(){ return window.innerWidth <= 1024 || window.matchMedia('(hover: none)').matches; }
+  function openAddTasks(day, preselect){
     closeOverlays();
-    if(viewMode==='list' || viewMode==='kanban'){ openCreateTaskModal(dateKey(new Date())); }
-    else { $('#quickAddSheet').classList.remove('hidden'); $('#scrim').classList.add('show'); }
-  });
+    atDay = day || viewingDayKey();
+    atSel = new Set(preselect || []);
+    $('#atNewInput').value = '';
+    renderAddTasks();
+    openDrawer('#addTasksSheet');
+  }
+  function renderAddTasks(){
+    const today = dateKey(new Date()), tomorrow = addDaysStr(today, 1);
+    const days = $('#atDays'); days.innerHTML = '';
+    const mk = (key, label)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'at-day' + (atDay === key ? ' active' : ''); b.textContent = label; b.addEventListener('click', ()=>{ atDay = key; renderAddTasks(); }); days.appendChild(b); };
+    mk(today, 'Today'); mk(tomorrow, 'Tomorrow');
+    if(atDay !== today && atDay !== tomorrow) mk(atDay, toDateObj(atDay).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }));
+    const pick = document.createElement('input'); pick.type = 'date'; pick.className = 'at-date' + ((atDay !== today && atDay !== tomorrow) ? ' active' : ''); pick.value = atDay; pick.setAttribute('aria-label', 'Pick a date');
+    pick.addEventListener('change', ()=>{ if(pick.value){ atDay = pick.value; renderAddTasks(); } });
+    days.appendChild(pick);
+    const q = ($('#atNewInput').value || '').trim().toLowerCase();
+    $('#atNewAddBtn').disabled = !q;
+    const onDay = new Set(tasks.filter(t=> t.date === atDay).map(t=> (t.name || '').trim().toLowerCase()));
+    // Frequent tasks
+    const fBox = $('#atFreq'); fBox.innerHTML = '';
+    const freq = frequentTemplates.filter(f=> !q || (f.name || '').toLowerCase().includes(q));
+    if(!frequentTemplates.length) fBox.innerHTML = '<div class="at-empty">No frequent tasks yet — tick "Save as a frequent task" when you add one.</div>';
+    else if(!freq.length) fBox.innerHTML = '<div class="at-empty">No frequent task matches.</div>';
+    freq.forEach(f=>{
+      const key = 'f:' + f.id, already = onDay.has((f.name || '').trim().toLowerCase());
+      const b = document.createElement('button'); b.type = 'button';
+      b.className = 'at-chip' + (atSel.has(key) ? ' sel' : '') + (already ? ' on-day' : '');
+      b.innerHTML = '<span class="at-tick">✓</span><span class="task-icon"></span><span class="at-nm"></span>';
+      renderTaskIcon(b.querySelector('.task-icon'), f.name, f.icon);
+      b.querySelector('.at-nm').textContent = f.name;
+      if(already) b.title = 'Already on this day';
+      b.addEventListener('click', ()=>{ atSel.has(key) ? atSel.delete(key) : atSel.add(key); renderAddTasks(); });
+      fBox.appendChild(b);
+    });
+    // Backlog
+    const backlog = tasks.filter(t=> !t.date && t.status !== 'done');
+    $('#atBacklogCount').textContent = backlog.length ? `(${backlog.length})` : '';
+    const bBox = $('#atBacklog'); bBox.innerHTML = '';
+    const bl = backlog.filter(t=> !q || (t.name || '').toLowerCase().includes(q));
+    if(!backlog.length) bBox.innerHTML = '<div class="at-empty">Backlog is empty.</div>';
+    else if(!bl.length) bBox.innerHTML = '<div class="at-empty">No backlog task matches.</div>';
+    bl.forEach(t=>{
+      const key = 'b:' + t.id;
+      const b = document.createElement('button'); b.type = 'button';
+      b.className = 'at-bl' + (atSel.has(key) ? ' sel' : '');
+      b.innerHTML = '<span class="at-box">' + (atSel.has(key) ? '✓' : '') + '</span><span class="task-icon"></span><span class="at-nm"></span>' + (t.priority === 'high' ? '<span class="at-hi">High</span>' : '');
+      renderTaskIcon(b.querySelector('.task-icon'), t.name, t.icon);
+      b.querySelector('.at-nm').textContent = t.name;
+      b.addEventListener('click', ()=>{ atSel.has(key) ? atSel.delete(key) : atSel.add(key); renderAddTasks(); });
+      bBox.appendChild(b);
+    });
+    // Footer
+    const n = atSel.size, btn = $('#atAddBtn');
+    const dayLabel = atDay === today ? 'Today' : atDay === tomorrow ? 'Tomorrow' : toDateObj(atDay).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+    btn.disabled = !n;
+    btn.textContent = n ? `Add ${n} task${n === 1 ? '' : 's'} to ${dayLabel}` : 'Select tasks to add';
+  }
+  function commitAddTasks(){
+    if(!atSel.size || !atDay) return;
+    const snap = captureUndo();
+    let added = 0, skipped = 0;
+    atSel.forEach(key=>{
+      const id = key.slice(2);
+      if(key.startsWith('f:')){
+        const f = frequentTemplates.find(x=> x.id === id); if(!f) return;
+        const norm = (f.name || '').trim().toLowerCase();
+        if(tasks.some(t=> t.date === atDay && (t.name || '').trim().toLowerCase() === norm)){ skipped++; return; }
+        addTask(f.name, f.icon, atDay); added++;
+      } else {
+        const t = tasks.find(x=> x.id === id); if(!t) return;
+        addHistory('Scheduled', `${taskLabel(t)} moved from Backlog to ${formatShort(atDay)}`);
+        t.date = atDay; added++;
+      }
+    });
+    persist();
+    closeOverlays();
+    renderAll();
+    if(added) offerUndo(`Added ${added} task${added === 1 ? '' : 's'} to ${formatShort(atDay)}` + (skipped ? ` · ${skipped} already there` : ''), snap);
+    else showToast('Those tasks are already on that day.');
+  }
+  function addNewTaskFromSheet(){
+    const name = ($('#atNewInput').value || '').trim(); if(!name || !atDay) return;
+    const snap = captureUndo();
+    addTask(name, guessIcon(name), atDay);
+    persist();
+    $('#atNewInput').value = '';
+    renderAll();
+    renderAddTasks();
+    offerUndo(`Added "${name}" to ${formatShort(atDay)}`, snap);
+  }
+  $('#closeAddTasksSheet').addEventListener('click', closeOverlays);
+  $('#atAddBtn').addEventListener('click', commitAddTasks);
+  $('#atNewAddBtn').addEventListener('click', addNewTaskFromSheet);
+  $('#atNewInput').addEventListener('input', renderAddTasks);
+  $('#atNewInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); addNewTaskFromSheet(); } });
+  $('#atMoreBtn').addEventListener('click', ()=>{ const d = atDay, nm = ($('#atNewInput').value || '').trim(); closeOverlays(); openCreateTaskModal(d); if(nm){ $('#editTaskNameInput').value = nm; } });
+  $('#atNewBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openBatchModal(); });
+  $('#atNewAuditBtn').addEventListener('click', ()=>{ closeOverlays(); openEventModal(); });
+  $('#quickAddFabBtn').addEventListener('click', ()=> openAddTasks(viewingDayKey()));
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=> openBatchModal());
   $('#closeAuditConflictModal').addEventListener('click', closeOverlays);
