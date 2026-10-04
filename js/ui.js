@@ -2248,3 +2248,105 @@ function setSiloRingFromModal(group,siloNum,rings){
 }
 
 /* ---------- Main render ---------- */
+
+// ---------- Current batch window (same content in ProdWise, CluckWise and the Viewer's Batch page) ----------
+function biD(k){ const p = String(k).slice(0,10).split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function biDays(a, b){ return Math.round((biD(b) - biD(a)) / 86400000); }
+function biFmt(k, o){ return biD(k).toLocaleDateString(undefined, o || { day:'numeric', month:'short' }); }
+function biEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+function biInt(n){ return Math.round(n).toLocaleString(); }
+// x = { number, start, end, today, sheds:[{name, placement, cleanout}], birds:'loading'|null|{placed,now,picked,mort,pct,updated}, events:'loading'|null|[{name,date,color,batchNumber}] }
+function batchInfoHtml(x){
+  const total = Math.max(1, biDays(x.start, x.end));
+  const day = Math.max(0, biDays(x.start, x.today));
+  const left = Math.max(0, biDays(x.today, x.end));
+  const pct = Math.min(100, Math.round(day / total * 100));
+  let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
+    <div class="bi-day">Day ${day}<small> of ${total}</small></div>
+    <div class="bi-bar"><span style="width:${pct}%"></span></div>
+    <div class="bi-dates"><span>Placed ${biFmt(x.start, { day:'numeric', month:'short', year:'numeric' })}</span><span>Clean-out ${biFmt(x.end, { day:'numeric', month:'short', year:'numeric' })}</span></div></div>`;
+  if(x.birds === 'loading') h += `<div class="bi-note">Loading bird numbers…</div>`;
+  else if(!x.birds) h += `<div class="bi-note">Bird numbers aren't available for this batch yet.</div>`;
+  else {
+    const b = x.birds;
+    h += `<div class="bi-stats">
+      <div class="bi-tile"><span class="bi-tl">Birds placed</span><span class="bi-tv">${biInt(b.placed)}</span><span class="bi-ts">at placement</span></div>
+      <div class="bi-tile"><span class="bi-tl">Birds now</span><span class="bi-tv">${biInt(b.now)}</span><span class="bi-ts">${b.picked ? biInt(b.picked) + ' picked up' : 'on the farm'}</span></div>
+      <div class="bi-tile bi-mort"><span class="bi-tl">Mortality</span><span class="bi-tv">${b.pct.toFixed(1)}%</span><span class="bi-ts">${biInt(b.mort)} birds${b.updated ? ' · updated ' + biFmt(b.updated) : ''}</span></div></div>`;
+  }
+  const sheds = (x.sheds || []).filter(s=> s.placement);
+  if(sheds.length){
+    h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span>Clean-out</span></div>`;
+    sheds.forEach(s=>{
+      const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
+      const coLeft = biDays(x.today, co);
+      h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span><span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
+    });
+    h += `</div>`;
+  }
+  h += `<div class="bi-sec">Audits &amp; events</div>`;
+  if(x.events === 'loading') h += `<div class="bi-note">Loading audits…</div>`;
+  else if(!x.events) h += `<div class="bi-note">Audits and events show here from CluckWise.</div>`;
+  else {
+    const up = x.events.filter(e=> e.date >= x.today).sort((a,b)=> a.date.localeCompare(b.date)).slice(0, 8);
+    if(!up.length) h += `<div class="bi-note">No audits or events coming up.</div>`;
+    up.forEach(e=>{
+      const d = biDays(x.today, e.date);
+      h += `<div class="bi-ev"><span class="bi-dot" style="background:${biEsc(e.color || '#888')}"></span><span class="bi-ev-t"><b>${biEsc(e.batchNumber ? e.name + ' · #' + e.batchNumber : e.name)}</b><small>${biFmt(e.date, { weekday:'short', day:'numeric', month:'short' })}</small></span><span class="bi-when">${d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'in ' + d + ' days'}</span></div>`;
+    });
+  }
+  return h;
+}
+function biBirdStats(sheds, today){
+  let placed = 0, mort = 0, picked = 0, updated = '';
+  (sheds || []).forEach(sh=>{
+    placed += Number(sh.initialPopulation) || 0;
+    mort += Number(sh.mortality) || 0;
+    (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; if(d && d <= today) picked += Number(p.birds) || 0; });
+    const u = biNorm(sh.mortalityUpdatedAt);
+    if(u > updated) updated = u;
+  });
+  if(!placed) return null;
+  return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
+}
+// Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
+function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
+function biKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+let batchInfoOpen=false;
+const biEventsCache={at:0,v:undefined};
+async function biLoadEvents(){
+  if(!syncFarmName)return null;
+  if(biEventsCache.v!==undefined&&Date.now()-biEventsCache.at<600000)return biEventsCache.v;
+  let v=null;
+  for(const name of [...new Set([syncFarmName,syncFarmName.toLowerCase()])]){
+    try{const res=await fetch(`${SYNC_WORKER_URL}/?farm=${encodeURIComponent(name)}&repo=${encodeURIComponent(SYNC_REPO)}`);if(!res.ok)continue;
+      const j=await res.json();const ev=j&&j.data&&Array.isArray(j.data.events)?j.data.events:null;
+      if(ev){v=ev.filter(e=>e&&e.date&&e.name).map(e=>({name:e.name,date:String(e.date).slice(0,10),color:e.color,batchNumber:e.batchNumber}));break;}}catch(e){}
+  }
+  biEventsCache.at=Date.now();biEventsCache.v=v;return v;
+}
+function batchInfoForProdwise(){
+  if(!farmData)return null;
+  const sheds=(farmData.sheds||[]).map((s,i)=>({name:String(s.id||i+1),placement:s.placementDate?iso(s.placementDate):'',cleanout:s.cleanoutDate?iso(s.cleanoutDate):''}));
+  const placed=sheds.map(s=>s.placement).filter(Boolean).sort();
+  if(!placed.length)return null;
+  const start=placed[0];
+  const ends=sheds.map(s=>s.cleanout).filter(Boolean).sort();
+  const end=ends.length?ends[ends.length-1]:iso(addDays(dateOnly(start),56));
+  sheds.forEach(s=>{if(!s.cleanout)s.cleanout=end;});
+  const birds=biBirdStats(farmData.sheds,iso(new Date()));
+  // Same figures as the dashboard: birds on hand from the shed model, picked up from logged pickups
+  if(birds){const td=dateOnly(new Date());birds.now=(farmData.sheds||[]).reduce((t,x)=>t+liveAtStartOfDay(x,td),0);birds.picked=(farmData.sheds||[]).reduce((t,x)=>t+totalPicked(x),0);}
+  return {number:predState.batchNumber||farmData.batchNumber||'—',start,end,today:iso(new Date()),sheds,birds,events:'loading'};
+}
+function openBatchInfoModal(){
+  const info=batchInfoForProdwise();
+  const m=document.getElementById('batchInfoModal'),body=document.getElementById('batchInfoBody');if(!m||!body)return;
+  body.innerHTML=info?batchInfoHtml(info):'<div class="bi-note">Add placement dates to your sheds to see the batch details.</div>';
+  batchInfoOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');
+  if(info)biLoadEvents().then(ev=>{info.events=ev;if(batchInfoOpen)body.innerHTML=batchInfoHtml(info);});
+}
+function closeBatchInfoModal(){
+  batchInfoOpen=false;const m=document.getElementById('batchInfoModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+}

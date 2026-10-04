@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
+      const actions={moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#settingsReportBtn')){generateBatchReport();return;}
 
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
+    if(e.target.closest('[data-batch-info]')){openBatchInfoModal();return;}
+    if(e.target.closest('#batchInfoClose')||(batchInfoOpen&&e.target.id==='batchInfoModal')){closeBatchInfoModal();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
     if(loadsModalState.open&&e.target.id==='loadsModal'){closeLoadsModal();return;}
         if(e.target.closest('[data-open-loads-modal]')){openLoadsModal();return;}
@@ -282,6 +284,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
       if(adjModalOpen){toggleAdjCollapse();return;}
       if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
+      if(batchInfoOpen){closeBatchInfoModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}
       if(feedCompareState.modalOpen){closeCompareModal();return;}
       if(settingsDrawerOpen){closeSettingsDrawer();return;}

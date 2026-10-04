@@ -3084,8 +3084,9 @@
     sheds.forEach(sh=>{
       placed += Number(sh.initialPopulation) || 0;
       mort += Number(sh.mortality) || 0;
-      (sh.pickups || []).forEach(p=>{ if(p && p.date && String(p.date).slice(0, 10) <= todayKey) picked += Number(p.birds) || 0; });
-      const u = String(sh.mortalityUpdatedAt || '').slice(0, 10); if(u > updated) updated = u;
+      const loc = v=>{ if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : dateKey(d); };
+      (sh.pickups || []).forEach(p=>{ const d = p ? loc(p.date) : ''; if(d && d <= todayKey) picked += Number(p.birds) || 0; });
+      const u = loc(sh.mortalityUpdatedAt); if(u > updated) updated = u;
     });
     if(!placed) return null;
     return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };

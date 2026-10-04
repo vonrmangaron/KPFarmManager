@@ -21,7 +21,7 @@ const run=(label,code)=>{try{return vm.runInContext(code,ctx);}catch(e){failed++
 
 console.log('2. Required functions exist');
 ['batchKpis','computeFarmTotals','computeGroupPredictions','computePredictions','computeSiloForecast','computeFarmAlerts','measuredFeedToDate','feedEatenMeasured',
- 'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner',
+ 'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner','batchInfoHtml','batchInfoForProdwise','openBatchInfoModal','biBirdStats',
  'siloSettingsBarHtml','renderSettingsFarmHistoryCard','fhRowHtml','summarizeBatchData','mergeCloudFarmHistory','siloReadTime','siloConfidence','siloSafetyDays',
  'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue','refreshLoadsViews','leftoverNoteText','projLeftoverText']
  .forEach(n=>ok(run('typeof '+n,`typeof ${n}`)==='function','missing function: '+n));
@@ -63,6 +63,7 @@ run('readings confidence',`(()=>{const r=siloData[1].readings[siloData[1].readin
 
 console.log('5. Rendered cards have no NaN / undefined');
 const html={kpi:'renderFarmKpiCard()',planner:'renderFeedPlanner(1,shedsForGroup(1),T)',siloBar:'siloSettingsBarHtml()',history:'renderSettingsFarmHistoryCard()',
+  batchInfo:'batchInfoHtml(Object.assign(batchInfoForProdwise(),{events:[{name:"Audit",date:iso(addDays(T,5)),color:"#f90"}]}))',
   pairSwitch:'pairSwitchHtml(1,"pred")',feedPlan:'feedPlanHtml()',fhRow:'fhRowHtml(predState.farmHistory[0])'};
 for(const [n,c] of Object.entries(html)){const h=run('render '+n,c);if(h!=null){const txt=String(h).replace(/<[^>]+>/g,' ');ok(!/\bNaN\b|\bundefined\b|Infinity/.test(txt),n+' renders without NaN/undefined');}}
 

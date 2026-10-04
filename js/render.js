@@ -340,8 +340,9 @@ function renderSidebarBatch() {
   const today = new Date();
   const age = Math.max(0, ...(farmData.sheds || []).filter(s => s.placementDate).map(s => daysBetween(s.placementDate, today)));
   el.hidden = false;
-  el.innerHTML = `<span class="sb-batch-k">Current batch</span>
-    <span class="sb-batch-v">${batch ? 'Batch ' + escapeHtml(String(batch)) : 'No batch number'}${age > 0 ? ` <em>· Day ${age}</em>` : ''}</span>`;
+  const sheds = (farmData.sheds || []).length;
+  el.innerHTML = `<button type="button" class="cur-batch" data-batch-info title="Batch details"><span class="cb-text"><span class="cb-k">Current batch</span>
+    <span class="cb-v">${batch ? 'Batch ' + escapeHtml(String(batch)) : 'No batch number'}<em>${age > 0 ? ` · Day ${age}` : ''}</em></span></span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
 }
 
 // Mobile bottom nav: Home · Groups · [Silo reading] · Predict · More.
@@ -391,6 +392,7 @@ function renderMoreSheet() {
     <div class="more-panel" role="dialog" aria-modal="true" aria-label="More">
       <div class="more-grip" aria-hidden="true"></div>
       <div class="more-group">
+        ${farmData ? row('moreBatch', 'home', 'Current batch', 'Birds, mortality, shed ages, audits') : ''}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}

@@ -2208,6 +2208,50 @@
   @media (max-width: 760px){
     #addTasksSheet{ top:auto !important; bottom:0 !important; height:auto !important; max-height:90vh !important; border-radius:20px 20px 0 0 !important; }
   }
+  /* ---------- Current batch card + window (same in ProdWise and CluckWise) ---------- */
+  .cur-batch{ display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface-soft); color:var(--ink); font-family:inherit; text-align:left; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+  .cur-batch:hover{ border-color:var(--primary); }
+  .cur-batch .cb-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .cur-batch .cb-k{ font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .cur-batch .cb-v{ font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+  .cur-batch .cb-v em{ font-style:normal; font-weight:500; color:var(--muted); }
+  .cur-batch .cb-chev{ width:16px; height:16px; flex-shrink:0; color:var(--muted); }
+  .bi-hero{ border-radius:16px; background:linear-gradient(155deg, #FFC812, #C9955F); color:#241A08; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .bi-hero-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .bi-chip{ padding:4px 10px; border-radius:999px; background:rgba(255,255,255,0.55); font-weight:800; font-size:13px; }
+  .bi-left{ padding:4px 10px; border-radius:999px; background:rgba(0,0,0,0.12); font-weight:800; font-size:13px; white-space:nowrap; }
+  .bi-day{ font-family:'Sora',sans-serif; font-weight:800; font-size:34px; line-height:1; }
+  .bi-day small{ font-size:14px; font-weight:700; opacity:.8; margin-left:6px; }
+  .bi-bar{ height:8px; border-radius:999px; background:rgba(255,255,255,0.5); overflow:hidden; }
+  .bi-bar span{ display:block; height:100%; background:#2B2116; border-radius:999px; }
+  .bi-dates{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:12.5px; font-weight:700; opacity:.85; }
+  .bi-stats{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:12px; }
+  .bi-tile{ background:var(--surface-soft); border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .bi-tl{ font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .bi-tv{ font-family:'Sora',sans-serif; font-weight:800; font-size:19px; color:var(--ink); overflow-wrap:anywhere; }
+  .bi-ts{ font-size:12px; color:var(--muted); }
+  .bi-mort .bi-tv{ color:var(--danger); }
+  .bi-note{ margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:var(--surface-soft); color:var(--muted); font-size:13px; text-align:center; }
+  .bi-sec{ margin:18px 0 8px; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .bi-table{ border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .bi-tr{ display:grid; grid-template-columns:60px 1fr 1.3fr; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
+  .bi-tr:first-child{ border-top:none; }
+  .bi-th{ background:var(--surface-soft); font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:7px 12px; }
+  .bi-s{ font-family:'Sora',sans-serif; font-weight:800; }
+  .bi-a{ font-weight:700; }
+  .bi-o{ display:flex; flex-direction:column; text-align:right; }
+  .bi-o small{ font-size:12px; font-weight:700; color:var(--primary-dark); }
+  .bi-tr.done{ opacity:.55; }
+  .bi-ev{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; margin-bottom:6px; background:var(--surface); }
+  .bi-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .bi-ev-t{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .bi-ev-t b{ font-size:14px; color:var(--ink); }
+  .bi-ev-t small{ font-size:12px; color:var(--muted); }
+  .bi-when{ flex-shrink:0; padding:3px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-weight:800; font-size:12px; }
+  @media (max-width: 420px){ .bi-stats{ grid-template-columns:1fr 1fr; } .bi-mort{ grid-column:1 / -1; } }
+  #batchInfoModal{ width:560px; }
+  #sbActiveBatch{ margin-bottom:12px; }
+  .cur-batch .batch-swatch{ display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:2px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2420,6 +2464,7 @@
     <div class="sheet-handle"></div>
     <div class="menu-head"><span class="sheet-title">Menu</span><span class="menu-sync" id="menuSyncLine"></span></div>
     <button class="menu-manage" id="moreManageBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg></span><span class="mm-text"><b>Manage farm</b><small>Batches, audits, frequent tasks, backlog</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <button class="menu-manage menu-batch" id="moreBatchBtn"><span class="mm-ic"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l9-6 9 6v11"/><path d="M9 21v-6h6v6"/></svg></span><span class="mm-text"><b id="moreBatchTitle">Current batch</b><small id="moreBatchSub">Day, birds, sheds, audits</small></span><svg class="mi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <div class="menu-grid">
       <button class="menu-tile" id="moreSearchBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
       <button class="menu-tile" id="moreYearBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><span>Year view</span></button>
@@ -2996,6 +3041,11 @@
     <div class="at-also"><span>Also:</span><button type="button" id="atNewBatchBtn">＋ New batch</button><button type="button" id="atNewAuditBtn">＋ New audit</button></div>
   </div>
   <div class="at-foot"><button type="button" class="btn-app" id="atAddBtn" disabled>Select tasks to add</button></div>
+</div>
+
+<div class="form-modal" id="batchInfoModal">
+  <div class="form-modal-head"><h2 id="biTitle">Current batch</h2><button id="closeBatchInfo" aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="biBody"></div>
 </div>
 
 <div class="form-modal" id="wxModal">
@@ -5956,14 +6006,10 @@
     const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
     const pct = active ? Math.min(100, Math.max(0, Math.round(batchAgeOn(b, today) / total * 100))) : 0;
     const daysTo = Math.round((toDateObj(b.start) - toDateObj(today)) / 86400000);
-    box.innerHTML = `<div class="sb-card">
-      <div class="sb-card-top"><span class="sb-eyebrow">${active ? 'Active batch' : 'Next batch'}</span>
-        <span class="sb-chip ${active ? 'ok' : 'soon'}">${active ? `Day ${batchAgeOn(b, today)}` : `in ${daysTo} day${daysTo === 1 ? '' : 's'}`}</span></div>
-      <div class="sb-batch-title"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span>
-        <span class="sb-batch-num">#${escapeHtml(b.number)}</span>${sheds ? `<span class="sb-batch-meta">· ${sheds} shed${sheds === 1 ? '' : 's'}</span>` : ''}</div>
-      ${active ? `<div class="sb-track" role="progressbar" aria-label="Batch progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%;background:${colorForBatchNumber(b.number)}"></span></div>` : ''}
-      <div class="sb-card-foot"><span>${active ? 'Placed' : 'Starts'} ${escapeHtml(formatShort(b.start))}</span><span>Ends ${escapeHtml(formatShort(b.end))}</span></div>
-    </div>`;
+    box.innerHTML = `<button type="button" class="cur-batch" id="curBatchBtn" title="Batch details">
+      <span class="cb-text"><span class="cb-k">${active ? 'Current batch' : 'Next batch'}</span>
+      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span></span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+    box.querySelector('#curBatchBtn').addEventListener('click', ()=> openBatchInfo(b.number));
   }
 
   function renderBatches(){
@@ -9108,6 +9154,7 @@
     $('#reportModal').classList.remove('open');
     $('#newReportModal').classList.remove('open');
     $('#addTasksSheet').classList.remove('open');
+    $('#batchInfoModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -9163,6 +9210,8 @@
   $('#navReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#navMoreBtn').addEventListener('click', ()=>{
     closeOverlays();
+    { const cb = currentOrNextBatch(); const mb = $('#moreBatchBtn'); mb.hidden = !cb;
+      if(cb){ const td = dateKey(new Date()); $('#moreBatchTitle').textContent = `Batch #${cb.number}` + (td >= cb.start ? ` · Day ${batchAgeOn(cb, td)}` : ''); $('#moreBatchSub').textContent = 'Birds, mortality, shed ages, audits'; } }
     const sl = $('#menuSyncLine'), si = $('#saveIndicator');
     if(sl && si){ sl.textContent = (si.querySelector('.sync-label') || si).textContent.trim(); sl.className = 'menu-sync ' + si.className.replace('sync-status', '').trim(); }
     $('#moreSheet').classList.remove('hidden');
@@ -9283,6 +9332,107 @@
   $('#atMoreBtn').addEventListener('click', ()=>{ const d = atDay, nm = ($('#atNewInput').value || '').trim(); closeOverlays(); openCreateTaskModal(d); if(nm){ $('#editTaskNameInput').value = nm; } });
   $('#atNewBatchBtn').addEventListener('click', ()=>{ closeOverlays(); openBatchModal(); });
   $('#atNewAuditBtn').addEventListener('click', ()=>{ closeOverlays(); openEventModal(); });
+  // ---------- Current batch window (same content in ProdWise, CluckWise and the Viewer's Batch page) ----------
+  function biD(k){ const p = String(k).slice(0,10).split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function biDays(a, b){ return Math.round((biD(b) - biD(a)) / 86400000); }
+  function biFmt(k, o){ return biD(k).toLocaleDateString(undefined, o || { day:'numeric', month:'short' }); }
+  function biEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+  function biInt(n){ return Math.round(n).toLocaleString(); }
+  // x = { number, start, end, today, sheds:[{name, placement, cleanout}], birds:'loading'|null|{placed,now,picked,mort,pct,updated}, events:'loading'|null|[{name,date,color,batchNumber}] }
+  function batchInfoHtml(x){
+    const total = Math.max(1, biDays(x.start, x.end));
+    const day = Math.max(0, biDays(x.start, x.today));
+    const left = Math.max(0, biDays(x.today, x.end));
+    const pct = Math.min(100, Math.round(day / total * 100));
+    let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
+      <div class="bi-day">Day ${day}<small> of ${total}</small></div>
+      <div class="bi-bar"><span style="width:${pct}%"></span></div>
+      <div class="bi-dates"><span>Placed ${biFmt(x.start, { day:'numeric', month:'short', year:'numeric' })}</span><span>Clean-out ${biFmt(x.end, { day:'numeric', month:'short', year:'numeric' })}</span></div></div>`;
+    if(x.birds === 'loading') h += `<div class="bi-note">Loading bird numbers…</div>`;
+    else if(!x.birds) h += `<div class="bi-note">Bird numbers aren't available for this batch yet.</div>`;
+    else {
+      const b = x.birds;
+      h += `<div class="bi-stats">
+        <div class="bi-tile"><span class="bi-tl">Birds placed</span><span class="bi-tv">${biInt(b.placed)}</span><span class="bi-ts">at placement</span></div>
+        <div class="bi-tile"><span class="bi-tl">Birds now</span><span class="bi-tv">${biInt(b.now)}</span><span class="bi-ts">${b.picked ? biInt(b.picked) + ' picked up' : 'on the farm'}</span></div>
+        <div class="bi-tile bi-mort"><span class="bi-tl">Mortality</span><span class="bi-tv">${b.pct.toFixed(1)}%</span><span class="bi-ts">${biInt(b.mort)} birds${b.updated ? ' · updated ' + biFmt(b.updated) : ''}</span></div></div>`;
+    }
+    const sheds = (x.sheds || []).filter(s=> s.placement);
+    if(sheds.length){
+      h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span>Clean-out</span></div>`;
+      sheds.forEach(s=>{
+        const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
+        const coLeft = biDays(x.today, co);
+        h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span><span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
+      });
+      h += `</div>`;
+    }
+    h += `<div class="bi-sec">Audits &amp; events</div>`;
+    if(x.events === 'loading') h += `<div class="bi-note">Loading audits…</div>`;
+    else if(!x.events) h += `<div class="bi-note">Audits and events show here from CluckWise.</div>`;
+    else {
+      const up = x.events.filter(e=> e.date >= x.today).sort((a,b)=> a.date.localeCompare(b.date)).slice(0, 8);
+      if(!up.length) h += `<div class="bi-note">No audits or events coming up.</div>`;
+      up.forEach(e=>{
+        const d = biDays(x.today, e.date);
+        h += `<div class="bi-ev"><span class="bi-dot" style="background:${biEsc(e.color || '#888')}"></span><span class="bi-ev-t"><b>${biEsc(e.batchNumber ? e.name + ' · #' + e.batchNumber : e.name)}</b><small>${biFmt(e.date, { weekday:'short', day:'numeric', month:'short' })}</small></span><span class="bi-when">${d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'in ' + d + ' days'}</span></div>`;
+      });
+    }
+    return h;
+  }
+  function biBirdStats(sheds, today){
+    let placed = 0, mort = 0, picked = 0, updated = '';
+    (sheds || []).forEach(sh=>{
+      placed += Number(sh.initialPopulation) || 0;
+      mort += Number(sh.mortality) || 0;
+      (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; if(d && d <= today) picked += Number(p.birds) || 0; });
+      const u = biNorm(sh.mortalityUpdatedAt);
+      if(u > updated) updated = u;
+    });
+    if(!placed) return null;
+    return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
+  }
+  // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
+  function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
+  function biKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+  function currentOrNextBatch(){
+    const today = dateKey(new Date());
+    return batches.filter(b=> b.start && b.end && today >= b.start && today <= b.end).sort((a,b)=> b.start.localeCompare(a.start))[0]
+      || batches.filter(b=> b.start && b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0] || null;
+  }
+  const biBirdCache = new Map();
+  async function biLoadBirds(no){
+    const farm = (ghFarmName || '').trim();
+    if(!farm || !no) return null;
+    const hit = biBirdCache.get(no); if(hit && Date.now() - hit.at < 600000) return hit.v;
+    let v = null;
+    for(const name of [...new Set([farm, farm.toLowerCase()])]){
+      try{
+        const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(name + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+        if(!res.ok) continue;
+        const j = await res.json();
+        if(j && j.data && j.data.farmData){ v = biBirdStats(j.data.farmData.sheds, dateKey(new Date())); break; }
+      }catch(e){}
+    }
+    biBirdCache.set(no, { at: Date.now(), v });
+    return v;
+  }
+  function openBatchInfo(number){
+    const b = batches.find(x=> String(x.number) === String(number)) || currentOrNextBatch();
+    if(!b) return;
+    closeOverlays();
+    const today = dateKey(new Date());
+    const info = { number: b.number, start: b.start, end: b.end, today,
+      sheds: (b.sheds || []).slice().sort((x,y)=> String(x.shed).localeCompare(String(y.shed), undefined, { numeric:true })).map(sh=> ({ name: sh.shed, placement: sh.placement, cleanout: sh.cleanout || b.end })),
+      birds: 'loading', events: events.map(e=> ({ name: e.name, date: e.date, color: e.color, batchNumber: e.batchNumber })) };
+    $('#biTitle').textContent = today >= b.start ? 'Current batch' : 'Next batch';
+    $('#biBody').innerHTML = batchInfoHtml(info);
+    openDrawer('#batchInfoModal');
+    biLoadBirds(b.number).then(v=>{ info.birds = v; if($('#batchInfoModal').classList.contains('open')) $('#biBody').innerHTML = batchInfoHtml(info); });
+  }
+  $('#closeBatchInfo').addEventListener('click', closeOverlays);
+  $('#moreBatchBtn').addEventListener('click', ()=>{ const cb = currentOrNextBatch(); closeOverlays(); if(cb) openBatchInfo(cb.number); });
   $('#quickAddFabBtn').addEventListener('click', ()=> openAddTasks(viewingDayKey()));
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=> openBatchModal());
