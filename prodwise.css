@@ -3753,3 +3753,17 @@ label.lbl { display: block; }
   .vdock { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   .pred-layout, #app { padding-bottom: 72px; }
 }
+
+/* Phones: views + Adjustments in one round yellow button on the right (same as CluckWise) */
+@media (max-width: 768px) {
+  body.has-vdock .adj-fab { display: none !important; }
+  .vdock { left: auto; right: 16px; align-items: flex-end; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .vdock-items { align-items: flex-end; flex-direction: column; }
+  .vdock-item::after { content: none; }
+  .vdock-item::before { content: attr(data-label); position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); white-space: nowrap; padding: 6px 11px; border-radius: 999px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow-md); font: 700 13px Sora, sans-serif; pointer-events: none; }
+  .vdock-adj { color: var(--primary-dark); margin-top: 4px; }
+  .vdock-toggle, body.theme-dark .vdock-toggle { width: 58px; height: 58px; padding: 0; gap: 0; justify-content: center; border-radius: 50%; border: none; background: #FFC812; color: #241A08; box-shadow: var(--shadow-lg); }
+  .vdock-toggle .vd-close { display: none; }
+  .vdock.open .vdock-toggle .vd-open { display: none; }
+  .vdock.open .vdock-toggle .vd-close { display: block; }
+}

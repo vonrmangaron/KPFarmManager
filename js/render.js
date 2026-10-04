@@ -2159,7 +2159,7 @@ function viewDockHtml(rail){
   const actIcon=active?(active.querySelector('svg')||{}).outerHTML||'':'';
   const actLbl=active?(active.querySelector('span')||active).textContent.trim():'View';
   return `<div class="vdock${viewDockOpen?' open':''}" id="vdock"><div class="gdock-scrim" data-vdock-close></div>
-    <div class="vdock-items">${btns.map(item).join('')}</div>
-    <button type="button" class="vdock-toggle" id="vdockToggle" aria-expanded="${viewDockOpen}" aria-label="Change view"><span class="vdock-ic">${actIcon}</span><span class="vdock-lbl">${escapeHtml(actLbl)}</span><svg class="vdock-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+    <div class="vdock-items">${btns.map(item).join('')}<button type="button" class="vdock-item vdock-adj" data-toggle-adjustments="1" data-label="Adjustments">${navIcon('gear')}</button></div>
+    <button type="button" class="vdock-toggle" id="vdockToggle" aria-expanded="${viewDockOpen}" aria-label="Views and adjustments — now: ${escapeAttr(actLbl)}" title="Views and adjustments"><svg class="vd-open" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg><svg class="vd-close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>`;
 }

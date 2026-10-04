@@ -252,7 +252,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){activeTab='predictions';setPredGroup(Number(gpg.dataset.gotoPredgroup));window.scrollTo(0,0);return;}
     if(e.target.closest('#vdockToggle')){viewDockOpen=!viewDockOpen;groupDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.toggle('open',viewDockOpen);const g=document.getElementById('gdock');if(g)g.classList.remove('open');return;}
     if(viewDockOpen&&(!e.target.closest('#vdock')||e.target.closest('[data-vdock-close]'))){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}
-    if(e.target.closest('.vdock-item')){viewDockOpen=false;}
+    if(e.target.closest('.vdock-item')){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}
     if(e.target.closest('#gdockToggle')){viewDockOpen=false;const vd=document.getElementById('vdock');if(vd)vd.classList.remove('open');groupDockOpen=!groupDockOpen;const d=document.getElementById('gdock');if(d)d.classList.toggle('open',groupDockOpen);e.target.closest('#gdockToggle').setAttribute('aria-expanded',String(groupDockOpen));return;}
     if(groupDockOpen&&(!e.target.closest('#gdock')||e.target.closest('[data-gdock-close]'))){groupDockOpen=false;const d=document.getElementById('gdock');if(d)d.classList.remove('open');}
     if(e.target.closest('.gdock-item')){groupDockOpen=false;}
