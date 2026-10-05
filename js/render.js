@@ -1773,7 +1773,7 @@ function adjModalBodyHtml(){
     <div class="adj-actions">
       <button type="button" class="btn-global-autofill-sm" data-global-autofill="1" ${dirty?'disabled':''}>✨ Auto-fill all sheds</button>
       <button type="button" class="btn-global-clear-sm" data-global-clear-pickups="1" ${dirty?'disabled':''}>🗑️ Clear all planned pickups</button>
-      ${blockedCount>0?`<button type="button" class="bdw-btn" data-replan-blocked="1" ${dirty?'disabled':''}>Re-plan ${blockedCount} pickup${blockedCount===1?'':'s'} on blocked days</button>`:''}
+      ${blockedCount>0?`<button type="button" class="btn-replan-sm" data-replan-blocked="1" ${dirty?'disabled':''}>📅 Re-plan ${blockedCount} pickup${blockedCount===1?'':'s'} on blocked days</button>`:''}
     </div>
   </section>`;
 }
