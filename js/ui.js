@@ -1235,6 +1235,16 @@ function updateShedField(shedIdx,key,rawValue){
   else if(key==='chickWeightGrams'){const n=Number(rawValue);if(Number.isFinite(n)&&n>0){const kg=n/1000;if(kg>=MIN_CHICK_WEIGHT_KG&&kg<=MAX_CHICK_WEIGHT_KG)shed.chickWeightKg=kg;}}
   saveState();schedulePush();scheduleRender(60);
 }
+// Dashboard Clean-out card: one date for every shed still open (sheds with a
+// logged final pickup keep that pickup's date)
+function setAllCleanoutDates(rawValue){
+  if(!farmData||!rawValue)return 0;
+  const d=parseExcelDate(rawValue);if(!d)return 0;
+  let n=0;
+  farmData.sheds.forEach(shed=>{if(!shed.placementDate||finalPickupOf(shed))return;shed.cleanoutDate=d;reconcilePredictedPickups(shed);n++;});
+  if(n){saveState();schedulePush();render();showToast(`Clean-out set to ${fmtShortNoYear(d)} for ${n} shed${n>1?'s':''}.`);}
+  return n;
+}
 function setBatchNumber(v){
   const s=String(v??'').trim();
   if(!s){if(predState.batchNumber)return;predState.batchNumber='';if(farmData)farmData.batchNumber='';savePredState();saveState();schedulePush();return;}

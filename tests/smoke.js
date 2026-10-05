@@ -142,5 +142,20 @@ const pb=run('pickup birds',`(()=>{
 if(pb){ok(pb.b1===8100,'birds saved');ok(near(pb.keptTotal,14800,0.01),'kill-sheet total kept when birds change');
   ok(near(pb.avgKept,14800/8100,1e-6),'estimated weight keeps the average');ok(pb.unchanged===8200,'0 birds rejected');ok(!pb.html,'Pickups tool renders');}
 
+console.log('10. Clean-out shortcut + pair arrows');
+const co=run('cleanout set all',`(()=>{
+  const sh=farmData.sheds;const before=sh.map(s=>s.cleanoutDate&&iso(s.cleanoutDate));
+  const fin=sh.find(s=>finalPickupOf(s));
+  const n=setAllCleanoutDates('2026-12-01');
+  const after=sh.filter(s=>s.placementDate&&!finalPickupOf(s)).every(s=>iso(s.cleanoutDate)==='2026-12-01');
+  const html=renderCleanoutDashCard();
+  const prev=pairStepHtml(1,'shed'),next=pairStepHtml(4,'pred',1);
+  return {n,after,finKept:!fin||iso(fin.cleanoutDate)!=='2026-12-01'||iso(finalPickupOf(fin).date)==='2026-12-01',
+    hasInputs:/data-field="cleanoutDate"/.test(html),hasSetAll:/dcoSetAllBtn/.test(html)||n<2,
+    prevWrap:/data-tab="g4"/.test(prev),nextWrap:/data-predgroup="1"/.test(next)};
+})()`);
+if(co){ok(co.n>0&&co.after,'set all applies to open sheds');ok(co.finKept,'final pickup keeps its date');
+  ok(co.hasInputs,'clean-out dates editable on dashboard');ok(co.hasSetAll,'set-all row shown');ok(co.prevWrap&&co.nextWrap,'pair arrows wrap 1↔4');}
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

@@ -735,6 +735,13 @@ function renderGroupStatusGrid() {
 
 // Dashboard: clean-out outlook for every shed (same numbers as the
 // Predictions snapshot cards — shedCleanoutInfo)
+// Clean-out date, editable in place (same setter as the shed card). A logged
+// final pickup fixes the date, so those rows stay read-only.
+function dcoDateCell(shed,co,fb){
+  const idx=farmData.sheds.indexOf(shed);
+  if(finalPickupOf(shed))return `${fmtShortNoYear(co.endDate)}<span class="dco-lock" title="Set by the final pickup">✓</span>`;
+  return `<input type="date" class="dco-date${fb?' dco-date-unset':''}" value="${iso(shed.cleanoutDate)}" data-shed="${idx}" data-field="cleanoutDate" aria-label="Shed ${shed.id} clean-out date"${fb?` title="Not set — using the ${co.endSrc} (${fmtShortNoYear(co.endDate)})"`:''}>`;
+}
 function renderCleanoutDashCard(){
   if(!farmData)return '';
   const today=dateOnly(new Date());
@@ -748,21 +755,24 @@ function renderCleanoutDashCard(){
     const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
     const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
     return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td>
-      <td>${fmtShortNoYear(co.endDate)}${fb?'<sup class="dco-mark" title="No clean-out date set — using the '+co.endSrc+'">*</sup>':''} <span class="dco-sub">${when}</span></td>
+      <td>${dcoDateCell(shed,co,fb)} <span class="dco-sub">${when}</span></td>
       <td class="num">${co.cleanAge}d</td>
       <td class="num">${co.finalKg?co.finalKg.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.finalBirds.toLocaleString()} birds</div></td>
       <td class="num">${co.avgAll?co.avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.pickupCount} pickups</div></td>
       <td class="num dco-total">${Math.round(co.totalKgAll).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAll.toLocaleString()} birds</div></td></tr>`;
   }).join('');
   const avgAll=totBirds>0?totKg/totBirds:0,avgFin=finBirds>0?finKg/finBirds:0;
+  const open=sheds.filter(s=>!finalPickupOf(s));
+  const setAll=open.length>1?`<tbody class="dco-setall"><tr><td class="shed-name-cell">All</td><td colspan="5"><div class="dco-setall-row"><input type="date" class="dco-date" id="dcoSetAllDate" aria-label="Clean-out date for all sheds"><button type="button" class="btn-secondary dco-setall-btn" id="dcoSetAllBtn">Set all ${open.length} sheds</button></div></td></tr></tbody>`:'';
   return `<div class="dash-card dash-cleanout">
     <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Last pickup vs whole-batch weights per shed</span></div>
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
       <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Age</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr></thead>
       <tbody>${rows}</tbody>
+      ${setAll}
       <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
     </table></div>
-    <p class="dco-note">Weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' * No clean-out date set — using the shed\'s last pickup.':''}</p>
+    <p class="dco-note">Weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' Empty date = not set yet, using the shed\'s last pickup.':''} Tap a date to change it.</p>
   </div>`;
 }
 function renderDashboardView() {
@@ -1153,7 +1163,7 @@ function groupViewHtml(g){
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=pairSwitchHtml(g,'sheds');
-  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairLabel(g)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
@@ -1859,10 +1869,16 @@ function renderPredictionsView(){
   const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;
   const gridClass=view==='both'&&sheds.length>1?'pred-grid compare':'pred-grid';
   const groupNames={1:pairLabel(1),2:pairLabel(2),3:pairLabel(3),4:pairLabel(4)};
-  return `${pairSwitchHtml(g,'pred')}<div class="pred-layout"><div class="predictions-head"><h1>📊 ${groupNames[g]} Prediction</h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
+  return `${pairSwitchHtml(g,'pred')}<div class="pred-layout"><div class="predictions-head"><h1>${pairStepHtml(g,'pred')}📊 ${groupNames[g]} Prediction${pairStepHtml(g,'pred',1)}</h1><span class="head-note">Pair result · per-shed detail below · farm total on the Dashboard</span></div>${predRailHtml(g,view,sheds)}<div class="${gridClass}" style="margin-top:14px;">${visibleSheds.map(s=>renderPredictionsShedCard(s,g)).join('')}</div></div>`;
 }
 // Shed-pair switcher — the same segmented bar on the Sheds and Predictions
 // pages; sticks to the top while scrolling on phones and tablets
+// ‹ › on the pair title: previous / next pair, wrapping 4 → 1
+function pairStepHtml(g,ctx,dir=-1){
+  const n=((g-1+dir+4)%4)+1;
+  const attr=ctx==='pred'?`data-predgroup="${n}"`:`data-tab="g${n}"`;
+  return `<button type="button" class="pair-step" ${attr} aria-label="${dir<0?'Previous':'Next'}: ${pairLabel(n)}" title="${pairLabel(n)}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${dir<0?'M15 6l-6 6 6 6':'M9 6l6 6-6 6'}"/></svg></button>`;
+}
 function pairSwitchHtml(g,ctx){
   return `<div class="group-switch-mobile" role="tablist" aria-label="Shed pair">${[1,2,3,4].map(gi=>`<button type="button" role="tab" class="gsm-btn${gi===g?' active':''}" ${ctx==='pred'?`data-predgroup="${gi}"`:`data-tab="g${gi}"`} aria-selected="${gi===g}">${pairShort(gi)}</button>`).join('')}</div>`;
 }
