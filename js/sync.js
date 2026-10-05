@@ -10,7 +10,7 @@ function loadSyncState(){try{const raw=localStorage.getItem(SYNC_FARMNAME_KEY);i
 function saveSyncState(){try{if(!syncFarmName){localStorage.removeItem(SYNC_FARMNAME_KEY);return;}localStorage.setItem(SYNC_FARMNAME_KEY,JSON.stringify({farmName:syncFarmName,lastSyncAt:syncLastSyncAt,connectedAt:syncConnectedAt,excelMeta:syncExcelMeta}));}catch(e){}}
 function arrayBufferToBase64(buf){const bytes=new Uint8Array(buf);let binary='';const chunk=8192;for(let i=0;i<bytes.length;i+=chunk){binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));}return btoa(binary);}
 function base64ToBlob(base64,mime){const binary=atob(base64);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return new Blob([bytes],{type:mime});}
-function serializeSiloDataForCloud(){const out={};[1,2,3,4].forEach(g=>{const s=siloData[g]||{readings:[],deliveries:[]};out[g]={readings:(s.readings||[]).map(r=>({date:r.date,silo1Rings:r.silo1Rings,silo2Rings:r.silo2Rings,silo3Rings:r.silo3Rings,time:r.time==='am'?'am':'pm'})),deliveries:(s.deliveries||[]).map(d=>({id:d.id,date:d.date?iso(d.date):null,amountKg:Number(d.amountKg)||0,feedType:d.feedType||'',note:d.note||''}))};});return out;}
+function serializeSiloDataForCloud(){const out={};[1,2,3,4].forEach(g=>{const s=siloData[g]||{readings:[],deliveries:[]};out[g]={readings:(s.readings||[]).map(r=>({date:r.date,silo1Rings:r.silo1Rings,silo2Rings:r.silo2Rings,silo3Rings:r.silo3Rings,time:r.time==='am'?'am':'pm',...(typeof r.deliveryIn==='boolean'?{deliveryIn:r.deliveryIn}:{})})),deliveries:(s.deliveries||[]).map(d=>({id:d.id,date:d.date?iso(d.date):null,amountKg:Number(d.amountKg)||0,feedType:d.feedType||'',note:d.note||''}))};});return out;}
 
 function buildCloudPayload(){
   return {
@@ -37,6 +37,7 @@ function buildCloudPayload(){
       feedQuota:predState.feedQuota,
       truckSplitMode:predState.truckSplitMode,
       siloConfidencePct:predState.siloConfidencePct,
+      deliveryTiming:predState.deliveryTiming,
       safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
       farmHistoryDeleted:predState.farmHistoryDeleted||[]
@@ -66,7 +67,7 @@ function applyCloudPayload(payload,options){
     saveState();migrateMortalityAnchors();
     if(!predState.batchNumber&&farmData.batchNumber){predState.batchNumber=sanitizeBatchNumber(farmData.batchNumber);savePredState();}
   }
-  if(payload.siloData&&typeof payload.siloData==='object'){const incoming={};[1,2,3,4].forEach(g=>{const s=payload.siloData[g]||{};incoming[g]={readings:Array.isArray(s.readings)?s.readings.map(r=>({date:String(r.date||''),silo1Rings:normalizeRing(r.silo1Rings),silo2Rings:normalizeRing(r.silo2Rings),silo3Rings:normalizeRing(r.silo3Rings),time:r.time==='am'?'am':'pm'})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b)=>a.date.localeCompare(b.date)):[],deliveries:Array.isArray(s.deliveries)?s.deliveries.map(d=>({id:d.id||String(Date.now())+Math.random().toString(16).slice(2),date:d.date?dateOnly(d.date):null,amountKg:Number(d.amountKg)||0,feedType:FEED_TYPES.some(f=>f.id===d.feedType)?d.feedType:'',note:d.note||''})).filter(d=>d.date&&d.amountKg>0):[]};});siloData=incoming;saveSiloData();}
+  if(payload.siloData&&typeof payload.siloData==='object'){const incoming={};[1,2,3,4].forEach(g=>{const s=payload.siloData[g]||{};incoming[g]={readings:Array.isArray(s.readings)?s.readings.map(r=>({date:String(r.date||''),silo1Rings:normalizeRing(r.silo1Rings),silo2Rings:normalizeRing(r.silo2Rings),silo3Rings:normalizeRing(r.silo3Rings),time:r.time==='am'?'am':'pm',...(typeof r.deliveryIn==='boolean'?{deliveryIn:r.deliveryIn}:{})})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date)).sort((a,b)=>a.date.localeCompare(b.date)):[],deliveries:Array.isArray(s.deliveries)?s.deliveries.map(d=>({id:d.id||String(Date.now())+Math.random().toString(16).slice(2),date:d.date?dateOnly(d.date):null,amountKg:Number(d.amountKg)||0,feedType:FEED_TYPES.some(f=>f.id===d.feedType)?d.feedType:'',note:d.note||''})).filter(d=>d.date&&d.amountKg>0):[]};});siloData=incoming;saveSiloData();}
   if(Array.isArray(payload.farmLoads)){loadUnitRepairs=0;farmLoads=payload.farmLoads.map(normalizeLoad).filter(Boolean);saveFarmLoads();if(loadUnitRepairs>0){const n=loadUnitRepairs;loadUnitRepairs=0;setTimeout(()=>{schedulePush();showToast(`Fixed ${n} docket weight${n===1?'':'s'} that were entered in kg.`);},800);}}
   if(payload.predictions&&typeof payload.predictions==='object'){
     const p=payload.predictions;
@@ -82,7 +83,7 @@ function applyCloudPayload(payload,options){
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
     // The farm's history travels with every batch file. Merged, never replaced:
     // a device that hadn't synced a new record can't wipe it out.
-    {const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
+    {if(p.deliveryTiming==='early'||p.deliveryTiming==='day')predState.deliveryTiming=p.deliveryTiming;const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;}
     mergeCloudFarmHistory(p);
     mergeProjectionLog(p.projectionLog);
     if(p.feedQuota&&typeof p.feedQuota==='object'){const q={};Object.keys(DEFAULT_FEED_QUOTA).forEach(k=>{const n=Number(p.feedQuota[k]);q[k]=Number.isFinite(n)&&n>=0&&n<=10?n:DEFAULT_FEED_QUOTA[k];});predState.feedQuota=q;}

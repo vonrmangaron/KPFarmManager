@@ -1813,11 +1813,13 @@ function siloSettingsBarHtml(){
   return `<div class="silo-set" role="group" aria-label="Silo planning">
       <div class="ss-item" title="Plan as if the silos hold this share of what you read — 80% turns a 50 t reading into 40 t. Feed eaten (FCR) still uses the real reading."><span class="ss-lbl">Reading accuracy</span><span class="ss-step">${step('conf',-5,'Lower reading accuracy',conf<=50)}<b>${conf}%</b>${step('conf',5,'Raise reading accuracy',conf>=100)}</span></div>
       <div class="ss-item" title="'Runs out' and the feed alerts trigger when the silos would drop below this much feed."><span class="ss-lbl">Safety stock</span><span class="ss-step">${step('safety',-0.5,'Less safety stock',safety<=0)}<b>${safety} day${safety===1?'':'s'}</b>${step('safety',0.5,'More safety stock',safety>=3)}</span></div>
+      <div class="ss-item ss-timing" title="When do feed trucks usually arrive? Early morning means a morning reading already includes that day's delivery, so it isn't counted twice."><span class="ss-lbl">Deliveries arrive</span><span class="ss-seg"><button type="button" class="ss-seg-btn${deliveryTimingEarly()?' active':''}" data-silo-set="timing" data-step="1" aria-pressed="${deliveryTimingEarly()}">Early AM</button><button type="button" class="ss-seg-btn${deliveryTimingEarly()?'':' active'}" data-silo-set="timing" data-step="0" aria-pressed="${!deliveryTimingEarly()}">During day</button></span></div>
     </div>`;
 }
 function changeSiloSetting(key,delta){
   if(key==='conf')predState.siloConfidencePct=Math.max(50,Math.min(100,Math.round(siloConfidence()*100)+delta));
   else if(key==='safety')predState.safetyDays=Math.max(0,Math.min(3,Math.round((siloSafetyDays()+delta)*2)/2));
+  else if(key==='timing')predState.deliveryTiming=delta===1?'early':'day';
   else return;
   savePredState();schedulePush();
   if(document.getElementById('siloModal')?.classList.contains('open'))renderSiloModalBody();
@@ -2163,13 +2165,13 @@ function renderSiloModalBody(){
         <span class="sms-status-wrap" id="smsStatus-${g}">${siloGroupStatusHtml(g)}</span>
         <span class="sms-group-total" id="smsGroupTotal-${g}">${fmtFeed(totalKg)}</span>
       </div>
-      <div class="sms-group-body"><div id="smsSilos-${g}" class="sms-silos">${silosHtml}</div>${nextBtn}</div>
+      <div class="sms-group-body">${deliveryInQuestionHtml(g)}<div id="smsSilos-${g}" class="sms-silos">${silosHtml}</div>${nextBtn}</div>
     </div>`;
   }).join('');
   body.innerHTML=`<div class="sms-date-bar">
       <div class="sms-date-main"><span class="sms-date-label">Recording for</span><span class="sms-date-value">${fmtShort(new Date())}</span></div>
       ${readTimeToggleHtml()}
-      <span class="sms-date-hint">${siloReadTime()==='am'?'Morning = stock <strong>before</strong> today\'s feeding and delivery':'Evening = stock at <strong>end of day</strong>, after today\'s delivery'} · tap the ring level for each silo · saves instantly</span>
+      <span class="sms-date-hint">${siloReadTime()==='am'?`Morning = stock <strong>before</strong> today's feeding${deliveryTimingEarly()?', after an early delivery':' and delivery'}`:'Evening = stock at <strong>end of day</strong>, after today\'s delivery'} · tap the ring level for each silo · saves instantly</span>
     </div>
     ${siloSettingsBarHtml()}
     ${groupsHtml}
@@ -2349,4 +2351,19 @@ function openBatchInfoModal(){
 }
 function closeBatchInfoModal(){
   batchInfoOpen=false;const m=document.getElementById('batchInfoModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+}
+
+// Reading sheet, morning + a delivery today: is that load already in the silos?
+function deliveryInQuestionHtml(g){
+  if(siloReadTime()!=='am')return '';
+  const today=dateOnly(new Date());const kg=deliveriesKgOn(g,today);if(!(kg>0))return '';
+  const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===iso(today));
+  const yes=r&&typeof r.deliveryIn==='boolean'?r.deliveryIn:deliveryTimingEarly();
+  return `<div class="sms-delin" role="group" aria-label="Today's delivery"><span class="sms-delin-q">🚛 Today's ${fmtFeed(kg)} delivery already in the silo?</span><span class="ss-seg"><button type="button" class="ss-seg-btn${yes?' active':''}" data-delin="${g}" data-val="1" aria-pressed="${yes}">Yes</button><button type="button" class="ss-seg-btn${yes?'':' active'}" data-delin="${g}" data-val="0" aria-pressed="${!yes}">No</button></span></div>`;
+}
+function setDeliveryIn(g,val){
+  const todayIso=iso(new Date());const s=siloData[g]=siloData[g]||{readings:[],deliveries:[]};
+  let r=s.readings.find(x=>x.date===todayIso);
+  if(!r){const prev=s.readings.length?s.readings[s.readings.length-1]:null;r={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null,time:siloReadTime()};s.readings.push(r);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
+  r.deliveryIn=!!val;saveSiloData();schedulePush();renderSiloModalBody();render();
 }

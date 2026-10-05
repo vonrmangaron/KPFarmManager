@@ -58,7 +58,7 @@ function intakeCalibration(){
       const rs=byDate[ds];if(groups.some(g=>!rs[g]))return;
       let eaten=carry,manual=0,auto=0;
       groups.forEach(g=>{const r=rs[g],D=dateOnly(r.date),morning=readingIsMorning(r),end=morning?addDays(D,-1):D;
-        farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(morning?ld>=D:ld>D)return;eaten+=loadKgToPairBefore(l,g);});
+        farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(!loadBeforeReading(r,ld))return;eaten+=loadKgToPairBefore(l,g);});
         eaten-=readingTotalKg(r);
         shedsForGroup(g).filter(s=>s.placementDate).forEach(s=>{const v=rawTo(s,end);if(hasManualFeedPct(s))manual+=v;else auto+=v;});});
       pts.push({date:ds,x:auto,y:eaten-manual});

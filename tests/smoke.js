@@ -23,7 +23,7 @@ console.log('2. Required functions exist');
 ['batchKpis','computeFarmTotals','computeGroupPredictions','computePredictions','computeSiloForecast','computeFarmAlerts','measuredFeedToDate','feedEatenMeasured',
  'readingEndOfDayKg','balanceOnEndOfDay','shedFeedOn','shedFeedOnRaw','resultPlanEndDate','autoPlanForShed','farmTotalsEarly','renderFarmKpiCard','renderFeedPlanner','batchInfoHtml','batchInfoForProdwise','openBatchInfoModal','biBirdStats',
  'siloSettingsBarHtml','renderSettingsFarmHistoryCard','fhRowHtml','summarizeBatchData','mergeCloudFarmHistory','siloReadTime','siloConfidence','siloSafetyDays',
- 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue','refreshLoadsViews','leftoverNoteText','projLeftoverText']
+ 'fmtFeed','feedIn','feedOut','pairSwitchHtml','historyKpis','farmFeedToOrder','recordProjectionSnapshot','mergeProjectionLog','projectionLogHtml','finalUpliftFactor','feedPlan','packTrucks','feedPlanHtml','nextFeedTypeDue','readingIncludesDayDelivery','deliveryInQuestionHtml','refreshLoadsViews','leftoverNoteText','projLeftoverText']
  .forEach(n=>ok(run('typeof '+n,`typeof ${n}`)==='function','missing function: '+n));
 
 console.log('3. Formulas (batchKpis)');
@@ -109,6 +109,25 @@ const m=run('merge',`(()=>{const R=(id,b,s)=>({id,batch:b,placed:100,picked:90,l
   predState.farmHistory=[R('a','A',1),R('b','B',1)];predState.farmHistoryDeleted=[];deleteFarmHistoryRec('b');mergeCloudFarmHistory({farmHistory:[R('a','A',1),R('b','B',1)]});
   return [u,nw,predState.farmHistory.length];})()`);
 if(m){ok(m[0]===2,'union of two devices');ok(m[1]==='A-new','newer edit wins');ok(m[2]===1,'deletions stick');}
+
+console.log('8. Early-morning delivery vs morning reading');
+const dt=run('delivery timing',`(()=>{
+  const g=1,today=dateOnly(new Date()),ti=iso(today);
+  farmLoads=farmLoads.filter(l=>iso(l.date)!==ti);
+  saveLoad({date:today,feedType:'finisher',plannedKg:60000,splitKg:{1:30000,2:30000,3:0,4:0},note:'',actualKg:60000});
+  const r={date:ti,silo1Rings:4,silo2Rings:4,silo3Rings:4,time:'am'};
+  siloData[g].readings=siloData[g].readings.filter(x=>x.date!==ti).concat([r]);
+  const base=readingTotalKg(r)*siloConfidence(),eat=groupDailyFeedOn(shedsForGroup(g),today);
+  predState.deliveryTiming='early';const early=readingEndOfDayKg(g,r,deliveriesKgOn);const eatenEarly=feedEatenMeasured().pairs.find(p=>p.g===g).delivered;
+  predState.deliveryTiming='day';const day=readingEndOfDayKg(g,r,deliveriesKgOn);const eatenDay=feedEatenMeasured().pairs.find(p=>p.g===g).delivered;
+  r.deliveryIn=true;const override=readingEndOfDayKg(g,r,deliveriesKgOn);
+  r.time='pm';delete r.deliveryIn;const evening=readingEndOfDayKg(g,r,deliveriesKgOn);
+  predState.deliveryTiming='early';
+  return {early:early-(base-eat),day:day-(base+deliveriesKgOn(g,today)-eat),override:override-(base-eat),evening:evening-base,diffDelivered:eatenEarly-eatenDay,load:deliveriesKgOn(g,today)};
+})()`);
+if(dt){ok(near(dt.early,0,1),'early delivery: morning reading is not topped up again');ok(near(dt.day,0,1),'daytime delivery: morning reading adds that day\'s load');
+  ok(near(dt.override,0,1),'per-reading "already in" answer wins over the setting');ok(near(dt.evening,0,1),'evening reading unaffected');
+  ok(near(dt.diffDelivered,dt.load,1),'eaten-so-far counts the early load as delivered before the reading');}
 
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);
