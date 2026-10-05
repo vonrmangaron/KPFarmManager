@@ -7189,6 +7189,9 @@
 
   let kanbanEdgeFadeUpdater = null;
   let kanbanLandOn = null;
+  // Keep the Board where you were across redraws (duplicate, copy, tick…):
+  // the day shown on phones, the sideways scroll on desktop, and each day's list scroll.
+  let kanbanViewKey = null, kanbanDeskScroll = null; const kanbanColScroll = {};
   function renderKanban(){
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
@@ -7348,13 +7351,20 @@
     wrap.appendChild(dots);
     if(kbPhone){
       const todayIdx = kbChips.findIndex(c=> c.isToday);
-      const idx = kanbanLandOn === 'first' ? 0 : kanbanLandOn === 'last' ? 6 : (todayIdx >= 0 ? todayIdx : 0);
+      const keptIdx = kanbanViewKey ? kbChips.findIndex(c=> c.key === kanbanViewKey) : -1;
+      const idx = kanbanLandOn === 'first' ? 0 : kanbanLandOn === 'last' ? 6 : keptIdx >= 0 ? keptIdx : (todayIdx >= 0 ? todayIdx : 0);
       kanbanLandOn = null;
+      kanbanViewKey = kbChips[idx] ? kbChips[idx].key : null;
       requestAnimationFrame(()=>{
         const col = board.children[idx]; if(col) board.scrollLeft = col.offsetLeft - board.firstElementChild.offsetLeft;
         strip.querySelectorAll('.kb-day').forEach((d,i)=> d.classList.toggle('active', i===idx));
       });
+    } else if(kanbanDeskScroll && kanbanDeskScroll.week === dateKey(monday)){
+      requestAnimationFrame(()=>{ board.scrollLeft = kanbanDeskScroll.left; });
     }
+    // each day's own list scroll position
+    requestAnimationFrame(()=>{ board.querySelectorAll('.kanban-cards[data-date]').forEach(el=>{ const v = kanbanColScroll[el.dataset.date]; if(v) el.scrollTop = v; }); });
+    board.addEventListener('scroll', (e)=>{ const el = e.target; if(el.classList && el.classList.contains('kanban-cards') && el.dataset.date) kanbanColScroll[el.dataset.date] = el.scrollTop; }, true);
     let scrollTimer = null;
     board.addEventListener('scroll', ()=>{
       clearTimeout(scrollTimer);
@@ -7363,6 +7373,8 @@
         const idx = Math.round(board.scrollLeft / colWidth);
         dots.querySelectorAll('.kdotpage').forEach((d,i)=> d.classList.toggle('active', i===idx));
         if(strip) strip.querySelectorAll('.kb-day').forEach((d,i)=> d.classList.toggle('active', i===idx));
+        if(kbPhone){ if(kbChips[idx]) kanbanViewKey = kbChips[idx].key; }
+        else kanbanDeskScroll = { week: dateKey(monday), left: board.scrollLeft };
       }, 80);
     });
     board.addEventListener('wheel', (e)=>{
@@ -8638,7 +8650,7 @@
     else currentDate.setMonth(currentDate.getMonth()+1);
     renderAll();
   });
-  $('#todayBtn').addEventListener('click', ()=>{ currentDate = new Date(); agendaDate = null; renderAll(); });
+  $('#todayBtn').addEventListener('click', ()=>{ currentDate = new Date(); agendaDate = null; kanbanViewKey = null; kanbanDeskScroll = null; renderAll(); });
 
   // ==================== ROUTINE TRACKER ====================
   // A register of recurring farm jobs. A tracked task matches every calendar
