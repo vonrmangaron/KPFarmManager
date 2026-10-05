@@ -2365,6 +2365,8 @@
     .year-mini-grid > div{ font-size:11px !important; min-height:20px; display:flex; align-items:center; justify-content:center; padding:0 !important; }
     .year-mini-grid .ymd-wx{ display:none; }
   }
+  .just-duplicated{ animation:dupFlash 2.2s ease; }
+  @keyframes dupFlash{ 0%,60%{ box-shadow:0 0 0 3px var(--primary), var(--shadow-md); } 100%{ box-shadow:none; } }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3227,6 +3229,25 @@
   let tasks = [];
   let orderCounter = Date.now();
   function nextOrder(){ return orderCounter++; }
+  // Duplicate: an exact twin just below the original, same day — then drag it anywhere.
+  // The twin is a fresh open task, not linked to the original's repeat series or report.
+  function duplicateTask(id){
+    const t = tasks.find(x=> x.id === id); if(!t) return;
+    const undoSnap = captureUndo();
+    const copy = JSON.parse(JSON.stringify(t));
+    ['seriesId','linkedReportId','completedAt','doneAt','doneBy','source','dayAge'].forEach(k=> delete copy[k]);
+    copy.id = uid(); copy.status = 'open'; copy.createdAt = Date.now();
+    copy.assignees = Array.isArray(t.assignees) ? t.assignees.slice() : [];
+    // order: straight after the original, before whatever came next that day
+    const sameDay = tasks.filter(x=> (x.date || null) === (t.date || null) && x.id !== t.id && (x.order||0) > (t.order||0));
+    const nextO = sameDay.reduce((m,x)=> Math.min(m, x.order||0), Infinity);
+    copy.order = isFinite(nextO) ? ((t.order||0) + nextO) / 2 : (t.order||0) + 0.5;
+    tasks.push(copy);
+    addHistory('Duplicated', `${taskLabel(t)} duplicated on ${t.date ? formatShort(t.date) : 'Backlog'}`);
+    persist(); renderAll();
+    requestAnimationFrame(()=>{ document.querySelectorAll(`[data-id="${copy.id}"]`).forEach(el=>{ el.classList.add('just-duplicated'); el.scrollIntoView({ block:'nearest', behavior:'smooth' }); setTimeout(()=> el.classList.remove('just-duplicated'), 2200); }); });
+    offerUndo(`Duplicated "${t.name}" — drag it anywhere`, undoSnap);
+  }
   function taskSortCompare(a, b){
     const aDone = a.status==='done' ? 1 : 0;
     const bDone = b.status==='done' ? 1 : 0;
@@ -5332,6 +5353,7 @@
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
         <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
+        <button class="task-menu-item btn-duplicate" type="button" title="Make a twin just below — drag it anywhere"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></span>Duplicate</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
         <div class="task-menu-sep"></div>
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
@@ -7133,6 +7155,7 @@
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
         <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
+        <button class="task-menu-item btn-duplicate" type="button" title="Make a twin just below — drag it anywhere"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></span>Duplicate</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
         <div class="task-menu-sep"></div>
         <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
@@ -8256,10 +8279,12 @@
   document.addEventListener('click', (e)=>{
     const editBtn = e.target.closest('.btn-edit');
     const copyBtn = e.target.closest('.btn-copy');
+    const dupBtn = e.target.closest('.btn-duplicate');
     const doneBtn = e.target.closest('.btn-done');
     const delBtn = e.target.closest('.btn-delete');
     if(editBtn){ const id = taskIdFromEl(editBtn); closeAllTaskMenus(); if(id) openEditTaskModal(id); return; }
     if(copyBtn){ const id = taskIdFromEl(copyBtn); closeAllTaskMenus(); if(id) openCopyTaskModal(id); return; }
+    if(dupBtn){ const id = taskIdFromEl(dupBtn); closeAllTaskMenus(); if(id) duplicateTask(id); return; }
     if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
       const id = taskIdFromEl(delBtn);
