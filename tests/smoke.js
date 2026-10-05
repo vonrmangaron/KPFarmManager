@@ -129,5 +129,18 @@ if(dt){ok(near(dt.early,0,1),'early delivery: morning reading is not topped up a
   ok(near(dt.override,0,1),'per-reading "already in" answer wins over the setting');ok(near(dt.evening,0,1),'evening reading unaffected');
   ok(near(dt.diffDelivered,dt.load,1),'eaten-so-far counts the early load as delivered before the reading');}
 
+console.log('9. Pickup birds edited inline');
+const pb=run('pickup birds',`(()=>{
+  const sh=farmData.sheds[0];const p=sh.pickups[0];const d=iso(p.date);
+  p.weightEstimated=false;p.totalWeightKg=8000*1.85;p.birds=8000;
+  setPickupBirds(1,d,'8100');const keptTotal=p.totalWeightKg,b1=p.birds;
+  p.weightEstimated=true;setPickupBirds(1,d,'8200');const avgKept=p.totalWeightKg/p.birds;
+  setPickupBirds(1,d,'0');const unchanged=p.birds;
+  pickupsModalOpen=true;let html='';try{refreshPickupsModal();}catch(e){html='ERR '+e.message;}pickupsModalOpen=false;
+  return {keptTotal,b1,avgKept,unchanged,html};
+})()`);
+if(pb){ok(pb.b1===8100,'birds saved');ok(near(pb.keptTotal,14800,0.01),'kill-sheet total kept when birds change');
+  ok(near(pb.avgKept,14800/8100,1e-6),'estimated weight keeps the average');ok(pb.unchanged===8200,'0 birds rejected');ok(!pb.html,'Pickups tool renders');}
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

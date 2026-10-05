@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
+      const actions={morePickups:openPickupsModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreImport:triggerImport,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#settingsBatchHistoryBtn')){openBatchHistoryModal();return;}
     if(e.target.closest('#settingsReportBtn')){generateBatchReport();return;}
 
+    if(e.target.closest('#pickupsBtn')){openPickupsModal();return;}
+    if(e.target.closest('#pickupsClose')||(pickupsModalOpen&&e.target.id==='pickupsModal')){closePickupsModal();return;}
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
     if(e.target.closest('[data-batch-info]')){openBatchInfoModal();return;}
     if(e.target.closest('#batchInfoClose')||(batchInfoOpen&&e.target.id==='batchInfoModal')){closeBatchInfoModal();return;}
@@ -294,6 +296,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
       if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
       if(batchInfoOpen){closeBatchInfoModal();return;}
+      if(pickupsModalOpen){closePickupsModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}
       if(feedCompareState.modalOpen){closeCompareModal();return;}
       if(settingsDrawerOpen){closeSettingsDrawer();return;}
@@ -336,7 +339,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     if(t.id==='densityMax'){setDensityGlobal('maxDensity',t.value);return;}
     if(t.id==='targetPickupsGlobal'){setDensityGlobal('targetPickups',t.value);return;}
     if(t.dataset&&t.dataset.targetShed!==undefined&&t.dataset.targetDay!==undefined){setTargetCurveValue(Number(t.dataset.targetShed),Number(t.dataset.targetDay),t.value);return;}
-    if(t.dataset&&t.dataset.pickupShed!==undefined&&t.dataset.pickupDate){if(t.dataset.pickupField==='avg')setPickupAvgWeight(Number(t.dataset.pickupShed),t.dataset.pickupDate,t.value);else setPickupTotalWeight(Number(t.dataset.pickupShed),t.dataset.pickupDate,t.value);return;}
+    if(t.dataset&&t.dataset.pickupShed!==undefined&&t.dataset.pickupDate){if(t.dataset.pickupField==='birds')setPickupBirds(Number(t.dataset.pickupShed),t.dataset.pickupDate,t.value);else if(t.dataset.pickupField==='avg'){setPickupAvgWeight(Number(t.dataset.pickupShed),t.dataset.pickupDate,t.value);refreshPickupsModal();}else{setPickupTotalWeight(Number(t.dataset.pickupShed),t.dataset.pickupDate,t.value);refreshPickupsModal();}return;}
     if(t.id&&t.id.startsWith('predTargetWeight_')){const g=Number(t.id.replace('predTargetWeight_',''));setTargetHarvestWeight(g,t.value);return;}
     if(t.id==='predBetaSlider'){setPredBeta(t.value);scheduleRender(60);return;}
     if(t.id==='predBetaNumber'){setPredBeta(t.value);scheduleRender(60);return;}

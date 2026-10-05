@@ -2367,3 +2367,58 @@ function setDeliveryIn(g,val){
   if(!r){const prev=s.readings.length?s.readings[s.readings.length-1]:null;r={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null,time:siloReadTime()};s.readings.push(r);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
   r.deliveryIn=!!val;saveSiloData();schedulePush();renderSiloModalBody();render();
 }
+
+// Birds on a logged pickup, edited inline. The kill-sheet total stays and the average
+// follows; if the weight is only an estimate, the average stays and the total follows.
+function setPickupBirds(shedId,pickupDateIso,value){
+  if(!farmData)return;
+  const shed=farmData.sheds[shedId-1];if(!shed)return;
+  const pickup=(shed.pickups||[]).find(p=>iso(p.date)===pickupDateIso);if(!pickup)return;
+  const n=Math.floor(Number(value));
+  if(!Number.isFinite(n)||n<=0){showToast('Enter the number of birds picked up.',true);render();refreshPickupsModal();return;}
+  const old=Number(pickup.birds)||0;if(n===old)return;
+  if(pickup.totalWeightKg!=null&&old>0&&(pickup.weightEstimated||!(pickup.totalWeightKg>0))){const avg=pickup.totalWeightKg/old;pickup.totalWeightKg=avg*n;}
+  pickup.birds=n;
+  reflowShedPickups(shed);reconcilePredictedPickups(shed);
+  saveState();schedulePush();render();refreshPickupsModal();
+  showToast(`Shed ${shedId} · ${fmtShortNoYear(pickup.date)}: ${n.toLocaleString()} birds.`);
+}
+// Tools → Pickups: every logged pickup per shed, editable inline
+let pickupsModalOpen=false;
+function openPickupsModal(){pickupsModalOpen=true;const m=document.getElementById('pickupsModal');if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}refreshPickupsModal();}
+function closePickupsModal(){pickupsModalOpen=false;const m=document.getElementById('pickupsModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
+function refreshPickupsModal(){
+  if(!pickupsModalOpen)return;
+  const body=document.getElementById('pickupsBody');if(!body)return;
+  if(!farmData){body.innerHTML='<div class="bi-note">Load a batch first.</div>';return;}
+  const keepScroll=body.scrollTop;
+  let farmBirds=0,farmKg=0,farmWeighed=0;
+  const sheds=(farmData.sheds||[]).map(shed=>{
+    const ps=(shed.pickups||[]).slice().sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    let birds=0,kg=0,wBirds=0;
+    const rows=ps.map(p=>{
+      const b=Number(p.birds)||0;birds+=b;
+      const tot=p.totalWeightKg!=null&&p.totalWeightKg>0?Number(p.totalWeightKg):null;
+      if(tot!=null&&!p.weightEstimated){kg+=tot;wBirds+=b;}
+      const avg=tot!=null&&b>0?tot/b:null;
+      const d=iso(p.date);
+      return `<tr class="${p.isFinal?'is-final':''}">
+        <td>${escapeHtml(fmtShortNoYear(p.date))}${p.isFinal?' <span class="pk-final">Final</span>':''}${p.weightEstimated?' <span class="est-chip">est</span>':''}</td>
+        <td class="num pk-age">${pickupAge(shed,p)}d</td>
+        <td class="num" data-label="Birds"><input class="pred-pickup-input pk-birds" type="number" min="1" step="1" inputmode="numeric" value="${b||''}" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="birds" aria-label="Birds"></td>
+        <td class="num" data-label="Total kg"><input class="pred-pickup-input" type="number" min="0" step="1" inputmode="decimal" value="${tot!=null?Math.round(tot):''}" placeholder="total kg" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="total" aria-label="Total weight kg"></td>
+        <td class="num" data-label="Avg kg"><input class="pred-pickup-input" type="number" min="0" step="0.001" inputmode="decimal" value="${avg!=null?Number(avg.toFixed(3)):''}" placeholder="kg/bird" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="avg" aria-label="Average weight kg"></td>
+        <td class="num"><button type="button" class="pk-edit" data-pickup-edit="${shed.id}|${d}" title="Edit date, age or final">✎</button></td>
+      </tr>`;}).join('');
+    farmBirds+=birds;farmKg+=kg;farmWeighed+=wBirds;
+    const avgAll=wBirds>0?kg/wBirds:null;
+    const canAdd=ps.length<MAX_PICKUPS_PER_SHED;
+    return `<section class="pk-shed">
+      <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
+        <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
+      ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
+    </section>`;
+  }).join('');
+  body.innerHTML=`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;
+  body.scrollTop=keepScroll;
+}

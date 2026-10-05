@@ -110,6 +110,7 @@ const NAV_ITEMS = [
   { section: 'TOOLS' },
   { id: 'feedloads', label: 'Feed Loads', icon: 'loads', modalBtnId: 'loadsBtn' },
   { id: 'siloreadings', label: 'Silo Readings', icon: 'silo', modalBtnId: 'siloBtn' },
+  { id: 'pickups', label: 'Pickups', icon: 'pickups', modalBtnId: 'pickupsBtn' },
   { id: 'comparefeed', label: 'Compare Feed', icon: 'compare', modalBtnId: 'toolsCompareBtn' },
   { id: 'history', label: 'History', icon: 'history' },
   { section: 'APPS' },
