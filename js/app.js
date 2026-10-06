@@ -256,7 +256,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const sld=e.target.closest('[data-sl-day]');if(sld){const [g,d]=sld.dataset.slDay.split('|');siloLevelSel[g]=d.replace(/^r/,'');render();return;}
     const sts=e.target.closest('[data-starter-silo]');if(sts){const [g,n]=sts.dataset.starterSilo.split('|').map(Number);predState.starterSilo={...(predState.starterSilo||{}),[g]:predState.starterSilo&&predState.starterSilo[g]===n?null:n};savePredState();schedulePush();render();showToast(predState.starterSilo[g]?`Silo ${n} kept for next batch's Starter.`:'Starter silo cleared.');return;}
     const sbf=e.target.closest('[data-starter-buf]');if(sbf){predState.starterBufferDays=Number(sbf.dataset.starterBuf);savePredState();schedulePush();render();return;}
-    const sob=e.target.closest('[data-silo-open]');if(sob){const [g,n]=sob.dataset.siloOpen.split('|').map(Number);toggleSiloOpen(g,n);return;}
+    const sos=e.target.closest('[data-silo-open-set]');if(sos){const [g,n,v]=sos.dataset.siloOpenSet.split('|').map(Number);setSiloOpen(g,n,v===1);return;}
     const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){activeTab='predictions';setPredGroup(Number(gpg.dataset.gotoPredgroup));window.scrollTo(0,0);return;}
     if(e.target.closest('#vdockToggle')){viewDockOpen=!viewDockOpen;groupDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.toggle('open',viewDockOpen);const g=document.getElementById('gdock');if(g)g.classList.remove('open');return;}
     if(viewDockOpen&&(!e.target.closest('#vdock')||e.target.closest('[data-vdock-close]'))){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}

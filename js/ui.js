@@ -2183,11 +2183,13 @@ function openSilosDisplay(g){
   const m=readingOpenField(r).open;if(m)return {set:m,auto:false};
   const p=siloLevelPlan(g,{until:dateOnly(r.date)});return {set:p?p.start.open:[],auto:true};
 }
-function siloOpenBtnHtml(g,n){
-  const r=latestReading(g);if(!r)return '';
-  const od=openSilosDisplay(g);const on=od.set.includes(n);
-  return `<button type="button" class="silo-open-btn${on?' on':''}${on&&od.auto?' auto':''}" data-silo-open="${g}|${n}" aria-pressed="${on}" title="${on&&od.auto?'Guessed open — tap to confirm which silo is open':'Mark which silo is open (one or two)'}">${on?'Open':'Closed'}</button>`;
+// Desktop card: Closed | Open switch
+function siloOpenSegHtml(g,n){
+  const r=latestReading(g);if(!r)return '<span class="lbl">This silo</span>';
+  const od=openSilosDisplay(g);const on=od.set.includes(n);const auto=on&&od.auto;
+  return `<span class="silo-open-seg" role="group" aria-label="Silo ${n} open or closed" title="${auto?'Guessed open — tap Open to confirm':'Which silo the birds are eating from (one or two)'}"><button type="button" class="${!on?'on':''}" data-silo-open-set="${g}|${n}|0" aria-pressed="${!on}">Closed</button><button type="button" class="${on?'on':''}${auto?' auto':''}" data-silo-open-set="${g}|${n}|1" aria-pressed="${on}">Open</button></span>`;
 }
+function setSiloOpen(g,n,want){const od=openSilosDisplay(g);const on=od.set.includes(n);if(on===want&&!(want&&od.auto))return;toggleSiloOpen(g,n);}
 // Toggle a silo open/closed on the latest reading (one or two can be open)
 function toggleSiloOpen(g,n){
   const r=latestReading(g);if(!r){showToast('Record a silo reading first.',true);return;}
@@ -2214,7 +2216,7 @@ function siloRowHtml(g,n){
     `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${fmtFeed(ringsToKg(r),0)}"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${fmtFeedCompact(ringsToKg(r))}</span></button>`
   ).join('');
   return `<div class="sms-silo-row${carried?' carried':''}" id="smsRow-${g}-${n}">
-    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${starterSiloOf(g)===n?'<span class="silo-starter-tag">Starter</span>':''}${fromLbl}${siloOpenBtnHtml(g,n)}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></div>
+    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${starterSiloOf(g)===n?'<span class="silo-starter-tag">Starter</span>':''}${fromLbl}<span class="sms-head-right">${isOff?'':siloOpenSegHtml(g,n)}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></span></div>
     <div class="sms-ring-group">
       <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-pressed="${isOff}" aria-label="Silo ${n} off">Off</button>
       ${ringBtns}
