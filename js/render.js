@@ -649,6 +649,14 @@ function computeFarmAlerts() {
     // Starter silo for the next batch must be empty by clean-out
     [1,2,3,4].forEach(g => { starterAlerts(g).forEach(a => alerts.push(a)); });
   }
+  // A pickup whose date has passed still carries the estimated weight
+  allSheds.forEach(shed => {
+    (shed.pickups || []).forEach(p => {
+      if (!p.weightEstimated || !p.date || dateOnly(p.date) >= dateOnly(today)) return;
+      const g = Math.ceil(shed.id / 2);
+      alerts.push({ kind: 'warn', msg: `<strong>Shed ${shed.id}</strong> · ${fmtShortNoYear(p.date)} pickup still has an estimated weight — enter the kill-sheet weight`, tab: 'g'+g, shedId: shed.id });
+    });
+  });
   if (notifPrefs.shedPerformance) {
     allSheds.forEach(shed => {
       if (!shed.placementDate) return;
@@ -2045,7 +2053,15 @@ function renderDailyPerformance(shed){
     else if(r.customOn)readingBadge=`<span class="sample-pill" title="${r.customOn.isOfficial?'Plant weight':'Shed scale'}: ${r.customOn.avgWeightKg.toFixed(3)} kg">📏</span>`;
     let weightCell='—';
     if(r.weight!=null){const bandStr=(r.band!=null&&r.weightType==='gompertz')?`<span class="conf-band">±${(r.band*100).toFixed(0)}%</span>`:'';if(r.weightType==='gompertz')weightCell=`<span class="w-forecast">${r.weight.toFixed(3)}</span>${bandStr}<span class="w-pill gompertz">AI curve</span>`;else if(r.weightType==='ross-scaled')weightCell=`<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">Adjusted</span>`;else if(r.weightType==='ai-pickup')weightCell=`<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill forecast">From pickup</span>`;else if(r.weightType==='ai-target')weightCell=`<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill ai-target">From targets</span>`;else if(r.weightType==='standard')weightCell=`<span class="w-forecast">${r.weight.toFixed(3)}</span><span class="w-pill standard">Standard</span>`;}
+    // Pickup day: show the kill-sheet weight (or its estimate) instead of the curve — display only
+    const lp=(shed.pickups||[]).find(p=>p.date&&iso(p.date)===iso(r.date)&&pickupAvgKg(p)>0);
+    let dv=r.daysVar;
+    if(lp){const avg=pickupAvgKg(lp);
+      weightCell=lp.weightEstimated?`<span class="w-forecast">${avg.toFixed(3)}</span><span class="w-pill est" title="Estimated from your latest kill-sheet weight — enter the real weight when it arrives">Est</span>`
+        :`<span class="w-actual">${avg.toFixed(3)}</span><span class="w-pill actual" title="Kill-sheet weight${r.weight!=null?` · AI curve ${r.weight.toFixed(3)}`:''}">Kill sheet</span>`;
+      if(r.age>0)dv=daysVsTarget(r.age,avg);}
     let daysCell='—';let daysCls='';
+    if(dv!=null){const v=dv;r={...r,daysVar:v};}
     if(r.daysVar!=null){if(Math.abs(r.daysVar)<0.1){daysCell='On target';daysCls='days-neu';}else if(r.daysVar>0){daysCell=`${r.daysVar.toFixed(1)}d ahead`;daysCls='days-pos';}else{daysCell=`${Math.abs(r.daysVar).toFixed(1)}d behind`;daysCls='days-neg';}}
     const stdCell=r.age>0?r.standard.toFixed(3):'—';
     return `<tr class="${cls}"><td>${fmtShort(r.date)}${todayTag}${wkndTag}${readingBadge}</td><td class="num">${r.age}d${milestoneBadge}</td><td class="num">${r.live.toLocaleString()}${pickupNote}</td><td class="num">${weightCell}</td><td class="num" style="color:var(--muted);">${stdCell}</td><td class="num ${daysCls}">${daysCell}</td></tr>`;

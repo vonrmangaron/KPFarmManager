@@ -236,5 +236,17 @@ const fpn=run('silo numbers',`(()=>{
 if(fpn){ok(fpn.a==='123|123|123|123','not set: every pair 1–3');ok(fpn.b==='1,2,3|4,5,6|7,8,9|10,11,12','1–12: pairs get 1-3, 4-6, 7-9, 10-12');
   ok(fpn.lbl==='Silo 6+4','split label uses farm numbers');ok(fpn.c===24,'13–24 range');}
 
+console.log('16. Estimated-weight reminder and kill-sheet weight in the daily table');
+const kr=run('kill sheet display',`(()=>{
+  const T=dateOnly(new Date());const sh=farmData.sheds[2];const keep=sh.pickups;const pl=dateOnly(sh.placementDate);
+  sh.pickups=[{date:T,birds:4000,isFinal:false,totalWeightKg:4000*1.811,source:'manual'},{date:addDays(T,-1),birds:5000,isFinal:false,totalWeightKg:5000*2.0,source:'manual',weightEstimated:true},{date:addDays(T,2),birds:6000,isFinal:false,totalWeightKg:6000*2.2,source:'manual',weightEstimated:true}];
+  gompertzCache=new Map();
+  const al=computeFarmAlerts().filter(a=>/estimated weight/.test(a.msg)&&/Shed 3</.test(a.msg)).length;
+  const html=renderDailyPerformance(sh);
+  sh.pickups=keep;gompertzCache=new Map();
+  return {al,kill:/Kill sheet/.test(html)&&/1\.811/.test(html),est:/>Est</.test(html)};
+})()`);
+if(kr){ok(kr.al===1,'reminder only for the past pickup still on est. weight');ok(kr.kill,'pickup day shows the kill-sheet weight');ok(kr.est,'estimated pickup shows Est');}
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);
