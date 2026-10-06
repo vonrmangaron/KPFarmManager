@@ -762,37 +762,54 @@ function dcoDateCell(shed,co,fb){
   if(finalPickupOf(shed))return `${fmtShortNoYear(co.endDate)}<span class="dco-lock" title="Set by the final pickup">✓</span>`;
   return `<input type="date" class="dco-date${fb?' dco-date-unset':''}" value="${iso(shed.cleanoutDate)}" data-shed="${idx}" data-field="cleanoutDate" aria-label="Shed ${shed.id} clean-out date"${fb?` title="Not set — using the ${co.endSrc} (${fmtShortNoYear(co.endDate)})"`:''}>`;
 }
+// Dashboard: one row per shed — where it is today and where it ends at clean-out
+// (same numbers as before: currentShedWeightEstimate today, shedCleanoutInfo to clean-out)
 function renderCleanoutDashCard(){
   if(!farmData)return '';
   const today=dateOnly(new Date());
   const sheds=(farmData.sheds||[]).filter(s=>s.placementDate);
   if(!sheds.length)return '';
-  let totBirds=0,totKg=0,finBirds=0,finKg=0,anyFallback=false;
-  const rows=sheds.map(shed=>{
+  let totBirds=0,totKg=0,finBirds=0,finKg=0,anyFallback=false,liveNow=0;
+  const rows=(farmData.sheds||[]).map(shed=>{
+    if(!shed.placementDate)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="6" class="dco-none">No placement date</td></tr>`;
+    // today
+    const age=daysBetween(shed.placementDate,today);const live=liveAtStartOfDay(shed,today);liveNow+=live;
+    const est=currentShedWeightEstimate(shed,today);const alw=est?est.kg:null;
+    const daysVar=(alw&&age>0)?daysVsTarget(age,alw):null;const sev=daysBehindSeverity(daysVar);
+    const mort=shed.initialPopulation>0?((Number(shed.mortality)||0)/shed.initialPopulation*100):0;
+    const dotColor=sev==='unknown'?'#9CA3AF':sev==='bad'?'var(--danger)':sev==='warn'?'var(--primary)':'var(--success)';
+    const behind=daysVar==null?'—':Math.abs(daysVar)<0.1?'On target':`${Math.abs(daysVar).toFixed(1)}d ${daysVar>0?'ahead':'behind'}`;
+    const alwChip=est&&est.isEstimate?`<span class="est-chip" title="${escapeAttr(weightEstTitle(est))}">est</span>`:'';
+    const nowCells=`<td class="num">D${age}<div class="dco-birds">${live>0?live.toLocaleString():'—'} birds · ${mort.toFixed(1)}% mort.</div></td>
+      <td class="num">${alw?alw.toFixed(3):'—'} <span class="dco-sub">kg</span>${alwChip}<div class="dco-birds"><span class="dash-status-dot" style="background:${dotColor}"></span>${behind}</div></td>`;
+    // to clean-out
     const co=shedCleanoutInfo(shed,today);
-    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="5" class="dco-none">Not enough data yet</td></tr>`;
+    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td>${nowCells}<td colspan="4" class="dco-none">Not enough data yet</td></tr>`;
     totBirds+=co.birdsAll;totKg+=co.totalKgAll;finBirds+=co.finalBirds;finKg+=co.finalBirds*co.finalKg;
     const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
     const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
     return `<tr${co.daysToEnd<0?' class="dco-past"':''}><td class="shed-name-cell">Shed ${shed.id}</td>
-      <td>${dcoDateCell(shed,co,fb)} <span class="dco-sub">${when}</span></td>
-      <td class="num">${co.cleanAge}d</td>
+      ${nowCells}
+      <td class="dco-co">${dcoDateCell(shed,co,fb)}<div class="dco-birds">D${co.cleanAge} · ${when}</div></td>
       <td class="num">${co.finalKg?co.finalKg.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.finalBirds.toLocaleString()} birds</div></td>
       <td class="num">${co.avgAll?co.avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.pickupCount} pickups</div></td>
       <td class="num dco-total">${Math.round(co.totalKgAll).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAll.toLocaleString()} birds</div></td></tr>`;
   }).join('');
   const avgAll=totBirds>0?totKg/totBirds:0,avgFin=finBirds>0?finKg/finBirds:0;
   const open=sheds.filter(s=>!finalPickupOf(s));
-  const setAll=open.length>1?`<tbody class="dco-setall"><tr><td class="shed-name-cell">All</td><td colspan="5"><div class="dco-setall-row"><input type="date" class="dco-date" id="dcoSetAllDate" aria-label="Clean-out date for all sheds"><button type="button" class="btn-secondary dco-setall-btn" id="dcoSetAllBtn">Set all ${open.length} sheds</button></div></td></tr></tbody>`:'';
+  const setAll=open.length>1?`<tbody class="dco-setall"><tr><td class="shed-name-cell">All</td><td colspan="2"></td><td colspan="4"><div class="dco-setall-row"><input type="date" class="dco-date" id="dcoSetAllDate" aria-label="Clean-out date for all sheds"><button type="button" class="btn-secondary dco-setall-btn" id="dcoSetAllBtn">Set all ${open.length} sheds</button></div></td></tr></tbody>`:'';
   return `<div class="dash-card dash-cleanout">
-    <div class="dash-card-head"><h2 class="dash-card-title">🧹 Clean-out</h2><span class="dco-head-sub">Last pickup vs whole-batch weights per shed</span></div>
+    <div class="dash-card-head"><h2 class="dash-card-title">Shed forecast until clean-out</h2><span class="dco-head-sub">Today, then the outlook to each shed's clean-out</span><button class="dash-card-action" data-tab="g1" type="button">All sheds</button></div>
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
-      <thead><tr><th>Shed</th><th>Clean-out</th><th class="num">Age</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr></thead>
+      <thead>
+        <tr class="dco-group"><th></th><th colspan="2">Today</th><th colspan="4">To clean-out</th></tr>
+        <tr><th>Shed</th><th class="num">Age · birds</th><th class="num">Weight · vs Ross</th><th>Clean-out</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr>
+      </thead>
       <tbody>${rows}</tbody>
       ${setAll}
-      <tfoot><tr><td>Farm</td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
+      <tfoot><tr><td>Farm</td><td class="num"><div class="dco-birds">${liveNow.toLocaleString()} birds</div></td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
     </table></div>
-    <p class="dco-note">Weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' Empty date = not set yet, using the shed\'s last pickup.':''} Tap a date to change it.</p>
+    <p class="dco-note">Clean-out weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' Empty date = not set yet, using the shed\'s last pickup.':''} Tap a date to change it.</p>
   </div>`;
 }
 function renderDashboardView() {
@@ -903,29 +920,6 @@ function renderDashboardView() {
   }).join('');
 
   // ── Per-shed table rows ──
-  const shedRows = allSheds.map(shed => {
-    if (!shed.placementDate) return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="6" style="color:var(--muted)">No placement date</td></tr>`;
-    const age  = daysBetween(shed.placementDate, today);
-    const live = liveAtStartOfDay(shed, today);
-    const est  = currentShedWeightEstimate(shed, today);
-    const alw  = est ? est.kg : null;
-    const daysVar = (alw && age > 0) ? daysVsTarget(age, alw) : null;
-    const sev = daysBehindSeverity(daysVar);
-    const mort = shed.initialPopulation > 0 ? ((Number(shed.mortality)||0) / shed.initialPopulation * 100) : 0;
-    const dotColor = sev === 'unknown' ? '#9CA3AF' : sev === 'bad' ? 'var(--danger)' : sev === 'warn' ? 'var(--primary)' : 'var(--success)';
-    const rowClass = sev === 'bad' ? 'shed-row-bad' : sev === 'warn' ? 'shed-row-warn' : '';
-    const behindText = daysVar == null ? '—' : Math.abs(daysVar) < 0.1 ? 'On target' : `${Math.abs(daysVar).toFixed(1)}d ${daysVar > 0 ? 'ahead' : 'behind'}`;
-    const alwChip = est && est.isEstimate ? `<span class="est-chip" title="${escapeAttr(weightEstTitle(est))}">est</span>` : '';
-    return `<tr class="${rowClass}">
-      <td class="shed-name-cell">Shed ${shed.id}</td>
-      <td>D${age}</td>
-      <td>${alw ? alw.toFixed(2)+' kg'+alwChip : '—'}</td>
-      <td><span class="dash-status-dot" style="background:${dotColor}"></span>${behindText}</td>
-      <td>${live > 0 ? Math.round(live/1000)+'k' : '—'}</td>
-      <td>${mort.toFixed(1)}%</td>
-    </tr>`;
-  }).join('');
-
   // ── Silo bars ──
   const siloBars = [1,2,3,4].map(g => {
     const bal  = currentBalanceKg(g);
@@ -1024,22 +1018,8 @@ function renderDashboardView() {
     </div>
   </div>
 
-  <!-- Per shed: performance now beside the clean-out outlook -->
-  <div class="dash-split dash-split-half">
-  <div class="dash-card">
-    <div class="dash-card-head">
-      <h2 class="dash-card-title">Shed performance</h2>
-      <button class="dash-card-action" data-tab="g1" type="button">All sheds</button>
-    </div>
-    <div class="dash-table-scroll"><table class="dash-shed-table dash-perf-table">
-      <thead><tr>
-        <th>Shed</th><th>Age</th><th>Last ALW</th><th>Days behind</th><th>Live</th><th>Mort.</th>
-      </tr></thead>
-      <tbody>${shedRows}</tbody>
-    </table></div>
-  </div>
-    ${renderCleanoutDashCard()}
-  </div>
+  <!-- Per shed: today and the outlook to clean-out -->
+  ${renderCleanoutDashCard()}
 
   <!-- Trend -->
   ${renderGrowthChartSvg()}
