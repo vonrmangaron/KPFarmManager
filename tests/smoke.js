@@ -134,13 +134,13 @@ const pb=run('pickup birds',`(()=>{
   const sh=farmData.sheds[0];const p=sh.pickups[0];const d=iso(p.date);
   p.weightEstimated=false;p.totalWeightKg=8000*1.85;p.birds=8000;
   setPickupBirds(1,d,'8100');const keptTotal=p.totalWeightKg,b1=p.birds;
-  p.weightEstimated=true;setPickupBirds(1,d,'8200');const avgKept=p.totalWeightKg/p.birds;
+  p.weightEstimated=true;setPickupBirds(1,d,'8200');const avgKept=p.totalWeightKg/p.birds;gompertzCache=new Map();const estAvg=estimatedPickupWeight(sh,dateOnly(p.date));
   setPickupBirds(1,d,'0');const unchanged=p.birds;
   pickupsModalOpen=true;let html='';try{refreshPickupsModal();}catch(e){html='ERR '+e.message;}pickupsModalOpen=false;
-  return {keptTotal,b1,avgKept,unchanged,html};
+  return {keptTotal,b1,avgKept,estAvg,unchanged,html};
 })()`);
 if(pb){ok(pb.b1===8100,'birds saved');ok(near(pb.keptTotal,14800,0.01),'kill-sheet total kept when birds change');
-  ok(near(pb.avgKept,14800/8100,1e-6),'estimated weight keeps the average');ok(pb.unchanged===8200,'0 birds rejected');ok(!pb.html,'Pickups tool renders');}
+  ok(near(pb.avgKept,pb.estAvg,1e-3),'estimated weight keeps the curve average');ok(pb.unchanged===8200,'0 birds rejected');ok(!pb.html,'Pickups tool renders');}
 
 console.log('10. Clean-out shortcut + pair arrows');
 const co=run('cleanout set all',`(()=>{
@@ -156,6 +156,22 @@ const co=run('cleanout set all',`(()=>{
 })()`);
 if(co){ok(co.n>0&&co.after,'set all applies to open sheds');ok(co.finKept,'final pickup keeps its date');
   ok(co.hasInputs,'clean-out dates editable on dashboard');ok(co.hasSetAll,'set-all row shown');ok(co.prevWrap&&co.nextWrap,'pair arrows wrap 1↔4');}
+
+console.log('11. Estimated pickup weight follows a later real weighing');
+const ew=run('est follows real',`(()=>{
+  const sh=farmData.sheds[1];const pl=dateOnly(sh.placementDate);
+  sh.pickups=[{date:addDays(pl,31),birds:8000,isFinal:false,totalWeightKg:null,source:'manual'},
+              {date:addDays(pl,35),birds:6000,isFinal:false,totalWeightKg:6000*2.4,source:'manual',weightEstimated:true}];
+  gompertzCache=new Map();refreshEstimatedPickupWeights(sh);const before=sh.pickups[1].totalWeightKg/6000;
+  sh.pickups[0].totalWeightKg=8000*2.05;sh.pickups[0].totalWeightKgManual=true;
+  gompertzCache=new Map();const moved=refreshEstimatedPickupWeights(sh);const after=sh.pickups[1].totalWeightKg/6000;
+  sh.pickups[0].totalWeightKg=8000*2.25;gompertzCache=new Map();refreshEstimatedPickupWeights(sh);const after2=sh.pickups[1].totalWeightKg/6000;
+  gompertzCache=new Map();const again=refreshEstimatedPickupWeights(sh);
+  return {before,after,after2,moved,again,birds:sh.pickups[1].birds,est:sh.pickups[1].weightEstimated};
+})()`);
+if(ew){ok(ew.moved&&Math.abs(ew.after-ew.before)>0.01,'est pickup re-projects when day-31 weight arrives');
+  ok(ew.after2>ew.after,'heavier day-31 weight → heavier day-35 estimate');ok(ew.after>2.05,'day-35 estimate grows on from day-31 weight');
+  ok(!ew.again,'refresh is stable (no change on repeat)');ok(ew.birds===6000&&ew.est,'birds and est flag kept');}
 
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

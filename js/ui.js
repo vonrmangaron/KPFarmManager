@@ -643,6 +643,19 @@ async function openPastBatch(targetBatchKey){
 // "current weight" (anchored to the last real weighing), projected to
 // that date. Used to pre-fill kill-sheet pickups before they're weighed.
 function estimatedPickupWeight(shed,dateObj){const e=dateObj?currentShedWeightEstimate(shed,dateObj):null;return e&&e.kg>0?Number(e.kg.toFixed(3)):null;}
+// Logged pickups saved with an estimated weight follow the latest curve: when a
+// real weighing arrives (e.g. day 31), a later est. pickup (day 35) re-projects
+// from it. Birds stay; only the estimated total/average moves.
+function refreshEstimatedPickupWeights(shed){
+  let changed=false;
+  (shed.pickups||[]).forEach(p=>{
+    if(!p.weightEstimated||!(Number(p.birds)>0))return;
+    const est=estimatedPickupWeight(shed,dateOnly(p.date));if(!(est>0))return;
+    const tot=est*Number(p.birds);
+    if(!(p.totalWeightKg>0)||Math.abs(tot-p.totalWeightKg)>0.5){p.totalWeightKg=tot;changed=true;}
+  });
+  return changed;
+}
 // Nearest planned pickup within ±3 days of a date (a logged pickup replaces it)
 function nearbyPlannedPickup(shed,dateIso){
   const d=parseExcelDate(dateIso);if(!d)return null;let best=null,gap=Infinity;

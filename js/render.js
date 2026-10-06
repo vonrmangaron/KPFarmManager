@@ -1064,6 +1064,7 @@ function render(){
       lastPageKey=pageKey;
     }
     gompertzCache=new Map();autoPlanCache=new Map();farmRangeCache=null;thinPatternCache=null;intakeCalCache=null;finalPickupCache=null;
+    if(farmData){let estMoved=false;(farmData.sheds||[]).forEach(s=>{if(refreshEstimatedPickupWeights(s))estMoved=true;});if(estMoved){autoPlanCache=new Map();finalPickupCache=null;saveState();schedulePush();}}
     // Batch number field
     const batchEl=document.getElementById('batchNumber');
     if(batchEl){const want=predState.batchNumber||(farmData?farmData.batchNumber:'')||'';if(batchEl.value!==want)batchEl.value=want;batchEl.readOnly=!!want;batchEl.title=want?'Batch number is locked. Use "New Batch" to change it.':'Enter or import a batch number';}
