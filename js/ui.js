@@ -788,7 +788,7 @@ function deleteManualPickup(shedId,dateIso){
   if(!confirm(`Delete this ${label} pickup from ${fmtShort(p.date)}?`))return;
   shed.pickups=(shed.pickups||[]).filter(x=>iso(x.date)!==dateIso);
   reflowShedPickups(shed);reconcilePredictedPickups(shed);
-  saveState();schedulePush();render();
+  saveState();schedulePush();render();refreshPickupsModal();
   showToast('Pickup deleted.');
 }
 
@@ -2418,7 +2418,7 @@ function refreshPickupsModal(){
         <td class="num" data-label="Birds"><input class="pred-pickup-input pk-birds" type="number" min="1" step="1" inputmode="numeric" value="${b||''}" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="birds" aria-label="Birds"></td>
         <td class="num" data-label="Total kg"><input class="pred-pickup-input" type="number" min="0" step="1" inputmode="decimal" value="${tot!=null?Math.round(tot):''}" placeholder="total kg" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="total" aria-label="Total weight kg"></td>
         <td class="num" data-label="Avg kg"><input class="pred-pickup-input" type="number" min="0" step="0.001" inputmode="decimal" value="${avg!=null?Number(avg.toFixed(3)):''}" placeholder="kg/bird" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="avg" aria-label="Average weight kg"></td>
-        <td class="num"><button type="button" class="pk-edit" data-pickup-edit="${shed.id}|${d}" title="Edit date, age or final">✎</button></td>
+        <td class="num pk-acts"><div class="pk-acts-in"><button type="button" class="pk-edit" data-pickup-edit="${shed.id}|${d}" title="Edit date, age or final" aria-label="Edit pickup">✎</button><button type="button" class="pk-del" data-pickup-delete="${shed.id}|${d}" title="Delete pickup" aria-label="Delete pickup"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></td>
       </tr>`;}).join('');
     farmBirds+=birds;farmKg+=kg;farmWeighed+=wBirds;
     const avgAll=wBirds>0?kg/wBirds:null;

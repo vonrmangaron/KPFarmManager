@@ -3800,6 +3800,9 @@ label.lbl { display: block; }
 .pk-table tr.is-final td { background: var(--primary-soft); }
 .pk-final { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--primary-dark); background: var(--primary-soft); border-radius: 999px; padding: 1px 6px; }
 .pk-edit { border: 1px solid var(--line); background: var(--surface-soft); color: var(--ink); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; }
+.pk-acts-in { display: inline-flex; gap: 6px; }
+.pk-del { border: 1px solid var(--line); background: var(--surface-soft); color: var(--danger); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.pk-del:hover { background: var(--danger-soft); border-color: var(--danger); }
 .pk-empty { padding: 12px 14px; font-size: 13px; color: var(--muted); }
 @media (max-width: 768px) { #pickupsModal .pk-panel { width: 100%; height: 100%; max-height: none; border-radius: 0; } }
 
@@ -3807,10 +3810,13 @@ label.lbl { display: block; }
 @media (max-width: 600px) {
   .pk-table { min-width: 0; }
   .pk-table thead { display: none; }
-  .pk-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 34px; gap: 6px 8px; padding: 10px 12px; border-top: 1px solid var(--line); align-items: end; }
+  .pk-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 6px 8px; padding: 10px 12px; border-top: 1px solid var(--line); align-items: end; }
   .pk-table td { border: none; padding: 0; }
   .pk-table td:nth-child(1) { grid-column: 1 / 3; font-weight: 700; }
-  .pk-table td.pk-age { grid-column: 3 / 5; text-align: right; color: var(--muted); }
+  .pk-table td:nth-child(1) { grid-row: 1; align-self: center; }
+  .pk-table td.pk-age { grid-column: 3; grid-row: 1; align-self: center; text-align: right; color: var(--muted); }
+  .pk-table td.pk-acts { grid-column: 4; grid-row: 1; }
+  .pk-table td[data-label]:nth-child(5) { grid-column: 3 / 5; }
   .pk-table td[data-label] { display: flex; flex-direction: column; gap: 3px; text-align: left; }
   .pk-table td[data-label]::before { content: attr(data-label); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
   .pk-table .pred-pickup-input { width: 100%; box-sizing: border-box; }
