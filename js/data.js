@@ -552,3 +552,101 @@ function clearTestDeliveries(group){
   showToast(`🧹 Cleared ${count} test deliver${count===1?'y':'ies'}.`);
 }
 let toastTimer=null;
+
+// ── Per-silo levels ──
+// One silo per pair is open at a time (two when a delivery came just as one
+// emptied). The latest reading says which are open (else: the emptiest one).
+// Birds eat from the open silo(s); when they run out, the silo with the
+// oldest feed opens next. Each load goes into the silo picked on the order
+// (else the open silo, or the emptiest with room). Pair totals stay the same
+// as the feed forecast; this only places the feed in the three silos.
+const SILO_CAP_KG=CONE_KG+RING_KG*MAX_RINGS;
+function starterSiloOf(g){const n=Number(predState.starterSilo&&predState.starterSilo[g]);return n>=1&&n<=3?n:null;}
+function starterBufferDays(){const b=Number(predState.starterBufferDays);return b===14||b===21?b:21;}
+function loadSiloFor(l,g){const n=Number(l&&l.siloFor&&l.siloFor[g]);return n>=1&&n<=3?n:null;}
+// Day the pair's last birds leave (feed stops after it)
+function pairCleanoutDate(g){let d=null;shedsForGroup(g).forEach(s=>{if(!s.placementDate)return;const f=finalPickupDate(s);if(f&&(!d||f>d))d=f;});return d;}
+// From here the starter silo only takes Starter for the next batch: N days
+// before clean-out, or the pair's first Finisher load if that is earlier
+function starterWindowStart(g){
+  const co=pairCleanoutDate(g);let s=co?addDays(co,-starterBufferDays()):null;
+  farmLoads.forEach(l=>{if(l.feedType==='finisher'&&Number(l.splitKg&&l.splitKg[g])>0){const d=dateOnly(l.date);if(!s||d<s)s=d;}});
+  return s;
+}
+function isNextBatchStarter(l,g,win){return l.feedType==='starter'&&win&&dateOnly(l.date)>=win;}
+// opts: {until: Date, excludeLoadId}
+function siloLevelPlan(g,opts){
+  const o=opts||{};const r=latestReading(g);if(!r)return null;
+  const conf=siloConfidence();const sheds=shedsForGroup(g);const D0=dateOnly(r.date);
+  const kg=[r.silo1Rings,r.silo2Rings,r.silo3Rings].map(x=>ringsToKg(x)*conf);
+  const starter=starterSiloOf(g);const win=starterWindowStart(g);
+  const loads=farmLoads.filter(l=>l.date&&l.id!==o.excludeLoadId&&Number(l.splitKg&&l.splitKg[g])>0);
+  const lastFill=[0,0,0];
+  loads.forEach(l=>{const n=loadSiloFor(l,g);const d=dateOnly(l.date);if(n&&loadBeforeReading(r,d))lastFill[n-1]=Math.max(lastFill[n-1],d.getTime());});
+  const marked=readingOpenField(r).open;
+  let open=marked?marked.map(n=>n-1).filter(i=>kg[i]>0):[];
+  if(!open.length){const c=[0,1,2].filter(i=>kg[i]>0).sort((a,b)=>((a===starter-1)-(b===starter-1))||(kg[a]-kg[b]));if(c.length)open=[c[0]];}
+  const locked=new Set();// starter silo holding next batch's starter: never drawn
+  let queue=[0,1,2].filter(i=>kg[i]>0&&!open.includes(i)).sort((a,b)=>(lastFill[a]-lastFill[b])||(a-b));
+  const pickTarget=(n,amt)=>{
+    if(n)return n-1;
+    if(open.length&&SILO_CAP_KG-kg[open[0]]>=amt)return open[0];
+    return [0,1,2].filter(i=>i!==starter-1&&!locked.has(i)).sort((a,b)=>kg[a]-kg[b])[0];
+  };
+  const step=(D,withDel,eatOn)=>{
+    const row={date:D,del:[],overflow:[],sw:[],eat:0,short:0};
+    if(withDel)loads.filter(l=>iso(l.date)===iso(D)).forEach(l=>{
+      const amt=Number(l.splitKg[g])||0;const n=loadSiloFor(l,g);let i=pickTarget(n,amt);
+      const room=SILO_CAP_KG-kg[i];const put=Math.min(Math.max(0,room),amt);kg[i]+=put;
+      row.del.push({silo:i+1,kg:amt,feedType:l.feedType,loadId:l.id,set:!!n});
+      if(amt-put>0.5){row.overflow.push({silo:i+1,kg:amt-put});const j=[0,1,2].filter(x=>x!==i&&x!==starter-1).sort((a,b)=>kg[a]-kg[b])[0];if(j!=null){kg[j]+=amt-put;if(!open.includes(j)&&!queue.includes(j))queue.push(j);}}
+      if(i===starter-1&&isNextBatchStarter(l,g,win)){locked.add(i);open=open.filter(x=>x!==i);queue=queue.filter(x=>x!==i);}
+      else if(!open.includes(i)&&!queue.includes(i)&&!locked.has(i))queue.push(i);
+    });
+    let rem=eatOn?groupDailyFeedOn(sheds,D):0;row.eat=rem;
+    let guard=0;
+    while(rem>0.5&&guard++<12){
+      if(!open.length){if(!queue.length)break;open=[queue.shift()];row.sw.push(open[0]+1);}
+      const per=rem/open.length;
+      open.forEach(i=>{const t=Math.min(kg[i],per);kg[i]-=t;rem-=t;});
+      open=open.filter(i=>kg[i]>0.5);[0,1,2].forEach(i=>{if(kg[i]<=0.5)kg[i]=0;});
+    }
+    row.short=Math.max(0,rem);row.kg=kg.slice();row.open=open.map(i=>i+1);row.next=queue.length?queue[0]+1:null;row.locked=[...locked].map(i=>i+1);
+    row.total=kg[0]+kg[1]+kg[2];return row;
+  };
+  const days=[];
+  const start={date:D0,kg:kg.slice(),open:open.map(i=>i+1),marked:!!marked,next:queue.length?queue[0]+1:null,total:kg[0]+kg[1]+kg[2]};
+  if(readingIsMorning(r)){
+    // morning reading: today's delivery (if not in yet) and today's feed still to come
+    const inc=readingIncludesDayDelivery(r);const row=step(D0,!inc,true);days.push(row);
+  }
+  const until=dateOnly(o.until||addDays(new Date(),14));
+  for(let D=addDays(D0,1);D<=until;D=addDays(D,1))days.push(step(D,true,true));
+  return {g,start,days,starter,win,reading:r};
+}
+function siloPlanOn(plan,D){if(!plan)return null;const t=iso(D);for(let i=plan.days.length-1;i>=0;i--)if(iso(plan.days[i].date)<=t)return plan.days[i];return iso(plan.start.date)<=t?plan.start:null;}
+// Is the starter silo empty in time for the next batch?
+// state: none | pick | ready | ontrack | action ; plus loads of other feed planned into it
+function starterSiloStatus(g){
+  if(!shedsForGroup(g).some(s=>s.placementDate))return null;
+  const co=pairCleanoutDate(g);if(!co)return null;
+  const today=dateOnly(new Date());const win=starterWindowStart(g);const inWin=!!win&&today>=win;
+  const n=starterSiloOf(g);
+  const base={g,co,win,inWin,silo:n,daysToCo:daysBetween(today,co)};
+  if(!n)return {...base,state:'pick'};
+  const plan=siloLevelPlan(g,{until:addDays(co,1)});
+  const wrong=farmLoads.filter(l=>l.date&&loadSiloFor(l,g)===n&&Number(l.splitKg[g])>0&&win&&dateOnly(l.date)>=win&&!isNextBatchStarter(l,g,win)&&dateOnly(l.date)<=co);
+  if(!plan)return {...base,state:'noreading',wrong};
+  const nowRow=siloPlanOn(plan,today)||plan.start;const nowKg=nowRow.kg[n-1];
+  // first day it is empty and stays empty until clean-out (ignoring next batch's starter)
+  let emptyOn=null;
+  const rows=[plan.start,...plan.days].filter(r=>r.date<=co);
+  rows.forEach(r=>{const k=r.kg[n-1];const lockedNow=r.locked&&r.locked.includes(n);if(k<=0.5||lockedNow){if(!emptyOn)emptyOn=r.date;}else emptyOn=null;});
+  const isOpen=(nowRow.open||[]).includes(n);
+  if(nowKg<=0.5&&emptyOn)return {...base,state:wrong.length?'watch':'ready',kg:0,emptyOn,wrong,isOpen};
+  if(emptyOn)return {...base,state:'ontrack',kg:nowKg,emptyOn,wrong,isOpen};
+  const avg=Math.max(1,groupDailyFeedOn(shedsForGroup(g),today));
+  const daysNeeded=Math.ceil(nowKg/avg);
+  const openBy=addDays(co,-daysNeeded-1);
+  return {...base,state:'action',kg:nowKg,openBy:openBy<today?today:openBy,late:openBy<today,wrong,isOpen};
+}

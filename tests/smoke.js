@@ -173,5 +173,42 @@ if(ew){ok(ew.moved&&Math.abs(ew.after-ew.before)>0.01,'est pickup re-projects wh
   ok(ew.after2>ew.after,'heavier day-31 weight → heavier day-35 estimate');ok(ew.after>2.05,'day-35 estimate grows on from day-31 weight');
   ok(!ew.again,'refresh is stable (no change on repeat)');ok(ew.birds===6000&&ew.est,'birds and est flag kept');}
 
+console.log('12. Silo levels: one open at a time, silo per load, starter silo');
+const sl=run('silo plan',`(()=>{
+  const T=dateOnly(new Date());const g=1;
+  siloData[g]={readings:[{date:iso(addDays(T,-1)),silo1Rings:3,silo2Rings:2,silo3Rings:0,time:'pm',open:[3]}],deliveries:[]};
+  const keepLoads=farmLoads;
+  farmLoads=[normalizeLoad({id:'L1',date:iso(addDays(T,2)),feedType:'finisher',plannedKg:24000,splitKg:{1:24000,2:0,3:0,4:0},siloFor:{1:2}})];
+  const persisted=JSON.parse(JSON.stringify(serializeFarmLoads()))[0].siloFor;
+  const ser=JSON.parse(JSON.stringify(serializeSiloDataForCloud()))[1].readings[0].open;
+  const plan=siloLevelPlan(g,{until:addDays(T,8)});
+  const d0=plan.days[0];const s3First=d0.kg[2]<plan.start.kg[2];const s1Same=d0.kg[0]===plan.start.kg[0]||d0.kg[2]>0;
+  const delRow=plan.days.find(r=>r.del.length);
+  const totalsMatch=plan.days.every(r=>Math.abs(r.total-Math.max(0,balanceOnEndOfDay(g,r.date,true)))<2||r.short>0);
+  predState.starterSilo={1:3,2:null,3:null,4:null};
+  const st=starterSiloStatus(g);
+  predState.starterSilo={1:null,2:null,3:null,4:null};
+  const pick=starterSiloStatus(g);
+  farmLoads=keepLoads;
+  return {persisted,ser,s3First,s1Same,delSilo:delRow&&delRow.del[0].silo,totalsMatch,stState:st&&st.state,pickState:pick&&pick.state,openStart:plan.start.open};
+})()`);
+if(sl){ok(sl.persisted&&sl.persisted[1]===2,'load keeps its silo');ok(Array.isArray(sl.ser)&&sl.ser[0]===3,'reading keeps open silo');
+  ok(sl.openStart.join()==='3','marked open silo used');ok(sl.s3First,'open silo empties first');ok(sl.delSilo===2,'load goes into its silo');
+  ok(sl.totalsMatch,'silo totals match the feed forecast');ok(['ready','ontrack','action','watch'].includes(sl.stState),'starter status computed ('+sl.stState+')');ok(sl.pickState==='pick','no starter silo → pick');}
+
+console.log('13. Silo picture never changes the feed calculations');
+const nc=run('silo fields are display-only',`(()=>{
+  const T=dateOnly(new Date());
+  const fp=()=>JSON.stringify([1,2,3,4].map(g=>{const f=computeSiloForecast(g,{start:0,end:21},{realOnly:true});return [f.rows.map(r=>Math.round(r.balance)),f.depletedDate&&iso(f.depletedDate),Math.round(readingEndOfDayKg(g,latestReading(g))||0),Math.round(deliveriesSinceLatestReading(g))];}).concat([Math.round(feedEatenMeasured().eaten)]));
+  [1,2,3,4].forEach(g=>{siloData[g]={readings:[{date:iso(addDays(T,-1)),silo1Rings:3,silo2Rings:2,silo3Rings:0,time:'pm'}],deliveries:[]};});
+  const keep=farmLoads;farmLoads=[normalizeLoad({id:'n1',date:iso(addDays(T,2)),feedType:'finisher',plannedKg:60000,splitKg:{1:30000,2:30000,3:0,4:0}})];
+  const before=fp();
+  [1,2,3,4].forEach(g=>{siloData[g].readings[0].open=[1,3];});farmLoads[0].siloFor={1:3,2:1};predState.starterSilo={1:3,2:1,3:2,4:null};
+  const after=fp();
+  predState.starterSilo={1:null,2:null,3:null,4:null};farmLoads=keep;
+  return before===after;
+})()`);
+ok(nc===true,'open silos, silo per load and starter silo leave every feed number unchanged');
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

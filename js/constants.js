@@ -32,7 +32,7 @@ const DEFAULT_FINAL_UPLIFT_PCT=8;
 // withdrawal has none (fed until clean-out). Trucks are always 60 t,
 // split between pairs; 'simple' = 60 · 30/30 · 15/15/15/15.
 const DEFAULT_FEED_QUOTA={starter:0.3,grower:1.0,finisher:2.0},TRUCK_KG=60000,SPLIT_STEP_KG=15000;
-let predState={feedQuota:{...DEFAULT_FEED_QUOTA},truckSplitMode:'simple',finalUpliftPct:DEFAULT_FINAL_UPLIFT_PCT,projectionLog:[],siloConfidencePct:100,safetyDays:1,deliveryTiming:'early',farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
+let predState={feedQuota:{...DEFAULT_FEED_QUOTA},truckSplitMode:'simple',finalUpliftPct:DEFAULT_FINAL_UPLIFT_PCT,projectionLog:[],siloConfidencePct:100,safetyDays:1,deliveryTiming:'early',starterSilo:{1:null,2:null,3:null,4:null},starterBufferDays:21,farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
@@ -43,6 +43,7 @@ let renderTimer=null,syncFarmName=null,syncSha=null,syncExcelSha=null,syncExcelM
 let pushDebounceTimer=null,pushMaxWaitTimer=null,pushPending=false,pushInFlight=false;
 let manualPickupState=null,sampleState=null,predictedPickupState=null,pendingImport=null,reviewChoices={};
 let gompertzCache=new Map(),settingsDrawerOpen=false,pendingNewBatchClean='',pendingNewBatchDownload=true;
+let siloLevelSel={};
 let notifPrefs={shedPerformance:true,feedBalance:true};
 
 // Farm name shown in the app. A view-only label: the cloud farm ID
@@ -95,6 +96,12 @@ function readTimeToggleHtml(){
 }
 // Farm-wide silo numbering: 12 silos, 3 per pair — pair 2's silos are 4, 5, 6
 function siloNumber(g,n){return (g-1)*3+n;}
+// Which silos were open at a reading (1–3 within the pair; one or two)
+function readingOpenField(r){const a=Array.isArray(r&&r.open)?[...new Set(r.open.map(Number).filter(n=>n>=1&&n<=3))].sort():[];return a.length?{open:a}:{};}
+// Starter silo per pair (1–3) and how many days before clean-out to plan it
+function applyStarterPrefs(v){if(!v)return;if(v.starterSilo&&typeof v.starterSilo==='object'){const o={1:null,2:null,3:null,4:null};[1,2,3,4].forEach(g=>{const n=Number(v.starterSilo[g]);if(n>=1&&n<=3)o[g]=n;});predState.starterSilo=o;}const b=Number(v.starterBufferDays);if(b===14||b===21)predState.starterBufferDays=b;}
+// A load's silo per pair: {g: 1–3}
+function normSiloFor(v){const o={};if(v&&typeof v==='object')[1,2,3,4].forEach(g=>{const n=Number(v[g]);if(n===1||n===2||n===3)o[g]=n;});return o;}
 
 // Sidebar navigation definition — used by sidebarHtml() in render.js
 const NAV_ITEMS = [

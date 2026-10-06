@@ -1565,7 +1565,7 @@ function renderLoadsModalBody(){
   } else {
     const rows=filtered.map(l=>{
       const r=rowBase(l);
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;return `<td class="split-cell on">${fmtFeedNum(v,1)}</td>`;};
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sn=loadSiloFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sn?`<span class="split-silo">S${sn}</span>`:''}</td>`;};
       const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
       const actualCls=(l.actualKg!=null)?'filled':'';
       const actualNeedsCls=r.needsActual?'needs':'';
@@ -1687,13 +1687,13 @@ function openLoadModal(editId,preset){
   if(editId){
     const load=farmLoads.find(l=>l.id===editId);if(!load){showToast('Load not found.',true);return;}
     const v=g=>feedIn(Number(load.splitKg[g])||0);
-    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',planned:feedIn(load.plannedKg),split:{1:v(1),2:v(2),3:v(3),4:v(4)},note:load.note||''};
+    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',planned:feedIn(load.plannedKg),split:{1:v(1),2:v(2),3:v(3),4:v(4)},note:load.note||'',siloFor:{...(load.siloFor||{})}};
   }else{
     // preset: {date, feedType, plannedT, splitT:{group:t}} (tonnes) — e.g. from a forecast row's Order
     const p=preset||{};const sp=p.splitT||{};const t=v=>feedIn((Number(v)||0)*1000);
     // No type given: the next feed type due for the pairs on this truck (or most pairs)
     const due=(()=>{const gs=Object.keys(sp).filter(g=>Number(sp[g])>0).map(Number);const list=(gs.length?gs:[1,2,3,4]).map(g=>nextFeedTypeDue(g)).filter(Boolean);if(!list.length)return '';const c={};list.forEach(t=>c[t]=(c[t]||0)+1);return Object.keys(c).sort((a,b)=>c[b]-c[a])[0];})();
-    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||due,planned:p.plannedT!=null?t(p.plannedT):t(FEED_BLOCK_T),split:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:''};
+    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||due,planned:p.plannedT!=null?t(p.plannedT):t(FEED_BLOCK_T),split:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:'',siloFor:{}};
   }
   renderLoadModal();
   const modal=document.getElementById('loadModal');const scrim=document.getElementById('syncScrim');
@@ -1711,6 +1711,7 @@ function renderLoadModal(){
     <div class="load-form-section"><div class="load-form-section-title"><span>Split across groups</span><button type="button" class="btn-split-evenly" id="lmSplitEven">⚖ Split evenly</button></div>
       <div class="split-grid">${[1,2,3,4].map(g=>`<div class="split-input-group"><label>${pairLabel(g)}</label><input type="number" min="0" step="${feedStep(true)}" data-lm-split="${g}" value="${s.split[g]}" /><span class="silo-note">${escapeHtml(siloNotes[g-1])}</span></div>`).join('')}</div>
       <div class="split-sum" id="lmSum"></div>
+      <div class="lm-silo-box">${[1,2,3,4].map(g=>`<div class="lm-silos" id="lmSilos-${g}"></div>`).join('')}</div>
     </div>
     <div class="mp-field"><label>Note (optional)</label><input type="text" id="lmNote" maxlength="60" value="${escapeAttr(s.note)}" placeholder="e.g. Order #1234 — Barlow's truck" /></div>
     <div class="mp-hint">One load = one truck = one docket. The <strong>planned split</strong> drives the feed balance forecast for each group. The <strong>actual</strong> docket total is entered separately in the Loads table.</div>
@@ -1741,9 +1742,39 @@ function renderLoadModal(){
     nonZero.forEach((inp,i)=>{const v=(i===n-1)?(planned-each*(n-1)):each;inp.value=feedIn(v);});
     refreshSum();
   };
+  // Silo per pair: expected level the day before the truck, room, starter silo
+  const refreshSilos=()=>{
+    const d=parseExcelDate(dateEl.value);const type=typeEl.value;
+    [1,2,3,4].forEach((g,gi)=>{
+      const box=document.getElementById('lmSilos-'+g);if(!box)return;
+      const amt=Math.round(feedOut(splitInputs[gi].value)||0);
+      if(!(amt>0)||!d){box.innerHTML='';return;}
+      const plan=siloLevelPlan(g,{until:d,excludeLoadId:s.editId});
+      const before=plan?(siloPlanOn(plan,addDays(d,-1))||plan.start):null;
+      const win=starterWindowStart(g);const st=starterSiloOf(g);
+      const starterLocked=n=>st===n&&win&&dateOnly(d)>=win&&type!=='starter';
+      if(!s.siloFor[g]&&before){const open=(before.open||[])[0];const cand=[1,2,3].filter(n=>!starterLocked(n)&&SILO_CAP_KG-before.kg[n-1]>=amt);s.siloFor[g]=open&&cand.includes(open)?open:(cand.sort((a,b)=>before.kg[a-1]-before.kg[b-1])[0]||null);}
+      const pick=s.siloFor[g]||null;
+      const chips=[1,2,3].map(n=>{
+        const kg=before?before.kg[n-1]:null;const room=kg!=null?SILO_CAP_KG-kg:null;
+        const fits=room==null||room>=amt;const isOpen=before&&(before.open||[]).includes(n);
+        const sub=kg==null?'no reading':starterLocked(n)?'Starter silo':kg>0.5?`${fmtFeedCompact(kg)}${isOpen?' · open':''}`:'empty';
+        const fit=kg==null?'':starterLocked(n)?'Next batch':fits?`room ${fmtFeedCompact(room)} ✓`:`room ${fmtFeedCompact(Math.max(0,room))} ✗`;
+        return `<button type="button" class="lm-silo${pick===n?' on':''}${starterLocked(n)?' starter':''}${!fits?' tight':''}" data-lm-silo="${g}|${n}" aria-pressed="${pick===n}"><b>Silo ${n}</b><span>${sub}</span><span class="lm-fit">${fit}</span></button>`;}).join('');
+      let warn='';
+      if(pick&&before){const room=SILO_CAP_KG-before.kg[pick-1];
+        if(starterLocked(pick))warn=`Silo ${pick} is the starter silo for next batch — it should be empty by ${fmtShortNoYear(pairCleanoutDate(g))}. You can still save; the app will watch it until it's empty.`;
+        else if(room<amt)warn=`Silo ${pick} would overflow by ${fmtFeed(amt-room,0)}. Pick another silo or split the load.`;}
+      box.innerHTML=`<div class="lm-silo-lbl">${pairLabel(g)} · ${fmtFeed(amt,0)} into</div><div class="lm-silo-row">${chips}</div>${warn?`<div class="lm-silo-warn">${warn}</div>`:''}`;
+    });
+  };
+  if(body._lmSilo)body.removeEventListener('click',body._lmSilo);
+  body._lmSilo=e=>{const b=e.target.closest('[data-lm-silo]');if(!b)return;const [g,n]=b.dataset.lmSilo.split('|').map(Number);s.siloFor[g]=n;refreshSilos();};body.addEventListener('click',body._lmSilo);
   plannedEl.addEventListener('input',refreshSum);
-  splitInputs.forEach(inp=>inp.addEventListener('input',refreshSum));
-  document.getElementById('lmSplitEven').addEventListener('click',splitEvenly);
+  splitInputs.forEach(inp=>inp.addEventListener('input',()=>{refreshSum();refreshSilos();}));
+  dateEl.addEventListener('change',refreshSilos);typeEl.addEventListener('change',refreshSilos);
+  refreshSilos();
+  document.getElementById('lmSplitEven').addEventListener('click',()=>{splitEvenly();refreshSilos();});
   refreshSum();
   const doSave=thenAnother=>{
     const plannedKg=Math.round(feedOut(plannedEl.value));
@@ -1754,7 +1785,8 @@ function renderLoadModal(){
     if(sumKg!==plannedKg){showToast('Splits must add up to the planned total.',true);return;}
     const dateObj=parseExcelDate(dateEl.value);
     if(!dateObj){showToast('Pick a valid date.',true);return;}
-    const payload={id:s.mode==='edit'?s.editId:undefined,date:dateObj,feedType:typeEl.value,plannedKg,splitKg,note:String(noteEl.value||'').trim(),actualKg:s.mode==='edit'?(farmLoads.find(l=>l.id===s.editId)||{}).actualKg:null};
+    const siloFor={};[1,2,3,4].forEach(g=>{if(splitKg[g]>0&&s.siloFor[g])siloFor[g]=s.siloFor[g];});
+    const payload={id:s.mode==='edit'?s.editId:undefined,date:dateObj,feedType:typeEl.value,plannedKg,splitKg,siloFor,note:String(noteEl.value||'').trim(),actualKg:s.mode==='edit'?(farmLoads.find(l=>l.id===s.editId)||{}).actualKg:null};
     const result=saveLoad(payload);
     if(!result||result.__error){showToast('Could not save load.',true);return;}
     updateLoadsDot();
@@ -1930,7 +1962,7 @@ function buildBatchReportHTML(){
         <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
         <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;return v>0?fmtFeedNum(v,1):'—';};
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sn=loadSiloFor(l,g);return v>0?fmtFeedNum(v,1)+(sn?` <span class="split-silo">S${sn}</span>`:''):'—';};
       const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):'—';
       html+=`<tr>
         <td class="num">#${i+1}</td>
@@ -2145,6 +2177,27 @@ const SILO_GROUP_COLORS={
   3:'linear-gradient(135deg,#C9774A,#8F4A28)',
   4:'linear-gradient(135deg,#A89055,#6E5A32)'
 };
+// Which silos are open: marked on the latest reading, else the app's guess
+function openSilosDisplay(g){
+  const r=latestReading(g);if(!r)return {set:[],auto:false};
+  const m=readingOpenField(r).open;if(m)return {set:m,auto:false};
+  const p=siloLevelPlan(g,{until:dateOnly(r.date)});return {set:p?p.start.open:[],auto:true};
+}
+function siloOpenBtnHtml(g,n){
+  const r=latestReading(g);if(!r)return '';
+  const od=openSilosDisplay(g);const on=od.set.includes(n);
+  return `<button type="button" class="silo-open-btn${on?' on':''}${on&&od.auto?' auto':''}" data-silo-open="${g}|${n}" aria-pressed="${on}" title="${on&&od.auto?'Guessed open — tap to confirm which silo is open':'Mark which silo is open (one or two)'}">${on?'Open':'Closed'}</button>`;
+}
+// Toggle a silo open/closed on the latest reading (one or two can be open)
+function toggleSiloOpen(g,n){
+  const r=latestReading(g);if(!r){showToast('Record a silo reading first.',true);return;}
+  const od=openSilosDisplay(g);let cur=od.auto?[]:od.set.slice();
+  if(od.auto&&od.set.includes(n)){cur=[n];}
+  else cur=cur.includes(n)?cur.filter(x=>x!==n):[...cur,n];
+  if(cur.length>2){showToast('At most two silos open at once.',true);return;}
+  if(cur.length)r.open=cur.sort();else delete r.open;
+  saveSiloData();schedulePush();render();renderSiloModalBody();
+}
 function siloRowHtml(g,n){
   const latest=latestReading(g);
   const rings=latest?latest[`silo${n}Rings`]:null;
@@ -2161,7 +2214,7 @@ function siloRowHtml(g,n){
     `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${fmtFeed(ringsToKg(r),0)}"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${fmtFeedCompact(ringsToKg(r))}</span></button>`
   ).join('');
   return `<div class="sms-silo-row${carried?' carried':''}" id="smsRow-${g}-${n}">
-    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${fromLbl}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></div>
+    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${starterSiloOf(g)===n?'<span class="silo-starter-tag">Starter</span>':''}${fromLbl}${siloOpenBtnHtml(g,n)}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></div>
     <div class="sms-ring-group">
       <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-pressed="${isOff}" aria-label="Silo ${n} off">Off</button>
       ${ringBtns}

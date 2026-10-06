@@ -133,10 +133,10 @@ function normalizeLoad(load){
   const rawActual=load.actualKg;
   let actualKg=(rawActual!=null&&Number.isFinite(Number(rawActual))&&Number(rawActual)>0)?Number(rawActual):null;
   if(actualKg!=null&&actualKg>MAX_LOAD_T*1000){actualKg=actualKg/1000;loadUnitRepairs++;}
-  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString())};
+  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString()),siloFor:normSiloFor(load.siloFor)};
 }
 function serializeFarmLoads(){
-  return farmLoads.map(l=>({id:l.id,date:l.date?iso(l.date):null,feedType:l.feedType||'',plannedKg:Number(l.plannedKg)||0,splitKg:{...l.splitKg},actualKg:(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?Number(l.actualKg):null,note:l.note||'',migrated:!!l.migrated,createdAt:l.createdAt||new Date().toISOString()}));
+  return farmLoads.map(l=>({id:l.id,date:l.date?iso(l.date):null,feedType:l.feedType||'',plannedKg:Number(l.plannedKg)||0,splitKg:{...l.splitKg},actualKg:(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?Number(l.actualKg):null,note:l.note||'',migrated:!!l.migrated,createdAt:l.createdAt||new Date().toISOString(),...(Object.keys(l.siloFor||{}).length?{siloFor:{...l.siloFor}}:{})}));
 }
 function saveFarmLoads(){try{localStorage.setItem(LOADS_KEY,JSON.stringify(serializeFarmLoads()));}catch(e){}}
 function loadFarmLoads(){try{const raw=localStorage.getItem(LOADS_KEY);if(!raw)return null;const parsed=JSON.parse(raw);if(!Array.isArray(parsed))return null;return parsed.map(normalizeLoad).filter(Boolean);}catch(e){return null;}}
@@ -196,7 +196,7 @@ function saveLoad(data){
   const dateObj=data.date instanceof Date?dateOnly(data.date):parseExcelDate(data.date);
   if(!dateObj)return {__error:'bad-date'};
   const id=data.id||uid('load');
-  const payload={id,date:dateObj,feedType:FEED_TYPES.some(f=>f.id===data.feedType)?data.feedType:'',plannedKg,splitKg,actualKg:(data.actualKg!=null&&Number.isFinite(Number(data.actualKg))&&Number(data.actualKg)>0)?Number(data.actualKg):null,note:String(data.note||'').slice(0,60),migrated:!!data.migrated,createdAt:data.createdAt||new Date().toISOString()};
+  const payload={id,date:dateObj,feedType:FEED_TYPES.some(f=>f.id===data.feedType)?data.feedType:'',plannedKg,splitKg,actualKg:(data.actualKg!=null&&Number.isFinite(Number(data.actualKg))&&Number(data.actualKg)>0)?Number(data.actualKg):null,note:String(data.note||'').slice(0,60),migrated:!!data.migrated,createdAt:data.createdAt||new Date().toISOString(),siloFor:normSiloFor(data.siloFor)};
   const idx=farmLoads.findIndex(l=>l.id===id);
   if(idx>=0)farmLoads[idx]=payload;else farmLoads.push(payload);
   saveFarmLoads();schedulePush();
