@@ -210,5 +210,20 @@ const nc=run('silo fields are display-only',`(()=>{
 })()`);
 ok(nc===true,'open silos, silo per load and starter silo leave every feed number unchanged');
 
+console.log('14. Split load into two silos (Silo 3+1)');
+const sp2=run('silo 3+1',`(()=>{
+  const T=dateOnly(new Date());const g=1;
+  siloData[g]={readings:[{date:iso(addDays(T,-1)),silo1Rings:0,silo2Rings:3,silo3Rings:3,time:'pm',open:[2]}],deliveries:[]};
+  const keep=farmLoads;
+  farmLoads=[normalizeLoad({id:'S1',date:iso(addDays(T,1)),feedType:'finisher',plannedKg:30000,splitKg:{1:30000,2:0,3:0,4:0},siloFor:{1:[3,1]}})];
+  const ser=JSON.parse(JSON.stringify(serializeFarmLoads()))[0].siloFor[1];
+  const plan=siloLevelPlan(g,{until:addDays(T,2)});const row=plan.days.find(r=>r.del.length);
+  const lbl=siloListLabel(loadSilosFor(farmLoads[0],g));
+  farmLoads=keep;
+  return {ser,dels:row.del.map(d=>[d.silo,Math.round(d.kg)]),over:row.overflow.length,lbl};
+})()`);
+if(sp2){ok(Array.isArray(sp2.ser)&&sp2.ser.join()==='3,1','split saved as [3,1]');ok(sp2.lbl==='Silo 3+1','label Silo 3+1');
+  ok(sp2.dels[0][0]===3&&sp2.dels[1]&&sp2.dels[1][0]===1,'fills Silo 3 first, rest into Silo 1');ok(sp2.dels.reduce((a,d)=>a+d[1],0)===30000,'whole load placed');ok(sp2.over===0,'no overflow');}
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

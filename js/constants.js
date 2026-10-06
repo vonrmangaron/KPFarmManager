@@ -101,7 +101,7 @@ function readingOpenField(r){const a=Array.isArray(r&&r.open)?[...new Set(r.open
 // Starter silo per pair (1–3) and how many days before clean-out to plan it
 function applyStarterPrefs(v){if(!v)return;if(v.starterSilo&&typeof v.starterSilo==='object'){const o={1:null,2:null,3:null,4:null};[1,2,3,4].forEach(g=>{const n=Number(v.starterSilo[g]);if(n>=1&&n<=3)o[g]=n;});predState.starterSilo=o;}const b=Number(v.starterBufferDays);if(b===14||b===21)predState.starterBufferDays=b;}
 // A load's silo per pair: {g: 1–3}
-function normSiloFor(v){const o={};if(v&&typeof v==='object')[1,2,3,4].forEach(g=>{const n=Number(v[g]);if(n===1||n===2||n===3)o[g]=n;});return o;}
+function normSiloFor(v){const o={};if(v&&typeof v==='object')[1,2,3,4].forEach(g=>{const a=[...new Set((Array.isArray(v[g])?v[g]:[v[g]]).map(Number).filter(n=>n===1||n===2||n===3))].slice(0,2);if(a.length)o[g]=a.length===1?a[0]:a;});return o;}
 
 // Sidebar navigation definition — used by sidebarHtml() in render.js
 const NAV_ITEMS = [

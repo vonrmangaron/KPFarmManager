@@ -1311,14 +1311,14 @@ function siloLevelCardHtml(g){
   if(cur.isReading){info.push(['Open',(cur.open||[]).length?cur.open.map(n=>'Silo '+n).join(' + ')+(plan.start.marked?'':' (guessed)'):'—']);}
   else{
     info.push(['Open silo',(cur.open||[]).length?cur.open.map(n=>'Silo '+n).join(' + ')+((cur.sw||[]).length?' · switched today':''):'none — all empty']);
-    info.push(['Delivered',(cur.del||[]).length?cur.del.map(d=>`+${fmtFeed(d.kg,0)} → Silo ${d.silo}${d.set?'':' (silo not set)'}`).join('<br>'):'—']);
+    info.push(['Delivered',(cur.del||[]).length?cur.del.map(d=>`+${fmtFeed(d.kg,0)} → Silo ${d.silo}${d.spill?' (overflow)':d.set?'':' (silo not set)'}`).join('<br>'):'—']);
     info.push(['Birds ate',cur.eat>0?'−'+fmtFeed(cur.eat,0):'—']);
     info.push(['Feed lasts',lasts!=null?(lasts>=10?'10+ days':lasts.toFixed(1)+' days'):'—']);
     if(cur.short>0.5)info.push(['Short',fmtFeed(cur.short,0)]);
   }
   const warns=(cur.overflow||[]).map(o=>`<div class="sl-warn">Silo ${o.silo} overflows by ${fmtFeed(o.kg,0)} — the rest goes into another silo. Pick a silo with room on that load.</div>`).join('');
   const strip=rows.map((r,i)=>{const s=statusOf(r);const on=i===sel;
-    const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+r.sw[r.sw.length-1]:(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+r.del[0].silo:s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
+    const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+r.sw[r.sw.length-1]:(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>d.silo))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
     const tone=r.isReading?'muted':s!=='ok'?'bad':(r.sw||[]).length?'amber':(r.del||[]).length?'ok':'amber';
     return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.isReading?'r':''}${iso(r.date)}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
   return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?'your reading':'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
