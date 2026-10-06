@@ -403,6 +403,7 @@ function renderMoreSheet() {
       <div class="more-group">
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
         ${row('moreImport', 'download', 'Import Excel', 'Load shed data from a file')}
+        ${row('moreProfile', 'home', 'Farm profile', escapeHtml(displayFarmName()||'Farm name and silo numbers'))}
         ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
       </div>
       <div class="more-foot">
@@ -668,7 +669,7 @@ function computeFarmAlerts() {
 function starterAlerts(g){
   const st=starterSiloStatus(g);if(!st||!st.inWin)return [];
   const out=[];const P=`<strong>${pairLabel(g)} starter silo</strong>`;const co=fmtShortNoYear(st.co);
-  const sn=st.silo?`Silo ${st.silo}`:'';
+  const sn=st.silo?`Silo ${siloNumber(g,st.silo)}`:'';
   if(st.state==='pick')out.push({kind:'warn',msg:`${P} — pick which silo takes next batch's Starter (clean-out ${co})`,tab:'g'+g,feedGroup:g});
   else if(st.state==='action')out.push({kind:st.late?'error':'warn',msg:`${P} — ${sn} still holds ${fmtFeed(st.kg,0)} · ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)} so it's empty by clean-out (${co})`,tab:'g'+g,feedGroup:g});
   (st.wrong||[]).forEach(l=>out.push({kind:'warn',msg:`${P} — ${sn} gets ${feedTypeLabel(l.feedType)} on ${fmtShortNoYear(l.date)}; it must still be empty by ${co}`,tab:'g'+g,feedGroup:g}));
@@ -1303,22 +1304,22 @@ function siloLevelCardHtml(g){
     return {kind:'closed',text:r.kg[i]>0.5?'Closed':'Empty'};
   };
   const silos=[0,1,2].map(i=>{const k=cur.kg[i];const d=siloDrawingHtml(k,badgeFor(cur,i));
-    return `<div class="sl-silo">${d.html}<div class="sl-meta"><span class="sl-name">Silo ${i+1}</span><span class="sl-kg${k<4000&&k>0.5?' low':''}">${fmtFeed(k,0)}</span><span class="sl-win-l">${d.win}</span></div></div>`;}).join('');
+    return `<div class="sl-silo">${d.html}<div class="sl-meta"><span class="sl-name">Silo ${siloNumber(g,i+1)}</span><span class="sl-kg${k<4000&&k>0.5?' low':''}">${fmtFeed(k,0)}</span><span class="sl-win-l">${d.win}</span></div></div>`;}).join('');
   const st=statusOf(cur);
   const lasts=(()=>{const ne=nextEat(cur.date);return ne?cur.total/ne:null;})();
   const chip=cur.isReading?['muted','Your reading']:st==='empty'?['bad','Empty — feed runs out']:st==='low'?['warn','Below safety stock — order']:['ok','OK'];
   const info=[];
-  if(cur.isReading){info.push(['Open',(cur.open||[]).length?cur.open.map(n=>'Silo '+n).join(' + ')+(plan.start.marked?'':' (guessed)'):'—']);}
+  if(cur.isReading){info.push(['Open',(cur.open||[]).length?cur.open.map(n=>'Silo '+siloNumber(g,n)).join(' + ')+(plan.start.marked?'':' (guessed)'):'—']);}
   else{
-    info.push(['Open silo',(cur.open||[]).length?cur.open.map(n=>'Silo '+n).join(' + ')+((cur.sw||[]).length?' · switched today':''):'none — all empty']);
-    info.push(['Delivered',(cur.del||[]).length?cur.del.map(d=>`+${fmtFeed(d.kg,0)} → Silo ${d.silo}${d.spill?' (overflow)':d.set?'':' (silo not set)'}`).join('<br>'):'—']);
+    info.push(['Open silo',(cur.open||[]).length?cur.open.map(n=>'Silo '+siloNumber(g,n)).join(' + ')+((cur.sw||[]).length?' · switched today':''):'none — all empty']);
+    info.push(['Delivered',(cur.del||[]).length?cur.del.map(d=>`+${fmtFeed(d.kg,0)} → Silo ${siloNumber(g,d.silo)}${d.spill?' (overflow)':d.set?'':' (silo not set)'}`).join('<br>'):'—']);
     info.push(['Birds ate',cur.eat>0?'−'+fmtFeed(cur.eat,0):'—']);
     info.push(['Feed lasts',lasts!=null?(lasts>=10?'10+ days':lasts.toFixed(1)+' days'):'—']);
     if(cur.short>0.5)info.push(['Short',fmtFeed(cur.short,0)]);
   }
-  const warns=(cur.overflow||[]).map(o=>`<div class="sl-warn">Silo ${o.silo} overflows by ${fmtFeed(o.kg,0)} — the rest goes into another silo. Pick a silo with room on that load.</div>`).join('');
+  const warns=(cur.overflow||[]).map(o=>`<div class="sl-warn">Silo ${siloNumber(g,o.silo)} overflows by ${fmtFeed(o.kg,0)} — the rest goes into another silo. Pick a silo with room on that load.</div>`).join('');
   const strip=rows.map((r,i)=>{const s=statusOf(r);const on=i===sel;
-    const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+r.sw[r.sw.length-1]:(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>d.silo))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
+    const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+siloNumber(g,r.sw[r.sw.length-1]):(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>siloNumber(g,d.silo)))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
     const tone=r.isReading?'muted':s!=='ok'?'bad':(r.sw||[]).length?'amber':(r.del||[]).length?'ok':'amber';
     return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.isReading?'r':''}${iso(r.date)}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
   return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?'your reading':'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
@@ -1331,14 +1332,14 @@ function siloLevelCardHtml(g){
 }
 function starterRowHtml(g){
   const st=starterSiloStatus(g);const n=starterSiloOf(g);
-  const chips=[1,2,3].map(i=>`<button type="button" class="sl-st-btn${n===i?' on':''}" data-starter-silo="${g}|${i}" aria-pressed="${n===i}">${i}</button>`).join('');
+  const chips=[1,2,3].map(i=>`<button type="button" class="sl-st-btn${n===i?' on':''}" data-starter-silo="${g}|${i}" aria-pressed="${n===i}">${siloNumber(g,i)}</button>`).join('');
   let chip='',line='';
   if(st){const co=fmtShortNoYear(st.co);
     if(st.state==='pick'){chip=['warn','Pick one'];line=`Choose the silo that takes next batch's Starter · clean-out ${co}.`;}
-    else if(st.state==='ready'){chip=['ok','Ready'];line=`Silo ${n} is empty and kept for Starter.`;}
-    else if(st.state==='watch'){chip=['warn','Watch'];line=`Silo ${n} is empty now but gets other feed before clean-out — it must empty again by ${co}.`;}
-    else if(st.state==='ontrack'){chip=['ok','On track'];line=`Silo ${n} has ${fmtFeed(st.kg,0)} · empty by about ${fmtShortNoYear(st.emptyOn)} (clean-out ${co}).`;}
-    else if(st.state==='action'){chip=[st.late?'bad':'warn',st.late?'Open now':'Plan'];line=`Silo ${n} has ${fmtFeed(st.kg,0)} and won't empty by clean-out (${co}) — ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)}.`;}
+    else if(st.state==='ready'){chip=['ok','Ready'];line=`Silo ${siloNumber(g,n)} is empty and kept for Starter.`;}
+    else if(st.state==='watch'){chip=['warn','Watch'];line=`Silo ${siloNumber(g,n)} is empty now but gets other feed before clean-out — it must empty again by ${co}.`;}
+    else if(st.state==='ontrack'){chip=['ok','On track'];line=`Silo ${siloNumber(g,n)} has ${fmtFeed(st.kg,0)} · empty by about ${fmtShortNoYear(st.emptyOn)} (clean-out ${co}).`;}
+    else if(st.state==='action'){chip=[st.late?'bad':'warn',st.late?'Open now':'Plan'];line=`Silo ${siloNumber(g,n)} has ${fmtFeed(st.kg,0)} and won't empty by clean-out (${co}) — ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)}.`;}
     else if(st.state==='noreading'){chip=['muted','No reading'];line='Record a silo reading to check it.';}
     if(st.state!=='pick'&&!st.inWin&&st.win)line+=` Kept for Starter from ${fmtShortNoYear(st.win)}.`;
   }
@@ -1348,7 +1349,7 @@ function starterRowHtml(g){
 function renderSiloInput(group,siloNum,rings){
   const isOff=(rings===null||rings===undefined||rings==='');
   const kg=ringsToKg(rings);
-  return `<div class="silo-input ${isOff?'off':''}"><div class="silo-title"><span>Silo ${siloNum}${starterSiloOf(group)===siloNum?' <span class="silo-starter-tag">Starter</span>':''}</span>${isOff?`<span class="off-badge">Off</span>`:`<span class="cap">Max ${fmtFeed(50000,0)}</span>`}</div><div class="ring-picker"><button class="ring-off ${isOff?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>${[0,1,2,3,4,5].map(r=>`<div class="ring-slot ${r===rings?'active':''}"><button class="ring-btn ${r===rings?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}" title="${r} ring${r===1?'':'s'} — ${fmtFeed(ringsToKg(r),0)}">${r}</button><span class="ring-t">${fmtFeedCompact(ringsToKg(r))}</span></div>`).join('')}</div><div class="silo-total">${isOff?'<span class="lbl">Not in use</span>':siloOpenSegHtml(group,siloNum)}<span class="val">${isOff?fmtFeed(0):fmtFeed(kg)}</span></div></div>`;
+  return `<div class="silo-input ${isOff?'off':''}"><div class="silo-title"><span>Silo ${siloNumber(group,siloNum)}${starterSiloOf(group)===siloNum?' <span class="silo-starter-tag">Starter</span>':''}</span>${isOff?`<span class="off-badge">Off</span>`:`<span class="cap">Max ${fmtFeed(50000,0)}</span>`}</div><div class="ring-picker"><button class="ring-off ${isOff?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>${[0,1,2,3,4,5].map(r=>`<div class="ring-slot ${r===rings?'active':''}"><button class="ring-btn ${r===rings?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}" title="${r} ring${r===1?'':'s'} — ${fmtFeed(ringsToKg(r),0)}">${r}</button><span class="ring-t">${fmtFeedCompact(ringsToKg(r))}</span></div>`).join('')}</div><div class="silo-total">${isOff?'<span class="lbl">Not in use</span>':siloOpenSegHtml(group,siloNum)}<span class="val">${isOff?fmtFeed(0):fmtFeed(kg)}</span></div></div>`;
 }
 function renderReadingHistory(group){
   const all=readingsSorted(group);
@@ -1357,7 +1358,7 @@ function renderReadingHistory(group){
   if(!arr.length)return `<details class="reading-history"><summary>🕘 Reading history (empty)</summary><div style="font-size:12.5px;color:var(--muted);padding:8px 0;">Once you tap a ring level, each reading is saved with today's date.</div></details>`;
   const todayIso=iso(new Date());
   const rk='rd:'+group;const on=bulkActive(rk);
-  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${all.length===arr.length?arr.length:`last ${arr.length} of ${all.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,arr.map(r=>r.date),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date</th><th>Silo 1</th><th>Silo 2</th><th>Silo 3</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${arr.map(r=>{const total=readingTotalKg(r);const cls=r.date===todayIso?'today':'';return `<tr class="${cls}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,r.date,fmtShort(dateOnly(r.date)))}</td>`:''}<td>${fmtShort(dateOnly(r.date))} <span class="rt-chip ${r.time==='am'?'am':'pm'}" title="${r.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${r.time==='am'?'AM':'PM'}</span></td><td>${r.silo1Rings===null?'—':r.silo1Rings+'r'}</td><td>${r.silo2Rings===null?'—':r.silo2Rings+'r'}</td><td>${r.silo3Rings===null?'—':r.silo3Rings+'r'}</td><td class="num">${fmtFeed(total)}</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" data-delete-reading="${group}|${r.date}" title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
+  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${all.length===arr.length?arr.length:`last ${arr.length} of ${all.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,arr.map(r=>r.date),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date</th><th>Silo ${siloNumber(group,1)}</th><th>Silo ${siloNumber(group,2)}</th><th>Silo ${siloNumber(group,3)}</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${arr.map(r=>{const total=readingTotalKg(r);const cls=r.date===todayIso?'today':'';return `<tr class="${cls}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,r.date,fmtShort(dateOnly(r.date)))}</td>`:''}<td>${fmtShort(dateOnly(r.date))} <span class="rt-chip ${r.time==='am'?'am':'pm'}" title="${r.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${r.time==='am'?'AM':'PM'}</span></td><td>${r.silo1Rings===null?'—':r.silo1Rings+'r'}</td><td>${r.silo2Rings===null?'—':r.silo2Rings+'r'}</td><td>${r.silo3Rings===null?'—':r.silo3Rings+'r'}</td><td class="num">${fmtFeed(total)}</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" data-delete-reading="${group}|${r.date}" title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
 }
 function renderGroupLoadsCard(group){
   const arr=loadsAffectingGroup(group);

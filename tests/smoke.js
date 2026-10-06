@@ -225,5 +225,16 @@ const sp2=run('silo 3+1',`(()=>{
 if(sp2){ok(Array.isArray(sp2.ser)&&sp2.ser.join()==='3,1','split saved as [3,1]');ok(sp2.lbl==='Silo 3+1','label Silo 3+1');
   ok(sp2.dels[0][0]===3&&sp2.dels[1]&&sp2.dels[1][0]===1,'fills Silo 3 first, rest into Silo 1');ok(sp2.dels.reduce((a,d)=>a+d[1],0)===30000,'whole load placed');ok(sp2.over===0,'no overflow');}
 
+console.log('15. Farm profile silo numbers');
+const fpn=run('silo numbers',`(()=>{
+  const a=[1,2,3,4].map(g=>[1,2,3].map(n=>siloNumber(g,n)).join(''));
+  predState.siloStart=1;const b=[1,2,3,4].map(g=>[1,2,3].map(n=>siloNumber(g,n)).join(','));const lbl=siloListLabel([3,1],2);
+  predState.siloStart=13;const c=siloNumber(4,3);
+  predState.siloStart=null;
+  return {a:a.join('|'),b:b.join('|'),lbl,c};
+})()`);
+if(fpn){ok(fpn.a==='123|123|123|123','not set: every pair 1–3');ok(fpn.b==='1,2,3|4,5,6|7,8,9|10,11,12','1–12: pairs get 1-3, 4-6, 7-9, 10-12');
+  ok(fpn.lbl==='Silo 6+4','split label uses farm numbers');ok(fpn.c===24,'13–24 range');}
+
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

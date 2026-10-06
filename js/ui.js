@@ -96,21 +96,36 @@ function settingsIcon(name){
 }
 function renderSettingsDrawerBody(){
   const body=document.getElementById('settingsDrawerBody');if(!body)return;
-  const sections=[renderSettingsDisplayNameCard(),renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsFarmHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
+  const sections=[renderSettingsUnitsCard(),renderSettingsDataCard(),renderSettingsSyncCard(),renderSettingsBatchHistoryCard(),renderSettingsFarmHistoryCard(),renderSettingsNotificationsCard(),renderSettingsReportsCard()];
   body.innerHTML=sections.join('<div class="settings-divider"></div>')+'<div class="settings-foot">Backed up to <strong>'+escapeHtml(SYNC_REPO)+'</strong> on GitHub</div><div class="settings-foot settings-credit">Made by Von Mangaron · Personal use only · Not for commercial use</div>';
   // Bind notification checkboxes directly — belt-and-braces alongside the
   // document-level delegated change handler.
   if(typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();
 }
-function renderSettingsDisplayNameCard(){
+// ── Farm profile: farm name and the silo numbers painted on the farm ──
+let farmProfileOpen=false;
+function farmProfileBodyHtml(){
   const cloudId=syncFarmName?`Your cloud farm ID stays <strong>${escapeHtml(syncFarmName)}</strong> — this only changes what you see.`:'Only changes what you see on this device.';
-  return `<div class="settings-section">
-    <div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm display name</h4></div></div>
-    <p class="settings-section-desc">The name shown in the sidebar, page headers and the dashboard.</p>
-    <input type="text" class="settings-input" id="settingsDisplayName" value="${escapeAttr(farmDisplayName)}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
-    <p class="settings-section-note">${cloudId} Leave empty to use the cloud farm ID.</p>
-  </div>`;
+  const st=siloStart();
+  const preview=[1,2,3,4].map(g=>`<div class="fp-pair"><span>${pairLabel(g)}</span><b>${[1,2,3].map(n=>'Silo '+siloNumber(g,n)).join(' · ')}</b></div>`).join('');
+  return `<div class="fp-sec">
+      <label class="fp-lbl" for="fpFarmName">Farm name</label>
+      <input type="text" class="settings-input" id="fpFarmName" value="${escapeAttr(farmDisplayName)}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
+      <p class="fp-note">${cloudId} Leave empty to use the cloud farm ID.</p>
+    </div>
+    <div class="fp-sec">
+      <div class="fp-lbl">Silo numbers</div>
+      <p class="fp-note">The numbers painted on your silos, 3 per pair. Enter 1 to 12 and Sheds 1–2 get Silo 1 · 2 · 3, Sheds 3–4 get Silo 4 · 5 · 6, and so on.</p>
+      <div class="fp-range"><input type="number" class="settings-input fp-num" id="fpSiloFrom" min="1" max="990" step="1" inputmode="numeric" value="${st!=null?st:''}" placeholder="1" aria-label="First silo number"><span>to</span><input type="number" class="settings-input fp-num" id="fpSiloTo" min="12" max="1001" step="1" inputmode="numeric" value="${st!=null?st+11:''}" placeholder="12" aria-label="Last silo number">${st!=null?'<button type="button" class="fp-clear" id="fpSiloClear">Clear</button>':''}</div>
+      <div class="fp-preview">${preview}</div>
+      ${st==null?'<p class="fp-note">Not set — each pair shows Silo 1 · 2 · 3.</p>':''}
+    </div>`;
 }
+function openFarmProfile(){const m=document.getElementById('farmProfileModal'),b=document.getElementById('farmProfileBody');if(!m||!b)return;b.innerHTML=farmProfileBodyHtml();farmProfileOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');}
+function closeFarmProfile(){farmProfileOpen=false;const m=document.getElementById('farmProfileModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}render();}
+function refreshFarmProfile(){const b=document.getElementById('farmProfileBody');if(farmProfileOpen&&b)b.innerHTML=farmProfileBodyHtml();}
+// from = first silo number (the range is always 12: 3 per pair)
+function setSiloStart(v){const n=Number(v);predState.siloStart=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;savePredState();schedulePush();refreshFarmProfile();render();}
 function renderSettingsUnitsCard(){
   const u=feedUnit();
   const opt=(v,lbl)=>`<button type="button" class="settings-seg-opt${u===v?' active':''}" data-feed-unit="${v}" aria-pressed="${u===v}">${lbl}</button>`;
@@ -1467,7 +1482,7 @@ function renderLoadsModalBody(){
       <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
       <div class="loads-summary-item"><div class="lbl">With actual</div><div class="val ok">${summary.withActual}</div><div class="sub">${summary.needsActual>0?`${summary.needsActual} to record`:'all caught up'}</div></div>
       <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div></div>
-      <div class="loads-summary-item"><div class="lbl">Actual so far</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—'}</div></div>
+      <div class="loads-summary-item"><div class="lbl">Actual delivery</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.deliveryKg>0?fmtTonnesAlways(summary.deliveryKg):'—'}</div><div class="sub">${summary.estKg>0?`incl. ${fmtTonnesAlways(summary.estKg)} est.`:'all from dockets'}</div></div>
       <div class="loads-summary-item"><label class="lbl" for="loadsCarryInput">↩ Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
     </div>
     <div class="loads-summary-actions">
@@ -1527,9 +1542,9 @@ function renderLoadsModalBody(){
       if(l.actualKg!=null&&Number.isFinite(Number(l.actualKg))){
         actualCell=`<span class="lon-actual filled">${fmtFeed(l.actualKg)} ✓</span>`;
       } else if(r.needsActual){
-        actualCell=`<span class="lon-actual needs">missing docket</span>`;
+        actualCell=`<span class="lon-actual needs">${fmtFeed(l.plannedKg)} est · missing docket</span>`;
       } else {
-        actualCell=`<span class="lon-actual pending">—</span>`;
+        actualCell=`<span class="lon-actual pending">${fmtFeed(l.plannedKg)} est</span>`;
       }
       const hasNote=!!(l.note&&l.note.trim());
       const noteStr=hasNote?escapeHtml(l.note):'no note';
@@ -1565,11 +1580,11 @@ function renderLoadsModalBody(){
   } else {
     const rows=filtered.map(l=>{
       const r=rowBase(l);
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.join('+')}</span>`:''}</td>`;};
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''}</td>`;};
       const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
       const actualCls=(l.actualKg!=null)?'filled':'';
       const actualNeedsCls=r.needsActual?'needs':'';
-      const actualPlaceholder=r.needsActual?'enter actual':'—';
+      const actualPlaceholder=`${fmtFeedNum(l.plannedKg)} est`;
       return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
         <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
@@ -1660,11 +1675,11 @@ function updateLoadsSummaryInline(){
     const valEl=tiles[3].querySelector('.val');
     const subEl=tiles[3].querySelector('.sub');
     if(valEl){
-      valEl.textContent=summary.actualKg>0?fmtTonnesAlways(summary.actualKg):'—';
+      valEl.textContent=summary.deliveryKg>0?fmtTonnesAlways(summary.deliveryKg):'—';
       valEl.classList.toggle('warn',summary.needsActual>0);
       valEl.classList.toggle('ok',summary.needsActual===0);
     }
-    if(subEl)subEl.textContent=`${summary.withActual} of ${summary.total} docket${summary.total===1?'':'s'} recorded`;
+    if(subEl)subEl.textContent=summary.estKg>0?`incl. ${fmtTonnesAlways(summary.estKg)} est.`:'all from dockets';
   }
   body.querySelectorAll('[data-loads-filter]').forEach(chip=>{
     const countEl=chip.querySelector('.count');
@@ -1770,13 +1785,13 @@ function renderLoadModal(){
         const pos=list.indexOf(n);
         const sub=kg==null?'no reading':starterLocked(n)?'Starter silo':kg>0.5?`${fmtFeedCompact(kg)}${isOpen?' · open':''}`:'empty';
         const fit=pos>=0&&list.length>1?`${pos===0?'1st':'then'} ${fmtFeedCompact(share[pos])}`:kg==null?'':starterLocked(n)?'Next batch':fits?`room ${fmtFeedCompact(room)} ✓`:`room ${fmtFeedCompact(Math.max(0,room))} ✗`;
-        return `<button type="button" class="lm-silo${pos>=0?' on':''}${starterLocked(n)?' starter':''}${!fits&&!(pos>=0&&list.length>1)?' tight':''}" data-lm-silo="${g}|${n}" aria-pressed="${pos>=0}"><b>Silo ${n}</b><span>${sub}</span><span class="lm-fit">${fit}</span></button>`;}).join('');
+        return `<button type="button" class="lm-silo${pos>=0?' on':''}${starterLocked(n)?' starter':''}${!fits&&!(pos>=0&&list.length>1)?' tight':''}" data-lm-silo="${g}|${n}" aria-pressed="${pos>=0}"><b>Silo ${siloNumber(g,n)}</b><span>${sub}</span><span class="lm-fit">${fit}</span></button>`;}).join('');
       let warn='',info='';
       if(list.length&&before){
         const bad=list.filter(starterLocked);
-        if(bad.length)warn=`Silo ${bad[0]} is the starter silo for next batch — it should be empty by ${fmtShortNoYear(pairCleanoutDate(g))}. You can still save; the app will watch it until it's empty.`;
-        else if(left>0.5)warn=list.length>1?`Still ${fmtFeed(left,0)} over — both silos are too full.`:`Silo ${list[0]} has room for ${fmtFeed(share[0],0)}. Tap another silo for the rest (e.g. Silo ${list[0]}+${[1,2,3].find(n=>n!==list[0]&&!starterLocked(n))||''}).`;
-        if(list.length>1){const lbl=siloListLabel(list);info=`<div class="lm-silo-info"><span><b>${lbl}</b> · fill Silo ${list[0]} (${fmtFeed(share[0],0)}), the rest into Silo ${list[1]} (${fmtFeed(share[1],0)}).</span><button type="button" class="lm-note-btn" data-lm-note="${g}">Add to note</button></div>`;}
+        if(bad.length)warn=`Silo ${siloNumber(g,bad[0])} is the starter silo for next batch — it should be empty by ${fmtShortNoYear(pairCleanoutDate(g))}. You can still save; the app will watch it until it's empty.`;
+        else if(left>0.5)warn=list.length>1?`Still ${fmtFeed(left,0)} over — both silos are too full.`:`Silo ${siloNumber(g,list[0])} has room for ${fmtFeed(share[0],0)}. Tap another silo for the rest (e.g. ${siloListLabel([list[0],[1,2,3].find(n=>n!==list[0]&&!starterLocked(n))].filter(Boolean),g)}).`;
+        if(list.length>1){const lbl=siloListLabel(list,g);info=`<div class="lm-silo-info"><span><b>${lbl}</b> · fill Silo ${siloNumber(g,list[0])} (${fmtFeed(share[0],0)}), the rest into Silo ${siloNumber(g,list[1])} (${fmtFeed(share[1],0)}).</span><button type="button" class="lm-note-btn" data-lm-note="${g}">Add to note</button></div>`;}
       }
       box.innerHTML=`<div class="lm-silo-lbl">${pairLabel(g)} · ${fmtFeed(amt,0)} into</div><div class="lm-silo-row">${chips}</div>${info}${warn?`<div class="lm-silo-warn">${warn}</div>`:''}`;
     });
@@ -1784,7 +1799,7 @@ function renderLoadModal(){
   if(body._lmSilo)body.removeEventListener('click',body._lmSilo);
   body._lmSilo=e=>{
     const nb=e.target.closest('[data-lm-note]');
-    if(nb){const g=Number(nb.dataset.lmNote);const lbl=siloListLabel(s.siloFor[g]);const multi=splitInputs.filter(x=>(feedOut(x.value)||0)>0).length>1;const txt=(multi?pairShort(g)+': ':'')+lbl;const cur=String(noteEl.value||'').trim();if(!cur.includes(txt))noteEl.value=(cur?cur+' · ':'')+txt;noteEl.value=noteEl.value.slice(0,60);showToast('Added to the driver note.');return;}
+    if(nb){const g=Number(nb.dataset.lmNote);const lbl=siloListLabel(s.siloFor[g],g);const multi=splitInputs.filter(x=>(feedOut(x.value)||0)>0).length>1;const txt=(multi?pairShort(g)+': ':'')+lbl;const cur=String(noteEl.value||'').trim();if(!cur.includes(txt))noteEl.value=(cur?cur+' · ':'')+txt;noteEl.value=noteEl.value.slice(0,60);showToast('Added to the driver note.');return;}
     const b=e.target.closest('[data-lm-silo]');if(!b)return;const [g,n]=b.dataset.lmSilo.split('|').map(Number);
     const list=(Array.isArray(s.siloFor[g])?s.siloFor[g]:s.siloFor[g]?[s.siloFor[g]]:[]).slice();
     const d=parseExcelDate(dateEl.value);const amt=Math.round(feedOut(splitInputs[g-1].value)||0);
@@ -1986,8 +2001,8 @@ function buildBatchReportHTML(){
         <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
         <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sl=loadSilosFor(l,g);return v>0?fmtFeedNum(v,1)+(sl.length?` <span class="split-silo">S${sl.join('+')}</span>`:''):'—';};
-      const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):'—';
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sl=loadSilosFor(l,g);return v>0?fmtFeedNum(v,1)+(sl.length?` <span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''):'—';};
+      const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):`${fmtFeed(l.plannedKg)} (est)`;
       html+=`<tr>
         <td class="num">#${i+1}</td>
         <td>${fmtShort(l.date)}</td>
@@ -2002,7 +2017,7 @@ function buildBatchReportHTML(){
       </tr>`;
     });
     const sumPlanned=farmLoads.reduce((s,l)=>s+(Number(l.plannedKg)||0),0);
-    const sumActual=farmLoads.reduce((s,l)=>s+(Number(l.actualKg)||0),0);
+    const sumActual=farmLoads.reduce((s,l)=>s+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
     const missing=farmLoads.filter(l=>!l.migrated&&l.actualKg==null&&dateOnly(l.date)<dateOnly(now)).length;
     html+=`<tr class="total-row">
       <td colspan="3">Totals</td>
@@ -2238,12 +2253,12 @@ function siloRowHtml(g,n){
   const fromDate=prior?dateOnly(prior.date):null;
   const fromLbl=carried&&fromDate?`<span class="sms-silo-from">from ${fromDate.getDate()} ${fromDate.toLocaleString('en',{month:'short'})}</span>`:(siloModalTouched[g].has(n)?'<span class="sms-silo-saved">✓ Saved</span>':'');
   const ringBtns=[0,1,2,3,4,5].map(r=>
-    `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${n} at ${r} rings, ${fmtFeed(ringsToKg(r),0)}"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${fmtFeedCompact(ringsToKg(r))}</span></button>`
+    `<button type="button" class="sms-ring-btn${r===rings?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="${r}" aria-pressed="${r===rings}" aria-label="Silo ${siloNumber(g,n)} at ${r} rings, ${fmtFeed(ringsToKg(r),0)}"><span class="sms-ring-n">${r}</span><span class="sms-ring-t">${fmtFeedCompact(ringsToKg(r))}</span></button>`
   ).join('');
   return `<div class="sms-silo-row${carried?' carried':''}" id="smsRow-${g}-${n}">
-    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${n}</span>${starterSiloOf(g)===n?'<span class="silo-starter-tag">Starter</span>':''}${fromLbl}<span class="sms-head-right">${isOff?'':siloOpenSegHtml(g,n)}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></span></div>
+    <div class="sms-silo-head"><span class="sms-silo-name">Silo ${siloNumber(g,n)}</span>${starterSiloOf(g)===n?'<span class="silo-starter-tag">Starter</span>':''}${fromLbl}<span class="sms-head-right">${isOff?'':siloOpenSegHtml(g,n)}<span class="sms-silo-total${isOff?' off':''}">${totalStr}</span></span></div>
     <div class="sms-ring-group">
-      <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-pressed="${isOff}" aria-label="Silo ${n} off">Off</button>
+      <button type="button" class="sms-ring-btn sms-ring-off${isOff?' active':''}" data-sms-group="${g}" data-sms-silo="${n}" data-sms-ring="off" aria-pressed="${isOff}" aria-label="Silo ${siloNumber(g,n)} off">Off</button>
       ${ringBtns}
     </div>
   </div>`;

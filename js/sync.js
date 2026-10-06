@@ -40,6 +40,7 @@ function buildCloudPayload(){
       deliveryTiming:predState.deliveryTiming,
       starterSilo:{...predState.starterSilo},
       starterBufferDays:predState.starterBufferDays,
+      siloStart:predState.siloStart,
       safetyDays:predState.safetyDays,
       farmHistory:predState.farmHistory||[],
       farmHistoryDeleted:predState.farmHistoryDeleted||[]

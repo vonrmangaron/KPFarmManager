@@ -185,7 +185,10 @@ function farmLoadsSummary(){
   const needsActual=farmLoads.filter(l=>!l.migrated&&l.actualKg==null&&dateOnly(l.date)<today).length;
   const upcoming=farmLoads.filter(l=>dateOnly(l.date)>=today).length;
   const past=farmLoads.filter(l=>dateOnly(l.date)<today).length;
-  return {total,plannedKg,withActual,actualKg,needsActual,upcoming,past};
+  // Display only: each load counts its docket, else its planned amount as an estimate
+  const estKg=farmLoads.reduce((s,l)=>s+(l.actualKg==null?Number(l.plannedKg)||0:0),0);
+  const deliveryKg=actualKg+estKg;
+  return {total,plannedKg,withActual,actualKg,needsActual,upcoming,past,estKg,deliveryKg};
 }
 function saveLoad(data){
   if(!data)return null;

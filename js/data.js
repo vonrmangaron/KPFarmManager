@@ -566,7 +566,7 @@ function starterBufferDays(){const b=Number(predState.starterBufferDays);return 
 // A load's silo(s) for a pair: [first] or [first, then] ("Silo 3+1": fill 3, the rest into 1)
 function loadSilosFor(l,g){const v=l&&l.siloFor&&l.siloFor[g];return (Array.isArray(v)?v:[v]).map(Number).filter(n=>n>=1&&n<=3);}
 function loadSiloFor(l,g){return loadSilosFor(l,g)[0]||null;}
-function siloListLabel(a){return a&&a.length?'Silo '+a.join('+'):'';}
+function siloListLabel(a,g){const l=(Array.isArray(a)?a:a?[a]:[]);return l.length?'Silo '+l.map(n=>g?siloNumber(g,n):n).join('+'):'';}
 // Day the pair's last birds leave (feed stops after it)
 function pairCleanoutDate(g){let d=null;shedsForGroup(g).forEach(s=>{if(!s.placementDate)return;const f=finalPickupDate(s);if(f&&(!d||f>d))d=f;});return d;}
 // From here the starter silo only takes Starter for the next batch: N days
