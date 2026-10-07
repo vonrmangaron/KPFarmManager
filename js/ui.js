@@ -2413,11 +2413,11 @@ function batchInfoHtml(x){
   }
   const sheds = (x.sheds || []).filter(s=> s.placement);
   if(sheds.length){
-    h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span>Clean-out</span></div>`;
+    h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-bh" title="Birds now → after this week's pickups">Birds → after</span><span>Clean-out</span></div>`;
     sheds.forEach(s=>{
       const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
       const coLeft = biDays(x.today, co);
-      h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span><span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
+      h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span>${biShedBirdsCell(x, s, done)}<span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
     });
     h += `</div>`;
   }
@@ -2434,21 +2434,32 @@ function batchInfoHtml(x){
   }
   return h;
 }
+// Shed row: birds now, and after the coming week's kill-sheet pickups (matched by shed number)
+function biShedBirdsCell(x, s, done){
+  const ps = x.birds && x.birds !== 'loading' && x.birds.perShed;
+  const m = String(s.name || '').match(/\d+/); const b = ps && m ? ps[String(Number(m[0]))] : null;
+  if(!b || done) return '<span class="bi-b">—</span>';
+  return `<span class="bi-b"><b>${biInt(b.now)}</b>${b.week ? `<small title="After this week's pickups (−${biInt(b.week)})">→ ${biInt(b.after)}</small>` : '<small>no pickup</small>'}</span>`;
+}
 function biBirdStats(sheds, today){
   let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
   // The coming week (next 7 days, the kill sheet's week): pickups entered from the kill sheet — never predicted ones
   const t0 = new Date(today + 'T00:00:00'), sun = biKey(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + 7));
   const weekDays = new Set();
-  (sheds || []).forEach(sh=>{
-    placed += Number(sh.initialPopulation) || 0;
-    mort += Number(sh.mortality) || 0;
-    (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today) picked += n; else if(d && d <= sun && n > 0){ weekPick += n; weekDays.add(d); } });
+  const perShed = {};
+  (sheds || []).forEach((sh, i)=>{
+    const sp = Number(sh.initialPopulation) || 0, sm = Number(sh.mortality) || 0; let sPick = 0, sWeek = 0;
+    placed += sp;
+    mort += sm;
+    (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today){ picked += n; sPick += n; } else if(d && d <= sun && n > 0){ weekPick += n; sWeek += n; weekDays.add(d); } });
+    const sNow = Math.max(0, sp - sm - sPick);
+    if(sp) perShed[String(sh.id != null ? sh.id : i + 1)] = { now: sNow, week: sWeek, after: Math.max(0, sNow - sWeek) };
     const u = biNorm(sh.mortalityUpdatedAt);
     if(u > updated) updated = u;
   });
   if(!placed) return null;
   const now = Math.max(0, placed - mort - picked);
-  return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort() };
+  return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort(), perShed };
 }
 // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
 function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
@@ -2479,7 +2490,7 @@ function batchInfoForProdwise(){
   const birds=biBirdStats(farmData.sheds,iso(new Date()));
   // Same figures as the dashboard: birds on hand from the shed model, picked up from logged pickups
   // Birds now = the dashboard's shed model; picked up = pickups up to today; after this week = now − the coming week's kill-sheet pickups
-  if(birds){const td=dateOnly(new Date());birds.now=(farmData.sheds||[]).reduce((t,x)=>t+liveAtStartOfDay(x,td),0);birds.afterWeek=Math.max(0,birds.now-birds.weekPick);}
+  if(birds){const td=dateOnly(new Date());birds.now=(farmData.sheds||[]).reduce((t,x)=>t+liveAtStartOfDay(x,td),0);birds.afterWeek=Math.max(0,birds.now-birds.weekPick);(farmData.sheds||[]).forEach(x=>{const k=String(x.id);const b=birds.perShed&&birds.perShed[k];if(b){b.now=liveAtStartOfDay(x,td);b.after=Math.max(0,b.now-b.week);}});}
   return {number:predState.batchNumber||farmData.batchNumber||'—',start,end,today:iso(new Date()),sheds,birds,events:'loading'};
 }
 function openBatchInfoModal(){

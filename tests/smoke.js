@@ -299,6 +299,8 @@ const b21=run('batch week + profile + calendar',`(()=>{
   pkView='cal';pkMonth=null;const cal=pkCalendarHtml();pkView='list';
   return {now:st.now,week:st.weekPick,after:st.afterWeek,days:st.weekDays.length,before,after2:after,cal:/pkc-grid/.test(cal)&&/data-pkc-month/.test(cal)};
 })()`);
+const ps=run('per-shed',`(()=>{const t=new Date();const k=d=>{const x=new Date(t);x.setDate(x.getDate()+d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};const st=biBirdStats([{id:3,initialPopulation:50000,mortality:1000,pickups:[{date:k(-2),birds:5000},{date:k(3),birds:7000}]},{id:4,initialPopulation:40000,mortality:0,pickups:[]}],k(0));const html=batchInfoHtml({number:'1',start:k(-30),end:k(20),today:k(0),sheds:[{name:'3',placement:k(-30),cleanout:k(20)}],birds:st,events:[]});return {s3:st.perShed['3'],s4:st.perShed['4'],cell:/44,000/.test(html)&&/→ 37,000/.test(html)};})()`);
+if(ps){ok(ps.s3.now===44000&&ps.s3.week===7000&&ps.s3.after===37000,'per shed: now and after this week');ok(ps.s4.after===40000&&ps.s4.week===0,'shed with no pickup this week');ok(ps.cell,'shed table shows birds now and after');}
 if(b21){ok(b21.now===44000&&b21.week===7000&&b21.after===37000&&b21.days===1,'after this week = now − kill-sheet pickups in the next 7 days (no predicted)');
   ok(b21.before===null||b21.before!==13,'farm profile change waits for Save');ok(b21.after2===13,'Save applies it');ok(b21.cal,'pickups calendar renders');}
 
