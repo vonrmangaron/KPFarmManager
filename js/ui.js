@@ -106,14 +106,18 @@ function renderSettingsDrawerBody(){
   if(typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();
 }
 // ── Farm profile: farm name and the silo numbers painted on the farm ──
-let farmProfileOpen=false;
+let farmProfileOpen=false,fpDraft=null;
+// Edits are a draft until Save changes; Cancel (or ✕) leaves everything as it was
+function fpSiloNo(start,g,n){return start!=null?start+(g-1)*3+n-1:n;}
+function fpDirty(){return !!fpDraft&&(String(fpDraft.name||'')!==String(farmDisplayName||'')||fpDraft.start!==siloStart());}
 function farmProfileBodyHtml(){
+  const d=fpDraft||{name:farmDisplayName,start:siloStart()};
   const cloudId=syncFarmName?`Your cloud farm ID stays <strong>${escapeHtml(syncFarmName)}</strong> — this only changes what you see.`:'Only changes what you see on this device.';
-  const st=siloStart();
-  const preview=[1,2,3,4].map(g=>`<div class="fp-pair"><span>${pairLabel(g)}</span><b>${[1,2,3].map(n=>'Silo '+siloNumber(g,n)).join(' · ')}</b></div>`).join('');
+  const st=d.start;
+  const preview=[1,2,3,4].map(g=>`<div class="fp-pair"><span>${pairLabel(g)}</span><b>${[1,2,3].map(n=>'Silo '+fpSiloNo(st,g,n)).join(' · ')}</b></div>`).join('');
   return `<div class="fp-sec">
       <label class="fp-lbl" for="fpFarmName">Farm name</label>
-      <input type="text" class="settings-input" id="fpFarmName" value="${escapeAttr(farmDisplayName)}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
+      <input type="text" class="settings-input" id="fpFarmName" value="${escapeAttr(d.name||'')}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
       <p class="fp-note">${cloudId} Leave empty to use the cloud farm ID.</p>
     </div>
     <div class="fp-sec">
@@ -122,11 +126,17 @@ function farmProfileBodyHtml(){
       <div class="fp-range"><input type="number" class="settings-input fp-num" id="fpSiloFrom" min="1" max="990" step="1" inputmode="numeric" value="${st!=null?st:''}" placeholder="1" aria-label="First silo number"><span>to</span><input type="number" class="settings-input fp-num" id="fpSiloTo" min="12" max="1001" step="1" inputmode="numeric" value="${st!=null?st+11:''}" placeholder="12" aria-label="Last silo number">${st!=null?'<button type="button" class="fp-clear" id="fpSiloClear">Clear</button>':''}</div>
       <div class="fp-preview">${preview}</div>
       ${st==null?'<p class="fp-note">Not set — each pair shows Silo 1 · 2 · 3.</p>':''}
-    </div>`;
+    </div>
+    <div class="fp-actions"><span class="fp-state" id="fpState">${fpDirty()?'Unsaved changes':'No changes'}</span><button type="button" class="fp-cancel" id="fpCancel">Cancel</button><button type="button" class="fp-save" id="fpSave"${fpDirty()?'':' disabled'}>Save changes</button></div>`;
 }
-function openFarmProfile(){const m=document.getElementById('farmProfileModal'),b=document.getElementById('farmProfileBody');if(!m||!b)return;b.innerHTML=farmProfileBodyHtml();farmProfileOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');}
-function closeFarmProfile(){farmProfileOpen=false;const m=document.getElementById('farmProfileModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}render();}
+function openFarmProfile(){const m=document.getElementById('farmProfileModal'),b=document.getElementById('farmProfileBody');if(!m||!b)return;fpDraft={name:farmDisplayName||'',start:siloStart()};b.innerHTML=farmProfileBodyHtml();farmProfileOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');}
+function closeFarmProfile(force){if(!force&&fpDirty()&&!confirm('Discard your changes to the farm profile?'))return;farmProfileOpen=false;fpDraft=null;const m=document.getElementById('farmProfileModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}render();}
 function refreshFarmProfile(){const b=document.getElementById('farmProfileBody');if(farmProfileOpen&&b)b.innerHTML=farmProfileBodyHtml();}
+function fpRefreshState(){const d=fpDirty();const st=document.getElementById('fpState'),sv=document.getElementById('fpSave');if(st)st.textContent=d?'Unsaved changes':'No changes';if(sv)sv.disabled=!d;}
+// Draft edits (nothing is saved until Save changes)
+function fpSetName(v){if(!fpDraft)return;fpDraft.name=String(v||'').slice(0,40);fpRefreshState();}
+function fpSetStart(v){if(!fpDraft)return;const n=Number(v);fpDraft.start=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;refreshFarmProfile();}
+function saveFarmProfile(){if(!fpDraft)return;const d=fpDraft;if(String(d.name||'')!==String(farmDisplayName||''))setFarmDisplayName(d.name);if(d.start!==siloStart())setSiloStart(d.start==null?'':d.start);closeFarmProfile(true);showToast('Farm profile saved.');}
 // from = first silo number (the range is always 12: 3 per pair)
 function setSiloStart(v){const n=Number(v);predState.siloStart=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;savePredState();schedulePush();refreshFarmProfile();render();}
 function renderSettingsUnitsCard(){
@@ -680,7 +690,7 @@ function nearbyPlannedPickup(shed,dateIso){
   (shed.predictedPickups||[]).forEach(pp=>{if(!pp.date)return;const g=Math.abs(daysBetween(dateOnly(pp.date),dateOnly(d)));if(g<=3&&g<gap){gap=g;best=pp;}});
   return best;
 }
-function openManualPickupModal(shedId,editDateIso){
+function openManualPickupModal(shedId,editDateIso,presetDateIso){
   if(!farmData)return;
   const shed=farmData.sheds[shedId-1];if(!shed)return;
   const pickups=shed.pickups||[];
@@ -690,7 +700,7 @@ function openManualPickupModal(shedId,editDateIso){
     manualPickupState={shedId,mode:'edit',originalDateIso:editDateIso,dateIso:iso(p.date),ageValue:pickupAge(shed,p),ageTouched:(p.ageOverride!=null),birds:p.birds||'',avgWeight:avg!=null?Number(avg.toFixed(3)):'',totalWeight:p.totalWeightKg!=null?Number(p.totalWeightKg.toFixed(2)):'',lastEdited:'avg',isFinal:!!p.isFinal,weightEst:!!p.weightEstimated,replaceId:null,replaceOn:false};
   }else{
     if(pickups.length>=MAX_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups (maximum).`,true);return;}
-    const today=todayIso();
+    const today=presetDateIso||todayIso();
     const computedAge=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,dateOnly(today))):0;
     const est=estimatedPickupWeight(shed,dateOnly(today));const near=nearbyPlannedPickup(shed,today);
     manualPickupState={shedId,mode:'add',originalDateIso:null,dateIso:today,ageValue:computedAge,ageTouched:false,birds:near?Number(near.birds)||'':'',avgWeight:est!=null?est:'',totalWeight:'',lastEdited:'avg',isFinal:false,weightEst:est!=null,replaceId:near?near.id:null,replaceOn:!!near};
@@ -799,7 +809,7 @@ function saveManualPickup(){
   }
   reflowShedPickups(shed);reconcilePredictedPickups(shed);
   saveState();schedulePush();
-  closeManualPickupModal();render();
+  closeManualPickupModal();render();refreshPickupsModal();
   const estNote=s.weightEst?' with an estimated weight':'';
   showToast(s.mode==='add'?`✅ Pickup added${estNote}${s.__replaced?' — replaced the planned pickup':''}.`:`✅ Pickup updated${estNote}.`);
 }
@@ -2398,6 +2408,7 @@ function batchInfoHtml(x){
     h += `<div class="bi-stats">
       <div class="bi-tile"><span class="bi-tl">Birds placed</span><span class="bi-tv">${biInt(b.placed)}</span><span class="bi-ts">at placement</span></div>
       <div class="bi-tile"><span class="bi-tl">Birds now</span><span class="bi-tv">${biInt(b.now)}</span><span class="bi-ts">${b.picked ? biInt(b.picked) + ' picked up' : 'on the farm'}</span></div>
+        <div class="bi-tile bi-after"><span class="bi-tl">After pickups this week</span><span class="bi-tv">${biInt(b.afterWeek != null ? b.afterWeek : b.now)}</span><span class="bi-ts">${b.weekPick ? '−' + biInt(b.weekPick) + ' · ' + b.weekDays.map(d=> biFmt(d, { weekday:'short' })).join(', ') : 'no pickups booked'}</span></div>
       <div class="bi-tile bi-mort"><span class="bi-tl">Mortality</span><span class="bi-tv">${b.pct.toFixed(1)}%</span><span class="bi-ts">${biInt(b.mort)} birds${b.updated ? ' · updated ' + biFmt(b.updated) : ''}</span></div></div>`;
   }
   const sheds = (x.sheds || []).filter(s=> s.placement);
@@ -2424,16 +2435,20 @@ function batchInfoHtml(x){
   return h;
 }
 function biBirdStats(sheds, today){
-  let placed = 0, mort = 0, picked = 0, updated = '';
+  let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
+  // The coming week (next 7 days, the kill sheet's week): pickups entered from the kill sheet — never predicted ones
+  const t0 = new Date(today + 'T00:00:00'), sun = biKey(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + 7));
+  const weekDays = new Set();
   (sheds || []).forEach(sh=>{
     placed += Number(sh.initialPopulation) || 0;
     mort += Number(sh.mortality) || 0;
-    (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; if(d && d <= today) picked += Number(p.birds) || 0; });
+    (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today) picked += n; else if(d && d <= sun && n > 0){ weekPick += n; weekDays.add(d); } });
     const u = biNorm(sh.mortalityUpdatedAt);
     if(u > updated) updated = u;
   });
   if(!placed) return null;
-  return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
+  const now = Math.max(0, placed - mort - picked);
+  return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort() };
 }
 // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
 function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
@@ -2463,7 +2478,8 @@ function batchInfoForProdwise(){
   sheds.forEach(s=>{if(!s.cleanout)s.cleanout=end;});
   const birds=biBirdStats(farmData.sheds,iso(new Date()));
   // Same figures as the dashboard: birds on hand from the shed model, picked up from logged pickups
-  if(birds){const td=dateOnly(new Date());birds.now=(farmData.sheds||[]).reduce((t,x)=>t+liveAtStartOfDay(x,td),0);birds.picked=(farmData.sheds||[]).reduce((t,x)=>t+totalPicked(x),0);}
+  // Birds now = the dashboard's shed model; picked up = pickups up to today; after this week = now − the coming week's kill-sheet pickups
+  if(birds){const td=dateOnly(new Date());birds.now=(farmData.sheds||[]).reduce((t,x)=>t+liveAtStartOfDay(x,td),0);birds.afterWeek=Math.max(0,birds.now-birds.weekPick);}
   return {number:predState.batchNumber||farmData.batchNumber||'—',start,end,today:iso(new Date()),sheds,birds,events:'loading'};
 }
 function openBatchInfoModal(){
@@ -2511,10 +2527,45 @@ function setPickupBirds(shedId,pickupDateIso,value){
 let pickupsModalOpen=false;
 function openPickupsModal(){pickupsModalOpen=true;const m=document.getElementById('pickupsModal');if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}refreshPickupsModal();}
 function closePickupsModal(){pickupsModalOpen=false;const m=document.getElementById('pickupsModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
+// ── Pickups tool: List or Calendar (catches by day; tap one to edit, + to add) ──
+let pkView=(()=>{try{return localStorage.getItem('pw-pk-view')==='cal'?'cal':'list';}catch(e){return 'list';}})(),pkMonth=null,pkAddDate=null;
+function pkViewBarHtml(){
+  return `<div class="pk-viewbar"><span class="pk-seg" role="group" aria-label="View"><button type="button" class="${pkView==='list'?'on':''}" data-pk-view="list" aria-pressed="${pkView==='list'}">List</button><button type="button" class="${pkView==='cal'?'on':''}" data-pk-view="cal" aria-pressed="${pkView==='cal'}">Calendar</button></span></div>`;
+}
+function pkCalendarHtml(){
+  const today=dateOnly(new Date());
+  if(!pkMonth)pkMonth=new Date(today.getFullYear(),today.getMonth(),1);
+  const first=new Date(pkMonth.getFullYear(),pkMonth.getMonth(),1),last=new Date(pkMonth.getFullYear(),pkMonth.getMonth()+1,0);
+  const start=addDays(first,-((first.getDay()+6)%7)),end=addDays(last,(7-last.getDay())%7);
+  // every logged pickup (kill sheet, weighed or not) — predicted ones are not catches
+  const byDay={};let monthBirds=0;
+  (farmData.sheds||[]).forEach(sh=>(sh.pickups||[]).forEach(p=>{if(!p.date)return;const k=iso(p.date);(byDay[k]=byDay[k]||[]).push({shed:sh.id,p});const d=dateOnly(p.date);if(d>=first&&d<=last)monthBirds+=Number(p.birds)||0;}));
+  const k1=n=>n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);
+  let rows='';
+  for(let w=start;w<=end;w=addDays(w,7)){
+    let cells='',wk=0;
+    for(let i=0;i<7;i++){
+      const d=addDays(w,i),k=iso(d),list=(byDay[k]||[]).sort((a,b)=>a.shed-b.shed);
+      list.forEach(x=>wk+=Number(x.p.birds)||0);
+      const chips=list.map(x=>{const b=Number(x.p.birds)||0;const avg=pickupAvgKg(x.p);
+        const tip=`Shed ${x.shed} · ${b.toLocaleString()} birds${avg?` · ${avg.toFixed(3)} kg${x.p.weightEstimated?' (est)':''}`:''}${x.p.isFinal?' · final':''} — tap to edit`;
+        return `<button type="button" class="pkc-chip${x.p.weightEstimated?' est':''}${x.p.isFinal?' final':''}" data-pickup-edit="${x.shed}|${k}" title="${escapeAttr(tip)}"><b>S${x.shed}</b><span class="pkc-n">${b.toLocaleString()}</span><span class="pkc-k">${k1(b)}</span></button>`;}).join('');
+      const adding=pkAddDate===k;
+      const picker=adding?`<div class="pkc-pick">${(farmData.sheds||[]).map(sh=>`<button type="button" data-pkc-shed="${sh.id}|${k}">S${sh.id}</button>`).join('')}<button type="button" class="pkc-x" data-pkc-add="" aria-label="Cancel">✕</button></div>`:'';
+      cells+=`<div class="pkc-day${d.getMonth()!==pkMonth.getMonth()?' out':''}${k===iso(today)?' today':''}${d.getDay()===0||d.getDay()===6?' wk':''}"><div class="pkc-top"><span class="pkc-d">${d.getDate()}</span>${adding?'':`<button type="button" class="pkc-add" data-pkc-add="${k}" aria-label="Add a pickup on ${escapeAttr(fmtShortNoYear(d))}">+</button>`}</div>${chips}${picker}</div>`;
+    }
+    rows+=`${cells}<div class="pkc-week">${wk?`<b>${wk.toLocaleString()}</b><span>birds</span>`:''}</div>`;
+  }
+  const head=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="pkc-h">${x}</div>`).join('')+'<div class="pkc-h pkc-wh">Week</div>';
+  return `<div class="pkc-bar"><button type="button" class="pkc-nav" data-pkc-month="-1" aria-label="Previous month">‹</button><b class="pkc-title">${pkMonth.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><button type="button" class="pkc-nav" data-pkc-month="1" aria-label="Next month">›</button><button type="button" class="pkc-today" data-pkc-month="0">Today</button><span class="pkc-sum">${monthBirds.toLocaleString()} birds this month</span></div>
+    <div class="pkc-grid">${head}${rows}</div>
+    <div class="pkc-legend"><span><i class="pkc-chip"></i>Weighed</span><span><i class="pkc-chip est"></i>Weight to come</span><span><i class="pkc-chip final"></i>Final</span><span>Tap a pickup to edit · + to add · predicted pickups aren't shown</span></div>`;
+}
 function refreshPickupsModal(){
   if(!pickupsModalOpen)return;
   const body=document.getElementById('pickupsBody');if(!body)return;
   if(!farmData){body.innerHTML='<div class="bi-note">Load a batch first.</div>';return;}
+  if(pkView==='cal'){const keep=body.scrollTop;body.innerHTML=pkViewBarHtml()+pkCalendarHtml();body.scrollTop=keep;return;}
   const keepScroll=body.scrollTop;
   let farmBirds=0,farmKg=0,farmWeighed=0;
   const sheds=(farmData.sheds||[]).map(shed=>{
@@ -2543,6 +2594,6 @@ function refreshPickupsModal(){
       ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
     </section>`;
   }).join('');
-  body.innerHTML=`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;
+  body.innerHTML=pkViewBarHtml()+`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;
   body.scrollTop=keepScroll;
 }

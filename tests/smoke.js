@@ -287,6 +287,21 @@ const rt=run('reading log',`(()=>{
 if(rt){ok(rt.n1===1,'taps in one sitting = one session');ok(rt.n2===2,'later reading = new session');ok(rt.after2===1&&rt.hasAt,"day's reading = latest session, with its time");
   ok(rt.serLog===2&&rt.serAt,'sessions and time are synced');ok(rt.back===3,'deleting the latest goes back to the earlier one');ok(rt.gone,'deleting the last one removes the day');}
 
+console.log('21. Batch window: birds after this week; Farm profile Save/Cancel; Pickups calendar');
+const b21=run('batch week + profile + calendar',`(()=>{
+  const t=new Date();const k=d=>{const x=new Date(t);x.setDate(x.getDate()+d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+  const sheds=[{initialPopulation:50000,mortality:1000,pickups:[{date:k(-2),birds:5000},{date:k(3),birds:7000,weightEstimated:true},{date:k(9),birds:9000}],predictedPickups:[{date:k(4),birds:8000}]}];
+  const st=biBirdStats(sheds,k(0));
+  // profile: draft does nothing until saved
+  const keepStart=predState.siloStart;fpDraft={name:farmDisplayName||'',start:siloStart()};fpSetStart(13);const before=siloStart();
+  fpDraft.start=13;saveFarmProfile();const after=siloStart();predState.siloStart=keepStart;
+  // calendar
+  pkView='cal';pkMonth=null;const cal=pkCalendarHtml();pkView='list';
+  return {now:st.now,week:st.weekPick,after:st.afterWeek,days:st.weekDays.length,before,after2:after,cal:/pkc-grid/.test(cal)&&/data-pkc-month/.test(cal)};
+})()`);
+if(b21){ok(b21.now===44000&&b21.week===7000&&b21.after===37000&&b21.days===1,'after this week = now − kill-sheet pickups in the next 7 days (no predicted)');
+  ok(b21.before===null||b21.before!==13,'farm profile change waits for Save');ok(b21.after2===13,'Save applies it');ok(b21.cal,'pickups calendar renders');}
+
 // End-to-end: stale office tab pushes into a cloud the laptop has changed (fake cloud)
 const pending=[];
 pending.push((async()=>{

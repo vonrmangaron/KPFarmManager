@@ -126,9 +126,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#loadsBtn')){openLoadsModal();return;}
     if(e.target.closest('[data-batch-info]')){openBatchInfoModal();return;}
     if(e.target.closest('#batchInfoClose')||(batchInfoOpen&&e.target.id==='batchInfoModal')){closeBatchInfoModal();return;}
-    if(e.target.closest('#farmProfileClose')||(farmProfileOpen&&e.target.id==='farmProfileModal')){closeFarmProfile();return;}
+    if(e.target.closest('#farmProfileClose')||e.target.closest('#fpCancel')||(farmProfileOpen&&e.target.id==='farmProfileModal')){closeFarmProfile();return;}
+    if(e.target.closest('#fpSave')){saveFarmProfile();return;}
     if(e.target.closest('#sbFarm')){openFarmProfile();return;}
-    if(e.target.closest('#fpSiloClear')){setSiloStart('');return;}
+    if(e.target.closest('#fpSiloClear')){fpSetStart('');return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
     if(loadsModalState.open&&e.target.id==='loadsModal'){closeLoadsModal();return;}
         if(e.target.closest('[data-open-loads-modal]')){openLoadsModal();return;}
@@ -246,6 +247,10 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const sampleAddBtn=e.target.closest('[data-sample-add]');if(sampleAddBtn){openSampleModal(Number(sampleAddBtn.dataset.sampleAdd));return;}
     const sampleEditBtn=e.target.closest('[data-sample-edit]');if(sampleEditBtn){const parts=sampleEditBtn.dataset.sampleEdit.split('|');openSampleModal(Number(parts[0]),Number(parts[1]));return;}
     const sampleDelBtn=e.target.closest('[data-sample-delete]');if(sampleDelBtn){const parts=sampleDelBtn.dataset.sampleDelete.split('|');deleteSample(Number(parts[0]),Number(parts[1]));return;}
+    const pkv=e.target.closest('[data-pk-view]');if(pkv){pkView=pkv.dataset.pkView;try{localStorage.setItem('pw-pk-view',pkView);}catch(_){}pkAddDate=null;refreshPickupsModal();return;}
+    const pkm=e.target.closest('[data-pkc-month]');if(pkm){const n=Number(pkm.dataset.pkcMonth);const t=dateOnly(new Date());pkMonth=n===0?new Date(t.getFullYear(),t.getMonth(),1):new Date(pkMonth.getFullYear(),pkMonth.getMonth()+n,1);pkAddDate=null;refreshPickupsModal();return;}
+    const pka=e.target.closest('[data-pkc-add]');if(pka){pkAddDate=pka.dataset.pkcAdd||null;refreshPickupsModal();return;}
+    const pks=e.target.closest('[data-pkc-shed]');if(pks){const [sh,d]=pks.dataset.pkcShed.split('|');pkAddDate=null;openManualPickupModal(Number(sh),null,d);refreshPickupsModal();return;}
     const addPickupBtn=e.target.closest('[data-pickup-add]');if(addPickupBtn){openManualPickupModal(Number(addPickupBtn.dataset.pickupAdd));return;}
     const actionsBtn=e.target.closest('[data-pickup-actions-btn]');
     if(actionsBtn){e.stopPropagation();const wrap=actionsBtn.closest('.pickup-actions');const wasOpen=wrap.classList.contains('open');closeAllPickupActionsMenus();if(!wasOpen)openPickupActionsMenu(wrap);return;}
@@ -365,15 +370,16 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
       schedulePush();render();
       return;
     }
-    if(t.id==='fpSiloFrom'){setSiloStart(t.value);return;}
-    if(t.id==='fpSiloTo'){const v=String(t.value).trim();setSiloStart(v===''?'':Number(v)-11);return;}
+    if(t.id==='fpSiloFrom'){fpSetStart(t.value);return;}
+    if(t.id==='fpSiloTo'){const v=String(t.value).trim();fpSetStart(v===''?'':Number(v)-11);return;}
     if(t.id==='notifShedPerf'){setNotifPref('shedPerformance',t.checked);return;}
     if(t.id==='notifFeedBalance'){setNotifPref('feedBalance',t.checked);return;}
     if(t instanceof HTMLInputElement&&t.dataset&&t.dataset.shed!==undefined&&t.dataset.field){updateShedField(Number(t.dataset.shed),t.dataset.field,t.value);}
   });
 
   document.addEventListener('input',e=>{
-    if(e.target&&(e.target.id==='settingsDisplayName'||e.target.id==='fpFarmName')){setFarmDisplayName(e.target.value);return;}
+    if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
+    if(e.target&&e.target.id==='fpFarmName'){fpSetName(e.target.value);return;}
     // Adjustments modal fields update the draft only (no render → no re-pop)
     if(e.target&&e.target.dataset&&e.target.dataset.adj&&adjDraft){
       const f=e.target.dataset.adj;const v=Number(e.target.value);if(!Number.isFinite(v))return;
