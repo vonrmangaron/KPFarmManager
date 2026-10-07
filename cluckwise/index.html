@@ -6386,13 +6386,16 @@
         }
         clearTimeout(this._t);
         const undoSnap = captureUndo();
-        const removedCount = tasks.filter(t=> t.date && t.date>=b.start && t.date<=b.end).length;
-        tasks = tasks.filter(t=> !(t.date && t.date>=b.start && t.date<=b.end));
+        // Only this batch's own unfinished weigh-ins go. Farm tasks in the same dates, another
+        // batch's tasks (multi-age) and anything already done all stay.
+        const own = t=> t.batchNumber === b.number && t.source === 'auto-weight' && t.status !== 'done';
+        const removedCount = tasks.filter(own).length;
+        tasks = tasks.filter(t=> !own(t));
         reopenReportsWithoutTask();
         batches = batches.filter(x=>x.number!==b.number);
-        addHistory('Batch removed', `Batch #${b.number} removed along with ${removedCount} task(s)`);
+        addHistory('Batch removed', `Batch #${b.number} removed${removedCount ? ` along with ${removedCount} open weigh-in${removedCount === 1 ? '' : 's'}` : ''}`);
         persist(); renderAll();
-        offerUndo(`Batch #${b.number} removed — ${removedCount} task(s) deleted`, undoSnap);
+        offerUndo(`Batch #${b.number} removed${removedCount ? ` · ${removedCount} open weigh-in${removedCount === 1 ? '' : 's'} deleted` : ''}`, undoSnap);
       });
       box.appendChild(row);
     });
@@ -8140,6 +8143,15 @@
           parts = await writeArchive(b, cur.concat(move.filter(t=> !ids.has(t.id)).map(t=> cloneData(t))));
           const gone = new Set(move.map(t=> t.id));
           tasks = tasks.filter(t=> !gone.has(t.id));
+          // A report whose done task went to the archive stays Resolved (it isn't "task deleted").
+          let rpChanged = false;
+          reports.forEach(r=>{
+            if(!r.linkedTaskId || !gone.has(r.linkedTaskId)) return;
+            r.archivedTaskId = r.linkedTaskId; r.linkedTaskId = null; r.autoResolved = false;
+            if(r.status !== 'Resolved'){ r.status = 'Resolved'; r.resolvedAt = r.resolvedAt || new Date().toISOString(); }
+            r.updatedAt = new Date().toISOString(); rpChanged = true;
+          });
+          if(rpChanged) scheduleReportsPush();
         }
         b.archived = { at: Date.now(), count: move.length, parts };
         addHistory('Batch archived', `Batch #${b.number}: ${move.length} completed task${move.length === 1 ? '' : 's'} moved to its archive${cutoff !== '9999-12-31' ? ` (tasks from ${formatShort(cutoff)} on stay — a batch is still running)` : ''}`);
