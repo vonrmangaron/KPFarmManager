@@ -451,7 +451,19 @@ async function handleConnectFarm(farmName){
     syncFarmName=clean;closeSettingsDrawer();openFarmBatchPickerModal(clean,listing.files);
   }finally{if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
 }
+// Send any edits still waiting to go to the cloud before this batch is closed. False = couldn't (no signal).
+async function flushBeforeLeavingBatch(){
+  if(!(pushPending&&syncFarmName&&syncConnectedAt))return true;
+  clearTimeout(pushDebounceTimer);pushDebounceTimer=null;clearTimeout(pushMaxWaitTimer);pushMaxWaitTimer=null;
+  for(let i=0;pushInFlight&&i<50;i++)await new Promise(r=>setTimeout(r,200));
+  pushPending=false;
+  if(await pushToCloud())return true;
+  pushPending=true;schedulePush();
+  showToast('Your latest changes aren\'t saved to the cloud yet. Check the signal and try again.',true);
+  return false;
+}
 async function loadFarmBatchFromCloud(farmName,batchKey){
+  if(!(await flushBeforeLeavingBatch()))return;
   // Same farm: Farm history stays (and any pending upload finishes first)
   const sameFarm=!!syncFarmName&&sanitizeUserFarmName(syncFarmName)===sanitizeUserFarmName(farmName);
   if(sameFarm&&historyPushTimer){clearTimeout(historyPushTimer);historyPushTimer=null;try{await pushFarmHistory();}catch(e){}}
@@ -565,6 +577,7 @@ async function startNewBatch(cleanBatchNumber,opts){
   opts=opts||{};
   const clean=sanitizeBatchNumber(cleanBatchNumber);
   if(!clean){showToast('Enter a batch number.',true);return;}
+  if(!(await flushBeforeLeavingBatch()))return;
   if(opts.downloadBackup!==false){try{downloadCurrentBatchAsJson();}catch(e){console.error(e);}}
   clearTimeout(pushDebounceTimer);pushDebounceTimer=null;clearTimeout(pushMaxWaitTimer);pushMaxWaitTimer=null;pushPending=false;
   const farmToKeep=syncFarmName;

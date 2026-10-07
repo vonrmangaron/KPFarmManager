@@ -199,7 +199,7 @@ async function pullFromCloud(silent){
   syncSha=r.sha||null;
   if(r.data&&r.data.app&&r.data.app!==SYNC_APP_TAG){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
   // Local changes not yet in the cloud? Merge them in rather than lose them.
-  const base=syncBase||loadSyncBase();const ours=farmData?localSyncPayload():null;const theirs=syncNorm(r.data);
+  const base=loadSyncBase();const ours=farmData?localSyncPayload():null;const theirs=syncNorm(r.data);
   const localEdits=!!ours&&(base?!syncEq(ours,base):pushPending);
   let toApply=r.data,needPush=false;
   if(localEdits&&!syncEq(ours,theirs)){
@@ -230,7 +230,7 @@ async function pushToCloud(){
       const fresh=await fetch(buildSyncUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
       if(!fresh||!fresh.sha)throw new Error('Sync conflict: could not read the cloud');
       syncSha=fresh.sha;const theirs=syncNorm(fresh.data);
-      const base=syncBase||loadSyncBase();
+      const base=loadSyncBase();
       try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
       const merged=syncMerge(base||undefined,localSyncPayload(),theirs);
       applyCloudPayload(merged);data=localSyncPayload();
