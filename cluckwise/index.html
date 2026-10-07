@@ -1636,9 +1636,9 @@
   .mlog-table{ border-collapse:separate; border-spacing:0; min-width:100%; }
   .mlog-table th, .mlog-table td{ padding:0; border-bottom:1px solid var(--line); background:var(--surface); }
   .mlog-table tbody tr:last-child > *{ border-bottom:none; }
-  .mlog-table thead th{ position:sticky; top:0; z-index:2; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; padding:8px 2px 7px; text-align:center; }
-  .mlog-table .mlog-task-col{ position:sticky; left:0; z-index:1; width:285px; min-width:285px; max-width:285px; text-align:left; border-right:1px solid var(--line); }
-  .mlog-table thead .mlog-task-col{ z-index:3; padding-left:16px; font-family:'Sora',sans-serif; }
+  .mlog-table thead th{ position:sticky; top:0; z-index:3; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; padding:8px 2px 7px; text-align:center; }
+  .mlog-table .mlog-task-col{ position:sticky; left:0; z-index:2; width:285px; min-width:285px; max-width:285px; text-align:left; border-right:1px solid var(--line); }
+  .mlog-table thead .mlog-task-col{ z-index:4; padding-left:16px; font-family:'Sora',sans-serif; }
   .mlog-dayhead{ min-width:38px; text-transform:none !important; letter-spacing:0 !important; }
   .mlog-dayhead .dnum{ display:block; font-family:'Sora',sans-serif; font-size:13px; font-weight:700; color:var(--ink); letter-spacing:0; margin-top:2px; }
   .mlog-dayhead .dmon{ display:block; color:var(--primary-dark); font-weight:800; }
@@ -1665,7 +1665,11 @@
   .mlog-pill{ display:inline-flex; align-items:center; gap:6px; padding:2px 9px 2px 7px; border-radius:999px; background:var(--mlog-soft); color:var(--mlog-ink); font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
   .mlog-pill .mlog-dot{ width:8px; height:8px; }
   .mlog-last{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mlog-cell{ text-align:center; padding:4px 3px !important; }
+  .mlog-cell{ text-align:center; padding:4px 3px !important; position:relative; z-index:0; }
+  .mlog-catch{ position:absolute; top:0; right:0; width:15px; height:15px; border-radius:50%; background:#C2410C; color:#fff; display:inline-flex; align-items:center; justify-content:center; pointer-events:none; box-shadow:0 0 0 2px var(--surface); }
+  .mlog-catch svg{ width:10px; height:10px; }
+  .mlog-catch.final{ background:#7C2D12; }
+  .mlog-legend .mlog-catch-lg{ position:static; width:14px; height:14px; font-style:normal; box-shadow:none; }
   .mlog-box{ width:26px; height:26px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface-soft); color:#fff; font-size:15px; font-weight:800; line-height:1; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:transform .08s ease, border-color .12s ease; }
   .mlog-box:hover{ border-color:var(--success); }
   .mlog-box:active{ transform:scale(0.9); }
@@ -8659,6 +8663,8 @@
   // the matching calendar task done, or creates one, so both always agree.
   const MLOG_RANGES = { '7':7, '14':14, '30':30 };
   const MLOG_STATUS_ORDER = { over:0, soon:1, none:2, ok:3 };
+  // Catch = birds picked up (truck)
+  const MLOG_CATCH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/></svg>';
   let mlogRange = '14', mlogFrom = null, mlogTo = null;
   let mlogSearch = '', mlogShed = '', mlogCat = '', mlogSort = 'urgency';
   let mlogHistId = null, mlogEditId = null, mlogScrollToEnd = false, mlogShedTouched = false;
@@ -8741,6 +8747,50 @@
     return sel.value;
   }
 
+  // Catches from ProdWise: pickups entered from the kill sheet (with or without
+  // the weight yet). Predicted / planned-by-the-app pickups are never shown.
+  let mlogCatch = {}, mlogCatchKey = '';
+  function mlogShedNums(m){
+    let src = String(m.shed || '').trim();
+    if(!src){ const mm = String(m.name || '').match(/sheds?\s*([\d\s,&+–-]+(?:and\s*\d+)?)/i); src = mm ? mm[1] : ''; }
+    const out = new Set();
+    src.replace(/(\d+)\s*[-–]\s*(\d+)|(\d+)/g, (_, a, b, c)=>{
+      if(c){ const n = +c; if(n >= 1 && n <= 40) out.add(n); }
+      else { const x = +a, y = +b; if(x >= 1 && y <= 40 && y >= x && y - x < 12) for(let n = x; n <= y; n++) out.add(n); }
+      return _;
+    });
+    return [...out];
+  }
+  async function mlogLoadCatches(keys){
+    if(!keys.length) return;
+    const from = keys[0], to = keys[keys.length - 1];
+    const nos = batches.filter(b=> b.number && b.start && b.start <= to && (b.end || '9999-12-31') >= from).map(b=> String(b.number));
+    const sig = nos.join(',');
+    const results = await Promise.all(nos.map(no=> biLoadFeedData(no)));
+    const map = {};
+    results.forEach(d=>{
+      if(!d || !d.farmData) return;
+      (d.farmData.sheds || []).forEach(sh=>{
+        (sh.pickups || []).forEach(p=>{
+          const k = p ? biNorm(p.date) : ''; const birds = Number(p && p.birds) || 0;
+          if(!k || birds <= 0) return;
+          const s = map[sh.id] || (map[sh.id] = {});
+          const prev = s[k];
+          s[k] = { birds: (prev ? prev.birds : 0) + birds, est: !!p.weightEstimated || !!(prev && prev.est), final: !!p.isFinal || !!(prev && prev.final) };
+        });
+      });
+    });
+    const key = sig + '|' + JSON.stringify(map);
+    if(key === mlogCatchKey) return;
+    mlogCatch = map; mlogCatchKey = key;
+    if(mlogIsOpen()) renderMlog();
+  }
+  function mlogCatchesOn(nums, k){
+    const list = [];
+    nums.forEach(n=>{ const c = mlogCatch[n] && mlogCatch[n][k]; if(c) list.push({ shed:n, ...c }); });
+    return list;
+  }
+
   function openMlog(){
     closeOverlays();
     $('#mlogPage').classList.add('open');
@@ -8761,6 +8811,7 @@
     $('#mlogRangeSeg').querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.dataset.range === mlogRange));
     $('#mlogCustom').classList.toggle('hidden', mlogRange !== 'custom');
     const keys = mlogRangeKeys();
+    mlogLoadCatches(keys);
     const sub = [ghFarmName, `${maintenance.length} tracked task${maintenance.length === 1 ? '' : 's'}`];
     if(keys.length) sub.push(`${formatShort(keys[0])} – ${formatFull(keys[keys.length-1])}`);
     $('#mlogSub').textContent = sub.filter(Boolean).join(' · ');
@@ -8819,6 +8870,7 @@
       let p = -1;
       // Ahead of today: days already scheduled in the calendar, and the day it next falls due.
       const nm = mlogNorm(m.name);
+      const shedNums = mlogShedNums(m);
       const planned = new Set(), doneAny = new Set();
       tasks.forEach(t=>{ if(t.date && mlogNorm(t.name) === nm) (t.status === 'done' ? doneAny : planned).add(t.date); });
       keys.forEach(k=>{
@@ -8828,8 +8880,10 @@
         const plan = !done && planned.has(k);
         const gap = !done && !future && !plan && p >= 0 && mlogDaysBetween(dates[p], k) > every;
         const state = done ? 'done · tap to remove' : plan ? 'planned · tap to mark done' : (gap ? 'overdue · ' : '') + 'tap to plan';
-        const label = `${m.name}, ${formatFull(k)}: ${state}`;
-        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${wd === 6 ? ' wk-sat' : wd === 0 ? ' wk-sun' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done ? 'true' : plan ? 'mixed' : 'false'}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button></td>`;
+        const cat = shedNums.length ? mlogCatchesOn(shedNums, k) : [];
+        const catTxt = cat.map(c=> `Shed ${c.shed} catch ${c.birds.toLocaleString()} birds${c.final ? ' (final)' : ''}${c.est ? ' · weight to come' : ''}`).join('; ');
+        const label = `${m.name}, ${formatFull(k)}: ${state}${catTxt ? ' · ' + catTxt : ''}`;
+        body += `<td class="mlog-cell${wd === 0 || wd === 6 ? ' wkend' : ''}${wd === 6 ? ' wk-sat' : wd === 0 ? ' wk-sun' : ''}${k === today ? ' is-today' : ''}"><button type="button" class="mlog-box${done ? ' done' : ''}${gap ? ' gap' : ''}${plan ? ' planned' : ''}${future ? ' future' : ''}" data-mid="${escapeHtmlAttr(m.id)}" data-date="${k}" aria-pressed="${done ? 'true' : plan ? 'mixed' : 'false'}" aria-label="${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(label)}">${done ? '✓' : ''}</button>${cat.length ? `<span class="mlog-catch${cat.some(c=> c.final) ? ' final' : ''}" aria-hidden="true">${MLOG_CATCH_SVG}</span>` : ''}</td>`;
       });
       body += '</tr>';
     });
@@ -8843,6 +8897,7 @@
         <span><i class="mlog-box"></i>Not done</span>
         <span><i class="mlog-box planned"></i>Planned</span>
         <span><i class="mlog-wk-swatch"></i>Weekend</span>
+        ${Object.keys(mlogCatch).length ? `<span><i class="mlog-catch mlog-catch-lg">${MLOG_CATCH_SVG}</i>Catch (pickup from the kill sheet)</span>` : ''}
         <span>Tap a day once to plan · twice to mark done · three times to remove · swipe, drag or scroll the wheel for more days · tap a task for its history</span>
       </div>`;
     const card = main.querySelector('.mlog-card');
@@ -9605,22 +9660,27 @@
     return batches.filter(b=> b.start && b.end && today >= b.start && today <= b.end).sort((a,b)=> b.start.localeCompare(a.start))[0]
       || batches.filter(b=> b.start && b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0] || null;
   }
-  const biBirdCache = new Map();
-  async function biLoadBirds(no){
+  // The ProdWise batch file (<farm>-feed-<batch>), read-only, kept 10 minutes
+  const biFeedCache = new Map();
+  async function biLoadFeedData(no){
     const farm = (ghFarmName || '').trim();
     if(!farm || !no) return null;
-    const hit = biBirdCache.get(no); if(hit && Date.now() - hit.at < 600000) return hit.v;
+    const hit = biFeedCache.get(String(no)); if(hit && Date.now() - hit.at < 600000) return hit.v;
     let v = null;
     for(const name of [...new Set([farm, farm.toLowerCase()])]){
       try{
         const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(name + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
         if(!res.ok) continue;
         const j = await res.json();
-        if(j && j.data && j.data.farmData){ v = biBirdStats(j.data.farmData.sheds, dateKey(new Date())); break; }
+        if(j && j.data && j.data.farmData){ v = j.data; break; }
       }catch(e){}
     }
-    biBirdCache.set(no, { at: Date.now(), v });
+    biFeedCache.set(String(no), { at: Date.now(), v });
     return v;
+  }
+  async function biLoadBirds(no){
+    const d = await biLoadFeedData(no);
+    return d ? biBirdStats(d.farmData.sheds, dateKey(new Date())) : null;
   }
   function openBatchInfo(number){
     const b = batches.find(x=> String(x.number) === String(number)) || currentOrNextBatch();
