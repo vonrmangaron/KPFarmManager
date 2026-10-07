@@ -326,6 +326,9 @@
   .dc-warn-wind{ background:#4B5563; }
   #auditBarSection:empty{ display:none; }
   .audit-bar-simple .audit-bar-head{ cursor:default; }
+  .bp-switch{ display:flex; gap:6px; margin:0 0 12px; overflow-x:auto; }
+  .bp-sw{ flex:0 0 auto; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 14px; font:800 14px 'Sora',sans-serif; cursor:pointer; min-height:44px; }
+  .bp-sw.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
   .dc-upcoming{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px; }
   .dc-upcoming-lbl{ font-size:13px; font-weight:800; color:#5C4A2E; }
   .dc-up-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; background:rgba(255,255,255,0.55); color:#241A08; font-size:13px; font-weight:700; }
@@ -1319,6 +1322,10 @@
   Object.assign(TRANSLATIONS.es, {"backToToday": "Volver a hoy"});
   Object.assign(TRANSLATIONS.tl, {"backToToday": "Bumalik sa ngayon"});
   Object.assign(TRANSLATIONS.id, {"backToToday": "Kembali ke hari ini"});
+  Object.assign(TRANSLATIONS.en, {"bpDayN": "Day {n}"});
+  Object.assign(TRANSLATIONS.es, {"bpDayN": "Día {n}"});
+  Object.assign(TRANSLATIONS.tl, {"bpDayN": "Araw {n}"});
+  Object.assign(TRANSLATIONS.id, {"bpDayN": "Hari {n}"});
   Object.assign(TRANSLATIONS.en, {"noteLbl": "Note", "sortSort": "Sort", "sortAZ": "A–Z", "sortTip": "Sort by name (urgent tasks stay on top)", "sortOnMsg": "Sorted A–Z · urgent tasks stay on top", "sortOffMsg": "Back to the manager's order"});
   Object.assign(TRANSLATIONS.es, {"noteLbl": "Nota", "sortSort": "Ordenar", "sortAZ": "A–Z", "sortTip": "Ordenar por nombre (las urgentes quedan arriba)", "sortOnMsg": "Orden A–Z · las urgentes quedan arriba", "sortOffMsg": "Orden del encargado"});
   Object.assign(TRANSLATIONS.tl, {"noteLbl": "Tala", "sortSort": "Ayusin", "sortAZ": "A–Z", "sortTip": "Ayusin ayon sa pangalan (nasa itaas ang urgent)", "sortOnMsg": "Naka-A–Z · nasa itaas ang urgent", "sortOffMsg": "Balik sa ayos ng manager"});
@@ -3183,11 +3190,26 @@
     return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
   }
   const fmtInt = n => Math.round(n).toLocaleString();
+  let viewerBatchSel = null;
   function renderBatchPage(){
     const wrap = $('#batchPageBody'); if(!wrap) return;
     const todayKey = dateKey(new Date());
-    const b = batches.filter(x=> x.start && x.end && todayKey >= x.start && todayKey <= x.end).sort((x,y)=> y.start.localeCompare(x.start))[0];
+    // Multi-age farms: more than one batch can be running — a switch picks which one to show
+    const running = batches.filter(x=> x.start && x.end && todayKey >= x.start && todayKey <= x.end).sort((x,y)=> x.start.localeCompare(y.start));
+    const b = running.find(x=> x.number === viewerBatchSel) || running[running.length - 1];
     wrap.innerHTML = '';
+    if(running.length > 1){
+      const sw = document.createElement('div'); sw.className = 'bp-switch'; sw.setAttribute('role', 'group');
+      running.forEach(x=>{
+        const btn = document.createElement('button'); btn.type = 'button';
+        btn.className = 'bp-sw' + (x === b ? ' on' : '');
+        btn.setAttribute('aria-pressed', String(x === b));
+        btn.textContent = `#${x.number} · ${t('bpDayN').replace('{n}', Math.round((toDateObj(todayKey) - toDateObj(x.start)) / 86400000))}`;
+        btn.addEventListener('click', ()=>{ viewerBatchSel = x.number; renderBatchPage(); });
+        sw.appendChild(btn);
+      });
+      wrap.appendChild(sw);
+    }
     if(!b){
       const next = batches.filter(x=> x.start && x.start > todayKey).sort((x,y)=> x.start.localeCompare(y.start))[0];
       const el = document.createElement('div'); el.className = 'bp-empty';

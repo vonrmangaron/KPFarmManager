@@ -1682,6 +1682,13 @@
   .mlog-pill{ display:inline-flex; align-items:center; gap:6px; padding:2px 9px 2px 7px; border-radius:999px; background:var(--mlog-soft); color:var(--mlog-ink); font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
   .mlog-pill .mlog-dot{ width:8px; height:8px; }
   .mlog-last{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kanban-canvas{ position:relative; }
+  .week-jump{ display:none !important; position:absolute; top:0; bottom:0; width:84px; z-index:6; align-items:center; justify-content:center; border-radius:14px; background:var(--surface); box-shadow:var(--shadow-md); border:2px dashed var(--primary-dark); min-height:0 !important; padding:0 !important; }
+  .week-jump-left{ left:0; } .week-jump-right{ right:0; }
+  body.is-dragging .week-jump{ display:flex !important; }
+  .week-jump.drop-target{ background:var(--primary-soft); }
+  .week-jump > *{ display:none !important; }
+  .week-jump::before{ content:attr(data-label); white-space:pre; text-align:center; color:var(--primary-dark); font:800 11.5px/1.5 'Sora',sans-serif; pointer-events:none; }
   .mlog-cell{ text-align:center; padding:4px 3px !important; position:relative; z-index:0; }
   .mlog-catch{ position:absolute; top:0; right:0; width:15px; height:15px; border-radius:50%; background:#C2410C; color:#fff; display:inline-flex; align-items:center; justify-content:center; pointer-events:none; box-shadow:0 0 0 2px var(--surface); }
   .mlog-catch svg{ width:10px; height:10px; }
@@ -2259,6 +2266,15 @@
   .bi-note{ margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:var(--surface-soft); color:var(--muted); font-size:13px; text-align:center; }
   .bi-sec{ margin:18px 0 8px; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   .bi-table{ border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .bi-others{ display:flex; flex-wrap:wrap; gap:6px; }
+  .bi-other{ display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:6px 12px; font:700 12.5px 'Sora',sans-serif; cursor:pointer; }
+  .bi-arc{ border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+  .bi-arc-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; color:var(--ink); }
+  .bi-arc-btn{ border:1.5px solid var(--line); background:var(--surface-soft); color:var(--ink); border-radius:999px; padding:4px 12px; font:700 12px 'Sora',sans-serif; cursor:pointer; }
+  .bi-arc-day{ margin-top:6px; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .bi-arc-row{ display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--ink); padding:2px 0; }
+  .bi-arc-row small{ color:var(--muted); font-size:11.5px; }
+  .cur-batch-multi + .cur-batch-multi{ margin-top:6px; }
   .bi-tr{ display:grid; grid-template-columns:42px 64px minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr); align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
   .bi-tr:first-child{ border-top:none; }
   .bi-th{ background:var(--surface-soft); font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:7px 12px; }
@@ -3413,6 +3429,11 @@
   }
   function batchAgeOn(b, key){ return Math.round((toDateObj(key) - toDateObj(b.start)) / 86400000); }
   function batchesForDate(key){ return batches.filter(b => key>=b.start && key<=b.end); }
+  function taskBatch(t){
+    if(!t || !t.date) return null;
+    if(t.batchNumber){ const own = batches.find(b=> b.number === t.batchNumber); if(own) return own; }
+    return batchesForDate(t.date).sort((a,b)=> b.start.localeCompare(a.start))[0] || null;
+  }
   function eventsOnDate(key){ return events.filter(e=>e.date===key); }
   function eventOnDate(key){ return eventsOnDate(key)[0]; }
   function prepEventsForDate(key){ return events.filter(e=> key>=addDaysStr(e.date,-7) && key<=addDaysStr(e.date,-1)).sort((a,b)=> a.date.localeCompare(b.date)); }
@@ -3552,7 +3573,7 @@
     return {
       tasks: mergeCollection(base.tasks, local.tasks, server.tasks, byId),
       history: mergeCollection(base.history, local.history, server.history, histKey)
-        .sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, 200),
+        .sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, HISTORY_MAX),
       batches: mergeCollection(base.batches, local.batches, server.batches, b=> b.number),
       events: mergeCollection(base.events, local.events, server.events, byId),
       settings: mergeRecord(base.settings, local.settings, server.settings),
@@ -3574,7 +3595,16 @@
     renderAll();
   }
 
-  async function persist(){ showSyncPending(); schedulePush(); }
+  // ── This phone's own copy of the farm (survives the app being closed with no signal) ──
+  // data = what's on screen, base = the cloud copy it was last synced with (for a safe merge),
+  // pending = changes not yet sent.
+  function localCacheKey(){ return 'cw-local-v1-' + (ghPath || 'none'); }
+  function saveLocalCache(pending){
+    if(!ghPath) return;
+    try{ localStorage.setItem(localCacheKey(), JSON.stringify({ at: Date.now(), pending: !!pending, data: snapshotLocal(), base: lastSyncedSnapshot })); }catch(e){}
+  }
+  function loadLocalCache(){ try{ const v = JSON.parse(localStorage.getItem(localCacheKey()) || 'null'); return v && v.data ? v : null; }catch(e){ return null; } }
+  async function persist(){ saveLocalCache(true); showSyncPending(); schedulePush(); }
   let syncState = 'idle';
   let lastSyncAt = null;
   function renderSyncStatus(){
@@ -3652,15 +3682,30 @@
     }catch(e){}
     updateGithubStatusUI();
     renderSyncStatus();
+    const cache = ghPath ? loadLocalCache() : null;
+    if(cache){
+      try{
+        applyMergedState(normalizeSnapshot(cache.data));
+        lastSyncedSnapshot = cache.base ? normalizeSnapshot(cache.base) : null;
+        if(cache.pending) pushPending = true;
+        renderAll();
+      }catch(e){ console.warn('Saved copy unreadable', e); }
+    }
     if(ghPath){
-      showLoadingOverlay();
+      if(!cache) showLoadingOverlay();
       let ok = false;
       const pullPromise = pullFromGithub(true);
       try{
         ok = await Promise.race([pullPromise, new Promise(resolve=> setTimeout(()=>resolve(false), 6000))]);
       }catch(e){ ok = false; }
       hideLoadingOverlay();
-      if(!ok){
+      if(!ok && cache){
+        // No signal: keep working on this phone's copy; it merges with the cloud when signal returns
+        syncState = 'error'; renderSyncStatus();
+        showToast(cache.pending ? 'Offline — showing your saved copy. Your changes will sync when there\'s signal.' : 'Offline — showing the copy saved on this phone.');
+        pullPromise.then(lateOk=>{ if(lateOk){ renderAll(); if(pushPending) runScheduledPush(); } }).catch(()=>{});
+      }
+      if(!ok && !cache){
         showLoadErrorOverlay();
         // A slow connection can still finish after the 6s timeout. If it does,
         // drop the error screen instead of leaving fresh data hidden behind it.
@@ -3754,6 +3799,8 @@
       if(weighFix.changes) renderAll();
       // Local edits survived the merge -> push them back up.
       if(weighFix.changes || stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
+      saveLocalCache(pushPending);
+      setTimeout(()=>{ runArchive(); loadArchives(); }, 1500);
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
       if(!pushPending) flashSaved(); else renderSyncStatus();
@@ -3794,6 +3841,7 @@
       if(result && result.sha) ghSha = result.sha;
       lastSyncedSnapshot = cloneData(merged);
       maybeTakeDailySnapshot();
+      setTimeout(()=> saveLocalCache(pushPending), 0);
       // Keep any edits made while the request was in flight, layered on what we just saved.
       const current = snapshotLocal();
       const next = stableStr(current) === stableStr(localAtStart) ? merged : mergeSnapshots(localAtStart, current, merged);
@@ -4002,9 +4050,11 @@
     return window.innerWidth <= 1024 ? 'list' : 'month';
   }
 
+  // Enough history to trace what happened over the past week or two (was 200 ≈ one busy day)
+  const HISTORY_MAX = 1500;
   function addHistory(action, detail){
     history.unshift({ id: uid(), ts: Date.now(), action, detail });
-    if(history.length>200) history.length = 200;
+    if(history.length>HISTORY_MAX) history.length = HISTORY_MAX;
   }
   function updateBatchColorDefault(){ const inp = $('#batchColorInput'); if(inp) inp.value = nextPaletteColor(); }
   function updateEventColorDefault(){ const inp = $('#eventColorInput'); if(inp) inp.value = DEFAULT_EVENT_COLOR; }
@@ -4215,7 +4265,7 @@
     if(st.error || !st.sheds.length && !batches.some(b=> b.number===st.number)){ pv.hidden = true; return; }
     const existing = batches.find(b=> b.number===st.number);
     const draft = { number: st.number, start: st.start, end: st.end || addDaysStr(st.start, 69), sheds: st.sheds };
-    const plan = planWeighIns(tasks, [draft], { full:true, batchNumber: st.number, oldSheds: existing ? existing.sheds : null });
+    const plan = planWeighIns(tasks, [draft], { full:true, batchNumber: st.number, oldSheds: existing ? existing.sheds : null, fromDate: dateKey(new Date()) });
     const total = st.sheds.reduce((n, sh)=> n + weighWeeks(sh.placement, sh.cleanout), 0);
     pv.hidden = false;
     pv.innerHTML = `<strong>Weigh-ins:</strong> ${total} across ${st.sheds.length} shed${st.sheds.length===1?'':'s'}, every 7 days until each shed's cleanout.`
@@ -5205,7 +5255,7 @@
     };
     const headers = ['Date','Task','Status','Priority','Assignees','Notes','Batch'];
     const rows = scopedTasks.map(t=>{
-      const activeBatch = t.date ? batchesForDate(t.date).find(b=>b) : null;
+      const activeBatch = taskBatch(t);
       return [
         t.date ? formatFull(t.date) : 'Backlog',
         t.name,
@@ -6270,7 +6320,14 @@
     const box = $('#sbActiveBatch');
     if(!box) return;
     const today = dateKey(new Date());
-    const active = batches.filter(b=> today >= b.start && today <= b.end).sort((a,b)=> b.start.localeCompare(a.start))[0];
+    const running = batches.filter(b=> today >= b.start && today <= b.end).sort((a,b)=> a.start.localeCompare(b.start));
+    if(running.length > 1){
+      // Multi-age: every batch that still has birds, oldest first
+      box.innerHTML = running.map(b=> `<button type="button" class="cur-batch cur-batch-multi" data-cb="${escapeHtmlAttr(b.number)}" title="Batch details"><span class="cb-text"><span class="cb-k">${b.number === running[running.length-1].number ? 'Newest batch' : 'Still running'}</span><span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· Day ${batchAgeOn(b, today)}</em></span></span></button>`).join('');
+      box.querySelectorAll('[data-cb]').forEach(el=> el.addEventListener('click', ()=> openBatchInfo(el.dataset.cb)));
+      return;
+    }
+    const active = running[0];
     const next = active ? null : batches.filter(b=> b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0];
     const b = active || next;
     if(!b){ box.innerHTML = ''; return; }
@@ -7223,7 +7280,7 @@
     const isHighPriority = task.priority === 'high' && task.status!=='done';
     card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
     card.dataset.id = task.id;
-    const activeBatch = batchesForDate(task.date||'').find(b=> b);
+    const activeBatch = taskBatch(task);
     const stripColor = activeBatch ? colorForBatchNumber(activeBatch.number) : 'var(--line)';
     const avatarsHtml = buildAssigneeAvatarsHtml(task.assignees);
     card.innerHTML = `
@@ -7376,6 +7433,14 @@
     const canvas = document.createElement('div');
     canvas.className = 'kanban-canvas';
     canvas.appendChild(board);
+    // While dragging: drop on an edge to move the task to the same weekday a week earlier / later
+    [['-7','◀','Previous\nweek','left'],['7','▶','Next\nweek','right']].forEach(([shift, arrow, label, side])=>{
+      const z = document.createElement('div');
+      z.className = 'day-tasks week-jump week-jump-' + side;
+      z.dataset.shift = shift;
+      z.dataset.label = arrow + '\n' + label;   // drawn by CSS so the zone stays an empty drop list
+      canvas.appendChild(z);
+    });
     // Phones: a day strip to jump between days; swiping past Sunday/Monday changes the week
     let strip = null;
     if(kbPhone){
@@ -7654,7 +7719,16 @@
           suppressNextClick = true;
           setTimeout(()=>{ suppressNextClick = false; }, 80);
           const item = evt.item;
-          const toDate = evt.to.dataset.date;
+          let toDate = evt.to.dataset.date;
+          const shift = Number(evt.to.dataset.shift || 0);
+          if(shift){
+            // Week-jump zone: same weekday one week earlier/later, and the board follows the task there
+            const t = tasks.find(x=> x.id === item.dataset.id);
+            const fromKey = (t && t.date) || dateKey(getMonday(currentDate));
+            toDate = addDaysStr(fromKey, shift);
+            currentDate = toDateObj(toDate);
+            if(item.dataset.template !== 'true' && t){ item.remove(); moveTask(t.id, toDate, { deferRender: true }); return; }
+          }
           if(item.dataset.template==='true'){
             instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true, dropEvt: evt });
           } else {
@@ -7905,6 +7979,14 @@
       renderTaskIcon(res.querySelector('.sr-icon'), t.name, t.icon);
       return res;
     });
+    const arcHits = archivedTasks.filter(t=> has(t.name) || has(t.notes) || (t.assignees||[]).some(has)).sort((a,b)=> (b.date || '').localeCompare(a.date || ''));
+    group('Archived tasks', arcHits, 15, t=>{
+      const parts = [t.date ? formatFull(t.date) : '', 'Done', `Batch #${t._archived} archive`];
+      if((t.assignees||[]).length) parts.push(t.assignees.join(', '));
+      const res = buildSearchResult(t.icon, t.name, parts.filter(Boolean).join(' · '), q, ()=>{ closeOverlays(); openBatchInfo(t._archived, true); });
+      renderTaskIcon(res.querySelector('.sr-icon'), t.name, t.icon);
+      return res;
+    });
     const repHits = reports.filter(r=> [r.code, r.shed, r.location, r.problemType, r.notes, r.createdBy, r.managerNotes, r.resolutionNotes].some(has))
       .sort((a,b)=> (b.createdAt || '').localeCompare(a.createdAt || ''));
     group('Reports', repHits, 15, r=> buildSearchResult('🚩', r.code || '(no code)',
@@ -7933,15 +8015,27 @@
   // of that day) plus the latest "before-restore" point; 7-day retention.
   const SNAPSHOT_KEEP_DAYS = 7;
   let snapshotInFlight = false;
-  function snapshotsUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName + '-snapshots')}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
-  async function fetchSnapshotsFile(){
-    const res = await fetch(snapshotsUrl(), { cache:'no-store' });
+  // One small file per restore point, so none ever reaches the sync server's ~1 MB limit
+  // (all of them in one file did, and then every backup silently failed):
+  //   <farm>-snap-d0 … d6  daily point for that weekday (overwritten a week later = 7-day retention)
+  //   <farm>-snap-before   the latest "before restore" point
+  function snapSlotName(slot){ return ghFarmName + '-snap-' + slot; }
+  function snapSlotUrl(slot){ return `${WORKER_URL}/?farm=${encodeURIComponent(snapSlotName(slot))}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  const SNAP_SLOTS = ['d0','d1','d2','d3','d4','d5','d6','before'];
+  function snapSlotFor(entry){ return entry.kind === 'before-restore' ? 'before' : 'd' + toDateObj(entry.date).getDay(); }
+  async function fetchSnapSlot(slot){
+    const res = await fetch(snapSlotUrl(slot), { cache:'no-store' });
     if(res.status === 404) return { list:[], sha:null };
-    if(!res.ok) throw new Error('Snapshots GET ' + res.status);
+    if(!res.ok) throw new Error('Snapshot GET ' + res.status);
     const r = await res.json();
     if(!r || r.notFound) return { list:[], sha:null };
     const d = r.data || {};
     return { list: Array.isArray(d.snapshots) ? d.snapshots : [], sha: r.sha };
+  }
+  async function fetchSnapshotsFile(){
+    const got = await Promise.all(SNAP_SLOTS.map(sl=> fetchSnapSlot(sl).catch(()=> null)));
+    if(got.every(g=> g === null)) throw new Error('Snapshots unavailable');
+    return { list: got.filter(Boolean).flatMap(g=> g.list), sha:null };
   }
   function pruneSnapshots(list){
     const cutoff = addDaysStr(dateKey(new Date()), -SNAPSHOT_KEEP_DAYS);
@@ -7959,13 +8053,13 @@
   }
   async function saveSnapshotEntry(entry, onlyIfMissingDaily, retry){
     retry = retry || 0;
-    const { list, sha } = await fetchSnapshotsFile();
+    const slot = snapSlotFor(entry);
+    const { list, sha } = await fetchSnapSlot(slot);
     if(onlyIfMissingDaily && list.some(s=> s && s.kind==='daily' && s.date===entry.date)) return 'exists';
-    const next = pruneSnapshots(list.concat([entry]));
-    const res = await fetch(snapshotsUrl(), {
+    const res = await fetch(snapSlotUrl(slot), {
       method:'PUT',
       headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ sha, data: { snapshots: next } })
+      body: JSON.stringify({ sha, data: { snapshots: [entry] } })
     });
     if((res.status === 409 || res.status === 422) && retry < 3){
       await new Promise(r=> setTimeout(r, 500 * (retry + 1)));
@@ -7974,6 +8068,80 @@
     if(!res.ok) throw new Error('Snapshots PUT ' + res.status);
     return 'saved';
   }
+  // ==================== BATCH ARCHIVE ====================
+  // A few days after a batch ends, its completed tasks move out of the main farm file into
+  // "<farm>-archive-<batch>" (split into parts if ever large), so the farm file stays well under
+  // the sync server's ~1 MB limit. Multi-age farms: anything dated on/after the start of a batch
+  // that is still running stays in the farm file until that batch ends too. Open tasks never move.
+  // Archived tasks stay visible (read-only): Search, the Routine Tracker and the batch window.
+  const ARCHIVE_GRACE_DAYS = 3, ARCHIVE_PART_BYTES = 800000;
+  let archivedTasks = [], archiveLoadedKey = '', archiveRunning = false;
+  function archiveName(no, part){ return ghFarmName + '-archive-' + String(no).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') + (part ? '-p' + part : ''); }
+  function archiveUrl(no, part){ return `${WORKER_URL}/?farm=${encodeURIComponent(archiveName(no, part))}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  async function fetchArchivePart(no, part){
+    const res = await fetch(archiveUrl(no, part), { cache:'no-store' });
+    if(res.status === 404) return { tasks:[], sha:null };
+    if(!res.ok) throw new Error('Archive GET ' + res.status);
+    const r = await res.json();
+    if(!r || r.notFound) return { tasks:[], sha:null };
+    return { tasks: Array.isArray(r.data && r.data.tasks) ? r.data.tasks : [], sha: r.sha };
+  }
+  function archiveParts(b){ return Math.max(1, Number(b && b.archived && b.archived.parts) || 1); }
+  async function fetchArchive(b){
+    const parts = await Promise.all([...Array(archiveParts(b)).keys()].map(i=> fetchArchivePart(b.number, i)));
+    return parts.flatMap(p=> p.tasks);
+  }
+  async function loadArchives(){
+    if(!ghPath) return;
+    const list = batches.filter(b=> b.archived && b.archived.count);
+    const key = list.map(b=> b.number + ':' + b.archived.at).join(',');
+    if(key === archiveLoadedKey) return;
+    const got = await Promise.all(list.map(b=> fetchArchive(b).then(ts=> ts.map(t=> Object.assign({}, t, { _archived: b.number }))).catch(()=> [])));
+    archivedTasks = got.flat(); archiveLoadedKey = key;
+    if(mlogIsOpen()) renderMlog();
+  }
+  async function writeArchive(b, all){
+    const chunks = [[]]; let size = 0;
+    all.forEach(t=>{ const n = JSON.stringify(t).length + 1; if(size + n > ARCHIVE_PART_BYTES && chunks[chunks.length-1].length){ chunks.push([]); size = 0; } chunks[chunks.length-1].push(t); size += n; });
+    for(let i = 0; i < chunks.length; i++){
+      const cur = await fetchArchivePart(b.number, i);
+      const res = await fetch(archiveUrl(b.number, i), { method:'PUT', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ sha: cur.sha, data: { batch: b.number, farm: ghFarmName, part: i, parts: chunks.length, updatedAt: new Date().toISOString(), tasks: chunks[i] } }) });
+      if(!res.ok) throw new Error('Archive PUT ' + res.status);
+    }
+    return chunks.length;
+  }
+  async function runArchive(){
+    if(!ghPath || archiveRunning || !navigator.onLine || pushPending || pushInFlight) return;
+    const graceEnd = addDaysStr(dateKey(new Date()), -ARCHIVE_GRACE_DAYS);
+    const ended = batches.filter(b=> b.end && b.end < graceEnd && !b.archived).sort((a,b)=> a.end.localeCompare(b.end));
+    if(!ended.length) return;
+    archiveRunning = true;
+    let changed = false;
+    try{
+      for(const b of ended){
+        const running = batches.filter(x=> x.start && x.end && x.end >= graceEnd).map(x=> x.start).sort();
+        const cutoff = running.length ? running[0] : '9999-12-31';
+        const move = tasks.filter(t=> t.status === 'done' && t.date && t.date <= b.end && t.date < cutoff);
+        let parts = 1;
+        if(move.length){
+          const cur = await fetchArchive(b);
+          const ids = new Set(cur.map(t=> t.id));
+          parts = await writeArchive(b, cur.concat(move.filter(t=> !ids.has(t.id)).map(t=> cloneData(t))));
+          const gone = new Set(move.map(t=> t.id));
+          tasks = tasks.filter(t=> !gone.has(t.id));
+        }
+        b.archived = { at: Date.now(), count: move.length, parts };
+        addHistory('Batch archived', `Batch #${b.number}: ${move.length} completed task${move.length === 1 ? '' : 's'} moved to its archive${cutoff !== '9999-12-31' ? ` (tasks from ${formatShort(cutoff)} on stay — a batch is still running)` : ''}`);
+        changed = true;
+      }
+    }catch(e){ console.warn('Archive skipped — will try again next sync', e); }
+    finally{
+      archiveRunning = false;
+      if(changed){ persist(); renderAll(); loadArchives(); }
+    }
+  }
+
   async function maybeTakeDailySnapshot(){
     if(!ghPath || snapshotInFlight || !lastSyncedSnapshot) return;
     const today = dateKey(new Date());
@@ -8092,7 +8260,7 @@
     pill.textContent = t.status==='done' ? 'Done' : 'Open';
     pill.className = 'status-pill-lg ' + (t.status==='done' ? 'done' : 'open');
     $('#detailDate').textContent = t.date ? toDateObj(t.date).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'}) : 'Backlog (unscheduled)';
-    const activeBatch = t.date ? batchesForDate(t.date).find(b=>b) : null;
+    const activeBatch = taskBatch(t);
     const batchEl = $('#detailBatch');
     if(activeBatch){ batchEl.innerHTML = `<span class="batch-chip" style="background:${colorForBatchNumber(activeBatch.number)}">#${escapeHtml(activeBatch.number)} · Day ${batchAgeOn(activeBatch, t.date)}</span>`; batchEl.style.color = ''; }
     else { batchEl.innerHTML = ''; batchEl.textContent = 'Not linked to a batch'; batchEl.style.color = 'var(--muted)'; }
@@ -8496,7 +8664,8 @@
     const saved = upsertBatch(st.number, st.start, st.end, st.color);
     saved.sheds = st.sheds.map(sh=> ({ shed: String(sh.shed), placement: sh.placement, cleanout: sh.cleanout }));
     if(st.withChecklist) addPrepChecklistToBacklog(`Batch #${st.number}`);
-    const plan = recheckWeighIns({ full:true, batchNumber: st.number, oldSheds }, `Batch #${st.number} saved`);
+    // Only weigh-ins from today on are added — a past week that was missed stays missed (not re-added as overdue)
+    const plan = recheckWeighIns({ full:true, batchNumber: st.number, oldSheds, fromDate: dateKey(new Date()) }, `Batch #${st.number} saved`);
     persist(); renderAll();
     closeOverlays();
     const checked = saved.sheds.length ? ` — weigh-ins checked${plan.changes ? ': ' + weighSummary(plan) : ', no changes'}` : '';
@@ -8718,7 +8887,7 @@
   function mlogAgo(n){ return n === 0 ? 'Today' : n === 1 ? 'Yesterday' : `${n} days ago`; }
   function mlogDoneDates(m){
     const n = mlogNorm(m.name), today = dateKey(new Date()), set = new Set();
-    tasks.forEach(t=>{ if(t.status === 'done' && t.date && t.date <= today && mlogNorm(t.name) === n) set.add(t.date); });
+    tasks.concat(archivedTasks).forEach(t=>{ if(t.status === 'done' && t.date && t.date <= today && mlogNorm(t.name) === n) set.add(t.date); });
     return [...set].sort();
   }
   function mlogStatus(m, dates){
@@ -9634,10 +9803,11 @@
   // x = { number, start, end, today, sheds:[{name, placement, cleanout}], birds:'loading'|null|{placed,now,picked,mort,pct,updated}, events:'loading'|null|[{name,date,color,batchNumber}] }
   function batchInfoHtml(x){
     const total = Math.max(1, biDays(x.start, x.end));
-    const day = Math.max(0, biDays(x.start, x.today));
+    const ended = x.today > x.end;
+    const day = Math.min(total, Math.max(0, biDays(x.start, x.today)));
     const left = Math.max(0, biDays(x.today, x.end));
     const pct = Math.min(100, Math.round(day / total * 100));
-    let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
+    let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${ended ? 'Ended' : left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
       <div class="bi-day">Day ${day}<small> of ${total}</small></div>
       <div class="bi-bar"><span style="width:${pct}%"></span></div>
       <div class="bi-dates"><span>Placed ${biFmt(x.start, { day:'numeric', month:'short', year:'numeric' })}</span><span>Clean-out ${biFmt(x.end, { day:'numeric', month:'short', year:'numeric' })}</span></div></div>`;
@@ -9732,7 +9902,26 @@
     const d = await biLoadFeedData(no);
     return d ? biBirdStats(d.farmData.sheds, dateKey(new Date())) : null;
   }
-  function openBatchInfo(number){
+  // Batch window extras (CluckWise only): other running batches, and this batch's archive
+  function biExtraHtml(b, showArchive){
+    const today = dateKey(new Date());
+    let h = '';
+    const others = batches.filter(x=> x.number !== b.number && x.start && x.end && today >= x.start && today <= x.end);
+    if(others.length) h += `<div class="bi-sec">Also running</div><div class="bi-others">${others.map(x=> `<button type="button" class="bi-other" data-bi-batch="${escapeHtmlAttr(x.number)}"><span class="batch-swatch" style="background:${colorForBatchNumber(x.number)}"></span>Batch ${escapeHtml(x.number)} · Day ${batchAgeOn(x, today)}</button>`).join('')}</div>`;
+    if(b.archived){
+      const list = archivedTasks.filter(t=> t._archived === b.number).sort((x,y)=> (y.date || '').localeCompare(x.date || ''));
+      h += `<div class="bi-sec">Archive</div><div class="bi-arc"><div class="bi-arc-head"><span>📦 ${b.archived.count} completed task${b.archived.count === 1 ? '' : 's'} archived ${formatShort(dateKey(new Date(b.archived.at)))}</span>${b.archived.count ? `<button type="button" class="bi-arc-btn" data-bi-arc="${escapeHtmlAttr(b.number)}">${showArchive ? 'Hide' : 'Show'}</button>` : ''}</div>`;
+      if(showArchive){
+        if(!list.length) h += `<div class="bi-note">Loading the archive…</div>`;
+        let last = '';
+        list.forEach(t=>{ if(t.date !== last){ last = t.date; h += `<div class="bi-arc-day">${escapeHtml(formatFullWithWeekday(t.date))}</div>`; } h += `<div class="bi-arc-row"><span>✓ ${escapeHtml(t.name)}</span>${(t.assignees||[]).length ? `<small>${escapeHtml(t.assignees.join(', '))}</small>` : ''}</div>`; });
+      }
+      h += `</div>`;
+    }
+    return h;
+  }
+  let biShowing = null, biShowArchive = false;
+  function openBatchInfo(number, showArchive){
     const b = batches.find(x=> String(x.number) === String(number)) || currentOrNextBatch();
     if(!b) return;
     closeOverlays();
@@ -9740,12 +9929,19 @@
     const info = { number: b.number, start: b.start, end: b.end, today,
       sheds: (b.sheds || []).slice().sort((x,y)=> String(x.shed).localeCompare(String(y.shed), undefined, { numeric:true })).map(sh=> ({ name: sh.shed, placement: sh.placement, cleanout: sh.cleanout || b.end })),
       birds: 'loading', events: events.map(e=> ({ name: e.name, date: e.date, color: e.color, batchNumber: e.batchNumber })) };
-    $('#biTitle').textContent = today >= b.start ? 'Current batch' : 'Next batch';
-    $('#biBody').innerHTML = batchInfoHtml(info);
+    biShowing = { b, info }; biShowArchive = !!showArchive;
+    $('#biTitle').textContent = b.end < today ? `Batch #${b.number}` : today >= b.start ? 'Current batch' : 'Next batch';
+    const paint = ()=>{ $('#biBody').innerHTML = batchInfoHtml(info) + biExtraHtml(b, biShowArchive); };
+    paint();
     openDrawer('#batchInfoModal');
-    biLoadBirds(b.number).then(v=>{ info.birds = v; if($('#batchInfoModal').classList.contains('open')) $('#biBody').innerHTML = batchInfoHtml(info); });
+    if(showArchive) loadArchives().then(()=>{ if(biShowing && biShowing.b === b && $('#batchInfoModal').classList.contains('open')) paint(); });
+    biLoadBirds(b.number).then(v=>{ info.birds = v; if(biShowing && biShowing.b === b && $('#batchInfoModal').classList.contains('open')) paint(); });
   }
   $('#closeBatchInfo').addEventListener('click', closeOverlays);
+  $('#biBody').addEventListener('click', (e)=>{
+    const o = e.target.closest('[data-bi-batch]'); if(o){ openBatchInfo(o.dataset.biBatch); return; }
+    const a = e.target.closest('[data-bi-arc]'); if(a && biShowing){ openBatchInfo(biShowing.b.number, !biShowArchive); }
+  });
   // ---------- Farm guide (shared by CluckWise and the Viewer) ----------
   // Starting values follow general Ross 308 broiler guidance; the manager can edit
   // them in CluckWise Settings (saved in settings.guide and synced to the Viewer).
