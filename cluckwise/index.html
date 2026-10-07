@@ -3383,7 +3383,13 @@
   function formatFullWithWeekday(key){ return toDateObj(key).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'}); }
   function addDaysStr(key, days){ const dt = toDateObj(key); dt.setDate(dt.getDate()+days); return dateKey(dt); }
   function getMonday(date){ const d = new Date(date); const day = d.getDay(); const diff = day===0 ? -6 : 1-day; d.setDate(d.getDate()+diff); return d; }
-  function addMonthsStr(key, months){ const dt = toDateObj(key); dt.setMonth(dt.getMonth()+months); return dateKey(dt); }
+  function addMonthsStr(key, months){
+    // Same day-of-month, or the month's last day when it's shorter (31 Jan → 28 Feb, not 3 Mar).
+    const dt = toDateObj(key), day = dt.getDate();
+    dt.setDate(1); dt.setMonth(dt.getMonth()+months);
+    dt.setDate(Math.min(day, new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate()));
+    return dateKey(dt);
+  }
   function isWeekendKey(key){ const d = toDateObj(key).getDay(); return d===0 || d===6; }
   function taskLabel(t){ return `"${t.name}"`; }
   function monthMatrix(date){
@@ -4469,7 +4475,7 @@
     let count = 0;
     const SAFETY_CAP = 366;
     while(count < SAFETY_CAP){
-      if(rule==='monthly'){ cur = addMonthsStr(cur, 1); }
+      if(rule==='monthly'){ cur = addMonthsStr(baseTask.date, count+1); }
       else if(rule==='daily' || rule==='weekdays'){ cur = addDaysStr(cur, 1); if(rule==='weekdays'){ while(isWeekendKey(cur)) cur = addDaysStr(cur,1); } }
       else if(rule==='every2days'){ cur = addDaysStr(cur, 2); }
       else if(rule==='weekly'){ cur = addDaysStr(cur, 7); }
@@ -7807,7 +7813,7 @@
   }
   function offerUndo(label, snap){
     if(!snap) return;
-    undoState = { label, snap };
+    undoState = { label, snap, after: captureUndo() };
     let el = $('#undoToast');
     if(!el){
       el = document.createElement('div');
@@ -7824,11 +7830,15 @@
   }
   function performUndo(){
     if(!undoState) return;
-    const s = undoState.snap, label = undoState.label;
+    const s = undoState.snap, label = undoState.label, after = undoState.after;
     undoState = null;
     hideUndoToast();
-    tasks = s.tasks; batches = s.batches; events = s.events; frequentTemplates = s.frequentTemplates;
-    if(Array.isArray(s.maintenance)) maintenance = s.maintenance;
+    // Undo only this action's changes: anything synced in from another phone since stays.
+    const current = { tasks, batches, events, frequentTemplates, maintenance };
+    const back = (field, keyFn)=> after ? mergeCollection(after[field] || [], s[field] || [], cloneData(current[field] || []), keyFn) : s[field];
+    const byId = x=> x.id;
+    tasks = back('tasks', byId); batches = back('batches', b=> b.number); events = back('events', byId); frequentTemplates = back('frequentTemplates', byId);
+    if(Array.isArray(s.maintenance)) maintenance = back('maintenance', byId);
     // Deleting a linked task cleared its report's link — put it back.
     let relinked = false;
     tasks.forEach(t=>{
