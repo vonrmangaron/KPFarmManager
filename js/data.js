@@ -434,6 +434,40 @@ function groupStatusSummary(g){
 }
 function computeFeedSummary(group){return groupLoadSummary(group);}
 
+// ── Reading log: every reading session with its time. Taps within 45 min on
+// the same day are one session. The day's reading (readings[], used by every
+// calculation) always equals that day's latest session.
+const READING_SESSION_MIN=45,READING_LOG_MAX=400;
+function siloLogOf(g){const s=siloData[g]||(siloData[g]={readings:[],deliveries:[]});if(!Array.isArray(s.log))s.log=[];return s.log;}
+function logSiloReading(g,reading){
+  const log=siloLogOf(g);const now=new Date();const last=log.length?log[log.length-1]:null;
+  const snap={date:reading.date,time:reading.time==='am'?'am':'pm',silo1Rings:reading.silo1Rings??null,silo2Rings:reading.silo2Rings??null,silo3Rings:reading.silo3Rings??null};
+  if(last&&last.date===reading.date&&now-new Date(last.at)<READING_SESSION_MIN*60000)Object.assign(last,snap,{at:now.toISOString()});
+  else log.push({id:uid('rd'),at:now.toISOString(),...snap});
+  if(log.length>READING_LOG_MAX)log.splice(0,log.length-READING_LOG_MAX);
+  reading.at=now.toISOString();
+  if(typeof siloLevelSel==='object')delete siloLevelSel[g];
+}
+// After a session is removed: the day's reading follows the day's latest remaining session
+function resyncDayReading(g,date){
+  const s=siloData[g];if(!s)return;const day=siloLogOf(g).filter(x=>x.date===date).sort((a,b)=>a.at.localeCompare(b.at));
+  const ri=(s.readings||[]).findIndex(r=>r.date===date);
+  if(!day.length){if(ri>=0)s.readings.splice(ri,1);return;}
+  const last=day[day.length-1];let r=ri>=0?s.readings[ri]:null;
+  if(!r){r={date};s.readings.push(r);}
+  Object.assign(r,{silo1Rings:last.silo1Rings,silo2Rings:last.silo2Rings,silo3Rings:last.silo3Rings,time:last.time,at:last.at});
+  s.readings.sort((a,b)=>a.date.localeCompare(b.date));
+}
+function deleteReadingSession(g,id){
+  const s=siloData[g];const log=siloLogOf(g);const i=log.findIndex(x=>x.id===id);if(i<0)return;
+  const e=log[i];const when=`${fmtShort(dateOnly(e.date))} ${fmtClock(e.at)}`;
+  if(!confirm(`Delete the silo reading from ${when}?\n\nThat day's reading goes back to the earlier one that day, if there is one.`))return;
+  const snap=JSON.parse(JSON.stringify({log:s.log,readings:s.readings}));
+  log.splice(i,1);resyncDayReading(g,e.date);
+  saveSiloData();schedulePush();render();
+  showUndoToast(`🗑️ Deleted the reading from ${when}.`,()=>{siloData[g].log=snap.log;siloData[g].readings=snap.readings;saveSiloData();schedulePush();render();showToast('↩ Restored.');});
+}
+function fmtClock(at){const d=new Date(at);return isNaN(d)?'':d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
 function setSiloRingsForToday(group,siloNum,rings){
   if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
   const s=siloData[group];const todayIso=iso(new Date());
@@ -442,6 +476,7 @@ function setSiloRingsForToday(group,siloNum,rings){
   const key=`silo${siloNum}Rings`;
   reading[key]=(rings===null)?null:normalizeRing(rings);
   reading.time=siloReadTime();
+  logSiloReading(group,reading);
   saveSiloData();schedulePush();render();
 }
 function deleteSiloReading(group,dateIso){
@@ -449,7 +484,7 @@ function deleteSiloReading(group,dateIso){
   const idx=s.readings.findIndex(r=>r.date===dateIso);if(idx<0)return;
   const d=parseExcelDate(dateIso);
   if(!confirm(`Delete the silo reading from ${fmtShort(d)}?\n\nThe balance projection for this group will change if this was the most recent reading.`))return;
-  s.readings.splice(idx,1);saveSiloData();schedulePush();render();
+  s.readings.splice(idx,1);if(Array.isArray(s.log))s.log=s.log.filter(e=>e.date!==dateIso);saveSiloData();schedulePush();render();
   const newLatest=s.readings.length?s.readings[s.readings.length-1]:null;
   if(newLatest)showToast(`🗑️ Reading deleted — balance now anchored on ${fmtShort(dateOnly(newLatest.date))}.`);
   else showToast('🗑️ Reading deleted — no silo readings left. Tap ring levels to record a new one.');
@@ -580,8 +615,9 @@ function isNextBatchStarter(l,g,win){return l.feedType==='starter'&&win&&dateOnl
 // opts: {until: Date, excludeLoadId}
 function siloLevelPlan(g,opts){
   const o=opts||{};const r=latestReading(g);if(!r)return null;
-  const conf=siloConfidence();const sheds=shedsForGroup(g);const D0=dateOnly(r.date);
-  const kg=[r.silo1Rings,r.silo2Rings,r.silo3Rings].map(x=>ringsToKg(x)*conf);
+  const sheds=shedsForGroup(g);const D0=dateOnly(r.date);
+  // What is physically in the silos: rings as read (Reading accuracy only buffers the order forecast)
+  const kg=[r.silo1Rings,r.silo2Rings,r.silo3Rings].map(x=>ringsToKg(x));
   const starter=starterSiloOf(g);const win=starterWindowStart(g);
   const loads=farmLoads.filter(l=>l.date&&l.id!==o.excludeLoadId&&Number(l.splitKg&&l.splitKg[g])>0);
   const lastFill=[0,0,0];

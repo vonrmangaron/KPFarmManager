@@ -86,7 +86,7 @@ function siloReadTimeLabel(t){return t==='am'?'Morning':'Evening';}
 function setSiloReadTime(t){
   t=t==='am'?'am':'pm';try{localStorage.setItem(SILO_TIME_KEY,JSON.stringify({t,date:iso(new Date())}));}catch(e){}
   const todayIso=iso(new Date());let changed=false;
-  [1,2,3,4].forEach(g=>{const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===todayIso);if(r&&r.time!==t){r.time=t;changed=true;}});
+  [1,2,3,4].forEach(g=>{const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===todayIso);if(r&&r.time!==t){r.time=t;changed=true;}const lg=(siloData[g]&&siloData[g].log)||[];const le=lg.filter(e=>e.date===todayIso).pop();if(le)le.time=t;});
   if(changed){saveSiloData();schedulePush();}
 }
 // Morning / Evening switch (Silo sheet + Current Silo Stock card)
@@ -99,6 +99,9 @@ function readTimeToggleHtml(){
 // pair 1 shows 1·2·3, pair 2 shows 4·5·6… Not set: every pair shows 1–3.
 function siloStart(){const v=Number(predState.siloStart);return Number.isInteger(v)&&v>=1&&v<=990?v:null;}
 function siloNumber(g,n){const s=siloStart();return s!=null?s+(g-1)*3+n-1:n;}
+// Silo reading log: every reading session with its time (stored, synced)
+function readingAtField(r){const a=r&&r.at;return (typeof a==='string'&&!isNaN(Date.parse(a)))?{at:a}:{};}
+function normReadingLog(list){if(!Array.isArray(list))return [];return list.map(e=>{if(!e||!/^\d{4}-\d{2}-\d{2}$/.test(String(e.date))||isNaN(Date.parse(e.at)))return null;const ring=v=>(v===null||v===undefined||v==='')?null:Math.max(0,Math.min(MAX_RINGS,Math.floor(Number(v))||0));return {id:String(e.id||('rd'+Date.parse(e.at))),at:String(e.at),date:String(e.date),time:e.time==='am'?'am':'pm',silo1Rings:ring(e.silo1Rings),silo2Rings:ring(e.silo2Rings),silo3Rings:ring(e.silo3Rings)};}).filter(Boolean).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400);}
 // Which silos were open at a reading (1–3 within the pair; one or two)
 function readingOpenField(r){const a=Array.isArray(r&&r.open)?[...new Set(r.open.map(Number).filter(n=>n>=1&&n<=3))].sort():[];return a.length?{open:a}:{};}
 // Starter silo per pair (1–3) and how many days before clean-out to plan it

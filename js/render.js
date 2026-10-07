@@ -1272,13 +1272,14 @@ function siloLevelCardHtml(g){
   const plan=siloLevelPlan(g,{until:addDays(new Date(),9)});
   if(!plan)return '';
   const today=dateOnly(new Date());
-  const rows=[];
-  if(dateOnly(plan.start.date)<today||(!readingIsMorning(plan.reading)&&iso(plan.start.date)===iso(today)))rows.push({...plan.start,isReading:true});
-  plan.days.forEach(r=>{if(dateOnly(r.date)>=today)rows.push(r);});
-  if(!rows.length)rows.push({...plan.start,isReading:true});
-  const want=siloLevelSel[g]||iso(today);
-  let sel=rows.findIndex(r=>iso(r.date)===want);
-  if(sel<0)sel=rows.findIndex(r=>iso(r.date)===iso(today));if(sel<0)sel=0;
+  // The latest reading always has its own day (exactly as read), then the end of
+  // each day from today on. A new reading or open/closed change shows the reading.
+  const rows=[{...plan.start,isReading:true,key:'r'+iso(plan.start.date)}];
+  plan.days.forEach(r=>{if(dateOnly(r.date)>=today&&!(iso(r.date)===iso(plan.start.date)&&!readingIsMorning(plan.reading)))rows.push({...r,key:iso(r.date)});});
+  const readToday=iso(plan.start.date)===iso(today);
+  const want=siloLevelSel[g]||(readToday?'r'+iso(today):iso(today));
+  let sel=rows.findIndex(r=>r.key===want);
+  if(sel<0)sel=rows.findIndex(r=>r.key===iso(today));if(sel<0)sel=0;
   const cur=rows[sel];
   const nextEat=d=>{const n=groupDailyFeedOn(shedsForGroup(g),addDays(d,1));return n>0?n:null;};
   const statusOf=r=>{const ne=nextEat(r.date);if(r.total<=0.5&&ne)return 'empty';if(ne&&r.total<ne*siloSafetyDays())return 'low';return 'ok';};
@@ -1310,8 +1311,8 @@ function siloLevelCardHtml(g){
   const strip=rows.map((r,i)=>{const s=statusOf(r);const on=i===sel;
     const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+siloNumber(g,r.sw[r.sw.length-1]):(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>siloNumber(g,d.silo)))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
     const tone=r.isReading?'muted':s!=='ok'?'bad':(r.sw||[]).length?'amber':(r.del||[]).length?'ok':'amber';
-    return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.isReading?'r':''}${iso(r.date)}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
-  return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?'your reading':'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
+    return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.key}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}${r.isReading&&plan.reading.at?' · '+fmtClock(plan.reading.at):''}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
+  return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?`your reading · ${fmtShortNoYear(cur.date)}${plan.reading.at?' '+fmtClock(plan.reading.at):''}`:'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
     <div class="sl-main"><div class="sl-silos">${silos}</div>
       <div class="sl-side"><div class="sl-total">${fmtFeed(cur.total,0)}</div><span class="sl-chip sl-chip-${chip[0]}">${chip[1]}</span>
         <dl class="sl-info">${info.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${warns}</div></div>
@@ -1341,13 +1342,24 @@ function renderSiloInput(group,siloNum,rings){
   return `<div class="silo-input ${isOff?'off':''}"><div class="silo-title"><span>Silo ${siloNumber(group,siloNum)}${starterSiloOf(group)===siloNum?' <span class="silo-starter-tag">Starter</span>':''}</span>${isOff?`<span class="off-badge">Off</span>`:`<span class="cap">Max ${fmtFeed(50000,0)}</span>`}</div><div class="ring-picker"><button class="ring-off ${isOff?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="off">Off</button>${[0,1,2,3,4,5].map(r=>`<div class="ring-slot ${r===rings?'active':''}"><button class="ring-btn ${r===rings?'active':''}" type="button" data-silo-group="${group}" data-silo-num="${siloNum}" data-silo-ring="${r}" title="${r} ring${r===1?'':'s'} — ${fmtFeed(ringsToKg(r),0)}">${r}</button><span class="ring-t">${fmtFeedCompact(ringsToKg(r))}</span></div>`).join('')}</div><div class="silo-total">${isOff?'<span class="lbl">Not in use</span>':siloOpenSegHtml(group,siloNum)}<span class="val">${isOff?fmtFeed(0):fmtFeed(kg)}</span></div></div>`;
 }
 function renderReadingHistory(group){
-  const all=readingsSorted(group);
-  const limit=all.length<=30?all.length:30;
-  const arr=all.slice().reverse().slice(0,limit);
-  if(!arr.length)return `<details class="reading-history"><summary>🕘 Reading history (empty)</summary><div style="font-size:12.5px;color:var(--muted);padding:8px 0;">Once you tap a ring level, each reading is saved with today's date.</div></details>`;
+  // Every reading session with its time (newest first); older days recorded
+  // before times were kept show the day only. The day's latest session is the
+  // one the forecast uses.
+  const log=(siloData[group]&&siloData[group].log)||[];const logDays=new Set(log.map(e=>e.date));
+  const rows=[...log.map(e=>({kind:'e',key:'e:'+e.id,id:e.id,date:e.date,at:e.at,time:e.time,r:e})),
+    ...readingsSorted(group).filter(r=>!logDays.has(r.date)).map(r=>({kind:'d',key:'d:'+r.date,date:r.date,at:r.at||null,time:r.time,r}))]
+    .sort((a,b)=>(b.date.localeCompare(a.date))||String(b.at||'').localeCompare(String(a.at||'')));
+  if(!rows.length)return `<details class="reading-history"><summary>🕘 Reading history (empty)</summary><div style="font-size:12.5px;color:var(--muted);padding:8px 0;">Each time you tap ring levels, the reading is saved here with the date and time.</div></details>`;
+  const perDay={};rows.forEach(x=>{perDay[x.date]=(perDay[x.date]||0)+1;});
+  const usedKey={};rows.forEach(x=>{if(!usedKey[x.date])usedKey[x.date]=x.key;});   // newest of each day
+  const limit=Math.min(rows.length,40);const list=rows.slice(0,limit);
   const todayIso=iso(new Date());
   const rk='rd:'+group;const on=bulkActive(rk);
-  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${all.length===arr.length?arr.length:`last ${arr.length} of ${all.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,arr.map(r=>r.date),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date</th><th>Silo ${siloNumber(group,1)}</th><th>Silo ${siloNumber(group,2)}</th><th>Silo ${siloNumber(group,3)}</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${arr.map(r=>{const total=readingTotalKg(r);const cls=r.date===todayIso?'today':'';return `<tr class="${cls}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,r.date,fmtShort(dateOnly(r.date)))}</td>`:''}<td>${fmtShort(dateOnly(r.date))} <span class="rt-chip ${r.time==='am'?'am':'pm'}" title="${r.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${r.time==='am'?'AM':'PM'}</span></td><td>${r.silo1Rings===null?'—':r.silo1Rings+'r'}</td><td>${r.silo2Rings===null?'—':r.silo2Rings+'r'}</td><td>${r.silo3Rings===null?'—':r.silo3Rings+'r'}</td><td class="num">${fmtFeed(total)}</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" data-delete-reading="${group}|${r.date}" title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
+  const ring=v=>v===null||v===undefined?'—':v+'r';
+  return `<details class="reading-history"${on?' open':''}><summary>🕘 Reading history (${rows.length===limit?rows.length:`last ${limit} of ${rows.length}`})</summary><div class="rh-bulk">${bulkToolbar(rk,list.map(x=>x.key),'readings')}</div><table><thead><tr>${on?'<th class="bulk-cell"></th>':''}<th>Date &amp; time</th><th>Silo ${siloNumber(group,1)}</th><th>Silo ${siloNumber(group,2)}</th><th>Silo ${siloNumber(group,3)}</th><th class="num">Total</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${list.map(x=>{
+    const r=x.r;const total=readingTotalKg(r);const used=perDay[x.date]>1&&usedKey[x.date]===x.key;const older=perDay[x.date]>1&&!used;
+    const del=x.kind==='e'?`data-delete-session="${group}|${escapeAttr(x.id)}"`:`data-delete-reading="${group}|${x.date}"`;
+    return `<tr class="${x.date===todayIso?'today':''}${older?' rh-older':''}">${on?`<td class="bulk-cell">${bulkCheckbox(rk,x.key,fmtShort(dateOnly(x.date)))}</td>`:''}<td>${fmtShort(dateOnly(x.date))}${x.at?` <span class="rh-time">${fmtClock(x.at)}</span>`:''} <span class="rt-chip ${x.time==='am'?'am':'pm'}" title="${x.time==='am'?'Morning — start-of-day stock':'Evening — end-of-day stock'}">${x.time==='am'?'AM':'PM'}</span>${used?' <span class="rh-used" title="The latest reading of the day — the one the forecast uses">used</span>':''}</td><td>${ring(r.silo1Rings)}</td><td>${ring(r.silo2Rings)}</td><td>${ring(r.silo3Rings)}</td><td class="num">${fmtFeed(total)}</td><td style="text-align:right;"><button class="reading-delete-btn" type="button" ${del} title="Delete this reading">✕</button></td></tr>`;}).join('')}</tbody></table></details>`;
 }
 function renderGroupLoadsCard(group){
   const arr=loadsAffectingGroup(group);
@@ -1404,7 +1416,7 @@ function renderFeedPlanner(group,sheds,today){
       <div class="summary-card"><div class="sc-label">Status</div><div class="sc-value ${statusTone}">${statusText}</div><div class="sc-sub">${statusSub}</div></div>
       <div class="summary-card"><div class="sc-label">${forecast.shortfall>0?'Shortfall':'Coverage'}</div><div class="sc-value ${forecast.shortfall>0?'red':'green'}">${forecast.shortfall>0?fmtFeed(forecast.shortfall):'✅ Covered'}</div><div class="sc-sub">${forecast.shortfall>0?'Consumption exceeds supply over range':`Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div></div>
     </div>
-    ${hasReading?`<div class="reading-info"><div class="ri-item"><span class="ri-label">Last reading:</span><span class="ri-value">${fmtShort(latestDate)} · ${readingAgeBadge}</span></div><div class="ri-item"><span class="ri-label">Consumed since:</span><span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>${deliveredSince>0?`<div class="ri-item"><span class="ri-label">Delivered since:</span><span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>`:''}<div class="ri-item"><span class="ri-label">Projected today:</span><span class="ri-value amber">${fmtFeed(projected)}</span></div></div>`:''}
+    ${hasReading?`<div class="reading-info"><div class="ri-item"><span class="ri-label">Last reading:</span><span class="ri-value">${fmtShort(latestDate)}${latest&&latest.at?` ${fmtClock(latest.at)}`:''} · ${readingAgeBadge}</span></div><div class="ri-item"><span class="ri-label">Consumed since:</span><span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>${deliveredSince>0?`<div class="ri-item"><span class="ri-label">Delivered since:</span><span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>`:''}<div class="ri-item"><span class="ri-label">Projected today:</span><span class="ri-value amber">${fmtFeed(projected)}</span></div></div>`:''}
     <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span>${readTimeToggleHtml()}</h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?fmtFeed(readingTotalKg(latest)):'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
     ${siloLevelCardHtml(group)}
     <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>

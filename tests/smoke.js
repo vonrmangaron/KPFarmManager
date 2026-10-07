@@ -181,10 +181,12 @@ const sl=run('silo plan',`(()=>{
   farmLoads=[normalizeLoad({id:'L1',date:iso(addDays(T,2)),feedType:'finisher',plannedKg:24000,splitKg:{1:24000,2:0,3:0,4:0},siloFor:{1:2}})];
   const persisted=JSON.parse(JSON.stringify(serializeFarmLoads()))[0].siloFor;
   const ser=JSON.parse(JSON.stringify(serializeSiloDataForCloud()))[1].readings[0].open;
+  const keepConf=predState.siloConfidencePct;predState.siloConfidencePct=100;   // picture = rings as read; forecast equal at 100%
   const plan=siloLevelPlan(g,{until:addDays(T,8)});
   const d0=plan.days[0];const s3First=d0.kg[2]<plan.start.kg[2];const s1Same=d0.kg[0]===plan.start.kg[0]||d0.kg[2]>0;
   const delRow=plan.days.find(r=>r.del.length);
   const totalsMatch=plan.days.every(r=>Math.abs(r.total-Math.max(0,balanceOnEndOfDay(g,r.date,true)))<2||r.short>0);
+  predState.siloConfidencePct=keepConf;
   predState.starterSilo={1:3,2:null,3:null,4:null};
   const st=starterSiloStatus(g);
   predState.starterSilo={1:null,2:null,3:null,4:null};
@@ -264,6 +266,26 @@ const mg=run('sync merge',`(()=>{
 if(mg){ok(mg.open&&mg.open[0]===2,'laptop open-silo marks kept');ok(mg.starter[1]===2&&mg.starter[2]===3,'laptop starter silos kept');ok(mg.siloFor&&mg.siloFor[1]&&mg.siloFor[1][0]===3,'laptop silo-per-load kept');
   ok(mg.l2,'laptop new load kept');ok(!mg.l3,'office deletion kept');ok(mg.log==='2026-10-06,2026-10-07','office projection log kept');ok(mg.pick===2,'office new pickup kept');
   ok(mg.conf===85,'same field on both: this device wins');ok(mg.nbOpen&&mg.nbL2,'no saved base: union, nothing lost');ok(mg.same,'no local edits: cloud taken as is');}
+
+console.log('20. Silo reading times: every session logged, latest drives the day, delete reverts');
+const rt=run('reading log',`(()=>{
+  const g=4;const T=iso(new Date());siloData[g]={readings:[],deliveries:[]};
+  setSiloRingsForToday(g,1,3);setSiloRingsForToday(g,2,2);            // one session (same sitting)
+  const s=siloData[g];const n1=s.log.length;
+  s.log[0].at=new Date(Date.now()-3*3600e3).toISOString();           // pretend it was 3 h ago
+  setSiloRingsForToday(g,1,1);                                        // new session
+  const n2=s.log.length;const day=s.readings.find(r=>r.date===T);const after2=day.silo1Rings;const hasAt=!!day.at;
+  const ser=JSON.parse(JSON.stringify(serializeSiloDataForCloud()))[g];
+  window.confirm=()=>true;const keepUndo=showUndoToast;showUndoToast=function(){};
+  deleteReadingSession(g,s.log[1].id);
+  const back=s.readings.find(r=>r.date===T).silo1Rings;
+  deleteReadingSession(g,s.log[0].id);
+  const gone=!s.readings.find(r=>r.date===T);
+  showUndoToast=keepUndo;siloData[g]={readings:[],deliveries:[]};
+  return {n1,n2,after2,hasAt,serLog:ser.log.length,serAt:!!ser.readings[0].at,back,gone};
+})()`);
+if(rt){ok(rt.n1===1,'taps in one sitting = one session');ok(rt.n2===2,'later reading = new session');ok(rt.after2===1&&rt.hasAt,"day's reading = latest session, with its time");
+  ok(rt.serLog===2&&rt.serAt,'sessions and time are synced');ok(rt.back===3,'deleting the latest goes back to the earlier one');ok(rt.gone,'deleting the last one removes the day');}
 
 // End-to-end: stale office tab pushes into a cloud the laptop has changed (fake cloud)
 const pending=[];

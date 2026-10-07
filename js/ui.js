@@ -48,10 +48,13 @@ function bulkDelete(){
     restore=()=>{farmLoads=snapshot;saveFarmLoads();updateLoadsDot();};
   }else if(kind==='rd'){
     const s=siloData[num];if(!s)return;
-    snapshot=structuredClone(s.readings||[]);
+    snapshot=structuredClone({readings:s.readings||[],log:s.log||[]});
     what=`${plural('silo reading')} from ${pairLabel(num)}`;
-    apply=()=>{s.readings=(s.readings||[]).filter(r=>!ids.includes(String(r.date)));saveSiloData();};
-    restore=()=>{siloData[num].readings=snapshot;saveSiloData();};
+    apply=()=>{
+      const eids=ids.filter(x=>x.startsWith('e:')).map(x=>x.slice(2)),days=ids.filter(x=>x.startsWith('d:')).map(x=>x.slice(2));
+      const touched=new Set();s.log=(s.log||[]).filter(e=>{if(eids.includes(e.id)){touched.add(e.date);return false;}return true;});
+      s.readings=(s.readings||[]).filter(r=>!days.includes(String(r.date)));touched.forEach(d=>resyncDayReading(num,d));saveSiloData();};
+    restore=()=>{siloData[num].readings=snapshot.readings;siloData[num].log=snapshot.log;saveSiloData();};
   }else return;
   const extra=kind==='pk'?'\n\nThese are official pickup records.':kind==='rd'?'\n\nThe feed balance re-anchors on the latest remaining reading.':'';
   if(!confirm(`Delete ${what}?${extra}\n\nYou can undo this for 10 seconds.`))return;
@@ -2188,10 +2191,11 @@ function siloGroupStatusHtml(g){
   if(!latest)return `<span class="sms-status none">No readings</span>`;
   if(latest.date===iso(new Date())){
     const carried=[1,2,3].filter(n=>siloIsCarried(g,n)).length;
-    return carried?`<span class="sms-status partial">${3-carried}/3 read</span>`:`<span class="sms-status done">✓ Today</span>`;
+    const t=latest.at?' '+fmtClock(latest.at):'';
+    return carried?`<span class="sms-status partial">${3-carried}/3 read${t}</span>`:`<span class="sms-status done">✓ Today${t}</span>`;
   }
   const days=daysBetween(dateOnly(latest.date),new Date());
-  return `<span class="sms-status stale">${days===1?'Yesterday':days+'d ago'}</span>`;
+  return `<span class="sms-status stale">${days===1?'Yesterday':days+'d ago'}${latest.at?' '+fmtClock(latest.at):''}</span>`;
 }
 function openSiloModal(){
   closeSettingsDrawer();
@@ -2238,6 +2242,7 @@ function toggleSiloOpen(g,n){
   else cur=cur.includes(n)?cur.filter(x=>x!==n):[...cur,n];
   if(cur.length>2){showToast('At most two silos open at once.',true);return;}
   if(cur.length)r.open=cur.sort();else delete r.open;
+  delete siloLevelSel[g];
   saveSiloData();schedulePush();render();renderSiloModalBody();
 }
 function siloRowHtml(g,n){
@@ -2348,6 +2353,7 @@ function setSiloRingFromModal(group,siloNum,rings){
   }
   reading[`silo${siloNum}Rings`]=(rings===null)?null:normalizeRing(rings);
   reading.time=siloReadTime();
+  logSiloReading(group,reading);
   siloModalTouched[group].add(siloNum);
   saveSiloData();schedulePush();
   try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}

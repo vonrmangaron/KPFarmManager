@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       return;
     }
 
+    const delSess=e.target.closest('[data-delete-session]');if(delSess){e.stopPropagation();const [g,id]=delSess.dataset.deleteSession.split('|');deleteReadingSession(Number(g),id);return;}
     const deleteReadingBtn=e.target.closest('[data-delete-reading]');
     if(deleteReadingBtn){e.stopPropagation();const parts=deleteReadingBtn.dataset.deleteReading.split('|');deleteSiloReading(Number(parts[0]),parts[1]);return;}
 
@@ -256,7 +257,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const pg=e.target.closest('[data-predgroup]');if(pg){if(pg.closest('.sidebar')){activeTab='predictions';sbPredOpen=true;}setPredGroup(Number(pg.dataset.predgroup));return;}
     const gsg=e.target.closest('[data-goto-shedgroup]');if(gsg){const g=Number(gsg.dataset.gotoShedgroup);const v=['shed1','shed2','both'].includes(predState.predView)?predState.predView:'shed1';shedViewByGroup[g]=v;saveShedViews();activeTab='g'+g;render();window.scrollTo(0,0);return;}
     if(e.target.closest('#dcoSetAllBtn')){const inp=document.getElementById('dcoSetAllDate');if(!inp||!inp.value){showToast('Pick a date first.',true);if(inp)inp.focus();return;}setAllCleanoutDates(inp.value);return;}
-    const sld=e.target.closest('[data-sl-day]');if(sld){const [g,d]=sld.dataset.slDay.split('|');siloLevelSel[g]=d.replace(/^r/,'');render();return;}
+    const sld=e.target.closest('[data-sl-day]');if(sld){const [g,d]=sld.dataset.slDay.split('|');siloLevelSel[g]=d;render();return;}
     const sts=e.target.closest('[data-starter-silo]');if(sts){const [g,n]=sts.dataset.starterSilo.split('|').map(Number);predState.starterSilo={...(predState.starterSilo||{}),[g]:predState.starterSilo&&predState.starterSilo[g]===n?null:n};savePredState();schedulePush();render();showToast(predState.starterSilo[g]?`Silo ${siloNumber(g,n)} kept for next batch's Starter.`:'Starter silo cleared.');return;}
     const sbf=e.target.closest('[data-starter-buf]');if(sbf){predState.starterBufferDays=Number(sbf.dataset.starterBuf);savePredState();schedulePush();render();return;}
     const sos=e.target.closest('[data-silo-open-set]');if(sos){const [g,n,v]=sos.dataset.siloOpenSet.split('|').map(Number);setSiloOpen(g,n,v===1);return;}
