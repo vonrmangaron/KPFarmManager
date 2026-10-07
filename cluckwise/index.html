@@ -2259,14 +2259,14 @@
   .bi-note{ margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:var(--surface-soft); color:var(--muted); font-size:13px; text-align:center; }
   .bi-sec{ margin:18px 0 8px; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   .bi-table{ border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  .bi-tr{ display:grid; grid-template-columns:44px 64px 1.3fr 1fr; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
+  .bi-tr{ display:grid; grid-template-columns:42px 64px minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr); align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
   .bi-tr:first-child{ border-top:none; }
   .bi-th{ background:var(--surface-soft); font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:7px 12px; }
   .bi-s{ font-family:'Sora',sans-serif; font-weight:800; }
   .bi-a{ font-weight:700; }
   .bi-o{ display:flex; flex-direction:column; text-align:right; }
   .bi-o small{ font-size:12px; font-weight:700; color:var(--primary-dark); }
-  .bi-tr.done{ opacity:.55; } .bi-b{ display:flex; flex-direction:column; font-variant-numeric:tabular-nums; } .bi-b b{ font-family:'Sora',sans-serif; font-weight:800; } .bi-b small{ font-size:11.5px; font-weight:700; color:var(--muted); }
+  .bi-tr.done{ opacity:.55; } .bi-num{ text-align:right; } .bi-sm{ display:none; } @media (max-width:520px){ .bi-lg{ display:none; } .bi-sm{ display:inline; } .bi-tr{ grid-template-columns:36px 52px minmax(0,1fr) minmax(0,1fr) minmax(0,1.05fr); gap:6px; padding:9px 10px; font-size:13px; } .bi-th{ font-size:10px; } .bi-o small{ font-size:11px; white-space:nowrap; } } .bi-b{ display:flex; flex-direction:column; align-items:flex-end; font-variant-numeric:tabular-nums; } .bi-b b{ font-family:'Sora',sans-serif; font-weight:800; } .bi-b small{ font-size:11.5px; font-weight:700; color:var(--muted); } .bi-b.has-pick b{ color:var(--primary-dark); }
   .bi-ev{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; margin-bottom:6px; background:var(--surface); }
   .bi-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
   .bi-ev-t{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
@@ -9653,7 +9653,7 @@
     }
     const sheds = (x.sheds || []).filter(s=> s.placement);
     if(sheds.length){
-      h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-bh" title="Birds now → after this week's pickups">Birds → after</span><span>Clean-out</span></div>`;
+      h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-num">Now</span><span class="bi-num" title="Birds left once this week's pickups (next 7 days, from the kill sheet) are done"><span class="bi-lg">After this week</span><span class="bi-sm">After</span></span><span class="bi-num">Clean-out</span></div>`;
       sheds.forEach(s=>{
         const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
         const coLeft = biDays(x.today, co);
@@ -9678,8 +9678,8 @@
   function biShedBirdsCell(x, s, done){
     const ps = x.birds && x.birds !== 'loading' && x.birds.perShed;
     const m = String(s.name || '').match(/\d+/); const b = ps && m ? ps[String(Number(m[0]))] : null;
-    if(!b || done) return '<span class="bi-b">—</span>';
-    return `<span class="bi-b"><b>${biInt(b.now)}</b>${b.week ? `<small title="After this week's pickups (−${biInt(b.week)})">→ ${biInt(b.after)}</small>` : '<small>no pickup</small>'}</span>`;
+    if(!b || done) return '<span class="bi-num bi-b">—</span><span class="bi-num bi-b">—</span>';
+    return `<span class="bi-num bi-b"><b>${biInt(b.now)}</b></span><span class="bi-num bi-b${b.week ? ' has-pick' : ''}"><b>${biInt(b.after)}</b>${b.week ? `<small>−${biInt(b.week)}</small>` : ''}</span>`;
   }
   function biBirdStats(sheds, today){
     let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
