@@ -10,6 +10,11 @@
 // Report ids are random UUIDs, so a photo link can't be guessed. Saving and
 // deleting are only accepted from the CluckWise site. Each photo expires by
 // itself after KEEP_DAYS, so storage never builds up.
+//
+// Farm passwords: bind the sync server's KEYS store here too (same name, KEYS).
+// Then a phone's key (X-Farm-Device / X-Farm-Key) is checked like on the sync
+// server: a signed-out phone can't save or delete, a locked farm needs a key, and
+// only a manager can delete. Without KEYS it works as before.
 
 const ALLOWED_ORIGINS = ['https://vonrmangaron.github.io'];
 const MAX_BYTES = 800 * 1024;
@@ -20,10 +25,35 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Farm-Device, X-Farm-Key',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };
+}
+
+async function sha256(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+// Same rules as the sync server: 'manager' | 'worker' | 'open', or null when refused.
+async function phoneRole(request, env, farmSlug) {
+  if (!env.KEYS) return 'open';
+  const parts = farmSlug.split('-');
+  let farm = null, rec = null;
+  for (let i = 1; i <= Math.min(parts.length, 6) && !rec; i++) {
+    farm = parts.slice(0, i).join('-');
+    const v = await env.KEYS.get(`farm:${farm}`);
+    rec = v ? JSON.parse(v) : null;
+  }
+  if (!rec) return 'open';
+  const id = request.headers.get('X-Farm-Device'), key = request.headers.get('X-Farm-Key');
+  if (id && key) {
+    const v = await env.KEYS.get(`dev:${farm}:${id}`);
+    const dev = v ? JSON.parse(v) : null;
+    if (!dev || dev.keyHash !== await sha256(key) || (dev.role === 'manager' && dev.gen !== rec.mgrGen)) return null;
+    return dev.role;
+  }
+  return rec.locked ? null : 'open';
 }
 
 function reply(status, body, cors) {
@@ -49,6 +79,9 @@ export default {
     }
 
     if (!ALLOWED_ORIGINS.includes(origin)) return reply(403, { error: 'not allowed' }, cors);
+    const role = await phoneRole(request, env, match[1]);
+    if (!role) return reply(401, { error: 'sign in to the farm', signedOut: true }, cors);
+    if (request.method === 'DELETE' && role === 'worker') return reply(403, { error: 'managers only' }, cors);
 
     if (request.method === 'PUT') {
       if ((request.headers.get('Content-Type') || '').split(';')[0].trim() !== 'image/jpeg') {
