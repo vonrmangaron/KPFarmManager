@@ -325,6 +325,7 @@
   .dc-warn-storm{ background:#6741D9; }
   .dc-warn-wind{ background:#4B5563; }
   #auditBarSection:empty{ display:none; }
+  .audit-bar-simple .audit-bar-head{ cursor:default; }
   .dc-upcoming{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px; }
   .dc-upcoming-lbl{ font-size:13px; font-weight:800; color:#5C4A2E; }
   .dc-up-chip{ display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; background:rgba(255,255,255,0.55); color:#241A08; font-size:13px; font-weight:700; }
@@ -393,6 +394,15 @@
   .tnc-icon{ font-size:15px; flex-shrink:0; line-height:1.4; }
   .tnc-text{ font-size:13px; color:var(--ink); white-space:pre-wrap; line-height:1.4; }
   .task-card.done{ opacity:0.68; }
+  .task-card.has-note{ cursor:pointer; }
+  .task-card.has-note .task-note-callout{ display:none; }
+  .task-card.note-open .task-note-callout{ display:flex; }
+  .note-tag{ display:flex; align-items:center; gap:4px; margin-top:5px; padding:2px 9px; border-radius:999px; background:#FFF4CC; border:1px solid #E0A339; color:#7A4E0E; font-size:12px; font-weight:800; width:max-content; }
+  body.theme-dark .note-tag{ background:#3D3320; border-color:#8A6A1F; color:#FFD27A; }
+  .note-tag .nt-car{ font-size:10px; transition:transform .15s ease; }
+  .task-card.note-open .note-tag .nt-car{ transform:rotate(180deg); }
+  .agenda-filter .sort-btn{ flex:0 0 auto !important; margin-left:auto; display:inline-flex; align-items:center; justify-content:center; gap:5px; min-width:46px; padding:10px 12px !important; }
+  .sort-btn.on{ background:var(--ink) !important; color:var(--bg) !important; }
   .task-card.high-priority{ border-color:#E0A339; background:#FFF8E8; }
   body.theme-dark .task-card.high-priority{ background:#3D3320; border-color:#8A6A1F; }
   .priority-flag{ font-size:14px; flex-shrink:0; }
@@ -1309,6 +1319,10 @@
   Object.assign(TRANSLATIONS.es, {"backToToday": "Volver a hoy"});
   Object.assign(TRANSLATIONS.tl, {"backToToday": "Bumalik sa ngayon"});
   Object.assign(TRANSLATIONS.id, {"backToToday": "Kembali ke hari ini"});
+  Object.assign(TRANSLATIONS.en, {"noteLbl": "Note", "sortSort": "Sort", "sortAZ": "A–Z", "sortTip": "Sort by name (urgent tasks stay on top)", "sortOnMsg": "Sorted A–Z · urgent tasks stay on top", "sortOffMsg": "Back to the manager's order"});
+  Object.assign(TRANSLATIONS.es, {"noteLbl": "Nota", "sortSort": "Ordenar", "sortAZ": "A–Z", "sortTip": "Ordenar por nombre (las urgentes quedan arriba)", "sortOnMsg": "Orden A–Z · las urgentes quedan arriba", "sortOffMsg": "Orden del encargado"});
+  Object.assign(TRANSLATIONS.tl, {"noteLbl": "Tala", "sortSort": "Ayusin", "sortAZ": "A–Z", "sortTip": "Ayusin ayon sa pangalan (nasa itaas ang urgent)", "sortOnMsg": "Naka-A–Z · nasa itaas ang urgent", "sortOffMsg": "Balik sa ayos ng manager"});
+  Object.assign(TRANSLATIONS.id, {"noteLbl": "Catatan", "sortSort": "Urutkan", "sortAZ": "A–Z", "sortTip": "Urutkan menurut nama (tugas penting tetap di atas)", "sortOnMsg": "Urut A–Z · tugas penting tetap di atas", "sortOffMsg": "Kembali ke urutan manajer"});
   Object.assign(TRANSLATIONS.en, {"navGuide": "Guide", "issTitle": "Issues", "issMine": "Mine", "issAll": "All farm", "issOpenN": "{n} open", "issNone": "No open issues", "issNoneMine": "You haven't sent any reports yet.", "issOpen": "Open", "issProgress": "In progress", "issResolved": "Resolved", "issFixed": "Fixed"});
   Object.assign(TRANSLATIONS.es, {"navGuide": "Guía", "issTitle": "Problemas", "issMine": "Míos", "issAll": "Toda la granja", "issOpenN": "{n} abiertos", "issNone": "No hay problemas abiertos", "issNoneMine": "Aún no has enviado reportes.", "issOpen": "Abierto", "issProgress": "En curso", "issResolved": "Resuelto", "issFixed": "Solución"});
   Object.assign(TRANSLATIONS.tl, {"navGuide": "Gabay", "issTitle": "Mga isyu", "issMine": "Akin", "issAll": "Buong bukid", "issOpenN": "{n} bukas", "issNone": "Walang bukas na isyu", "issNoneMine": "Wala ka pang naipadalang report.", "issOpen": "Bukas", "issProgress": "Inaayos", "issResolved": "Naayos na", "issFixed": "Ginawa"});
@@ -2244,6 +2258,9 @@
       batches = parsed.batches || [];
       events = parsed.events || [];
       tasks.forEach(tk=>{ if(!Array.isArray(tk.assignees)) tk.assignees = tk.assignee ? [tk.assignee] : []; });
+      // Tasks assigned only to the manager stay in the main app (workers never see them)
+      const mgr = String((parsed.settings && parsed.settings.manager) || '').trim().toLowerCase();
+      if(mgr) tasks = tasks.filter(tk=> !(tk.assignees.length && tk.assignees.every(a=> String(a || '').trim().toLowerCase() === mgr)));
       applyPendingTicksOverlay();
       if(parsed.settings){
         syncedDisplay = {
@@ -2803,15 +2820,25 @@
   }
   const CHECK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const openNotes = new Set();
   function buildReadOnlyTaskCard(tk){
     const card=document.createElement('div');
     const isHighPriority = tk.priority === 'high' && tk.status!=='done';
-    card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'');
+    card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'')+(tk.notes?' has-note':'')+(tk.notes&&openNotes.has(tk.id)?' note-open':'');
     card.dataset.id = tk.id;
-    card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${tk.notes ? `<span class="note-tag"><span aria-hidden="true">📝</span>${escapeHtml(t('noteLbl'))}<span class="nt-car" aria-hidden="true">▾</span></span>` : ''}${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     card.querySelector('.task-name').textContent = tk.name;
-    if(tk.notes) card.querySelector('.tnc-text').textContent = tk.notes;
+    if(tk.notes){
+      card.querySelector('.tnc-text').textContent = tk.notes;
+      card.setAttribute('aria-expanded', String(openNotes.has(tk.id)));
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('.task-status-btn')) return;
+        const open = !card.classList.contains('note-open');
+        card.classList.toggle('note-open', open); card.setAttribute('aria-expanded', String(open));
+        if(open) openNotes.add(tk.id); else openNotes.delete(tk.id);
+      });
+    }
     const statusBtn = card.querySelector('.task-status-btn');
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -2820,13 +2847,21 @@
     });
     return card;
   }
+  let taskSort = (()=>{ try{ return localStorage.getItem('cw-viewer-sort') === 'name' ? 'name' : 'order'; }catch(e){ return 'order'; } })();
+  // High-priority open tasks always come first; then A–Z or the manager's order
+  function taskCmp(a,b){
+    const pa = (a.priority === 'high' && a.status !== 'done') ? 0 : 1, pb = (b.priority === 'high' && b.status !== 'done') ? 0 : 1;
+    if(pa !== pb) return pa - pb;
+    if(taskSort === 'name') return String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity:'base', numeric:true });
+    return (a.order || 0) - (b.order || 0);
+  }
   function getAgendaTasks(){
     const todayKey=dateKey(new Date());
     let filtered;
     if(agendaFilter==='today'){ const dk = agendaDayKey(); filtered = tasks.filter(tk=> tk.date===dk); }
     else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey && tk.date<=weekEnd); }
     else filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey);
-    return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.status==='done'?1:0)-(b.status==='done'?1:0)) || ((a.order||0)-(b.order||0)));
+    return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.status==='done'?1:0)-(b.status==='done'?1:0)) || taskCmp(a,b));
   }
   // ---------- Day navigation (Today/Day tab) ----------
   function agendaDayKey(){ return agendaDate || dateKey(new Date()); }
@@ -2894,6 +2929,14 @@
       });
       bar.appendChild(btn);
     });
+    const so = document.createElement('button');
+    so.type = 'button'; so.className = 'sort-btn' + (taskSort === 'name' ? ' on' : '');
+    so.setAttribute('aria-pressed', String(taskSort === 'name'));
+    so.title = t('sortTip');
+    so.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg><span></span>';
+    so.setAttribute('aria-label', t('sortTip'));
+    so.addEventListener('click', ()=>{ taskSort = taskSort === 'name' ? 'order' : 'name'; try{ localStorage.setItem('cw-viewer-sort', taskSort); }catch(e){} renderList(); showToast(taskSort === 'name' ? t('sortOnMsg') : t('sortOffMsg')); });
+    bar.appendChild(so);
   }
   // ---------- Day card (replaces the old hero): follows the selected day ----------
   function renderHero(){
@@ -2954,82 +2997,19 @@
       .filter(e=> e.date && key >= addDaysStr(e.date, -7) && key <= e.date)
       .sort((a,b)=> a.date.localeCompare(b.date));
   }
+  // Events: name and countdown only (no task list — keeps the Today screen calm)
   function renderAuditBars(){
     const wrap = $('#auditBarSection');
     if(!wrap) return;
     wrap.innerHTML = '';
     const todayKey = dateKey(new Date());
     activeAuditPrepEvents().forEach(ev=>{
-      const cs = addDaysStr(ev.date, -7);
       const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(agendaDayKey())) / 86400000);
-      const windowTasks = tasks.filter(tk=> tk.date && tk.date >= cs && tk.date <= ev.date);
-      const doneCount = windowTasks.filter(tk=> tk.status==='done').length;
-      const openTasks = windowTasks.filter(tk=> tk.status!=='done')
-        .sort((a,b)=> a.date.localeCompare(b.date) || ((a.order||0)-(b.order||0)));
-      const pct = windowTasks.length ? Math.round((doneCount / windowTasks.length) * 100) : 0;
-      const isOpen = openAuditBars.has(ev.id);
-
       const bar = document.createElement('div');
-      bar.className = 'audit-bar' + (isOpen ? ' open' : '');
-
-      const head = document.createElement('button');
-      head.type = 'button';
-      head.className = 'audit-bar-head';
-      head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      head.innerHTML = `
-        <span class="ab-icon">📝</span>
-        <span class="ab-main">
-          <span class="ab-title"></span>
-          <span class="ab-bar"><span style="width:${pct}%"></span></span>
-        </span>
-        <span class="ab-right">
-          <span class="ab-days"></span>
-          <span class="ab-count"></span>
-        </span>
-        <span class="ab-chevron">▾</span>`;
-      head.querySelector('.ab-title').textContent = ev.batchNumber ? `${ev.name} · #${ev.batchNumber}` : ev.name;
-      head.querySelector('.ab-days').textContent = daysLeft <= 0 ? t('abToday') : daysLeft === 1 ? t('abTomorrow') : `${daysLeft} ${t('abDays')}`;
-      head.querySelector('.ab-count').textContent = `${doneCount}/${windowTasks.length} ${t('abPrepDone')}`;
-      head.addEventListener('click', ()=>{
-        const nowOpen = !bar.classList.contains('open');
-        bar.classList.toggle('open', nowOpen);
-        head.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
-        if(nowOpen) openAuditBars.add(ev.id); else openAuditBars.delete(ev.id);
-        saveOpenAuditBars();
-      });
-      bar.appendChild(head);
-
-      const body = document.createElement('div');
-      body.className = 'audit-bar-body';
-      if(openTasks.length === 0){
-        const empty = document.createElement('div');
-        empty.className = 'ab-empty';
-        empty.textContent = windowTasks.length ? t('abAllDone') : t('abNoTasks');
-        body.appendChild(empty);
-      } else {
-        openTasks.slice(0, AUDIT_BAR_MAX_TASKS).forEach(tk=>{
-          const label = document.createElement('div');
-          const overdue = tk.date < todayKey;
-          label.className = 'ab-task-date' + (overdue ? ' overdue' : '');
-          label.textContent = (overdue ? `⚠ ${t('abOverdue')} · ` : '') + toDateObj(tk.date).toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
-          body.appendChild(label);
-          body.appendChild(buildReadOnlyTaskCard(tk));
-        });
-        if(openTasks.length > AUDIT_BAR_MAX_TASKS){
-          const more = document.createElement('button');
-          more.type = 'button';
-          more.className = 'ab-more';
-          more.textContent = `+ ${openTasks.length - AUDIT_BAR_MAX_TASKS} ${t('abMore')}`;
-          more.addEventListener('click', ()=>{
-            agendaFilter = 'week';
-            renderList();
-            const list = $('#agendaFilterBar');
-            if(list) list.scrollIntoView({ behavior:'smooth', block:'start' });
-          });
-          body.appendChild(more);
-        }
-      }
-      bar.appendChild(body);
+      bar.className = 'audit-bar audit-bar-simple';
+      bar.innerHTML = `<div class="audit-bar-head"><span class="ab-icon">📝</span><span class="ab-main"><span class="ab-title"></span></span><span class="ab-right"><span class="ab-days"></span></span></div>`;
+      bar.querySelector('.ab-title').textContent = ev.batchNumber ? `${ev.name} · #${ev.batchNumber}` : ev.name;
+      bar.querySelector('.ab-days').textContent = daysLeft <= 0 ? t('abToday') : daysLeft === 1 ? t('abTomorrow') : `${daysLeft} ${t('abDays')}`;
       wrap.appendChild(bar);
     });
     // Phones: audits/events outside their prep week, as one short line (desktop has the side list)

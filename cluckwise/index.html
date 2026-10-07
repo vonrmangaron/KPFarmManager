@@ -418,6 +418,12 @@
   .task-avatars .task-avatar:first-child{ margin-left:0; }
   .task-avatar.more-avatar{ background:var(--muted); font-size:9px; }
   .assignee-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .assignee-picks{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .assignee-picks:empty{ display:none; }
+  .assignee-pick{ display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:5px 11px 5px 8px; font:600 12.5px 'Inter',sans-serif; cursor:pointer; min-height:32px; }
+  .assignee-pick:hover{ border-color:var(--primary-dark); }
+  .assignee-pick .ap-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .assignee-pick small{ font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
   .assignee-chip{ display:flex; align-items:center; gap:5px; padding:3px 4px 3px 3px; border-radius:999px; color:#fff; font-size:11.5px; font-weight:600; font-family:'Inter',sans-serif; }
   .assignee-chip .chip-initial{ width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700; }
   .assignee-chip .chip-remove{ border:none; background:rgba(0,0,0,0.15); color:#fff; width:16px; height:16px; border-radius:50%; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
@@ -1221,6 +1227,15 @@
   .st-body{ padding:16px 16px 28px !important; gap:0 !important; scroll-behavior:smooth; flex:1; min-height:0; }
   .st-section{ margin-bottom:20px; }
   .st-section-head{ display:flex; align-items:flex-start; gap:10px; margin:0 4px 10px; }
+  .st-section[id] > .st-section-head{ cursor:pointer; border-radius:10px; }
+  .st-section[id] > .st-section-head::after{ content:'▾'; margin-left:auto; align-self:center; color:var(--muted); font-size:13px; padding:0 4px; transition:transform .15s ease; }
+  .st-section[id] > .st-section-head:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:2px; }
+  .st-section.st-collapsed{ margin-bottom:8px; }
+  .st-section.st-collapsed > .st-section-head{ margin-bottom:0; padding:6px 0; align-items:center; }
+  #settingsTabs button{ padding:8px 6px; }
+  .st-section.st-collapsed > .st-section-head::after{ transform:rotate(-90deg); }
+  .st-section.st-collapsed > :not(.st-section-head){ display:none !important; }
+  .st-section.st-collapsed > .st-section-head p{ display:none; }
   .st-section-head .st-ic{ font-size:18px; width:34px; height:34px; border-radius:10px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .st-section-head:not(:has(p)){ align-items:center; }
   .st-section-head h3{ font-family:'Sora',sans-serif; font-size:14.5px; font-weight:800; margin:0; color:var(--ink); }
@@ -2233,7 +2248,7 @@
   .bi-bar{ height:8px; border-radius:999px; background:rgba(255,255,255,0.5); overflow:hidden; }
   .bi-bar span{ display:block; height:100%; background:#2B2116; border-radius:999px; }
   .bi-dates{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:12.5px; font-weight:700; opacity:.85; }
-  .bi-stats{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:12px; }
+  .bi-stats{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px; }
   .bi-tile{ background:var(--surface-soft); border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; min-width:0; }
   .bi-tl{ font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
   .bi-tv{ font-family:'Sora',sans-serif; font-weight:800; font-size:19px; color:var(--ink); overflow-wrap:anywhere; }
@@ -2256,7 +2271,7 @@
   .bi-ev-t b{ font-size:14px; color:var(--ink); }
   .bi-ev-t small{ font-size:12px; color:var(--muted); }
   .bi-when{ flex-shrink:0; padding:3px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-weight:800; font-size:12px; }
-  @media (max-width: 420px){ .bi-stats{ grid-template-columns:1fr 1fr; } .bi-mort{ grid-column:1 / -1; } }
+  @media (max-width: 420px){ .bi-stats{ grid-template-columns:1fr 1fr; } }
   #batchInfoModal{ width:560px; }
   #sbActiveBatch{ margin-bottom:12px; }
   .cur-batch .batch-swatch{ display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:2px; }
@@ -2309,6 +2324,12 @@
   .menu-guide .mm-ic{ background:#3E7CB1 !important; color:#fff !important; }
   .gs-card{ padding:12px 14px; display:flex; flex-direction:column; gap:14px; }
   .gs-h{ font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:6px; }
+  details.gs-block > summary.gs-h{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; margin:0; padding:4px 0; }
+  details.gs-block > summary.gs-h::-webkit-details-marker{ display:none; }
+  details.gs-block > summary.gs-h::after{ content:'▾'; margin-left:auto; color:var(--muted); font-size:12px; transition:transform .15s ease; }
+  details.gs-block[open] > summary.gs-h{ margin-bottom:8px; }
+  details.gs-block[open] > summary.gs-h::after{ transform:rotate(180deg); }
+  .gs-sum{ font-family:'Inter',sans-serif; font-weight:600; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .gs-row{ display:grid; grid-template-columns:auto 64px auto 1fr auto auto; align-items:center; gap:6px; margin-bottom:6px; font-size:12.5px; color:var(--muted); }
   .gs-row input{ width:100%; min-width:0; box-sizing:border-box; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface-soft); color:var(--ink); font-size:14px; }
   .gs-del{ border:none; background:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px; }
@@ -2665,6 +2686,7 @@
   </div>
   <nav class="st-tabs" id="settingsTabs" aria-label="Settings sections">
     <button type="button" data-target="stAppearance" class="active">Appearance</button>
+    <button type="button" data-target="stGuide">Guide</button>
     <button type="button" data-target="stWeather">Weather</button>
     <button type="button" data-target="stSync">Sync</button>
     <button type="button" data-target="stWorkers">Workers</button>
@@ -2751,6 +2773,8 @@
           <div class="st-sync-status"><span class="st-badge" id="syncBadge">Not connected</span><span class="st-status" id="githubStatus">Not connected</span></div>
           <label class="st-label" for="githubPathInput">Farm name</label>
           <input type="text" id="githubPathInput" class="st-input" placeholder="e.g. Riverside Farm">
+          <label class="st-label" for="syncManagerInput">Your name (manager)</label>
+          <input type="text" id="syncManagerInput" class="st-input" placeholder="e.g. Von" maxlength="40" autocomplete="name">
           <p class="st-warn">⚠️ Use exactly the same name on every device — it's how they find the same data.</p>
           <div class="st-btn-pair">
             <button class="st-btn st-btn-primary" id="connectGithubBtn" type="button">Connect</button>
@@ -2763,6 +2787,10 @@
     <section class="st-section" id="stWorkers">
       <div class="st-section-head"><span class="st-ic">👥</span><div><h3>Workers</h3></div></div>
       <div class="st-card">
+        <div class="st-row st-row-stack">
+          <div class="st-row-text"><label class="st-label" for="managerNameInput">Manager</label><span class="st-hint">Set when you connect this farm. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
+          <input type="text" id="managerNameInput" class="st-input" placeholder="Manager's name" maxlength="40" autocomplete="name">
+        </div>
         <div class="st-row st-row-stack">
           <div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint" id="accessPwStatus">Connect to a farm first (Sync tab).</span></div>
           <div class="st-input-row">
@@ -2900,6 +2928,7 @@
     </div>
     <datalist id="assigneeList"></datalist>
     <div class="assignee-chips" id="editTaskAssigneeChips"></div>
+    <div class="assignee-picks" id="editTaskAssigneePicks" aria-label="Tap a name to assign"></div>
 
     <label for="editTaskDateInput">Date (leave blank for Backlog)</label>
     <input type="date" id="editTaskDateInput">
@@ -3670,11 +3699,25 @@
     else el.textContent = 'Enter your farm name, then click Connect.';
     const pathInput = $('#githubPathInput');
     if(pathInput && ghFarmName) pathInput.value = ghFarmName;
+    renderManagerFields();
   }
   function showLoadingOverlay(){ const el = $('#loadingOverlay'); if(el) el.classList.add('show'); }
   function hideLoadingOverlay(){ const el = $('#loadingOverlay'); if(el) el.classList.remove('show'); }
+  function renderManagerFields(){
+    const m = managerName();
+    ['#managerNameInput', '#syncManagerInput'].forEach(id=>{ const el = $(id); if(el && document.activeElement !== el) el.value = m; });
+  }
+  function setManagerName(v){
+    v = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+    if(v === managerName()) return;
+    const old = managerName();
+    settings.manager = v; persist(); renderManagerFields(); refreshAssigneeDatalist();
+    if(v) addHistory('Settings', old ? `Manager changed from ${old} to ${v}` : `Manager set to ${v}`);
+  }
+  ['#managerNameInput', '#syncManagerInput'].forEach(id=> $(id).addEventListener('change', (e)=> setManagerName(e.target.value)));
   async function connectGithub(){
     const name = $('#githubPathInput').value.trim();
+    const mgr = ($('#syncManagerInput').value || '').trim();
     if(!name){ showToast('Enter a name for this farm.', true); return; }
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
@@ -3683,6 +3726,7 @@
     reportsSha = null;
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
     await pullFromGithub();
+    if(mgr) setManagerName(mgr);
     updateGithubStatusUI();
     renderSyncStatus();
   }
@@ -5251,10 +5295,29 @@
     return ASSIGNEE_PALETTE[Math.abs(hash) % ASSIGNEE_PALETTE.length];
   }
   function initialsForAssignee(name){ return name.trim().charAt(0).toUpperCase(); }
+  // Everyone who can be assigned: the manager, every worker who joined in the
+  // Viewer, then names already used on tasks (one entry per person, any case)
+  function managerName(){ return String(settings.manager || '').trim(); }
+  function knownPeople(){
+    const out = [], seen = new Set();
+    const add = n=>{ n = String(n || '').trim().replace(/\s+/g, ' '); const k = n.toLowerCase(); if(n && !seen.has(k)){ seen.add(k); out.push(n); } };
+    add(managerName());
+    ((accessData && accessData.members) || []).slice().sort((a,b)=> (a.name || '').localeCompare(b.name || '')).forEach(m=> add(m.name));
+    tasks.flatMap(t=> t.assignees || []).sort().forEach(add);
+    return out;
+  }
+  function renderAssigneePicks(){
+    const box = $('#editTaskAssigneePicks'); if(!box) return;
+    const taken = new Set((editingAssignees || []).map(n=> n.trim().toLowerCase()));
+    const mgr = managerName().toLowerCase();
+    const people = knownPeople().filter(n=> !taken.has(n.toLowerCase()));
+    box.innerHTML = people.map(n=> `<button type="button" class="assignee-pick" data-pick="${escapeHtmlAttr(n)}"><span class="ap-dot" style="background:${colorForAssignee(n)}"></span>${escapeHtml(n)}${n.toLowerCase() === mgr ? '<small>manager</small>' : ''}</button>`).join('');
+  }
   function refreshAssigneeDatalist(){
+    renderAssigneePicks();
     const dl = $('#assigneeList');
     if(!dl) return;
-    const names = Array.from(new Set(tasks.flatMap(t=>t.assignees||[]))).sort();
+    const names = knownPeople();
     dl.innerHTML = '';
     names.forEach(name=>{ const opt = document.createElement('option'); opt.value = name; dl.appendChild(opt); });
   }
@@ -5519,6 +5582,7 @@
   function wxNeedsSetup(){ return settings.showWeather !== false && !(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
   function openWeatherSettings(){
     openDrawer('#settingsDrawer');
+    setStSection(document.getElementById('stWeather'), true);
     setTimeout(()=>{
       const inp = $('#weatherSearchInput');
       if(inp){ inp.scrollIntoView({ block:'center', behavior:'smooth' }); inp.focus(); }
@@ -7698,15 +7762,6 @@
     const todayKey = dateKey(new Date());
     const cs = addDaysStr(ev.date, -7);
     const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
-    const windowTasks = tasks.filter(t=> t.date && t.date >= cs && t.date <= ev.date);
-    const doneCount = windowTasks.filter(t=> t.status==='done').length;
-    const openTasks = windowTasks.filter(t=> t.status!=='done')
-      .sort((a,b)=> a.date.localeCompare(b.date) || taskSortCompare(a,b));
-    const prepNames = new Set(PREP_CHECKLIST.map(n=> n.toLowerCase()));
-    const backlogPrep = tasks.filter(t=> !t.date && t.status!=='done' && prepNames.has((t.name||'').trim().toLowerCase()));
-    const batch = ev.batchNumber ? batches.find(b=> b.number===ev.batchNumber) : null;
-    const shedSet = batch && Array.isArray(batch.sheds) && batch.sheds.length ? new Set(batch.sheds.map(s=> String(s.shed))) : null;
-    const openReports = reports.filter(r=> (r.status==='Open' || r.status==='In Progress') && (!shedSet || shedSet.has(String(r.shed))));
 
     const panel = document.createElement('div');
     panel.className = 'audit-prep';
@@ -7733,53 +7788,7 @@
     headText.append(titleRow, sub);
     head.append(tile, headText);
     panel.appendChild(head);
-
-    const pct = windowTasks.length ? Math.round((doneCount / windowTasks.length) * 100) : 0;
-    const bar = document.createElement('div');
-    bar.className = 'audit-prep-bar';
-    bar.innerHTML = `<span style="width:${pct}%"></span>`;
-    panel.appendChild(bar);
-
-    const stats = document.createElement('div');
-    stats.className = 'audit-prep-stats';
-    const line = document.createElement('div');
-    line.textContent = windowTasks.length ? `Prep ${doneCount} of ${windowTasks.length} tasks done` : 'No tasks scheduled in the prep week yet';
-    stats.appendChild(line);
-    if(backlogPrep.length){
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'audit-prep-link';
-      b.textContent = `⚠ ${backlogPrep.length} checklist item(s) still in Backlog — schedule them`;
-      b.addEventListener('click', ()=>{ closeOverlays(); openBacklogModal(); });
-      stats.appendChild(b);
-    }
-    if(openReports.length){
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'audit-prep-link';
-      b.textContent = `🚩 ${openReports.length} open report(s)${shedSet ? " in this batch's sheds" : ''}`;
-      b.addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
-      stats.appendChild(b);
-    }
-    panel.appendChild(stats);
-
-    const max = compact ? 3 : 4;
-    openTasks.slice(0, max).forEach(t=>{
-      const it = document.createElement('button');
-      it.type = 'button'; it.className = 'audit-prep-item';
-      const ic = document.createElement('span'); ic.className = 'task-icon'; renderTaskIcon(ic, t.name, t.icon);
-      const nm = document.createElement('span'); nm.className = 'api-name'; nm.textContent = t.name;
-      const dt = document.createElement('span'); dt.className = 'api-date';
-      dt.textContent = (t.date < todayKey ? '⚠ ' : '') + formatShort(t.date);
-      it.append(ic, nm, dt);
-      it.addEventListener('click', ()=> openTaskDetailModal(t.id));
-      panel.appendChild(it);
-    });
-    if(openTasks.length > max){
-      const more = document.createElement('button');
-      more.type = 'button'; more.className = 'audit-prep-link';
-      more.textContent = `+ ${openTasks.length - max} more open — show this week`;
-      more.addEventListener('click', ()=>{ closeOverlays(); viewMode = 'list'; agendaFilter = 'week'; syncViewButtons(); renderAll(); });
-      panel.appendChild(more);
-    }
+    // Countdown only — the prep-week task list was removed to keep it calm
     return panel;
   }
   function renderAuditPrep(){
@@ -8348,6 +8357,7 @@
       chip.querySelector('.chip-name').textContent = name;
       box.appendChild(chip);
     });
+    if(boxId === '#editTaskAssigneeChips') renderAssigneePicks();
   }
   function addAssigneeToPending(inputId, arr, boxId){
     const input = $(inputId);
@@ -9304,6 +9314,7 @@
       }
       try{ localStorage.setItem(knownMembersKey(), JSON.stringify(ids)); localStorage.setItem(knownMembersKey() + '-devices', JSON.stringify(devIds)); }catch(e){}
       renderAccess();
+      refreshAssigneeDatalist();
     }catch(e){
       if(!silent) showToast('Could not load workers. Check your connection.', true);
       renderAccess(true);
@@ -9313,6 +9324,7 @@
   function renderAccess(failed){
     const st = $('#accessPwStatus'), list = $('#accessMembers'), cnt = $('#accessCount'), btn = $('#accessPwSaveBtn'), inp = $('#accessPwInput');
     if(!st) return;
+    renderManagerFields();
     const connected = !!ghPath;
     inp.disabled = btn.disabled = !connected || accessBusy;
     $('#accessRefreshBtn').disabled = !connected;
@@ -9614,6 +9626,7 @@
       h += `<div class="bi-stats">
         <div class="bi-tile"><span class="bi-tl">Birds placed</span><span class="bi-tv">${biInt(b.placed)}</span><span class="bi-ts">at placement</span></div>
         <div class="bi-tile"><span class="bi-tl">Birds now</span><span class="bi-tv">${biInt(b.now)}</span><span class="bi-ts">${b.picked ? biInt(b.picked) + ' picked up' : 'on the farm'}</span></div>
+          <div class="bi-tile bi-after"><span class="bi-tl">After pickups this week</span><span class="bi-tv">${biInt(b.afterWeek != null ? b.afterWeek : b.now)}</span><span class="bi-ts">${b.weekPick ? '−' + biInt(b.weekPick) + ' · ' + b.weekDays.map(d=> biFmt(d, { weekday:'short' })).join(', ') : 'no pickups booked'}</span></div>
         <div class="bi-tile bi-mort"><span class="bi-tl">Mortality</span><span class="bi-tv">${b.pct.toFixed(1)}%</span><span class="bi-ts">${biInt(b.mort)} birds${b.updated ? ' · updated ' + biFmt(b.updated) : ''}</span></div></div>`;
     }
     const sheds = (x.sheds || []).filter(s=> s.placement);
@@ -9640,16 +9653,20 @@
     return h;
   }
   function biBirdStats(sheds, today){
-    let placed = 0, mort = 0, picked = 0, updated = '';
+    let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
+    // The coming week (next 7 days, the kill sheet's week): pickups entered from the kill sheet — never predicted ones
+    const t0 = new Date(today + 'T00:00:00'), sun = biKey(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + 7));
+    const weekDays = new Set();
     (sheds || []).forEach(sh=>{
       placed += Number(sh.initialPopulation) || 0;
       mort += Number(sh.mortality) || 0;
-      (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; if(d && d <= today) picked += Number(p.birds) || 0; });
+      (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today) picked += n; else if(d && d <= sun && n > 0){ weekPick += n; weekDays.add(d); } });
       const u = biNorm(sh.mortalityUpdatedAt);
       if(u > updated) updated = u;
     });
     if(!placed) return null;
-    return { placed, mort, picked, now: Math.max(0, placed - mort - picked), pct: mort / placed * 100, updated };
+    const now = Math.max(0, placed - mort - picked);
+    return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort() };
   }
   // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
   function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
@@ -9910,12 +9927,16 @@
   $('#moreGuideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; openGuide(); });
   // Settings: edit the guide's targets (rows of "from day → value")
   const GUIDE_FIELDS = [['temp', 'Shed temperature', '°C', 'number'], ['rh', 'Humidity', '%', 'text'], ['dark', 'Hours of dark', 'h', 'number']];
+  const guideSetOpen = new Set();
   function renderGuideSettings(){
     const box = $('#guideSettings'); if(!box) return;
     const c = guideCfg(settings.guide);
-    box.innerHTML = GUIDE_FIELDS.map(([k, label, unit, type])=> `<div class="gs-block" data-gs="${k}"><div class="gs-h">${label}</div>
-      ${c[k].slice().sort((a,b)=> a[0]-b[0]).map((r, i)=> `<div class="gs-row"><span>From day</span><input type="number" min="0" max="70" class="gs-age" value="${escapeHtmlAttr(r[0])}"><span>→</span><input type="${type}" class="gs-val" value="${escapeHtmlAttr(r[1])}"><span class="gs-unit">${unit}</span><button type="button" class="gs-del" aria-label="Remove row">✕</button></div>`).join('')}
-      <button type="button" class="gs-add">+ Add row</button></div>`).join('') + `<div class="gs-foot"><button type="button" class="st-btn" id="gsReset">Reset to Ross 308 defaults</button></div>`;
+    // Each target folds up (tap its name); the summary shows the first and last value
+    box.innerHTML = GUIDE_FIELDS.map(([k, label, unit, type])=>{ const rows = c[k].slice().sort((a,b)=> a[0]-b[0]); const f = rows[0], l = rows[rows.length - 1];
+      const sum = rows.length ? (rows.length > 1 ? `Day ${f[0]}: ${f[1]} ${unit} → day ${l[0]}: ${l[1]} ${unit}` : `${f[1]} ${unit}`) : '';
+      return `<details class="gs-block" data-gs="${k}"${guideSetOpen.has(k) ? ' open' : ''}><summary class="gs-h"><span>${label}</span><span class="gs-sum">${escapeHtml(sum)}</span></summary>
+      ${rows.map((r, i)=> `<div class="gs-row"><span>From day</span><input type="number" min="0" max="70" class="gs-age" value="${escapeHtmlAttr(r[0])}"><span>→</span><input type="${type}" class="gs-val" value="${escapeHtmlAttr(r[1])}"><span class="gs-unit">${unit}</span><button type="button" class="gs-del" aria-label="Remove row">✕</button></div>`).join('')}
+      <button type="button" class="gs-add">+ Add row</button></details>`; }).join('') + `<div class="gs-foot"><button type="button" class="st-btn" id="gsReset">Reset to Ross 308 defaults</button></div>`;
   }
   function saveGuideSettings(){
     const out = {};
@@ -9929,10 +9950,11 @@
     persist();
   }
   $('#guideSettings').addEventListener('change', (e)=>{ if(e.target.matches('input')) saveGuideSettings(); });
+  $('#guideSettings').addEventListener('toggle', (e)=>{ const d = e.target; if(d.matches && d.matches('details.gs-block')){ d.open ? guideSetOpen.add(d.dataset.gs) : guideSetOpen.delete(d.dataset.gs); } }, true);
   $('#guideSettings').addEventListener('click', (e)=>{
     if(e.target.closest('.gs-del')){ e.target.closest('.gs-row').remove(); saveGuideSettings(); renderGuideSettings(); return; }
     const add = e.target.closest('.gs-add');
-    if(add){ const bl = add.closest('.gs-block'); const k = bl.dataset.gs; const c = guideCfg(settings.guide); settings.guide = Object.assign({}, settings.guide || {}, { [k]: c[k].concat([[ (c[k][c[k].length-1] || [0])[0] + 7, c[k][c[k].length-1][1] ]]) }); persist(); renderGuideSettings(); return; }
+    if(add){ const bl = add.closest('.gs-block'); const k = bl.dataset.gs; guideSetOpen.add(k); const c = guideCfg(settings.guide); settings.guide = Object.assign({}, settings.guide || {}, { [k]: c[k].concat([[ (c[k][c[k].length-1] || [0])[0] + 7, c[k][c[k].length-1][1] ]]) }); persist(); renderGuideSettings(); return; }
     if(e.target.closest('#gsReset')){ const g = Object.assign({}, settings.guide || {}); delete g.temp; delete g.rh; delete g.dark; settings.guide = g; persist(); renderGuideSettings(); showToast('Guide targets reset to Ross 308 defaults. Your card text is kept.'); }
   });
   renderGuideSettings();
@@ -10016,6 +10038,11 @@
   $('#editTaskAssigneeAddBtn').addEventListener('click', ()=> addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips'));
   $('#editTaskAssigneeInput').addEventListener('keydown', (e)=>{
     if(e.key==='Enter'){ e.preventDefault(); addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips'); }
+  });
+  $('#editTaskAssigneePicks').addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-pick]'); if(!b) return;
+    const n = b.dataset.pick; if(!editingAssignees.some(x=> x.toLowerCase() === n.toLowerCase())) editingAssignees.push(n);
+    renderAssigneeChips('#editTaskAssigneeChips', editingAssignees);
   });
   $('#editTaskAssigneeChips').addEventListener('click', (e)=>{
     const btn = e.target.closest('.chip-remove');
@@ -10262,20 +10289,42 @@
   $('#setTheme').addEventListener('change', (e)=>{ settings.theme = e.target.value === 'dark' ? 'dark' : 'light'; applySettings(); persist(); });
   document.querySelectorAll('#settingsDrawer select[data-seg]').forEach(enhanceSegmented);
   syncSegmented();
+  // Settings sections fold like the guide targets: tap a heading; open ones are remembered
+  const ST_OPEN_KEY = 'cw-settings-open';
+  let stTabPinnedUntil = 0;
+  let stOpen = (()=>{ try{ const v = JSON.parse(localStorage.getItem(ST_OPEN_KEY) || 'null'); return Array.isArray(v) ? new Set(v) : new Set(['stAppearance']); }catch(e){ return new Set(['stAppearance']); } })();
+  function setStSection(sec, open){
+    if(!sec || !sec.id) return;
+    sec.classList.toggle('st-collapsed', !open);
+    const h = sec.querySelector(':scope > .st-section-head'); if(h) h.setAttribute('aria-expanded', String(open));
+    if(open) stOpen.add(sec.id); else stOpen.delete(sec.id);
+    try{ localStorage.setItem(ST_OPEN_KEY, JSON.stringify([...stOpen])); }catch(e){}
+  }
+  document.querySelectorAll('#settingsBody > .st-section[id]').forEach(sec=>{
+    const h = sec.querySelector(':scope > .st-section-head'); if(!h) return;
+    h.setAttribute('role', 'button'); h.tabIndex = 0;
+    sec.classList.toggle('st-collapsed', !stOpen.has(sec.id)); h.setAttribute('aria-expanded', String(stOpen.has(sec.id)));
+    const flip = ()=> setStSection(sec, sec.classList.contains('st-collapsed'));
+    h.addEventListener('click', flip);
+    h.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); flip(); } });
+  });
   $('#settingsTabs').addEventListener('click', (e)=>{
     const b = e.target.closest('button[data-target]');
     if(!b) return;
     const sec = document.getElementById(b.dataset.target);
     const body = $('#settingsBody');
+    if(sec) setStSection(sec, true);
     if(sec && body) body.scrollTo({ top: sec.offsetTop - body.offsetTop - 6, behavior:'smooth' });
     document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x === b));
+    stTabPinnedUntil = Date.now() + 900;
   });
   $('#settingsBody').addEventListener('scroll', ()=>{
     const body = $('#settingsBody');
-    const ids = ['stAppearance','stWeather','stSync','stData'];
+    const ids = ['stAppearance','stGuide','stWeather','stSync','stWorkers','stData'];
     let current = ids[0];
     ids.forEach(id=>{ const el = document.getElementById(id); if(el && el.offsetTop - body.offsetTop - 40 <= body.scrollTop) current = id; });
-    if(body.scrollTop + body.clientHeight >= body.scrollHeight - 4) current = 'stData';
+    if(Date.now() < stTabPinnedUntil) return;   // a tab was just tapped: keep it highlighted
+    if(body.scrollHeight - body.clientHeight > 40 && body.scrollTop + body.clientHeight >= body.scrollHeight - 4) current = 'stData';
     document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x.dataset.target === current));
   }, { passive:true });
   $('#themeToggleBtn').addEventListener('click', ()=>{ settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
