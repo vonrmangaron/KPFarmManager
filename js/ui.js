@@ -343,7 +343,7 @@ function renderSettingsSyncCard(){
   const excelWhen=syncExcelMeta&&syncExcelMeta.uploadedAt?fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()):'';
   const statusRows=`<div class="settings-status-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch||'—')}</span></div>
     <div class="settings-status-row"><span class="lbl">Last sync</span><span class="val${isError?' err':''}">${isError?'Last attempt failed':(syncLastSyncAt?fmtRelativeTime(syncLastSyncAt):'Never')}</span></div>
-    <div class="settings-status-row"><span class="lbl">Backup file</span><span class="val file" title="${escapeAttr(fileName)}">${escapeHtml(fileName)}</span></div>`;
+    <div class="settings-status-row"><span class="lbl">Backup file</span><span class="val file" title="${escapeAttr(fileName)}">${escapeHtml(fileName)}</span></div>${farmKeyStatusRow()}`;
   // List-style actions: icon · label + detail · chevron
   const row=(id,icon,label,sub)=>`<button type="button" class="settings-list-row" id="${id}"><span class="slr-ic">${settingsIcon(icon)}</span><span class="slr-text"><span class="slr-label">${label}</span>${sub?`<span class="slr-sub">${sub}</span>`:''}</span><svg class="slr-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   const changeForm=settingsChangeFarmOpen?`<div class="settings-subcard">
@@ -2622,3 +2622,12 @@ function refreshPickupsModal(){
   body.innerHTML=pkViewBarHtml()+`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;
   body.scrollTop=keepScroll;
 }
+
+// Settings → Cloud sync: is this device signed in with the manager password?
+function farmKeyStatusRow(){
+  if(!window.FarmKey||!syncFarmName)return '';
+  const signed=!!FarmKey.get(syncFarmName,'manager');
+  if(!signed&&!(typeof pwFarmKeyInfo!=='undefined'&&pwFarmKeyInfo&&pwFarmKeyInfo.setup))return '';
+  return `<div class="settings-status-row"><span class="lbl">Manager sign-in</span><span class="val">${signed?'Signed in':'<button type="button" class="settings-btn settings-btn-sm settings-btn-primary" data-farmkey-signin>Sign in</button>'}</span></div>`;
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-farmkey-signin]'))farmKeyPrompt(null);});

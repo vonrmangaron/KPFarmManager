@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.10.07-c10';
+const CACHE_VERSION = 'cluckwise-2026.10.07-c11';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
@@ -32,7 +32,8 @@ const APP_SHELL = [
   'manifest.json',
   'manifest-viewer.json',
   'icons/icon-192.png',
-  'icons/icon-512.png'
+  'icons/icon-512.png',
+  '../js/farmkey.js'
 ];
 
 // Third-party hosts that are safe to keep a copy of.
@@ -96,6 +97,15 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache the service worker file itself.
   if (url.pathname.endsWith('/sw.js')) return;
+
+  // Shared code (../js/farmkey.js): newest when online, saved copy offline.
+  if (url.pathname.endsWith('.js')) {
+    event.respondWith(fetch(req, { cache: 'no-cache' }).then((res) => {
+      if (res && res.ok) { const copy = res.clone(); caches.open(PAGE_CACHE).then((c) => c.put(stripQuery(req.url), copy)); }
+      return res;
+    }).catch(async () => (await caches.match(stripQuery(req.url))) || new Response('', { status: 504 })));
+    return;
+  }
 
   // Icons, manifests and other same-origin files.
   event.respondWith(staleWhileRevalidate(req, STATIC_CACHE));

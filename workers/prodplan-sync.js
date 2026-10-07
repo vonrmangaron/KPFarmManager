@@ -13,12 +13,13 @@
 //   GET  ?prefix=<text>          → { files:[{ name, sha, size }] }   (manager only)
 //
 // Farm passwords (POST ?action=…, JSON body):
+//   info    { farm } → { setup, locked, oldPassword }   (public)
 //   setup   { farm, managerPassword, farmPassword, current?, deviceId, name, device }
 //           first time only. If the farm already has a password from the CluckWise
 //           Workers screen, `current` must be that password.
 //   join    { farm, role:'manager'|'worker', password, deviceId, name, device } → { key, role }
 //   leave   (with key) this phone signs itself out
-//   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock', … }
+//   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock' | 'organize', … }
 //
 // A phone sends X-Farm-Device and X-Farm-Key with every request. The farm is always
 // worked out here from the file name (never taken from the phone).
@@ -69,41 +70,95 @@ async function checkPassword(rec, pw) {
 }
 
 // ── GitHub ──────────────────────────────────────────────────
+// Files are kept in one folder per app:
+//   prodwise/   <farm>-feed-<batch>, its Excel copy (-file), <farm>-prodwise-history
+//   cluckwise/  everything else (tasks, reports, workers list, restore points, archives)
+// Files not moved yet stay readable at the top of the repo; the manager's
+// "Organise cloud files" (action manage, op organize) moves them.
+const folderFor = slug => (/-feed(-|$)/.test(slug) || /-prodwise-history$/.test(slug)) ? 'prodwise' : 'cluckwise';
 function github(env) {
   const repo = env.REPO || DEFAULT_REPO;
   const headers = { Authorization: `token ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'ProdPlanWorker' };
-  const fileUrl = slug => `https://api.github.com/repos/${repo}/contents/${encodeURIComponent(slug + '.json')}`;
+  const pathUrl = path => `https://api.github.com/repos/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const newPath = slug => `${folderFor(slug)}/${slug}.json`;
+  const oldPath = slug => `${slug}.json`;
+  async function readAt(path) {
+    const res = await fetch(pathUrl(path), { headers });
+    if (res.status === 404) return { notFound: true };
+    if (!res.ok) return { error: res.status };
+    const meta = await res.json();
+    let text;
+    if (meta.content && meta.encoding === 'base64') {
+      text = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
+    } else {
+      // Over 1 MB GitHub leaves the content out: fetch the raw file instead.
+      const raw = await fetch(pathUrl(path), { headers: { ...headers, Accept: 'application/vnd.github.raw' } });
+      if (!raw.ok) return { error: raw.status };
+      text = await raw.text();
+    }
+    return { sha: meta.sha, data: JSON.parse(text), text };
+  }
+  async function writeAt(path, sha, data, text) {
+    const body = { message: `ProdPlan.VM update ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(text != null ? text : JSON.stringify(data, null, 2)))) };
+    if (sha) body.sha = sha;
+    const res = await fetch(pathUrl(path), { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.status === 409 || res.status === 422) return { conflict: true };
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: res.status, detail: out };
+    return { ok: true, sha: out.content && out.content.sha };
+  }
+  async function exists(path) {
+    const res = await fetch(pathUrl(path), { method: 'GET', headers });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('GitHub error ' + res.status);
+    const meta = await res.json();
+    return meta.sha || null;
+  }
+  async function listDir(dir) {
+    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${dir}`, { headers });
+    if (res.status === 404) return [];
+    if (!res.ok) throw new Error('GitHub error ' + res.status);
+    const items = await res.json();
+    return (Array.isArray(items) ? items : []).filter(i => i.type === 'file' && i.name.endsWith('.json'));
+  }
   return {
     async read(slug) {
-      const res = await fetch(fileUrl(slug), { headers });
-      if (res.status === 404) return { notFound: true };
-      if (!res.ok) return { error: res.status };
-      const meta = await res.json();
-      let text;
-      if (meta.content && meta.encoding === 'base64') {
-        text = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
-      } else {
-        // Over 1 MB GitHub leaves the content out: fetch the raw file instead.
-        const raw = await fetch(fileUrl(slug), { headers: { ...headers, Accept: 'application/vnd.github.raw' } });
-        if (!raw.ok) return { error: raw.status };
-        text = await raw.text();
-      }
-      return { sha: meta.sha, data: JSON.parse(text) };
+      const r = await readAt(newPath(slug));
+      if (!r.notFound) { delete r.text; return r; }
+      const o = await readAt(oldPath(slug));
+      delete o.text;
+      return o;
     },
+    // Writes where the file is now: its folder, or the top of the repo until it's organised. New files go to the folder.
     async write(slug, sha, data) {
-      const body = { message: `ProdPlan.VM update ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) };
-      if (sha) body.sha = sha;
-      const res = await fetch(fileUrl(slug), { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (res.status === 409 || res.status === 422) return { conflict: true };
-      const out = await res.json().catch(() => ({}));
-      if (!res.ok) return { error: res.status, detail: out };
-      return { ok: true, sha: out.content && out.content.sha };
+      const inFolder = await exists(newPath(slug));
+      const atTop = inFolder ? null : await exists(oldPath(slug));
+      return writeAt(atTop ? oldPath(slug) : newPath(slug), sha, data);
     },
     async list(prefix) {
-      const res = await fetch(`https://api.github.com/repos/${repo}/contents/`, { headers });
-      if (!res.ok) return { error: res.status };
-      const items = await res.json();
-      return { files: (Array.isArray(items) ? items : []).filter(i => i.type === 'file' && i.name.startsWith(prefix)).map(i => ({ name: i.name, sha: i.sha, size: i.size })) };
+      const seen = new Map();
+      for (const dir of ['', 'cluckwise', 'prodwise']) {
+        for (const i of await listDir(dir)) if (i.name.startsWith(prefix) && !seen.has(i.name)) seen.set(i.name, { name: i.name, sha: i.sha, size: i.size });
+      }
+      return { files: [...seen.values()] };
+    },
+    // Moves one farm's files from the top of the repo into their app folder. Same content, so the
+    // file's version id (sha) stays the same and phones never see a conflict.
+    async organize(farm) {
+      const moved = [], skipped = [];
+      for (const i of await listDir('')) {
+        const slug = i.name.replace(/\.json$/, '');
+        if (!(slug === farm || slug.startsWith(farm + '-'))) continue;
+        const cur = await readAt(oldPath(slug));
+        if (cur.error || cur.notFound) { skipped.push(slug); continue; }
+        if (!(await exists(newPath(slug)))) {
+          const w = await writeAt(newPath(slug), null, null, cur.text);
+          if (!w.ok) { skipped.push(slug); continue; }
+        }
+        const del = await fetch(pathUrl(oldPath(slug)), { method: 'DELETE', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Organise: ${slug} → ${folderFor(slug)}/`, sha: cur.sha }) });
+        (del.ok ? moved : skipped).push(slug);
+      }
+      return { moved, skipped };
     },
   };
 }
@@ -196,6 +251,14 @@ async function handleAction(action, request, env, ctx, gh) {
   try { b = await request.json(); } catch (e) { return json({ error: 'Invalid JSON body' }, 400); }
   const farm = slugify(b.farm);
   if (!farm) return json({ error: 'Missing farm' }, 400);
+
+  if (action === 'info') {
+    // Public: does this farm use passwords yet, is it locked. Nothing else.
+    const rec = await getJson(env, farmKey(farm));
+    let oldPassword = false;
+    if (!rec) { const a = await gh.read(farm + '-access'); oldPassword = !!(a.data && a.data.password && a.data.password.hash); }
+    return json({ ok: true, setup: !!rec, locked: !!(rec && rec.locked), oldPassword });
+  }
 
   if (action === 'setup') {
     if (await getJson(env, farmKey(farm))) return json({ error: 'This farm already has passwords', exists: true }, 409);
@@ -300,6 +363,11 @@ async function handleAction(action, request, env, ctx, gh) {
       cursor = page.list_complete ? null : page.cursor;
     } while (cursor);
     return json({ ok: true, removed: n });
+  }
+
+  if (b.op === 'organize') {
+    const out = await gh.organize(farm);
+    return json({ ok: true, moved: out.moved.length, skipped: out.skipped });
   }
 
   if (b.op === 'lock') {

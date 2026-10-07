@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   migrateDeliveriesToLoads();
   loadLoadsView();
   render();
+  installFarmKey();
   if(syncFarmName&&syncConnectedAt){if(syncLastSyncAt)pullFromCloud(true).catch(()=>{});else pushToCloud().catch(()=>{});}
+  setTimeout(farmKeyCheck,2500);
   if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 
   document.addEventListener('click',e=>{
@@ -420,3 +422,29 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
   window.addEventListener('pagehide',flushPendingPush);
   window.addEventListener('beforeunload',flushPendingPush);
 });
+
+// ── Farm passwords: ProdWise signs in once with the manager password (see js/farmkey.js) ──
+let pwFarmKeyInfo=null;
+function installFarmKey(){
+  if(!window.FarmKey)return;
+  FarmKey.install({server:SYNC_WORKER_URL,urls:()=>[SYNC_WORKER_URL],farm:()=>syncFarmName,role:'manager',
+    text:k=>({wrong:'That password is not right.',wait:'Too many tries. Wait 15 minutes and try again.',noSetup:'This farm has no passwords yet.',offline:'No connection. Try again when you have signal.'})[k],
+    onRefused:j=>farmKeyPrompt(j)});
+}
+function farmKeyPrompt(j){
+  if(!syncFarmName||!window.FarmKey)return;
+  FarmKey.prompt({title:`Sign in to ${syncFarmName}`,
+    text:j&&j.needKey?'This farm is locked. Enter the manager password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the manager password to sync again.':'This farm now uses passwords. Enter the manager password once on this device.',
+    label:'Manager password',button:'Sign in',later:j?null:'Later',
+    onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}pullFromCloud(true).catch(()=>{});return null;}});
+}
+// Once a day: if the farm uses passwords and this device isn't signed in yet, ask (with "Later").
+async function farmKeyCheck(){
+  if(!window.FarmKey||!syncFarmName||!syncConnectedAt||!navigator.onLine)return;
+  pwFarmKeyInfo=await FarmKey.info(syncFarmName);
+  try{renderSettingsDrawerBody();}catch(e){}
+  if(!pwFarmKeyInfo||!pwFarmKeyInfo.setup||FarmKey.get(syncFarmName,'manager'))return;
+  const k='pw-farmkey-asked-'+FarmKey.slug(syncFarmName),today=new Date().toISOString().slice(0,10);
+  try{if(localStorage.getItem(k)===today)return;localStorage.setItem(k,today);}catch(e){}
+  farmKeyPrompt(null);
+}

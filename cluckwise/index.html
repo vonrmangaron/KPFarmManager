@@ -14,6 +14,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="../js/farmkey.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2006,6 +2007,19 @@
   .access-name{ font-size:13.5px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .access-sub{ font-size:11.5px; color:var(--muted); }
   .access-new{ font-size:10.5px; font-weight:800; color:var(--success); background:var(--success-soft); padding:1px 7px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .fk-panel{ gap:12px; }
+  .fk-panel .fk-state{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fk-chip{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:800; background:var(--surface-soft); border:1px solid var(--line); color:var(--muted); }
+  .fk-chip.on{ background:var(--primary-soft); border-color:var(--primary); color:var(--primary-dark); }
+  .fk-chip.lock{ background:var(--danger-soft); border-color:var(--danger); color:var(--danger); }
+  .fk-fields{ display:flex; flex-direction:column; gap:8px; }
+  .fk-sub{ display:flex; flex-direction:column; gap:6px; padding-top:10px; border-top:1px solid var(--line); }
+  .fk-dev{ display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--line); }
+  .fk-dev:first-child{ border-top:none; }
+  .fk-dev .access-text{ flex:1; min-width:0; }
+  .fk-role{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:2px 7px; border-radius:6px; background:var(--surface-soft); color:var(--muted); }
+  .fk-role.m{ background:var(--primary-soft); color:var(--primary-dark); }
+  .fk-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .access-remove{ border:1px solid var(--line); background:transparent; color:var(--muted); border-radius:8px; font-size:12px; font-weight:700; padding:6px 10px; cursor:pointer; flex-shrink:0; font-family:'Inter',sans-serif; }
   .access-remove:hover{ color:var(--danger); border-color:var(--danger); background:var(--danger-soft); }
   .access-remove.confirm{ color:#fff; background:var(--danger); border-color:var(--danger); }
@@ -2818,7 +2832,8 @@
           <div class="st-row-text"><label class="st-label" for="managerNameInput">Manager</label><span class="st-hint">Set when you connect this farm. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
           <input type="text" id="managerNameInput" class="st-input" placeholder="Manager's name" maxlength="40" autocomplete="name">
         </div>
-        <div class="st-row st-row-stack">
+        <div class="st-row st-row-stack fk-panel" id="fkPanel" hidden></div>
+        <div class="st-row st-row-stack" id="accessPwRow">
           <div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint" id="accessPwStatus">Connect to a farm first (Sync tab).</span></div>
           <div class="st-input-row">
             <div class="pw-field">
@@ -9545,6 +9560,7 @@
       if(!silent) showToast('Could not load workers. Check your connection.', true);
       renderAccess(true);
     }
+    fkRefresh();
   }
   let accessNewIds = new Set();
   function renderAccess(failed){
@@ -9573,6 +9589,135 @@
         <button type="button" class="access-remove" data-id="${escapeHtmlAttr(m.id)}" aria-label="Remove ${escapeHtmlAttr(name)} from this farm${devs.length > 1 ? ' (all ' + devs.length + ' devices)' : ''}">Remove</button></div>`;
     }).join('');
   }
+  // ==================== FARM PASSWORDS (sync server keys, see ../js/farmkey.js) ====================
+  // Manager password: ProdWise and this app. Farm password: workers in the Viewer.
+  // Shown only when the sync server has been updated; otherwise the old Farm password row stays.
+  let fkInfo = null, fkStatus = null, fkLoading = false;
+  const FK_TEXT = { wrong:'That password is not right.', wait:'Too many tries. Wait 15 minutes and try again.', noSetup:'This farm has no passwords yet.', offline:'No connection. Try again when you have signal.' };
+  function fkSignedIn(){ return !!(window.FarmKey && ghFarmName && fkInfo && fkInfo.setup && FarmKey.get(ghFarmName, 'manager')); }
+  function fkPromptSignIn(j){
+    if(!ghFarmName || !window.FarmKey) return;
+    FarmKey.prompt({ title:`Sign in to ${ghFarmName}`,
+      text: j && j.needKey ? 'This farm is locked. Enter the manager password once on this device to keep syncing.' : j && j.signedOut ? 'This device was signed out of the farm. Enter the manager password to sync again.' : 'This farm now uses passwords. Enter the manager password once on this device.',
+      label:'Manager password', button:'Sign in', later: j ? null : 'Later',
+      onSubmit: async pw=>{
+        const e = await FarmKey.signIn(ghFarmName, pw, (settings.manager || 'Manager') + ' · CluckWise');
+        if(e) return e;
+        showToast('Signed in. Syncing…');
+        fkRefresh(); pullFromGithub(true);
+        return null;
+      } });
+  }
+  async function fkRefresh(){
+    if(!window.FarmKey || !ghPath || fkLoading){ if(!ghPath){ fkInfo = null; renderFkPanel(); } return; }
+    fkLoading = true;
+    try{
+      fkInfo = await FarmKey.info(ghFarmName);
+      fkStatus = null;
+      if(fkSignedIn()){ const r = await FarmKey.action('manage', { farm: ghFarmName, op:'status' }); fkStatus = r.j && r.j.ok ? r.j : null; }
+    }finally{ fkLoading = false; }
+    renderFkPanel();
+    // Once a day: farm uses passwords but this device hasn't signed in yet.
+    if(fkInfo && fkInfo.setup && !FarmKey.get(ghFarmName, 'manager')){
+      const k = 'cw-farmkey-asked-' + FarmKey.slug(ghFarmName), today = dateKey(new Date());
+      let asked = null; try{ asked = localStorage.getItem(k); localStorage.setItem(k, today); }catch(e){}
+      if(asked !== today) fkPromptSignIn(null);
+    }
+  }
+  function fkPwField(id, placeholder){
+    return `<div class="pw-field"><input type="password" id="${id}" class="st-input" placeholder="${placeholder}" autocomplete="new-password"></div>`;
+  }
+  function fkConfirmBtn(btn, label, fn){
+    if(btn.dataset.pending !== '1'){ btn.dataset.pending = '1'; const old = btn.textContent; btn.textContent = label; clearTimeout(btn._t); btn._t = setTimeout(()=>{ btn.dataset.pending = ''; btn.textContent = old; }, 3500); return; }
+    clearTimeout(btn._t); btn.dataset.pending = ''; fn();
+  }
+  function renderFkPanel(){
+    const panel = $('#fkPanel'), oldRow = $('#accessPwRow');
+    if(!panel) return;
+    if(!fkInfo){ panel.hidden = true; if(oldRow) oldRow.hidden = false; return; }
+    panel.hidden = false; if(oldRow) oldRow.hidden = true;
+    if(!fkInfo.setup){
+      panel.innerHTML = `<div class="st-row-text"><span class="st-label">Passwords</span><span class="st-hint">Protect this farm's data. Workers sign in with the farm password in the Viewer. You sign in with the manager password in CluckWise and ProdWise. Workers can't see feed data.</span></div>
+        <div class="fk-fields">
+          ${fkInfo.oldPassword ? `<label class="st-label" for="fkCur">Current farm password</label>${fkPwField('fkCur', 'The one workers use now')}` : ''}
+          <label class="st-label" for="fkMgr">Manager password (for you)</label>${fkPwField('fkMgr', 'At least 6 characters')}
+          <label class="st-label" for="fkFarm">Farm password (for workers)</label>${fkPwField('fkFarm', fkInfo.oldPassword ? 'Can be the same as now' : 'At least 4 characters')}
+          <button class="st-btn st-btn-primary" id="fkSetupBtn" type="button">Turn on passwords</button>
+        </div>`;
+      $('#fkSetupBtn').addEventListener('click', fkSetup);
+      return;
+    }
+    if(!FarmKey.get(ghFarmName, 'manager')){
+      panel.innerHTML = `<div class="st-row-text"><span class="st-label">Passwords</span><span class="st-hint">This farm uses passwords. Sign in once on this device with the manager password.</span></div>
+        <button class="st-btn st-btn-primary" id="fkSignInBtn" type="button">Sign in</button>`;
+      $('#fkSignInBtn').addEventListener('click', ()=> fkPromptSignIn(null));
+      return;
+    }
+    const st = fkStatus, locked = !!(st ? st.locked : fkInfo.locked);
+    const me = (FarmKey.get(ghFarmName, 'manager') || {}).deviceId;
+    const devs = st ? st.devices.filter(d=> d.current).sort((a,b)=> (a.role === b.role ? 0 : a.role === 'manager' ? -1 : 1) || (b.seen || 0) - (a.seen || 0)) : [];
+    const devRows = devs.map(d=>{
+      const nm = d.name || (d.role === 'manager' ? 'Manager' : 'Worker');
+      const seen = d.seen ? 'Last used ' + formatTimeAgo(new Date(d.seen)) : '';
+      return `<div class="fk-dev"><span class="access-avatar" style="background:${colorForAssignee(nm)}">${escapeHtml(initialsForAssignee(nm))}</span>
+        <span class="access-text"><span class="access-name">${escapeHtml(nm)} <span class="fk-role${d.role === 'manager' ? ' m' : ''}">${d.role === 'manager' ? 'Manager' : 'Worker'}</span></span><span class="access-sub">${escapeHtml([d.device, d.deviceId === me ? 'This device' : seen].filter(Boolean).join(' · '))}</span></span>
+        ${d.deviceId === me ? '' : `<button type="button" class="access-remove" data-fk-revoke="${escapeHtmlAttr(d.deviceId)}">Sign out</button>`}</div>`;
+    }).join('');
+    panel.innerHTML = `<div class="st-row-text"><span class="st-label">Passwords</span>
+        <span class="fk-state"><span class="fk-chip on">On</span>${locked ? '<span class="fk-chip lock">Locked</span>' : '<span class="fk-chip">Not locked</span>'}</span>
+        <span class="st-hint">${locked ? 'Only signed-in devices can sync.' : 'Devices that haven\'t signed in can still sync. Lock the farm once every device below has signed in.'}</span></div>
+      <div class="fk-sub"><span class="st-label">Signed-in devices <span class="sb-count">${devs.length || ''}</span></span>${devRows || '<p class="st-hint">Loading…</p>'}</div>
+      <div class="fk-sub"><label class="st-label" for="fkNewFarm">Change farm password</label><span class="st-hint">Workers already signed in stay connected.</span>
+        <div class="st-input-row">${fkPwField('fkNewFarm', 'New farm password')}<button class="st-btn st-btn-primary" id="fkFarmBtn" type="button">Change</button></div></div>
+      <div class="fk-sub"><label class="st-label" for="fkNewMgr">Change manager password</label><span class="st-hint">Your other devices will need to sign in again.</span>
+        <div class="st-input-row">${fkPwField('fkNewMgr', 'New manager password')}<button class="st-btn st-btn-primary" id="fkMgrBtn" type="button">Change</button></div></div>
+      <div class="fk-sub fk-actions">
+        <button class="st-btn ${locked ? 'st-btn-ghost' : 'st-btn-primary'}" id="fkLockBtn" type="button">${locked ? 'Unlock farm' : 'Lock farm'}</button>
+        <button class="st-btn st-btn-ghost" id="fkSignoutAllBtn" type="button">Sign out all other devices</button>
+      </div>
+      <div class="fk-sub"><span class="st-label">Cloud files</span><span class="st-hint">Puts this farm's files into a CluckWise folder and a ProdWise folder in the cloud. Safe to run any time; nothing changes for the apps.</span>
+        <div class="fk-actions"><button class="st-btn st-btn-ghost" id="fkOrganizeBtn" type="button">Organise cloud files</button></div></div>`;
+    $('#fkFarmBtn').addEventListener('click', ()=> fkChange('farmPassword', $('#fkNewFarm').value, 4));
+    $('#fkMgrBtn').addEventListener('click', ()=> fkChange('managerPassword', $('#fkNewMgr').value, 6));
+    $('#fkLockBtn').addEventListener('click', function(){ fkConfirmBtn(this, locked ? 'Tap again to unlock' : 'Tap again to lock', ()=> fkManage({ op:'lock', locked: !locked }, locked ? 'Farm unlocked.' : 'Farm locked. Only signed-in devices can sync.', locked ? 'Farm unlocked' : 'Farm locked')); });
+    $('#fkSignoutAllBtn').addEventListener('click', function(){ fkConfirmBtn(this, 'Tap again: everyone signs in again', ()=> fkManage({ op:'signoutAll' }, 'All other devices signed out.', 'All other devices signed out')); });
+    $('#fkOrganizeBtn').addEventListener('click', async function(){
+      this.disabled = true; this.textContent = 'Organising…';
+      const r = await FarmKey.action('manage', { farm: ghFarmName, op:'organize' });
+      this.disabled = false; this.textContent = 'Organise cloud files';
+      if(!(r.j && r.j.ok)){ showToast((r.j && r.j.error) || 'Could not organise. Check your connection.', true); return; }
+      if(r.j.moved) addHistory('Workers', `Cloud files organised into app folders (${r.j.moved} moved)`);
+      showToast(r.j.moved ? `${r.j.moved} file${r.j.moved === 1 ? '' : 's'} moved into the CluckWise and ProdWise folders.` : 'Already organised.');
+    });
+    panel.querySelectorAll('[data-fk-revoke]').forEach(b=> b.addEventListener('click', function(){ fkConfirmBtn(this, 'Confirm', ()=> fkManage({ op:'revoke', deviceIds:[this.dataset.fkRevoke] }, 'Device signed out.', 'A device was signed out')); }));
+  }
+  async function fkManage(body, okMsg, historyMsg){
+    const r = await FarmKey.action('manage', Object.assign({ farm: ghFarmName }, body));
+    if(!(r.j && r.j.ok)){ showToast((r.j && r.j.error) || 'Could not save. Check your connection.', true); return false; }
+    if(historyMsg) addHistory('Workers', historyMsg);
+    showToast(okMsg); fkRefresh();
+    return true;
+  }
+  async function fkChange(field, pw, min){
+    if(String(pw || '').length < min){ showToast(`Use at least ${min} characters.`, true); return; }
+    await fkManage({ op:'passwords', [field]: pw }, field === 'farmPassword' ? 'Farm password changed. Workers already signed in stay connected.' : 'Manager password changed. Your other devices will need to sign in again.', field === 'farmPassword' ? 'Farm password changed' : 'Manager password changed');
+  }
+  async function fkSetup(){
+    const mgr = $('#fkMgr').value, farm = $('#fkFarm').value, cur = $('#fkCur') ? $('#fkCur').value : '';
+    if(mgr.length < 6){ showToast('Manager password: at least 6 characters.', true); $('#fkMgr').focus(); return; }
+    if(farm.length < 4){ showToast('Farm password: at least 4 characters.', true); $('#fkFarm').focus(); return; }
+    if(mgr === farm){ showToast('Use a different manager password from the farm password.', true); return; }
+    const btn = $('#fkSetupBtn'); btn.disabled = true;
+    const deviceId = FarmKey.newDeviceId('manager');
+    const r = await FarmKey.action('setup', { farm: ghFarmName, managerPassword: mgr, farmPassword: farm, current: cur, deviceId, name: (settings.manager || 'Manager') + ' · CluckWise', device: FarmKey.deviceLabel() });
+    btn.disabled = false;
+    if(!(r.j && r.j.key)){ showToast((r.j && r.j.error) || 'Could not turn on passwords. Check your connection.', true); return; }
+    FarmKey.set(ghFarmName, 'manager', { key: r.j.key, deviceId: r.j.deviceId, role:'manager', at: Date.now() });
+    addHistory('Workers', 'Farm passwords turned on');
+    showToast('Passwords are on. Sign in once in ProdWise and on your other devices.');
+    fkRefresh();
+  }
+
   async function saveFarmPassword(){
     const pw = $('#accessPwInput').value;
     if(pw.length < 4){ showToast('Use at least 4 characters for the farm password.', true); $('#accessPwInput').focus(); return; }
@@ -9595,6 +9740,8 @@
     accessBusy = true;
     try{
       await updateAccessFile(d=>{ d.members = d.members.filter(x=> x.id !== id); });
+      // With passwords on, their phones' keys stop working straight away.
+      if(fkSignedIn()) await FarmKey.action('manage', { farm: ghFarmName, op:'revoke', deviceIds: (m.devices || []).map(d=> d.id) });
       try{ localStorage.setItem(knownMembersKey(), JSON.stringify(accessData.members.map(x=> x.id))); localStorage.setItem(knownMembersKey() + '-devices', JSON.stringify(accessData.members.flatMap(x=> x.devices.map(d=> d.id)))); }catch(e){}
       addHistory('Workers', `Removed ${m.name} from the farm`);
       showToast(`${m.name} removed${(m.devices || []).length > 1 ? ' from all ' + m.devices.length + ' devices' : ''}. They'll need the farm password to join again.`);
@@ -11013,6 +11160,7 @@
     }
   });
 
+  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
   load();
 })();
 </script>
