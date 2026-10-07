@@ -998,6 +998,8 @@
   .bm-copy-cleanout{ align-self:flex-end; border:none; background:transparent; color:var(--primary-dark); font-weight:700; font-size:12px; cursor:pointer; padding:2px 0; }
   .bm-preview{ font-size:12.5px; line-height:1.45; color:var(--ink); background:var(--secondary-soft); border-radius:10px; padding:9px 12px; }
   .bm-preview-change{ display:block; color:var(--secondary); font-weight:600; margin-top:2px; }
+  .bm-weigh-reset{ display:flex; flex-direction:column; gap:4px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .bm-weigh-btn{ align-self:flex-start; width:auto !important; padding:8px 14px !important; font-weight:700; }
   .bm-error{ font-size:12px; color:var(--danger); margin:0; }
   #addBatchBtn:disabled{ opacity:0.5; cursor:not-allowed; filter:grayscale(0.3); }
   .ac-note{ font-size:12.5px; line-height:1.45; color:var(--muted); margin:0 0 4px; }
@@ -2257,14 +2259,14 @@
   .bi-note{ margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px; background:var(--surface-soft); color:var(--muted); font-size:13px; text-align:center; }
   .bi-sec{ margin:18px 0 8px; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   .bi-table{ border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  .bi-tr{ display:grid; grid-template-columns:60px 1fr 1.3fr; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
+  .bi-tr{ display:grid; grid-template-columns:44px 64px 1.3fr 1fr; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--line); font-size:14px; color:var(--ink); }
   .bi-tr:first-child{ border-top:none; }
   .bi-th{ background:var(--surface-soft); font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:7px 12px; }
   .bi-s{ font-family:'Sora',sans-serif; font-weight:800; }
   .bi-a{ font-weight:700; }
   .bi-o{ display:flex; flex-direction:column; text-align:right; }
   .bi-o small{ font-size:12px; font-weight:700; color:var(--primary-dark); }
-  .bi-tr.done{ opacity:.55; }
+  .bi-tr.done{ opacity:.55; } .bi-b{ display:flex; flex-direction:column; font-variant-numeric:tabular-nums; } .bi-b b{ font-family:'Sora',sans-serif; font-weight:800; } .bi-b small{ font-size:11.5px; font-weight:700; color:var(--muted); }
   .bi-ev{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; margin-bottom:6px; background:var(--surface); }
   .bi-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
   .bi-ev-t{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
@@ -2982,6 +2984,10 @@
     <p id="batchFormError" class="bm-error" hidden></p>
 
     <button class="btn-app" id="addBatchBtn" style="margin-top:6px;">Add batch</button>
+    <div class="bm-weigh-reset" id="batchWeighReset" hidden>
+      <button type="button" class="btn-ghost-ai bm-weigh-btn" id="recreateWeighBtn">⚖️ Re-create weigh-ins</button>
+      <span class="bm-sub">Adds back any missing weekly weigh-in from today until each shed's clean-out. Ticked ones and your own tasks are left alone.</span>
+    </div>
   </div>
 </div>
 
@@ -3268,8 +3274,9 @@
     const t = tasks.find(x=> x.id === id); if(!t) return;
     const undoSnap = captureUndo();
     const copy = JSON.parse(JSON.stringify(t));
-    ['seriesId','linkedReportId','completedAt','doneAt','doneBy','source','dayAge'].forEach(k=> delete copy[k]);
+    ['seriesId','linkedReportId','completedAt','doneAt','doneBy','source','dayAge','batchNumber','shedNum'].forEach(k=> delete copy[k]);
     copy.id = uid(); copy.status = 'open'; copy.createdAt = Date.now();
+    copy.source = 'copy';   // the user's own task: the weigh-in planner never adopts or removes it
     copy.assignees = Array.isArray(t.assignees) ? t.assignees.slice() : [];
     // order: straight after the original, before whatever came next that day
     const sameDay = tasks.filter(x=> (x.date || null) === (t.date || null) && x.id !== t.id && (x.order||0) > (t.order||0));
@@ -4083,6 +4090,7 @@
         for(let w=1; addDaysStr(sh.placement, w*7) <= end; w++){
           const d = w*7;
           if(groups.has(String(sh.shed) + '|' + d)) continue;
+          if(opts.fromDate && addDaysStr(sh.placement, d) < opts.fromDate) continue;
           plan.add.push({ name:`Weight Shed ${sh.shed} - (Day ${d})`, date:addDaysStr(sh.placement, d), meta:{ batchNumber:b.number, shedNum:String(sh.shed), source:'auto-weight', dayAge:d } });
         }
       });
@@ -4113,14 +4121,26 @@
   function recheckWeighIns(opts, reason){
     const plan = planWeighIns(tasks, batches, opts);
     if(!plan.changes) return plan;
+    const before = new Map(tasks.map(t=> [t.id, t]));
     tasks = applyWeighInPlan(tasks, plan);
     const again = planWeighIns(tasks, batches, opts);
     if(again.changes){ tasks = applyWeighInPlan(tasks, again); console.warn('Weigh-in recheck needed a second pass', again); }
     if(plan.remove.size) reopenReportsWithoutTask();
-    addHistory('Weigh-ins checked', `${reason}: ${weighSummary(plan)}`);
+    const gone = [...plan.remove].map(id=> before.get(id)).filter(Boolean).map(t=> `${t.name}${t.date ? ' (' + formatShort(t.date) + ')' : ''}`);
+    const made = plan.add.map(a=> `${a.name} (${formatShort(a.date)})`);
+    addHistory('Weigh-ins checked', `${reason}: ${weighSummary(plan)}${gone.length ? ' — removed: ' + gone.join(', ') : ''}${made.length && made.length <= 12 ? ' — added: ' + made.join(', ') : ''}`);
     return plan;
   }
 
+  // Re-create the batch's weekly weigh-ins from today on (missing ones only)
+  function recreateWeighIns(number){
+    const b = batches.find(x=> x.number === number); if(!b) return;
+    const undoSnap = captureUndo();
+    const plan = recheckWeighIns({ full:true, batchNumber:b.number, fromDate: dateKey(new Date()) }, `Batch #${b.number}: re-create weigh-ins`);
+    if(!plan.changes){ showToast('All weigh-ins are already there — nothing to add.'); return; }
+    persist(); renderAll();
+    offerUndo(`Weigh-ins: ${weighSummary(plan)}`, undoSnap);
+  }
   // ----- Batch modal (add + edit) -----
   let batchModalEditing = null;
   function readShedRows(){
@@ -4206,6 +4226,7 @@
     batchModalEditing = b ? b.number : null;
     $('#batchModalTitle').textContent = b ? `Edit Batch #${b.number}` : 'Add batch';
     $('#addBatchBtn').textContent = b ? 'Save changes' : 'Add batch';
+    $('#batchWeighReset').hidden = !b;
     $('#batchExistingNote').style.display = 'none';
     const num = $('#batchNumberInput');
     num.value = b ? b.number : '';
@@ -8254,6 +8275,7 @@
   function buildCopiedTask(src, dateVal){
     return {
       id: uid(),
+      source: 'copy',   // a copy is the user's own task: the weigh-in planner never adopts or removes it
       name: src.name,
       icon: src.icon,
       date: dateVal || null,
@@ -9631,11 +9653,11 @@
     }
     const sheds = (x.sheds || []).filter(s=> s.placement);
     if(sheds.length){
-      h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span>Clean-out</span></div>`;
+      h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-bh" title="Birds now → after this week's pickups">Birds → after</span><span>Clean-out</span></div>`;
       sheds.forEach(s=>{
         const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
         const coLeft = biDays(x.today, co);
-        h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span><span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
+        h += `<div class="bi-tr${done ? ' done' : ''}"><span class="bi-s">${biEsc(s.name)}</span><span class="bi-a">${done ? '✓' : notYet ? '—' : 'Day ' + biDays(s.placement, x.today)}</span>${biShedBirdsCell(x, s, done)}<span class="bi-o"><b>${biFmt(co)}</b><small>${done ? 'Cleaned out' : coLeft + ' day' + (coLeft === 1 ? '' : 's') + ' left'}</small></span></div>`;
       });
       h += `</div>`;
     }
@@ -9652,21 +9674,32 @@
     }
     return h;
   }
+  // Shed row: birds now, and after the coming week's kill-sheet pickups (matched by shed number)
+  function biShedBirdsCell(x, s, done){
+    const ps = x.birds && x.birds !== 'loading' && x.birds.perShed;
+    const m = String(s.name || '').match(/\d+/); const b = ps && m ? ps[String(Number(m[0]))] : null;
+    if(!b || done) return '<span class="bi-b">—</span>';
+    return `<span class="bi-b"><b>${biInt(b.now)}</b>${b.week ? `<small title="After this week's pickups (−${biInt(b.week)})">→ ${biInt(b.after)}</small>` : '<small>no pickup</small>'}</span>`;
+  }
   function biBirdStats(sheds, today){
     let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
     // The coming week (next 7 days, the kill sheet's week): pickups entered from the kill sheet — never predicted ones
     const t0 = new Date(today + 'T00:00:00'), sun = biKey(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + 7));
     const weekDays = new Set();
-    (sheds || []).forEach(sh=>{
-      placed += Number(sh.initialPopulation) || 0;
-      mort += Number(sh.mortality) || 0;
-      (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today) picked += n; else if(d && d <= sun && n > 0){ weekPick += n; weekDays.add(d); } });
+    const perShed = {};
+    (sheds || []).forEach((sh, i)=>{
+      const sp = Number(sh.initialPopulation) || 0, sm = Number(sh.mortality) || 0; let sPick = 0, sWeek = 0;
+      placed += sp;
+      mort += sm;
+      (sh.pickups || []).forEach(p=>{ const d = p ? biNorm(p.date) : ''; const n = Number(p && p.birds) || 0; if(d && d <= today){ picked += n; sPick += n; } else if(d && d <= sun && n > 0){ weekPick += n; sWeek += n; weekDays.add(d); } });
+      const sNow = Math.max(0, sp - sm - sPick);
+      if(sp) perShed[String(sh.id != null ? sh.id : i + 1)] = { now: sNow, week: sWeek, after: Math.max(0, sNow - sWeek) };
       const u = biNorm(sh.mortalityUpdatedAt);
       if(u > updated) updated = u;
     });
     if(!placed) return null;
     const now = Math.max(0, placed - mort - picked);
-    return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort() };
+    return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort(), perShed };
   }
   // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
   function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
@@ -10089,6 +10122,7 @@
     closeOverlays();
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
   });
+  $('#recreateWeighBtn').addEventListener('click', ()=>{ if(batchModalEditing){ const n = batchModalEditing; closeOverlays(); recreateWeighIns(n); } });
   $('#closeBatchModal').addEventListener('click', closeOverlays);
   $('#closeBacklogModal').addEventListener('click', closeOverlays);
   $('#backlogSearchInput').addEventListener('input', renderBacklogModalList);
