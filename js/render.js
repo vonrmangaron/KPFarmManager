@@ -235,6 +235,7 @@ function historyRowHtml(s) {
   const sourceLabels = {
     'manual': 'Manual save',
     'auto-newbatch': 'Before New Batch',
+    'auto-sync': 'Before sync merge',
     'auto-import': 'Before Excel import',
     'auto-restore': 'Before restore'
   };

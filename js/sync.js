@@ -146,6 +146,50 @@ async function pushFarmHistory(){
   }catch(e){console.warn('Farm history push failed',e);}
 }
 function scheduleHistoryPush(){if(!syncFarmName)return;clearTimeout(historyPushTimer);historyPushTimer=setTimeout(pushFarmHistory,800);}
+// ── Three-way sync merge ──
+// Each device keeps the version it last synced (the base). When the cloud has
+// moved on, both sides' changes since that base are combined: lists merge item
+// by item (loads/sheds by id, readings/pickups by date), a field changed on one
+// side only takes that side, and a field changed on both takes this device's
+// edit. A stale device can no longer overwrite newer work wholesale.
+const SYNC_BASE_KEY='prodwise_sync_base_v1';
+let syncBase=null;
+function syncNorm(p){if(!p)return null;const c=JSON.parse(JSON.stringify(p));delete c.lastUpdated;return c;}
+function syncEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function loadSyncBase(){try{const v=JSON.parse(localStorage.getItem(SYNC_BASE_KEY)||'null');syncBase=v&&v.key===buildFileKey(syncFarmName||'')?v.data:null;}catch(e){syncBase=null;}return syncBase;}
+function saveSyncBase(data){syncBase=data;try{localStorage.setItem(SYNC_BASE_KEY,JSON.stringify({key:buildFileKey(syncFarmName||''),data}));}catch(e){}}
+// Current local state as the cloud would store it (the shape every device writes)
+function localSyncPayload(){return syncNorm(buildCloudPayload());}
+function syncIsObj(v){return v!==null&&typeof v==='object'&&!Array.isArray(v);}
+function syncArrKey(list){for(const k of ['id','date','d']){if(list.length&&list.every(x=>syncIsObj(x)&&x[k]!=null&&x[k]!==''))return k;}return null;}
+function syncMerge(base,ours,theirs){
+  if(syncEq(ours,theirs))return theirs;
+  if(base!==undefined&&base!==null){if(syncEq(ours,base))return theirs;if(syncEq(theirs,base))return ours;}
+  if(Array.isArray(ours)&&Array.isArray(theirs)){
+    const b=Array.isArray(base)?base:[];const key=syncArrKey([...ours,...theirs,...b]);
+    if(!key)return ours;
+    const kv=x=>String(x[key]);const bm=new Map(b.map(x=>[kv(x),x])),om=new Map(ours.map(x=>[kv(x),x])),tm=new Map(theirs.map(x=>[kv(x),x]));
+    const order=[...theirs.map(kv),...ours.map(kv).filter(k=>!tm.has(k))];const out=[];
+    order.forEach(k=>{const bb=bm.get(k),o=om.get(k),t=tm.get(k);
+      if(o&&t){out.push(syncMerge(bb,o,t));return;}
+      if(o){if(bb&&syncEq(o,bb))return;out.push(o);return;}       // they deleted it (we hadn't changed it)
+      if(t){if(bb&&syncEq(t,bb))return;out.push(t);}               // we deleted it (they hadn't changed it)
+    });
+    if(key!=='id')out.sort((x,y)=>String(x[key]).localeCompare(String(y[key])));
+    return out;
+  }
+  if(syncIsObj(ours)&&syncIsObj(theirs)){
+    const b=syncIsObj(base)?base:{};const out={};
+    new Set([...Object.keys(ours),...Object.keys(theirs)]).forEach(k=>{
+      const inO=k in ours,inT=k in theirs;
+      if(inO&&inT){out[k]=syncMerge(b[k],ours[k],theirs[k]);return;}
+      if(inO){if(k in b&&syncEq(ours[k],b[k]))return;out[k]=ours[k];return;}
+      if(k in b&&syncEq(theirs[k],b[k]))return;out[k]=theirs[k];
+    });
+    return out;
+  }
+  return ours;   // same value changed on both devices: this device's edit wins
+}
 async function pullFromCloud(silent){
   if(!syncFarmName)return false;
   syncState='pulling';renderSettingsDrawerBody();
@@ -153,11 +197,23 @@ async function pullFromCloud(silent){
   if(!r.ok){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Could not sync — check your connection.',true);return false;}
   if(r.notFound){syncState='idle';renderSettingsDrawerBody();await pushToCloud();if(!silent)showToast('Connected — created a new file for this farm.');return true;}
   syncSha=r.sha||null;
-  const ok=applyCloudPayload(r.data);
+  if(r.data&&r.data.app&&r.data.app!==SYNC_APP_TAG){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
+  // Local changes not yet in the cloud? Merge them in rather than lose them.
+  const base=syncBase||loadSyncBase();const ours=farmData?localSyncPayload():null;const theirs=syncNorm(r.data);
+  const localEdits=!!ours&&(base?!syncEq(ours,base):pushPending);
+  let toApply=r.data,needPush=false;
+  if(localEdits&&!syncEq(ours,theirs)){
+    try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
+    toApply=syncMerge(base||undefined,ours,theirs);needPush=!syncEq(toApply,theirs);
+  }
+  const ok=applyCloudPayload(toApply);
   if(!ok){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
+  saveSyncBase(needPush?theirs:localSyncPayload());
+  if(needPush){pushPending=true;}
   syncLastSyncAt=Date.now();saveSyncState();
   syncState='idle';renderSettingsDrawerBody();render();
   pullFarmHistory();
+  if(needPush)runScheduledPush();
   if(!silent)showToast('Synced ✓');
   return true;
 }
@@ -165,11 +221,25 @@ async function pushToCloud(){
   if(!syncFarmName)return false;
   syncState='pushing';renderSettingsDrawerBody();
   try{
-    const body={sha:syncSha,data:buildCloudPayload()};
-    const res=await fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(res.status===409){const fresh=await fetch(buildSyncUrl(syncFarmName)).then(r=>r.json()).catch(()=>null);if(fresh&&fresh.sha){syncSha=fresh.sha;mergeCloudFarmHistory(fresh.data&&fresh.data.predictions);const retry=await fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:syncSha,data:buildCloudPayload()})});if(!retry.ok)throw new Error('Sync retry failed');const rr=await retry.json();if(rr&&rr.sha)syncSha=rr.sha;}else throw new Error('Could not refresh cloud state');}
-    else if(!res.ok)throw new Error('Sync server responded '+res.status);
-    else{const result=await res.json();if(result&&result.sha)syncSha=result.sha;}
+    const put=(sha,data)=>fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:{...data,lastUpdated:new Date().toISOString()}})});
+    let data=localSyncPayload();
+    let res=await put(syncSha,data);
+    for(let tries=0;res.status===409&&tries<3;tries++){
+      // The cloud changed since this device last synced (another device saved):
+      // merge both sides' changes, show them here, then save the merge.
+      const fresh=await fetch(buildSyncUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
+      if(!fresh||!fresh.sha)throw new Error('Sync conflict: could not read the cloud');
+      syncSha=fresh.sha;const theirs=syncNorm(fresh.data);
+      const base=syncBase||loadSyncBase();
+      try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
+      const merged=syncMerge(base||undefined,localSyncPayload(),theirs);
+      applyCloudPayload(merged);data=localSyncPayload();
+      try{render();}catch(e){}
+      res=await put(syncSha,data);
+    }
+    if(!res.ok)throw new Error('Sync server responded '+res.status);
+    const result=await res.json().catch(()=>null);if(result&&result.sha)syncSha=result.sha;
+    saveSyncBase(data);
     syncLastSyncAt=Date.now();saveSyncState();
     syncState='idle';renderSettingsDrawerBody();
     return true;

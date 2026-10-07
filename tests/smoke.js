@@ -248,5 +248,70 @@ const kr=run('kill sheet display',`(()=>{
 })()`);
 if(kr){ok(kr.al===1,'reminder only for the past pickup still on est. weight');ok(kr.kill,'pickup day shows the kill-sheet weight');ok(kr.est,'estimated pickup shows Est');}
 
+console.log('17. Sync merge: a stale device never overwrites newer work');
+const mg=run('sync merge',`(()=>{
+  const base={farmData:{sheds:[{id:1,pickups:[{date:'2026-10-02',birds:4230}]}]},siloData:{1:{readings:[{date:'2026-10-06',silo1Rings:3}]}},farmLoads:[{id:'L1',plannedKg:60000},{id:'L3',plannedKg:30000}],predictions:{starterSilo:{1:null,2:null},siloConfidencePct:90,projectionLog:[{d:'2026-10-06',feed:1}]}};
+  const theirs=JSON.parse(JSON.stringify(base));   // laptop last night
+  theirs.siloData[1].readings[0].open=[2];theirs.predictions.starterSilo={1:2,2:3};theirs.farmLoads[0].siloFor={1:[3,1]};theirs.farmLoads.push({id:'L2',plannedKg:60000});theirs.predictions.siloConfidencePct=95;
+  const ours=JSON.parse(JSON.stringify(base));     // office tab left open since yesterday
+  ours.predictions.projectionLog.push({d:'2026-10-07',feed:2});ours.farmData.sheds[0].pickups.push({date:'2026-10-08',birds:7000,weightEstimated:true});ours.farmLoads=ours.farmLoads.filter(l=>l.id!=='L3');ours.predictions.siloConfidencePct=85;
+  const m=syncMerge(base,ours,theirs);
+  const noBase=syncMerge(undefined,ours,theirs);
+  return {open:m.siloData[1].readings[0].open,starter:m.predictions.starterSilo,siloFor:m.farmLoads.find(l=>l.id==='L1').siloFor,l2:!!m.farmLoads.find(l=>l.id==='L2'),l3:!!m.farmLoads.find(l=>l.id==='L3'),
+    log:m.predictions.projectionLog.map(x=>x.d).join(','),pick:m.farmData.sheds[0].pickups.length,conf:m.predictions.siloConfidencePct,
+    nbOpen:noBase.siloData[1].readings[0].open,nbL2:!!noBase.farmLoads.find(l=>l.id==='L2'),same:syncEq(syncMerge(base,base,theirs),theirs)};
+})()`);
+if(mg){ok(mg.open&&mg.open[0]===2,'laptop open-silo marks kept');ok(mg.starter[1]===2&&mg.starter[2]===3,'laptop starter silos kept');ok(mg.siloFor&&mg.siloFor[1]&&mg.siloFor[1][0]===3,'laptop silo-per-load kept');
+  ok(mg.l2,'laptop new load kept');ok(!mg.l3,'office deletion kept');ok(mg.log==='2026-10-06,2026-10-07','office projection log kept');ok(mg.pick===2,'office new pickup kept');
+  ok(mg.conf===85,'same field on both: this device wins');ok(mg.nbOpen&&mg.nbL2,'no saved base: union, nothing lost');ok(mg.same,'no local edits: cloud taken as is');}
+
+// End-to-end: stale office tab pushes into a cloud the laptop has changed (fake cloud)
+const pending=[];
+pending.push((async()=>{
+  const r=await vm.runInContext(`(async()=>{
+    const realFetch=fetch;syncFarmName='testfarm';syncConnectedAt=1;
+    const base=localSyncPayload();saveSyncBase(base);syncSha='sha-old';
+    const theirs=JSON.parse(JSON.stringify(base));theirs.predictions.starterSilo={1:2,2:null,3:null,4:null};theirs.farmLoads=(theirs.farmLoads||[]).concat([{id:'LAPTOP',date:'2026-10-20',feedType:'finisher',plannedKg:60000,splitKg:{1:60000,2:0,3:0,4:0}}]);
+    predState.siloConfidencePct=85;   // office's own edit
+    let putBody=null;const calls=[];
+    fetch=async(url,opt)=>{calls.push((opt&&opt.method)||'GET');
+      if(opt&&opt.method==='PUT'){const b=JSON.parse(opt.body);if(b.sha==='sha-old')return {status:409,ok:false,json:async()=>({})};putBody=b;return {status:200,ok:true,json:async()=>({sha:'sha-3'})};}
+      return {status:200,ok:true,json:async()=>({sha:'sha-new',data:theirs})};};
+    const okPush=await pushToCloud();fetch=realFetch;
+    const d=putBody&&putBody.data;
+    const out={okPush,calls:calls.join(','),starter:d&&d.predictions.starterSilo[1],laptopLoad:!!(d&&d.farmLoads.find(l=>l.id==='LAPTOP')),conf:d&&d.predictions.siloConfidencePct,localSeesLaptop:!!farmLoads.find(l=>l.id==='LAPTOP'),sha:syncSha};
+    farmLoads=farmLoads.filter(l=>l.id!=='LAPTOP');predState.starterSilo={1:null,2:null,3:null,4:null};syncFarmName=null;syncConnectedAt=null;
+    return out;
+  })()`,ctx);
+  console.log('18. Stale tab pushes after another device saved (fake cloud)');
+  ok(r.okPush&&r.calls==='PUT,GET,PUT','conflict detected, cloud re-read, merged save');
+  ok(r.starter===2&&r.laptopLoad,"other device's starter silo and new load survive");ok(r.conf===85,"this device's own edit saved too");
+  ok(r.localSeesLaptop,"this device now shows the other device's changes");ok(r.sha==='sha-3','new cloud version recorded');
+})().catch(e=>{failed++;console.log('  ✗ sync end-to-end:',e.message);}));
+
+pending.push(pending[0].then(async()=>{
+  const r=await vm.runInContext(`(async()=>{
+    const realFetch=fetch;syncFarmName='testfarm';syncConnectedAt=1;
+    const base=localSyncPayload();saveSyncBase(base);
+    const theirs=JSON.parse(JSON.stringify(base));theirs.predictions.starterSilo={1:3,2:null,3:null,4:null};
+    predState.safetyDays=2;                      // edited here, not saved yet
+    let pushed=null;
+    fetch=async(url,opt)=>{if(opt&&opt.method==='PUT'){pushed=JSON.parse(opt.body).data;return {status:200,ok:true,json:async()=>({sha:'s2'})};}return {status:200,ok:true,json:async()=>({sha:'s1',data:theirs})};};
+    await pullFromCloud(true);for(let i=0;i<50;i++)await Promise.resolve();
+    const a={starter:predState.starterSilo[1],safety:predState.safetyDays,pushedBoth:!!pushed&&pushed.predictions.starterSilo[1]===3&&pushed.predictions.safetyDays===2};
+    // no local edits: plain pull, nothing pushed
+    pushed=null;const theirs2=JSON.parse(JSON.stringify(localSyncPayload()));theirs2.predictions.starterSilo={1:1,2:null,3:null,4:null};
+    fetch=async(url,opt)=>{if(opt&&opt.method==='PUT'){pushed=JSON.parse(opt.body).data;return {status:200,ok:true,json:async()=>({sha:'s4'})};}return {status:200,ok:true,json:async()=>({sha:'s3',data:theirs2})};};
+    await pullFromCloud(true);
+    a.plain=predState.starterSilo[1]===1&&!pushed;
+    fetch=realFetch;predState.starterSilo={1:null,2:null,3:null,4:null};predState.safetyDays=1;syncFarmName=null;syncConnectedAt=null;
+    return a;
+  })()`,ctx);
+  console.log('19. Pull keeps unsaved local edits and takes the rest from the cloud');
+  ok(r.starter===3,'cloud change applied');ok(r.safety===2,'unsaved local edit kept');ok(r.pushedBoth,'merged result saved back to the cloud');ok(r.plain,'no local edits: cloud taken, nothing pushed');
+}).catch(e=>{failed++;console.log('  ✗ sync pull:',e.message);}));
+
+Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);
+});

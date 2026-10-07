@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v133';
+const CACHE_NAME = 'prodwise-v134';
 const CORE_ASSETS = [
   './',
   './index.html',

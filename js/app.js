@@ -405,7 +405,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     if(document.visibilityState==='hidden'){flushPendingPush();}
     else if(document.visibilityState==='visible'){
       if(syncFarmName&&syncConnectedAt){
-        if(syncLastSyncAt){if(pushPending)await runScheduledPush();pullFromCloud(true).catch(()=>{});}
+        if(syncLastSyncAt){await pullFromCloud(true).catch(()=>{});if(pushPending)runScheduledPush();}
         else{await pushToCloud().catch(()=>{});}
       }
     }
