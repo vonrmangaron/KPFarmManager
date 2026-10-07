@@ -2394,10 +2394,11 @@ function biInt(n){ return Math.round(n).toLocaleString(); }
 // x = { number, start, end, today, sheds:[{name, placement, cleanout}], birds:'loading'|null|{placed,now,picked,mort,pct,updated}, events:'loading'|null|[{name,date,color,batchNumber}] }
 function batchInfoHtml(x){
   const total = Math.max(1, biDays(x.start, x.end));
-  const day = Math.max(0, biDays(x.start, x.today));
+  const ended = x.today > x.end;
+    const day = Math.min(total, Math.max(0, biDays(x.start, x.today)));
   const left = Math.max(0, biDays(x.today, x.end));
   const pct = Math.min(100, Math.round(day / total * 100));
-  let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
+  let h = `<div class="bi-hero"><div class="bi-hero-top"><span class="bi-chip">Batch #${biEsc(x.number)}</span><span class="bi-left">${ended ? 'Ended' : left ? left + ' day' + (left === 1 ? '' : 's') + ' left' : 'Last day'}</span></div>
     <div class="bi-day">Day ${day}<small> of ${total}</small></div>
     <div class="bi-bar"><span style="width:${pct}%"></span></div>
     <div class="bi-dates"><span>Placed ${biFmt(x.start, { day:'numeric', month:'short', year:'numeric' })}</span><span>Clean-out ${biFmt(x.end, { day:'numeric', month:'short', year:'numeric' })}</span></div></div>`;
