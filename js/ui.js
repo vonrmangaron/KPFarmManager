@@ -2413,7 +2413,7 @@ function batchInfoHtml(x){
   }
   const sheds = (x.sheds || []).filter(s=> s.placement);
   if(sheds.length){
-    h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-bh" title="Birds now → after this week's pickups">Birds → after</span><span>Clean-out</span></div>`;
+    h += `<div class="bi-sec">Shed age &amp; clean-out</div><div class="bi-table"><div class="bi-tr bi-th"><span>Shed</span><span>Age</span><span class="bi-num">Now</span><span class="bi-num" title="Birds left once this week's pickups (next 7 days, from the kill sheet) are done"><span class="bi-lg">After this week</span><span class="bi-sm">After</span></span><span class="bi-num">Clean-out</span></div>`;
     sheds.forEach(s=>{
       const co = s.cleanout || x.end, done = x.today > co, notYet = x.today < s.placement;
       const coLeft = biDays(x.today, co);
@@ -2438,8 +2438,8 @@ function batchInfoHtml(x){
 function biShedBirdsCell(x, s, done){
   const ps = x.birds && x.birds !== 'loading' && x.birds.perShed;
   const m = String(s.name || '').match(/\d+/); const b = ps && m ? ps[String(Number(m[0]))] : null;
-  if(!b || done) return '<span class="bi-b">—</span>';
-  return `<span class="bi-b"><b>${biInt(b.now)}</b>${b.week ? `<small title="After this week's pickups (−${biInt(b.week)})">→ ${biInt(b.after)}</small>` : '<small>no pickup</small>'}</span>`;
+  if(!b || done) return '<span class="bi-num bi-b">—</span><span class="bi-num bi-b">—</span>';
+  return `<span class="bi-num bi-b"><b>${biInt(b.now)}</b></span><span class="bi-num bi-b${b.week ? ' has-pick' : ''}"><b>${biInt(b.after)}</b>${b.week ? `<small>−${biInt(b.week)}</small>` : ''}</span>`;
 }
 function biBirdStats(sheds, today){
   let placed = 0, mort = 0, picked = 0, updated = '', weekPick = 0;
