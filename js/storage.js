@@ -29,7 +29,7 @@ function migrateMortalityAnchors(){
   if(changed)saveState();return changed;
 }
 function saveShedViews(){try{localStorage.setItem(VIEW_KEY,JSON.stringify(shedViewByGroup));}catch(e){}}
-function loadShedViews(){try{const raw=localStorage.getItem(VIEW_KEY);if(!raw)return null;const v=JSON.parse(raw);if(!v||typeof v!=='object')return null;const out={...DEFAULT_VIEWS};[1,2,3,4].forEach(g=>{if(['shed1','shed2','both','planner'].includes(v[g]))out[g]=v[g];});return out;}catch(e){return null;}}
+function loadShedViews(){try{const raw=localStorage.getItem(VIEW_KEY);if(!raw)return null;const v=JSON.parse(raw);if(!v||typeof v!=='object')return null;const out={...DEFAULT_VIEWS};[1,2,3,4].forEach(g=>{if(['overview','planner','pickups','growth','setup'].includes(v[g]))out[g]=v[g];});return out;}catch(e){return null;}}
 function isFreshSession(){try{return !sessionStorage.getItem(SESSION_KEY);}catch(e){return false;}}
 function markSessionActive(){try{sessionStorage.setItem(SESSION_KEY,'1');}catch(e){}}
 function initShedViews(){if(isFreshSession()){markSessionActive();shedViewByGroup={...DEFAULT_VIEWS};saveShedViews();return;}const saved=loadShedViews();shedViewByGroup=saved||{...DEFAULT_VIEWS};}

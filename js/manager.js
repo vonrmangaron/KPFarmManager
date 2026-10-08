@@ -108,7 +108,7 @@ function renderHomeView(){
       <div class="mgr-silos"><span class="mgr-k">Silos run low (with booked loads)</span>${siloRows}</div>
       <div class="mgr-actions">
         <button type="button" class="mgr-btn primary" data-mgr-loads>Feed loads</button>
-        <button type="button" class="mgr-btn" data-tab="g${firstLow?firstLow.g:1}" title="Opens the pair's feed plan: tap a day to add a test delivery">Test a delivery${firstLow?` · ${escapeHtml(pairLabel(firstLow.g))}`:''}</button>
+        <button type="button" class="mgr-btn" data-mgr-feed="${firstLow?firstLow.g:1}" title="Opens the pair's feed plan: tap a day to add a test delivery">Test a delivery${firstLow?` · ${escapeHtml(pairLabel(firstLow.g))}`:''}</button>
       </div>
     </section>`;
   const weekHtml=`<section class="mgr-card mgr-week">
@@ -260,3 +260,86 @@ function siloSettingsLineHtml(){
   const conf=Math.round(siloConfidence()*100),safety=siloSafetyDays();
   return `<div class="silo-set-line">Reading accuracy <b>${conf}%</b> · safety stock <b>${safety} day${safety===1?'':'s'}</b> · trucks <b>${deliveryTimingEarly()?'early morning':'during the day'}</b><button type="button" class="silo-set-link" data-open-farmsettings>Change in Farm settings ›</button></div>`;
 }
+
+// ── One page per pair (Sheds + Predictions combined, 2026-10) ──────────
+// Tabs by job: Overview · Feed & silo · Pickups · Growth · Setup. Feed & silo
+// is the existing planner; Pickups, Growth and Setup reuse the prediction
+// card's own pieces, so every edit works exactly as before.
+const PAIR_TABS=[['overview','Overview'],['planner','Feed & silo'],['pickups','Pickups'],['growth','Growth'],['setup','Setup']];
+function pairTabsHtml(g,view){
+  return `<nav class="pair-tabs" aria-label="${escapeAttr(pairLabel(g))} sections">${PAIR_TABS.map(([v,l])=>`<button type="button" class="pair-tab${v===view?' active':''}" data-shedview="${v}" data-group="${g}" aria-pressed="${v===view}">${escapeHtml(l)}</button>`).join('')}</nav>`;
+}
+// Shed inputs, rarely changed (from the old Sheds page card)
+function shedSetupHtml(shed){
+  const idx=shed.id-1,chickW=shedChickWeight(shed),fp=finalPickupOf(shed);
+  const row=(id,label,input)=>`<div class="field-row"><label for="${id}">${label}</label>${input}</div>`;
+  return `<div class="panel pair-setup"><h4>Shed setup</h4>
+    ${row(`setPlace_${idx}`,'Placement date',`<input id="setPlace_${idx}" type="date" value="${iso(shed.placementDate)}" data-shed="${idx}" data-field="placementDate" />`)}
+    ${row(`setPop_${idx}`,'Birds placed',`<input id="setPop_${idx}" type="number" min="0" value="${shed.initialPopulation}" data-shed="${idx}" data-field="initialPopulation" />`)}
+    ${row(`setChick_${idx}`,'Chick weight (g)',`<input id="setChick_${idx}" type="number" step="0.1" min="30" max="80" value="${Math.round(chickW*1000)}" data-shed="${idx}" data-field="chickWeightGrams" />`)}
+    ${row(`setFeed_${idx}`,'Feed intake (% of Ross)',`<input id="setFeed_${idx}" type="number" step="1" min="50" max="150" value="${shed.feedAdjustPct!=null?shed.feedAdjustPct:''}" placeholder="100 = standard" data-shed="${idx}" data-field="feedAdjustPct" title="Daily feed per bird as a % of the Ross 308 intake. Leave empty for the standard (100%)." />`)}
+    ${row(`setClean_${idx}`,'Clean-out date',`<input id="setClean_${idx}" type="date" value="${iso(shed.cleanoutDate)}" data-shed="${idx}" data-field="cleanoutDate" ${fp?'title="Set automatically from the final pickup"':''} />`)}
+  </div>`;
+}
+function pairGrowthChip(shed,today){
+  const age=ageInDays(shed,today);if(age<=0)return '';
+  const f=forecastWeightModeAware(shed,today);if(!f||f.kg==null)return '';
+  const dv=daysVsTarget(age,f.kg);if(dv==null)return '';
+  const sev=daysBehindSeverity(dv);
+  const txt=Math.abs(dv)<0.5?'On standard':dv>0?`${dv.toFixed(1)} days ahead`:`${(-dv).toFixed(1)} days behind`;
+  return `<span class="pair-chip ${sev}" title="Growth vs the Ross 308 standard">${txt}</span>`;
+}
+function pairOverviewHtml(g){
+  const today=mgrToday(),sheds=shedsForGroup(g).filter(s=>s.placementDate);
+  if(!sheds.length)return `<div class="empty-card">${pairLabel(g)} has no birds yet.</div>`;
+  const gp=computeGroupPredictions(g);
+  const result=gp&&gp.hasData?`<section class="mgr-card pair-result"><div class="pair-result-k"><span class="mgr-k">Pair result</span><span class="mgr-sub">projected at clean-out</span></div>
+      <div><span class="mgr-lbl">cFCR</span><b class="pr-big">${gp.cfcr.toFixed(3)}</b></div>
+      <div><span class="mgr-lbl">FCR</span><b>${gp.fcr.toFixed(3)}</b></div>
+      <div><span class="mgr-lbl">Average weight</span><b>${gp.avgWeight.toFixed(2)} kg</b></div>
+      <div><span class="mgr-lbl">Livability</span><b>${gp.livability.toFixed(1)}%</b></div>
+      <div><span class="mgr-lbl">PIF</span><b>${Math.round(gp.pif)}</b></div></section>`:'';
+  const card=s=>{
+    const idx=s.id-1,age=ageInDays(s,today),live=Math.max(0,liveAtStartOfDay(s,today));
+    const done=(s.pickups||[]).filter(p=>p.date&&dateOnly(p.date)<=today&&!p.weightEstimated&&Number(p.birds)>0&&Number(p.totalWeightKg)>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    const last=done[done.length-1];
+    const coming=mgrComingPickups(s);
+    const finalP=coming.length?coming[coming.length-1]:null;
+    const next=coming.length>1?coming[0]:null;
+    const row=(k,v)=>`<div class="pair-row"><span>${k}</span><b>${v}</b></div>`;
+    return `<section class="mgr-card pair-shed">
+      <div class="pair-shed-head"><span class="mgr-title">Shed ${s.id}</span>${pairGrowthChip(s,today)}</div>
+      <div class="pair-trio">
+        <div class="pair-tile"><span>Age</span><b>${age} d</b></div>
+        <div class="pair-tile"><span>Birds now</span><b>${live.toLocaleString('en-US')}</b></div>
+        <label class="pair-tile" for="ovMort_${idx}"><span>Mortality</span><input id="ovMort_${idx}" type="number" min="0" inputmode="numeric" value="${Number(s.mortality)||0}" data-shed="${idx}" data-field="mortality" aria-label="Shed ${s.id} mortality"></label>
+      </div>
+      <div class="pair-rows">
+        ${row('Last kill sheet',last?`${(last.totalWeightKg/last.birds).toFixed(2)} kg · ${escapeHtml(fmtShortNoYear(last.date))}, day ${pickupAge(s,last)}`:'None yet')}
+        ${row('Next pickup',next?`${escapeHtml(fmtShortNoYear(next.date))} · ${next.birds.toLocaleString('en-US')} birds`:'—')}
+        ${row(finalP&&finalP.planned?'Final pickup (plan)':'Last pickup',finalP?`${escapeHtml(fmtShortNoYear(finalP.date))} · ${finalP.birds.toLocaleString('en-US')} birds`:'Not planned yet')}
+        ${row('Clean-out',s.cleanoutDate?`${escapeHtml(fmtShortNoYear(s.cleanoutDate))} · day ${ageInDays(s,dateOnly(s.cleanoutDate))}`:'Not set')}
+      </div>
+    </section>`;
+  };
+  const silo=mgrSiloOutlook().find(x=>x.g===g);
+  const nextLoad=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[g])>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date))[0];
+  const low=silo&&silo.dep&&silo.days<=10;
+  const feed=`<section class="mgr-card mgr-feed pair-feed">
+      <div class="mgr-feed-head"><span class="mgr-title">Feed for ${escapeHtml(pairLabel(g))}</span><button type="button" class="mgr-link" data-shedview="planner" data-group="${g}">Feed &amp; silo ›</button></div>
+      <div class="mgr-tiles">
+        <div class="mgr-tile"><span>In silos</span><b>${silo&&silo.stock!=null?mgrT(silo.stock):'—'}</b><em>${silo&&silo.reading?(silo.readAge===0?'read today':`read ${escapeHtml(fmtShortNoYear(silo.reading.date))}`):'no reading yet'}</em></div>
+        <div class="mgr-tile${low?' low':''}"><span>Runs low</span><b>${silo&&silo.dep?escapeHtml(mgrWhen(silo.dep)):'After clean-out'}</b>${silo&&silo.dep?`<em>${silo.days>1?`in ${silo.days} days`:''}</em>`:''}</div>
+        <div class="mgr-tile"><span>Next load</span><b>${nextLoad?escapeHtml(mgrWhen(dateOnly(nextLoad.date))):'None booked'}</b>${nextLoad?`<em>${mgrT(nextLoad.splitKg[g])}${nextLoad.feedType?' '+escapeHtml(nextLoad.feedType):''}</em>`:''}</div>
+      </div>
+      <div class="mgr-actions"><button type="button" class="mgr-btn primary" data-mgr-silo>Record silo reading</button><button type="button" class="mgr-btn" data-shedview="planner" data-group="${g}">Test a delivery</button></div>
+    </section>`;
+  // This week for the pair: its loads and its sheds' pickups
+  const end=addDays(today,6),days=new Map();const day=d=>{const k=iso(d);if(!days.has(k))days.set(k,{date:d,parts:[]});return days.get(k);};
+  farmLoads.forEach(l=>{if(!l.date)return;const d=dateOnly(l.date),kg=Number(l.splitKg&&l.splitKg[g])||0;if(d<today||d>end||!kg)return;day(d).parts.push(`Feed ${mgrT(kg)}${l.feedType?' '+l.feedType:''}`);});
+  sheds.forEach(s=>(s.pickups||[]).concat(s.predictedPickups||[]).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date);if(d<today||d>end)return;day(d).parts.push(`Pickup Shed ${s.id} · ${(Number(p.birds)||0).toLocaleString('en-US')}`);}));
+  const week=[...days.values()].sort((a,b)=>a.date-b.date);
+  const weekHtml=`<section class="mgr-card mgr-week"><span class="mgr-k">This week · ${escapeHtml(pairLabel(g))}</span>${week.length?week.map(w=>`<div class="mgr-week-row"><span class="mgr-week-day">${escapeHtml(mgrWhen(w.date))}</span><span>${escapeHtml([...new Set(w.parts)].join(' · '))}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups this week.</p>'}</section>`;
+  return `<div class="pair-overview">${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
+}
+document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);activeTab='g'+g;shedViewByGroup[g]='planner';saveShedViews();render();}});

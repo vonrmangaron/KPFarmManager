@@ -1170,11 +1170,13 @@ function groupViewHtml(g){
   const mortRate=init>0?(mort/init)*100:0;
   const feedToday=groupFeedToday(sheds,today);
   const grad=g===1?'linear-gradient(135deg,#E0A339,#A8721F)':g===2?'linear-gradient(135deg,#B08463,#5E2E22)':g===3?'linear-gradient(135deg,#C9774A,#8F4A28)':'linear-gradient(135deg,#A89055,#6E5A32)';
-  const view=shedViewByGroup[g]||'planner';let contentHtml='';
+  let view=shedViewByGroup[g]||'overview';if(!['overview','planner','pickups','growth','setup'].includes(view))view='overview';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
+  else if(view==='overview')contentHtml=pairOverviewHtml(g);
+  else if(view==='pickups'||view==='growth'||view==='setup'){const both=sheds.length>1;contentHtml=`<div class="pred-grid${both?' compare':''} pair-part-${view}">${sheds.map(s=>renderPredictionsShedCard(s,g,view)).join('')}</div>`;}
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=pairSwitchHtml(g,'sheds');
-  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${shedTabsHtml(g,view,sheds)}${contentHtml}</div>`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${pairTabsHtml(g,view)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
@@ -2200,7 +2202,7 @@ function shedCleanoutInfoInner(shed,today){
   return {endDate,endSrc,cleanAge:daysBetween(shed.placementDate,endDate),daysToEnd:daysBetween(today,endDate),
     finalBirds,finalKg,bandPct,birdsAll,totalKgAll,avgAll:birdsAll>0?totalKgAll/birdsAll:0,pickupCount:det.length+(remaining>0?1:0)};
 }
-function renderPredictionsShedCard(shed,group){
+function renderPredictionsShedCard(shed,group,part){
   const pred=computePredictions(shed,group);
   const grp=computeGroupPredictions(group);
   const groupSheds=shedsForGroup(group);
@@ -2271,6 +2273,13 @@ function renderPredictionsShedCard(shed,group){
   const confidenceHtml=(groupHasData&&grp&&grp.hasData)?`<div class="pred-confidence"><span style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Pair confidence</span><div class="bar"><div class="bar-fill ${groupConf.cls}" style="width:${grp.confidence}%"></div></div><span class="pct" style="color:${groupConf.cls==='low'?'var(--danger)':(groupConf.cls==='medium'?'var(--primary-dark)':'var(--success)')};">${grp.confidence}%</span><span style="font-size:11px;color:var(--muted);">${groupConf.label}</span></div>`:'';
   const daysBehindHtml=renderDaysBehind(shed);
   const dailyPerfHtml=renderDailyPerformance(shed);
+  if(part){
+    const head=`<div class="pred-shed-head"><h3>Shed ${shed.id}</h3><div style="display:flex;gap:6px;flex-wrap:wrap;"><span class="tag muted">Age ${pred.currentAge}d</span><span class="tag amber">Live ${pred.liveNow.toLocaleString()}</span></div></div>`;
+    const body=part==='growth'?`${curvePanelHtml}${daysBehindHtml}${forecastDayBarHtml()}${dailyPerfHtml}`
+      :part==='pickups'?`<div class="pickups-block">${pickupHeaderHtml}${pickupTableHtml}</div>${planBlockHtml}`
+      :`${shedSetupHtml(shed)}${rateBarHtml}`;
+    return `<article class="pred-shed-card" id="pred-shed-card-${shed.id}">${head}<div class="pred-shed-body">${body}</div></article>`;
+  }
   return `<article class="pred-shed-card" id="pred-shed-card-${shed.id}"><div class="pred-shed-head"><h3>🏠 Shed ${shed.id}</h3><div style="display:flex;gap:6px;flex-wrap:wrap;"><span class="tag muted">Age ${pred.currentAge}d</span><span class="tag amber">Live ${pred.liveNow.toLocaleString()}</span>${pred.gompertzFit?`<span class="tag green">AI curve</span>`:''}${realPickupCount>0?`<span class="tag green">${realPickupCount} pickup${realPickupCount===1?'':'s'}</span>`:''}</div></div><div class="pred-shed-body">${snapshotHtml}${rateBarHtml}${curvePanelHtml}${daysBehindHtml}${forecastDayBarHtml()}${dailyPerfHtml}<div class="pickups-block" style="margin-top:14px;">${pickupHeaderHtml}${pickupTableHtml}</div>${planBlockHtml}${estimatesHtml}${confidenceHtml}</div></article>`;
 }
 function closeAllPickupActionsMenus(exceptWrap){document.querySelectorAll('.pickup-actions.open').forEach(el=>{if(el!==exceptWrap)el.classList.remove('open');});}

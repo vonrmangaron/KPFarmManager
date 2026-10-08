@@ -4,7 +4,7 @@ const DEFAULT_CHICK_WEIGHT_KG=0.044,MIN_CHICK_WEIGHT_KG=0.030,MAX_CHICK_WEIGHT_K
 const GOMPERTZ_K_MIN=0.02,GOMPERTZ_K_MAX=0.12,GOMPERTZ_A_MAX=30,MAX_UNCERTAINTY=0.35,DEFAULT_SHED_POPULATION=52000;
 const DEFAULT_DENSITY_GLOBAL={maxDensity:32,triggerDensity:31,targetDensity:25.5,targetPickups:5};
 const CLUCKWISE_URL='./cluckwise/',SYNC_WORKER_URL='https://prodplan-sync.vonrmangaron.workers.dev',SYNC_REPO='vonrmangaron/farmdata',SYNC_SUFFIX='-feed',SYNC_APP_TAG='prodwise',SYNC_SCHEMA_VERSION=13,MAX_EXCEL_WARN_BYTES=2*1024*1024;
-const DEFAULT_VIEWS={1:'planner',2:'planner',3:'planner',4:'planner'},CONE_KG=10000,RING_KG=8000,MAX_RINGS=5,COMPARE_MIN_WIDTH=768;
+const DEFAULT_VIEWS={1:'overview',2:'overview',3:'overview',4:'overview'},CONE_KG=10000,RING_KG=8000,MAX_RINGS=5,COMPARE_MIN_WIDTH=768;
 const ROSS_308_WEIGHTS_KG={0:0.044,7:0.2135,14:0.533,21:1.012,28:1.6165,35:2.2955,42:2.998,49:3.6815,56:4.318};
 const TARGET_DAYS=[7,14,21,28];
 function ringsToKg(r){if(r===null||r===undefined||r===''||isNaN(r))return 0;const n=Number(r);if(n<0)return 0;if(n===0)return CONE_KG;return CONE_KG+RING_KG*Math.min(MAX_RINGS,Math.floor(n));}

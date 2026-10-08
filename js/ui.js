@@ -1306,7 +1306,7 @@ function setBatchNumber(v){
   predState.batchNumber=s;if(farmData)farmData.batchNumber=s;
   savePredState();saveState();schedulePush();
 }
-function setShedView(group,view){if(!['shed1','shed2','both','planner'].includes(view))return;shedViewByGroup[group]=view;inlineDeliveryState=null;saveShedViews();schedulePush();render();}
+function setShedView(group,view){if(!['overview','planner','pickups','growth','setup'].includes(view))return;shedViewByGroup[group]=view;inlineDeliveryState=null;saveShedViews();schedulePush();render();}
 function setShedTargetPickups(shedId,value){
   if(!farmData)return;
   const shed=farmData.sheds[shedId-1];if(!shed)return;
