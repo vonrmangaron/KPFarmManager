@@ -1633,13 +1633,15 @@ function computeFarmTotals(){
     totalLiveWeight+=pred.totalWeightKg;totalFeedAuto+=pred.totalFeedKg;totalPlaced+=pred.initialPop;totalMortalityEst+=pred.estFinalMort;totalCurrentMort+=Math.max(0,Number(shed.mortality)||0);
     totalBirdsAtHarvest+=pred.birdsAll;weightedAgeSum+=pred.ageBirdSum;targetBirdSum+=pred.targetALW*pred.birdsAll;shedsWithData++;
   }
-  // Feed eaten so far = measured (dockets + carry-over − silo stock), smoothed
-  // over all readings; the Ross model only covers the days after.
+  // The result uses the Ross intake standard for the whole batch: backtested on 2606/2607,
+  // and those batches finished 2–3% under it. Feed measured from silo readings (dockets +
+  // carry-over − stock, 8 t rings) is only shown as a check: on 2701 it read 7% over the
+  // standard and pushed cFCR to 1.72, out of line with the farm (2026-10-08).
   let feedMeasured=null;
   try{const m=measuredFeedToDate();
     if(m){let modelPast=0;
       withResultPlan(()=>Object.keys(m.cut).forEach(g=>{const end=m.cut[g];shedsForGroup(Number(g)).filter(s=>s.placementDate).forEach(s=>{for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))modelPast+=shedFeedOn(s,d);});}));
-      feedMeasured={eaten:m.eaten,modelPast,asOf:m.asOf,fitted:m.fitted,points:m.points};totalFeedAuto=totalFeedAuto-modelPast+m.eaten;}
+      feedMeasured={eaten:m.eaten,modelPast,asOf:m.asOf,fitted:m.fitted,points:m.points};}
   }catch(e){console.warn('Measured feed-to-date failed',e);feedMeasured=null;}
   const autoLeftover=totalFarmLeftover();
   const leftoverKg=(predState.farmLeftoverKg!=null&&Number.isFinite(Number(predState.farmLeftoverKg))&&Number(predState.farmLeftoverKg)>0)?Number(predState.farmLeftoverKg):0;
@@ -1677,7 +1679,8 @@ function feedToOrderLineHtml(f){
 // What the projection has learned from this batch's own data
 function learnedBasisHtml(t){
   if(!FARM_LEARNING){const fm=t&&t.feedMeasured;
-    const feedPart=fm?`<span title="Feed already eaten is measured: carry-over + docket loads − silo stock${fm.fitted?`, smoothed over ${fm.points} reading dates so one odd reading can't swing it`:''} (${fmtFeed(fm.eaten)}; the Ross table would have said ${fmtFeed(fm.modelPast)}). Days after use the Ross 308 intake table.">Feed: <b>measured to ${fmtShortNoYear(fm.asOf)}</b> + <b>Ross 308 intake</b> after</span>`:`<span title="Daily feed per bird from the Ross 308 intake table (or a shed's own Feed intake %). Record a silo reading for every pair to use measured feed for the days already passed.">Feed: <b>Ross 308 intake</b></span>`;
+    const chk=fm&&fm.modelPast>0?Math.round((fm.eaten/fm.modelPast-1)*100):null;
+    const feedPart=`<span title="Feed for the whole batch follows the Ross 308 intake table for the birds on the farm each day.">Feed: <b>Ross 308 intake</b></span>${chk!=null?`<span class="fk-sep"> · </span><span title="Check only, not used in the result: carry-over + docket loads − silo stock to ${fmtShortNoYear(fm.asOf)} = ${fmtFeed(fm.eaten)}; the Ross table says ${fmtFeed(fm.modelPast)}. Ring readings (8 t a ring), unread silos and loads arriving after a reading make this swing.">Silo readings: <b>${chk>0?'+':''}${chk}%</b> vs standard so far</span>`:''}`;
     return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b>, <b>${Math.round((finalUpliftFactor()-1)*100)}%</b> heavier than thins</span></div>`;}
   const parts=[];
   const cal=intakeCalibration();

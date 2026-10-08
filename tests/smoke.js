@@ -317,6 +317,19 @@ const f22=run('docket + carry-over',`(()=>{
 if(f22){ok(f22.a&&!f22.b&&!f22.c,'docket total = deliveries + carry-over is recognised (and only then)');
   if(f22.f1!=null){ok(f22.f1===63000&&f22.in1,'typed total holding the carry-over: counted once (65 − 2 = 63 t)');ok(f22.f2===63000,'dockets-only total: carry-over added (60 + 5 − 2 = 63 t)');}}
 
+console.log('23. Projected result follows the Ross intake standard; silo readings are a check only');
+const f23=run('silo check only',`(()=>{
+  const keepSilo=JSON.stringify(siloData),keepLoads=farmLoads;
+  const t1=computeFarmTotals();
+  // a load and a near-empty silo reading would say the birds ate far more than standard
+  farmLoads=[{id:'s23',date:iso(addDays(dateOnly(new Date()),-3)),plannedKg:60000,actualKg:60000,splitKg:{1:60000,2:0,3:0,4:0}}];
+  [1,2,3,4].forEach(g=>{siloData[g].readings=[{date:iso(dateOnly(new Date())),silo1Rings:0,silo2Rings:0,silo3Rings:0,time:'pm'}];});
+  const t2=computeFarmTotals();
+  siloData=JSON.parse(keepSilo);farmLoads=keepLoads;
+  return {same:t1.hasData&&t2.hasData&&Math.abs(t1.totalFeed-t2.totalFeed)<1,has:!!t2.feedMeasured,basis:/Ross 308 intake/.test(learnedBasisHtml(t2))};
+})()`);
+if(f23){ok(f23.same,'silo readings do not change the projected feed');ok(f23.basis,'card says the feed follows the Ross 308 intake');}
+
 // End-to-end: stale office tab pushes into a cloud the laptop has changed (fake cloud)
 const pending=[];
 pending.push((async()=>{

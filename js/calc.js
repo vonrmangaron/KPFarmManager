@@ -175,6 +175,9 @@ function computeEffectivePickups(shed){
   const real=(shed.pickups||[]).map(p=>({...p,__source:'real'}));
   const realDates=new Set(real.map(p=>iso(p.date)));
   let predicted=(shed.predictedPickups||[]).filter(pp=>!realDates.has(iso(pp.date))).map(pp=>({date:pp.date,birds:Number(pp.birds)||0,isFinal:!!pp.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'predicted',ageOverride:null,__source:'predicted',__id:pp.id}));
+  // The range's early end (last pickups PROJ_EARLY_DAYS before clean-out) moves saved pickups past
+  // that day onto it, so plans saved at the plant's clean-out date move with it.
+  if(includeAutoPlan&&projEndShiftDays>0){const end=resultPlanEndDate(shed);if(end)predicted=predicted.map(p=>dateOnly(p.date)>end?{...p,date:end}:p);}
   const autos=includeAutoPlan?autoPlanForShed(shed).map(a=>({date:a.date,birds:Number(a.birds)||0,isFinal:!!a.isFinal,variance:null,totalWeightKg:null,totalWeightKgFromExcel:null,totalWeightKgManual:false,source:'auto',ageOverride:null,__source:'auto',__id:a.id})):[];
   let tests=[];
   if(includeTestPickups){
