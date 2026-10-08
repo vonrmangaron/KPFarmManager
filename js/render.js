@@ -269,9 +269,7 @@ function historyRowHtml(s) {
 // Predictions submenu open state (sidebar only — not persisted)
 let sbPredOpen = true;
 function toggleSidebarPredictions() {
-  if (activeTab !== 'predictions') { activeTab = 'predictions'; sbPredOpen = true; }
-  else sbPredOpen = !sbPredOpen;
-  render();
+  gotoPair(predState.predGroup || 1, 'overview');
 }
 
 // Worst days-behind severity across a group's sheds — same thresholds as
@@ -399,7 +397,6 @@ function renderMoreSheet() {
       <div class="more-grip" aria-hidden="true"></div>
       <div class="more-group">
         ${row('moreHome', 'grid', 'Result detail', 'Projected result, PIF, dockets and leftover')}
-        ${row('morePredict', 'chart', 'Predictions', 'Per pair and per shed')}
         ${row('moreBatch', 'home', 'Batch details', 'Sheds, ages and clean-out dates')}
         ${row('morePickups', 'pickups', 'Pickups', 'Every pickup per shed, edit inline')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
@@ -1110,7 +1107,7 @@ function render(){
     else if(activeTab==='home'){app.innerHTML=renderHomeView();}
     else if(activeTab==='farmsettings'){app.innerHTML=renderFarmSettingsView();}
     else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
-    else if(activeTab==='predictions'){app.innerHTML=renderPredictionsView();}
+    else if(activeTab==='predictions'){activeTab='g'+(predState.predGroup||1);app.innerHTML=groupViewHtml(predState.predGroup||1);}
     else{
       if(!['g1','g2','g3','g4'].includes(activeTab))activeTab='home';
       app.innerHTML=activeTab==='dashboard'?renderDashboardView():groupViewHtml(Number(activeTab.replace('g','')));

@@ -1357,8 +1357,7 @@ function setTargetHarvestWeight(group,v){let n=Number(v);if(!Number.isFinite(n)|
 function openShedPerformance(shedId){
   const g=Math.ceil(shedId/2);
   const idx=shedsForGroup(g).findIndex(s=>s.id===shedId);
-  activeTab='predictions';sbPredOpen=true;
-  predState.predGroup=g;predState.predView=idx===1?'shed2':'shed1';savePredState();
+  activeTab='g'+g;shedViewByGroup[g]='growth';saveShedViews();predState.predGroup=g;
   if(feedCompareState.modalOpen)closeCompareModal();
   render();
   requestAnimationFrame(()=>{

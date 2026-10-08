@@ -235,7 +235,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     }
 
     const gotoCardBtn=e.target.closest('[data-goto-predcard]');
-    if(gotoCardBtn){const shedId=Number(gotoCardBtn.dataset.gotoPredcard);if(!Number.isFinite(shedId))return;const group=Math.floor((shedId-1)/2)+1;const isFirstOfGroup=(shedId%2===1);activeTab='predictions';predState.predGroup=group;predState.predView=isFirstOfGroup?'shed1':'shed2';savePredState();closeCompareModal();render();const card=document.getElementById(`pred-shed-card-${shedId}`);if(card)card.scrollIntoView({behavior:'auto',block:'start'});return;}
+    if(gotoCardBtn){const shedId=Number(gotoCardBtn.dataset.gotoPredcard);if(!Number.isFinite(shedId))return;const group=Math.floor((shedId-1)/2)+1;const isFirstOfGroup=(shedId%2===1);gotoPair(group,'growth',shedId);return;}
     const ppAddBtn=e.target.closest('[data-pp-add]');if(ppAddBtn){openPredictedPickupModal(Number(ppAddBtn.dataset.ppAdd));return;}
     const ppAutofillBtn=e.target.closest('[data-pp-autofill]');if(ppAutofillBtn){autoFillPredictedPickupsForShed(Number(ppAutofillBtn.dataset.ppAutofill));return;}
     const ppClearBtn=e.target.closest('[data-pp-clear]');if(ppClearBtn){clearPredictedPickupsForShed(Number(ppClearBtn.dataset.ppClear));return;}
@@ -246,7 +246,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const cycleApply=e.target.closest('[data-pred-cycle-apply]');
     if(cycleApply){const bar=cycleApply.closest('.pred-daily-range-bar');if(bar){const sEl=bar.querySelector('[data-pred-cycle="start"]');const eEl=bar.querySelector('[data-pred-cycle="end"]');if(sEl&&eEl)setPredDailyCycle(sEl.value,eEl.value);}return;}
     const gotoBtn=e.target.closest('[data-goto-predpickup]');
-    if(gotoBtn){const shedId=Number(gotoBtn.dataset.gotoPredpickup);if(!Number.isFinite(shedId))return;const group=Math.floor((shedId-1)/2)+1;const isFirstOfGroup=(shedId%2===1);activeTab='predictions';predState.predGroup=group;predState.predView=isFirstOfGroup?'shed1':'shed2';savePredState();closeCompareModal();render();const card=document.getElementById(`pred-shed-card-${shedId}`);if(card)card.scrollIntoView({behavior:'auto',block:'start'});openManualPickupModal(shedId);return;}
+    if(gotoBtn){const shedId=Number(gotoBtn.dataset.gotoPredpickup);if(!Number.isFinite(shedId))return;const group=Math.floor((shedId-1)/2)+1;const isFirstOfGroup=(shedId%2===1);gotoPair(group,'pickups',shedId);openManualPickupModal(shedId);return;}
     const sampleAddBtn=e.target.closest('[data-sample-add]');if(sampleAddBtn){openSampleModal(Number(sampleAddBtn.dataset.sampleAdd));return;}
     const sampleEditBtn=e.target.closest('[data-sample-edit]');if(sampleEditBtn){const parts=sampleEditBtn.dataset.sampleEdit.split('|');openSampleModal(Number(parts[0]),Number(parts[1]));return;}
     const sampleDelBtn=e.target.closest('[data-sample-delete]');if(sampleDelBtn){const parts=sampleDelBtn.dataset.sampleDelete.split('|');deleteSample(Number(parts[0]),Number(parts[1]));return;}
@@ -262,14 +262,14 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const deleteBtn=e.target.closest('[data-pickup-delete]');if(deleteBtn){closeAllPickupActionsMenus();const parts=deleteBtn.dataset.pickupDelete.split('|');deleteManualPickup(Number(parts[0]),parts[1]);return;}
     closeAllPickupActionsMenus();
 
-    const pg=e.target.closest('[data-predgroup]');if(pg){if(pg.closest('.sidebar')){activeTab='predictions';sbPredOpen=true;}setPredGroup(Number(pg.dataset.predgroup));return;}
+    const pg=e.target.closest('[data-predgroup]');if(pg){gotoPair(Number(pg.dataset.predgroup),'overview');return;}
     const gsg=e.target.closest('[data-goto-shedgroup]');if(gsg){const g=Number(gsg.dataset.gotoShedgroup);const v=['shed1','shed2','both'].includes(predState.predView)?predState.predView:'shed1';shedViewByGroup[g]=v;saveShedViews();activeTab='g'+g;render();window.scrollTo(0,0);return;}
     if(e.target.closest('#dcoSetAllBtn')){const inp=document.getElementById('dcoSetAllDate');if(!inp||!inp.value){showToast('Pick a date first.',true);if(inp)inp.focus();return;}setAllCleanoutDates(inp.value);return;}
     const sld=e.target.closest('[data-sl-day]');if(sld){const [g,d]=sld.dataset.slDay.split('|');siloLevelSel[g]=d;render();return;}
     const sts=e.target.closest('[data-starter-silo]');if(sts){const [g,n]=sts.dataset.starterSilo.split('|').map(Number);predState.starterSilo={...(predState.starterSilo||{}),[g]:predState.starterSilo&&predState.starterSilo[g]===n?null:n};savePredState();schedulePush();render();showToast(predState.starterSilo[g]?`Silo ${siloNumber(g,n)} kept for next batch's Starter.`:'Starter silo cleared.');return;}
     const sbf=e.target.closest('[data-starter-buf]');if(sbf){predState.starterBufferDays=Number(sbf.dataset.starterBuf);savePredState();schedulePush();render();return;}
     const sos=e.target.closest('[data-silo-open-set]');if(sos){const [g,n,v]=sos.dataset.siloOpenSet.split('|').map(Number);setSiloOpen(g,n,v===1);return;}
-    const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){activeTab='predictions';setPredGroup(Number(gpg.dataset.gotoPredgroup));window.scrollTo(0,0);return;}
+    const gpg=e.target.closest('[data-goto-predgroup]');if(gpg){gotoPair(Number(gpg.dataset.gotoPredgroup),'overview');return;}
     if(e.target.closest('#vdockToggle')){viewDockOpen=!viewDockOpen;groupDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.toggle('open',viewDockOpen);const g=document.getElementById('gdock');if(g)g.classList.remove('open');return;}
     if(viewDockOpen&&(!e.target.closest('#vdock')||e.target.closest('[data-vdock-close]'))){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}
     if(e.target.closest('.vdock-item')){viewDockOpen=false;const d=document.getElementById('vdock');if(d)d.classList.remove('open');}

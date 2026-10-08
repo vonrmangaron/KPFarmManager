@@ -343,3 +343,13 @@ function pairOverviewHtml(g){
   return `<div class="pair-overview">${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
 }
 document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);activeTab='g'+g;shedViewByGroup[g]='planner';saveShedViews();render();}});
+
+// Predictions now live on each pair's page: anything that used to open the
+// Predictions page opens the matching tab instead.
+function gotoPair(g,view,shedId){
+  g=Math.max(1,Math.min(4,Number(g)||1));
+  activeTab='g'+g;shedViewByGroup[g]=view||'overview';predState.predGroup=g;saveShedViews();
+  if(feedCompareState.modalOpen)closeCompareModal();
+  render();
+  if(shedId){requestAnimationFrame(()=>{const el=document.getElementById('pred-shed-card-'+shedId);if(el)el.scrollIntoView({behavior:'auto',block:'start'});});}
+}

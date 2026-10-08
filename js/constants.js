@@ -119,8 +119,6 @@ const NAV_ITEMS = [
   { id: 'g2', label: pairLabel(2), icon: 'home', badge: true },
   { id: 'g3', label: pairLabel(3), icon: 'home', badge: true },
   { id: 'g4', label: pairLabel(4), icon: 'home', badge: true },
-  { section: 'REPORTS' },
-  { id: 'predictions', label: 'Predictions', icon: 'chart' },
   { section: 'TOOLS' },
   { id: 'feedloads', label: 'Feed Loads', icon: 'loads', modalBtnId: 'loadsBtn' },
   { id: 'siloreadings', label: 'Silo Readings', icon: 'silo', modalBtnId: 'siloBtn' },
