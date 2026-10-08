@@ -304,6 +304,19 @@ if(ps){ok(ps.s3.now===44000&&ps.s3.week===7000&&ps.s3.after===37000,'per shed: n
 if(b21){ok(b21.now===44000&&b21.week===7000&&b21.after===37000&&b21.days===1,'after this week = now − kill-sheet pickups in the next 7 days (no predicted)');
   ok(b21.before===null||b21.before!==13,'farm profile change waits for Save');ok(b21.after2===13,'Save applies it');ok(b21.cal,'pickups calendar renders');}
 
+console.log('22. Batch feed: carry-over counted once; a finished batch uses its delivery dockets');
+const f22=run('docket + carry-over',`(()=>{
+  const keep={o:predState.farmFeedOverride,c:predState.carryoverFarmKg,l:predState.farmLeftoverKg,loads:farmLoads};
+  const a=docketIncludesCarry(1933080,1860080,73000),b=docketIncludesCarry(1860080,1860080,73000),c=docketIncludesCarry(1933080,1860080,0);
+  farmLoads=[{id:'x',date:'2026-01-01',plannedKg:60000,actualKg:60000,splitKg:{1:15000,2:15000,3:15000,4:15000}}];predState.carryoverFarmKg=5000;predState.farmLeftoverKg=2000;
+  predState.farmFeedOverride=65000;const t1=computeFarmTotals();   // typed total holds the carry-over
+  predState.farmFeedOverride=60000;const t2=computeFarmTotals();   // dockets only
+  predState.farmFeedOverride=keep.o;predState.carryoverFarmKg=keep.c;predState.farmLeftoverKg=keep.l;farmLoads=keep.loads;
+  return {a,b,c,f1:t1.hasData?t1.totalFeed:null,f2:t2.hasData?t2.totalFeed:null,in1:t1.carryInDocket};
+})()`);
+if(f22){ok(f22.a&&!f22.b&&!f22.c,'docket total = deliveries + carry-over is recognised (and only then)');
+  if(f22.f1!=null){ok(f22.f1===63000&&f22.in1,'typed total holding the carry-over: counted once (65 − 2 = 63 t)');ok(f22.f2===63000,'dockets-only total: carry-over added (60 + 5 − 2 = 63 t)');}}
+
 // End-to-end: stale office tab pushes into a cloud the laptop has changed (fake cloud)
 const pending=[];
 pending.push((async()=>{

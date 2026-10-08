@@ -118,6 +118,13 @@ function balanceOnEndOfDay(group,D,realOnly){
 // carry-over + loads delivered up to each pair's latest silo reading
 // − feed in its silos at that reading. A docket actual scales that
 // load's planned split. Morning reading: that day's loads not in yet.
+// The docket total is meant as deliveries only, with the carry-over added on top. A typed total that
+// equals the deliveries + the carry-over (within 1 t or 0.5%) already holds it: count it once.
+// Works for any batch (batch 2607 had 1,933,080 = 1,860,080 dockets + 73,000 carry-over).
+function docketIncludesCarry(docketKg,deliveriesKg,carryKg){
+  docketKg=num0(docketKg);deliveriesKg=num0(deliveriesKg);carryKg=num0(carryKg);
+  return docketKg>0&&carryKg>0&&deliveriesKg>0&&Math.abs(docketKg-(deliveriesKg+carryKg))<=Math.max(1000,deliveriesKg*0.005);
+}
 function feedOrderedKg(){return farmLoads.reduce((s,l)=>s+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);}
 function loadKgToPairBefore(l,g){const sk=Number(l.splitKg&&l.splitKg[g])||0;if(sk<=0)return 0;const pk=Number(l.plannedKg)||0;return (l.actualKg!=null&&pk>0)?sk*Number(l.actualKg)/pk:sk;}
 function feedEatenMeasured(){
@@ -259,8 +266,9 @@ function historyIntakePrior(){const r=farmHistory().filter(x=>x.intakePct>0);ret
 function summarizeCurrentBatch(){
   if(!farmData)return null;
   const cal=typeof intakeCalibration==='function'?intakeCalibration():{ok:false};
-  return summarizeBatchData({sheds:farmData.sheds||[],batch:predState.batchNumber||farmData.batchNumber||'',docketKg:num0(predState.farmFeedOverride)>0?num0(predState.farmFeedOverride):feedOrderedKg(),
-    carryKg:carryoverTotalKg(),leftoverKg:num0(predState.farmLeftoverKg),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
+  const over=num0(predState.farmFeedOverride),carry=carryoverTotalKg();
+  return summarizeBatchData({sheds:farmData.sheds||[],batch:predState.batchNumber||farmData.batchNumber||'',docketKg:over>0?over:feedOrderedKg(),
+    carryKg:over>0&&docketIncludesCarry(over,feedOrderedKg(),carry)?0:carry,leftoverKg:num0(predState.farmLeftoverKg),intakePct:cal.ok&&!cal.fromHistory?Math.round(cal.factor*1000)/10:null});
 }
 // Summarise a batch file from the cloud without loading it
 function summarizeBatchPayload(payload){
@@ -269,7 +277,7 @@ function summarizeBatchPayload(payload){
   const loads=Array.isArray(payload.farmLoads)?payload.farmLoads:[];
   const loadsKg=loads.reduce((s,l)=>s+(l&&l.actualKg!=null?num0(l.actualKg):num0(l&&l.plannedKg)),0);
   const carry=num0(pr.carryoverFarmKg)>0?num0(pr.carryoverFarmKg):Object.values(pr.carryoverKg||{}).reduce((s,v)=>s+num0(v),0);
-  return summarizeBatchData({sheds:payload.farmData.sheds,batch:String(payload.batchNumber||payload.farmData.batchNumber||''),docketKg:num0(pr.farmFeedOverride)>0?num0(pr.farmFeedOverride):loadsKg,carryKg:carry,leftoverKg:num0(pr.farmLeftoverKg),intakePct:null});
+  return summarizeBatchData({sheds:payload.farmData.sheds,batch:String(payload.batchNumber||payload.farmData.batchNumber||''),docketKg:num0(pr.farmFeedOverride)>0?num0(pr.farmFeedOverride):loadsKg,carryKg:num0(pr.farmFeedOverride)>0&&docketIncludesCarry(pr.farmFeedOverride,loadsKg,carry)?0:carry,leftoverKg:num0(pr.farmLeftoverKg),intakePct:null});
 }
 function summarizeBatchData(o){
   const sheds=(o.sheds||[]).filter(s=>s&&s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return null;

@@ -1650,15 +1650,22 @@ function computeFarmTotals(){
   // − feed left at clean-out. The auto estimate is bird intake, which
   // already includes eating the carry-over, so it isn't added there.
   const carryKg=carryoverTotalKg();
-  const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+carryKg:totalFeedAuto;
-  // Leftover only comes off the docket total (delivered + carry-over − leftover).
+  const carryInDocket=usingManualFeed&&docketIncludesCarry(predState.farmFeedOverride,feedOrderedKg(),carryKg);
+  // A finished batch (every shed has had its final pickup or is past its clean-out) whose loads all
+  // have their docket weight uses the real feed: deliveries + carry-over − leftover. No docket total to type.
+  const todayD=dateOnly(new Date()),placedSheds=sheds.filter(s=>s.placementDate);
+  const shedDone=s=>(s.cleanoutDate&&dateOnly(s.cleanoutDate)<todayD)||(s.pickups||[]).some(p=>p.isFinal&&p.date&&dateOnly(p.date)<=todayD);
+  const batchDone=placedSheds.length>0&&placedSheds.every(shedDone);
+  const fromDockets=!usingManualFeed&&batchDone&&farmLoads.length>0&&farmLoads.every(l=>l.actualKg!=null);
+  const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+(carryInDocket?0:carryKg):fromDockets?feedOrderedKg()+carryKg:totalFeedAuto;
+  // Leftover only comes off the docket-based total (delivered + carry-over − leftover).
   // The auto estimate is feed the birds eat, so the leftover was never in it.
-  const totalFeed=Math.max(0,usingManualFeed?baseFeed-leftoverKg:baseFeed);
+  const totalFeed=Math.max(0,usingManualFeed||fromDockets?baseFeed-leftoverKg:baseFeed);
   const targetKg=totalBirdsAtHarvest>0?targetBirdSum/totalBirdsAtHarvest:CFCR_REF_KG;
   const k=batchKpis({feedKg:totalFeed,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg});
   const {fcr,cfcr,cfcrInd,pif}=k,avgWeight=k.alw,livability=k.livability,weightedAge=k.avgAge;
   const cage=cAge245ForSheds(sheds.filter(s=>s.placementDate));
-  return {feedMeasured,hasData:true,carryKg,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
+  return {feedMeasured,hasData:true,carryKg,carryInDocket,fromDockets,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 // Leftover hint: with expected pickups; never a negative 'leftover'
 // "Still to order" line: expected (with auto pickups) and safe (no future pickups)
@@ -1690,8 +1697,12 @@ function learnedBasisHtml(t){
 function farmFeedSubText(t){
   const co=t.carryKg>0?t.carryKg:0;
   if(t.usingManualFeed){
-    const parts=['Manual (dockets)'];if(co)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
+    const parts=[t.carryInDocket?'Manual (dockets, incl. carry-over)':'Manual (dockets)'];if(co&&!t.carryInDocket)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
     return `${parts.join(' ')} · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
+  }
+  if(t.fromDockets){
+    const parts=[`Delivery dockets ${fmtFeed(feedOrderedKg())}`];if(co)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
+    return `${parts.join(' ')} · batch finished, so the real feed is used · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
   }
   const base=`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}${t.leftoverApplied?` · ${fmtFeed(t.leftoverKg)} leftover not deducted (the birds didn't eat it)`:''}`;
   return co?`${base} · carry-over ${fmtFeed(co)} is already in the birds' intake`:base;
@@ -1723,7 +1734,7 @@ function renderFarmKpiCard(){
   const vs=(now,last,dp,unit,lowerBetter)=>{if(last==null)return '';const d=now-last;const cls=Math.abs(d)<Math.pow(10,-dp)/2?'':((lowerBetter?d<0:d>0)?' good':' bad');return `<div class="fkt-last${cls}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">last batch ${last.toFixed(dp)}${unit}</div>`;};
   const fpb=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0;
   const feedPanelOpen=fkFeedOpen||t.usingManualFeed||t.leftoverApplied;
-  const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><label class="farm-leftover-label" for="farmFeedOverride">🧾 Docket total (${feedUnit()})</label><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="all dockets for the batch" value="${overrideVal}" /><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at clean-out (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="0" value="${leftoverVal}" /><div class="fkt-note" id="kpiLeftoverNote">${leftoverNoteText(t)}</div><div class="fkt-proj" id="kpiProjLeftover">${projLeftoverText(t)}</div>${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
+  const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><label class="farm-leftover-label" for="farmFeedOverride">🧾 Docket total (${feedUnit()}) <span class="fkt-hint">this batch's deliveries only, without carry-over</span></label><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="all dockets for the batch" value="${overrideVal}" /><div id="kpiDocketWarn">${docketCarryWarningHtml()}</div><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at clean-out (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="0" value="${leftoverVal}" /><div class="fkt-note" id="kpiLeftoverNote">${leftoverNoteText(t)}</div><div class="fkt-proj" id="kpiProjLeftover">${projLeftoverText(t)}</div>${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
   return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">${t.shedsWithData} of ${SHED_COUNT} sheds</span><button type="button" class="fk-how-toggle" data-fk-toggle="how" aria-expanded="${fkHowOpen}">How it's calculated ${fkHowOpen?'▴':'▾'}</button>${howHtml}</div><div class="farm-kpi-grid">
     <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub">${fpb.toFixed(2)} kg per bird</div>${lr?vs(fpb,lr.feedKg/lr.picked,2,' kg/bird',true):''}<button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button>${feedPanel}</div>
@@ -1765,7 +1776,9 @@ function projectionLogHtml(){
 }
 // Leftover only comes off the docket total; say so where it's typed
 function leftoverNoteText(t){
+  if(t.usingManualFeed&&t.carryInDocket)return `Total = docket total (already holds the ${fmtFeed(t.carryKg||0)} carry-over) − leftover`;
   if(t.usingManualFeed)return `Total = docket total + ${fmtFeed(t.carryKg||0)} carry-over − leftover`;
+  if(t.fromDockets)return `Total = delivery dockets + ${fmtFeed(t.carryKg||0)} carry-over − leftover`;
   return `Only used with the docket total — the estimate above already counts just what the birds eat.`;
 }
 function projLeftoverText(t){
@@ -1797,6 +1810,13 @@ function updateFarmKpiValues(){
   const lo=el('farmLeftoverInput');
   if(lo)lo.classList.toggle('manual',t.leftoverApplied);
   set('kpiLeftoverNote',leftoverNoteText(t));set('kpiProjLeftover',projLeftoverText(t));
+  set('kpiDocketWarn',docketCarryWarningHtml());
+}
+// Says so when the typed docket total already holds the carry-over (it's then counted once).
+function docketCarryWarningHtml(){
+  const over=Number(predState.farmFeedOverride)||0,carry=carryoverTotalKg();
+  if(!docketIncludesCarry(over,feedOrderedKg(),carry))return '';
+  return `<div class="fkt-note fkt-incl">Includes the ${fmtFeed(carry)} carry-over, so it's counted once.</div>`;
 }
 // Prediction adjustments — opened from the gear on the floating rail.
 // Not persisted: a reload never reopens it.
