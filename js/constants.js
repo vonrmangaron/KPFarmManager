@@ -13,7 +13,7 @@ function feedTypeLabel(id){const f=FEED_TYPES.find(x=>x.id===id);return f?f.labe
 function feedTypeTagHtml(id){const cls=id&&FEED_TYPES.some(f=>f.id===id)?id:'unspecified';return `<span class="feed-tag ${cls}">${feedTypeLabel(id)}</span>`;}
 const ROSS_308_FEED_INTAKE={1:11,2:15,3:19,4:24,5:28,6:33,7:37,8:42,9:47,10:51,11:56,12:60,13:65,14:69,15:74,16:78,17:83,18:88,19:92,20:97,21:101,22:106,23:110,24:115,25:119,26:124,27:129,28:133,29:138,30:142,31:147,32:151,33:156,34:160,35:165,36:170,37:174,38:179,39:183,40:188,41:192,42:197,43:201,44:206,45:211,46:215,47:220,48:223,49:225,50:227,51:229,52:230,53:231,54:233,55:233,56:234,57:234,58:234,59:234,60:234};
 const KEYS={shedId:['Shed','shed','ShedId','Shed ID','ShedID','Shed#','Shed No','ShedNo'],batch:['BatchNumber','Batch Number','Batch','Batch#'],placement:['PlacementDate','Placement Date','Placement','Placement_Dt'],cleanout:['CleanoutDate','Cleanout Date','Cleanout','Cleanout_Dt'],population:['InitialPopulation','Initial Population','Population','InitPop','InitialPop'],mortality:['Mortality','MortalityCount','Mortality Count','TotalMortality'],customFeed:['CustomFeedKg','Custom Feed Kg','CustomFeed','Custom Feed']};
-let farmData=null,activeTab='dashboard',shedRange={start:0,end:0},siloRange={start:0,end:14},shedViewByGroup={...DEFAULT_VIEWS};
+let farmData=null,activeTab='home',shedRange={start:0,end:0},siloRange={start:0,end:14},shedViewByGroup={...DEFAULT_VIEWS};
 let siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
 let testDeliveries={1:[],2:[],3:[],4:[]},farmLoads=[],inlineDeliveryState=null;
 // Projections follow the Ross 308 standard (intake by age; growth fitted
@@ -112,7 +112,8 @@ function normSiloFor(v){const o={};if(v&&typeof v==='object')[1,2,3,4].forEach(g
 // Sidebar navigation definition — used by sidebarHtml() in render.js
 const NAV_ITEMS = [
   { section: 'OVERVIEW' },
-  { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'dashboard', label: 'Result detail', icon: 'grid' },
   { section: 'SHEDS' },
   { id: 'g1', label: pairLabel(1), icon: 'home', badge: true },
   { id: 'g2', label: pairLabel(2), icon: 'home', badge: true },
@@ -126,6 +127,7 @@ const NAV_ITEMS = [
   { id: 'pickups', label: 'Pickups', icon: 'pickups', modalBtnId: 'pickupsBtn' },
   { id: 'comparefeed', label: 'Compare Feed', icon: 'compare', modalBtnId: 'toolsCompareBtn' },
   { id: 'history', label: 'History', icon: 'history' },
+  { id: 'farmsettings', label: 'Farm settings', icon: 'gear' },
   { section: 'APPS' },
   { id: 'cluckwise', label: 'CluckWise', icon: 'cluckwise', external: true },
 ];

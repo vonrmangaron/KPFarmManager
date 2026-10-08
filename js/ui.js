@@ -1928,6 +1928,7 @@ function compareTestActions(g){
 // Compare Feed (ordering). Reading accuracy scales each reading for the
 // forecast; safety stock is when "runs out" is flagged.
 function siloSettingsBarHtml(){
+  if(typeof siloSettingsLineHtml==='function')return siloSettingsLineHtml();
   const conf=Math.round(siloConfidence()*100),safety=siloSafetyDays();
   const step=(k,d,lbl,dis)=>`<button type="button" class="ss-btn" data-silo-set="${k}" data-step="${d}" aria-label="${lbl}" ${dis?'disabled':''}>${d>0?'+':'−'}</button>`;
   return `<div class="silo-set" role="group" aria-label="Silo planning">

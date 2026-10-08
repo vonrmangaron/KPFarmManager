@@ -312,6 +312,10 @@ function sidebarHtml() {
       const sev = groupSeverity(g, today);
       meta = `<span class="sb-link-meta">${count ? `<span class="sb-count" title="${count} open alert${count>1?'s':''}">${count}</span>` : ''}${sev !== 'unknown' ? `<span class="sb-status-dot ${sev}" title="${sevLabel[sev]}"></span>` : ''}</span>`;
     }
+    if (item.id === 'farmsettings' && farmData) {
+      const n = farmSettingsNotNormal().length;
+      if (n) meta = `<span class="sb-link-meta"><span class="sb-count" title="${n} setting${n>1?'s':''} not at normal">${n}</span></span>`;
+    }
     if (item.external) {
       meta = `<span class="sb-link-meta"><svg class="sb-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>`;
     }
@@ -358,13 +362,13 @@ function mobileNavHtml() {
   const summary = typeof farmLoadsSummary === 'function' ? farmLoadsSummary() : { needsActual: 0 };
   const moreDot = summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : '';
   return `<div class="mob-nav-inner">
-    <button class="mob-nav-btn" data-batch-info type="button"><span class="mob-nav-pill">${navIcon('home')}</span>Batch</button>
+    ${tab('home', 'Home', 'home', activeTab === 'home')}
     ${tab(inGroup ? activeTab : 'g1', 'Sheds', 'grid', inGroup)}
     <button class="mob-nav-btn mob-nav-silo" id="siloBtnMob" type="button" aria-label="Record silo reading">
       <span class="mob-nav-fab">${navIcon('silo')}</span>Silo reading
     </button>
-    ${tab('predictions', 'Predict', 'chart', activeTab === 'predictions')}
-    <button class="mob-nav-btn${activeTab === 'history' ? ' active' : ''}" id="moreBtnMob" type="button" aria-haspopup="dialog">
+    <button class="mob-nav-btn" id="feedBtnMob" type="button"><span class="mob-nav-pill">${navIcon('loads')}${summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : ''}</span>Feed</button>
+    <button class="mob-nav-btn${['history','predictions','dashboard','farmsettings'].includes(activeTab) ? ' active' : ''}" id="moreBtnMob" type="button" aria-haspopup="dialog">
       <span class="mob-nav-pill">${navIcon('more')}${moreDot}</span>More
     </button>
   </div>`;
@@ -394,11 +398,14 @@ function renderMoreSheet() {
     <div class="more-panel" role="dialog" aria-modal="true" aria-label="More">
       <div class="more-grip" aria-hidden="true"></div>
       <div class="more-group">
-        ${row('moreHome', 'grid', 'Dashboard', 'Farm overview and projections')}
+        ${row('moreHome', 'grid', 'Result detail', 'Projected result, PIF, dockets and leftover')}
+        ${row('morePredict', 'chart', 'Predictions', 'Per pair and per shed')}
+        ${row('moreBatch', 'home', 'Batch details', 'Sheds, ages and clean-out dates')}
         ${row('morePickups', 'pickups', 'Pickups', 'Every pickup per shed, edit inline')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
+        ${row('moreFarmSettings', 'gear', 'Farm settings', farmData && farmSettingsNotNormal().length ? `${farmSettingsNotNormal().length} not at normal` : 'Settings that change your numbers')}
         ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}
       </div>
       <div class="more-group">
@@ -449,7 +456,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { dashboard:'Dashboard', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', farmsettings:'Farm settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   if (subEl) {
     if (farmData) {
@@ -1095,15 +1102,17 @@ function render(){
     const app=document.getElementById('app');
     if(activeTab==='history'){app.innerHTML=renderHistoryView();}
     else if(!farmData){
-      if(activeTab!=='dashboard')activeTab='dashboard';
+      if(activeTab!=='dashboard'&&activeTab!=='home')activeTab='home';
       app.innerHTML=renderDashboardView();
       // Nothing to compare without data
       if(feedCompareState.modalOpen){feedCompareState.modalOpen=false;const cm=document.getElementById('compareFeedModal');if(cm)cm.classList.remove('open');}
     }
+    else if(activeTab==='home'){app.innerHTML=renderHomeView();}
+    else if(activeTab==='farmsettings'){app.innerHTML=renderFarmSettingsView();}
     else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
     else if(activeTab==='predictions'){app.innerHTML=renderPredictionsView();}
     else{
-      if(!['g1','g2','g3','g4'].includes(activeTab))activeTab='dashboard';
+      if(!['g1','g2','g3','g4'].includes(activeTab))activeTab='home';
       app.innerHTML=activeTab==='dashboard'?renderDashboardView():groupViewHtml(Number(activeTab.replace('g','')));
     }
     // Pop-ups opened from the sidebar (Compare feed, Feed loads) can sit over

@@ -13,7 +13,7 @@ const ctx={console,Math,JSON,Intl,Date,localStorage:{getItem:k=>store[k]??null,s
   document:stub,navigator:{onLine:false},setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){},fetch:()=>Promise.reject(new Error('offline')),
   performance:{now:()=>Date.now()},location:{search:'',hash:''},matchMedia:()=>({matches:false,addEventListener(){}}),addEventListener(){},requestAnimationFrame:()=>0,CSS:{escape:s=>s}};
 ctx.window=ctx;vm.createContext(ctx);
-const ORDER=['constants','calc','loads','storage','sync','data','ui','history','render'];
+const ORDER=['constants','calc','loads','storage','sync','data','ui','history','render','manager'];
 console.log('1. Scripts load together');
 for(const f of ORDER){try{vm.runInContext(fs.readFileSync(path.join(ROOT,'js',f+'.js'),'utf8'),ctx,{filename:f+'.js'});passed++;}catch(e){failed++;console.log('  ✗',f+'.js:',e.message);}}
 try{new Function(fs.readFileSync(path.join(ROOT,'js','app.js'),'utf8'));passed++;}catch(e){failed++;console.log('  ✗ app.js syntax:',e.message);}
