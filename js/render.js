@@ -298,7 +298,7 @@ function sidebarHtml() {
     }
     if (item.modalBtnId) {
       const dot = item.modalBtnId === 'loadsBtn' ? '<span class="loads-dot" id="loadsDot"></span>' : '';
-      return `<button class="sb-link" id="${escapeAttr(item.modalBtnId)}" type="button">
+      return `<button class="sb-link" id="${escapeAttr(item.modalBtnId)}" type="button" title="${escapeAttr(item.label)}">
         ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span>${dot}
       </button>`;
     }
@@ -329,7 +329,7 @@ function sidebarHtml() {
         ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span><span class="sb-link-meta">${chev}</span>
       </button>${open ? `<div class="sb-subnav">${subnav}</div>` : ''}`;
     }
-    return `<button class="sb-link${isActive?' active':''}" data-tab="${escapeAttr(item.id)}" type="button"${isActive?' aria-current="page"':''}>
+    return `<button class="sb-link${isActive?' active':''}" data-tab="${escapeAttr(item.id)}" type="button" title="${escapeAttr(item.label)}"${isActive?' aria-current="page"':''}>
       ${navIcon(item.icon)}<span class="sb-link-label">${escapeHtml(item.label)}</span>${meta}
     </button>`;
   }).join('');

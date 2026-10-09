@@ -353,3 +353,33 @@ function gotoPair(g,view,shedId){
   render();
   if(shedId){requestAnimationFrame(()=>{const el=document.getElementById('pred-shed-card-'+shedId);if(el)el.scrollIntoView({behavior:'auto',block:'start'});});}
 }
+
+// ── Sidebar rail (collapsed icon bar) and tools as pages (2026-10) ─────
+const SB_RAIL_KEY='prodwise_sb_rail_v1';
+function setSidebarRail(on){document.body.classList.toggle('sb-rail',!!on);try{localStorage.setItem(SB_RAIL_KEY,on?'1':'0');}catch(e){}
+  const b=document.getElementById('sbRailBtn');if(b){const t=on?'Expand sidebar':'Collapse sidebar';b.setAttribute('aria-label',t);b.title=t;}}
+// Feed loads, Silo readings, Pickups and Compare feed open as pages in the main area, not windows on top
+const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},siloModal:{btn:'siloBtn',close:()=>closeSiloModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
+let toolPageOpen=null;
+function syncToolPages(changed){
+  const open=Object.keys(TOOL_PAGES).filter(id=>document.getElementById(id)?.classList.contains('open'));
+  // Only one tool page at a time: the newest one stays
+  if(open.length>1){const keep=changed&&open.includes(changed)?changed:open[open.length-1];open.filter(id=>id!==keep).forEach(id=>{try{TOOL_PAGES[id].close();}catch(e){}});toolPageOpen=keep;}
+  else toolPageOpen=open[0]||null;
+  document.body.classList.toggle('tool-open',!!toolPageOpen);
+  Object.entries(TOOL_PAGES).forEach(([id,t])=>{const b=document.getElementById(t.btn);if(b)b.classList.toggle('active',id===toolPageOpen);});
+}
+function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getElementById(id)?.classList.contains('open')){try{TOOL_PAGES[id].close();}catch(e){}}});}
+document.addEventListener('DOMContentLoaded',()=>{
+  let rail=false;try{rail=localStorage.getItem(SB_RAIL_KEY)==='1';}catch(e){}setSidebarRail(rail);
+  const obs=new MutationObserver(muts=>{let changed=null;muts.forEach(m=>{if(m.target&&m.target.id&&TOOL_PAGES[m.target.id]&&m.target.classList.contains('open'))changed=m.target.id;});syncToolPages(changed);});
+  Object.keys(TOOL_PAGES).forEach(id=>{const m=document.getElementById(id);if(m){m.classList.add('tool-page');obs.observe(m,{attributes:true,attributeFilter:['class']});}});
+  const nav=document.getElementById('sidebarNav');if(nav)new MutationObserver(()=>syncToolPages(null)).observe(nav,{childList:true});
+});
+// Going anywhere else closes the tool page
+document.addEventListener('click',e=>{
+  if(e.target.closest('#sbRailBtn')){setSidebarRail(!document.body.classList.contains('sb-rail'));return;}
+  if(!toolPageOpen)return;
+  const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info]');
+  if(nav&&!e.target.closest('.compare-modal'))closeToolPages();
+},true);

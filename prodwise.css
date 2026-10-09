@@ -4226,3 +4226,49 @@ body:not(.theme-dark) .mgr-tile.accent b{color:#12357A}
 body:not(.theme-dark) .mgr-card,body:not(.theme-dark) .fs-list{box-shadow:var(--shadow-md)}
 body:not(.theme-dark) .mgr-need .mgr-need-bar{background:var(--primary)}
 body:not(.theme-dark) .pair-tab.active,body:not(.theme-dark) .mgr-btn.primary{background:var(--ink);color:#fff}
+
+/* ── Sidebar rail: collapsed to a slim dark icon bar (2026-10) ─────── */
+:root{--sb-w:248px}
+body.sb-rail{--sb-w:76px}
+.sb-brand{position:relative}
+.sb-rail-btn{margin-left:auto;width:30px;height:30px;flex-shrink:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.sb-rail-btn svg{width:15px;height:15px;transition:transform .2s ease}
+.sb-rail-btn:hover{color:var(--ink);border-color:var(--muted)}
+@media (min-width:769px){
+  body.sb-rail .sidebar{width:76px;background:#16191B;border-right:none;color:#E8EBEC;overflow:visible}
+  body.sb-rail .sb-brand{flex-direction:column;align-items:center;gap:12px;padding:16px 0 10px}
+  body.sb-rail .sb-brand-text,body.sb-rail .sb-batch,body.sb-rail .sb-section-label,body.sb-rail .sb-link-label,body.sb-rail .sb-link-meta,body.sb-rail .sb-subnav,body.sb-rail .sb-chev,body.sb-rail .sb-sync,body.sb-rail .sb-farm,body.sb-rail .sb-theme-seg,body.sb-rail .loads-dot{display:none!important}
+  body.sb-rail .sb-rail-btn{margin:0;background:#262B2E;border-color:#33393D;color:#E8EBEC}
+  body.sb-rail .sb-rail-btn svg{transform:rotate(180deg)}
+  body.sb-rail .sb-nav{padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:6px}
+  body.sb-rail .sb-link{width:48px;height:48px;min-height:48px;padding:0;justify-content:center;border-radius:14px;color:#A9B0B4;margin:0 auto;border:none;box-shadow:none}
+  body.sb-rail .sb-link svg{width:21px;height:21px;margin:0}
+  body.sb-rail .sb-link:hover{background:rgba(255,255,255,0.08);color:#FFFFFF}
+  body.sb-rail .sb-link.active{background:rgba(255,255,255,0.14);color:#FFFFFF}
+  body.sb-rail .sb-link.active::before,body.sb-rail .sb-link.active::after{display:none}
+  body.sb-rail .sb-link[data-tab="g1"] svg{color:var(--pair1)} body.sb-rail .sb-link[data-tab="g2"] svg{color:var(--pair2)}
+  body.sb-rail .sb-link[data-tab="g3"] svg{color:var(--pair3)} body.sb-rail .sb-link[data-tab="g4"] svg{color:var(--pair4)}
+  body.sb-rail .sb-foot{border-top:1px solid #2A2F32;padding:12px 0}
+  body.sb-rail .sb-foot-row{flex-direction:column;align-items:center;gap:8px}
+  body.sb-rail .sb-icon-btn{color:#A9B0B4;background:transparent;border-color:#33393D}
+}
+
+/* ── Tools as pages: Feed loads, Silo readings, Pickups, Compare feed (2026-10) ── */
+.compare-modal.tool-page{inset:auto;top:0;right:0;bottom:0;left:var(--sb-w);background:var(--bg);z-index:150;align-items:stretch;justify-content:stretch}
+.compare-modal.tool-page .compare-modal-panel{width:100%;height:100%;max-width:none;max-height:none;border-radius:0;border:none;box-shadow:none;background:var(--bg);transform:none!important}
+.tool-page .compare-modal-head{background:var(--surface);border-bottom:1px solid var(--line);padding:16px 28px;min-height:64px;box-sizing:border-box}
+.tool-page .compare-modal-head h3{font-family:'Sora',sans-serif;font-size:22px;font-weight:800}
+.tool-page .compare-modal-close{border-radius:12px}
+.tool-page .compare-modal-body{padding:20px 28px 40px}
+#siloModal.tool-page .compare-modal-body{width:100%;max-width:820px;margin:0 auto;box-sizing:border-box}
+@media (max-width:768px){
+  .compare-modal.tool-page{left:0;bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  .tool-page .compare-modal-head{padding:12px 16px;min-height:56px;padding-top:max(12px,env(safe-area-inset-top))}
+  .tool-page .compare-modal-head h3{font-size:19px}
+  .tool-page .compare-modal-body{padding:14px 16px 28px}
+}
+#siloModal.tool-page .compare-modal-panel{max-width:none!important;max-height:none!important}
+/* Silo readings: pair bars white with the pair's colour, like the pair pages (light mode) */
+body:not(.theme-dark) .sms-group-head{background:var(--surface)!important;color:var(--ink)!important;position:relative;padding-left:26px!important;border-bottom:1px solid var(--line)}
+body:not(.theme-dark) .sms-group-head::before{content:'';position:absolute;left:10px;top:10px;bottom:10px;width:5px;border-radius:3px;background:var(--pair-color,var(--primary))}
+body:not(.theme-dark) .sms-group-head *{color:inherit}

@@ -2305,7 +2305,7 @@ function renderSiloModalBody(){
       ?`<button type="button" class="sms-next-btn" data-sms-next="${g+1}">Next: ${pairLabel(g+1)} →</button>`
       :`<button type="button" class="sms-next-btn" data-sms-finish>Finish</button>`;
     return `<div class="sms-group-section${isOpen?' open':''}" data-sms-section="${g}">
-      <div class="sms-group-head" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle ${pairLabel(g)}">
+      <div class="sms-group-head gvh-p${g}" style="background:${SILO_GROUP_COLORS[g]}" data-sms-toggle="${g}" role="button" tabindex="0" aria-expanded="${isOpen?'true':'false'}" aria-label="Toggle ${pairLabel(g)}">
         <span class="sms-group-caret" aria-hidden="true">▶</span>
         <span class="sms-group-titles"><span class="sms-group-name">${pairLabel(g)}</span></span>
         <span class="sms-status-wrap" id="smsStatus-${g}">${siloGroupStatusHtml(g)}</span>
