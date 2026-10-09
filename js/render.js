@@ -458,6 +458,13 @@ function updatePageHeader() {
   if (!titleEl) return;
   const tabLabels = { home:'Home', farmsettings:'Farm settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
+  // Desktop tool pages use this same header (their own window title bar is hidden)
+  const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;
+  if (tool && window.matchMedia('(min-width:769px)').matches) {
+    titleEl.textContent = TOOL_PAGES[toolPageOpen].title;
+    if (subEl) { const batch = farmData ? (predState.batchNumber || farmData.batchNumber || '') : ''; subEl.textContent = `${batch ? 'Batch ' + batch + ' · ' : ''}${TOOL_PAGES[toolPageOpen].sub}`; }
+    return;
+  }
   if (subEl) {
     if (farmData) {
       const batch = predState.batchNumber || farmData.batchNumber || '';

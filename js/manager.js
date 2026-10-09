@@ -363,7 +363,12 @@ const SB_RAIL_KEY='prodwise_sb_rail_v1';
 function setSidebarRail(on){document.body.classList.toggle('sb-rail',!!on);try{localStorage.setItem(SB_RAIL_KEY,on?'1':'0');}catch(e){}
   const b=document.getElementById('sbRailBtn');if(b){const t=on?'Expand sidebar':'Collapse sidebar';b.setAttribute('aria-label',t);b.title=t;}}
 // Feed loads, Silo readings, Pickups and Compare feed open as pages in the main area, not windows on top
-const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},mortModal:{btn:'mortBtn',close:()=>closeMortModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
+const TOOL_PAGES={
+  loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal(),title:'Feed loads',sub:'All sheds · plan and log deliveries'},
+  pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal(),title:'Pickups',sub:'Every pickup, all sheds'},
+  mortModal:{btn:'mortBtn',close:()=>closeMortModal(),title:'Mortality',sub:'Total morts per shed'},
+  compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal(),title:'Compare feed',sub:'Feed balance for every pair, side by side'},
+};
 let toolPageOpen=null;
 function syncToolPages(changed){
   const open=Object.keys(TOOL_PAGES).filter(id=>document.getElementById(id)?.classList.contains('open'));
@@ -371,6 +376,9 @@ function syncToolPages(changed){
   if(open.length>1){const keep=changed&&open.includes(changed)?changed:open[open.length-1];open.filter(id=>id!==keep).forEach(id=>{try{TOOL_PAGES[id].close();}catch(e){}});toolPageOpen=keep;}
   else toolPageOpen=open[0]||null;
   document.body.classList.toggle('tool-open',!!toolPageOpen);
+  // the page sits under the app header, which shows the tool's name
+  const ph=document.getElementById('pageHeader');if(ph)document.body.style.setProperty('--ph-h',ph.offsetHeight+'px');
+  if(typeof updatePageHeader==='function')updatePageHeader();
   Object.entries(TOOL_PAGES).forEach(([id,t])=>{const b=document.getElementById(t.btn);if(b)b.classList.toggle('active',id===toolPageOpen);});
 }
 function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getElementById(id)?.classList.contains('open')){try{TOOL_PAGES[id].close();}catch(e){}}});}
