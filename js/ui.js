@@ -2414,6 +2414,7 @@ function setSiloRingFromModal(group,siloNum,rings){
   siloModalTouched[group].add(siloNum);
   saveSiloData();schedulePush();
   scheduleRender(120); // the page behind the window shows the new feed balance
+  if(feedCompareState.modalOpen){clearTimeout(window.__cmpT);window.__cmpT=setTimeout(()=>{try{renderCompareModalBody();}catch(e){}},120);}
   try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
   // Refresh just this group's rows, status and totals.
   const silos=document.getElementById(`smsSilos-${group}`);

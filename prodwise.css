@@ -4399,12 +4399,18 @@ body:has(#mortModal.open) .adj-fab{display:none!important}
 .mort-card .mort-out{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;min-height:24px}
 @media (max-width:560px){.mort-cards{grid-template-columns:1fr 1fr;gap:10px}.mort-card{padding:14px 12px 12px}.mort-input{font-size:17px}}
 
-/* ---------- Silo readings: a side window on desktop, the page behind stays visible and updates live ---------- */
+/* ---------- Silo readings: a centred window with a light backdrop, so the balances behind stay readable ---------- */
 @media (min-width:769px){
-  #siloModal{background:rgba(16,24,40,0.16);justify-content:flex-end;align-items:stretch;backdrop-filter:none;-webkit-backdrop-filter:none}
-  #siloModal .compare-modal-panel{width:min(520px,100%);height:100%;max-width:none;max-height:none;border-radius:0;border:none;border-left:1px solid var(--line);box-shadow:-18px 0 44px rgba(16,24,40,0.18);transform:translateX(32px)}
-  #siloModal.open .compare-modal-panel{transform:none}
+  #siloModal{background:rgba(16,24,40,0.22);backdrop-filter:none;-webkit-backdrop-filter:none;z-index:9997}
+  #siloModal .compare-modal-panel{width:min(640px,calc(100% - 48px));height:auto;max-height:min(88vh,860px)}
 }
+.cmp-head-actions{display:flex;align-items:center;gap:10px}
+.cmp-silo-btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:600 13px Inter,sans-serif;cursor:pointer}
+.cmp-silo-btn svg{width:16px;height:16px;color:var(--primary-dark)}
+.cmp-silo-btn:hover{border-color:var(--primary);background:var(--primary-soft)}
+
+/* Closed Settings panel sits off-screen: no shadow leaking onto the page edge */
+.settings-drawer:not(.open){box-shadow:none}
 
 /* ---------- Mortality: 4 sheds across on desktop ---------- */
 @media (min-width:900px){.mort-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}

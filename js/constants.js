@@ -124,7 +124,6 @@ const NAV_ITEMS = [
   { id: 'pickups', label: 'Pickups', icon: 'pickups', modalBtnId: 'pickupsBtn' },
   { id: 'mortality', label: 'Mortality', icon: 'mortality', modalBtnId: 'mortBtn' },
   { id: 'comparefeed', label: 'Compare Feed', icon: 'compare', modalBtnId: 'toolsCompareBtn' },
-  { id: 'siloreadings', label: 'Silo Readings', icon: 'silo', modalBtnId: 'siloBtn' },
   { id: 'history', label: 'History', icon: 'history' },
   { id: 'farmsettings', label: 'Farm settings', icon: 'gear' },
   { section: 'APPS' },

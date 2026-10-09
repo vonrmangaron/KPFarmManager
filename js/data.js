@@ -26,7 +26,7 @@ function applyTheme(theme){
     btn.setAttribute('aria-pressed',active?'true':'false');
   });
   const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta)meta.setAttribute('content',isDark?'#1A2438':'#E0A339');
+  if(meta)meta.setAttribute('content',isDark?'#1A2438':'#FFFFFF'); // installed-app window bar matches the page header
 }
 function loadTheme(){try{const t=localStorage.getItem(THEME_KEY);return (t==='dark'||t==='light')?t:'light';}catch(e){return 'light';}}
 function saveTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}}
