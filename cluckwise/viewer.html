@@ -848,34 +848,6 @@
   body:not(.theme-dark) .dc-ring-inner{ background:var(--primary-soft); color:var(--ink); }
   body:not(.theme-dark) .day-card .dc-today{ border-color:var(--line); background:var(--surface); color:var(--ink); }
   body:not(.theme-dark) .hero-batch-chip{ background:var(--primary-soft); color:var(--primary-dark); }
-
-  /* To fix for you, report box on tasks */
-  .tofix-h{ display:flex; align-items:center; gap:8px; margin:2px 0 10px; }
-  .tofix-h svg{ width:17px; height:17px; color:var(--primary-dark); }
-  .tofix-h b{ font-family:'Sora',sans-serif; font-size:15px; }
-  .tofix-n{ font-size:12px; font-weight:800; color:var(--primary-dark); background:var(--primary-soft); border-radius:999px; padding:1px 8px; }
-  .tofix-card{ border:1px solid var(--line); border-radius:16px; background:var(--surface); padding:12px; margin-bottom:10px; display:flex; flex-direction:column; gap:10px; }
-  .tofix-top{ display:flex; gap:12px; min-width:0; }
-  .tofix-text{ display:flex; flex-direction:column; gap:3px; min-width:0; }
-  .tofix-text b{ font-size:15px; }
-  .tofix-text span{ font-size:13px; color:var(--muted); }
-  .tofix-text .tofix-due{ align-self:flex-start; font-size:11px; font-weight:800; border-radius:999px; padding:2px 8px; background:var(--surface-soft); color:var(--muted); }
-  .tofix-due.due{ background:var(--primary-soft); color:var(--primary-dark); }
-  .tofix-due.over{ background:var(--danger-soft); color:var(--danger); }
-  .iss-thumb{ width:56px; height:56px; border-radius:10px; background:var(--surface-soft); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden; }
-  .iss-thumb img{ width:100%; height:100%; object-fit:cover; }
-  .tofix-btn{ height:48px; border:none; border-radius:12px; background:var(--success); color:#fff; font:700 15px 'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
-  .tofix-btn svg{ width:18px; height:18px; }
-  .tofix-btn.ghost{ background:var(--surface); color:var(--success); border:1.5px solid var(--success); }
-  .iss-who{ font-size:12.5px; color:var(--primary-dark); font-weight:600; }
-  .iss-card.iss-flash{ animation:issFlash 1.4s ease; }
-  @keyframes issFlash{ 0%,40%{ box-shadow:0 0 0 3px var(--primary); } 100%{ box-shadow:none; } }
-  .task-rep{ display:flex; align-items:center; gap:10px; margin-top:8px; padding:8px; border-radius:10px; background:var(--surface-soft); }
-  .task-rep .iss-thumb{ width:42px; height:42px; border-radius:8px; font-size:18px; }
-  .task-rep-text{ display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
-  .task-rep-text b{ font-size:12.5px; }
-  .task-rep-text span{ font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .task-rep-view{ flex-shrink:0; border:none; background:none; color:var(--primary-dark); font:700 13px 'Inter',sans-serif; cursor:pointer; padding:8px 4px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -1059,7 +1031,6 @@
   <div class="sheet-handle"></div>
   <div class="sheet-head"><h2 id="issuesTitle">Issues</h2><button id="closeIssues" aria-label="Close">✕</button></div>
   <div class="sheet-body">
-    <div id="issToFix"></div>
     <div class="iss-seg" id="issSeg"><button type="button" class="active" data-iss="mine" id="issMineBtn">Mine</button><button type="button" data-iss="all" id="issAllBtn">All farm</button></div>
     <div id="issuesList"></div>
   </div>
@@ -1390,10 +1361,6 @@
   Object.assign(TRANSLATIONS.es, {"navGuide": "Guía", "issTitle": "Problemas", "issMine": "Míos", "issAll": "Toda la granja", "issOpenN": "{n} abiertos", "issNone": "No hay problemas abiertos", "issNoneMine": "Aún no has enviado reportes.", "issOpen": "Abierto", "issProgress": "En curso", "issResolved": "Resuelto", "issFixed": "Solución"});
   Object.assign(TRANSLATIONS.tl, {"navGuide": "Gabay", "issTitle": "Mga isyu", "issMine": "Akin", "issAll": "Buong bukid", "issOpenN": "{n} bukas", "issNone": "Walang bukas na isyu", "issNoneMine": "Wala ka pang naipadalang report.", "issOpen": "Bukas", "issProgress": "Inaayos", "issResolved": "Naayos na", "issFixed": "Ginawa"});
   Object.assign(TRANSLATIONS.id, {"navGuide": "Panduan", "issTitle": "Masalah", "issMine": "Milik saya", "issAll": "Seluruh kandang", "issOpenN": "{n} terbuka", "issNone": "Tidak ada masalah terbuka", "issNoneMine": "Anda belum mengirim laporan.", "issOpen": "Terbuka", "issProgress": "Dikerjakan", "issResolved": "Selesai", "issFixed": "Perbaikan"});
-  Object.assign(TRANSLATIONS.en, {"fixForYou": "To fix for you", "markFixed": "Mark fixed", "issReported": "Reported", "issAssigned": "Task assigned", "issFixedBy": "Fixed by {n}", "issFixedByYou": "Fixed by you", "issOnIt": "{n} is on it", "issNoOne": "not assigned yet", "dueToday": "Due today", "dueTomorrow": "Tomorrow", "overdueN": "Overdue {n} d", "fromReport": "From report {c}", "viewReport": "View", "markedFixed": "Marked fixed — the manager is notified", "reportedBy": "reported by {n}", "reportedByYou": "reported by you", "notScheduled": "Not scheduled"});
-  Object.assign(TRANSLATIONS.es, {"fixForYou": "Por arreglar", "markFixed": "Marcar arreglado", "issReported": "Reportado", "issAssigned": "Tarea asignada", "issFixedBy": "Arreglado por {n}", "issFixedByYou": "Arreglado por ti", "issOnIt": "{n} lo está arreglando", "issNoOne": "sin asignar", "dueToday": "Para hoy", "dueTomorrow": "Mañana", "overdueN": "Atrasado {n} d", "fromReport": "Del reporte {c}", "viewReport": "Ver", "markedFixed": "Marcado como arreglado — se avisa al encargado", "reportedBy": "reportado por {n}", "reportedByYou": "reportado por ti", "notScheduled": "Sin fecha"});
-  Object.assign(TRANSLATIONS.tl, {"fixForYou": "Aayusin mo", "markFixed": "Naayos na", "issReported": "Naiulat", "issAssigned": "May nakatoka na", "issFixedBy": "Inayos ni {n}", "issFixedByYou": "Inayos mo", "issOnIt": "Inaayos ni {n}", "issNoOne": "wala pang nakatoka", "dueToday": "Ngayong araw", "dueTomorrow": "Bukas", "overdueN": "Lampas {n} araw", "fromReport": "Mula sa ulat {c}", "viewReport": "Tingnan", "markedFixed": "Naayos na — naabisuhan ang manager", "reportedBy": "iniulat ni {n}", "reportedByYou": "iniulat mo", "notScheduled": "Wala pang petsa"});
-  Object.assign(TRANSLATIONS.id, {"fixForYou": "Untuk kamu perbaiki", "markFixed": "Tandai selesai", "issReported": "Dilaporkan", "issAssigned": "Sudah ditugaskan", "issFixedBy": "Diperbaiki oleh {n}", "issFixedByYou": "Kamu perbaiki", "issOnIt": "{n} sedang memperbaiki", "issNoOne": "belum ditugaskan", "dueToday": "Hari ini", "dueTomorrow": "Besok", "overdueN": "Terlambat {n} hari", "fromReport": "Dari laporan {c}", "viewReport": "Lihat", "markedFixed": "Ditandai selesai — manajer diberi tahu", "reportedBy": "dilaporkan oleh {n}", "reportedByYou": "kamu laporkan", "notScheduled": "Belum dijadwalkan"});
   function t(key){
     const lang = settings.lang || 'en';
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
@@ -2965,13 +2932,6 @@
     card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${tk.notes ? `<span class="note-tag"><span aria-hidden="true">📝</span>${escapeHtml(t('noteLbl'))}<span class="nt-car" aria-hidden="true">▾</span></span>` : ''}${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     card.querySelector('.task-name').textContent = tk.name;
-    const rep = reportForTask(tk);
-    if(rep){
-      const box = document.createElement('div'); box.className = 'task-rep';
-      const note = (rep.notes || '').replace(/\s+/g, ' ').trim();
-      box.innerHTML = `${issThumb(rep)}<span class="task-rep-text"><b>${escapeHtml(fmtT('fromReport', { c:rep.code || '' }))}</b><span>${escapeHtml([note ? '“' + (note.length > 60 ? note.slice(0,57) + '…' : note) + '”' : rep.problemType, rep.createdBy].filter(Boolean).join(' · '))}</span></span><button type="button" class="task-rep-view" data-view-report="${escapeHtml(rep.id)}">${escapeHtml(t('viewReport'))}</button>`;
-      card.appendChild(box);
-    }
     if(tk.notes){
       card.querySelector('.tnc-text').textContent = tk.notes;
       card.setAttribute('aria-expanded', String(openNotes.has(tk.id)));
@@ -3566,7 +3526,6 @@
       reports = server.concat(loadPendingReports().filter(r=> !server.some(x=> x.id === r.id)));
       if(pendingIds.size === 0 && !server.length) reports = [];
       updateIssuesBadge();
-      if(tasks.some(tk=> tk.linkedReportId)) renderList();   // report boxes on today's tasks
       if($('#issuesSheet').classList.contains('open')) renderIssues();
     }catch(e){}
   }
@@ -3585,61 +3544,7 @@
     const sub = $('#issuesBtnSub'); if(sub) sub.textContent = open ? t('issOpenN').replace('{n}', open) : t('issNone');
     const tt = $('#issuesBtnTitle'); if(tt) tt.textContent = t('issTitle');
   }
-  // ---- Problems turned into tasks: "To fix for you", plain statuses, report box on tasks ----
-  const fmtT = (key, map)=> Object.keys(map||{}).reduce((s,k)=> s.split('{'+k+'}').join(map[k]), t(key));
-  function linkedTaskOf(r){ return r && r.linkedTaskId ? tasks.find(x=> x.id === r.linkedTaskId) : null; }
-  function taskDueInfo(tk){
-    if(!tk || !tk.date) return { cls:'none', label:t('notScheduled') };
-    const today = todayKeyV();
-    if(tk.date < today){ const n = Math.round((new Date(today) - new Date(tk.date)) / 86400000); return { cls:'over', label:fmtT('overdueN', { n }) }; }
-    if(tk.date === today) return { cls:'due', label:t('dueToday') };
-    const tm = new Date(today); tm.setDate(tm.getDate() + 1);
-    if(tk.date === tm.toISOString().slice(0,10)) return { cls:'none', label:t('dueTomorrow') };
-    return { cls:'none', label:new Date(tk.date + 'T00:00:00').toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }) };
-  }
-  function todayKeyV(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-  function reportForTask(tk){ return tk && tk.linkedReportId ? reports.find(r=> r.id === tk.linkedReportId) : null; }
-  function toFixTasks(){
-    const me = myName();
-    return tasks.filter(tk=> tk.linkedReportId && tk.status !== 'done' && reportForTask(tk) &&
-      (!me || !(tk.assignees||[]).length || (tk.assignees||[]).some(a=> String(a||'').trim().toLowerCase() === me)))
-      .sort((a,b)=> (a.date || '9999').localeCompare(b.date || '9999'));
-  }
-  function issThumb(r){
-    const p = (r.photoUrls || [])[0];
-    return `<span class="iss-thumb">${p ? `<img loading="lazy" alt="" src="${escapeHtml(p)}">` : '🔧'}</span>`;
-  }
-  function renderToFix(){
-    const box = $('#issToFix'); if(!box) return;
-    const list = toFixTasks();
-    if(!list.length){ box.innerHTML = ''; return; }
-    const me = myName();
-    box.innerHTML = `<div class="tofix-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg><b>${escapeHtml(t('fixForYou'))}</b><span class="tofix-n">${list.length}</span></div>` +
-      list.map((tk, i)=>{ const r = reportForTask(tk), due = taskDueInfo(tk);
-        const by = (r.createdBy||'').trim().toLowerCase() === me && me ? t('reportedByYou') : (r.createdBy ? fmtT('reportedBy', { n:r.createdBy }) : '');
-        const place = r.shed ? `${t('bpShed')} ${r.shed}` : (r.location || '');
-        return `<div class="tofix-card"><div class="tofix-top">${issThumb(r)}<div class="tofix-text"><b>${escapeHtml(r.problemType || tk.name)}</b><span>${escapeHtml([place, by].filter(Boolean).join(' · '))}</span><span class="tofix-due ${due.cls}">${escapeHtml(due.label)}</span></div></div>
-          <button type="button" class="tofix-btn${i ? ' ghost' : ''}" data-fix-task="${escapeHtml(tk.id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>${escapeHtml(t('markFixed'))}</button></div>`; }).join('');
-  }
-  document.addEventListener('click', (e)=>{
-    const b = e.target.closest && e.target.closest('[data-fix-task]'); if(!b) return;
-    if(!ghPath){ showToast(t('connectToSave'), true); return; }
-    const tk = tasks.find(x=> x.id === b.dataset.fixTask); if(!tk || tk.status === 'done') return;
-    toggleTaskDoneInViewer(tk.id);
-    showToast(t('markedFixed'));
-    if($('#issuesSheet').classList.contains('open')) renderIssues();
-  });
-  // "View" on a task's report box: open Issues on that report
-  document.addEventListener('click', (e)=>{
-    const b = e.target.closest && e.target.closest('[data-view-report]'); if(!b) return;
-    e.stopPropagation();
-    const id = b.dataset.viewReport, r = reports.find(x=> x.id === id);
-    issFilter = r && (r.createdBy||'').trim().toLowerCase() === myName() ? 'mine' : 'all';
-    openIssues();
-    setTimeout(()=>{ const el = document.querySelector(`.iss-card[data-iss-id="${CSS.escape(id)}"]`); if(el){ el.scrollIntoView({ block:'center', behavior:'smooth' }); el.classList.add('iss-flash'); } }, 260);
-  }, true);
   function renderIssues(){
-    renderToFix();
     const list = $('#issuesList'); if(!list) return;
     document.querySelectorAll('#issSeg button').forEach(b=> b.classList.toggle('active', b.dataset.iss === issFilter));
     let rows = (issFilter === 'mine' ? myReports() : reports).slice();
@@ -3649,15 +3554,10 @@
     if(!rows.length){ const n = document.createElement('div'); n.className = 'empty-note'; n.textContent = issFilter === 'mine' ? t('issNoneMine') : t('issNone'); list.appendChild(n); return; }
     rows.slice(0, 60).forEach(r=>{
       const st = r.status === 'Resolved' ? 'res' : r.status === 'In Progress' ? 'prog' : 'open';
-      const lt = linkedTaskOf(r), me = myName();
-      const el = document.createElement('div'); el.className = 'iss-card iss-' + (st === 'open' && lt ? 'prog' : st) + (r.urgent && st !== 'res' ? ' iss-urgent' : '');
-      el.dataset.issId = r.id;
-      el.innerHTML = '<div class="iss-top"><span class="iss-type"></span><span class="iss-pill"></span></div><div class="iss-sub"></div><div class="iss-who" hidden></div><div class="iss-fix" hidden></div>';
+      const el = document.createElement('div'); el.className = 'iss-card iss-' + st + (r.urgent && st !== 'res' ? ' iss-urgent' : '');
+      el.innerHTML = '<div class="iss-top"><span class="iss-type"></span><span class="iss-pill"></span></div><div class="iss-sub"></div><div class="iss-fix" hidden></div>';
       el.querySelector('.iss-type').textContent = (r.urgent && st !== 'res' ? '🔴 ' : '') + (r.problemType || 'Report');
-      el.querySelector('.iss-pill').textContent = st === 'res'
-        ? (r.resolvedBy ? ((r.resolvedBy.trim().toLowerCase() === me && me) ? t('issFixedByYou') : fmtT('issFixedBy', { n:r.resolvedBy })) : t('issResolved'))
-        : lt ? t('issAssigned') : st === 'prog' ? t('issProgress') : t('issReported');
-      if(st !== 'res' && lt){ const w = el.querySelector('.iss-who'); w.hidden = false; const who = (lt.assignees||[]).join(', '); w.textContent = (who ? fmtT('issOnIt', { n:who }) : t('issNoOne')) + ' · ' + taskDueInfo(lt).label; }
+      el.querySelector('.iss-pill').textContent = st === 'res' ? t('issResolved') : st === 'prog' ? t('issProgress') : t('issOpen');
       const when = r.createdAt ? new Date(r.createdAt).toLocaleDateString(undefined, { day:'numeric', month:'short' }) : '';
       el.querySelector('.iss-sub').textContent = [r.shed ? `${t('bpShed')} ${r.shed}` : (r.location || ''), r.createdBy, when].filter(Boolean).join(' · ');
       if(st === 'res' && r.resolutionNotes){ const fx = el.querySelector('.iss-fix'); fx.hidden = false; fx.textContent = '✓ ' + t('issFixed') + ': ' + r.resolutionNotes; }
