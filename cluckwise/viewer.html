@@ -2423,10 +2423,58 @@
       if(tk) tk.status = status;
     });
   }
+  // A task made from a problem report: the report follows it (done -> Resolved,
+  // reopened -> back to In progress if it was resolved by the task). Same rule as the main app.
+  const linkedReportQueue = new Map();
+  let linkedReportTimer = null;
+  function queueLinkedReport(tk){
+    if(!tk || !tk.linkedReportId) return;
+    linkedReportQueue.set(tk.linkedReportId, tk.status === 'done');
+    const local = reports.find(r=> r.id === tk.linkedReportId);
+    if(local) applyLinkedReportStatus(local, tk.status === 'done');
+    clearTimeout(linkedReportTimer);
+    linkedReportTimer = setTimeout(flushLinkedReports, 1200);
+  }
+  function applyLinkedReportStatus(r, done){
+    const now = new Date().toISOString();
+    const me = (loadMember() || {}).name || '';
+    if(done && r.status !== 'Resolved'){ r.status = 'Resolved'; r.autoResolved = true; r.resolvedAt = r.resolvedAt || now; r.updatedAt = now; if(me) r.resolvedBy = me; return true; }
+    if(!done && r.status === 'Resolved' && r.autoResolved){ r.status = 'In Progress'; r.resolvedAt = null; r.autoResolved = false; r.updatedAt = now; delete r.resolvedBy; return true; }
+    return false;
+  }
+  async function flushLinkedReports(attempt){
+    attempt = attempt || 1;
+    const rn = reportsFarmName();
+    if(!ghPath || !rn || !linkedReportQueue.size) return;
+    if(!navigator.onLine){ linkedReportTimer = setTimeout(flushLinkedReports, 15000); return; }
+    const batch = new Map(linkedReportQueue);
+    try{
+      const url = `${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`;
+      const getRes = await fetch(url);
+      if(!getRes.ok) throw new Error('GET reports ' + getRes.status);
+      const fresh = await getRes.json();
+      if(!fresh || fresh.notFound) { batch.forEach((v,k)=> linkedReportQueue.delete(k)); return; }
+      const d = fresh.data || {};
+      const list = Array.isArray(d) ? d : (d.reports || []);
+      let changed = false;
+      batch.forEach((done, id)=>{ const r = list.find(x=> x.id === id); if(r && applyLinkedReportStatus(r, done)) changed = true; });
+      if(changed){
+        const putRes = await fetch(url, { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ sha: fresh.sha, data: { reports: list } }) });
+        if(putRes.status === 409 && attempt < 4){ await new Promise(r=> setTimeout(r, 300*attempt)); return flushLinkedReports(attempt+1); }
+        if(!putRes.ok) throw new Error('PUT reports ' + putRes.status);
+        reports = list.concat(loadPendingReports().filter(r=> !list.some(x=> x.id === r.id)));
+      }
+      batch.forEach((done, id)=>{ if(linkedReportQueue.get(id) === done) linkedReportQueue.delete(id); });
+    }catch(e){
+      console.warn('Linked report update failed — the manager app will catch up on its next sync', e);
+      if(attempt < 4) linkedReportTimer = setTimeout(()=> flushLinkedReports(attempt+1), 4000*attempt);
+    }
+  }
   function setTaskStatusLocal(id, status){
     const tk = tasks.find(x=> x.id === id);
     if(!tk) return null;
     tk.status = status;
+    queueLinkedReport(tk);
     pendingTicks.set(id, status);
     savePendingTicks();
     renderAll();

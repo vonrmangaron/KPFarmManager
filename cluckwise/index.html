@@ -950,6 +950,7 @@
   .report-alert{ position:fixed; top:calc(14px + env(safe-area-inset-top, 0px)); left:50%; transform:translate(-50%,-16px); opacity:0; pointer-events:none; z-index:120; display:flex; align-items:center; gap:10px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-left:4px solid var(--primary); border-radius:14px; box-shadow:var(--shadow-lg); padding:10px 10px 10px 14px; max-width:min(560px, 92vw); font-weight:700; font-size:13.5px; transition:opacity .2s ease, transform .2s ease; }
   .report-alert.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
   .report-alert.urgent{ border-left-color:var(--danger); }
+  .report-alert.fixed{ border-left-color:var(--success); }
   .report-alert .ra-msg{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .report-alert .ra-view{ flex-shrink:0; border:none; background:var(--primary); color:#241A08; font-weight:800; font-size:12.5px; padding:7px 14px; border-radius:999px; cursor:pointer; font-family:'Sora',sans-serif; }
   .report-alert .ra-x{ flex-shrink:0; border:none; background:transparent; color:var(--muted); font-size:15px; cursor:pointer; padding:4px 6px; }
@@ -4016,6 +4017,7 @@
       const localOnly = reports.filter(r => !serverIds.has(r.id));
       reports = serverReports.concat(localOnly);
       checkNewReports();
+      checkResolvedReports();
       updateReportsBadge();
       renderReportsView();
     }catch(e){
@@ -4119,7 +4121,7 @@
     });
     if(reopenReportsWithoutTask()) reportsChanged = true;
 
-    if(reportsChanged) scheduleReportsPush();
+    if(reportsChanged){ scheduleReportsPush(); checkResolvedReports(); }
     if(tasksChanged) persist();
     if(reportsChanged || tasksChanged) renderAll();
   }
@@ -4470,6 +4472,7 @@
           r.autoResolved = true;
           r.resolvedAt = new Date().toISOString();
           r.updatedAt = new Date().toISOString();
+          markResolvedSeen(r);
           addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
           scheduleReportsPush();
         } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
@@ -4805,7 +4808,34 @@
       }catch(e){}
     }
   }
-  function showReportAlert(msg, reportId, urgent){
+  // ---- A worker fixed a reported problem: tell the manager (banner + device alert) ----
+  const RESOLVED_SEEN_KEY = 'cluckwise-resolved-seen';
+  function loadResolvedSeen(){ try{ const v = JSON.parse(localStorage.getItem(RESOLVED_SEEN_KEY) || 'null'); return Array.isArray(v) ? new Set(v) : null; }catch(e){ return null; } }
+  function saveResolvedSeen(set){ try{ localStorage.setItem(RESOLVED_SEEN_KEY, JSON.stringify([...set].slice(-800))); }catch(e){} }
+  // One notice per fix: keyed by report + when it was fixed (a later re-fix notifies again)
+  const fixKey = r => r.id + '|' + (r.resolvedAt || '');
+  function markResolvedSeen(r){ const s = loadResolvedSeen() || new Set(); s.add(fixKey(r)); saveResolvedSeen(s); }
+  function checkResolvedReports(){
+    const seen = loadResolvedSeen();
+    const resolved = reports.filter(r => r.status === 'Resolved');
+    if(!seen){ saveResolvedSeen(new Set(resolved.map(fixKey))); return; }   // first run: no flood of old ones
+    const fresh = resolved.filter(r => !seen.has(fixKey(r)) && (r.autoResolved || r.resolvedBy));
+    resolved.forEach(r => seen.add(fixKey(r)));
+    saveResolvedSeen(seen);
+    if(!fresh.length) return;
+    fresh.forEach(r => addHistory('Report fixed', `${r.code} ${r.problemType} · ${reportPlace(r)}${r.resolvedBy ? ' — by ' + r.resolvedBy : ' — task done'}`));
+    const one = fresh.length === 1 ? fresh[0] : null;
+    const msg = one ? `Fixed: ${one.problemType} · ${reportPlace(one)}${one.resolvedBy ? ' · by ' + one.resolvedBy : ''}`
+                    : `${fresh.length} reported problems fixed`;
+    showReportAlert('✅ ' + msg, one ? one.id : null, false, 'fixed');
+    if('Notification' in window && Notification.permission === 'granted' && document.hidden){
+      try{
+        const n = new Notification('CluckWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-fixed' });
+        n.onclick = ()=>{ window.focus(); openReportsDrawer(one ? one.id : null); n.close(); };
+      }catch(e){}
+    }
+  }
+  function showReportAlert(msg, reportId, urgent, kind){
     let el = $('#reportAlert');
     if(!el){
       el = document.createElement('div'); el.id = 'reportAlert'; el.className = 'report-alert'; el.setAttribute('role', 'status');
@@ -4817,6 +4847,7 @@
     el.querySelector('.ra-msg').textContent = msg;
     el.dataset.id = reportId || '';
     el.classList.toggle('urgent', !!urgent);
+    el.classList.toggle('fixed', kind === 'fixed');
     el.classList.add('show');
     clearTimeout(showReportAlert._t);
     showReportAlert._t = setTimeout(()=> el.classList.remove('show'), 15000);
@@ -5055,6 +5086,7 @@
     r.status = status;
     r.resolvedAt = status === 'Resolved' ? new Date().toISOString() : null;
     r.autoResolved = false;
+    if(status === 'Resolved') markResolvedSeen(r); else delete r.resolvedBy;
     touchReport(r, `status: ${old} → ${status}`);
     showToast(`Report ${RP_STATUS_LABEL[status].toLowerCase()}.`);
   }
@@ -11260,6 +11292,11 @@
     reportsPollTick++;
     const alertsOn = 'Notification' in window && Notification.permission === 'granted';
     if(document.hidden && !(alertsOn && reportsPollTick % 3 === 0)) return;
+    // Visible and idle: full sync, so a task a worker ticked shows here and its
+    // linked report turns Resolved without leaving and coming back to the app.
+    const ae = document.activeElement, typing = ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable);
+    const busy = typing || pushPending || pushInFlight || document.querySelector('.form-modal.open, .sheet-overlay:not(.hidden), .history-drawer.open');
+    if(!document.hidden && !busy){ pullFromGithub(true); return; }
     pullReportsFromGithub(true);
   }, 60000);
   document.addEventListener('keydown', (e)=>{
