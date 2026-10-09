@@ -4272,3 +4272,34 @@ body.sb-rail{--sb-w:76px}
 body:not(.theme-dark) .sms-group-head{background:var(--surface)!important;color:var(--ink)!important;position:relative;padding-left:26px!important;border-bottom:1px solid var(--line)}
 body:not(.theme-dark) .sms-group-head::before{content:'';position:absolute;left:10px;top:10px;bottom:10px;width:5px;border-radius:3px;background:var(--pair-color,var(--primary))}
 body:not(.theme-dark) .sms-group-head *{color:inherit}
+
+/* Sidebar fixes (2026-10-09): a tool page is the current page, so other items lose their highlight */
+body.tool-open .sb-link[data-tab].active{background:transparent;font-weight:inherit}
+body.tool-open .sb-link[data-tab].active::before,body.tool-open .sb-link[data-tab].active::after{display:none}
+body.tool-open .sb-link[data-tab].active>svg{color:inherit}
+@media (min-width:769px){
+  /* Rail highlight: dark like the dark theme, for both hover and the current page */
+  body.sb-rail .sb-link:hover{background:#212A42;color:#FFFFFF}
+  body.sb-rail .sb-link.active,body.sb-rail.tool-open .sb-link.active:not([data-tab]){background:#28324D;color:#FFFFFF}
+  body.sb-rail.tool-open .sb-link[data-tab].active{background:transparent;color:#A9B0B4}
+  /* Rail footer: profile (farm avatar) and the theme switch stay */
+  body.sb-rail .sb-farm{display:flex!important;flex:none;justify-content:center;margin:0;padding:4px}
+  body.sb-rail .sb-farm-text{display:none!important}
+  body.sb-rail .sb-farm:hover{background:#212A42}
+  body.sb-rail .sb-theme-seg{display:flex!important;flex-direction:column;gap:2px;background:#1F2427;border-color:#33393D}
+  body.sb-rail .sb-theme-opt{width:32px;height:30px;color:#A9B0B4;border-radius:6px}
+  body.sb-rail .sb-theme-opt:hover{color:#FFFFFF;background:#212A42}
+  body.sb-rail .sb-theme-opt.active{background:#28324D;color:var(--primary)}
+}
+body.tool-open .sb-link[data-tab].active{color:var(--sb-ink-2,var(--muted))}
+@media (min-width:769px){
+  body.sb-rail .sb-nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;gap:3px;scrollbar-width:none}
+  body.sb-rail .sb-nav::-webkit-scrollbar{display:none}
+  body.sb-rail .sb-link{width:44px;height:42px;min-height:42px;border-radius:12px}
+  body.sb-rail .sb-link svg{width:20px;height:20px}
+  body.sb-rail .sb-brand{padding:12px 0 8px;gap:10px}
+  body.sb-rail .sb-foot{padding:10px 0;flex-shrink:0}
+  body.sb-rail .sb-theme-opt{height:28px}
+}
+body.tool-open .sb-link[data-tab].active>svg{color:var(--muted)}
+@media (min-width:769px){body.sb-rail.tool-open .sb-link[data-tab].active>svg{color:#A9B0B4}}
