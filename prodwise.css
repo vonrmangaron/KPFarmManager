@@ -4442,3 +4442,20 @@ body:has(#mortModal.open) .adj-fab{display:none!important}
   #compareFeedModal.tool-page .compare-modal-body{padding-top:20px}
   #compareFeedBody > .silo-set-line:first-child{padding-right:170px;min-height:36px;box-sizing:border-box}
 }
+
+/* ---------- Installed app on a computer, title bar hidden (Window Controls Overlay) ----------
+   The app starts below the window buttons; that strip is painted in the app's own colours
+   (charcoal over the sidebar, header colour on the right) and drags the window. */
+@media (display-mode: window-controls-overlay){
+  :root{ --wco-h: env(titlebar-area-height, 0px); }
+  body::before{ content:''; position:fixed; top:0; left:0; right:0; height:var(--wco-h); z-index:10000;
+    background:linear-gradient(to right, #16191B 0, #16191B var(--sb-w), var(--surface) var(--sb-w));
+    -webkit-app-region:drag; app-region:drag; }
+  .app-layout{ top:var(--wco-h); }
+  .compare-modal.tool-page{ top:calc(var(--ph-h, 68px) + var(--wco-h)) !important; }
+  .settings-drawer{ top:var(--wco-h); }
+  button, a, input, select, textarea, [role="button"]{ -webkit-app-region:no-drag; app-region:no-drag; }
+}
+@media (display-mode: window-controls-overlay) and (max-width:768px){
+  body::before{ background:var(--surface); }
+}

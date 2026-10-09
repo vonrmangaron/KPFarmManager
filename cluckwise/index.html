@@ -2668,6 +2668,24 @@
     .sidebar .sb-sec .task-card.high-priority{ background:#3D3320; border-color:#F0A21A; }
     .sidebar .cur-batch{ background:#1E2225; border-color:#262B2E; }
   }
+
+  /* ---------- Installed app on a computer, title bar hidden (Window Controls Overlay) ----------
+     The app starts below the window buttons; that strip uses the app's own colours and drags the window. */
+  @media (display-mode: window-controls-overlay){
+    :root{ --wco-h: env(titlebar-area-height, 0px); }
+    body{ padding-top:var(--wco-h); box-sizing:border-box; }
+    body::before{ content:''; position:fixed; top:0; left:0; right:0; height:var(--wco-h); z-index:10000;
+      background:var(--surface); -webkit-app-region:drag; app-region:drag; }
+    .shell{ height:calc(100vh - var(--wco-h)) !important; }
+    .history-drawer{ top:var(--wco-h); height:calc(100% - var(--wco-h)); }
+    .reports-modal.mt-page{ top:var(--wco-h); }
+    button, a, input, select, textarea, [role="button"]{ -webkit-app-region:no-drag; app-region:no-drag; }
+  }
+  @media (display-mode: window-controls-overlay) and (min-width: 1025px){
+    body::before{ background:linear-gradient(to right, #16191B 0, #16191B 280px, var(--surface) 280px); }
+    body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 76px, var(--surface) 76px); }
+    .sidebar{ height:calc(100vh - var(--wco-h)) !important; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
