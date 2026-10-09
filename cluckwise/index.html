@@ -2444,6 +2444,25 @@
   body:not(.theme-dark) .kanban-column.today .col-head{ box-shadow:none; }
   body:not(.theme-dark) .col-head .dbar{ background:var(--surface-soft); }
 
+  /* ---------- Dark sidebar (desktop): charcoal like ProdWise's sidebar, in both themes ---------- */
+  @media (min-width: 761px){
+    .sidebar{
+      --bg:#16191B; --surface:#1F2427; --surface-soft:#262B2E; --line:#33393D;
+      --ink:#F2F4F5; --muted:#A9B0B4;
+      --primary-dark:#FFC876; --primary-soft:#3D3320;
+      --secondary:#9AA4AA; --secondary-soft:#2A3034;
+      --danger:#F0685A; --danger-soft:#3A2321; --success:#5FBE72; --success-soft:#1E3524;
+      --shadow-sm:0 1px 2px rgba(0,0,0,0.3);
+      --sb-thumb:#3A4044; --sb-thumb-hover:#4A5155;
+      background:#16191B; border-right-color:#16191B; color:var(--ink); color-scheme:dark;
+    }
+    .sidebar .sb-brand{ background:#16191B; border-bottom-color:#262B2E; }
+    .sidebar .sb-collapse:hover{ background:#212A42; border-color:transparent; color:#FFFFFF; }
+    .sidebar .sb-icon-btn:hover{ background:#212A42; color:#FFFFFF; }
+    .sidebar .btn-create-wide.audit:hover{ background:#212A42; }
+    .sidebar .task-card.high-priority{ background:#3D3320; }
+  }
+
   /* ---------- Collapsed sidebar = slim icon rail (desktop), same look as ProdWise ---------- */
   .sb-rail{ display:none; }
   @media (min-width: 1025px){
@@ -2631,56 +2650,6 @@
   body.mt-open .mode-dock, body.mt-open .fab-dock, body.mt-open .bottom-nav{ display:none !important; }
 
   .rp-thumb svg{ width:19px; height:19px; color:var(--primary-dark); }
-
-  /* =====================================================================
-     DESIGN B — "Soft cards" (2026-10-10): same layout and content as before,
-     the sidebar, header and calendar become rounded cards on a soft ground.
-     ===================================================================== */
-  :root{ --b-ground:#ECEEE8; --b-panel:#F7F8F5; --b-shadow:0 1px 2px rgba(16,24,40,.05); }
-  body.theme-dark{ --b-ground:#141C2C; --b-panel:var(--surface-soft); --b-shadow:none; }
-  .cur-batch .cb-sub{ font-size:12px; color:var(--muted); }
-  @media (min-width: 1025px){
-    body{ background:var(--b-ground); }
-    .shell{ padding:16px; gap:16px; box-sizing:border-box; grid-template-columns:286px minmax(0,1fr); background:var(--b-ground); }
-    body.sb-collapsed .shell{ grid-template-columns:76px minmax(0,1fr); }
-    .sidebar{ height:auto; min-height:0; border:none; border-radius:16px; box-shadow:var(--b-shadow); padding:0 16px 16px; }
-    .sidebar .sb-brand{ margin:0 -16px 10px; padding:0 14px 0 18px; border-bottom:none; border-radius:16px 16px 0 0; }
-    .sidebar .sb-divider{ display:none; }
-    .sidebar .sb-sec{ background:var(--b-panel); border-radius:12px; padding:10px; margin-top:10px; }
-    .sidebar .cur-batch{ background:var(--primary-soft); border:none; border-radius:12px; padding:12px; }
-    .sidebar .cur-batch .cb-k{ color:var(--primary-dark); }
-    .topbar{ height:64px !important; border:none !important; border-radius:16px; box-shadow:var(--b-shadow) !important; }
-    .topbar .nav-group #prevBtn, .topbar .nav-group #nextBtn{ border:none !important; background:var(--surface-soft) !important; }
-    .topbar .calendar-density-btn, .topbar #todayBtn{ border:none !important; background:var(--surface-soft) !important; box-shadow:none !important; }
-    .calendar-wrap-outer{ background:var(--surface); border-radius:16px; overflow:hidden; box-shadow:var(--b-shadow); }
-    .shell > .app-footer{ background:transparent; }
-    /* calendar days: soft tiles */
-    .day-cell{ border-color:transparent; box-shadow:none; background:var(--b-panel); }
-    .day-cell.weekend{ border-top:none; background:var(--weekend-bg); }
-    .day-cell.today{ box-shadow:inset 0 0 0 2px var(--primary) !important; }
-    .day-cell .task-card{ border-color:transparent; }
-    /* Maintenance page sits beside the sidebar card */
-    .reports-modal.mt-page{ top:16px; bottom:16px; right:16px; left:318px; border-radius:16px; }
-    /* collapsed icon bar: light, like the card */
-    .sr-btn{ color:var(--muted); }
-    .sr-btn:hover{ background:var(--surface-soft); color:var(--ink); }
-    .sr-expand{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
-    .sr-sep{ background:var(--line); }
-    .sr-batch{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
-    .sr-batch:hover{ background:var(--primary-soft); border-color:var(--primary); }
-    .sr-batch .sr-num{ color:var(--muted); }
-    body.sb-collapsed .reports-modal.mt-page{ left:108px; }
-  }
-  /* Board: more room for tasks — compact column header */
-  .col-head{ padding:7px 9px; margin-bottom:6px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; }
-  .col-head > .col-head-top{ flex:1 1 100%; }
-  .col-head .dprogress{ margin-top:0; flex:0 0 74px; }
-  .col-head .col-batch-age{ margin-top:0; }
-  .col-head > .wx-card, .col-head > .wx-setup-chip, .col-head > [class*="wx-"]:not(.col-wx-mini){ margin:0 !important; padding:2px 7px !important; min-height:0 !important; font-size:11px !important; border-radius:999px !important; flex:0 1 auto; max-width:100%; }
-  .col-head > .wx-card *{ font-size:11px !important; }
-  .col-head > .wx-setup{ display:none !important; }   /* setup prompt: on the calendar, not in every column */
-  .kanban-column{ padding:6px; }
-  .kanban-column .empty-note{ padding:8px 4px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -6754,7 +6723,7 @@
     const daysTo = Math.round((toDateObj(b.start) - toDateObj(today)) / 86400000);
     box.innerHTML = `<button type="button" class="cur-batch" id="curBatchBtn" title="Batch details">
       <span class="cb-text"><span class="cb-k">${active ? 'Current batch' : 'Next batch'}</span>
-      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span>${active && b.end ? `<span class="cb-sub">Clean-out ${escapeHtml(formatShort(b.end))}</span>` : ''}</span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span></span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
     box.querySelector('#curBatchBtn').addEventListener('click', ()=> openBatchInfo(b.number));
   }
 
@@ -6950,7 +6919,7 @@
       } else if(activeBatches.length){
         const c = colorForBatchNumber(activeBatches[0].number);
         cell.style.background = hexToRgba(c, lightTint(0.14));
-        cell.style.border = `1px solid ${hexToRgba(c, 0.32)}`;
+        cell.style.border = `1.5px solid ${c}`;
       }
 
       if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
