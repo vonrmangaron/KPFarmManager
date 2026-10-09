@@ -2570,7 +2570,7 @@
   .rpd-head-row{ display:flex; align-items:center; gap:8px; }
   .rpd-head .rpd-code{ font-size:12px; font-weight:700; color:var(--muted); }
   .rpd-head .rpd-copy{ margin-left:auto; border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:5px 9px; font:600 12px 'Inter',sans-serif; color:var(--ink); cursor:pointer; }
-  .rpd-x{ width:32px; height:32px; border:none; border-radius:8px; background:var(--surface-soft); color:var(--ink); cursor:pointer; flex-shrink:0; }
+  .rpd-x{ margin-left:auto; width:32px; height:32px; border:none; border-radius:8px; background:var(--surface-soft); color:var(--ink); cursor:pointer; flex-shrink:0; }
   .rpd-head .rpd-type{ margin:0; font-family:'Sora',sans-serif; font-size:19px; font-weight:700; color:var(--ink); }
   .rpd-head .rpd-sub{ font-size:13px; color:var(--muted); }
   .mt-page .rpd-scroll{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:16px; }
@@ -2648,6 +2648,8 @@
     .mt-page .rp-head-text{ order:1; } .mt-page .rp-close{ order:2; } .mt-page .rp-head-btn{ order:3; } .mt-page .rp-alert-btn{ order:4; } .rp-search{ order:5; }
   }
   body.mt-open .mode-dock, body.mt-open .fab-dock, body.mt-open .bottom-nav{ display:none !important; }
+
+  .rp-thumb svg{ width:19px; height:19px; color:var(--primary-dark); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2917,9 +2919,9 @@
       <h2 id="rpTitle">Maintenance</h2>
       <div class="rp-sub">Problems reported on the farm, and how they were fixed</div>
     </div>
-    <label class="rp-search" title="Search by code, shed, problem, note or name">
+    <label class="rp-search" title="Search by shed, problem, note or name">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input type="search" id="reportsSearchInput" placeholder="Search code, shed, problem, name" aria-label="Search reports">
+      <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
     <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
     <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
@@ -4271,14 +4273,14 @@
         r.resolvedAt = r.resolvedAt || new Date().toISOString();
         r.updatedAt = new Date().toISOString();
         reportsChanged = true;
-        addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
+        addHistory('Report auto-resolved', `${rpLabel(r)} resolved via linked task`);
       } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
         r.status = 'In Progress';
         r.resolvedAt = null;
         r.autoResolved = false;
         r.updatedAt = new Date().toISOString();
         reportsChanged = true;
-        addHistory('Report reopened', `${r.code} reopened via linked task`);
+        addHistory('Report reopened', `${rpLabel(r)} reopened via linked task`);
       }
     });
 
@@ -4639,14 +4641,14 @@
           r.resolvedAt = new Date().toISOString();
           r.updatedAt = new Date().toISOString();
           markResolvedSeen(r);
-          addHistory('Report auto-resolved', `${r.code} resolved via linked task`);
+          addHistory('Report auto-resolved', `${rpLabel(r)} resolved via linked task`);
           scheduleReportsPush();
         } else if(t.status !== 'done' && r.status === 'Resolved' && r.autoResolved){
           r.status = 'In Progress';
           r.resolvedAt = null;
           r.autoResolved = false;
           r.updatedAt = new Date().toISOString();
-          addHistory('Report reopened', `${r.code} reopened via linked task`);
+          addHistory('Report reopened', `${rpLabel(r)} reopened via linked task`);
           scheduleReportsPush();
         }
       }
@@ -4989,7 +4991,7 @@
     resolved.forEach(r => seen.add(fixKey(r)));
     saveResolvedSeen(seen);
     if(!fresh.length) return;
-    fresh.forEach(r => addHistory('Report fixed', `${r.code} ${r.problemType} · ${reportPlace(r)}${r.resolvedBy ? ' — by ' + r.resolvedBy : ' — task done'}`));
+    fresh.forEach(r => addHistory('Report fixed', `${rpLabel(r)}${r.resolvedBy ? ' — by ' + r.resolvedBy : ' — task done'}`));
     const one = fresh.length === 1 ? fresh[0] : null;
     const msg = one ? `Fixed: ${one.problemType} · ${reportPlace(one)}${one.resolvedBy ? ' · by ' + one.resolvedBy : ''}`
                     : `${fresh.length} reported problems fixed`;
@@ -5119,8 +5121,9 @@
     filtered.forEach(r => list.appendChild(buildReportCard(r)));
   }
   // Problem-type icon for a report (emoji, matches the report form)
-  // No icons: a report without a photo shows the first letter of its problem type
-  function reportTypeIcon(type){ const t = String(type || '').replace(/^Other\s*—\s*/i, '').trim(); return t ? t[0].toUpperCase() : '?'; }
+  // A report without a photo shows the maintenance (wrench) icon
+  const RP_WRENCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>';
+  function reportTypeIcon(){ return RP_WRENCH; }
   function reportDayGroup(r){
     if(r.urgent && r.status !== 'Resolved') return 'Urgent';
     if(!r.createdAt) return 'Earlier';
@@ -5141,17 +5144,17 @@
     const el = document.createElement('div');
     el.setAttribute('role', 'button'); el.tabIndex = 0;
     el.className = `rp-row status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
-    el.title = `Open ${r.code || 'report'}`;
+    el.title = 'Open this problem';
     el.innerHTML = `<span class="rp-c-prob"><span class="rp-thumb"></span><span class="rp-prob-text"><span class="rp-prob-top"><b class="rp-prob-name"></b>${urgent ? '<span class="rp-tag urgent">Urgent</span>' : ''}${isNew ? '<span class="rp-tag new">New</span>' : ''}</span><span class="rp-prob-sub"></span></span></span>
       <span class="rp-c-place" data-label="Place"></span>
       <span class="rp-c-rep" data-label="Reported"></span>
       <span class="rp-c-status" data-label="Status"><span class="rp-st st-${sc}"></span></span>
       <span class="rp-c-task" data-label="Task"></span>`;
     const thumb = el.querySelector('.rp-thumb');
-    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.textContent = reportTypeIcon(r.problemType); }; img.src = photo; thumb.appendChild(img); }
-    else thumb.textContent = reportTypeIcon(r.problemType);
+    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.innerHTML = RP_WRENCH; }; img.src = photo; thumb.appendChild(img); }
+    else thumb.innerHTML = RP_WRENCH;
     el.querySelector('.rp-prob-name').textContent = rpTypeName(r);
-    el.querySelector('.rp-prob-sub').textContent = [r.code, (r.notes || '').replace(/\s+/g, ' ').trim()].filter(Boolean).join(' · ');
+    el.querySelector('.rp-prob-sub').textContent = (r.notes || '').replace(/\s+/g, ' ').trim();
     el.querySelector('.rp-c-place').textContent = reportPlace(r);
     el.querySelector('.rp-c-rep').textContent = [r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
     el.querySelector('.rp-st').textContent = sc === 'resolved' ? (r.resolvedBy ? `Fixed by ${r.resolvedBy}` : 'Fixed') : (RP_STATUS_LABEL[r.status] || r.status || 'Open');
@@ -5184,7 +5187,7 @@
     const st = (v, label) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}" title="Set to ${label}">${label}</button>`;
     pane.innerHTML = `
       <div class="rpd-head">
-        <div class="rpd-head-row"><span class="rpd-code"></span><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<button type="button" class="rpd-copy" data-rp-copy title="Copy the report code">Copy code</button><button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
+        <div class="rpd-head-row"><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
         <h3 class="rpd-type"></h3>
         <div class="rpd-sub"></div>
       </div>
@@ -5213,7 +5216,6 @@
         <button type="button" class="rpd-delete" data-rp-delete title="Delete this report">Delete report</button>
         <div class="rpd-confirm" hidden><span>${sc !== 'resolved' ? "This problem isn't fixed yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
       </div>`;
-    pane.querySelector('.rpd-code').textContent = r.code || '';
     pane.querySelector('.rp-st').textContent = sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open');
     pane.querySelector('.rpd-type').textContent = rpTypeName(r);
     const fmtWhen = iso => iso ? fmtDateTime12(new Date(iso), { weekday:'short', month:'short', day:'numeric' }) : '';
@@ -5270,7 +5272,7 @@
   }
   function touchReport(r, what){
     r.updatedAt = new Date().toISOString();
-    addHistory('Report updated', `${r.code} ${what}`);
+    addHistory('Report updated', `${rpLabel(r)}: ${what}`);
     scheduleReportsPush();
     renderAll();
   }
@@ -5298,7 +5300,7 @@
     if((r[field] || '') === value) return;
     r[field] = value;
     r.updatedAt = new Date().toISOString();
-    addHistory('Report updated', `${r.code} notes updated`);
+    addHistory('Report updated', `${rpLabel(r)}: notes updated`);
     scheduleReportsPush();
     const s = $('#rpdSaved'); if(s){ s.textContent = '✓ Saved'; clearTimeout(saveReportNote._t); saveReportNote._t = setTimeout(()=>{ if($('#rpdSaved')) $('#rpdSaved').textContent = ''; }, 2000); }
   }
@@ -5317,7 +5319,7 @@
     reports = reports.filter(x => x.id !== id);
     deletedReportIds.add(id);
     saveDeletedReportIds();
-    addHistory('Report deleted', `${r.code} (${reportPlace(r)} · ${r.problemType}) deleted`);
+    addHistory('Report deleted', `${rpLabel(r)} deleted`);
     scheduleReportsPush();
     currentReportId = null;
     renderAll();
@@ -5330,6 +5332,7 @@
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
 
+  function rpLabel(r){ return `${rpTypeName(r)} · ${reportPlace(r)}`; }
   function rpTypeName(r){ return String((r && r.problemType) || 'Report').replace(/^Other\s*—\s*/i, '').trim() || 'Report'; }
   function reportPlace(r){ return r.shed ? `Shed ${r.shed}` : (r.location || 'Around the farm'); }
   // A report whose converted task no longer exists goes back to Open (unless the manager resolved it by hand).
@@ -5340,7 +5343,7 @@
       r.linkedTaskId = null;
       if(!(r.status === 'Resolved' && !r.autoResolved)){ r.status = 'Open'; r.resolvedAt = null; r.autoResolved = false; }
       r.updatedAt = new Date().toISOString();
-      addHistory('Report reopened', `${r.code} is Open again: its task was deleted`);
+      addHistory('Report reopened', `${rpLabel(r)} is Open again: its task was deleted`);
       changed = true;
     });
     if(changed) scheduleReportsPush();
@@ -5356,10 +5359,10 @@
     closeOverlays();
     openCreateTaskModal(null);
     pendingReportTask = r.id;
-    $('#editTaskModalTitle').textContent = `New task · report ${r.code || ''}`.trim();
+    $('#editTaskModalTitle').textContent = 'New task from a report';
     $('#editTaskNameInput').value = `Fix ${rpTypeName(r)} — ${reportPlace(r)}`.slice(0, Number($('#editTaskNameInput').maxLength) > 0 ? Number($('#editTaskNameInput').maxLength) : 200);
     updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
-    $('#editTaskNotesInput').value = `Report ${r.code}${r.createdBy ? ' · by ' + r.createdBy : ''}\n${r.notes || ''}`.trim();
+    $('#editTaskNotesInput').value = `${r.createdBy ? 'Reported by ' + r.createdBy : 'From a report'}${r.notes ? '\n' + r.notes : ''}`.trim();
     $('#editTaskPriorityInput').checked = true;
     $('#editTaskDateInput').value = '';
     $('#editTaskCreateOnlyRow').style.display = 'none';   // not a frequent task
@@ -5373,7 +5376,7 @@
     r.status = 'In Progress';
     r.autoResolved = false;
     r.updatedAt = new Date().toISOString();
-    addHistory('Report converted', `${r.code} → task "${t.name}"`);
+    addHistory('Report converted', `${rpLabel(r)} → task "${t.name}"`);
     scheduleReportsPush();
   }
   function convertReportToTask(reportId){
@@ -5384,7 +5387,7 @@
       return;
     }
     const taskName = `Fix ${r.problemType} — ${reportPlace(r)}`;
-    const noteText = `Report ${r.code}\n${r.notes || ''}`.trim();
+    const noteText = `${r.createdBy ? 'Reported by ' + r.createdBy : 'From a report'}${r.notes ? '\n' + r.notes : ''}`.trim();
     // Goes to the Backlog so the manager can schedule it.
     const t = addTask(taskName, guessIcon(taskName), null, {
       priority: 'high',
@@ -5395,7 +5398,7 @@
     r.status = 'In Progress';
     r.autoResolved = false;
     r.updatedAt = new Date().toISOString();
-    addHistory('Report converted', `${r.code} → task "${taskName}"`);
+    addHistory('Report converted', `${rpLabel(r)} → task "${taskName}"`);
     persist();
     scheduleReportsPush();
     renderAll();
@@ -8383,8 +8386,8 @@
     });
     const repHits = reports.filter(r=> [r.code, r.shed, r.location, r.problemType, r.notes, r.createdBy, r.managerNotes, r.resolutionNotes].some(has))
       .sort((a,b)=> (b.createdAt || '').localeCompare(a.createdAt || ''));
-    group('Reports', repHits, 15, r=> buildSearchResult('🚩', r.code || '(no code)',
-      `${r.status || 'Open'} · ${reportPlace(r)} · ${r.problemType}${r.notes ? ' · ' + r.notes.replace(/\s+/g,' ') : ''}`, q,
+    group('Reports', repHits, 15, r=> buildSearchResult('🚩', rpTypeName(r),
+      `${r.status || 'Open'} · ${reportPlace(r)}${r.notes ? ' · ' + r.notes.replace(/\s+/g,' ') : ''}`, q,
       ()=>{ closeOverlays(); openReportsDrawer(); openReportDetailModal(r.id); }));
     const evHits = events.filter(e=> has(e.name) || has(e.batchNumber)).sort((a,b)=> a.date.localeCompare(b.date));
     group('Events / Audits', evHits, 10, e=> buildSearchResult('📝', e.name,
@@ -8688,7 +8691,7 @@
       const r = reports.find(x => x.id === t.linkedReportId);
       if(r){
         reportRow.style.display = 'flex';
-        $('#detailReportCode').textContent = r.code;
+        $('#detailReportCode').textContent = rpLabel(r);
       } else {
         reportRow.style.display = 'none';
       }
@@ -10797,7 +10800,7 @@
     {id:'silo', name:'Silo', k:'silo'}, {id:'safety', name:'Safety', k:'safety'}, {id:'lighting', name:'Lighting', k:'lighting'},
     {id:'electricity', name:'Electricity', k:'electricity'}, {id:'biosecurity', name:'Biosecurity', k:'biosecurity'} ];
   function problemTypes(){ return Array.isArray(settings.problemTypes) ? settings.problemTypes : DEFAULT_PROBLEM_TYPES.map(x => Object.assign({}, x)); }
-  function saveProblemTypes(list, msg){ settings.problemTypes = list; persist(); renderPtypes(); if(msg) showToast(msg); }
+  function saveProblemTypes(list, msg){ settings.problemTypes = list; persist(); renderPtypes(); renderReportsView(); if(msg) showToast(msg); }
   let ptConfirm = null;
   function renderPtypes(){
     const box = $('#ptypesList'); if(!box) return;
@@ -10817,7 +10820,11 @@
         if(v === p.name) return;
         if(list.some((x, j) => j !== i && x.name.trim().toLowerCase() === v.toLowerCase())){ showToast('That problem type is already in the list.', true); inp.value = p.name; return; }
         const next = problemTypes(); next[i] = { id: p.id, name: v };   // renamed: shown as typed (no translation)
-        saveProblemTypes(next, 'Renamed.');
+        // reports of this type take the new name too
+        const now = new Date().toISOString(); let moved = 0;
+        reports.forEach(r => { if(String(r.problemType || '').trim().toLowerCase() === p.name.trim().toLowerCase()){ r.problemType = v; r.updatedAt = now; moved++; } });
+        if(moved){ addHistory('Problem type renamed', `“${p.name}” → “${v}” (${moved} report${moved === 1 ? '' : 's'})`); scheduleReportsPush(); }
+        saveProblemTypes(next, moved ? `Renamed — ${moved} report${moved === 1 ? '' : 's'} updated.` : 'Renamed.');
       };
       inp.addEventListener('change', commit);
       inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); inp.blur(); } if(e.key === 'Escape'){ inp.value = p.name; inp.blur(); } });
