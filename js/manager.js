@@ -77,13 +77,28 @@ function renderHomeView(){
   const off=farmSettingsNotNormal();
   const firstLow=silos.find(x=>x.dep)||silos[0];
 
+  // Where we'll finish: cFCR and FCR tiles ("low / to high"), then last batch with a verdict
+  const rng=(a,b)=>{if(a==null||!(e&&e.hasData))return {lo:b,hi:b};return {lo:Math.min(a,b),hi:Math.max(a,b)};};
+  const rv=(r,dp)=>r.lo.toFixed(dp)===r.hi.toFixed(dp)?r.hi.toFixed(dp):`<span>${r.lo.toFixed(dp)}</span><span><span class="mgr-ft-to">to</span>${r.hi.toFixed(dp)}</span>`;
+  const rc=rng(ec&&ec.cfcr,t.cfcr),rf=rng(ec&&ec.fcr,t.fcr);
+  let verdict='';
+  if(lk&&Number.isFinite(lk.cfcr)){
+    const L=lk.cfcr,near=0.005;
+    const [cls,txt]=rc.hi<L-near?['good','better than last batch']
+      :rc.lo>L+near?['bad','higher than last batch']
+      :(rc.hi-L>0.01&&L-rc.lo<=0.01)?['warn','similar to slightly higher']
+      :(L-rc.lo>0.01&&rc.hi-L<=0.01)?['good','similar to slightly lower']
+      :['neutral','about the same'];
+    verdict=`<span class="mgr-verdict ${cls}" title="cFCR: lower is better">${txt}</span>`;
+  }
   const finish=`<section class="mgr-card mgr-finish">
       <span class="mgr-k">Where we'll finish</span>
-      <div class="mgr-finish-row">
-        <div class="mgr-big"><span class="mgr-lbl">cFCR</span><b>${span(ec&&ec.cfcr,t.cfcr,3)}</b></div>
-        <div class="mgr-mid"><span class="mgr-lbl">FCR</span><b>${span(ec&&ec.fcr,t.fcr,3)}</b></div>
+      <div class="mgr-ftiles">
+        <div class="mgr-ftile main" title="Projected cFCR at clean-out"><span class="mgr-ft-k">cFCR</span><b class="mgr-ft-v">${rv(rc,3)}</b><span class="mgr-ft-s">corrected FCR</span></div>
+        <div class="mgr-ftile" title="Projected FCR at clean-out"><span class="mgr-ft-k">FCR</span><b class="mgr-ft-v">${rv(rf,3)}</b><span class="mgr-ft-s">feed ÷ live weight</span></div>
       </div>
-      <div class="mgr-meta">${lk?`<span class="mgr-chip">Last batch ${escapeHtml(String(lr.batch||''))}: ${lk.cfcr.toFixed(3)}</span>`:''}${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span>Low end if the last birds go ${PROJ_EARLY_DAYS} days early</span>`:''}</div>
+      ${lk?`<div class="mgr-lastrow"><span class="mgr-lr-k">Last batch ${escapeHtml(String(lr.batch||''))}</span><b>${lk.cfcr.toFixed(3)}</b>${verdict}</div>`:''}
+      ${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span class="mgr-ft-note">Low end if the last birds go ${PROJ_EARLY_DAYS} days early.</span>`:''}
       <button type="button" class="mgr-link" data-tab="dashboard">Result detail: PIF, ALW, dockets &amp; leftover ›</button>
     </section>`;
   const birds=`<section class="mgr-card mgr-birds">
