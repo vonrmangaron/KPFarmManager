@@ -2498,6 +2498,156 @@
     body.sb-anim .sidebar > *{ animation:sbFadeIn .3s ease both; }
   }
   @keyframes sbFadeIn{ from{ opacity:0; } to{ opacity:1; } }
+
+  /* ================= Maintenance page (was the Reports window) ================= */
+  .reports-modal.mt-page{ top:0; left:0; right:0; bottom:0; width:auto; height:auto; transform:none; border-radius:0; box-shadow:none; background:var(--bg); z-index:40; }
+  @media (min-width: 1025px){
+    .reports-modal.mt-page{ left:280px; }
+    body.sb-collapsed .reports-modal.mt-page{ left:76px; }
+  }
+  .mt-page .rp-head{ background:var(--surface); border-bottom:1px solid var(--line); padding:0 28px; min-height:72px; gap:12px; flex-wrap:wrap; }
+  .mt-page .rp-head h2{ font-size:22px; font-weight:700; }
+  .rp-sub{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .rp-search{ display:flex; align-items:center; gap:8px; height:40px; width:min(320px, 100%); box-sizing:border-box; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-soft); color:var(--muted); }
+  .rp-search svg{ width:16px; height:16px; flex-shrink:0; }
+  .rp-search input{ flex:1; min-width:0; border:none; background:transparent; outline:none; font:13.5px 'Inter',sans-serif; color:var(--ink); }
+  .rp-search:focus-within{ border-color:var(--primary); background:var(--surface); }
+  .rp-head-btn{ height:40px; padding:0 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 13px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; }
+  .rp-head-btn:hover{ border-color:var(--primary); }
+  .mt-page .rp-alert-btn{ height:40px; border-radius:10px; padding:0 14px; font-size:13px; }
+  .mt-page .rp-close{ width:40px; height:40px; border-radius:10px; }
+  .rp-kpis{ display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px; padding:18px 28px 0; flex-shrink:0; }
+  .rp-kpi{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 16px; display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .rp-kpi-l{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .rp-kpi b{ font-family:'Sora',sans-serif; font-size:24px; color:var(--ink); }
+  .rp-kpi-s{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rp-kpi.bad b, .rp-kpi.bad-sub .rp-kpi-s{ color:var(--danger); }
+  .rp-kpi.ok b{ color:var(--success); }
+  .mt-page .rp-body{ flex:1; min-height:0; display:flex; gap:16px; padding:16px 28px 24px; }
+  .mt-page .rp-list-pane{ flex:1; min-width:0; border:1px solid var(--line); border-radius:16px; background:var(--surface); overflow:hidden; }
+  .mt-page .rp-detail-pane{ width:430px; flex-shrink:0; border:1px solid var(--line); border-radius:16px; background:var(--surface); overflow:hidden; }
+  .mt-page .reports-toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line); }
+  .mt-page .reports-filter-row{ display:flex; gap:2px; background:var(--surface-soft); border:1px solid var(--line); border-radius:10px; padding:3px; flex-wrap:wrap; }
+  .mt-page .reports-filter-row button{ border:none; background:transparent; border-radius:8px; padding:6px 12px; font:600 12.5px 'Inter',sans-serif; color:var(--muted); cursor:pointer; }
+  .mt-page .reports-filter-row button.active{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
+  .rp-cnt{ font-weight:600; color:var(--muted); margin-left:2px; }
+  .rp-tool-right{ margin-left:auto; display:flex; gap:8px; }
+  .rp-tool-right select{ height:34px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); font:600 12.5px 'Inter',sans-serif; padding:0 8px; }
+  .rp-thead, .rp-row{ display:grid; grid-template-columns:minmax(0,2.3fr) minmax(0,.8fr) minmax(0,1.1fr) minmax(0,.95fr) minmax(0,1.2fr); gap:12px; align-items:center; padding:0 16px; }
+  .rp-thead{ padding-top:9px; padding-bottom:9px; background:var(--surface-soft); border-bottom:1px solid var(--line); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .mt-page .reports-list{ flex:1; overflow-y:auto; display:block; padding:0; }
+  .rp-row{ padding-top:10px; padding-bottom:10px; border-bottom:1px solid var(--line); cursor:pointer; font-size:13px; color:var(--ink); }
+  .rp-row:hover{ background:var(--surface-soft); }
+  .rp-row.selected{ background:var(--primary-soft); box-shadow:inset 3px 0 0 var(--primary); }
+  .rp-row:focus-visible{ outline:2px solid var(--primary-dark); outline-offset:-2px; }
+  .rp-c-prob{ display:flex; gap:10px; align-items:center; min-width:0; }
+  .rp-thumb{ width:40px; height:40px; border-radius:8px; background:var(--surface-soft); border:1px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; font:700 15px 'Sora',sans-serif; color:var(--muted); overflow:hidden; box-sizing:border-box; }
+  .rp-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .rp-prob-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .rp-prob-top{ display:flex; gap:6px; align-items:center; min-width:0; }
+  .rp-prob-name{ font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rp-prob-sub{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rp-tag{ flex-shrink:0; font-size:10px; font-weight:800; border-radius:999px; padding:1px 7px; text-transform:uppercase; letter-spacing:.03em; }
+  .rp-tag.urgent{ background:var(--danger); color:#fff; }
+  .rp-tag.new{ background:var(--primary); color:#241A08; }
+  .rp-c-place, .rp-c-rep, .rp-c-task{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .rp-c-rep{ color:var(--muted); font-size:12.5px; }
+  .rp-st{ display:inline-block; font-size:11.5px; font-weight:700; border-radius:999px; padding:3px 9px; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; vertical-align:middle; }
+  .rp-st.st-open{ background:var(--danger-soft); color:var(--danger); }
+  .rp-st.st-progress{ background:var(--primary-soft); color:var(--primary-dark); }
+  .rp-st.st-resolved{ background:var(--success-soft); color:var(--success); }
+  .rp-task-who{ color:var(--ink); }
+  .rp-task-when{ color:var(--muted); }
+  .rp-task-when.late{ color:var(--danger); font-weight:700; }
+  .rp-task-when.due{ color:var(--primary-dark); font-weight:700; }
+  .rp-link{ border:none; background:none; padding:0; color:var(--primary-dark); font:700 12.5px 'Inter',sans-serif; cursor:pointer; }
+  .rp-link:hover{ text-decoration:underline; }
+  .rp-muted{ color:var(--muted); }
+  .mt-page .rp-empty-list{ padding:28px 16px; color:var(--muted); font-size:13px; }
+  /* details */
+  .mt-page .rp-detail-pane{ display:flex; flex-direction:column; }
+  .rpd-head{ padding:14px 18px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:6px; }
+  .rpd-head-row{ display:flex; align-items:center; gap:8px; }
+  .rpd-head .rpd-code{ font-size:12px; font-weight:700; color:var(--muted); }
+  .rpd-head .rpd-copy{ margin-left:auto; border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:5px 9px; font:600 12px 'Inter',sans-serif; color:var(--ink); cursor:pointer; }
+  .rpd-x{ width:32px; height:32px; border:none; border-radius:8px; background:var(--surface-soft); color:var(--ink); cursor:pointer; flex-shrink:0; }
+  .rpd-head .rpd-type{ margin:0; font-family:'Sora',sans-serif; font-size:19px; font-weight:700; color:var(--ink); }
+  .rpd-head .rpd-sub{ font-size:13px; color:var(--muted); }
+  .mt-page .rpd-scroll{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:16px; }
+  .rpd-task{ display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .rpd-task-text{ display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .rpd-task-name{ font-size:13.5px; }
+  .rpd-task-meta{ font-size:12.5px; color:var(--muted); }
+  .rpd-hint{ font-size:12.5px; color:var(--muted); }
+  .rpd-hist{ display:flex; flex-direction:column; gap:8px; }
+  .rpd-step{ display:flex; gap:10px; font-size:12.5px; color:var(--ink); align-items:flex-start; }
+  .rpd-dot{ width:9px; height:9px; border-radius:50%; margin-top:4px; flex-shrink:0; box-sizing:border-box; }
+  .rpd-step.rep .rpd-dot{ background:var(--danger); }
+  .rpd-step.task .rpd-dot{ background:var(--primary); }
+  .rpd-step.fix .rpd-dot{ background:var(--success); }
+  .rpd-step.wait{ color:var(--muted); }
+  .rpd-step.wait .rpd-dot{ border:1.5px solid var(--muted); }
+  .rpd-when{ color:var(--muted); }
+  .rpd-empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:24px; text-align:center; color:var(--muted); font-size:13px; }
+  .rpd-empty svg{ width:34px; height:34px; opacity:.6; }
+  /* Problem types window */
+  .pt-modal{ z-index:60; width:460px; }
+  .pt-modal .pt-x{ font-size:18px; }
+  .pt-help{ margin:0; font-size:12.5px; color:var(--muted); }
+  .pt-list{ display:flex; flex-direction:column; gap:6px; }
+  .pt-row{ display:flex; gap:6px; align-items:center; }
+  .pt-row input{ flex:1; min-width:0; }
+  .form-modal-body .pt-row input{ padding:8px 10px; font-size:14px; }
+  .pt-mv{ width:34px; height:36px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); cursor:pointer; flex-shrink:0; }
+  .pt-mv:disabled{ opacity:.35; cursor:default; }
+  .pt-del{ height:36px; padding:0 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--danger); font:600 12.5px 'Inter',sans-serif; cursor:pointer; flex-shrink:0; }
+  .pt-del.confirm{ background:var(--danger); color:#fff; border-color:var(--danger); }
+  .pt-add{ display:flex; gap:6px; margin-top:6px; }
+  .pt-add input{ flex:1; min-width:0; }
+  .pt-add-btn{ height:42px; padding:0 16px; border:none; border-radius:10px; background:var(--primary); color:#241A08; font:700 13.5px 'Inter',sans-serif; cursor:pointer; }
+  .pt-reset{ align-self:flex-start; border:none; background:none; padding:4px 0; color:var(--muted); font:600 12.5px 'Inter',sans-serif; cursor:pointer; text-decoration:underline; }
+  .pt-empty{ font-size:13px; color:var(--muted); padding:6px 0; }
+  @media (max-width: 1100px){ .rp-kpis{ grid-template-columns:repeat(3, minmax(0,1fr)); } .mt-page .rp-detail-pane{ width:380px; } }
+  @media (max-width: 760px){
+    .mt-page .rp-head{ padding:10px 16px; padding-top:calc(10px + env(safe-area-inset-top, 0px)); }
+    .mt-page .rp-head-text{ flex:1 1 calc(100% - 56px); }
+    .rp-search{ order:5; width:100%; }
+    .rp-head-btn{ order:4; }
+    .rp-kpis{ grid-template-columns:repeat(2, minmax(0,1fr)); padding:12px 16px 0; gap:8px; }
+    .rp-kpi:last-child{ grid-column:1 / -1; }
+    .mt-page .rp-body{ padding:12px 16px 16px; }
+    .mt-page .rp-detail-pane{ width:auto; flex:1; }
+    .rp-thead{ display:none; }
+    .rp-tool-right{ margin-left:0; width:100%; } .rp-tool-right select{ flex:1; }
+    .rp-row{ grid-template-columns:1fr auto; grid-template-areas:"prob prob" "rep status" "place task"; row-gap:6px; padding:12px 14px; }
+    .mt-page .rp-detail-pane{ display:none; }
+    .reports-modal.mt-page.show-detail .rp-detail-pane{ display:flex; }
+    .reports-modal.mt-page.show-detail .rp-list-pane, .reports-modal.mt-page.show-detail .rp-kpis{ display:none; }
+    .rp-c-prob{ grid-area:prob; } .rp-c-rep{ grid-area:rep; } .rp-c-status{ grid-area:status; justify-self:end; } .rp-c-place{ grid-area:place; color:var(--muted); font-size:12.5px; } .rp-c-task{ grid-area:task; justify-self:end; font-size:12.5px; }
+  }
+
+  /* Maintenance page: layout fixes */
+  .mt-page .reports-toolbar{ flex-direction:row; justify-content:flex-start; }
+  .mt-page .reports-filter-row{ flex:0 1 auto; }
+  .rp-thead, .rp-row{ grid-template-columns:minmax(0,2.8fr) minmax(0,.75fr) minmax(0,1fr) minmax(0,.95fr) minmax(0,1.15fr); }
+  .mt-page .rp-detail-pane{ width:400px; }
+  .mt-page .rpd-controls{ display:flex; flex-direction:column; gap:12px; }
+  .mt-page .rpd-seg{ display:flex; }
+  .mt-page .rpd-seg-btn{ flex:1; white-space:nowrap; }
+  @media (max-width: 760px){
+    .reports-modal.mt-page{ z-index:49; }
+    .rp-kpis{ display:flex; overflow-x:auto; scrollbar-width:none; gap:8px; }
+    .rp-kpis::-webkit-scrollbar{ display:none; }
+    .rp-kpi{ flex:0 0 auto; min-width:118px; padding:9px 12px; gap:1px; }
+    .rp-kpi:last-child{ grid-column:auto; }
+    .rp-kpi b{ font-size:19px; }
+    .rp-kpi-s{ font-size:11px; }
+    .rp-prob-top{ flex-wrap:wrap; }
+    .rp-row{ grid-template-columns:minmax(0,1fr) auto; }
+    .rp-prob-name{ white-space:normal; }
+    .mt-page .rp-head-text{ order:1; } .mt-page .rp-close{ order:2; } .mt-page .rp-head-btn{ order:3; } .mt-page .rp-alert-btn{ order:4; } .rp-search{ order:5; }
+  }
+  body.mt-open .mode-dock, body.mt-open .fab-dock, body.mt-open .bottom-nav{ display:none !important; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2761,15 +2911,21 @@
   <div class="history-list" id="historyList"></div>
 </div>
 
-<div class="reports-modal" id="reportsDrawer" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+<div class="reports-modal mt-page" id="reportsDrawer" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
   <div class="rp-head">
     <div class="rp-head-text">
-      <h2 id="rpTitle">Reports</h2>
-      <div class="rp-summary" id="rpSummary"></div>
+      <h2 id="rpTitle">Maintenance</h2>
+      <div class="rp-sub">Problems reported on the farm, and how they were fixed</div>
     </div>
-    <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>🔔 Alerts on this device</button>
-    <button type="button" class="rp-close" id="closeReports" aria-label="Close">✕</button>
+    <label class="rp-search" title="Search by code, shed, problem, note or name">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="reportsSearchInput" placeholder="Search code, shed, problem, name" aria-label="Search reports">
+    </label>
+    <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
+    <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
+    <button type="button" class="rp-close" id="closeReports" aria-label="Close" title="Close">✕</button>
   </div>
+  <div class="rp-kpis" id="rpSummary"></div>
   <div class="rp-body">
     <section class="rp-list-pane" aria-label="Report list">
       <div class="reports-toolbar">
@@ -2777,21 +2933,31 @@
           <button type="button" data-status="active" class="active">Active</button>
           <button type="button" data-status="Open">Open</button>
           <button type="button" data-status="In Progress">In progress</button>
-          <button type="button" data-status="Resolved">Resolved</button>
+          <button type="button" data-status="Resolved">Fixed</button>
           <button type="button" data-status="all">All</button>
         </div>
-        <div class="reports-search-row">
-          <input type="search" id="reportsSearchInput" placeholder="Search…" aria-label="Search reports by code, place, problem or name">
-          <select id="reportsShedFilter"><option value="">All places</option></select>
-          <select id="reportsSortSelect">
+        <div class="rp-tool-right">
+          <select id="reportsShedFilter" aria-label="Place" title="Show one place"><option value="">All places</option></select>
+          <select id="reportsSortSelect" aria-label="Sort" title="Sort">
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
           </select>
         </div>
       </div>
+      <div class="rp-thead" aria-hidden="true"><span>Problem</span><span>Place</span><span>Reported</span><span>Status</span><span>Task</span></div>
       <div class="reports-list" id="reportsList"></div>
     </section>
     <section class="rp-detail-pane" id="rpDetail" aria-label="Report details"></section>
+  </div>
+</div>
+
+<div class="form-modal pt-modal" id="ptypesModal" role="dialog" aria-modal="true" aria-labelledby="ptypesTitle">
+  <div class="form-modal-head"><h2 id="ptypesTitle">Problem types</h2><button type="button" class="pt-x" id="closePtypes" aria-label="Close" title="Close">✕</button></div>
+  <div class="form-modal-body pt-body">
+    <p class="pt-help">What workers can pick under “What's the problem?” in the Viewer. “Other” (type your own) is always there.</p>
+    <div class="pt-list" id="ptypesList"></div>
+    <div class="pt-add"><input type="text" id="ptypesNewInput" maxlength="40" placeholder="New problem type" aria-label="New problem type"><button type="button" class="pt-add-btn" id="ptypesAddBtn">Add</button></div>
+    <button type="button" class="pt-reset" id="ptypesResetBtn" title="Put back the original list">Restore the original list</button>
   </div>
 </div>
 
@@ -4872,17 +5038,35 @@
   }
   function renderReportsSummary(){
     const el = $('#rpSummary'); if(!el) return;
+    const now = Date.now(), today = dateKey(new Date());
+    const live = reports.filter(r => r.status !== 'Resolved');
     const open = reports.filter(r => r.status === 'Open').length;
-    const prog = reports.filter(r => r.status === 'In Progress').length;
-    const urgent = reports.filter(r => r.urgent && r.status !== 'Resolved').length;
-    el.innerHTML = `<span><b>${open}</b> open</span><span><b>${prog}</b> in progress</span>${urgent ? `<span class="u"><b>${urgent}</b> urgent</span>` : ''}`;
+    const urgent = live.filter(r => r.urgent).length;
+    const prog = reports.filter(r => r.status === 'In Progress');
+    const noTask = prog.filter(r => !(r.linkedTaskId && tasks.some(t => t.id === r.linkedTaskId))).length;
+    const overdue = live.filter(r => { const t = r.linkedTaskId && tasks.find(x => x.id === r.linkedTaskId); return t && t.status !== 'done' && t.date && t.date < today; }).length;
+    const fixedWeek = reports.filter(r => r.status === 'Resolved' && Date.parse(r.resolvedAt || '') >= now - 7 * 864e5);
+    const who = {}; fixedWeek.forEach(r => { const n = r.resolvedBy || 'you'; who[n] = (who[n] || 0) + 1; });
+    const whoTxt = Object.entries(who).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([n, c]) => `${c} by ${n}`).join(' · ');
+    const spans = reports.filter(r => r.status === 'Resolved' && r.createdAt && r.resolvedAt && Date.parse(r.resolvedAt) >= now - 30 * 864e5)
+      .map(r => (Date.parse(r.resolvedAt) - Date.parse(r.createdAt)) / 864e5).filter(d => d >= 0);
+    const avg = spans.length ? spans.reduce((a, b) => a + b, 0) / spans.length : null;
+    const avgTxt = avg == null ? '—' : avg < 1 ? `${Math.max(1, Math.round(avg * 24))} h` : `${avg.toFixed(1)} days`;
+    const card = (lbl, val, sub, cls, tip) => `<div class="rp-kpi${cls ? ' ' + cls : ''}" title="${escapeHtmlAttr(tip)}"><span class="rp-kpi-l">${lbl}</span><b>${val}</b><span class="rp-kpi-s">${sub}</span></div>`;
+    el.innerHTML =
+      card('Open', open, urgent ? `${urgent} urgent` : 'none urgent', urgent ? 'bad-sub' : '', 'Reported, not yet a task') +
+      card('In progress', prog.length, noTask ? `${noTask} without a task` : (prog.length ? 'all have a task' : '—'), '', 'Being worked on') +
+      card('Overdue', overdue, 'task past its day', overdue ? 'bad' : '', 'Problems whose task is past its day and not done') +
+      card('Fixed this week', fixedWeek.length, escapeHtml(whoTxt) || '—', 'ok', 'Fixed in the last 7 days') +
+      card('Average time to fix', avgTxt, 'last 30 days', '', 'From the report to fixed, for problems fixed in the last 30 days');
     const ab = $('#rpAlertBtn');
     if(ab){
       const supported = 'Notification' in window;
       ab.hidden = !supported || Notification.permission === 'denied';
       const on = supported && Notification.permission === 'granted';
       ab.classList.toggle('on', on);
-      ab.innerHTML = on ? '🔔 Alerts on' : '🔔 Alerts<span class="rp-ab-long"> on this device</span>';
+      ab.textContent = on ? 'Alerts on' : 'Turn on alerts';
+      ab.title = on ? 'This device gets an alert for new and fixed problems' : 'Get an alert on this device for new and fixed problems';
     }
   }
   function renderReportsList(){
@@ -4902,6 +5086,9 @@
       shedSelect.value = currentVal;
     }
 
+    const counts = { active: reports.filter(r => r.status !== 'Resolved').length, Open: reports.filter(r => r.status === 'Open').length, 'In Progress': reports.filter(r => r.status === 'In Progress').length, Resolved: reports.filter(r => r.status === 'Resolved').length, all: reports.length };
+    const names = { active:'Active', Open:'Open', 'In Progress':'In progress', Resolved:'Fixed', all:'All' };
+    document.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
     let filtered = reports.slice();
     if(reportsFilterStatus === 'active') filtered = filtered.filter(r => r.status !== 'Resolved');
     else if(reportsFilterStatus !== 'all') filtered = filtered.filter(r => r.status === reportsFilterStatus);
@@ -4929,25 +5116,11 @@
       list.innerHTML = `<div class="rp-empty-list">${reports.length ? 'No reports match these filters.' : 'No reports yet. Workers send them from the CluckWise Viewer.'}</div>`;
       return;
     }
-    // Group: Urgent first, then Today / Yesterday / This week / Earlier
-    let lastGroup = null;
-    filtered.forEach(r => {
-      const g = reportDayGroup(r);
-      if(g !== lastGroup){
-        const h = document.createElement('div'); h.className = 'rp-group' + (g === 'Urgent' ? ' urgent' : ''); h.textContent = g;
-        list.appendChild(h); lastGroup = g;
-      }
-      list.appendChild(buildReportCard(r));
-    });
+    filtered.forEach(r => list.appendChild(buildReportCard(r)));
   }
   // Problem-type icon for a report (emoji, matches the report form)
-  function reportTypeIcon(type){
-    const t = String(type || '').toLowerCase();
-    const map = [[/spill|^feed\b|^feed$/, '🌾'], [/feeder|auger/, '⚙️'], [/water|leak|drinker/, '💧'], [/fan|ventil/, '🌬️'], [/pop ?door|door/, '🚪'], [/silo/, '🛢️'],
-      [/safety/, '⚠️'], [/light/, '💡'], [/electric|power/, '⚡'], [/bio/, '🛡️'], [/cool/, '❄️'], [/curtain/, '🪟'], [/equip/, '🔧']];
-    const hit = map.find(([re])=> re.test(t));
-    return hit ? hit[1] : '❓';
-  }
+  // No icons: a report without a photo shows the first letter of its problem type
+  function reportTypeIcon(type){ const t = String(type || '').replace(/^Other\s*—\s*/i, '').trim(); return t ? t[0].toUpperCase() : '?'; }
   function reportDayGroup(r){
     if(r.urgent && r.status !== 'Resolved') return 'Urgent';
     if(!r.createdAt) return 'Earlier';
@@ -4963,26 +5136,38 @@
     const seen = seenReportIds();
     const isNew = !!seen && !seen.has(r.id) && sc !== 'resolved';
     const photo = (r.photoUrls || [])[0];
+    const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
+    const today = dateKey(new Date());
     const el = document.createElement('div');
     el.setAttribute('role', 'button'); el.tabIndex = 0;
-    el.className = `rp-item status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
-    el.innerHTML = `<span class="rp-thumb"></span>
-      <span class="rp-item-main">
-        <span class="rp-item-top"><span class="rp-item-type"></span>${isNew ? '<span class="rp-new">NEW</span>' : ''}<span class="rp-item-time"></span></span>
-        <span class="rp-item-row"><span class="rp-item-sub"></span><span class="rp-item-tags">${urgent ? '<span class="rp-pill urgent">Urgent</span>' : ''}${r.linkedTaskId ? '<span class="rp-pill task">Task</span>' : ''}<span class="rp-pill st-${sc}"></span></span></span>
-        ${r.notes ? '<span class="rp-item-note"></span>' : ''}
-      </span>`;
+    el.className = `rp-row status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
+    el.title = `Open ${r.code || 'report'}`;
+    el.innerHTML = `<span class="rp-c-prob"><span class="rp-thumb"></span><span class="rp-prob-text"><span class="rp-prob-top"><b class="rp-prob-name"></b>${urgent ? '<span class="rp-tag urgent">Urgent</span>' : ''}${isNew ? '<span class="rp-tag new">New</span>' : ''}</span><span class="rp-prob-sub"></span></span></span>
+      <span class="rp-c-place" data-label="Place"></span>
+      <span class="rp-c-rep" data-label="Reported"></span>
+      <span class="rp-c-status" data-label="Status"><span class="rp-st st-${sc}"></span></span>
+      <span class="rp-c-task" data-label="Task"></span>`;
     const thumb = el.querySelector('.rp-thumb');
-    const icon = reportTypeIcon(r.problemType);
-    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ thumb.textContent = icon; }; img.src = photo; thumb.appendChild(img); thumb.classList.add('has-photo'); }
-    else thumb.textContent = icon;
-    el.querySelector('.rp-item-type').textContent = r.problemType || 'Report';
-    el.querySelector('.rp-item-time').textContent = r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : '';
-    el.querySelector('.rp-item-sub').textContent = [reportPlace(r), r.createdBy].filter(Boolean).join(' · ');
-    el.querySelector('.rp-pill.st-' + sc).textContent = RP_STATUS_LABEL[r.status] || r.status || 'Open';
-    const note = el.querySelector('.rp-item-note'); if(note) note.textContent = r.notes.replace(/\s+/g, ' ');
-    el.addEventListener('click', () => openReportDetailModal(r.id));
-    el.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openReportDetailModal(r.id); } });
+    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.textContent = reportTypeIcon(r.problemType); }; img.src = photo; thumb.appendChild(img); }
+    else thumb.textContent = reportTypeIcon(r.problemType);
+    el.querySelector('.rp-prob-name').textContent = rpTypeName(r);
+    el.querySelector('.rp-prob-sub').textContent = [r.code, (r.notes || '').replace(/\s+/g, ' ').trim()].filter(Boolean).join(' · ');
+    el.querySelector('.rp-c-place').textContent = reportPlace(r);
+    el.querySelector('.rp-c-rep').textContent = [r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
+    el.querySelector('.rp-st').textContent = sc === 'resolved' ? (r.resolvedBy ? `Fixed by ${r.resolvedBy}` : 'Fixed') : (RP_STATUS_LABEL[r.status] || r.status || 'Open');
+    const tc = el.querySelector('.rp-c-task');
+    if(task){
+      const who = (task.assignees || []).join(', ');
+      const late = task.status !== 'done' && task.date && task.date < today;
+      const when = task.status === 'done' ? 'done' : !task.date ? 'Backlog' : task.date === today ? 'today' : late ? `${Math.round((toDateObj(today) - toDateObj(task.date)) / 864e5)} days late` : formatShort(task.date);
+      tc.innerHTML = `<span class="rp-task-who"></span><span class="rp-task-when${late ? ' late' : task.date === today && task.status !== 'done' ? ' due' : ''}"></span>`;
+      tc.querySelector('.rp-task-who').textContent = (who || 'no one yet') + ' · ';
+      tc.querySelector('.rp-task-when').textContent = when;
+    } else if(sc !== 'resolved'){
+      tc.innerHTML = `<button type="button" class="rp-link" data-rp-assign-row="${escapeHtmlAttr(r.id)}" title="Make a task for this problem">Assign as task</button>`;
+    } else tc.innerHTML = '<span class="rp-muted">—</span>';
+    el.addEventListener('click', (e) => { if(e.target.closest('[data-rp-assign-row]')){ e.stopPropagation(); openAssignTaskFromReport(r.id); return; } openReportDetailModal(r.id); });
+    el.addEventListener('keydown', (e) => { if((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); openReportDetailModal(r.id); } });
     return el;
   }
   function renderReportDetail(){
@@ -4990,49 +5175,49 @@
     const r = reports.find(x => x.id === currentReportId);
     $('#reportsDrawer').classList.toggle('show-detail', !!r);
     if(!r){
-      pane.innerHTML = `<div class="rpd-empty"><div class="rpd-empty-icon">🚩</div><div>${reports.length ? 'Select a report to see the details' : 'No reports yet'}</div></div>`;
+      pane.innerHTML = `<div class="rpd-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg><div>${reports.length ? 'Select a problem to see its photo, note, task and history' : 'No problems reported yet. Workers report them from the CluckWise Viewer.'}</div></div>`;
       return;
     }
+    const sc = rpStatusClass(r);
     const photo = (r.photoUrls || [])[0];
     const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
-    const st = (v) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}">${RP_STATUS_LABEL[v]}</button>`;
+    const st = (v, label) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}" title="Set to ${label}">${label}</button>`;
     pane.innerHTML = `
+      <div class="rpd-head">
+        <div class="rpd-head-row"><span class="rpd-code"></span><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<button type="button" class="rpd-copy" data-rp-copy title="Copy the report code">Copy code</button><button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
+        <h3 class="rpd-type"></h3>
+        <div class="rpd-sub"></div>
+      </div>
       <div class="rpd-scroll">
-        <div>
-          <button type="button" class="rpd-back" data-rp-back>‹ All reports</button>
-          <div class="rpd-title-row"><h3 class="rpd-type"></h3>${r.urgent && r.status !== 'Resolved' ? '<span class="rp-pill urgent">Urgent</span>' : ''}</div>
-          <div class="rpd-sub"></div>
-          <div class="rpd-code-row"><span class="rpd-code"></span><button type="button" class="rpd-copy" data-rp-copy>Copy code</button></div>
-        </div>
-        <div class="rpd-controls">
-          <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open')}${st('In Progress')}${st('Resolved')}</div></div>
-          <div class="rpd-field"><span class="rpd-lbl">Priority</span><div class="rpd-seg"><button type="button" class="rpd-seg-btn${!r.urgent ? ' active' : ''}" data-rp-urgent="0">Normal</button><button type="button" class="rpd-seg-btn${r.urgent ? ' active' : ''}" data-rp-urgent="1">Urgent</button></div></div>
-        </div>
-        ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>📷 Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
+        ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
         ${r.notes ? `<div class="rpd-block"><span class="rpd-lbl">Worker's note</span><div class="rpd-note" data-rp-text="notes"></div></div>` : ''}
         <div class="rpd-block">
           <span class="rpd-lbl">Task</span>
-          ${task ? `<div class="rpd-task-row"><span class="rpd-task-name"></span><span class="rpd-task-meta"></span><button type="button" class="rpd-btn" data-rp-viewtask>Open task</button></div>`
-                 : `<div class="rpd-task-row"><button type="button" class="rpd-btn primary" data-rp-assign>＋ Assign as task</button><span class="rpd-hint">Adds a high-priority task to the Backlog and sets the report to In progress.</span></div>`}
+          ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div>`
+                 : sc === 'resolved' ? `<div class="rpd-hint">No task.</div>`
+                 : `<div class="rpd-task"><div class="rpd-task-text"><span class="rpd-hint">No task yet. Make one to schedule the fix and choose who does it.</span></div><button type="button" class="rpd-btn primary" data-rp-assign title="Open the New task form, filled in from this report">Assign as task</button></div>`}
         </div>
+        <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist"></div></div>
+        <div class="rpd-controls">
+          <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open', 'Open')}${st('In Progress', 'In progress')}${st('Resolved', 'Fixed')}</div></div>
+          <div class="rpd-field"><span class="rpd-lbl">Priority</span><div class="rpd-seg"><button type="button" class="rpd-seg-btn${!r.urgent ? ' active' : ''}" data-rp-urgent="0">Normal</button><button type="button" class="rpd-seg-btn${r.urgent ? ' active' : ''}" data-rp-urgent="1">Urgent</button></div></div>
+        </div>
+        ${sc === 'resolved' ? `<div class="rpd-field"><label class="rpd-lbl" for="rpdResolutionNotes">What fixed it? <span>(the worker sees this)</span></label><textarea class="rpd-textarea" id="rpdResolutionNotes" rows="2" maxlength="500" placeholder="e.g. Replaced the valve"></textarea></div>` : ''}
         <div class="rpd-field">
           <label class="rpd-lbl" for="rpdManagerNotes">Manager notes <span>(only you see this)</span></label>
-          <textarea class="rpd-textarea" id="rpdManagerNotes" rows="3" maxlength="500" placeholder="Internal notes…"></textarea>
+          <textarea class="rpd-textarea" id="rpdManagerNotes" rows="3" maxlength="500" placeholder="Parts ordered, who to call…"></textarea>
         </div>
-        ${r.status === 'Resolved' ? `<div class="rpd-field"><label class="rpd-lbl" for="rpdResolutionNotes">What fixed it? <span>(the worker sees this)</span></label><textarea class="rpd-textarea" id="rpdResolutionNotes" rows="2" maxlength="500" placeholder="e.g. Replaced the valve"></textarea></div>` : ''}
         <div class="rpd-saved" id="rpdSaved" aria-live="polite"></div>
       </div>
       <div class="rpd-foot">
-        <button type="button" class="rpd-delete" data-rp-delete>Delete report</button>
-        <div class="rpd-confirm" hidden><span>${r.status !== 'Resolved' ? "This report isn't resolved yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
+        <button type="button" class="rpd-delete" data-rp-delete title="Delete this report">Delete report</button>
+        <div class="rpd-confirm" hidden><span>${sc !== 'resolved' ? "This problem isn't fixed yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
       </div>`;
-    pane.querySelector('.rpd-type').textContent = r.problemType || 'Report';
-    const sub = pane.querySelector('.rpd-sub');
-    const when = r.createdAt ? fmtDateTime12(new Date(r.createdAt), { month:'short', day:'numeric', year:'numeric' }) : '';
-    sub.innerHTML = `<b></b>${r.createdBy ? ' · reported by <b></b>' : ''}${when ? ' · <span></span>' : ''}`;
-    const bs = sub.querySelectorAll('b'); bs[0].textContent = reportPlace(r); if(r.createdBy) bs[1].textContent = r.createdBy;
-    if(when) sub.querySelector('span').textContent = when;
     pane.querySelector('.rpd-code').textContent = r.code || '';
+    pane.querySelector('.rp-st').textContent = sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open');
+    pane.querySelector('.rpd-type').textContent = rpTypeName(r);
+    const fmtWhen = iso => iso ? fmtDateTime12(new Date(iso), { weekday:'short', month:'short', day:'numeric' }) : '';
+    pane.querySelector('.rpd-sub').textContent = [reportPlace(r), r.createdBy ? 'reported by ' + r.createdBy : '', fmtWhen(r.createdAt)].filter(Boolean).join(' · ');
     const noteEl = pane.querySelector('[data-rp-text="notes"]'); if(noteEl) noteEl.textContent = r.notes;
     if(photo){
       const a = pane.querySelector('.rpd-photo'), img = a.querySelector('img'), note = a.querySelector('.rpd-photo-note');
@@ -5042,8 +5227,16 @@
     }
     if(task){
       pane.querySelector('.rpd-task-name').textContent = task.name;
-      pane.querySelector('.rpd-task-meta').textContent = task.status === 'done' ? '✓ Done' : task.date ? 'Scheduled ' + formatFull(task.date) : 'In Backlog — not scheduled yet';
+      const who = (task.assignees || []).join(', ');
+      pane.querySelector('.rpd-task-meta').textContent = [task.status === 'done' ? 'Done' : task.date ? formatFull(task.date) : 'In the Backlog, no day yet', who || 'no one yet', task.priority === 'high' ? 'high priority' : ''].filter(Boolean).join(' · ');
     }
+    // History: reported → task → fixed
+    const steps = [];
+    steps.push({ cls:'rep', text:`<b>Reported</b>${r.createdBy ? ' by ' + escapeHtml(r.createdBy) : ''}`, when: fmtWhen(r.createdAt) });
+    if(task) steps.push({ cls:'task', text:`<b>Task made</b> · ${task.date ? escapeHtml(formatShort(task.date)) : 'Backlog'}${(task.assignees || []).length ? ', ' + escapeHtml(task.assignees.join(', ')) : ''}`, when: task.createdAt ? fmtWhen(new Date(task.createdAt).toISOString()) : '' });
+    if(sc === 'resolved') steps.push({ cls:'fix', text:`<b>Fixed</b>${r.resolvedBy ? ' by ' + escapeHtml(r.resolvedBy) : r.autoResolved ? ' — task done' : ' — set by you'}`, when: fmtWhen(r.resolvedAt) });
+    else steps.push({ cls:'wait', text: task ? `Fixed — when ${(task.assignees || []).length ? escapeHtml(task.assignees.join(' or ')) + ' ticks' : 'someone ticks'} the task` : 'Fixed — not yet', when:'' });
+    pane.querySelector('.rpd-hist').innerHTML = steps.map(x => `<div class="rpd-step ${x.cls}"><span class="rpd-dot"></span><span>${x.text}${x.when ? ` <span class="rpd-when">· ${escapeHtml(x.when)}</span>` : ''}</span></div>`).join('');
     pane.querySelector('#rpdManagerNotes').value = r.managerNotes || '';
     const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
   }
@@ -5059,6 +5252,8 @@
     currentReportId = selectId || null;
     if(selectId) markReportSeen(selectId);
     openDrawer('#reportsDrawer');
+    $('#scrim').classList.remove('show');   // a page, not a pop-up
+    document.body.classList.add('mt-open');
     renderReportsView();
   }
   function openReportDetailModal(id){
@@ -5135,6 +5330,7 @@
   }
   function escapeHtmlAttr(s){ return escapeHtml(s); }
 
+  function rpTypeName(r){ return String((r && r.problemType) || 'Report').replace(/^Other\s*—\s*/i, '').trim() || 'Report'; }
   function reportPlace(r){ return r.shed ? `Shed ${r.shed}` : (r.location || 'Around the farm'); }
   // A report whose converted task no longer exists goes back to Open (unless the manager resolved it by hand).
   function reopenReportsWithoutTask(){
@@ -5149,6 +5345,36 @@
     });
     if(changed) scheduleReportsPush();
     return changed;
+  }
+  // "Assign as task": the New task form opens filled in from the report (no day = Backlog).
+  // Nothing is created until Add task; then the task and report are linked.
+  var pendingReportTask = null;
+  function openAssignTaskFromReport(reportId){
+    const r = reports.find(x => x.id === reportId);
+    if(!r) return;
+    if(r.linkedTaskId && tasks.some(t => t.id === r.linkedTaskId)){ showToast('This report already has a linked task.'); return; }
+    closeOverlays();
+    openCreateTaskModal(null);
+    pendingReportTask = r.id;
+    $('#editTaskModalTitle').textContent = `New task · report ${r.code || ''}`.trim();
+    $('#editTaskNameInput').value = `Fix ${rpTypeName(r)} — ${reportPlace(r)}`.slice(0, Number($('#editTaskNameInput').maxLength) > 0 ? Number($('#editTaskNameInput').maxLength) : 200);
+    updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
+    $('#editTaskNotesInput').value = `Report ${r.code}${r.createdBy ? ' · by ' + r.createdBy : ''}\n${r.notes || ''}`.trim();
+    $('#editTaskPriorityInput').checked = true;
+    $('#editTaskDateInput').value = '';
+    $('#editTaskCreateOnlyRow').style.display = 'none';   // not a frequent task
+    $('#editTaskFrequentBox').checked = false;
+  }
+  function linkTaskToReport(t, reportId){
+    const r = reports.find(x => x.id === reportId);
+    if(!r || !t) return;
+    t.linkedReportId = r.id;
+    r.linkedTaskId = t.id;
+    r.status = 'In Progress';
+    r.autoResolved = false;
+    r.updatedAt = new Date().toISOString();
+    addHistory('Report converted', `${r.code} → task "${t.name}"`);
+    scheduleReportsPush();
   }
   function convertReportToTask(reportId){
     const r = reports.find(x => x.id === reportId);
@@ -9914,6 +10140,8 @@
   function closeOverlays(){
     $('#historyDrawer').classList.remove('open');
     $('#reportsDrawer').classList.remove('open');
+    $('#ptypesModal').classList.remove('open');
+    document.body.classList.remove('mt-open');
     $('#mlogHistDrawer').classList.remove('open');
     $('#mlogTaskModal').classList.remove('open');
     $('#settingsDrawer').classList.remove('open');
@@ -9943,6 +10171,7 @@
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
     editingTaskId = null;
+    pendingReportTask = null;
     deleteAllPending = false;
     overdueModalOpen = false;
     pendingSeriesDeleteId = null;
@@ -10561,6 +10790,69 @@
   $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
   $('#reportsBtn').addEventListener('click', ()=> openReportsDrawer());
   $('#closeReports').addEventListener('click', closeOverlays);
+  // ---- Problem types (what workers pick under "What's the problem?") ----
+  const DEFAULT_PROBLEM_TYPES = [
+    {id:'feedSpill', name:'Feed Spill', k:'feedSpill'}, {id:'feederLine', name:'Feeder Line/Auger', k:'feederLine'},
+    {id:'waterLeak', name:'Water Leak', k:'waterLeak'}, {id:'fan', name:'Fan', k:'fan'}, {id:'popDoor', name:'Pop Door', k:'popDoor'},
+    {id:'silo', name:'Silo', k:'silo'}, {id:'safety', name:'Safety', k:'safety'}, {id:'lighting', name:'Lighting', k:'lighting'},
+    {id:'electricity', name:'Electricity', k:'electricity'}, {id:'biosecurity', name:'Biosecurity', k:'biosecurity'} ];
+  function problemTypes(){ return Array.isArray(settings.problemTypes) ? settings.problemTypes : DEFAULT_PROBLEM_TYPES.map(x => Object.assign({}, x)); }
+  function saveProblemTypes(list, msg){ settings.problemTypes = list; persist(); renderPtypes(); if(msg) showToast(msg); }
+  let ptConfirm = null;
+  function renderPtypes(){
+    const box = $('#ptypesList'); if(!box) return;
+    const list = problemTypes();
+    box.innerHTML = '';
+    if(!list.length){ box.innerHTML = '<div class="pt-empty">No problem types — workers will only see “Other”.</div>'; }
+    list.forEach((p, i) => {
+      const row = document.createElement('div'); row.className = 'pt-row';
+      row.innerHTML = `<input type="text" maxlength="40" aria-label="Problem type name" title="Rename — press Enter to save">
+        <button type="button" class="pt-mv" data-pt-up="${i}" ${i === 0 ? 'disabled' : ''} title="Move up" aria-label="Move up">↑</button>
+        <button type="button" class="pt-mv" data-pt-down="${i}" ${i === list.length - 1 ? 'disabled' : ''} title="Move down" aria-label="Move down">↓</button>
+        <button type="button" class="pt-del${ptConfirm === p.id ? ' confirm' : ''}" data-pt-del="${i}" title="${ptConfirm === p.id ? 'Tap again to delete' : 'Delete'}">${ptConfirm === p.id ? 'Delete?' : 'Delete'}</button>`;
+      const inp = row.querySelector('input'); inp.value = p.name;
+      const commit = () => {
+        const v = inp.value.trim().replace(/\s+/g, ' ');
+        if(!v){ inp.value = p.name; return; }
+        if(v === p.name) return;
+        if(list.some((x, j) => j !== i && x.name.trim().toLowerCase() === v.toLowerCase())){ showToast('That problem type is already in the list.', true); inp.value = p.name; return; }
+        const next = problemTypes(); next[i] = { id: p.id, name: v };   // renamed: shown as typed (no translation)
+        saveProblemTypes(next, 'Renamed.');
+      };
+      inp.addEventListener('change', commit);
+      inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); inp.blur(); } if(e.key === 'Escape'){ inp.value = p.name; inp.blur(); } });
+      box.appendChild(row);
+    });
+  }
+  function openPtypes(){ ptConfirm = null; renderPtypes(); $('#ptypesNewInput').value = ''; $('#ptypesModal').classList.add('open'); }
+  $('#rpTypesBtn').addEventListener('click', openPtypes);
+  $('#closePtypes').addEventListener('click', () => $('#ptypesModal').classList.remove('open'));
+  $('#ptypesList').addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    const list = problemTypes();
+    if(b.dataset.ptUp !== undefined){ const i = +b.dataset.ptUp; if(i > 0){ [list[i-1], list[i]] = [list[i], list[i-1]]; saveProblemTypes(list); } return; }
+    if(b.dataset.ptDown !== undefined){ const i = +b.dataset.ptDown; if(i < list.length - 1){ [list[i+1], list[i]] = [list[i], list[i+1]]; saveProblemTypes(list); } return; }
+    if(b.dataset.ptDel !== undefined){
+      const i = +b.dataset.ptDel, p = list[i]; if(!p) return;
+      if(ptConfirm !== p.id){ ptConfirm = p.id; renderPtypes(); clearTimeout(openPtypes._t); openPtypes._t = setTimeout(() => { ptConfirm = null; renderPtypes(); }, 3000); return; }
+      ptConfirm = null; list.splice(i, 1); saveProblemTypes(list, `“${p.name}” removed. Old reports keep their type.`);
+    }
+  });
+  function addPtype(){
+    const inp = $('#ptypesNewInput'), v = inp.value.trim().replace(/\s+/g, ' ');
+    if(!v) return;
+    const list = problemTypes();
+    if(v.toLowerCase() === 'other' || list.some(x => x.name.trim().toLowerCase() === v.toLowerCase())){ showToast('That problem type is already in the list.', true); return; }
+    list.push({ id: uid(), name: v }); inp.value = '';
+    saveProblemTypes(list, `“${v}” added.`);
+  }
+  $('#ptypesAddBtn').addEventListener('click', addPtype);
+  $('#ptypesNewInput').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addPtype(); } });
+  $('#ptypesResetBtn').addEventListener('click', function(){
+    if(this.dataset.pending !== '1'){ this.dataset.pending = '1'; this.textContent = 'Tap again to restore the original list'; clearTimeout(this._t); this._t = setTimeout(() => { this.dataset.pending = ''; this.textContent = 'Restore the original list'; }, 3000); return; }
+    this.dataset.pending = ''; this.textContent = 'Restore the original list';
+    delete settings.problemTypes; persist(); renderPtypes(); showToast('Original list restored.');
+  });
   $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
@@ -10651,12 +10943,19 @@
       if(notes) meta.notes = notes;
       if(priority) meta.priority = priority;
       const newTask = addTask(name, guessIcon(name), dateVal, Object.keys(meta).length ? meta : null);
+      const fromReport = pendingReportTask;
+      if(fromReport) linkTaskToReport(newTask, fromReport);
       let count = 0;
       if(repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
         count = generateRecurrence(newTask, repeatRule, untilDate);
       }
       persist(); renderAll();
       closeOverlays();
+      if(fromReport){
+        openReportDetailModal(fromReport);
+        showToast(dateVal ? `Task added for ${formatShort(dateVal)}. Report set to In progress.` : 'Task added to the Backlog. Report set to In progress.');
+        return;
+      }
       showToast(count>0 ? `Task added — ${count} more occurrence(s) added.` : 'Task added.');
       return;
     }
@@ -10745,7 +11044,7 @@
     if(!id) return;
     if(t.dataset.rpStatus){ setReportStatus(id, t.dataset.rpStatus); return; }
     if(t.dataset.rpUrgent){ setReportUrgent(id, t.dataset.rpUrgent === '1'); return; }
-    if(t.hasAttribute('data-rp-assign')){ convertReportToTask(id); return; }
+    if(t.hasAttribute('data-rp-assign')){ openAssignTaskFromReport(id); return; }
     if(t.hasAttribute('data-rp-viewtask')){
       const r = reports.find(x => x.id === id);
       if(!r || !r.linkedTaskId) return;
@@ -10961,7 +11260,7 @@
   });
   setInterval(()=> refreshWeather(false), 10 * 60 * 1000);
   window.addEventListener('online', ()=> refreshWeather(false));
-  $('#resetSettingsBtn').addEventListener('click', ()=>{ const keepLoc = settings.weatherLocation; settings = Object.assign({}, DEFAULT_SETTINGS, { weatherLocation: keepLoc }); applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
+  $('#resetSettingsBtn').addEventListener('click', ()=>{ const keepLoc = settings.weatherLocation, keepPt = settings.problemTypes; settings = Object.assign({}, DEFAULT_SETTINGS, { weatherLocation: keepLoc }); if(keepPt) settings.problemTypes = keepPt; applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
 
   // ---------- Bulk delete modal (mode tabs: range / name) ----------
   let bulkDeleteMode = 'range';

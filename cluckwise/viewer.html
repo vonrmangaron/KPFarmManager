@@ -1059,19 +1059,7 @@
     </div>
 
     <span class="field-label" id="problemTypeLabel">What's the problem?</span>
-    <div class="type-grid" id="typeGrid">
-      <button class="type-btn" type="button" data-type="Feed Spill" data-k="feedSpill"><span>🌾</span><span class="pt-l">Feed Spill</span></button>
-      <button class="type-btn" type="button" data-type="Feeder Line/Auger" data-k="feederLine"><span>⚙️</span><span class="pt-l">Feeder Line/Auger</span></button>
-      <button class="type-btn" type="button" data-type="Water Leak" data-k="waterLeak"><span>💧</span><span class="pt-l">Water Leak</span></button>
-      <button class="type-btn" type="button" data-type="Fan" data-k="fan"><span>🌬️</span><span class="pt-l">Fan</span></button>
-      <button class="type-btn" type="button" data-type="Pop Door" data-k="popDoor"><span>🚪</span><span class="pt-l">Pop Door</span></button>
-      <button class="type-btn" type="button" data-type="Silo" data-k="silo"><span>🛢️</span><span class="pt-l">Silo</span></button>
-      <button class="type-btn" type="button" data-type="Safety" data-k="safety"><span>⚠️</span><span class="pt-l">Safety</span></button>
-      <button class="type-btn" type="button" data-type="Lighting" data-k="lighting"><span>💡</span><span class="pt-l">Lighting</span></button>
-      <button class="type-btn" type="button" data-type="Electricity" data-k="electricity"><span>⚡</span><span class="pt-l">Electricity</span></button>
-      <button class="type-btn" type="button" data-type="Biosecurity" data-k="biosecurity"><span>🛡️</span><span class="pt-l">Biosecurity</span></button>
-      <button class="type-btn type-other" type="button" data-type="Other" data-k="other"><span>❓</span><span class="pt-l">Other</span></button>
-    </div>
+    <div class="type-grid" id="typeGrid" role="group" aria-labelledby="problemTypeLabel"></div>
     <input type="text" id="otherTypeInput" maxlength="40" placeholder="Type the problem" aria-label="Type the problem" hidden>
 
     <span class="field-label" id="urgLabel">How urgent?</span>
@@ -1955,7 +1943,7 @@
     $('#reportFabLabel').textContent = t('report');
     $('#navTodayLbl').textContent = t('today'); $('#navGuideLbl').textContent = t('navGuide');
     $('#issuesTitle').textContent = t('issTitle'); $('#issMineBtn').textContent = t('issMine'); $('#issAllBtn').textContent = t('issAll'); $('#navBatchLbl').textContent = t('navBatch'); $('#navReportLbl').textContent = t('report'); $('#navMenuLbl').textContent = t('navMenu');
-    document.querySelectorAll('.type-btn').forEach(b=>{ const l = b.querySelector('.pt-l'); if(l) l.textContent = t('pt_' + b.dataset.k); });
+    renderTypeGrid();
     $('#notesInput').placeholder = t('notesPh');
     $('#urgLabel').textContent = t('urgLabel'); $('#urgNormalBtn').textContent = t('urgNormal'); $('#urgUrgentBtn').textContent = '🔴 ' + t('urgUrgent');
     $('#otherTypeInput').placeholder = t('otherPh'); $('#otherTypeInput').setAttribute('aria-label', t('otherPh'));
@@ -2328,6 +2316,8 @@
           prodwiseFarm: String(parsed.settings.prodwiseFarm || '').trim(),
           guide: parsed.settings.guide || null
         };
+        syncedProblemTypes = Array.isArray(parsed.settings.problemTypes) ? parsed.settings.problemTypes : null;
+        renderTypeGrid();
         setTimeout(()=> refreshWeather(false), 0);
       }
       applySettings();
@@ -2675,6 +2665,24 @@
   // ---------- Report Problem form ----------
   let pendingPhotoFile = null;
   let selectedType = null;
+  // "What's the problem?" choices: the manager's list (farm settings), else the original list.
+  // Original choices show in the worker's language; "Other" is always last.
+  var DEFAULT_PROBLEM_TYPES = [
+    {id:'feedSpill', name:'Feed Spill', k:'feedSpill'}, {id:'feederLine', name:'Feeder Line/Auger', k:'feederLine'},
+    {id:'waterLeak', name:'Water Leak', k:'waterLeak'}, {id:'fan', name:'Fan', k:'fan'}, {id:'popDoor', name:'Pop Door', k:'popDoor'},
+    {id:'silo', name:'Silo', k:'silo'}, {id:'safety', name:'Safety', k:'safety'}, {id:'lighting', name:'Lighting', k:'lighting'},
+    {id:'electricity', name:'Electricity', k:'electricity'}, {id:'biosecurity', name:'Biosecurity', k:'biosecurity'} ];
+  var syncedProblemTypes = null;
+  function problemTypeLabel(p){ const tr = p.k ? t('pt_' + p.k) : ''; return (tr && tr !== 'pt_' + p.k) ? tr : p.name; }
+  function renderTypeGrid(){
+    const grid = document.getElementById('typeGrid'); if(!grid) return;
+    const list = (syncedProblemTypes || DEFAULT_PROBLEM_TYPES || []).filter(p=> p && String(p.name || '').trim());
+    const btn = (type, label, extra)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'type-btn' + (extra || ''); b.dataset.type = type; if(selectedType === type) b.classList.add('selected'); const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = label; b.appendChild(l); return b; };
+    grid.innerHTML = '';
+    list.forEach(p=> grid.appendChild(btn(String(p.name).trim(), problemTypeLabel(p))));
+    grid.appendChild(btn('Other', t('pt_other'), ' type-other'));
+    if(selectedType && selectedType !== 'Other' && !list.some(p=> String(p.name).trim() === selectedType)){ selectedType = null; if(typeof updateSubmitState === 'function') updateSubmitState(); }
+  }
   let reportUrgent = false;
   function setReportUrgent(on){
     reportUrgent = !!on;
