@@ -2490,6 +2490,13 @@
     .sb-sec.sr-flash{ animation:srFlash 1.1s ease; border-radius:10px; }
     @keyframes srFlash{ 0%,40%{ background:rgba(240,162,26,0.16); } 100%{ background:transparent; } }
   }
+
+  /* Sidebar hide/show slides smoothly */
+  @media (min-width: 1025px) and (prefers-reduced-motion: no-preference){
+    body.sb-anim .shell{ transition:grid-template-columns .28s cubic-bezier(.2,.8,.2,1); }
+    body.sb-anim .sidebar > *{ animation:sbFadeIn .3s ease both; }
+  }
+  @keyframes sbFadeIn{ from{ opacity:0; } to{ opacity:1; } }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -9923,6 +9930,10 @@
   $('#sidebarToggleBtn').addEventListener('click', toggleSidebar);
   // Desktop: the full-height sidebar can be hidden; remembered on this device
   function setSidebarCollapsed(on){
+    // slide, only when the button is pressed (not on page load)
+    document.body.classList.add('sb-anim');
+    clearTimeout(setSidebarCollapsed.t);
+    setSidebarCollapsed.t = setTimeout(()=>{ document.body.classList.remove('sb-anim'); if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater(); }, 360);
     document.body.classList.toggle('sb-collapsed', !!on);
     try{ localStorage.setItem('cluckwise-sb-collapsed', on ? '1' : ''); }catch(e){}
     if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();

@@ -1671,6 +1671,12 @@ function renderLoadsModalBody(){
 function toggleLoadReceived(id){
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
   load.received=!loadReceived(load);
+  // A load due today: today's morning reading gets the same answer (is it in the silos yet?)
+  if(dateOnly(load.date).getTime()===dateOnly(new Date()).getTime()){
+    let touched=false;
+    [1,2,3,4].forEach(g=>{if(!(Number(load.splitKg&&load.splitKg[g])>0))return;const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===iso(load.date));if(r&&readingIsMorning(r)){r.deliveryIn=load.received;touched=true;}});
+    if(touched){saveSiloData();if(typeof scheduleRender==='function')scheduleRender(60);}
+  }
   saveFarmLoads();schedulePush();
   renderLoadsModalBody();
   showToast(load.received?`Load on ${fmtShort(load.date)} marked received.`:`Load on ${fmtShort(load.date)} marked not received.`);
@@ -2387,6 +2393,8 @@ function toggleSiloGroup(g,force){
   if(section)section.classList.toggle('open',siloModalOpenGroups[g]);
   const head=body.querySelector(`[data-sms-toggle="${g}"]`);
   if(head)head.setAttribute('aria-expanded',siloModalOpenGroups[g]?'true':'false');
+  // Desktop: a pair page behind the window follows the pair being read
+  if(siloModalOpenGroups[g]&&/^g[1-4]$/.test(activeTab)&&activeTab!=='g'+g&&window.matchMedia('(min-width:769px)').matches){activeTab='g'+g;render();}
 }
 function setSiloRingFromModal(group,siloNum,rings){
   if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
@@ -2405,6 +2413,7 @@ function setSiloRingFromModal(group,siloNum,rings){
   logSiloReading(group,reading);
   siloModalTouched[group].add(siloNum);
   saveSiloData();schedulePush();
+  scheduleRender(120); // the page behind the window shows the new feed balance
   try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
   // Refresh just this group's rows, status and totals.
   const silos=document.getElementById(`smsSilos-${group}`);
@@ -2549,15 +2558,21 @@ function deliveryInQuestionHtml(g){
   if(siloReadTime()!=='am')return '';
   const today=dateOnly(new Date());const kg=deliveriesKgOn(g,today);if(!(kg>0))return '';
   const r=(siloData[g]&&siloData[g].readings||[]).find(x=>x.date===iso(today));
-  const yes=r&&typeof r.deliveryIn==='boolean'?r.deliveryIn:deliveryTimingEarly();
+  // Answer: today's reading, else the Received tick on today's loads, else the farm's usual timing
+  const tl=todaysLoadsFor(g),known=tl.filter(l=>typeof l.received==='boolean'||l.actualKg!=null);
+  const yes=r&&typeof r.deliveryIn==='boolean'?r.deliveryIn:known.length?known.some(loadReceived):deliveryTimingEarly();
   return `<div class="sms-delin" role="group" aria-label="Today's delivery"><span class="sms-delin-q">🚛 Today's ${fmtFeed(kg)} delivery already in the silo?</span><span class="ss-seg"><button type="button" class="ss-seg-btn${yes?' active':''}" data-delin="${g}" data-val="1" aria-pressed="${yes}">Yes</button><button type="button" class="ss-seg-btn${yes?'':' active'}" data-delin="${g}" data-val="0" aria-pressed="${!yes}">No</button></span></div>`;
 }
 function setDeliveryIn(g,val){
   const todayIso=iso(new Date());const s=siloData[g]=siloData[g]||{readings:[],deliveries:[]};
   let r=s.readings.find(x=>x.date===todayIso);
   if(!r){const prev=s.readings.length?s.readings[s.readings.length-1]:null;r={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null,time:siloReadTime()};s.readings.push(r);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
-  r.deliveryIn=!!val;saveSiloData();schedulePush();renderSiloModalBody();render();
+  r.deliveryIn=!!val;
+  // Same answer on the Feed loads Received tick for today's loads to this pair
+  todaysLoadsFor(g).forEach(l=>{l.received=!!val;});saveFarmLoads();
+  saveSiloData();schedulePush();renderSiloModalBody();render();
 }
+function todaysLoadsFor(g){const t=dateOnly(new Date()).getTime();return farmLoads.filter(l=>l.date&&dateOnly(l.date).getTime()===t&&Number(l.splitKg&&l.splitKg[g])>0);}
 
 // Birds on a logged pickup, edited inline. The kill-sheet total stays and the average
 // follows; if the weight is only an estimate, the average stays and the total follows.

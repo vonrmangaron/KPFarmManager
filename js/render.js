@@ -410,7 +410,7 @@ function renderMoreSheet() {
       </div>
       <div class="more-group">
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
-        ${row('moreImport', 'download', 'Import Excel', 'Load shed data from a file')}
+        ${row('moreSettings', 'gear', 'Settings', 'Units, import Excel, sync, reports')}
         ${row('moreProfile', 'home', 'Farm profile', escapeHtml(displayFarmName()||'Farm name and silo numbers'))}
         ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
       </div>

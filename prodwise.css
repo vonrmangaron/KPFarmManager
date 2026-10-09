@@ -4398,3 +4398,24 @@ body:has(#mortModal.open) .adj-fab{display:none!important}
 .mort-card-sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:-4px}
 .mort-card .mort-out{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;min-height:24px}
 @media (max-width:560px){.mort-cards{grid-template-columns:1fr 1fr;gap:10px}.mort-card{padding:14px 12px 12px}.mort-input{font-size:17px}}
+
+/* ---------- Silo readings: a side window on desktop, the page behind stays visible and updates live ---------- */
+@media (min-width:769px){
+  #siloModal{background:rgba(16,24,40,0.16);justify-content:flex-end;align-items:stretch;backdrop-filter:none;-webkit-backdrop-filter:none}
+  #siloModal .compare-modal-panel{width:min(520px,100%);height:100%;max-width:none;max-height:none;border-radius:0;border:none;border-left:1px solid var(--line);box-shadow:-18px 0 44px rgba(16,24,40,0.18);transform:translateX(32px)}
+  #siloModal.open .compare-modal-panel{transform:none}
+}
+
+/* ---------- Mortality: 4 sheds across on desktop ---------- */
+@media (min-width:900px){.mort-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:561px) and (max-width:899px){.mort-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- Sidebar collapse/expand: smooth (only after a click, not on page load) ---------- */
+@property --sb-w{syntax:'<length>';inherits:true;initial-value:248px}
+@media (min-width:769px) and (prefers-reduced-motion:no-preference){
+  body.sb-anim{transition:--sb-w .28s cubic-bezier(.2,.8,.2,1)}
+  body.sb-anim .sidebar{transition:width .28s cubic-bezier(.2,.8,.2,1)}
+  body.sb-anim .sidebar .sb-link-label,body.sb-anim .sidebar .sb-section-label,body.sb-anim .sidebar .sb-brand-text,body.sb-anim .sidebar .sb-batch,body.sb-anim .sidebar .sb-farm-text,body.sb-anim .sidebar .sb-link-meta,body.sb-anim .sidebar .sb-sync{animation:sbFadeIn .32s ease both}
+  .sidebar .sb-link-label,.sidebar .sb-section-label,.sidebar .sb-brand-text{white-space:nowrap}
+}
+@keyframes sbFadeIn{from{opacity:0}to{opacity:1}}

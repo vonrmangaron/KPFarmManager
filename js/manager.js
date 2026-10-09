@@ -363,7 +363,7 @@ const SB_RAIL_KEY='prodwise_sb_rail_v1';
 function setSidebarRail(on){document.body.classList.toggle('sb-rail',!!on);try{localStorage.setItem(SB_RAIL_KEY,on?'1':'0');}catch(e){}
   const b=document.getElementById('sbRailBtn');if(b){const t=on?'Expand sidebar':'Collapse sidebar';b.setAttribute('aria-label',t);b.title=t;}}
 // Feed loads, Silo readings, Pickups and Compare feed open as pages in the main area, not windows on top
-const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},siloModal:{btn:'siloBtn',close:()=>closeSiloModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},mortModal:{btn:'mortBtn',close:()=>closeMortModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
+const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},mortModal:{btn:'mortBtn',close:()=>closeMortModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
 let toolPageOpen=null;
 function syncToolPages(changed){
   const open=Object.keys(TOOL_PAGES).filter(id=>document.getElementById(id)?.classList.contains('open'));
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 // Going anywhere else closes the tool page
 document.addEventListener('click',e=>{
-  if(e.target.closest('#sbRailBtn')){setSidebarRail(!document.body.classList.contains('sb-rail'));return;}
+  if(e.target.closest('#sbRailBtn')){document.body.classList.add('sb-anim');setSidebarRail(!document.body.classList.contains('sb-rail'));clearTimeout(window.__sbAnimT);window.__sbAnimT=setTimeout(()=>document.body.classList.remove('sb-anim'),360);return;}
   if(!toolPageOpen)return;
   const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info]');
   if(nav&&!e.target.closest('.compare-modal'))closeToolPages();
