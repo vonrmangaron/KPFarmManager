@@ -4459,3 +4459,54 @@ body:has(#mortModal.open) .adj-fab{display:none!important}
 @media (display-mode: window-controls-overlay) and (max-width:768px){
   body::before{ background:var(--surface); }
 }
+
+/* =====================================================================
+   DARK MODE — "Deep navy" (2026-10-10): one navy family everywhere.
+   Page darkest, header and cards one step up, raised tiles one more;
+   the sidebar is the darkest navy (was charcoal). Amber stays the accent.
+   ===================================================================== */
+body.theme-dark{
+  --bg:#0E1524; --surface:#172135; --surface-soft:#1E2A42; --line:#26344F;
+  --ink:#E8EDF7; --muted:#93A0BA;
+  --primary:#F0A840; --primary-dark:#FFC56B; --primary-soft:#2C2A22;
+  --secondary:#6FA8E8; --secondary-soft:#1B2A45;
+  --danger:#F06A5A; --danger-soft:#3A2028;
+  --success:#4CC38A; --success-soft:#163328;
+  --info:#6EA2F5; --info-soft:#1A2A48; --plan:#A693F0; --plan-soft:#262448;
+  --shadow-sm:none; --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-lg:0 18px 44px rgba(0,0,0,0.5);
+  --tooltip-bg:#0A101C; --tooltip-ink:#E8EDF7; --tooltip-muted:#93A0BA;
+  --sb-bg:#0A101C; --sb-ink-2:#C3CBDD; --sb-faint:#7A88A5; --sb-hover:#14203A; --sb-tint:#1C2944;
+  --wco-side:#0A101C;
+  background:var(--bg);
+}
+body.theme-dark .page-header{ background:#111A2B; border-bottom-color:var(--line); }
+body.theme-dark .mgr-card, body.theme-dark .dash-card, body.theme-dark .card{ box-shadow:none; }
+/* amber tiles: navy with an amber edge, not a brown fill */
+body.theme-dark .mgr-tile.accent{ background:var(--surface-soft); box-shadow:inset 0 0 0 1px rgba(240,168,64,0.55); }
+body.theme-dark .mgr-tile.accent span{ color:var(--primary-dark); }
+body.theme-dark .new-batch-btn{ background:var(--surface-soft); border:1px solid var(--line); color:var(--primary-dark); }
+@media (min-width:769px){
+  body.theme-dark .sidebar{
+    --sb-bg:#0A101C; --sb-ink-2:#C3CBDD; --sb-faint:#7A88A5; --sb-hover:#14203A; --sb-tint:#1C2944;
+    --ink:#E8EDF7; --muted:#93A0BA; --line:#1A2438; --surface:#121B2C; --surface-soft:#121B2C;
+    background:#0A101C; border-right-color:#141E31;
+  }
+  body.theme-dark .sidebar .sb-rail-btn{ background:#121B2C; border-color:#1F2B42; }
+  body.theme-dark .sidebar .sb-theme-seg{ background:#121B2C; border-color:#1F2B42; }
+  body.theme-dark.sb-rail .sidebar{ background:#0A101C; }
+  body.theme-dark.sb-rail .sb-link:hover{ background:#14203A; }
+  body.theme-dark.sb-rail .sb-link.active{ background:#1C2944; }
+}
+@media (display-mode: window-controls-overlay){
+  body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C var(--sb-w), #111A2B var(--sb-w)); }
+}
+/* pair header in dark: a navy card with the pair-colour bar (same as light mode), not an amber gradient */
+body.theme-dark .group-view-head{background:var(--surface)!important;color:var(--ink);border:1px solid var(--line);position:relative;padding-left:30px}
+body.theme-dark .group-view-head::before{content:'';position:absolute;left:14px;top:16px;bottom:16px;width:6px;border-radius:3px;background:var(--pair-color,var(--primary))}
+body.theme-dark .group-view-head .pills span{background:var(--surface-soft);color:var(--ink)}
+body.theme-dark .group-view-head .pills span.feed-pill{background:var(--info-soft);border:none;color:#9CC1FF}
+body.theme-dark .group-view-head .pair-step{background:var(--surface-soft);color:var(--ink);border:1px solid var(--line)}
+body.theme-dark .sms-group-head{background:var(--surface)!important;color:var(--ink)}
+/* softer tints on navy (amber at full strength reads brown) */
+body.theme-dark{ --weekend-tint:rgba(240,168,64,0.08); --pickup-row:rgba(240,168,64,0.08); --pickup-final-row:rgba(240,168,64,0.16); }
+body.theme-dark .loads-table .split-cell.on{ background:rgba(110,162,245,0.08); }

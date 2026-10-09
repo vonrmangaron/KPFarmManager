@@ -2686,6 +2686,46 @@
     body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 76px, var(--surface) 76px); }
     .sidebar{ height:calc(100vh - var(--wco-h)) !important; }
   }
+
+  /* =====================================================================
+     DARK MODE — "Deep navy" (2026-10-10), same family as ProdWise:
+     page darkest, cards one step up, sidebar the darkest navy.
+     ===================================================================== */
+  body.theme-dark{
+    --bg:#0E1524; --surface:#172135; --surface-soft:#1E2A42; --line:#26344F;
+    --ink:#E8EDF7; --muted:#93A0BA;
+    --primary:#F0A840; --primary-dark:#FFC56B; --primary-soft:#2C2A22;
+    --secondary:#6FA8E8; --secondary-soft:#1B2A45;
+    --danger:#F06A5A; --danger-soft:#3A2028; --success:#4CC38A; --success-soft:#163328;
+    --weekend-bg:#131D30;
+    --shadow-sm:none; --shadow-md:0 8px 24px rgba(0,0,0,0.35); --shadow-lg:0 18px 44px rgba(0,0,0,0.5);
+    --sb-thumb:#26344F; --sb-thumb-hover:#33456A;
+  }
+  @media (min-width: 761px){
+    body.theme-dark .sidebar{
+      --bg:#0A101C; --surface:#121B2C; --surface-soft:#16213A; --line:#1A2438;
+      --ink:#E8EDF7; --muted:#93A0BA;
+      background:#0A101C; border-right-color:#141E31;
+      --sb-panel:#111A2B; --sb-panel-line:#18233A;
+    }
+    body.theme-dark .sidebar .sb-brand{ background:#0A101C; border-bottom-color:#141E31; }
+    body.theme-dark .sidebar .sb-sec .task-card, body.theme-dark .sidebar .sb-sec .batch-row, body.theme-dark .sidebar .sb-sec .event-row{ background:#172135; border-color:#22304A; }
+    body.theme-dark .sidebar .sb-sec .sb-sec-toggle:hover{ background:#172135; }
+    body.theme-dark .sidebar .cur-batch{ background:#111A2B; border-color:#18233A; }
+    body.theme-dark .sidebar .sb-collapse:hover, body.theme-dark .sidebar .sb-icon-btn:hover, body.theme-dark .sr-btn:hover{ background:#16213A; }
+    body.theme-dark .sr-expand, body.theme-dark .sr-batch{ background:#121B2C; border-color:#1F2B42; }
+    body.theme-dark .sr-sep{ background:#1A2438; }
+  }
+  body.theme-dark .topbar{ background:#111A2B; }
+  @media (display-mode: window-controls-overlay) and (min-width: 1025px){
+    body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 280px, #111A2B 280px); }
+    body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 76px, #111A2B 76px); }
+  }
+
+  /* navy dark: day columns and highlights as accents, not fills */
+  body.theme-dark .kanban-column{ background:var(--surface) !important; border-color:var(--line) !important; }
+  body.theme-dark .kanban-column .col-head{ background:var(--surface-soft) !important; }
+  body.theme-dark .rp-item.selected, body.theme-dark .rp-row.selected{ background:var(--surface-soft) !important; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3731,7 +3771,7 @@
     return BATCH_PALETTE[idx % BATCH_PALETTE.length];
   }
   // Field Fresh light mode: calendar day tints stay soft on the white base (dark mode unchanged)
-  function lightTint(a){ return document.body.classList.contains('theme-dark') ? a : a * 0.45; }
+  function lightTint(a){ return document.body.classList.contains('theme-dark') ? a * 0.55 : a * 0.45; }
   function hexToRgba(hex, alpha){
     const v = hex.replace('#','');
     const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
@@ -6955,7 +6995,7 @@
       } else if(activeBatches.length){
         const c = colorForBatchNumber(activeBatches[0].number);
         cell.style.background = hexToRgba(c, lightTint(0.14));
-        cell.style.border = `1.5px solid ${c}`;
+        cell.style.border = document.body.classList.contains('theme-dark') ? `1px solid ${hexToRgba(c, 0.38)}` : `1.5px solid ${c}`;
       }
 
       if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
