@@ -2650,6 +2650,24 @@
   body.mt-open .mode-dock, body.mt-open .fab-dock, body.mt-open .bottom-nav{ display:none !important; }
 
   .rp-thumb svg{ width:19px; height:19px; color:var(--primary-dark); }
+
+  /* Sidebar sections each in their own panel (same colours, just separated) */
+  :root{ --sb-panel:#F4F5F2; --sb-panel-line:transparent; }
+  .sidebar .sb-sec{ background:var(--sb-panel); border:1px solid var(--sb-panel-line); border-radius:14px; padding:8px 10px 10px; margin-top:12px; }
+  .sidebar .sb-sec .sb-sec-toggle:hover{ background:rgba(0,0,0,0.04); }
+  .sidebar .sb-divider{ display:none; }
+  .sidebar #sbActiveBatch{ margin-top:12px; }
+  .sidebar .cur-batch{ border-radius:14px; padding:10px 12px; }
+  body.theme-dark .sidebar{ --sb-panel:var(--surface-soft); }
+  @media (min-width: 761px){
+    /* charcoal sidebar: panels a step lighter, cards inside a step lighter again */
+    .sidebar{ --sb-panel:#1E2225; --sb-panel-line:#262B2E; }
+    body.theme-dark .sidebar{ --sb-panel:#1E2225; }
+    .sidebar .sb-sec .task-card, .sidebar .sb-sec .batch-row, .sidebar .sb-sec .event-row{ background:#262B2E; border-color:#30363A; }
+    .sidebar .sb-sec .sb-sec-toggle:hover{ background:#262B2E; }
+    .sidebar .sb-sec .task-card.high-priority{ background:#3D3320; border-color:#F0A21A; }
+    .sidebar .cur-batch{ background:#1E2225; border-color:#262B2E; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
