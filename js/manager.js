@@ -94,7 +94,7 @@ function renderHomeView(){
         <div><span class="mgr-lbl">Mortality</span><b>${placed?(mort/placed*100).toFixed(1):'0.0'}%</b></div>
       </div>
       <span class="mgr-sub">${mort.toLocaleString('en-US')} birds recorded · ${placed.toLocaleString('en-US')} placed</span>
-      <div class="mgr-actions"><button type="button" class="mgr-btn primary" data-mgr-mort title="Enter dead birds for every shed on one page">Enter mortality</button></div>
+      <div class="mgr-actions"><button type="button" class="mgr-btn primary" data-mgr-mort title="Enter the total morts for every shed on one page">Enter mortality</button></div>
     </section>`;
   const needsHtml=`<section class="mgr-card mgr-needs${needs.some(n=>n.tone==='bad')?' bad':needs.length?' warn':''}">
       <span class="mgr-k">Needs you</span>

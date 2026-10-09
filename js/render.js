@@ -401,7 +401,7 @@ function renderMoreSheet() {
         ${row('moreHome', 'grid', 'Result detail', 'Projected result, PIF, dockets and leftover')}
         ${row('moreBatch', 'home', 'Batch details', 'Sheds, ages and clean-out dates')}
         ${row('morePickups', 'pickups', 'Pickups', 'Every pickup per shed, edit inline')}
-        ${row('moreMort', 'mortality', 'Mortality', 'Dead birds for every shed, one page')}
+        ${row('moreMort', 'mortality', 'Mortality', 'Total morts for every shed, one page')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
