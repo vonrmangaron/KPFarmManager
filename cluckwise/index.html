@@ -18,7 +18,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -2633,32 +2633,35 @@
   .rp-thumb svg{ width:19px; height:19px; color:var(--primary-dark); }
 
   /* =====================================================================
-     NEW LOOK (2026-10): soft blue-grey ground, white rounded cards,
-     white sidebar with section links, a tools bar and a page-title bar.
+     DESIGN B — "Soft cards" (2026-10-10): same layout and content as before,
+     the sidebar, header and calendar become rounded cards on a soft ground.
      ===================================================================== */
-  :root{ --bg:#EEF3F8; --surface-soft:#F2F6FA; --line:#E5EAEF; --ink:#2A3547; --muted:#5A6A85; --weekend-bg:#F7F9FC; --nl-radius:20px; }
-  body, button, input, select, textarea, h1, h2, h3, h4, b, strong, label, span, div, a, p, li, td, th{ font-family:'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif !important; }
-  body{ background:var(--bg); }
-  .tbar-title, .tbar-add, .tb-profile, .sb-nav, .tb-search-txt{ display:none; }
-
+  :root{ --b-ground:#ECEEE8; --b-panel:#F7F8F5; --b-shadow:0 1px 2px rgba(16,24,40,.05); }
+  body.theme-dark{ --b-ground:#141C2C; --b-panel:var(--surface-soft); --b-shadow:none; }
+  .cur-batch .cb-sub{ font-size:12px; color:var(--muted); }
   @media (min-width: 1025px){
-    .shell{ padding:20px; gap:20px; box-sizing:border-box; grid-template-columns:250px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto; height:100vh; background:var(--bg); }
+    body{ background:var(--b-ground); }
+    .shell{ padding:16px; gap:16px; box-sizing:border-box; grid-template-columns:286px minmax(0,1fr); background:var(--b-ground); }
     body.sb-collapsed .shell{ grid-template-columns:76px minmax(0,1fr); }
-    /* sidebar card */
-    .sidebar{ height:auto; min-height:0; border:none; border-radius:var(--nl-radius); background:var(--surface); padding:20px 14px; box-shadow:none; }
-    .sidebar .sb-brand{ position:static; margin:0 0 8px; height:auto; padding:2px 6px 12px; border-bottom:none; background:transparent; }
-    .sb-brand-name{ font-size:20px; font-weight:800; }
-    .sb-brand-name .accent{ background:none; -webkit-background-clip:initial; background-clip:initial; color:var(--primary-dark); }
-    .sb-nav{ display:flex; flex-direction:column; gap:2px; margin-bottom:6px; }
-    .sbn-h{ font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:12px 12px 6px; }
-    .sbn-link{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:none; border-radius:12px; background:transparent; color:var(--ink); font-size:14.5px; font-weight:500; cursor:pointer; text-align:left; }
-    .sbn-link svg{ width:20px; height:20px; flex-shrink:0; }
-    .sbn-link:hover{ background:var(--surface-soft); }
-    .sbn-link.active{ background:var(--primary-soft); color:var(--primary-dark); font-weight:700; }
-    .sbn-badge{ margin-left:auto; min-width:20px; height:20px; padding:0 6px; box-sizing:border-box; border-radius:999px; background:var(--surface-soft); color:var(--muted); font-size:11.5px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
-    .sbn-badge.urgent{ background:var(--danger); color:#fff; }
+    .sidebar{ height:auto; min-height:0; border:none; border-radius:16px; box-shadow:var(--b-shadow); padding:0 16px 16px; }
+    .sidebar .sb-brand{ margin:0 -16px 10px; padding:0 14px 0 18px; border-bottom:none; border-radius:16px 16px 0 0; }
     .sidebar .sb-divider{ display:none; }
-    /* collapsed rail: same white card */
+    .sidebar .sb-sec{ background:var(--b-panel); border-radius:12px; padding:10px; margin-top:10px; }
+    .sidebar .cur-batch{ background:var(--primary-soft); border:none; border-radius:12px; padding:12px; }
+    .sidebar .cur-batch .cb-k{ color:var(--primary-dark); }
+    .topbar{ height:64px !important; border:none !important; border-radius:16px; box-shadow:var(--b-shadow) !important; }
+    .topbar .nav-group #prevBtn, .topbar .nav-group #nextBtn{ border:none !important; background:var(--surface-soft) !important; }
+    .topbar .calendar-density-btn, .topbar #todayBtn{ border:none !important; background:var(--surface-soft) !important; box-shadow:none !important; }
+    .calendar-wrap-outer{ background:var(--surface); border-radius:16px; overflow:hidden; box-shadow:var(--b-shadow); }
+    .shell > .app-footer{ background:transparent; }
+    /* calendar days: soft tiles */
+    .day-cell{ border-color:transparent; box-shadow:none; background:var(--b-panel); }
+    .day-cell.weekend{ border-top:none; background:var(--weekend-bg); }
+    .day-cell.today{ box-shadow:inset 0 0 0 2px var(--primary) !important; }
+    .day-cell .task-card{ border-color:transparent; }
+    /* Maintenance page sits beside the sidebar card */
+    .reports-modal.mt-page{ top:16px; bottom:16px; right:16px; left:318px; border-radius:16px; }
+    /* collapsed icon bar: light, like the card */
     .sr-btn{ color:var(--muted); }
     .sr-btn:hover{ background:var(--surface-soft); color:var(--ink); }
     .sr-expand{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
@@ -2666,139 +2669,18 @@
     .sr-batch{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
     .sr-batch:hover{ background:var(--primary-soft); border-color:var(--primary); }
     .sr-batch .sr-num{ color:var(--muted); }
-
-    /* two bars: tools (row 1) and page title (row 2), each a white card */
-    .topbar{ grid-column:2; grid-row:1; height:auto !important; display:grid !important; grid-template-columns:auto auto auto minmax(0,1fr) auto auto auto auto auto; grid-template-rows:68px 64px; row-gap:20px; column-gap:10px; align-items:center; padding:0 !important; background:transparent !important; border:none !important; box-shadow:none !important; position:relative; z-index:5; container-type:normal; }
-    .topbar::before, .topbar::after{ content:''; grid-column:1 / -1; align-self:stretch; background:var(--surface); border-radius:var(--nl-radius); z-index:-1; }
-    .topbar::before{ grid-row:1; } .topbar::after{ grid-row:2; }
-    .topbar .topbar-left, .topbar .toolbar{ display:contents !important; }
-    .topbar .brand, .topbar .tb-group, .topbar .tb-divider, .topbar .sidebar-toggle{ display:none !important; }
-    #sbExpandBtn{ grid-row:1; grid-column:1; margin-left:18px; }
-    #searchBtn{ grid-row:1; grid-column:4; justify-self:end; width:300px; height:42px; border:1px solid var(--line) !important; border-radius:12px !important; background:var(--surface) !important; display:flex; align-items:center; gap:10px; padding:0 14px; color:var(--muted); }
-    #searchBtn .tb-search-txt{ display:inline; order:2; font-size:14px; font-weight:500; color:var(--muted); }
-    #searchBtn .tb-ic{ order:1; }
-    #searchBtn .tb-label, #searchBtn .tb-kbd{ display:none !important; }
-    #searchBtn .tb-search-txt{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .sidebar .btn-create-wide{ font-size:13px; white-space:nowrap; }
-    .sb-brand-name{ font-size:19px; }
-    #overdueBtn{ grid-row:1; grid-column:5; }
-    #themeToggleBtn{ grid-row:1; grid-column:6; }
-    #settingsBtn{ grid-row:1; grid-column:7; }
-    #saveIndicator{ grid-row:1; grid-column:8; }
-    .tb-profile{ grid-row:1; grid-column:9; display:flex; align-items:center; gap:10px; margin:0 20px 0 6px; }
-    .tbp-av{ width:40px; height:40px; border-radius:50%; background:var(--primary-soft); color:var(--primary-dark); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; }
-    .tbp-text{ display:flex; flex-direction:column; line-height:1.25; }
-    .tbp-text b{ font-size:14px; color:var(--ink); } .tbp-text span{ font-size:12px; color:var(--muted); }
-    #overdueBtn, #themeToggleBtn, #settingsBtn{ width:40px; height:40px; border:none !important; background:transparent !important; border-radius:12px; color:var(--ink); }
-    #overdueBtn:hover, #themeToggleBtn:hover, #settingsBtn:hover{ background:var(--surface-soft) !important; }
-    .tbar-title{ display:block; grid-row:2; grid-column:1; margin-left:26px; font-size:18px; font-weight:700; color:var(--ink); white-space:nowrap; }
-    #navGroup{ grid-row:2; grid-column:2; margin-left:14px !important; }
-    #todayBtn{ grid-row:2; grid-column:3; height:36px; border-radius:10px; }
-    .tbar-add{ display:inline-flex; grid-row:2; grid-column:5 / -1; justify-self:end; align-items:center; height:40px; margin-right:20px; padding:0 18px; border:none; border-radius:999px; background:var(--primary); color:#241A08; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
-    .tbar-add:hover{ filter:brightness(1.05); }
-    body.mt-open #navGroup, body.mt-open #todayBtn, body.mt-open .tbar-add{ visibility:hidden; }
-    /* content card */
-    .calendar-wrap-outer{ background:var(--surface); border-radius:var(--nl-radius); overflow:hidden; }
-    .mode-dock{ display:none !important; }
-    .shell > .app-footer{ background:transparent; }
-
-    /* Maintenance: the content card, three panes */
-    .reports-modal.mt-page{ top:var(--mt-t, 202px); left:var(--mt-l, 290px); right:var(--mt-r, 20px); bottom:var(--mt-b, 20px); border-radius:var(--nl-radius); background:var(--surface); overflow:hidden; }
-    .mt-page .rp-head, .mt-page .rp-kpis{ display:none; }
-    .mt-page .rp-body{ padding:0; gap:0; }
-    .mt-page .rp-filters{ display:flex; }
-    .mt-page .rp-list-pane{ border:none; border-right:1px solid var(--line); border-radius:0; width:400px; flex:0 0 400px; }
-    .mt-page .rp-detail-pane{ border:none; border-radius:0; width:auto; flex:1; }
-    .mt-page .rp-tool-right #reportsShedFilter{ display:none; }
+    body.sb-collapsed .reports-modal.mt-page{ left:108px; }
   }
-
-  /* Maintenance panes (all sizes) */
-  .rp-filters{ display:none; width:230px; flex-shrink:0; box-sizing:border-box; padding:20px 16px; border-right:1px solid var(--line); flex-direction:column; gap:4px; overflow-y:auto; }
-  .rp-types-btn{ height:46px; border:none; border-radius:999px; background:var(--primary); color:#241A08; font-size:14.5px; font-weight:700; cursor:pointer; margin-bottom:12px; flex-shrink:0; }
-  .rp-types-btn:hover{ filter:brightness(1.05); }
-  .mt-page .rp-filters .reports-filter-row{ display:flex; flex-direction:column; flex-wrap:nowrap; flex-shrink:0; gap:2px; background:none; border:none; padding:0; }
-  .mt-page .rp-filters .reports-filter-row button{ width:100%; box-sizing:border-box; }
-  .mt-page .rp-filters .reports-filter-row button{ display:flex; align-items:center; text-align:left; padding:10px 12px; border-radius:10px; font-size:14px; font-weight:500; color:var(--ink); background:transparent; box-shadow:none; }
-  .mt-page .rp-filters .reports-filter-row button .rp-cnt{ margin-left:auto; }
-  .mt-page .rp-filters .reports-filter-row button:hover{ background:var(--surface-soft); }
-  .mt-page .rp-filters .reports-filter-row button.active{ background:var(--primary-soft); color:var(--primary-dark); font-weight:700; box-shadow:none; }
-  .mt-page .rp-filters .reports-filter-row button[data-status="urgent"] .rp-cnt{ color:var(--danger); font-weight:800; }
-  .rp-places-h{ font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink); padding:16px 12px 6px; border-top:1px solid var(--line); margin-top:12px; }
-  .rp-places{ display:flex; flex-direction:column; gap:1px; }
-  .rp-place{ display:flex; align-items:center; gap:10px; padding:8px 12px; border:none; border-radius:10px; background:transparent; color:var(--ink); font-size:14px; cursor:pointer; text-align:left; }
-  .rp-place:hover{ background:var(--surface-soft); }
-  .rp-place.on{ background:var(--surface-soft); font-weight:700; }
-  .rp-place-sq{ width:10px; height:10px; border-radius:3px; border:2px solid; box-sizing:border-box; flex-shrink:0; }
-  .rp-filters .rp-alert-btn{ margin-top:auto; height:38px; border-radius:10px; font-size:12.5px; }
-  .mt-page .rp-list-top{ display:flex; flex-direction:column; gap:8px; padding:16px; border-bottom:1px solid var(--line); }
-  .mt-page .rp-list-top .rp-search{ width:100%; height:44px; }
-  .mt-page .rp-tool-right{ margin-left:0; display:flex; gap:8px; }
-  .mt-page .rp-tool-right select{ flex:1; }
-  .mt-page .reports-toolbar, .mt-page .rp-thead{ display:none; }
-  /* list items */
-  .rp-row{ display:flex !important; align-items:center; gap:12px; padding:12px 16px !important; border-bottom:1px solid var(--line); grid-template-columns:none !important; }
-  .rp-row .rp-thumb{ width:46px; height:46px; border-radius:50%; border:none; background:var(--danger-soft); color:var(--danger); }
-  .rp-row.status-progress .rp-thumb{ background:var(--primary-soft); color:var(--primary-dark); }
-  .rp-row.status-resolved .rp-thumb{ background:var(--success-soft); color:var(--success); }
-  .rp-row .rp-thumb.has-photo{ background:var(--surface-soft); }
-  .rp-row .rp-thumb svg{ width:20px; height:20px; color:currentColor; }
-  .rp-row .rp-prob-text{ flex:1; min-width:0; }
-  .rp-row .rp-prob-name{ font-size:14.5px; font-weight:700; }
-  .rp-row .rp-prob-sub{ font-size:12.5px; color:var(--muted); }
-  .rp-when.late{ color:var(--danger); font-weight:700; }
-  .rp-row .rp-st{ flex-shrink:0; }
-  .rp-st.urgent{ background:var(--danger) !important; color:#fff !important; }
-  .rp-row.selected{ background:var(--surface-soft); box-shadow:inset 3px 0 0 var(--primary); }
-  /* details */
-  .rpd-bar{ display:flex; align-items:center; gap:6px; padding:16px 22px; border-bottom:1px solid var(--line); }
-  .rpd-bar b{ font-size:17px; font-weight:700; margin-right:auto; }
-  .rpd-icon{ width:38px; height:38px; border:none; border-radius:10px; background:transparent; color:var(--muted); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
-  .rpd-icon svg{ width:20px; height:20px; }
-  .rpd-icon:hover{ background:var(--surface-soft); color:var(--ink); }
-  .rpd-icon.on{ color:var(--danger); }
-  .rpd-icon.rpd-x{ margin-left:0; font-size:16px; }
-  .mt-page .rpd-scroll{ padding:20px 22px; gap:18px; }
-  .rpd-hero{ display:flex; gap:16px; align-items:center; }
-  .rpd-hero .rpd-photo{ width:96px; height:96px; flex-shrink:0; border-radius:16px; overflow:hidden; background:var(--surface-soft); display:flex; align-items:center; justify-content:center; }
-  .rpd-hero .rpd-photo img{ width:100%; height:100%; object-fit:cover; }
-  .rpd-hero .rpd-photo.none{ color:var(--primary-dark); background:var(--primary-soft); }
-  .rpd-hero .rpd-photo.none svg{ width:34px; height:34px; }
-  .rpd-hero-text{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-  .rpd-hero-text .rpd-type{ margin:0; font-size:19px; font-weight:800; color:var(--ink); }
-  .rpd-hero-text .rpd-sub{ font-size:13.5px; color:var(--muted); }
-  .rpd-hero-text .rp-st{ align-self:flex-start; }
-  .rpd-facts{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px 20px; }
-  .rpd-facts div{ display:flex; flex-direction:column; gap:3px; min-width:0; }
-  .rpd-facts span{ font-size:12.5px; color:var(--muted); }
-  .rpd-facts b{ font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; }
-  .rpd-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-  .rpd-act{ height:42px; padding:0 18px; border:none; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; }
-  .rpd-act.primary{ background:var(--primary); color:#241A08; }
-  .rpd-act.fix{ background:var(--success-soft); color:var(--success); }
-  .rpd-act.del{ background:var(--danger-soft); color:var(--danger); margin-left:auto; }
-  .mt-page .rpd-foot{ padding:14px 22px; border-top:1px solid var(--line); }
-  .mt-page .rpd-foot:has(.rpd-confirm:not([hidden])) .rpd-actions{ display:none; }
-
-  /* tablet: three panes without the outer bars */
-  @media (min-width: 761px) and (max-width: 1024px){
-    .mt-page .rp-kpis{ display:none; }
-    .mt-page .rp-filters{ display:flex; width:200px; }
-    .mt-page .rp-body{ padding:0; gap:0; }
-    .mt-page .rp-list-pane{ border-radius:0; border:none; border-right:1px solid var(--line); flex:0 0 320px; }
-    .mt-page .rp-detail-pane{ border:none; border-radius:0; flex:1; width:auto; }
-    .mt-page .rp-tool-right #reportsShedFilter{ display:none; }
-  }
-  /* phone: filters become a row of chips; list and details swap */
-  @media (max-width: 760px){
-    .mt-page .rp-body{ flex-direction:column; }
-    .mt-page .rp-filters{ display:flex; width:auto; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; border-right:none; padding:0 0 4px; gap:6px; scrollbar-width:none; }
-    .mt-page .rp-filters::-webkit-scrollbar{ display:none; }
-    .mt-page .rp-types-btn{ height:36px; margin:0; padding:0 14px; font-size:13px; flex-shrink:0; }
-    .mt-page .rp-filters .reports-filter-row{ flex-direction:row; flex-shrink:0; }
-    .mt-page .rp-filters .reports-filter-row button{ white-space:nowrap; padding:8px 12px; }
-    .rp-places-h, .rp-places, .rp-filters .rp-alert-btn{ display:none !important; }
-    .reports-modal.mt-page.show-detail .rp-filters{ display:none; }
-  }
+  /* Board: more room for tasks — compact column header */
+  .col-head{ padding:7px 9px; margin-bottom:6px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; }
+  .col-head > .col-head-top{ flex:1 1 100%; }
+  .col-head .dprogress{ margin-top:0; flex:0 0 74px; }
+  .col-head .col-batch-age{ margin-top:0; }
+  .col-head > .wx-card, .col-head > .wx-setup-chip, .col-head > [class*="wx-"]:not(.col-wx-mini){ margin:0 !important; padding:2px 7px !important; min-height:0 !important; font-size:11px !important; border-radius:999px !important; flex:0 1 auto; max-width:100%; }
+  .col-head > .wx-card *{ font-size:11px !important; }
+  .col-head > .wx-setup{ display:none !important; }   /* setup prompt: on the calendar, not in every column */
+  .kanban-column{ padding:6px; }
+  .kanban-column .empty-note{ padding:8px 4px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2831,9 +2713,6 @@
 
 <div class="shell">
   <div class="topbar">
-    <span class="tbar-title" id="tbarTitle">Calendar</span>
-    <button type="button" class="tbar-add" id="tbarAddBtn" title="Add a task">+ Add task</button>
-    <div class="tb-profile" id="tbProfile" title="Manager"></div>
     <div class="topbar-left">
       <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
       <button type="button" class="sb-expand" id="sbExpandBtn" title="Show sidebar" aria-label="Show sidebar"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
@@ -2858,7 +2737,7 @@
 
     <div class="toolbar">
       <button class="btn-today" id="todayBtn">Today</button>
-      <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><span class="tb-search-txt">Search tasks, problems…</span><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
+      <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
       <div class="tb-group" role="group" aria-label="Farm tools">
         <button class="btn-history" id="historyBtn" title="History of changes"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span class="tb-label">History</span></button>
         <button class="btn-history" id="mlogBtn" title="Routine Tracker: plan and log recurring farm jobs"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span class="tb-label">Routines</span></button>
@@ -2895,20 +2774,6 @@
         <span class="sb-brand-name">CluckWise<span class="accent">.vm</span></span>
         <button type="button" class="sb-collapse" id="sbCollapseBtn" title="Hide sidebar" aria-label="Hide sidebar"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
       </div>
-      <nav class="sb-nav" id="sbNav" aria-label="Pages">
-        <span class="sbn-h">Plan</span>
-        <button type="button" class="sbn-link" data-nav="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>Calendar</button>
-        <button type="button" class="sbn-link" data-nav="kanban"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="2"/><rect x="14" y="3" width="7" height="11" rx="2"/></svg>Board</button>
-        <button type="button" class="sbn-link" data-nav="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>List</button>
-        <span class="sbn-h">Farm</span>
-        <button type="button" class="sbn-link" data-nav="maintenance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Maintenance<span class="sbn-badge" id="sbnMtBadge" hidden></span></button>
-        <button type="button" class="sbn-link" data-nav="routine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Routine tracker</button>
-        <button type="button" class="sbn-link" data-nav="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6"/></svg>Farm guide</button>
-        <span class="sbn-h">More</span>
-        <button type="button" class="sbn-link" data-nav="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
-        <button type="button" class="sbn-link" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
-        <span class="sbn-h">Lists</span>
-      </nav>
       <div class="quick-actions">
         <button class="btn-create-wide batch" id="openBatchModalBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New batch</button>
         <button class="btn-create-wide audit" id="openEventModalBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg>New audit</button>
@@ -3085,30 +2950,25 @@
       <h2 id="rpTitle">Maintenance</h2>
       <div class="rp-sub">Problems reported on the farm, and how they were fixed</div>
     </div>
+    <label class="rp-search" title="Search by shed, problem, note or name">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
+    </label>
+    <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
+    <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
     <button type="button" class="rp-close" id="closeReports" aria-label="Close" title="Close">✕</button>
   </div>
   <div class="rp-kpis" id="rpSummary"></div>
   <div class="rp-body">
-    <aside class="rp-filters" aria-label="Filters">
-      <button type="button" class="rp-types-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
-      <div class="reports-filter-row" id="reportsFilterRow">
-        <button type="button" data-status="active" class="active">Active</button>
-        <button type="button" data-status="Open">Open</button>
-        <button type="button" data-status="In Progress">In progress</button>
-        <button type="button" data-status="Resolved">Fixed</button>
-        <button type="button" data-status="urgent">Urgent</button>
-        <button type="button" data-status="all">All</button>
-      </div>
-      <div class="rp-places-h">Places</div>
-      <div class="rp-places" id="rpPlaces"></div>
-      <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
-    </aside>
     <section class="rp-list-pane" aria-label="Report list">
-      <div class="rp-list-top">
-        <label class="rp-search" title="Search by shed, problem, note or name">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input type="search" id="reportsSearchInput" placeholder="Search problems" aria-label="Search reports">
-        </label>
+      <div class="reports-toolbar">
+        <div class="reports-filter-row" id="reportsFilterRow">
+          <button type="button" data-status="active" class="active">Active</button>
+          <button type="button" data-status="Open">Open</button>
+          <button type="button" data-status="In Progress">In progress</button>
+          <button type="button" data-status="Resolved">Fixed</button>
+          <button type="button" data-status="all">All</button>
+        </div>
         <div class="rp-tool-right">
           <select id="reportsShedFilter" aria-label="Place" title="Show one place"><option value="">All places</option></select>
           <select id="reportsSortSelect" aria-label="Sort" title="Sort">
@@ -3117,9 +2977,10 @@
           </select>
         </div>
       </div>
+      <div class="rp-thead" aria-hidden="true"><span>Problem</span><span>Place</span><span>Reported</span><span>Status</span><span>Task</span></div>
       <div class="reports-list" id="reportsList"></div>
     </section>
-    <section class="rp-detail-pane" id="rpDetail" aria-label="Problem details"></section>
+    <section class="rp-detail-pane" id="rpDetail" aria-label="Report details"></section>
   </div>
 </div>
 
@@ -5191,7 +5052,6 @@
     showReportAlert._t = setTimeout(()=> el.classList.remove('show'), 15000);
   }
   function updateReportsBadge(){
-    if(typeof syncSbNav === 'function') try{ syncSbNav(); }catch(e){}
     const count = getOpenReportsCount();
     const fresh = unseenReports().length;
     const badge = $('#reportsBadge');
@@ -5258,21 +5118,12 @@
         (anyFarm ? '<option value="__farm">Around the farm</option>' : '');
       shedSelect.value = currentVal;
     }
-    const placesBox = $('#rpPlaces');
-    if(placesBox){
-      const sheds = [...new Set(reports.map(r => r.shed).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
-      const anyFarm = reports.some(r => !r.shed);
-      const item = (val, label, color) => `<button type="button" class="rp-place${String(reportsShedFilter || '') === val ? ' on' : ''}" data-rp-place="${escapeHtmlAttr(val)}"><span class="rp-place-sq" style="border-color:${color}"></span>${escapeHtml(label)}</button>`;
-      const shedColor = n => { const p = Math.ceil(Number(n) / 2); return p >= 1 && p <= 4 ? `var(--pair${p})` : 'var(--muted)'; };
-      placesBox.innerHTML = item('', 'All places', 'var(--ink)') + sheds.map(n => item(String(n), `Shed ${n}`, shedColor(n))).join('') + (anyFarm ? item('__farm', 'Around the farm', 'var(--muted)') : '');
-    }
 
-    const counts = { active: reports.filter(r => r.status !== 'Resolved').length, Open: reports.filter(r => r.status === 'Open').length, 'In Progress': reports.filter(r => r.status === 'In Progress').length, Resolved: reports.filter(r => r.status === 'Resolved').length, urgent: reports.filter(r => r.urgent && r.status !== 'Resolved').length, all: reports.length };
-    const names = { active:'Active', Open:'Open', 'In Progress':'In progress', Resolved:'Fixed', urgent:'Urgent', all:'All' };
+    const counts = { active: reports.filter(r => r.status !== 'Resolved').length, Open: reports.filter(r => r.status === 'Open').length, 'In Progress': reports.filter(r => r.status === 'In Progress').length, Resolved: reports.filter(r => r.status === 'Resolved').length, all: reports.length };
+    const names = { active:'Active', Open:'Open', 'In Progress':'In progress', Resolved:'Fixed', all:'All' };
     document.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
     let filtered = reports.slice();
     if(reportsFilterStatus === 'active') filtered = filtered.filter(r => r.status !== 'Resolved');
-    else if(reportsFilterStatus === 'urgent') filtered = filtered.filter(r => r.urgent && r.status !== 'Resolved');
     else if(reportsFilterStatus !== 'all') filtered = filtered.filter(r => r.status === reportsFilterStatus);
     if(reportsShedFilter){
       filtered = filtered.filter(r => reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter));
@@ -5325,25 +5176,31 @@
     el.setAttribute('role', 'button'); el.tabIndex = 0;
     el.className = `rp-row status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
     el.title = 'Open this problem';
-    el.innerHTML = `<span class="rp-thumb"></span><span class="rp-prob-text"><span class="rp-prob-top"><b class="rp-prob-name"></b>${isNew ? '<span class="rp-tag new">New</span>' : ''}</span><span class="rp-prob-sub"></span></span><span class="rp-st st-${sc}${urgent ? ' urgent' : ''}"></span>`;
+    el.innerHTML = `<span class="rp-c-prob"><span class="rp-thumb"></span><span class="rp-prob-text"><span class="rp-prob-top"><b class="rp-prob-name"></b>${urgent ? '<span class="rp-tag urgent">Urgent</span>' : ''}${isNew ? '<span class="rp-tag new">New</span>' : ''}</span><span class="rp-prob-sub"></span></span></span>
+      <span class="rp-c-place" data-label="Place"></span>
+      <span class="rp-c-rep" data-label="Reported"></span>
+      <span class="rp-c-status" data-label="Status"><span class="rp-st st-${sc}"></span></span>
+      <span class="rp-c-task" data-label="Task"></span>`;
     const thumb = el.querySelector('.rp-thumb');
-    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.innerHTML = RP_WRENCH; }; img.src = photo; thumb.appendChild(img); thumb.classList.add('has-photo'); }
+    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.innerHTML = RP_WRENCH; }; img.src = photo; thumb.appendChild(img); }
     else thumb.innerHTML = RP_WRENCH;
     el.querySelector('.rp-prob-name').textContent = rpTypeName(r);
-    const sub = el.querySelector('.rp-prob-sub');
-    const parts = [reportPlace(r)];
-    if(sc === 'resolved') parts.push(r.resolvedBy ? 'fixed by ' + r.resolvedBy : 'fixed');
-    else if(task){
+    el.querySelector('.rp-prob-sub').textContent = (r.notes || '').replace(/\s+/g, ' ').trim();
+    el.querySelector('.rp-c-place').textContent = reportPlace(r);
+    el.querySelector('.rp-c-rep').textContent = [r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
+    el.querySelector('.rp-st').textContent = sc === 'resolved' ? (r.resolvedBy ? `Fixed by ${r.resolvedBy}` : 'Fixed') : (RP_STATUS_LABEL[r.status] || r.status || 'Open');
+    const tc = el.querySelector('.rp-c-task');
+    if(task){
+      const who = (task.assignees || []).join(', ');
       const late = task.status !== 'done' && task.date && task.date < today;
-      parts.push((task.assignees || []).join(', ') || 'no one yet');
-      sub.textContent = parts.join(' · ') + ' · ';
-      const w = document.createElement('span'); w.className = 'rp-when' + (late ? ' late' : '');
-      w.textContent = task.status === 'done' ? 'done' : !task.date ? 'Backlog' : task.date === today ? 'today' : late ? `${Math.round((toDateObj(today) - toDateObj(task.date)) / 864e5)} days late` : formatShort(task.date);
-      sub.appendChild(w);
-    }
-    if(!task || sc === 'resolved'){ if(sc !== 'resolved') parts.push([r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ')); sub.textContent = parts.filter(Boolean).join(' · '); }
-    el.querySelector('.rp-st').textContent = urgent ? 'Urgent' : sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open');
-    el.addEventListener('click', () => openReportDetailModal(r.id));
+      const when = task.status === 'done' ? 'done' : !task.date ? 'Backlog' : task.date === today ? 'today' : late ? `${Math.round((toDateObj(today) - toDateObj(task.date)) / 864e5)} days late` : formatShort(task.date);
+      tc.innerHTML = `<span class="rp-task-who"></span><span class="rp-task-when${late ? ' late' : task.date === today && task.status !== 'done' ? ' due' : ''}"></span>`;
+      tc.querySelector('.rp-task-who').textContent = (who || 'no one yet') + ' · ';
+      tc.querySelector('.rp-task-when').textContent = when;
+    } else if(sc !== 'resolved'){
+      tc.innerHTML = `<button type="button" class="rp-link" data-rp-assign-row="${escapeHtmlAttr(r.id)}" title="Make a task for this problem">Assign as task</button>`;
+    } else tc.innerHTML = '<span class="rp-muted">—</span>';
+    el.addEventListener('click', (e) => { if(e.target.closest('[data-rp-assign-row]')){ e.stopPropagation(); openAssignTaskFromReport(r.id); return; } openReportDetailModal(r.id); });
     el.addEventListener('keydown', (e) => { if((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); openReportDetailModal(r.id); } });
     return el;
   }
@@ -5352,40 +5209,33 @@
     const r = reports.find(x => x.id === currentReportId);
     $('#reportsDrawer').classList.toggle('show-detail', !!r);
     if(!r){
-      pane.innerHTML = `<div class="rpd-empty">${RP_WRENCH}<div>${reports.length ? 'Select a problem to see its photo, note, task and history' : 'No problems reported yet. Workers report them from the CluckWise Viewer.'}</div></div>`;
+      pane.innerHTML = `<div class="rpd-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg><div>${reports.length ? 'Select a problem to see its photo, note, task and history' : 'No problems reported yet. Workers report them from the CluckWise Viewer.'}</div></div>`;
       return;
     }
     const sc = rpStatusClass(r);
     const photo = (r.photoUrls || [])[0];
     const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
     const st = (v, label) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}" title="Set to ${label}">${label}</button>`;
-    const fmtWhen = iso => iso ? fmtDateTime12(new Date(iso), { weekday:'short', month:'short', day:'numeric' }) : '';
-    // batch and bird age on the day it was reported
-    let batchTxt = '—';
-    if(r.createdAt){ const dk = dateKey(new Date(r.createdAt)); const b = batches.find(x => dk >= x.start && dk <= x.end); if(b) batchTxt = `#${b.number} · day ${batchAgeOn(b, dk)}`; }
-    const openMs = (sc === 'resolved' && r.resolvedAt ? Date.parse(r.resolvedAt) : Date.now()) - Date.parse(r.createdAt || Date.now());
-    const dur = h => h < 1 ? 'under an hour' : h < 48 ? `${Math.round(h)} hour${Math.round(h) === 1 ? '' : 's'}` : `${Math.round(h / 24)} days`;
     pane.innerHTML = `
-      <div class="rpd-bar"><b>Problem details</b>
-        <button type="button" class="rpd-icon${r.urgent ? ' on' : ''}" data-rp-urgent="${r.urgent ? '0' : '1'}" title="${r.urgent ? 'Mark as normal' : 'Mark as urgent'}" aria-label="${r.urgent ? 'Mark as normal' : 'Mark as urgent'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></button>
-        <button type="button" class="rpd-icon" data-rp-delete title="Delete this report" aria-label="Delete this report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
-        <button type="button" class="rpd-icon rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button>
+      <div class="rpd-head">
+        <div class="rpd-head-row"><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
+        <h3 class="rpd-type"></h3>
+        <div class="rpd-sub"></div>
       </div>
       <div class="rpd-scroll">
-        <div class="rpd-hero">
-          ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : `<span class="rpd-photo none">${RP_WRENCH}</span>`}
-          <div class="rpd-hero-text"><h3 class="rpd-type"></h3><span class="rpd-sub"></span><span class="rp-st st-${sc}${r.urgent && sc !== 'resolved' ? ' urgent' : ''}"></span></div>
-        </div>
-        <div class="rpd-facts">
-          <div><span>Reported</span><b class="rpd-f-rep"></b></div>
-          <div><span>Batch</span><b>${escapeHtml(batchTxt)}</b></div>
-          <div><span>Task</span><b class="rpd-f-task"></b></div>
-          <div><span>${sc === 'resolved' ? 'Time to fix' : 'Time open'}</span><b>${r.createdAt ? dur(openMs / 36e5) : '—'}</b></div>
-        </div>
+        ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
         ${r.notes ? `<div class="rpd-block"><span class="rpd-lbl">Worker's note</span><div class="rpd-note" data-rp-text="notes"></div></div>` : ''}
-        ${task ? `<div class="rpd-block"><span class="rpd-lbl">Task</span><div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div></div>` : ''}
+        <div class="rpd-block">
+          <span class="rpd-lbl">Task</span>
+          ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div>`
+                 : sc === 'resolved' ? `<div class="rpd-hint">No task.</div>`
+                 : `<div class="rpd-task"><div class="rpd-task-text"><span class="rpd-hint">No task yet. Make one to schedule the fix and choose who does it.</span></div><button type="button" class="rpd-btn primary" data-rp-assign title="Open the New task form, filled in from this report">Assign as task</button></div>`}
+        </div>
         <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist"></div></div>
-        <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open', 'Open')}${st('In Progress', 'In progress')}${st('Resolved', 'Fixed')}</div></div>
+        <div class="rpd-controls">
+          <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open', 'Open')}${st('In Progress', 'In progress')}${st('Resolved', 'Fixed')}</div></div>
+          <div class="rpd-field"><span class="rpd-lbl">Priority</span><div class="rpd-seg"><button type="button" class="rpd-seg-btn${!r.urgent ? ' active' : ''}" data-rp-urgent="0">Normal</button><button type="button" class="rpd-seg-btn${r.urgent ? ' active' : ''}" data-rp-urgent="1">Urgent</button></div></div>
+        </div>
         ${sc === 'resolved' ? `<div class="rpd-field"><label class="rpd-lbl" for="rpdResolutionNotes">What fixed it? <span>(the worker sees this)</span></label><textarea class="rpd-textarea" id="rpdResolutionNotes" rows="2" maxlength="500" placeholder="e.g. Replaced the valve"></textarea></div>` : ''}
         <div class="rpd-field">
           <label class="rpd-lbl" for="rpdManagerNotes">Manager notes <span>(only you see this)</span></label>
@@ -5394,18 +5244,13 @@
         <div class="rpd-saved" id="rpdSaved" aria-live="polite"></div>
       </div>
       <div class="rpd-foot">
-        <div class="rpd-actions">
-          ${!task && sc !== 'resolved' ? '<button type="button" class="rpd-act primary" data-rp-assign title="Open the New task form, filled in from this report">Assign as task</button>' : ''}
-          ${sc !== 'resolved' ? '<button type="button" class="rpd-act fix" data-rp-status="Resolved" title="Set this problem to Fixed">Mark fixed</button>' : ''}
-          <button type="button" class="rpd-act del rpd-delete" data-rp-delete title="Delete this report">Delete</button>
-        </div>
+        <button type="button" class="rpd-delete" data-rp-delete title="Delete this report">Delete report</button>
         <div class="rpd-confirm" hidden><span>${sc !== 'resolved' ? "This problem isn't fixed yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
       </div>`;
-    pane.querySelector('.rp-st').textContent = (r.urgent && sc !== 'resolved' ? 'Urgent · ' : '') + (sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open'));
+    pane.querySelector('.rp-st').textContent = sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open');
     pane.querySelector('.rpd-type').textContent = rpTypeName(r);
-    pane.querySelector('.rpd-sub').textContent = [reportPlace(r), r.createdBy ? 'reported by ' + r.createdBy : ''].filter(Boolean).join(' · ');
-    pane.querySelector('.rpd-f-rep').textContent = fmtWhen(r.createdAt) || '—';
-    pane.querySelector('.rpd-f-task').textContent = task ? (task.status === 'done' ? 'Done' : task.date ? formatShort(task.date) + ((task.assignees || []).length ? ' · ' + task.assignees.join(', ') : '') : 'Backlog') : 'None yet';
+    const fmtWhen = iso => iso ? fmtDateTime12(new Date(iso), { weekday:'short', month:'short', day:'numeric' }) : '';
+    pane.querySelector('.rpd-sub').textContent = [reportPlace(r), r.createdBy ? 'reported by ' + r.createdBy : '', fmtWhen(r.createdAt)].filter(Boolean).join(' · ');
     const noteEl = pane.querySelector('[data-rp-text="notes"]'); if(noteEl) noteEl.textContent = r.notes;
     if(photo){
       const a = pane.querySelector('.rpd-photo'), img = a.querySelector('img'), note = a.querySelector('.rpd-photo-note');
@@ -5418,6 +5263,7 @@
       const who = (task.assignees || []).join(', ');
       pane.querySelector('.rpd-task-meta').textContent = [task.status === 'done' ? 'Done' : task.date ? formatFull(task.date) : 'In the Backlog, no day yet', who || 'no one yet', task.priority === 'high' ? 'high priority' : ''].filter(Boolean).join(' · ');
     }
+    // History: reported → task → fixed
     const steps = [];
     steps.push({ cls:'rep', text:`<b>Reported</b>${r.createdBy ? ' by ' + escapeHtml(r.createdBy) : ''}`, when: fmtWhen(r.createdAt) });
     if(task) steps.push({ cls:'task', text:`<b>Task made</b> · ${task.date ? escapeHtml(formatShort(task.date)) : 'Backlog'}${(task.assignees || []).length ? ', ' + escapeHtml(task.assignees.join(', ')) : ''}`, when: task.createdAt ? fmtWhen(new Date(task.createdAt).toISOString()) : '' });
@@ -5441,7 +5287,6 @@
     openDrawer('#reportsDrawer');
     $('#scrim').classList.remove('show');   // a page, not a pop-up
     document.body.classList.add('mt-open');
-    placeMtPage(); syncSbNav();
     renderReportsView();
   }
   function openReportDetailModal(id){
@@ -6909,7 +6754,7 @@
     const daysTo = Math.round((toDateObj(b.start) - toDateObj(today)) / 86400000);
     box.innerHTML = `<button type="button" class="cur-batch" id="curBatchBtn" title="Batch details">
       <span class="cb-text"><span class="cb-k">${active ? 'Current batch' : 'Next batch'}</span>
-      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span></span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span>${active && b.end ? `<span class="cb-sub">Clean-out ${escapeHtml(formatShort(b.end))}</span>` : ''}</span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
     box.querySelector('#curBatchBtn').addEventListener('click', ()=> openBatchInfo(b.number));
   }
 
@@ -7105,7 +6950,7 @@
       } else if(activeBatches.length){
         const c = colorForBatchNumber(activeBatches[0].number);
         cell.style.background = hexToRgba(c, lightTint(0.14));
-        cell.style.border = `1.5px solid ${c}`;
+        cell.style.border = `1px solid ${hexToRgba(c, 0.32)}`;
       }
 
       if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
@@ -8205,7 +8050,6 @@
     });
   }
   function syncViewButtons(){
-    if(typeof syncSbNav === 'function') try{ syncSbNav(); }catch(e){}
     const isCalendar = viewMode==='month' || viewMode==='year' || viewMode==='day';
     $('#viewCalendarBtn').classList.toggle('active', isCalendar);
     $('#viewListBtn').classList.toggle('active', viewMode==='list');
@@ -10332,7 +10176,6 @@
     $('#reportsDrawer').classList.remove('open');
     $('#ptypesModal').classList.remove('open');
     document.body.classList.remove('mt-open');
-    if(typeof syncSbNav === 'function') try{ syncSbNav(); }catch(e){}
     $('#mlogHistDrawer').classList.remove('open');
     $('#mlogTaskModal').classList.remove('open');
     $('#settingsDrawer').classList.remove('open');
@@ -10385,7 +10228,7 @@
     // slide, only when the button is pressed (not on page load)
     document.body.classList.add('sb-anim');
     clearTimeout(setSidebarCollapsed.t);
-    setSidebarCollapsed.t = setTimeout(()=>{ document.body.classList.remove('sb-anim'); if(document.body.classList.contains('mt-open')) placeMtPage(); if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater(); }, 360);
+    setSidebarCollapsed.t = setTimeout(()=>{ document.body.classList.remove('sb-anim'); if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater(); }, 360);
     document.body.classList.toggle('sb-collapsed', !!on);
     try{ localStorage.setItem('cluckwise-sb-collapsed', on ? '1' : ''); }catch(e){}
     if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();
@@ -10395,36 +10238,6 @@
   $('#sbMobileClose').addEventListener('click', closeOverlays);
   $('#sbExpandBtn').addEventListener('click', ()=> setSidebarCollapsed(false));
   $('#srExpandBtn').addEventListener('click', ()=> setSidebarCollapsed(false));
-  // ---- New look: sidebar links, page title, Add task, profile ----
-  $('#sbNav').addEventListener('click', (e)=>{
-    const b = e.target.closest('[data-nav]'); if(!b) return;
-    const k = b.dataset.nav;
-    const views = { calendar:'#viewCalendarBtn', kanban:'#viewKanbanBtn', list:'#viewListBtn' };
-    if(views[k]){ closeOverlays(); $(views[k]).click(); syncSbNav(); return; }
-    const tools = { maintenance:'#reportsBtn', routine:'#mlogBtn', guide:'#guideBtn', history:'#historyBtn', settings:'#settingsBtn' };
-    if(tools[k]) $(tools[k]).click();
-    syncSbNav();
-  });
-  $('#tbarAddBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(viewMode === 'kanban' || viewMode === 'list' ? dateKey(new Date()) : viewingDayKey()); });
-  function syncSbNav(){
-    const mt = document.body.classList.contains('mt-open');
-    const cur = mt ? 'maintenance' : (viewMode === 'kanban' ? 'kanban' : viewMode === 'list' ? 'list' : 'calendar');
-    document.querySelectorAll('#sbNav [data-nav]').forEach(b => { const on = b.dataset.nav === cur; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    const t = $('#tbarTitle'); if(t) t.textContent = mt ? 'Maintenance' : ({ kanban:'Board', list:'List' }[cur] || 'Calendar');
-    const badge = $('#sbnMtBadge'); if(badge){ const n = getOpenReportsCount(); badge.textContent = n; badge.hidden = !n; badge.classList.toggle('urgent', reports.some(r => r.status !== 'Resolved' && r.urgent)); }
-    const pr = $('#tbProfile');
-    if(pr){ const name = (settings.manager || '').trim() || 'Manager'; pr.innerHTML = `<span class="tbp-av">${escapeHtml(name.charAt(0).toUpperCase())}</span><span class="tbp-text"><b>${escapeHtml(name)}</b><span>Manager</span></span>`; }
-  }
-  // The Maintenance page sits in the content area, under the two bars (desktop)
-  function placeMtPage(){
-    const m = $('#reportsDrawer'), o = document.querySelector('.calendar-wrap-outer');
-    if(!m || !o) return;
-    if(window.innerWidth < 1025){ ['--mt-t','--mt-l','--mt-r','--mt-b'].forEach(v => m.style.removeProperty(v)); return; }
-    const r = o.getBoundingClientRect();
-    m.style.setProperty('--mt-t', r.top + 'px'); m.style.setProperty('--mt-l', r.left + 'px');
-    m.style.setProperty('--mt-r', (window.innerWidth - r.right) + 'px'); m.style.setProperty('--mt-b', Math.max(20, window.innerHeight - r.bottom) + 'px');
-  }
-  window.addEventListener('resize', ()=>{ if(document.body.classList.contains('mt-open')) placeMtPage(); });
   $('#srBatchBtn').addEventListener('click', e=>{ const n = e.currentTarget.dataset.cb; if(n) openBatchInfo(n); });
   document.querySelectorAll('#sbRail [data-rail]').forEach(el=> el.addEventListener('click', ()=>{
     const k = el.dataset.rail;
@@ -11243,11 +11056,6 @@
   });
   $('#reportsSearchInput').addEventListener('input', (e)=>{
     reportsSearchQuery = e.target.value;
-    renderReportsList();
-  });
-  $('#rpPlaces').addEventListener('click', (e)=>{
-    const b = e.target.closest('[data-rp-place]'); if(!b) return;
-    reportsShedFilter = b.dataset.rpPlace; $('#reportsShedFilter').value = reportsShedFilter;
     renderReportsList();
   });
   $('#reportsShedFilter').addEventListener('change', (e)=>{
