@@ -2238,8 +2238,8 @@ function closeSiloModal(){
 }
 const SILO_GROUP_SHEDS={1:[1,2],2:[3,4],3:[5,6],4:[7,8]};
 const SILO_GROUP_COLORS={
-  1:'linear-gradient(135deg,#E0A339,#A8721F)',
-  2:'linear-gradient(135deg,#B08463,#5E2E22)',
+  1:'linear-gradient(135deg,#F0A21A,#8A5300)',
+  2:'linear-gradient(135deg,#7C8388,#5E2E22)',
   3:'linear-gradient(135deg,#C9774A,#8F4A28)',
   4:'linear-gradient(135deg,#A89055,#6E5A32)'
 };

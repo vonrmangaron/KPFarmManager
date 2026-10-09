@@ -1166,14 +1166,14 @@ function groupViewHtml(g){
   const live=sheds.reduce((s,x)=>s+liveAtStartOfDay(x,today),0);
   const mortRate=init>0?(mort/init)*100:0;
   const feedToday=groupFeedToday(sheds,today);
-  const grad=g===1?'linear-gradient(135deg,#E0A339,#A8721F)':g===2?'linear-gradient(135deg,#B08463,#5E2E22)':g===3?'linear-gradient(135deg,#C9774A,#8F4A28)':'linear-gradient(135deg,#A89055,#6E5A32)';
+  const grad=g===1?'linear-gradient(135deg,#F0A21A,#8A5300)':g===2?'linear-gradient(135deg,#7C8388,#5E2E22)':g===3?'linear-gradient(135deg,#C9774A,#8F4A28)':'linear-gradient(135deg,#A89055,#6E5A32)';
   let view=shedViewByGroup[g]||'overview';if(!['overview','planner','pickups','growth','setup'].includes(view))view='overview';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else if(view==='overview')contentHtml=pairOverviewHtml(g);
   else if(view==='pickups'||view==='growth'||view==='setup'){const both=sheds.length>1;contentHtml=`<div class="pred-grid${both?' compare':''} pair-part-${view}">${sheds.map(s=>renderPredictionsShedCard(s,g,view)).join('')}</div>`;}
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=pairSwitchHtml(g,'sheds');
-  return groupSwitch+`<div class="pred-layout"><div class="group-view-head" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${pairTabsHtml(g,view)}${contentHtml}</div>`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head gvh-p${g}" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${pairTabsHtml(g,view)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
