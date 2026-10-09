@@ -147,6 +147,7 @@ function navIcon(type) {
     pickups: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M6 11h5"/>',
     grid: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     home: '<path d="M3 10 12 4l9 6v10H3z"/><path d="M9 20v-6h6v6"/>',
+    mortality: '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/><path d="M9 12h6"/>',
     shed: '<path d="M2 11 6.5 6.5h11L22 11"/><path d="M3.5 10v9.5h17V10"/><path d="M9.5 6.5V5h5v1.5"/><path d="M6.5 14.5h2M11 14.5h2M15.5 14.5h2"/>',
     chart: '<path d="M3 20h18"/><path d="m4 16 5-5 4 3 7-8"/><path d="M15 6h5v5"/>',
     cluckwise: '<circle cx="11" cy="14" r="6"/><circle cx="14" cy="8" r="4"/><path d="m18 8 3 1-3 1"/>',
@@ -400,6 +401,7 @@ function renderMoreSheet() {
         ${row('moreHome', 'grid', 'Result detail', 'Projected result, PIF, dockets and leftover')}
         ${row('moreBatch', 'home', 'Batch details', 'Sheds, ages and clean-out dates')}
         ${row('morePickups', 'pickups', 'Pickups', 'Every pickup per shed, edit inline')}
+        ${row('moreMort', 'mortality', 'Mortality', 'Dead birds for every shed, one page')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}

@@ -30,6 +30,9 @@ function mgrSiloOutlook(){
 function mgrNeeds(silos){
   const out=[],today=mgrToday(),hour=new Date().getHours();
   silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
+  // Mortality not entered since before yesterday (sheds that still have birds)
+  const late=mgrPlaced().filter(s=>{const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
+  if(late.length)out.push({tone:'warn',title:`Enter mortality for ${late.length===mgrPlaced().length?'all sheds':late.length+' shed'+(late.length===1?'':'s')}`,sub:'Not updated for 2 days or more',act:'data-mgr-mort'});
   silos.filter(x=>!x.reading||(x.readAge>0&&hour>=9)).forEach(x=>out.push({tone:'warn',title:`Read the silos for ${pairLabel(x.g)}`,sub:x.reading?`Last reading ${mgrWhen(dateOnly(x.reading.date)).toLowerCase()==='today'?'today':fmtShortNoYear(x.reading.date)}`:'No reading yet this batch',act:'data-mgr-silo'}));
   const sum=farmLoadsSummary();if(sum.needsActual>0)out.push({tone:'warn',title:`Enter docket weights for ${sum.needsActual} load${sum.needsActual===1?'':'s'}`,sub:'Delivered loads still on their planned weight',act:'data-mgr-loads'});
   const est=mgrPlaced().reduce((n,s)=>n+(s.pickups||[]).filter(p=>p.date&&dateOnly(p.date)<=today&&p.weightEstimated).length,0);
@@ -91,6 +94,7 @@ function renderHomeView(){
         <div><span class="mgr-lbl">Mortality</span><b>${placed?(mort/placed*100).toFixed(1):'0.0'}%</b></div>
       </div>
       <span class="mgr-sub">${mort.toLocaleString('en-US')} birds recorded · ${placed.toLocaleString('en-US')} placed</span>
+      <div class="mgr-actions"><button type="button" class="mgr-btn primary" data-mgr-mort title="Enter dead birds for every shed on one page">Enter mortality</button></div>
     </section>`;
   const needsHtml=`<section class="mgr-card mgr-needs${needs.some(n=>n.tone==='bad')?' bad':needs.length?' warn':''}">
       <span class="mgr-k">Needs you</span>
@@ -359,7 +363,7 @@ const SB_RAIL_KEY='prodwise_sb_rail_v1';
 function setSidebarRail(on){document.body.classList.toggle('sb-rail',!!on);try{localStorage.setItem(SB_RAIL_KEY,on?'1':'0');}catch(e){}
   const b=document.getElementById('sbRailBtn');if(b){const t=on?'Expand sidebar':'Collapse sidebar';b.setAttribute('aria-label',t);b.title=t;}}
 // Feed loads, Silo readings, Pickups and Compare feed open as pages in the main area, not windows on top
-const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},siloModal:{btn:'siloBtn',close:()=>closeSiloModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
+const TOOL_PAGES={loadsModal:{btn:'loadsBtn',close:()=>closeLoadsModal()},siloModal:{btn:'siloBtn',close:()=>closeSiloModal()},pickupsModal:{btn:'pickupsBtn',close:()=>closePickupsModal()},mortModal:{btn:'mortBtn',close:()=>closeMortModal()},compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal()}};
 let toolPageOpen=null;
 function syncToolPages(changed){
   const open=Object.keys(TOOL_PAGES).filter(id=>document.getElementById(id)?.classList.contains('open'));

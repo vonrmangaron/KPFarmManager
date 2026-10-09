@@ -1555,10 +1555,19 @@ function renderLoadsModalBody(){
       isWeekendRow?'is-weekend':'',
       isPast?'is-past':'',
       needsActual?'load-needs-actual':'',
-      (!isPast&&!isWeekendRow)?'load-upcoming':'',
+      (!isPast&&!isWeekendRow&&!loadReceived(l))?'load-upcoming':'',
       loadReceived(l)?'is-received':''
     ].filter(Boolean).join(' ');
-    return {isWeekendRow,isPast,dc,badge,loadNum,needsActual,rowCls};
+    // Why the row is coloured — row tooltip, and a toast when the # badge is tapped
+    const why=[];
+    if(needsActual)why.push('Red: past load with no docket actual yet — enter the actual');
+    else if(loadReceived(l))why.push('Green: received');
+    else if(isPast)why.push('Grey: past load');
+    else if(!isWeekendRow)why.push('Orange: upcoming load, not delivered yet');
+    if(isWeekendRow)why.push(`Tinted, orange bar: weekend delivery (${l.date.toLocaleDateString(undefined,{weekday:'long'})})${!isPast&&!loadReceived(l)?', upcoming':''}`);
+    if(dc>1)why.push(`${dc} loads on this date`);
+    const tip=escapeAttr(why.join(' · '));
+    return {isWeekendRow,isPast,dc,badge,loadNum,needsActual,rowCls,tip};
   };
   const rcvCell=l=>{const on=loadReceived(l),n=loadNumberMap.get(l.id)||0;return `<td class="load-rcv-cell"><button type="button" class="load-rcv ${on?'on':''}" data-load-received="${escapeAttr(l.id)}" aria-pressed="${on}" title="${on?'Received — tap to undo':'Tap when this load is delivered'}" aria-label="Load #${n} ${on?'received':'not received yet'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></td>`;};
   const view=loadsModalState.view||'table';
@@ -1578,9 +1587,9 @@ function renderLoadsModalBody(){
       const hasNote=!!(l.note&&l.note.trim());
       const noteStr=hasNote?escapeHtml(l.note):'no note';
       const noteCls=hasNote?'':'empty';
-      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
+      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
         ${rcvCell(l)}
-        <td class="lon-num-cell">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span></td>
+        <td class="lon-num-cell">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge" data-load-why="${r.tip}" role="button" tabindex="0" aria-label="Load #${r.loadNum}: ${r.tip}">#${r.loadNum}</span></td>
         <td class="lon-date">${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
         <td class="num lon-planned">${fmtFeed(l.plannedKg)}</td>
@@ -1616,9 +1625,9 @@ function renderLoadsModalBody(){
       const actualCls=(l.actualKg!=null)?'filled':'';
       const actualNeedsCls=r.needsActual?'needs':'';
       const actualPlaceholder=`${fmtFeedNum(l.plannedKg)} est`;
-      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}">
+      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
         ${rcvCell(l)}
-        <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
+        <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge" data-load-why="${r.tip}" role="button" tabindex="0" aria-label="Load #${r.loadNum}: ${r.tip}">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
         <td>${feedTypeTagHtml(l.feedType)}</td>
         <td class="num loads-planned">${fmtFeed(l.plannedKg)}</td>
         ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
@@ -1648,6 +1657,7 @@ function renderLoadsModalBody(){
   body.querySelectorAll('[data-loads-view]').forEach(b=>b.addEventListener('click',()=>setLoadsView(b.dataset.loadsView)));
   body.querySelectorAll('[data-load-edit]').forEach(b=>b.addEventListener('click',()=>openLoadModal(b.dataset.loadEdit,null)));
   body.querySelectorAll('[data-load-delete]').forEach(b=>b.addEventListener('click',()=>confirmDeleteLoad(b.dataset.loadDelete)));
+  body.querySelectorAll('[data-load-why]').forEach(b=>{const go=e=>{if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();showToast(b.dataset.loadWhy);};b.addEventListener('click',go);b.addEventListener('keydown',go);});
   body.querySelectorAll('[data-load-received]').forEach(b=>b.addEventListener('click',()=>toggleLoadReceived(b.dataset.loadReceived)));
   body.querySelectorAll('[data-load-actual]').forEach(inp=>{
     inp.addEventListener('blur',()=>handleLoadActualBlur(inp));
