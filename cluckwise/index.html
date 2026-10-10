@@ -2996,6 +2996,25 @@
     .sidebar .event-row:hover .e-actions, .sidebar .event-row:focus-within .e-actions{ display:flex; }
     .sidebar .event-row:hover .e-countdown{ display:none; }
   }
+
+  /* Guide page, not a window (2026-10-10 follow-up): page header, no close, no pop-in, full width */
+  .g-head-sub{ display:none; }
+  @media (min-width: 761px){
+    #guideModal, #guideModal.open{ transition:none !important; animation:none !important; opacity:1; }
+    #guideModal:not(.open){ display:none !important; }
+    #guideModal .form-modal-head{ justify-content:flex-start; gap:14px; min-height:72px !important; padding:0 28px !important; }
+    #guideModal .g-head-text h2{ margin:0; font-size:22px !important; }
+    .g-head-sub{ display:block; font-size:12.5px; color:var(--muted); margin-top:2px; }
+    #guideModal .g-head-actions{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+    #guideModal .g-edit-btn{ height:40px; padding:0 16px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 13.5px 'Inter',sans-serif; }
+    #guideModal .g-edit-btn.on{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+    #guideModalBody{ max-width:none !important; padding:22px 28px 48px !important; }
+    #guideModalBody .g-grid{ grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; }
+    #guideModalBody .g-checks{ display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:10px; }
+  }
+  @media (min-width: 1025px){
+    #closeGuideModal{ display:none !important; }   /* leave through the rail, like the other pages */
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3863,7 +3882,7 @@
 </div>
 
 <div class="form-modal" id="guideModal">
-  <div class="form-modal-head"><h2>Farm guide</h2><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
+  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Viewer's Guide — targets and checks by batch age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
   <div class="g-page-wrap">
     <div class="form-modal-body" id="guideModalBody"></div>
     <aside class="g-side" id="guideSide" aria-label="Guide targets">
