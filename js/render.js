@@ -929,7 +929,7 @@ function renderDashboardView() {
       <div class="dash-pickup-info">
         <span class="dash-pickup-kind dash-delivery-kind-${typeCls}">${escapeHtml(feedTypeLabel(l.feedType)).toUpperCase()}</span>
         <span class="dash-pickup-sheds">${groups.length ? `Sheds ${groups.map(pairShort).join(' &amp; ')}` : 'Unassigned'}</span>
-        <span class="dash-pickup-detail">${fmtFeed(totalKg)}${splitText}${l.note ? ' · ' + escapeHtml(l.note) : ''}</span>
+        <span class="dash-pickup-detail">${fmtFeed(totalKg)}${splitText}${l.docket ? ' · docket ' + escapeHtml(l.docket) : ''}</span>
       </div>
     </div>`;
   }).join('');

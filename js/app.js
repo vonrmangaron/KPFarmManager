@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#fpSave')){saveFarmProfile();return;}
     if(e.target.closest('#sbFarm')){openFarmProfile();return;}
     if(e.target.closest('#fpSiloClear')){fpSetStart('');return;}
+    if(e.target.closest('#loadsSumClose')||e.target.id==='loadsSumModal'){closeLoadsSummary();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
     if(loadsModalState.open&&e.target.id==='loadsModal'){closeLoadsModal();return;}
         if(e.target.closest('[data-open-loads-modal]')){openLoadsModal();return;}
@@ -313,6 +314,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
       if(adjModalOpen){toggleAdjCollapse();return;}
       if(moreSheetOpen){closeMoreSheet();return;}
       if(document.getElementById('siloModal').classList.contains('open')){closeSiloModal();return;}
+      if(document.getElementById('loadsSumModal').classList.contains('open')){closeLoadsSummary();return;}
       if(batchInfoOpen){closeBatchInfoModal();return;}
       if(pickupsModalOpen){closePickupsModal();return;}
       if(loadsModalState.open){closeLoadsModal();return;}

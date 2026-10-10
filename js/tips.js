@@ -51,8 +51,9 @@ const TIP_RULES=[
   ['[id^="mortRateSlider_"],[id^="mortRateNum_"]','Expected daily mortality (% of birds per day) used for the forecast'],
   // Tools
   ['.loads-chip',e=>({all:'Show every load',upcoming:'Loads dated today or later',needs:'Past loads still missing their docket actual',past:'Loads before today'})[e.dataset.loadsFilter]||''],
-  ['[data-loads-view="table"]','Table: enter docket actuals straight in the list'],
-  ['[data-loads-view="oneline"]','One-line: one row per load, for checking against dockets'],
+  ['#loadsSumBtn','Received and upcoming loads with their totals, ready to copy into a message'],
+  ['[data-load-docket]','Docket number from the delivery docket — needed before the load can be ticked received'],
+  ['.lc-card','The load to watch now: today\'s, an overdue one, or the next one coming'],
   ['#loadsAddBtn','Add a feed load (one truck, one docket)'],
   ['.sms-status',e=>e.classList.contains('done')?'All 3 silos read today':e.classList.contains('partial')?'Some silos read today, the rest carried from an earlier reading':e.classList.contains('stale')?'Last reading was before today — read the silos':'No silo reading yet for this pair'],
   ['.sms-next-btn','Save and go to the next pair'],

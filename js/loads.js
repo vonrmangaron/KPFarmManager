@@ -133,12 +133,17 @@ function normalizeLoad(load){
   const rawActual=load.actualKg;
   let actualKg=(rawActual!=null&&Number.isFinite(Number(rawActual))&&Number(rawActual)>0)?Number(rawActual):null;
   if(actualKg!=null&&actualKg>MAX_LOAD_T*1000){actualKg=actualKg/1000;loadUnitRepairs++;}
-  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString()),siloFor:normSiloFor(load.siloFor),...(typeof load.received==='boolean'?{received:load.received}:{})};
+  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),docket:String(load.docket||'').trim().slice(0,30),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString()),siloFor:normSiloFor(load.siloFor),...(typeof load.received==='boolean'?{received:load.received}:{})};
 }
-// Delivered/received tick: set by the manager, or automatic once the docket actual is in.
+// Delivered/received tick: set by the manager (needs the docket no. and actual). Older loads with no tick saved count as received once their actual was in.
 function loadReceived(l){return typeof l.received==='boolean'?l.received:(l.actualKg!=null);}
+// A load can be ticked received only with its docket number and the actual weight
+function loadComplete(l){return !!(l&&String(l.docket||'').trim()&&l.actualKg!=null&&Number(l.actualKg)>0);}
+// Exactly 60 t on a docket is unusual (they run a bit over or under) — ask first
+const EXACT_LOAD_KG=60000;
+function loadLooksPlanned(kg){return Math.round(Number(kg))===EXACT_LOAD_KG;}
 function serializeFarmLoads(){
-  return farmLoads.map(l=>({id:l.id,date:l.date?iso(l.date):null,feedType:l.feedType||'',plannedKg:Number(l.plannedKg)||0,splitKg:{...l.splitKg},actualKg:(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?Number(l.actualKg):null,note:l.note||'',migrated:!!l.migrated,createdAt:l.createdAt||new Date().toISOString(),...(Object.keys(l.siloFor||{}).length?{siloFor:{...l.siloFor}}:{}),...(typeof l.received==='boolean'?{received:l.received}:{})}));
+  return farmLoads.map(l=>({id:l.id,date:l.date?iso(l.date):null,feedType:l.feedType||'',plannedKg:Number(l.plannedKg)||0,splitKg:{...l.splitKg},actualKg:(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?Number(l.actualKg):null,note:l.note||'',...(l.docket?{docket:l.docket}:{}),migrated:!!l.migrated,createdAt:l.createdAt||new Date().toISOString(),...(Object.keys(l.siloFor||{}).length?{siloFor:{...l.siloFor}}:{}),...(typeof l.received==='boolean'?{received:l.received}:{})}));
 }
 function saveFarmLoads(){try{localStorage.setItem(LOADS_KEY,JSON.stringify(serializeFarmLoads()));}catch(e){}}
 function loadFarmLoads(){try{const raw=localStorage.getItem(LOADS_KEY);if(!raw)return null;const parsed=JSON.parse(raw);if(!Array.isArray(parsed))return null;return parsed.map(normalizeLoad).filter(Boolean);}catch(e){return null;}}
@@ -201,7 +206,7 @@ function saveLoad(data){
   const dateObj=data.date instanceof Date?dateOnly(data.date):parseExcelDate(data.date);
   if(!dateObj)return {__error:'bad-date'};
   const id=data.id||uid('load');
-  const payload={id,date:dateObj,feedType:FEED_TYPES.some(f=>f.id===data.feedType)?data.feedType:'',plannedKg,splitKg,actualKg:(data.actualKg!=null&&Number.isFinite(Number(data.actualKg))&&Number(data.actualKg)>0)?Number(data.actualKg):null,note:String(data.note||'').slice(0,60),migrated:!!data.migrated,createdAt:data.createdAt||new Date().toISOString(),siloFor:normSiloFor(data.siloFor)};
+  const payload={id,date:dateObj,feedType:FEED_TYPES.some(f=>f.id===data.feedType)?data.feedType:'',plannedKg,splitKg,actualKg:(data.actualKg!=null&&Number.isFinite(Number(data.actualKg))&&Number(data.actualKg)>0)?Number(data.actualKg):null,note:String(data.note||'').slice(0,60),docket:String(data.docket||'').trim().slice(0,30),migrated:!!data.migrated,createdAt:data.createdAt||new Date().toISOString(),siloFor:normSiloFor(data.siloFor)};
   const idx=farmLoads.findIndex(l=>l.id===id);
   const rec=typeof data.received==='boolean'?data.received:(idx>=0&&typeof farmLoads[idx].received==='boolean'?farmLoads[idx].received:undefined);
   if(typeof rec==='boolean')payload.received=rec;

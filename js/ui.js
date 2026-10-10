@@ -1445,15 +1445,9 @@ function closeLoadsModal(){
 }
 function refreshLoadsViews(){if(loadsModalState.open)renderLoadsModalBody();}
 function setLoadsFilter(f){loadsModalState.filter=f;renderLoadsModalBody();}
-function setLoadsView(v){
-  if(v!=='table'&&v!=='oneline')return;
-  loadsModalState.view=v;
-  try{localStorage.setItem(LOADS_VIEW_KEY,v);}catch(e){}
-  renderLoadsModalBody();
-}
-function loadLoadsView(){
-  try{const v=localStorage.getItem(LOADS_VIEW_KEY);if(v==='table'||v==='oneline')loadsModalState.view=v;}catch(e){}
-}
+// One view only (the one-line view was removed)
+function setLoadsView(){renderLoadsModalBody();}
+function loadLoadsView(){loadsModalState.view='table';}
 function updateLoadsDot(){
   const dot=document.getElementById('loadsDot');if(!dot)return;
   const summary=farmLoadsSummary();
@@ -1483,63 +1477,100 @@ function feedPlanHtml(){
     <p class="fp-note">60 t loads to clean-out${p.carry>0?' · withdrawal includes carry-over':''}</p>
   </div>`;
 }
+// The load to watch: today's not-received load, else the oldest overdue one, else the next one coming
+function currentLoad(){
+  const today=dateOnly(new Date()).getTime();
+  const open=farmLoads.filter(l=>!loadReceived(l)).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date)||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const t=open.find(l=>dateOnly(l.date).getTime()===today);if(t)return {load:t,when:'today'};
+  const late=open.filter(l=>dateOnly(l.date).getTime()<today);if(late.length)return {load:late[0],when:'overdue'};
+  const next=open.find(l=>dateOnly(l.date).getTime()>today);if(next)return {load:next,when:'next'};
+  return null;
+}
+function loadsTotals(){
+  const rec=farmLoads.filter(loadReceived),up=farmLoads.filter(l=>!loadReceived(l));
+  const recKg=rec.reduce((s,l)=>s+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
+  const recEst=rec.filter(l=>l.actualKg==null).length;
+  const upKg=up.reduce((s,l)=>s+(Number(l.plannedKg)||0),0);
+  const today=dateOnly(new Date());
+  const needsDocket=farmLoads.filter(l=>!l.migrated&&!loadReceived(l)&&dateOnly(l.date)<=today).length;
+  return {rec,up,recKg,recEst,upKg,needsDocket};
+}
+const LOAD_LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const LOAD_CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function loadPairsText(l){return [1,2,3,4].filter(g=>Number(l.splitKg[g])>0).map(pairShort).join(', ');}
+function currentLoadHtml(nums){
+  const c=currentLoad();
+  if(!c)return `<div class="lc-card lc-none"><div class="lc-top"><span class="lc-lbl">Current load</span></div><b class="lc-date">All loads received</b><div class="lc-sub">Add the next load when it's ordered.</div></div>`;
+  const l=c.load,n=nums.get(l.id)||0;
+  const badge=c.when==='today'?'<span class="lc-badge today">Today</span>':c.when==='overdue'?'<span class="lc-badge late">Overdue</span>':`<span class="lc-badge next">Next · ${dayDiffLabel(l.date)}</span>`;
+  const chips=[1,2,3,4].filter(g=>Number(l.splitKg[g])>0).map(g=>{const sl=loadSilosFor(l,g);return `<span class="lc-chip">Sheds ${pairShort(g)} · ${fmtFeedNum(Number(l.splitKg[g]),1)}${sl.length?` → Silo ${sl.map(x=>siloNumber(g,x)).join('+')}`:''}</span>`;}).join('');
+  const ok=loadComplete(l);
+  const status=ok
+    ?`<div class="lc-status ok">${LOAD_CHECK_SVG}<span>Docket ${escapeHtml(l.docket)} · ${fmtFeed(l.actualKg)} — ready to tick received</span><button type="button" class="lc-rcv" data-load-received="${escapeAttr(l.id)}">Mark received</button></div>`
+    :`<div class="lc-status">${LOAD_LOCK_SVG}<span>${!String(l.docket||'').trim()&&l.actualKg==null?'Needs the docket no. and actual delivery':!String(l.docket||'').trim()?'Needs the docket no.':'Needs the actual delivery'} before it can be ticked received</span><button type="button" class="lc-edit" data-load-edit="${escapeAttr(l.id)}">Enter docket</button></div>`;
+  return `<div class="lc-card ${c.when}"><div class="lc-top"><span class="lc-lbl">Current load · #${n}</span>${badge}</div>
+    <div class="lc-main"><b class="lc-date">${fmtShort(l.date)}</b>${feedTypeTagHtml(l.feedType)}<span class="lc-kg">${fmtFeed(l.plannedKg)}</span></div>
+    <div class="lc-chips">${chips}</div>${status}</div>`;
+}
+function dayDiffLabel(d){const n=Math.round((dateOnly(d)-dateOnly(new Date()))/86400000);return n===1?'tomorrow':`in ${n} days`;}
 function renderLoadsModalBody(){
   const body=document.getElementById('loadsBody');if(!body)return;
   const prevScroll=body.scrollTop;
   const summary=farmLoadsSummary();
+  const tot=loadsTotals();
   const today=dateOnly(new Date());
   const all=farmLoads.slice().sort((a,b)=>{const t=dateOnly(a.date)-dateOnly(b.date);if(t!==0)return t;return String(a.createdAt||'').localeCompare(String(b.createdAt||''));});
   const loadNumberMap=new Map();
   all.forEach((l,i)=>loadNumberMap.set(l.id,i+1));
-  const filter=loadsModalState.filter||'all';
+  let filter=loadsModalState.filter||'all';
+  if(!['all','upcoming','needs','received'].includes(filter))filter='all';
   let filtered=all;
-  if(filter==='upcoming')filtered=all.filter(l=>dateOnly(l.date)>=today);
-  else if(filter==='needs')filtered=all.filter(l=>!l.migrated&&l.actualKg==null&&dateOnly(l.date)<today);
-  else if(filter==='past')filtered=all.filter(l=>dateOnly(l.date)<today);
+  if(filter==='upcoming')filtered=all.filter(l=>!loadReceived(l));
+  else if(filter==='needs')filtered=all.filter(l=>!l.migrated&&!loadReceived(l)&&dateOnly(l.date)<=today);
+  else if(filter==='received')filtered=all.filter(loadReceived);
   // Received loads first, then the rest — each by date
   filtered=filtered.slice().sort((a,b)=>(loadReceived(b)?1:0)-(loadReceived(a)?1:0)||(dateOnly(a.date)-dateOnly(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   const dateCounts={};
   all.forEach(l=>{const k=iso(l.date);dateCounts[k]=(dateCounts[k]||0)+1;});
+  const cur=currentLoad();const curId=cur?cur.load.id:null;
+  const nextUp=tot.up.filter(l=>dateOnly(l.date)>today).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date))[0];
 
-  // Carry-over from last batch: one farm-wide amount, no date; always withdrawal feed
   const coTotal=carryoverTotalKg();
+  const sumHtml=`<div class="loads-head-actions">
+      <button class="btn-load-sum" id="loadsSumBtn" type="button" title="Received and upcoming loads with totals, ready to copy">Generate summary</button>
+      <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add load</button>
+    </div>
+    <div class="loads-top">
+      ${currentLoadHtml(loadNumberMap)}
+      <div class="lt-tile"><div class="lbl">Received</div><div class="val ok">${tot.rec.length} load${tot.rec.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.recKg)}${tot.recEst?` · ${tot.recEst} without a docket weight`:' on dockets'}</div></div>
+      <div class="lt-tile"><div class="lbl">Upcoming</div><div class="val">${tot.up.length} load${tot.up.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.upKg)} planned${nextUp?` · next ${fmtShortNoYear(nextUp.date)}`:''}</div></div>
+      <div class="lt-tile"><label class="lbl" for="loadsCarryInput">Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
+    </div>`;
   const planHtml=feedPlanHtml();
-  const sumHtml=`<div class="loads-summary">
-    <div class="loads-summary-grid">
-      <div class="loads-summary-item"><div class="lbl">Total loads</div><div class="val">${summary.total}</div><div class="sub">${summary.upcoming} upcoming · ${summary.past} past</div></div>
-      <div class="loads-summary-item"><div class="lbl">With actual</div><div class="val ok">${summary.withActual}</div><div class="sub">${summary.needsActual>0?`${summary.needsActual} to record`:'all caught up'}</div></div>
-      <div class="loads-summary-item"><div class="lbl">Planned</div><div class="val">${fmtTonnesAlways(summary.plannedKg)}</div></div>
-      <div class="loads-summary-item"><div class="lbl">Actual delivery</div><div class="val ${summary.needsActual>0?'warn':'ok'}">${summary.deliveryKg>0?fmtTonnesAlways(summary.deliveryKg):'—'}</div><div class="sub">${summary.estKg>0?`incl. ${fmtTonnesAlways(summary.estKg)} est.`:'all from dockets'}</div></div>
-      <div class="loads-summary-item"><label class="lbl" for="loadsCarryInput">↩ Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
-    </div>
-    <div class="loads-summary-actions">
-      <button class="btn-load-add" id="loadsAddBtn" type="button">＋ Add Load</button>
-      <div class="loads-view-toggle">
-        <button type="button" class="${loadsModalState.view==='table'?'active':''}" data-loads-view="table">☰ Table</button>
-        <button type="button" class="${loadsModalState.view==='oneline'?'active':''}" data-loads-view="oneline">📋 One-line</button>
-      </div>
-    </div>
-  </div>`;
-
   const chipsHtml=`<div class="loads-filter-chips">
-    <button type="button" class="loads-chip ${filter==='all'?'active':''}" data-loads-filter="all">All loads <span class="count">${summary.total}</span></button>
-    <button type="button" class="loads-chip ${filter==='upcoming'?'active':''}" data-loads-filter="upcoming">Upcoming <span class="count">${summary.upcoming}</span></button>
-    <button type="button" class="loads-chip ${filter==='needs'?'active':''}" data-loads-filter="needs">Needs actual <span class="count">${summary.needsActual}</span></button>
-    <button type="button" class="loads-chip ${filter==='past'?'active':''}" data-loads-filter="past">Past <span class="count">${summary.past}</span></button>
+    <button type="button" class="loads-chip ${filter==='all'?'active':''}" data-loads-filter="all">All <span class="count">${summary.total}</span></button>
+    <button type="button" class="loads-chip ${filter==='upcoming'?'active':''}" data-loads-filter="upcoming">Upcoming <span class="count">${tot.up.length}</span></button>
+    <button type="button" class="loads-chip ${filter==='needs'?'active':''}" data-loads-filter="needs" title="Due or past, not received yet — enter the docket no. and actual">Needs docket <span class="count">${tot.needsDocket}</span></button>
+    <button type="button" class="loads-chip ${filter==='received'?'active':''}" data-loads-filter="received">Received <span class="count">${tot.rec.length}</span></button>
     <span class="loads-bulk">${bulkToolbar('loads',filtered.map(l=>String(l.id)),'loads')}</span>
   </div>`;
+  const wire=()=>{
+    const ab1=document.getElementById('loadsAddBtn');if(ab1)ab1.addEventListener('click',()=>openLoadModal(null,null));
+    const sb=document.getElementById('loadsSumBtn');if(sb)sb.addEventListener('click',openLoadsSummary);
+    body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
+    body.querySelectorAll('[data-load-edit]').forEach(b=>b.addEventListener('click',()=>openLoadModal(b.dataset.loadEdit,null)));
+    body.querySelectorAll('[data-load-received]').forEach(b=>b.addEventListener('click',()=>toggleLoadReceived(b.dataset.loadReceived)));
+  };
 
   if(filtered.length===0){
     let emptyIcon='🚛',emptyTitle='No feed loads planned yet',emptySub='Add your first load to start planning deliveries. One load = one truckload = one docket.';
-    if(filter==='needs'&&summary.total>0){emptyIcon='✅';emptyTitle='Nothing needs an actual right now';emptySub='Every past load has its docket number recorded.';}
-    else if(filter==='upcoming'){emptyIcon='📅';emptyTitle='No upcoming loads';emptySub='All loads are in the past.';}
-    else if(filter==='past'){emptyIcon='📜';emptyTitle='No past loads';emptySub='All loads are in the future.';}
+    if(filter==='needs'&&summary.total>0){emptyIcon='✅';emptyTitle='Nothing needs a docket right now';emptySub='Every load that is due has been received.';}
+    else if(filter==='upcoming'){emptyIcon='📅';emptyTitle='No upcoming loads';emptySub='Every load has been received.';}
+    else if(filter==='received'){emptyIcon='📜';emptyTitle='No loads received yet';emptySub='Tick a load once its docket no. and actual are in.';}
     const emptyHtml=`<div class="loads-empty"><div class="emoji">${emptyIcon}</div><div class="title">${emptyTitle}</div><div class="sub">${emptySub}</div>${filter==='all'?'<button class="btn-load-add" type="button" id="loadsEmptyAddBtn">＋ Add first load</button>':''}</div>`;
     body.innerHTML=sumHtml+planHtml+chipsHtml+emptyHtml;
-    const ab1=document.getElementById('loadsAddBtn');if(ab1)ab1.addEventListener('click',()=>openLoadModal(null,null));
+    wire();
     const ab2=document.getElementById('loadsEmptyAddBtn');if(ab2)ab2.addEventListener('click',()=>openLoadModal(null,null));
-    body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
-    body.querySelectorAll('[data-loads-view]').forEach(b=>b.addEventListener('click',()=>setLoadsView(b.dataset.loadsView)));
     requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
     return;
   }
@@ -1550,115 +1581,57 @@ function renderLoadsModalBody(){
     const dc=dateCounts[iso(l.date)]||0;
     const badge=dc>1?`<span class="loads-count-badge">${dc} loads</span>`:'';
     const loadNum=loadNumberMap.get(l.id)||0;
-    const needsActual=!l.migrated&&l.actualKg==null&&isPast;
-    const rowCls=[
-      isWeekendRow?'is-weekend':'',
-      isPast?'is-past':'',
-      needsActual?'load-needs-actual':'',
-      (!isPast&&!isWeekendRow&&!loadReceived(l))?'load-upcoming':'',
-      loadReceived(l)?'is-received':''
-    ].filter(Boolean).join(' ');
-    // Why the row is coloured — row tooltip, and a toast when the # badge is tapped
+    const rcv=loadReceived(l);
+    const due=!l.migrated&&!rcv&&dateOnly(l.date)<=today;
+    const isCur=l.id===curId;
+    const rowCls=[isWeekendRow?'is-weekend':'',isPast?'is-past':'',due&&!isCur?'load-needs-actual':'',(!isPast&&!isWeekendRow&&!rcv)?'load-upcoming':'',rcv?'is-received':'',isCur?'is-current':''].filter(Boolean).join(' ');
     const why=[];
-    if(needsActual)why.push('Red: past load with no docket actual yet — enter the actual');
-    else if(loadReceived(l))why.push('Green: received');
-    else if(isPast)why.push('Grey: past load');
+    if(isCur)why.push('Current load — highlighted at the top');
+    if(rcv)why.push('Green: received');
+    else if(due&&!isCur)why.push('Red: due and not received — enter the docket no. and actual, then tick it');
     else if(!isWeekendRow)why.push('Orange: upcoming load, not delivered yet');
-    if(isWeekendRow)why.push(`Tinted, orange bar: weekend delivery (${l.date.toLocaleDateString(undefined,{weekday:'long'})})${!isPast&&!loadReceived(l)?', upcoming':''}`);
+    if(isWeekendRow)why.push(`Tinted, orange bar: weekend delivery (${l.date.toLocaleDateString(undefined,{weekday:'long'})})`);
     if(dc>1)why.push(`${dc} loads on this date`);
-    const tip=escapeAttr(why.join(' · '));
-    return {isWeekendRow,isPast,dc,badge,loadNum,needsActual,rowCls,tip};
+    return {badge,loadNum,rowCls,tip:escapeAttr(why.join(' · ')),rcv,isCur,due};
   };
-  const rcvCell=l=>{const on=loadReceived(l),n=loadNumberMap.get(l.id)||0;return `<td class="load-rcv-cell"><button type="button" class="load-rcv ${on?'on':''}" data-load-received="${escapeAttr(l.id)}" aria-pressed="${on}" title="${on?'Received — tap to undo':'Tap when this load is delivered'}" aria-label="Load #${n} ${on?'received':'not received yet'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></td>`;};
-  const view=loadsModalState.view||'table';
-  let bodyHtml='';
-  if(view==='oneline'){
-    const rows=filtered.map(l=>{
-      const r=rowBase(l);
-      const splitParts=[1,2,3,4].map(g=>{const v=Number(l.splitKg[g])||0;return v>0?`${pairShort(g)}: ${fmtFeedNum(v,1)}`:`${pairShort(g)}: —`;}).join(' · ');
-      let actualCell='';
-      if(l.actualKg!=null&&Number.isFinite(Number(l.actualKg))){
-        actualCell=`<span class="lon-actual filled">${fmtFeed(l.actualKg)} ✓</span>`;
-      } else if(r.needsActual){
-        actualCell=`<span class="lon-actual needs">${fmtFeed(l.plannedKg)} est · missing docket</span>`;
-      } else {
-        actualCell=`<span class="lon-actual pending">${fmtFeed(l.plannedKg)} est</span>`;
-      }
-      const hasNote=!!(l.note&&l.note.trim());
-      const noteStr=hasNote?escapeHtml(l.note):'no note';
-      const noteCls=hasNote?'':'empty';
-      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
-        ${rcvCell(l)}
-        <td class="lon-num-cell">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge" data-load-why="${r.tip}" role="button" tabindex="0" aria-label="Load #${r.loadNum}: ${r.tip}">#${r.loadNum}</span></td>
-        <td class="lon-date">${fmtShort(l.date)}${r.badge}</td>
-        <td>${feedTypeTagHtml(l.feedType)}</td>
-        <td class="num lon-planned">${fmtFeed(l.plannedKg)}</td>
-        <td class="lon-split">${splitParts}</td>
-        <td class="num">${actualCell}</td>
-        <td class="lon-note-cell ${noteCls}">${noteStr}</td>
-        <td class="lon-actions-cell">
-          <button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button>
-          <button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button>
-        </td>
-      </tr>`;
-    }).join('');
-    bodyHtml=`<div class="loads-table-wrap"><table class="loads-table loads-oneline-table">
-      <thead><tr>
-        <th class="load-rcv-cell" title="Received">Rcvd</th>
-        <th class="lon-num-cell">#</th>
-        <th>Date</th>
-        <th>Type</th>
-        <th class="num">Planned</th>
-        <th>Split</th>
-        <th class="num">Actual Delivery</th>
-        <th>Note</th>
-        <th class="lon-actions-cell"></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-    <div class="loads-hint">💡 <strong>Audit view</strong> — one row per load, aligned columns for comparing physical dockets. Red rows are past loads <strong>missing their actual</strong>. Switch to <strong>☰ Table</strong> to enter or edit actuals inline.</div>`;
-  } else {
-    const rows=filtered.map(l=>{
-      const r=rowBase(l);
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''}</td>`;};
-      const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
-      const actualCls=(l.actualKg!=null)?'filled':'';
-      const actualNeedsCls=r.needsActual?'needs':'';
-      const actualPlaceholder=`${fmtFeedNum(l.plannedKg)} est`;
-      return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
-        ${rcvCell(l)}
-        <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge" data-load-why="${r.tip}" role="button" tabindex="0" aria-label="Load #${r.loadNum}: ${r.tip}">#${r.loadNum}</span>${fmtShort(l.date)}${r.badge}</td>
-        <td>${feedTypeTagHtml(l.feedType)}</td>
-        <td class="num loads-planned">${fmtFeed(l.plannedKg)}</td>
-        ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
-        <td class="loads-actual-cell"><span class="loads-actual-wrap"><input type="number" class="loads-actual-input ${actualCls} ${actualNeedsCls}" step="${feedStep()}" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${actualPlaceholder}" value="${actualStr}" title="${feedUnit()==='t'?'Tonnes (e.g. 30.12). Kilograms like 30120 are converted automatically.':'Kilograms (e.g. 30120). Tonnes like 30.12 are converted automatically.'}" /><span class="loads-actual-unit">${feedUnit()}</span></span></td>
-        <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
-      </tr>`;
-    }).join('');
-    bodyHtml=`<div class="loads-table-wrap"><table class="loads-table">
-      <thead><tr>
-        <th class="load-rcv-cell" title="Received">Rcvd</th>
-        <th>Date</th><th>Type</th><th class="num">Planned</th>
-        <th class="split-cell" style="text-align:center;" title="${pairLabel(1)}">${pairShort(1)}</th>
-        <th class="split-cell" style="text-align:center;" title="${pairLabel(2)}">${pairShort(2)}</th>
-        <th class="split-cell" style="text-align:center;" title="${pairLabel(3)}">${pairShort(3)}</th>
-        <th class="split-cell" style="text-align:center;" title="${pairLabel(4)}">${pairShort(4)}</th>
-        <th>Actual Delivery</th>
-        <th style="width:80px;text-align:right;">Actions</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-    <div class="loads-hint">💡 Type the docket total straight into the Actual column, in <strong>${feedUnitWord()}</strong> (${feedUnit()==='t'?'e.g. 30.12 — kg like 30120 is converted automatically':'e.g. 30120 — tonnes like 30.12 are converted automatically'}). Change the unit in Settings → Units. One number per load — the app tracks it for every group. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
-  }
+  const rcvCell=(l,r)=>{
+    const ok=loadComplete(l);const lock=!r.rcv&&!ok;
+    const title=r.rcv?'Received — tap to undo':lock?'Add the docket no. and actual delivery first':'Tap to mark received';
+    return `<td class="load-rcv-cell"><button type="button" class="load-rcv ${r.rcv?'on':''}${lock?' locked':''}" data-load-received="${escapeAttr(l.id)}" aria-pressed="${r.rcv}" title="${title}" aria-label="Load #${r.loadNum}: ${title}">${lock?LOAD_LOCK_SVG:LOAD_CHECK_SVG}</button></td>`;
+  };
+  const rows=filtered.map(l=>{
+    const r=rowBase(l);
+    const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''}</td>`;};
+    const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
+    const needCls=r.due?'needs':'';
+    return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
+      ${rcvCell(l,r)}
+      <td class="loads-date">${bulkCheckbox('loads',l.id,'load #'+r.loadNum)}<span class="load-num-badge" data-load-why="${r.tip}" role="button" tabindex="0" aria-label="Load #${r.loadNum}: ${r.tip}">#${r.loadNum}</span>${fmtShort(l.date)}${r.isCur?'<span class="lc-row-tag">Current</span>':''}${r.badge}</td>
+      <td>${feedTypeTagHtml(l.feedType)}</td>
+      <td class="num loads-planned">${fmtFeed(l.plannedKg)}</td>
+      ${splitCell(1)}${splitCell(2)}${splitCell(3)}${splitCell(4)}
+      <td class="loads-docket-cell"><input type="text" class="loads-docket-input ${l.docket?'filled':''} ${!l.docket?needCls:''}" maxlength="30" data-load-docket="${escapeAttr(l.id)}" value="${escapeAttr(l.docket||'')}" placeholder="Docket no." aria-label="Docket number for load #${r.loadNum}" /></td>
+      <td class="loads-actual-cell"><span class="loads-actual-wrap"><input type="number" class="loads-actual-input ${l.actualKg!=null?'filled':''} ${l.actualKg==null?needCls:''}" step="${feedStep()}" min="0" data-load-actual="${escapeAttr(l.id)}" placeholder="${fmtFeedNum(l.plannedKg)} est" value="${actualStr}" title="${feedUnit()==='t'?'Tonnes (e.g. 60.12). Kilograms like 60120 are converted automatically.':'Kilograms (e.g. 60120). Tonnes like 60.12 are converted automatically.'}" /><span class="loads-actual-unit">${feedUnit()}</span></span></td>
+      <td><div class="loads-actions"><button type="button" class="edit" data-load-edit="${escapeAttr(l.id)}" title="Edit load">✎</button><button type="button" class="del" data-load-delete="${escapeAttr(l.id)}" title="Delete load">✕</button></div></td>
+    </tr>`;
+  }).join('');
+  const bodyHtml=`<div class="loads-table-wrap"><table class="loads-table">
+    <thead><tr>
+      <th class="load-rcv-cell" title="Received — needs the docket no. and actual first">Rcvd</th>
+      <th>Date</th><th>Type</th><th class="num">Planned</th>
+      ${[1,2,3,4].map(g=>`<th class="split-cell" style="text-align:center;" title="${pairLabel(g)}">${pairShort(g)}</th>`).join('')}
+      <th>Docket no.</th>
+      <th>Actual delivery</th>
+      <th style="width:80px;text-align:right;">Actions</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="loads-hint">💡 Enter the <strong>docket no.</strong> and the docket weight in <strong>${feedUnitWord()}</strong>, then tick <strong>Rcvd</strong>. The tick stays locked until both are in. Change the unit in Settings → Units. <strong>Actual is record-only</strong> and does not affect the balance forecast.</div>`;
 
   body.innerHTML=sumHtml+planHtml+chipsHtml+bodyHtml;
-  document.getElementById('loadsAddBtn').addEventListener('click',()=>openLoadModal(null,null));
-  body.querySelectorAll('[data-loads-filter]').forEach(b=>b.addEventListener('click',()=>setLoadsFilter(b.dataset.loadsFilter)));
-  body.querySelectorAll('[data-loads-view]').forEach(b=>b.addEventListener('click',()=>setLoadsView(b.dataset.loadsView)));
-  body.querySelectorAll('[data-load-edit]').forEach(b=>b.addEventListener('click',()=>openLoadModal(b.dataset.loadEdit,null)));
+  wire();
   body.querySelectorAll('[data-load-delete]').forEach(b=>b.addEventListener('click',()=>confirmDeleteLoad(b.dataset.loadDelete)));
   body.querySelectorAll('[data-load-why]').forEach(b=>{const go=e=>{if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();showToast(b.dataset.loadWhy);};b.addEventListener('click',go);b.addEventListener('keydown',go);});
-  body.querySelectorAll('[data-load-received]').forEach(b=>b.addEventListener('click',()=>toggleLoadReceived(b.dataset.loadReceived)));
   body.querySelectorAll('[data-load-actual]').forEach(inp=>{
     inp.addEventListener('blur',()=>handleLoadActualBlur(inp));
     inp.addEventListener('keydown',e=>{
@@ -1666,11 +1639,40 @@ function renderLoadsModalBody(){
       if(e.key==='Escape'){e.preventDefault();const load=farmLoads.find(l=>l.id===inp.dataset.loadActual);if(load)inp.value=(load.actualKg!=null)?feedIn(load.actualKg):'';inp.classList.remove('invalid');inp.blur();}
     });
   });
+  body.querySelectorAll('[data-load-docket]').forEach(inp=>{
+    inp.addEventListener('blur',()=>handleLoadDocketBlur(inp));
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();inp.blur();}
+      if(e.key==='Escape'){e.preventDefault();const load=farmLoads.find(l=>l.id===inp.dataset.loadDocket);if(load)inp.value=load.docket||'';inp.blur();}
+    });
+  });
   requestAnimationFrame(()=>{body.scrollTop=prevScroll;});
+}
+// Point at the empty docket / actual boxes of one load
+function flagLoadInputs(id){
+  const body=document.getElementById('loadsBody');if(!body)return;
+  const load=farmLoads.find(l=>l.id===id);if(!load)return;
+  const sel=v=>body.querySelector(`[data-load-${v}="${CSS.escape(id)}"]`);
+  const d=sel('docket'),a=sel('actual');
+  const miss=[];if(d&&!String(load.docket||'').trim())miss.push(d);if(a&&load.actualKg==null)miss.push(a);
+  miss.forEach(x=>{x.classList.add('flag');setTimeout(()=>x.classList.remove('flag'),1600);});
+  if(miss[0]){miss[0].scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>miss[0].focus(),250);}
+}
+function confirmExact60(load){
+  return confirm(`Is the docket exactly ${fmtFeed(EXACT_LOAD_KG)}?\n\nDockets are usually a little over or under 60 t, and ${fmtFeed(EXACT_LOAD_KG)} is the planned amount.${load&&load.docket?`\nCheck the weight on docket ${load.docket}.`:''}\n\nOK = yes, it's exactly 60 t.  Cancel = let me fix it.`);
 }
 function toggleLoadReceived(id){
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
-  load.received=!loadReceived(load);
+  const on=!loadReceived(load);
+  if(on&&!loadComplete(load)){
+    const need=[!String(load.docket||'').trim()?'docket no.':'',load.actualKg==null?'actual delivery':''].filter(Boolean).join(' and the ');
+    showToast(`Add the ${need} first.`,true);
+    if(loadsModalState.filter==='received')setLoadsFilter('all');
+    flagLoadInputs(id);
+    return;
+  }
+  if(on&&loadLooksPlanned(load.actualKg)&&!confirmExact60(load)){flagLoadInputs(id);const a=document.querySelector(`[data-load-actual="${CSS.escape(id)}"]`);if(a){a.focus();a.select&&a.select();}return;}
+  load.received=on;
   // A load due today: today's morning reading gets the same answer (is it in the silos yet?)
   if(dateOnly(load.date).getTime()===dateOnly(new Date()).getTime()){
     let touched=false;
@@ -1678,8 +1680,16 @@ function toggleLoadReceived(id){
     if(touched){saveSiloData();if(typeof scheduleRender==='function')scheduleRender(60);}
   }
   saveFarmLoads();schedulePush();
-  renderLoadsModalBody();
+  renderLoadsModalBody();updateLoadsDot();
   showToast(load.received?`Load on ${fmtShort(load.date)} marked received.`:`Load on ${fmtShort(load.date)} marked not received.`);
+}
+function handleLoadDocketBlur(inp){
+  const load=farmLoads.find(l=>l.id===inp.dataset.loadDocket);if(!load)return;
+  const v=String(inp.value||'').trim().slice(0,30);
+  if(v===(load.docket||''))return;
+  load.docket=v;
+  saveFarmLoads();schedulePush();
+  renderLoadsModalBody();
 }
 function handleLoadActualBlur(inp){
   const id=inp.dataset.loadActual;
@@ -1687,17 +1697,10 @@ function handleLoadActualBlur(inp){
   const raw=inp.value.trim();
   const currentVal=(load.actualKg!=null)?feedIn(load.actualKg):'';
   if(raw===currentVal)return;
-  const tr=inp.closest('tr');
   if(raw===''){
+    if(typeof load.received!=='boolean')load.received=loadReceived(load);
     load.actualKg=null;
-    saveFarmLoads();schedulePush();
-    inp.value='';
-    inp.classList.remove('filled','invalid');
-    inp.classList.add('needs');
-    inp.placeholder='enter actual';
-    if(tr)tr.classList.add('load-needs-actual');
-    updateLoadsDot();
-    updateLoadsSummaryInline();
+    saveFarmLoads();schedulePush();updateLoadsDot();renderLoadsModalBody();
     return;
   }
   const n=Number(raw);
@@ -1707,47 +1710,58 @@ function handleLoadActualBlur(inp){
     setTimeout(()=>{inp.classList.remove('invalid');inp.value=currentVal;},900);
     return;
   }
-  load.actualKg=docketToKg(n);
+  const kg=docketToKg(n);
+  if(loadLooksPlanned(kg)&&!confirmExact60(load)){inp.value=currentVal;setTimeout(()=>{inp.focus();},0);return;}
+  // Entering the weight no longer ticks the load by itself: pin what it is now, the tick does the rest
+  if(typeof load.received!=='boolean')load.received=loadReceived(load);
+  load.actualKg=kg;
   if(feedUnit()==='t'&&n>MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as kg → ${fmtFeed(load.actualKg)}.`);
   else if(feedUnit()==='kg'&&n<=MAX_LOAD_T)showToast(`Read ${n.toLocaleString()} as tonnes → ${fmtFeed(load.actualKg)}.`);
-  saveFarmLoads();schedulePush();
-  inp.value=feedIn(load.actualKg);
-  inp.classList.remove('invalid','needs');
-  inp.classList.add('filled');
-  if(tr)tr.classList.remove('load-needs-actual');
-  updateLoadsDot();
-  updateLoadsSummaryInline();
+  saveFarmLoads();schedulePush();updateLoadsDot();renderLoadsModalBody();
 }
-function updateLoadsSummaryInline(){
-  const summary=farmLoadsSummary();
-  const body=document.getElementById('loadsBody');if(!body)return;
-  const tiles=body.querySelectorAll('.loads-summary-item');
-  if(tiles[1]){
-    const valEl=tiles[1].querySelector('.val');
-    const subEl=tiles[1].querySelector('.sub');
-    if(valEl)valEl.textContent=String(summary.withActual);
-    if(subEl)subEl.textContent=summary.needsActual>0?`${summary.needsActual} still need one`:'all caught up';
-  }
-  if(tiles[3]){
-    const valEl=tiles[3].querySelector('.val');
-    const subEl=tiles[3].querySelector('.sub');
-    if(valEl){
-      valEl.textContent=summary.deliveryKg>0?fmtTonnesAlways(summary.deliveryKg):'—';
-      valEl.classList.toggle('warn',summary.needsActual>0);
-      valEl.classList.toggle('ok',summary.needsActual===0);
-    }
-    if(subEl)subEl.textContent=summary.estKg>0?`incl. ${fmtTonnesAlways(summary.estKg)} est.`:'all from dockets';
-  }
-  body.querySelectorAll('[data-loads-filter]').forEach(chip=>{
-    const countEl=chip.querySelector('.count');
-    if(!countEl)return;
-    const f=chip.dataset.loadsFilter;
-    if(f==='all')countEl.textContent=String(summary.total);
-    else if(f==='upcoming')countEl.textContent=String(summary.upcoming);
-    else if(f==='needs')countEl.textContent=String(summary.needsActual);
-    else if(f==='past')countEl.textContent=String(summary.past);
+function updateLoadsSummaryInline(){renderLoadsModalBody();}
+/* ---------- Generate summary: received and upcoming loads with totals ---------- */
+function loadsSummaryData(){
+  const byDate=(a,b)=>dateOnly(a.date)-dateOnly(b.date)||String(a.createdAt||'').localeCompare(String(b.createdAt||''));
+  const t=loadsTotals();
+  return {rec:t.rec.slice().sort(byDate),up:t.up.slice().sort(byDate),recKg:t.recKg,upKg:t.upKg,co:carryoverTotalKg()};
+}
+function loadsSummaryText(){
+  const d=loadsSummaryData();const batch=(farmData&&farmData.batchNumber)?`Batch ${farmData.batchNumber} · `:'';
+  const ln=[`Feed loads — ${batch}${fmtShort(new Date())}`,'',`RECEIVED (${d.rec.length})`];
+  d.rec.forEach(l=>ln.push(`${fmtShortNoYear(l.date)} · ${feedTypeLabel(l.feedType)} · ${l.docket?'docket '+l.docket:'no docket'} · ${l.actualKg!=null?fmtFeed(l.actualKg):fmtFeed(l.plannedKg)+' est'}`));
+  ln.push(`Total received: ${fmtFeed(d.recKg)}`,'',`UPCOMING (${d.up.length})`);
+  d.up.forEach(l=>ln.push(`${fmtShortNoYear(l.date)} · ${feedTypeLabel(l.feedType)} · Sheds ${loadPairsText(l)||'—'} · ${fmtFeed(l.plannedKg)}`));
+  ln.push(`Total upcoming: ${fmtFeed(d.upKg)}`);
+  if(d.co>0)ln.push('',`Carried over: ${fmtFeed(d.co)}`);
+  ln.push(`Batch total (received + upcoming${d.co>0?' + carried over':''}): ${fmtFeed(d.recKg+d.upKg+d.co)}`);
+  return ln.join('\n');
+}
+function openLoadsSummary(){
+  const m=document.getElementById('loadsSumModal');const body=document.getElementById('loadsSumBody');if(!m||!body)return;
+  const d=loadsSummaryData();const today=dateOnly(new Date());
+  const recRows=d.rec.map(l=>`<tr><td>${fmtShortNoYear(l.date)}</td><td>${feedTypeTagHtml(l.feedType)}</td><td class="ls-dk">${l.docket?escapeHtml(l.docket):'<span class="ls-muted">no docket</span>'}</td><td class="num">${l.actualKg!=null?fmtFeed(l.actualKg):`<span class="ls-muted">${fmtFeed(l.plannedKg)} est</span>`}</td></tr>`).join('');
+  const upRows=d.up.map(l=>{const late=dateOnly(l.date)<today;return `<tr${late?' class="ls-late"':''}><td>${fmtShortNoYear(l.date)}${late?' <span class="ls-tag">overdue</span>':dateOnly(l.date).getTime()===today.getTime()?' <span class="ls-tag today">today</span>':''}</td><td>${feedTypeTagHtml(l.feedType)}</td><td>${loadPairsText(l)||'—'}</td><td class="num">${fmtFeed(l.plannedKg)}</td></tr>`;}).join('');
+  const batch=(farmData&&farmData.batchNumber)?`Batch ${escapeHtml(String(farmData.batchNumber))} · `:'';
+  body.innerHTML=`<div class="ls-sub">${batch}as of ${fmtShort(new Date())}</div>
+    <section class="ls-sec rec"><div class="ls-h"><span class="ls-dot"></span><b>Received</b><span class="ls-n">${d.rec.length} load${d.rec.length===1?'':'s'}</span></div>
+      ${d.rec.length?`<table class="ls-table"><thead><tr><th>Date</th><th>Type</th><th>Docket</th><th class="num">Actual</th></tr></thead><tbody>${recRows}</tbody></table>`:'<div class="ls-empty">No loads received yet.</div>'}
+      <div class="ls-total"><span>Total received</span><b>${fmtFeed(d.recKg)}</b></div></section>
+    <section class="ls-sec up"><div class="ls-h"><span class="ls-dot"></span><b>Upcoming</b><span class="ls-n">${d.up.length} load${d.up.length===1?'':'s'}</span></div>
+      ${d.up.length?`<table class="ls-table"><thead><tr><th>Date</th><th>Type</th><th>Sheds</th><th class="num">Planned</th></tr></thead><tbody>${upRows}</tbody></table>`:'<div class="ls-empty">Nothing else planned.</div>'}
+      <div class="ls-total"><span>Total upcoming</span><b>${fmtFeed(d.upKg)}</b></div></section>
+    <div class="ls-foot"><span>${d.co>0?`Carried over ${fmtFeed(d.co)}`:''}</span><span>Batch total <b>${fmtFeed(d.recKg+d.upKg+d.co)}</b></span></div>
+    <div class="ls-actions"><button type="button" class="ls-copy" id="loadsSumCopy">Copy summary</button><button type="button" class="ls-close" id="loadsSumDone">Close</button></div>`;
+  document.getElementById('loadsSumCopy').addEventListener('click',()=>{
+    const txt=loadsSummaryText();
+    const done=()=>showToast('Summary copied — paste it into a message.');
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));else fallbackCopy(txt,done);
   });
+  document.getElementById('loadsSumDone').addEventListener('click',closeLoadsSummary);
+  m.classList.add('open');m.setAttribute('aria-hidden','false');
 }
+function fallbackCopy(txt,done){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){showToast('Could not copy — select the text and copy it.',true);}ta.remove();}
+function closeLoadsSummary(){const m=document.getElementById('loadsSumModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
 function confirmDeleteLoad(id){
   const load=farmLoads.find(l=>l.id===id);if(!load)return;
   const label=`${fmtShort(load.date)}${load.feedType?' · '+feedTypeLabel(load.feedType):''} · ${fmtFeed(load.plannedKg)}`;
@@ -1759,13 +1773,13 @@ function openLoadModal(editId,preset){
   if(editId){
     const load=farmLoads.find(l=>l.id===editId);if(!load){showToast('Load not found.',true);return;}
     const v=g=>feedIn(Number(load.splitKg[g])||0);
-    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',planned:feedIn(load.plannedKg),split:{1:v(1),2:v(2),3:v(3),4:v(4)},note:load.note||'',siloFor:{...(load.siloFor||{})}};
+    loadModalState={mode:'edit',editId,date:iso(load.date),feedType:load.feedType||'',planned:feedIn(load.plannedKg),split:{1:v(1),2:v(2),3:v(3),4:v(4)},note:load.note||'',docket:load.docket||'',actual:load.actualKg!=null?feedIn(load.actualKg):'',siloFor:{...(load.siloFor||{})}};
   }else{
     // preset: {date, feedType, plannedT, splitT:{group:t}} (tonnes) — e.g. from a forecast row's Order
     const p=preset||{};const sp=p.splitT||{};const t=v=>feedIn((Number(v)||0)*1000);
     // No type given: the next feed type due for the pairs on this truck (or most pairs)
     const due=(()=>{const gs=Object.keys(sp).filter(g=>Number(sp[g])>0).map(Number);const list=(gs.length?gs:[1,2,3,4]).map(g=>nextFeedTypeDue(g)).filter(Boolean);if(!list.length)return '';const c={};list.forEach(t=>c[t]=(c[t]||0)+1);return Object.keys(c).sort((a,b)=>c[b]-c[a])[0];})();
-    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||due,planned:p.plannedT!=null?t(p.plannedT):t(FEED_BLOCK_T),split:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:'',siloFor:{}};
+    loadModalState={mode:'add',editId:null,date:p.date||todayIso(),feedType:p.feedType||due,planned:p.plannedT!=null?t(p.plannedT):t(FEED_BLOCK_T),split:{1:t(sp[1]),2:t(sp[2]),3:t(sp[3]),4:t(sp[4])},note:'',docket:'',actual:'',siloFor:{}};
   }
   renderLoadModal();
   const modal=document.getElementById('loadModal');const scrim=document.getElementById('syncScrim');
@@ -1785,15 +1799,16 @@ function renderLoadModal(){
       <div class="split-sum" id="lmSum"></div>
       <div class="lm-silo-box">${[1,2,3,4].map(g=>`<div class="lm-silos" id="lmSilos-${g}"></div>`).join('')}</div>
     </div>
-    <div class="mp-field"><label>Note (optional)</label><input type="text" id="lmNote" maxlength="60" value="${escapeAttr(s.note)}" placeholder="e.g. Order #1234 — Barlow's truck" /></div>
-    <div class="mp-hint">One load = one truck = one docket. The <strong>planned split</strong> drives the feed balance forecast for each group. The <strong>actual</strong> docket total is entered separately in the Loads table.</div>
+    <div class="lm-dk-row"><div class="mp-field"><label for="lmDocket">Docket no.</label><input type="text" id="lmDocket" maxlength="30" value="${escapeAttr(s.docket)}" placeholder="e.g. D-48602" /></div>
+      <div class="mp-field"><label for="lmActual">Actual delivery (${feedUnit()})</label><input type="number" id="lmActual" min="0" step="${feedStep()}" value="${s.actual}" placeholder="from the docket" /></div></div>
+    <div class="mp-hint">One load = one truck = one docket. The <strong>planned split</strong> drives the feed balance forecast for each group. Add the <strong>docket no.</strong> and its weight when the truck arrives — the load can only be ticked received once both are in.</div>
     <div class="load-modal-actions">
       <button type="button" class="primary grow" id="lmSaveBtn">${s.mode==='add'?'💾 Save load':'✓ Save changes'}</button>
       ${s.mode==='add'?`<button type="button" class="ghost" id="lmSaveAnotherBtn">＋ Save &amp; add another</button>`:''}
       ${s.mode==='edit'?`<button type="button" class="danger" id="lmDeleteBtn">🗑 Delete load</button>`:''}
       <button type="button" class="ghost" id="lmCancelBtn">Cancel</button>
     </div>`;
-  const dateEl=document.getElementById('lmDate');const typeEl=document.getElementById('lmType');const plannedEl=document.getElementById('lmPlanned');const noteEl=document.getElementById('lmNote');
+  const dateEl=document.getElementById('lmDate');const typeEl=document.getElementById('lmType');const plannedEl=document.getElementById('lmPlanned');const docketEl=document.getElementById('lmDocket');const actualEl=document.getElementById('lmActual');
   const splitInputs=[1,2,3,4].map(g=>body.querySelector(`[data-lm-split="${g}"]`));
   const sumEl=document.getElementById('lmSum');
   const refreshSum=()=>{
@@ -1848,15 +1863,14 @@ function renderLoadModal(){
         const bad=list.filter(starterLocked);
         if(bad.length)warn=`Silo ${siloNumber(g,bad[0])} is the starter silo for next batch — it should be empty by ${fmtShortNoYear(pairCleanoutDate(g))}. You can still save; the app will watch it until it's empty.`;
         else if(left>0.5)warn=list.length>1?`Still ${fmtFeed(left,0)} over — both silos are too full.`:`Silo ${siloNumber(g,list[0])} has room for ${fmtFeed(share[0],0)}. Tap another silo for the rest (e.g. ${siloListLabel([list[0],[1,2,3].find(n=>n!==list[0]&&!starterLocked(n))].filter(Boolean),g)}).`;
-        if(list.length>1){const lbl=siloListLabel(list,g);info=`<div class="lm-silo-info"><span><b>${lbl}</b> · fill Silo ${siloNumber(g,list[0])} (${fmtFeed(share[0],0)}), the rest into Silo ${siloNumber(g,list[1])} (${fmtFeed(share[1],0)}).</span><button type="button" class="lm-note-btn" data-lm-note="${g}">Add to note</button></div>`;}
+        if(list.length>1){const lbl=siloListLabel(list,g);info=`<div class="lm-silo-info"><span><b>${lbl}</b> · fill Silo ${siloNumber(g,list[0])} (${fmtFeed(share[0],0)}), the rest into Silo ${siloNumber(g,list[1])} (${fmtFeed(share[1],0)}).</span></div>`;}
       }
       box.innerHTML=`<div class="lm-silo-lbl">${pairLabel(g)} · ${fmtFeed(amt,0)} into</div><div class="lm-silo-row">${chips}</div>${info}${warn?`<div class="lm-silo-warn">${warn}</div>`:''}`;
     });
   };
   if(body._lmSilo)body.removeEventListener('click',body._lmSilo);
   body._lmSilo=e=>{
-    const nb=e.target.closest('[data-lm-note]');
-    if(nb){const g=Number(nb.dataset.lmNote);const lbl=siloListLabel(s.siloFor[g],g);const multi=splitInputs.filter(x=>(feedOut(x.value)||0)>0).length>1;const txt=(multi?pairShort(g)+': ':'')+lbl;const cur=String(noteEl.value||'').trim();if(!cur.includes(txt))noteEl.value=(cur?cur+' · ':'')+txt;noteEl.value=noteEl.value.slice(0,60);showToast('Added to the driver note.');return;}
+    // (silo labels are kept on the load itself; the note field became the docket no.)
     const b=e.target.closest('[data-lm-silo]');if(!b)return;const [g,n]=b.dataset.lmSilo.split('|').map(Number);
     const list=(Array.isArray(s.siloFor[g])?s.siloFor[g]:s.siloFor[g]?[s.siloFor[g]]:[]).slice();
     const d=parseExcelDate(dateEl.value);const amt=Math.round(feedOut(splitInputs[g-1].value)||0);
@@ -1882,7 +1896,14 @@ function renderLoadModal(){
     const dateObj=parseExcelDate(dateEl.value);
     if(!dateObj){showToast('Pick a valid date.',true);return;}
     const siloFor=normSiloFor(Object.fromEntries([1,2,3,4].filter(g=>splitKg[g]>0&&s.siloFor[g]).map(g=>[g,s.siloFor[g]])));
-    const payload={id:s.mode==='edit'?s.editId:undefined,date:dateObj,feedType:typeEl.value,plannedKg,splitKg,siloFor,note:String(noteEl.value||'').trim(),actualKg:s.mode==='edit'?(farmLoads.find(l=>l.id===s.editId)||{}).actualKg:null};
+    const prev=s.mode==='edit'?(farmLoads.find(l=>l.id===s.editId)||{}):{};
+    const rawAct=String(actualEl.value||'').trim();let actualKg=null;
+    if(rawAct!==''){const n=Number(rawAct);if(!Number.isFinite(n)||n<=0){showToast('Enter a positive actual delivery, or leave it empty.',true);return;}actualKg=docketToKg(n);}
+    if(actualKg!=null&&loadLooksPlanned(actualKg)&&!(prev.actualKg!=null&&loadLooksPlanned(prev.actualKg))&&!confirmExact60({docket:String(docketEl.value||'').trim()})){actualEl.focus();return;}
+    const docket=String(docketEl.value||'').trim();
+    // A received load keeps its tick only while it still has its docket and actual
+    const keepRcv=typeof prev.received==='boolean'?prev.received:(s.mode==='edit'?loadReceived(prev):false);
+    const payload={id:s.mode==='edit'?s.editId:undefined,date:dateObj,feedType:typeEl.value,plannedKg,splitKg,siloFor,note:prev.note||'',docket,actualKg,...(typeof keepRcv==='boolean'?{received:keepRcv}:{})};
     const result=saveLoad(payload);
     if(!result||result.__error){showToast('Could not save load.',true);return;}
     updateLoadsDot();
@@ -2057,7 +2078,7 @@ function buildBatchReportHTML(){
     html+=`<section><h2>Feed Deliveries</h2><table>
       <thead><tr><th>#</th><th>Date</th><th>Type</th><th class="num">Planned</th>
         <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
-        <th class="num">Actual Delivery</th><th>Note</th></tr></thead><tbody>`;
+        <th class="num">Actual Delivery</th><th>Docket</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
       const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sl=loadSilosFor(l,g);return v>0?fmtFeedNum(v,1)+(sl.length?` <span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''):'—';};
       const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):`${fmtFeed(l.plannedKg)} (est)`;
@@ -2071,7 +2092,7 @@ function buildBatchReportHTML(){
         <td class="num">${splitCell(3)}</td>
         <td class="num">${splitCell(4)}</td>
         <td class="num">${escapeHtml(actualStr)}</td>
-        <td>${escapeHtml(l.note||'')}</td>
+        <td>${escapeHtml(l.docket||'')}</td>
       </tr>`;
     });
     const sumPlanned=farmLoads.reduce((s,l)=>s+(Number(l.plannedKg)||0),0);
@@ -2570,7 +2591,7 @@ function setDeliveryIn(g,val){
   if(!r){const prev=s.readings.length?s.readings[s.readings.length-1]:null;r={date:todayIso,silo1Rings:prev?prev.silo1Rings:null,silo2Rings:prev?prev.silo2Rings:null,silo3Rings:prev?prev.silo3Rings:null,time:siloReadTime()};s.readings.push(r);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
   r.deliveryIn=!!val;
   // Same answer on the Feed loads Received tick for today's loads to this pair
-  todaysLoadsFor(g).forEach(l=>{l.received=!!val;});saveFarmLoads();
+  todaysLoadsFor(g).forEach(l=>{if(!val)l.received=false;else if(loadComplete(l))l.received=true;});saveFarmLoads();
   saveSiloData();schedulePush();renderSiloModalBody();render();
 }
 function todaysLoadsFor(g){const t=dateOnly(new Date()).getTime();return farmLoads.filter(l=>l.date&&dateOnly(l.date).getTime()===t&&Number(l.splitKg&&l.splitKg[g])>0);}
