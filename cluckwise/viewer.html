@@ -1426,7 +1426,7 @@
     return (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
   }
   const BATCH_PALETTE = ['#0F8A75','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
-  const DEFAULT_EVENT_COLOR = '#000000';
+  const DEFAULT_EVENT_COLOR = '#6E55D3';   // audits: one purple (no custom colours)
   const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
   const PHOTO_WORKER_URL = 'https://cluckwise-photos.vonrmangaron.workers.dev';
   const HARDCODED_REPO = 'vonrmangaron/farmdata';
@@ -1449,9 +1449,8 @@
   function colorForBatchNumber(number){
     const b=batches.find(x=>x.number===number);
     if(!b) return '#8A7A5C';
-    if(b.color) return b.color;
-    const idx=typeof b.colorIndex==='number'?b.colorIndex:batches.indexOf(b);
-    return BATCH_PALETTE[idx % BATCH_PALETTE.length];
+    // Same rule as the main app: orange while running, grey once ended
+    return (!b.end || b.end >= dateKey(new Date())) ? '#F0A21A' : '#9AA3A8';
   }
   function renderIconInto(el, icon){
     if(icon && /^https?:\/\//.test(icon)){ el.innerHTML=''; const img=document.createElement('img'); img.src=icon; img.alt=''; el.appendChild(img); }
@@ -3233,7 +3232,7 @@
       later.forEach(ev=>{
         const d = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
         const chip = document.createElement('span'); chip.className = 'dc-up-chip';
-        const dot = document.createElement('span'); dot.className = 'dc-dot'; dot.style.background = ev.color || DEFAULT_EVENT_COLOR;
+        const dot = document.createElement('span'); dot.className = 'dc-dot'; dot.style.background = DEFAULT_EVENT_COLOR;
         const nm = document.createElement('span'); nm.textContent = ev.name;
         const when = document.createElement('b'); when.textContent = d === 0 ? t('abToday') : d === 1 ? t('abTomorrow') : t('inDays').replace('{n}', d);
         chip.append(dot, nm, when); line.appendChild(chip);
@@ -3331,7 +3330,7 @@
       const isToday = ev.date===todayKey;
       const card = document.createElement('div'); card.className='audit-card'+(isToday?' audit-today':'');
       const daysLeft = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
-      card.innerHTML = `<span class="audit-swatch" style="background:${ev.color||DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>${isToday?'<span class="audit-today-badge"></span>':'<span class="audit-when"></span>'}`;
+      card.innerHTML = `<span class="audit-swatch" style="background:${DEFAULT_EVENT_COLOR}"></span><div class="audit-body"><div class="audit-name"></div><div class="audit-sub"></div></div>${isToday?'<span class="audit-today-badge"></span>':'<span class="audit-when"></span>'}`;
       card.querySelector('.audit-name').textContent = ev.batchNumber ? `${ev.name} (${t('batch')} #${ev.batchNumber})` : ev.name;
       const sub = card.querySelector('.audit-sub');
       sub.innerHTML = '<span class="audit-date"></span><span class="audit-prep"></span>';

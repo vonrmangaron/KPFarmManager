@@ -2838,6 +2838,164 @@
     body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 364px, #111A2B 364px) !important; }
     body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
   }
+
+  /* ===== Batch + audit windows (2026-10-10): wide, two parts, Cancel, no colour pickers ===== */
+  .form-modal.bm-wide{ width:960px; max-width:94vw; max-height:88vh; }
+  .form-modal.ev-wide{ width:600px; max-width:94vw; }
+  .bm-wide .form-modal-head, .ev-wide .form-modal-head{ gap:12px; justify-content:flex-start; padding:16px 22px; }
+  .bm-wide .form-modal-head > button, .ev-wide .form-modal-head > button{ margin-left:auto; }
+  .bm-dot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; background:#F0A21A; }
+  .bm-head-text h2{ margin:0; }
+  .bm-head-sub{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .ev-head-ic{ width:34px; height:34px; border-radius:10px; background:#EEEAFC; color:#6E55D3; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  body.theme-dark .ev-head-ic{ background:rgba(169,139,240,.16); color:#A98BF0; }
+  .bm-body{ display:grid !important; grid-template-columns:320px minmax(0,1fr); gap:0 !important; padding:0 !important; }
+  .bm-left{ display:flex; flex-direction:column; gap:8px; padding:18px 22px; border-right:1px solid var(--line); background:var(--surface-soft); }
+  .bm-right{ display:flex; flex-direction:column; gap:12px; padding:18px 22px; min-width:0; }
+  .bm-sec{ font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .bm-check{ margin-top:6px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+  .bm-color-note{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:var(--primary-soft); color:var(--primary-dark); font-size:12.5px; font-weight:600; }
+  .bm-color-note .bm-cn-dot{ width:12px; height:12px; border-radius:50%; background:#F0A21A; flex-shrink:0; }
+  .bm-color-note.ev{ background:#EEEAFC; color:#5A43BF; } .bm-color-note.ev .bm-cn-dot{ background:#6E55D3; }
+  body.theme-dark .bm-color-note.ev{ background:rgba(169,139,240,.14); color:#C9B8FF; }
+  .bm-weigh-reset{ margin-top:auto; display:flex; flex-direction:column; gap:4px; padding-top:10px; }
+  .bm-weigh-btn{ display:inline-flex; align-items:center; gap:6px; align-self:flex-start; height:34px; padding:0 12px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--primary-dark); font:700 13px 'Inter',sans-serif; cursor:pointer; }
+  .bm-sheds-head{ display:flex; align-items:flex-end; gap:12px; }
+  .bm-sheds-head .bm-sub{ display:block; margin-top:2px; }
+  .bm-stepper{ margin-left:auto; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .bm-stepper button{ width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:800 16px 'Inter',sans-serif; cursor:pointer; }
+  .bm-stepper input{ width:56px !important; height:34px; text-align:center; padding:0 4px !important; box-sizing:border-box; }
+  .bm-wide .bm-sheds{ border:1px solid var(--line); border-radius:14px; overflow:hidden; gap:0; }
+  .bm-wide .bm-sheds:empty{ display:none; }
+  .bm-wide .bm-shed-head, .bm-wide .bm-shed-row{ grid-template-columns:72px 1fr 1fr 70px; padding:8px 12px; gap:10px; }
+  .bm-wide .bm-shed-head{ background:var(--surface-soft); }
+  .bm-wide .bm-shed-row{ border-top:1px solid var(--line); }
+  .bm-shed-days{ font-size:12.5px; font-weight:600; color:var(--muted); text-align:right; }
+  .bm-shed-head span:last-child{ text-align:right; }
+  .bm-wide .bm-copy-cleanout{ margin:0; border:none; border-top:1px solid var(--line); border-radius:0; padding:10px 12px; background:var(--surface); color:var(--primary-dark); font-weight:700; text-align:left; cursor:pointer; }
+  .bm-foot{ display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:12px 22px; border-top:1px solid var(--line); background:var(--surface); flex-shrink:0; }
+  .bm-foot .bm-error{ margin:0 auto 0 0; }
+  .bm-foot .btn-app{ width:auto; margin:0 !important; padding:0 24px; height:44px; }
+  .bm-cancel{ height:44px; padding:0 20px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 14px 'Inter',sans-serif; cursor:pointer; }
+  .bm-cancel:hover{ background:var(--surface-soft); }
+  @media (max-width: 760px){
+    .bm-body{ grid-template-columns:1fr; }
+    .bm-left{ border-right:none; border-bottom:1px solid var(--line); }
+    .bm-wide .bm-shed-head, .bm-wide .bm-shed-row{ grid-template-columns:56px 1fr 1fr; }
+    .bm-shed-days, .bm-shed-head span:last-child{ display:none; }
+  }
+
+  /* Report a problem: in the header on tablets and computers (phones keep the quick-actions button) */
+  .btn-report-top{ display:none; }
+  @media (min-width: 761px){
+    .btn-report-top{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:10px; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font:800 13.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .btn-report-top svg{ width:16px; height:16px; }
+    .btn-report-top:hover{ background:var(--primary); color:#241A08; }
+    .fab-items .fab-report{ display:none !important; }
+  }
+  @media (min-width: 761px) and (max-width: 1180px){ .btn-report-top span{ display:none; } .btn-report-top{ padding:0 11px; } }
+
+  /* ===== Guide as a page (2026-10-10): its targets moved here from Settings ===== */
+  .g-page-wrap{ display:flex; flex-direction:column; min-height:0; flex:1; overflow:auto; }
+  .g-side{ display:none; }
+  #guideModal.editing .g-side{ display:flex; flex-direction:column; gap:12px; padding:16px 18px 24px; border-top:1px solid var(--line); }
+  .g-side-head{ display:flex; flex-direction:column; gap:4px; }
+  .g-side-head b{ font-family:'Sora',sans-serif; font-size:16px; color:var(--ink); }
+  .g-side-head span{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+  @media (min-width: 761px){
+    body.guide-open #scrim{ display:none; }
+    #guideModal{ top:0 !important; left:0 !important; right:0; bottom:0; width:auto !important; max-width:none !important; max-height:none !important; height:auto; border-radius:0; transform:none !important; box-shadow:none; background:var(--bg); z-index:44; }
+    #guideModal .form-modal-head{ background:var(--surface); min-height:60px; box-sizing:border-box; padding:0 24px; }
+    #guideModal .form-modal-head h2{ font-family:'Sora',sans-serif; font-size:20px; }
+    .g-page-wrap{ flex-direction:row; align-items:flex-start; overflow:auto; }
+    #guideModalBody{ flex:1; min-width:0; max-width:880px; padding:22px 26px 40px; overflow:visible; }
+    #guideModal.editing .g-side{ position:sticky; top:0; width:380px; flex-shrink:0; margin:22px 26px 22px 0; border:1px solid var(--line); border-radius:16px; background:var(--surface); padding:18px; box-sizing:border-box; max-height:calc(100vh - 110px); overflow:auto; }
+  }
+  @media (min-width: 1025px){
+    #guideModal{ left:84px !important; }
+    /* full pages: the side panel steps aside */
+    body.rail-page .shell{ grid-template-columns:84px 0 minmax(0,1fr) !important; }
+    body.rail-page .sidebar{ display:none !important; }
+    body.rail-page .reports-modal.mt-page{ left:84px; }
+  }
+
+  /* ===== Side panels redesign (2026-10-10): Tasks and Batches & audits ===== */
+  /* current batch card — all widths */
+  .cur-batch{ flex-direction:column; align-items:stretch !important; gap:7px !important; padding:13px 14px !important; border-radius:16px !important; }
+  .cur-batch .cb-top{ display:flex; align-items:center; }
+  .cur-batch .cb-top .cb-chev{ margin-left:auto; }
+  .cur-batch .cb-main{ display:flex; align-items:baseline; gap:8px; }
+  .cur-batch .cb-num{ font-family:'Sora',sans-serif; font-size:24px; font-weight:800; line-height:1.1; }
+  .cur-batch .cb-day{ font-size:14px; font-weight:700; }
+  .cur-batch .cb-bar{ display:block; height:7px; border-radius:999px; background:rgba(255,255,255,.45); overflow:hidden; }
+  .cur-batch .cb-bar span{ display:block; height:100%; border-radius:999px; background:#241A08; }
+  .cur-batch .cb-dates{ display:flex; justify-content:space-between; gap:8px; font-size:11.5px; font-weight:700; opacity:.85; }
+  .cur-batch .cb-sheds{ font-size:11.5px; font-weight:600; opacity:.75; }
+  .cur-batch.is-active, .sidebar .cur-batch.is-active{ background:linear-gradient(150deg,#F0A21A,#C9842A) !important; border-color:transparent !important; color:#241A08 !important; }
+  .cur-batch.is-active .cb-k, .cur-batch.is-active .cb-chev{ color:#241A08 !important; opacity:.75; }
+  /* batch rows: active orange, finished grey */
+  .sb-chip.active{ background:#F0A21A; color:#241A08; }
+  .sb-chip.done{ background:var(--surface-soft); color:var(--muted); }
+  .batch-row.b-ended .b-num{ opacity:.7; }
+  /* audit rows: purple date tile */
+  .e-tile{ width:38px; height:40px; border-radius:9px; background:#EEEAFC; color:#5A43BF; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; line-height:1.05; }
+  .e-tile-m{ font-size:9px; font-weight:800; letter-spacing:.04em; }
+  .e-tile b{ font-family:'Sora',sans-serif; font-size:15px; }
+  body.theme-dark .e-tile{ background:rgba(169,139,240,.16); color:#C9B8FF; }
+  .sidebar .e-countdown{ color:var(--muted); font-weight:700; }
+  .sidebar .e-countdown.soon{ color:var(--danger); }
+  /* backlog note */
+  .sb-noday{ display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin-top:2px; }
+  .sb-find{ display:none; }
+  @media (min-width: 1025px){
+    /* sections sit flat on the panel, split by a line — no boxes */
+    .sidebar .sb-sec{ background:transparent !important; border:none !important; border-radius:0; padding:0 !important; margin-top:14px; }
+    .sidebar .sb-sec + .sb-sec{ border-top:1px solid #2F353A !important; padding-top:14px !important; }
+    body.theme-dark .sidebar .sb-sec + .sb-sec{ border-top-color:var(--line) !important; }
+    .sidebar .sb-sec-heading{ font-size:11px; letter-spacing:.08em; }
+    .sb-find{ display:flex; align-items:center; gap:8px; height:38px; margin:0 0 4px; padding:0 12px; border-radius:10px; background:#262B2E; border:1px solid #2F353A; color:#A2A9AE; box-sizing:border-box; order:-1; }
+    body.theme-dark .sb-find{ background:var(--surface); border-color:var(--line); }
+    .sb-find svg{ width:15px; height:15px; flex-shrink:0; }
+    .sb-find input{ flex:1; min-width:0; border:none; background:transparent; outline:none; color:#F1F3F4; font:500 13.5px 'Inter',sans-serif; }
+    .sb-find input::placeholder{ color:#8C9398; }
+    .sb-find:focus-within{ border-color:var(--primary); }
+    body.sbm-batch .sb-find{ display:none; }
+    /* frequent tasks: clean one-line rows with a drag hint */
+    .sidebar .frequent-list .task-card{ padding:6px 8px !important; border-radius:10px !important; }
+    .sidebar .frequent-list .task-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar .frequent-list .task-card .task-card-top::after{ content:''; width:14px; height:14px; flex-shrink:0; opacity:.45; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='9' cy='6' r='1.6'/%3E%3Ccircle cx='15' cy='6' r='1.6'/%3E%3Ccircle cx='9' cy='12' r='1.6'/%3E%3Ccircle cx='15' cy='12' r='1.6'/%3E%3Ccircle cx='9' cy='18' r='1.6'/%3E%3Ccircle cx='15' cy='18' r='1.6'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='9' cy='6' r='1.6'/%3E%3Ccircle cx='15' cy='6' r='1.6'/%3E%3Ccircle cx='9' cy='12' r='1.6'/%3E%3Ccircle cx='15' cy='12' r='1.6'/%3E%3Ccircle cx='9' cy='18' r='1.6'/%3E%3Ccircle cx='15' cy='18' r='1.6'/%3E%3C/svg%3E") center/contain no-repeat; }
+    .sidebar .frequent-list .task-card.editing-freq .task-card-top::after{ display:none; }
+    .sidebar .sb-more{ color:#FFC56B; font-weight:700; }
+    /* backlog: small cards with a coloured edge (red when High) */
+    .sidebar .backlog-list{ gap:8px !important; }
+    .sidebar .backlog-list .task-card{ background:#262B2E !important; border:1px solid #2F353A !important; border-radius:12px !important; padding:9px 10px !important; box-shadow:inset 3px 0 0 #5A6267 !important; }
+    .sidebar .backlog-list .task-card.high-priority{ box-shadow:inset 3px 0 0 var(--danger) !important; }
+    body.theme-dark .sidebar .backlog-list .task-card{ background:var(--surface) !important; border-color:var(--line) !important; }
+    .sidebar .sb-high-tag{ background:rgba(240,106,90,.16); color:#F06A5A; margin-right:6px; }
+    .sidebar .backlog-list .sb-noday{ display:inline; margin-left:0; }
+    /* batches & audits rows */
+    .sidebar .batch-row, .sidebar .event-row{ background:transparent !important; border:none !important; padding:8px 6px !important; border-radius:10px; }
+    .sidebar .batch-row:hover, .sidebar .event-row:hover{ background:#262B2E !important; }
+    body.theme-dark .sidebar .batch-row:hover, body.theme-dark .sidebar .event-row:hover{ background:var(--surface) !important; }
+    .sidebar .batch-row .batch-swatch{ width:10px; height:10px; border-radius:50%; }
+    .sidebar .e-top{ align-items:center; gap:10px; }
+    .sidebar .event-row .e-sub{ padding-left:48px; margin-top:-16px; }
+    .sidebar .event-checklist-tag{ margin-left:48px; }
+  }
+
+  .cur-batch .cb-dates span{ white-space:nowrap; }
+  .cur-batch .cb-left{ margin-left:auto; font-size:12px; font-weight:800; background:rgba(255,255,255,.5); border-radius:999px; padding:2px 8px; white-space:nowrap; }
+  .bm-body{ grid-template-columns:350px minmax(0,1fr) !important; align-items:stretch; }
+  .bm-weigh-reset{ margin-top:6px !important; }
+  @media (min-width: 1025px){
+    .sidebar .event-row .e-top{ align-items:flex-start; }
+    .sidebar .event-row .e-name{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+    .sidebar .event-row .e-countdown{ margin-top:3px; white-space:nowrap; }
+    .sidebar .event-row .e-sub{ padding-left:48px; margin-top:-20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; }
+    .sidebar .event-row .e-actions{ margin-top:0; display:none; }
+    .sidebar .event-row:hover .e-actions, .sidebar .event-row:focus-within .e-actions{ display:flex; }
+    .sidebar .event-row:hover .e-countdown{ display:none; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2905,6 +3063,7 @@
     </div>
 
     <div class="toolbar">
+      <button type="button" class="btn-report-top" id="topReportBtn" title="Report a problem on the farm (a photo is optional)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg><span>Report a problem</span></button>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
       <div class="tb-group" role="group" aria-label="Farm tools">
@@ -2953,6 +3112,7 @@
       <div class="sb-divider"></div>
 
       <div class="sb-panel-title" id="sbPanelTitle" aria-hidden="true"></div>
+      <label class="sb-find" id="sbFind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="sbFindInput" placeholder="Find a task" autocomplete="off" aria-label="Find a frequent or backlog task"></label>
       <section class="sb-sec">
         <div class="sb-sec-h">
           <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="frequentCollapseBtn" aria-controls="frequentSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="frequentTasksHeader">Frequent tasks</span><span class="sb-count" id="frequentCount"></span></button></h2>
@@ -3029,7 +3189,6 @@
     <button class="fab-add" data-label="Add tasks" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
     <button class="fab-report" data-label="New report" id="fabReportBtn" title="New report" aria-label="New report"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg></button>
     <button class="fab-notif" data-label="Notifications" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
-    <button class="fab-refresh" data-label="Refresh" id="fabRefreshBtn" title="Refresh from GitHub" aria-label="Refresh from GitHub">⟳</button>
     <button class="fab-viewer" data-label="Viewer mode" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
     <button class="fab-delete" data-label="Bulk delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
   </div>
@@ -3181,7 +3340,6 @@
   </div>
   <nav class="st-tabs" id="settingsTabs" aria-label="Settings sections">
     <button type="button" data-target="stAppearance" class="active">Appearance</button>
-    <button type="button" data-target="stGuide">Guide</button>
     <button type="button" data-target="stWeather">Weather</button>
     <button type="button" data-target="stSync">Sync</button>
     <button type="button" data-target="stWorkers">Workers</button>
@@ -3228,10 +3386,6 @@
       </div>
     </section>
 
-    <section class="st-section" id="stGuide">
-      <div class="st-section-head"><span class="st-ic">📘</span><div><h3>Farm guide targets</h3><p>Shown to workers in the Viewer's Guide. Starts from Ross 308 guidance — set them to your integrator's numbers. To change the guide's wording or add your own cards, open the Guide and tap ✎ Edit guide.</p></div></div>
-      <div class="st-card gs-card" id="guideSettings"></div>
-    </section>
 
     <section class="st-section" id="stWeather">
       <div class="st-section-head"><span class="st-ic">🌤️</span><div><h3>Weather</h3></div></div>
@@ -3454,34 +3608,41 @@
   </div>
 </div>
 
-<div class="form-modal" id="batchModal">
-  <div class="form-modal-head"><h2 id="batchModalTitle">Add batch</h2><button id="closeBatchModal" aria-label="Close">✕</button></div>
-  <div class="form-modal-body">
-    <label for="batchNumberInput">Batch number</label>
-    <input type="text" id="batchNumberInput" placeholder="e.g. B-1024">
-    <p id="batchExistingNote" style="display:none;font-size:12px;color:var(--primary-dark);background:var(--primary-soft);padding:8px 10px;border-radius:8px;margin:2px 0 0;"></p>
-    <p id="batchLegacyNote" class="bm-note" hidden>These sheds didn't have cleanout dates yet, so they've been filled in from the batch end date. Check them and save.</p>
-    <div class="bm-row2">
-      <div><label for="batchStartInput">Start date</label><input type="date" id="batchStartInput"></div>
-      <div><label for="batchEndInput">End date</label><input type="date" id="batchEndInput"></div>
+<div class="form-modal bm-wide" id="batchModal">
+  <div class="form-modal-head"><span class="bm-dot" id="batchModalDot" aria-hidden="true"></span><div class="bm-head-text"><h2 id="batchModalTitle">Add batch</h2><div class="bm-head-sub" id="batchModalSub"></div></div><button id="closeBatchModal" aria-label="Close">✕</button></div>
+  <div class="form-modal-body bm-body">
+    <div class="bm-left">
+      <div class="bm-sec">Batch details</div>
+      <label for="batchNumberInput">Batch number</label>
+      <input type="text" id="batchNumberInput" placeholder="e.g. 2701">
+      <p id="batchExistingNote" style="display:none;font-size:12px;color:var(--primary-dark);background:var(--primary-soft);padding:8px 10px;border-radius:8px;margin:2px 0 0;"></p>
+      <p id="batchLegacyNote" class="bm-note" hidden>These sheds didn't have cleanout dates yet, so they've been filled in from the batch end date. Check them and save.</p>
+      <div class="bm-row2">
+        <div><label for="batchStartInput">Start date</label><input type="date" id="batchStartInput"></div>
+        <div><label for="batchEndInput">End date</label><input type="date" id="batchEndInput"></div>
+      </div>
+      <span class="bm-sub" id="batchEndHint">optional — defaults to 70 days</span>
+      <input type="color" id="batchColorInput" hidden>
+      <label class="checkbox-row bm-check"><input type="checkbox" id="batchChecklistBox"> Add the frequent-task checklist to the Backlog</label>
+      <div class="bm-color-note"><span class="bm-cn-dot"></span><span>Shown in <b>orange</b> while it runs, <b>grey</b> once it has ended.</span></div>
+      <div class="bm-weigh-reset" id="batchWeighReset" hidden>
+        <button type="button" class="bm-weigh-btn" id="recreateWeighBtn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Re-create missing weigh-ins</button>
+        <span class="bm-sub">Adds back any missing weekly weigh-in from today until each shed's clean-out. Ticked ones and your own tasks are left alone.</span>
+      </div>
     </div>
-    <span class="bm-sub" id="batchEndHint">optional — defaults to 70 days</span>
-    <label for="batchColorInput">Highlight color</label>
-    <input type="color" id="batchColorInput">
-    <label class="checkbox-row"><input type="checkbox" id="batchChecklistBox"> Add Frequent Task Checklist to Backlog</label>
-
-    <label for="shedCountInput" style="margin-top:10px;">Number of sheds</label>
-    <span class="bm-sub">Each shed needs a placement and cleanout date. Weigh-ins are scheduled every 7 days until that shed's cleanout.</span>
-    <input type="number" id="shedCountInput" min="0" max="30" placeholder="e.g. 4">
-    <div id="shedInputsContainer" class="bm-sheds"></div>
-    <div id="batchWeighPreview" class="bm-preview" hidden></div>
+    <div class="bm-right">
+      <div class="bm-sheds-head">
+        <div><div class="bm-sec">Sheds</div><span class="bm-sub">Placement → clean-out. Weigh-ins every 7 days until each clean-out.</span></div>
+        <div class="bm-stepper"><button type="button" id="shedMinusBtn" aria-label="One shed fewer">−</button><input type="number" id="shedCountInput" min="0" max="30" placeholder="0" aria-label="Number of sheds"><button type="button" id="shedPlusBtn" aria-label="One more shed">+</button></div>
+      </div>
+      <div id="shedInputsContainer" class="bm-sheds"></div>
+      <div id="batchWeighPreview" class="bm-preview" hidden></div>
+    </div>
+  </div>
+  <div class="bm-foot">
     <p id="batchFormError" class="bm-error" hidden></p>
-
-    <button class="btn-app" id="addBatchBtn" style="margin-top:6px;">Add batch</button>
-    <div class="bm-weigh-reset" id="batchWeighReset" hidden>
-      <button type="button" class="btn-ghost-ai bm-weigh-btn" id="recreateWeighBtn">⚖️ Re-create weigh-ins</button>
-      <span class="bm-sub">Adds back any missing weekly weigh-in from today until each shed's clean-out. Ticked ones and your own tasks are left alone.</span>
-    </div>
+    <button type="button" class="bm-cancel" id="batchCancelBtn">Cancel</button>
+    <button class="btn-app" id="addBatchBtn">Add batch</button>
   </div>
 </div>
 
@@ -3499,19 +3660,22 @@
   <div class="form-modal-body" id="backlogModalList" style="padding-top:8px;"></div>
 </div>
 
-<div class="form-modal" id="eventModal">
-  <div class="form-modal-head"><h2 id="eventModalTitle">Add event / audit</h2><button id="closeEventModal" aria-label="Close">✕</button></div>
+<div class="form-modal ev-wide" id="eventModal">
+  <div class="form-modal-head"><span class="ev-head-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg></span><h2 id="eventModalTitle">Add audit</h2><button id="closeEventModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body">
-    <label for="eventNameInput">Event name</label>
-    <input type="text" id="eventNameInput" placeholder="e.g. Welfare Audit" maxlength="60">
-    <label for="eventDateInput">Event date</label>
-    <input type="date" id="eventDateInput">
-    <label for="eventBatchSelect">Batch (optional)</label>
-    <select id="eventBatchSelect"><option value="">— None —</option></select>
-    <label class="checkbox-row" id="eventChecklistRow"><input type="checkbox" id="eventChecklistBox"> Add Frequent Task Checklist to Backlog</label>
-    <label for="eventColorInput">Audit card background color</label>
-    <input type="color" id="eventColorInput">
-    <button class="btn-app" id="addEventBtn" style="margin-top:6px;">Add event</button>
+    <label for="eventNameInput">Audit name</label>
+    <input type="text" id="eventNameInput" placeholder="e.g. Welfare audit" maxlength="60">
+    <div class="bm-row2">
+      <div><label for="eventDateInput">Date</label><input type="date" id="eventDateInput"></div>
+      <div><label for="eventBatchSelect">Batch (optional)</label><select id="eventBatchSelect"><option value="">— None —</option></select></div>
+    </div>
+    <label class="checkbox-row bm-check" id="eventChecklistRow"><input type="checkbox" id="eventChecklistBox"> Add the frequent-task checklist to the Backlog</label>
+    <input type="color" id="eventColorInput" hidden>
+    <div class="bm-color-note ev"><span class="bm-cn-dot"></span><span>Audits always show in <b>purple</b>, with a prep week before them.</span></div>
+  </div>
+  <div class="bm-foot">
+    <button type="button" class="bm-cancel" id="eventCancelBtn">Cancel</button>
+    <button class="btn-app" id="addEventBtn">Add audit</button>
   </div>
 </div>
 
@@ -3700,7 +3864,13 @@
 
 <div class="form-modal" id="guideModal">
   <div class="form-modal-head"><h2>Farm guide</h2><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
-  <div class="form-modal-body" id="guideModalBody"></div>
+  <div class="g-page-wrap">
+    <div class="form-modal-body" id="guideModalBody"></div>
+    <aside class="g-side" id="guideSide" aria-label="Guide targets">
+      <div class="g-side-head"><b>Guide targets</b><span>Shown to workers in the Viewer's Guide. Starts from Ross 308 — set them to your integrator's numbers. The card text on the left can be edited too.</span></div>
+      <div class="st-card gs-card" id="guideSettings"></div>
+    </aside>
+  </div>
 </div>
 
 <div class="form-modal" id="wxModal">
@@ -3735,7 +3905,7 @@
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
   const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month', showWeather:true, weatherUnit:'celsius', weatherLocation:null };
-  const DEFAULT_EVENT_COLOR = '#000000';
+  const DEFAULT_EVENT_COLOR = '#6E55D3';   // audits: one purple (no custom colours)
   const ICON_RULES = [
     [/feed|grain|corn/i,'🌾'],[/water|drink|hydrat/i,'💧'],[/vaccin|inject|dose/i,'💉'],
     [/clean|disinfect|sanit|wash|footbath|biosecur/i,'🧹'],[/heat|brood|warm|lamp/i,'🔥'],
@@ -3907,9 +4077,8 @@
   function colorForBatchNumber(number){
     const b = batches.find(x=>x.number===number);
     if(!b) return '#8A7A5C';
-    if(b.color) return b.color;
-    const idx = (typeof b.colorIndex === 'number') ? b.colorIndex : batches.indexOf(b);
-    return BATCH_PALETTE[idx % BATCH_PALETTE.length];
+    // One colour rule (no custom colours): orange while the batch runs, grey once it has ended
+    return (!b.end || b.end >= dateKey(new Date())) ? '#F0A21A' : '#9AA3A8';
   }
   // Field Fresh light mode: calendar day tints stay soft on the white base (dark mode unchanged)
   function lightTint(a){ return document.body.classList.contains('theme-dark') ? a * 0.55 : a * 0.45; }
@@ -4705,7 +4874,7 @@
     if(n > 0){
       const head = document.createElement('div');
       head.className = 'bm-shed-head';
-      head.innerHTML = '<span></span><span>Placement</span><span>Cleanout</span>';
+      head.innerHTML = '<span>Shed</span><span>Placed</span><span>Clean-out</span><span>Days</span>';
       box.appendChild(head);
     }
     for(let i=1;i<=n;i++){
@@ -4715,7 +4884,8 @@
       row.dataset.shed = i;
       row.innerHTML = `<span class="bm-shed-name">Shed ${i}</span>
         <input type="date" class="shed-date-input" data-shed="${i}" aria-label="Shed ${i} placement date" value="${cur.placement || ''}">
-        <input type="date" class="shed-cleanout-input" data-shed="${i}" aria-label="Shed ${i} cleanout date" value="${cur.cleanout || ''}">`;
+        <input type="date" class="shed-cleanout-input" data-shed="${i}" aria-label="Shed ${i} cleanout date" value="${cur.cleanout || ''}">
+        <span class="bm-shed-days"></span>`;
       box.appendChild(row);
     }
     if(n > 1){
@@ -4746,6 +4916,10 @@
   }
   function refreshBatchForm(){
     const st = batchFormState();
+    document.querySelectorAll('#shedInputsContainer .bm-shed-row').forEach(r=>{
+      const a = r.querySelector('.shed-date-input').value, c = r.querySelector('.shed-cleanout-input').value, o = r.querySelector('.bm-shed-days');
+      if(o) o.textContent = a && c && c >= a ? `${Math.round((toDateObj(c) - toDateObj(a)) / 86400000)} days` : '';
+    });
     const endInp = $('#batchEndInput');
     if(st.sheds.length){
       endInp.disabled = true;
@@ -4772,7 +4946,10 @@
   function openBatchModal(b){
     closeOverlays();
     batchModalEditing = b ? b.number : null;
-    $('#batchModalTitle').textContent = b ? `Edit Batch #${b.number}` : 'Add batch';
+    $('#batchModalTitle').textContent = b ? `Edit batch #${b.number}` : 'Add batch';
+    { const today = dateKey(new Date()); const running = !b || !b.end || b.end >= today;
+      $('#batchModalDot').style.background = running ? '#F0A21A' : '#9AA3A8';
+      $('#batchModalSub').textContent = !b ? 'A new batch shows in orange while it runs' : (running ? `Running · day ${batchAgeOn(b, today)}` : `Finished ${formatFull(b.end)}`); }
     $('#addBatchBtn').textContent = b ? 'Save changes' : 'Add batch';
     $('#batchWeighReset').hidden = !b;
     $('#batchExistingNote').style.display = 'none';
@@ -5082,7 +5259,7 @@
     const title = $('#auditConflictTitle');
     body.innerHTML = '';
     const note = (html)=>{ const p = document.createElement('p'); p.className = 'ac-note'; p.innerHTML = html; body.appendChild(p); };
-    const card = (ev, label)=>{ const d = document.createElement('div'); d.className = 'ac-card'; d.innerHTML = `<span class="batch-swatch" style="background:${ev.color || DEFAULT_EVENT_COLOR}"></span><span class="ac-card-main"><strong>${escapeHtml(ev.name)}</strong><span>${escapeHtml(label)}</span></span>`; body.appendChild(d); };
+    const card = (ev, label)=>{ const d = document.createElement('div'); d.className = 'ac-card'; d.innerHTML = `<span class="batch-swatch" style="background:${DEFAULT_EVENT_COLOR}"></span><span class="ac-card-main"><strong>${escapeHtml(ev.name)}</strong><span>${escapeHtml(label)}</span></span>`; body.appendChild(d); };
     const btn = (cls, html, fn)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.innerHTML = html; b.addEventListener('click', fn); body.appendChild(b); return b; };
     const done = ()=>{ $('#auditConflictModal').classList.remove('open'); $('#scrim').classList.remove('show'); };
     const draftLabel = `${formatFullWithWeekday(draft.date)}${editId ? '' : ' (new)'}`;
@@ -6798,13 +6975,15 @@
   function renderBacklog(){
     const list = $('#backlogList');
     list.innerHTML = '';
-    const open = tasks.filter(t=>t.date===null).sort(taskSortCompare);
+    const open = tasks.filter(t=>t.date===null).filter(t=> sbFindMatch(t.name)).sort(taskSortCompare);
     $('#backlogCount').textContent = open.length || '';
     const srBc = $('#srBacklogCount'); if(srBc){ srBc.textContent = open.length > 99 ? '99+' : String(open.length); srBc.hidden = !open.length; }
     if(open.length===0){ list.innerHTML = '<div class="empty-note">No tasks waiting.</div>'; }
     else{
-      (backlogShowAll ? open : open.slice(0, SIDEBAR_BACKLOG_CAP)).forEach(t=>{
+      ((backlogShowAll || sbFindQ) ? open : open.slice(0, SIDEBAR_BACKLOG_CAP)).forEach(t=>{
         const card = buildTaskCard(t);
+        const nd = document.createElement('span'); nd.className = 'sb-noday'; nd.textContent = 'No day yet';
+        card.querySelector('.task-body').appendChild(nd);
         if(t.priority === 'high' && t.status !== 'done'){
           const tag = document.createElement('span');
           tag.className = 'sb-high-tag';
@@ -6825,6 +7004,9 @@
     list.appendChild(buildInlineAddRow('backlog', null));
   }
 
+  // Side panel search: narrows Frequent tasks and Backlog
+  var sbFindQ = '';
+  function sbFindMatch(name){ return !sbFindQ || String(name || '').toLowerCase().includes(sbFindQ); }
   function renderFrequentTasks(){
     const box = $('#frequentList');
     box.innerHTML = '';
@@ -6835,9 +7017,11 @@
       box.innerHTML = '<div class="empty-note">Check "Save as a frequent task" when adding a task to build this list.</div>';
       return;
     }
-    const shown = frequentShowAll ? frequentTemplates : frequentTemplates.slice(0, SIDEBAR_FREQUENT_CAP);
+    const pool = frequentTemplates.filter(f=> sbFindMatch(f.name));
+    if(!pool.length){ box.innerHTML = '<div class="empty-note">No frequent task matches.</div>'; return; }
+    const shown = (frequentShowAll || sbFindQ) ? pool : pool.slice(0, SIDEBAR_FREQUENT_CAP);
     shown.forEach(item=> box.appendChild(buildFrequentChip(item)));
-    if(frequentTemplates.length > SIDEBAR_FREQUENT_CAP){
+    if(!sbFindQ && frequentTemplates.length > SIDEBAR_FREQUENT_CAP){
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'sb-more';
@@ -6966,9 +7150,13 @@
     const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
     const pct = active ? Math.min(100, Math.max(0, Math.round(batchAgeOn(b, today) / total * 100))) : 0;
     const daysTo = Math.round((toDateObj(b.start) - toDateObj(today)) / 86400000);
-    box.innerHTML = `<button type="button" class="cur-batch" id="curBatchBtn" title="Batch details">
-      <span class="cb-text"><span class="cb-k">${active ? 'Current batch' : 'Next batch'}</span>
-      <span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· ${active ? 'Day ' + batchAgeOn(b, today) : 'starts ' + escapeHtml(formatShort(b.start))}</em></span></span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+    const left = Math.round((toDateObj(b.end) - toDateObj(today)) / 86400000);
+    box.innerHTML = `<button type="button" class="cur-batch ${active ? 'is-active' : 'is-next'}" id="curBatchBtn" title="Batch details">
+      <span class="cb-top"><span class="cb-k">${active ? 'Current batch' : 'Next batch'}</span><svg class="cb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span class="cb-main"><b class="cb-num">#${escapeHtml(b.number)}</b><span class="cb-day">${active ? 'Day ' + batchAgeOn(b, today) : (daysTo === 1 ? 'starts tomorrow' : 'starts in ' + daysTo + ' days')}</span>${active && left >= 0 ? `<span class="cb-left">${left} day${left === 1 ? '' : 's'} left</span>` : ''}</span>
+      ${active ? `<span class="cb-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>` : ''}
+      <span class="cb-dates"><span>${active ? 'Placed' : 'Starts'} ${escapeHtml(formatShort(b.start))}</span><span>Out ${escapeHtml(formatShort(b.end))}</span></span>${sheds ? `<span class="cb-sheds">${sheds} shed${sheds === 1 ? '' : 's'}</span>` : ''}
+    </button>`;
     box.querySelector('#curBatchBtn').addEventListener('click', ()=> openBatchInfo(b.number));
   }
 
@@ -6977,7 +7165,8 @@
     box.innerHTML = '';
     $('#batchesCount').textContent = batches.length || '';
     if(batches.length===0){ box.innerHTML = '<div class="empty-note">No batches yet. Use + Batch above to add one.</div>'; return; }
-    batches.slice().sort((a,b)=>a.start.localeCompare(b.start)).forEach(b=>{
+    const bRank = b=>{ const t = dateKey(new Date()); return t < b.start ? 1 : t > b.end ? 2 : 0; };
+    batches.slice().sort((a,b)=> bRank(a) - bRank(b) || (bRank(a) === 2 ? b.start.localeCompare(a.start) : a.start.localeCompare(b.start))).forEach(b=>{
       const row = document.createElement('div');
       row.className = 'batch-row';
       const c = colorForBatchNumber(b.number);
@@ -6985,7 +7174,8 @@
       const shedCount = (b.sheds || []).length;
       const shedTxt = shedCount ? ` · ${shedCount} shed${shedCount === 1 ? '' : 's'}` : '';
       const bState = bToday < b.start ? 'upcoming' : bToday > b.end ? 'ended' : 'active';
-      const bChip = { active:['ok','Active'], upcoming:['soon','Upcoming'], ended:['done','Ended'] }[bState];
+      const bChip = { active:['active','Active'], upcoming:['soon','Upcoming'], ended:['done','Finished'] }[bState];
+      row.classList.add('b-' + bState);
       const bSub = bState === 'active' ? `Day ${batchAgeOn(b, bToday)}${shedTxt} · ends ${formatShort(b.end)}`
         : bState === 'upcoming' ? `Starts ${formatShort(b.start)}${shedTxt}` : `${formatShort(b.start)} – ${formatFull(b.end)}`;
       row.innerHTML = `
@@ -7040,7 +7230,7 @@
       row.className = 'event-row';
       row.innerHTML = `
         <div class="e-top">
-          <span class="batch-swatch" style="background:${ev.color || DEFAULT_EVENT_COLOR}"></span>
+          <span class="e-tile" aria-hidden="true"><span class="e-tile-m">${escapeHtml(toDateObj(ev.date).toLocaleDateString('en', { month:'short' }).toUpperCase())}</span><b>${toDateObj(ev.date).getDate()}</b></span>
           <span class="e-name"></span>
           <span class="e-countdown"></span>
           <span class="e-actions"><button class="edit-event" title="Edit">✎</button><button class="remove-event" title="Remove event">✕</button></span>
@@ -7052,7 +7242,8 @@
       row.querySelector('.e-sub').textContent = `${formatFull(ev.date)} · prep from ${formatShort(cs)}`;
       row.querySelector('.e-sub').title = `Prep week ${formatFull(cs)} – ${formatFull(ce)}`;
       const evDays = Math.round((toDateObj(ev.date) - toDateObj(todayKey)) / 86400000);
-      row.querySelector('.e-countdown').textContent = evDays === 0 ? 'Today' : `${evDays}d`;
+      row.querySelector('.e-countdown').textContent = evDays === 0 ? 'Today' : evDays === 1 ? 'Tomorrow' : `in ${evDays} days`;
+      if(evDays <= 7) row.querySelector('.e-countdown').classList.add('soon');
       row.querySelector('.edit-event').addEventListener('click', ()=> openEventModal(ev));
       row.querySelector('.remove-event').addEventListener('click', ()=> deleteEvent(ev.id));
       const clash = auditConflicts(ev.date, ev.id, true);
@@ -7078,9 +7269,9 @@
 
   function dayHighlightColor(key){
     const exact = eventOnDate(key);
-    if(exact) return { color: exact.color || DEFAULT_EVENT_COLOR, alpha: 0.18 };
+    if(exact) return { color: DEFAULT_EVENT_COLOR, alpha: 0.18 };
     const crit = criticalEventForDate(key);
-    if(crit) return { color: crit.color || DEFAULT_EVENT_COLOR, alpha: 0.08 };
+    if(crit) return { color: DEFAULT_EVENT_COLOR, alpha: 0.08 };
     const active = batchesForDate(key);
     if(active.length) return { color: colorForBatchNumber(active[0].number), alpha: 0.14 };
     return null;
@@ -7153,11 +7344,11 @@
       const critEvent = !exactEvent ? criticalEventForDate(key) : null;
       const activeBatches = batchesForDate(key);
       if(exactEvent){
-        const c = exactEvent.color || DEFAULT_EVENT_COLOR;
+        const c = DEFAULT_EVENT_COLOR;
         cell.style.background = hexToRgba(c, lightTint(0.18));
         cell.style.border = `2px solid ${c}`;
       } else if(critEvent){
-        const c = critEvent.color || DEFAULT_EVENT_COLOR;
+        const c = DEFAULT_EVENT_COLOR;
         cell.style.background = hexToRgba(c, lightTint(0.08));
         cell.style.border = `1.5px dashed ${hexToRgba(c, 0.7)}`;
         cell.title = `Prep week for ${prepEventsForDate(key).map(e=>e.name).join(', ')}`;
@@ -7190,7 +7381,7 @@
         eventsOnDate(key).forEach(ev=>{
           const rb = document.createElement('div');
           rb.className = 'event-ribbon';
-          rb.style.background = ev.color || DEFAULT_EVENT_COLOR;
+          rb.style.background = DEFAULT_EVENT_COLOR;
           rb.textContent = '🚩 ' + ev.name;
           rb.title = `Audit day: ${ev.name}${ev.batchNumber ? ` (Batch #${ev.batchNumber})` : ''}`;
           ribbons.appendChild(rb);
@@ -7335,14 +7526,14 @@
     dayEvents.forEach(ev=>{
       const pill = document.createElement('div');
       pill.className = 'day-context-event';
-      pill.style.background = ev.color || DEFAULT_EVENT_COLOR;
+      pill.style.background = DEFAULT_EVENT_COLOR;
       pill.textContent = '🚩 ' + ev.name;
       container.appendChild(pill);
     });
     prepEvents.forEach(ev=>{
       const pill = document.createElement('div');
       pill.className = 'day-context-event prep';
-      pill.style.color = ev.color || DEFAULT_EVENT_COLOR;
+      pill.style.color = DEFAULT_EVENT_COLOR;
       pill.textContent = '⏳ Prep: ' + ev.name;
       container.appendChild(pill);
     });
@@ -9454,14 +9645,14 @@
     closeOverlays();
     populateEventBatchSelect();
     eventModalEditId = ev ? ev.id : null;
-    $('#eventModalTitle').textContent = ev ? 'Edit audit' : 'Add event / audit';
-    $('#addEventBtn').textContent = ev ? 'Save changes' : 'Add event';
+    $('#eventModalTitle').textContent = ev ? 'Edit audit' : 'Add audit';
+    $('#addEventBtn').textContent = ev ? 'Save changes' : 'Add audit';
     $('#eventChecklistRow').style.display = ev ? 'none' : '';
     $('#eventNameInput').value = ev ? ev.name : '';
     $('#eventDateInput').value = ev ? ev.date : '';
     $('#eventBatchSelect').value = ev ? (ev.batchNumber || '') : '';
     $('#eventChecklistBox').checked = false;
-    $('#eventColorInput').value = ev ? (ev.color || DEFAULT_EVENT_COLOR) : DEFAULT_EVENT_COLOR;
+    $('#eventColorInput').value = ev ? (DEFAULT_EVENT_COLOR) : DEFAULT_EVENT_COLOR;
     openDrawer('#eventModal');
   }
   $('#openEventModalBtn').addEventListener('click', ()=> openEventModal());
@@ -10415,7 +10606,7 @@
     $('#newReportModal').classList.remove('open');
     $('#addTasksSheet').classList.remove('open');
     $('#batchInfoModal').classList.remove('open');
-    $('#guideModal').classList.remove('open');
+    $('#guideModal').classList.remove('open'); document.body.classList.remove('guide-open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -10658,7 +10849,7 @@
       if(!up.length) h += `<div class="bi-note">No audits or events coming up.</div>`;
       up.forEach(e=>{
         const d = biDays(x.today, e.date);
-        h += `<div class="bi-ev"><span class="bi-dot" style="background:${biEsc(e.color || '#888')}"></span><span class="bi-ev-t"><b>${biEsc(e.batchNumber ? e.name + ' · #' + e.batchNumber : e.name)}</b><small>${biFmt(e.date, { weekday:'short', day:'numeric', month:'short' })}</small></span><span class="bi-when">${d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'in ' + d + ' days'}</span></div>`;
+        h += `<div class="bi-ev"><span class="bi-dot" style="background:${DEFAULT_EVENT_COLOR}"></span><span class="bi-ev-t"><b>${biEsc(e.batchNumber ? e.name + ' · #' + e.batchNumber : e.name)}</b><small>${biFmt(e.date, { weekday:'short', day:'numeric', month:'short' })}</small></span><span class="bi-when">${d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'in ' + d + ' days'}</span></div>`;
       });
     }
     return h;
@@ -10963,11 +11154,16 @@
     if(mainGuideAge == null) mainGuideAge = cb && td >= cb.start ? batchAgeOn(cb, td) : 21;
     renderMainGuide();
     openDrawer('#guideModal');
+    // A page, not a window: no dimmed backdrop
+    document.body.classList.add('guide-open');
+    $('#scrim').classList.remove('show');
+    try{ renderGuideSettings(); }catch(e){}
   }
   function renderMainGuide(){
     const cb = currentOrNextBatch(), td = dateKey(new Date());
     $('#guideModalBody').innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit });
     const eb = $('#guideEditBtn'); eb.textContent = mainGuideEdit ? '✓ Done' : '✎ Edit guide'; eb.classList.toggle('on', mainGuideEdit);
+    $('#guideModal').classList.toggle('editing', mainGuideEdit);
   }
   $('#guideModalBody').addEventListener('click', (e)=>{
     const b = e.target.closest('[data-g-age]'); if(!b) return;
@@ -11234,6 +11430,11 @@
   });
   $('#recreateWeighBtn').addEventListener('click', ()=>{ if(batchModalEditing){ const n = batchModalEditing; closeOverlays(); recreateWeighIns(n); } });
   $('#closeBatchModal').addEventListener('click', closeOverlays);
+  $('#batchCancelBtn').addEventListener('click', closeOverlays);
+  $('#eventCancelBtn').addEventListener('click', closeOverlays);
+  const stepSheds = d=>{ const inp = $('#shedCountInput'); const n = Math.max(0, Math.min(30, (parseInt(inp.value, 10) || 0) + d)); inp.value = n || ''; renderShedInputs(n); };
+  $('#shedMinusBtn').addEventListener('click', ()=> stepSheds(-1));
+  $('#shedPlusBtn').addEventListener('click', ()=> stepSheds(1));
   $('#closeBacklogModal').addEventListener('click', closeOverlays);
   $('#backlogSearchInput').addEventListener('input', renderBacklogModalList);
   $('#backlogSortSelect').addEventListener('change', renderBacklogModalList);
@@ -11425,6 +11626,8 @@
     }
   }
   $('#fabReportBtn').addEventListener('click', openNewReport);
+  $('#topReportBtn').addEventListener('click', openNewReport);
+  $('#sbFindInput').addEventListener('input', (e)=>{ sbFindQ = e.target.value.trim().toLowerCase(); renderFrequentTasks(); renderBacklog(); try{ initSortables(); }catch(err){} });
   // ===== Desktop icon rail + Calendar/List/Board tabs in the header (2026-10-10, board redesign) =====
   (function(){
     const rail = $('#appRail'); if(!rail) return;
@@ -11446,8 +11649,10 @@
     $('#sbfNewBatch').addEventListener('click', ()=> $('#openBatchModalBtn').click());
     $('#sbfNewAudit').addEventListener('click', ()=> $('#openEventModalBtn').click());
     function arSync(){
-      const which = isOpen('#mlogPage') ? 'routine' : isOpen('#reportsDrawer') ? 'maint' : sbMode;
-      rail.querySelectorAll('.ar-btn[data-ar="tasks"],.ar-btn[data-ar="batch"],.ar-btn[data-ar="maint"],.ar-btn[data-ar="routine"]').forEach(b=> b.classList.toggle('active', b.dataset.ar === which));
+      const which = isOpen('#mlogPage') ? 'routine' : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
+      rail.querySelectorAll('.ar-btn[data-ar="tasks"],.ar-btn[data-ar="batch"],.ar-btn[data-ar="maint"],.ar-btn[data-ar="routine"],.ar-btn[data-ar="guide"]').forEach(b=> b.classList.toggle('active', b.dataset.ar === which));
+      // Maintenance, Routine and Guide are full pages: the side panel steps aside while one is open
+      document.body.classList.toggle('rail-page', which === 'routine' || which === 'maint' || which === 'guide');
       const src = $('#reportsBadge'), dst = $('#arMaintBadge');
       if(src && dst){ const n = src.classList.contains('hidden') ? '' : src.textContent.trim(); dst.hidden = !n || n === '0'; dst.textContent = n; }
     }
@@ -11464,14 +11669,14 @@
       }
       else if(a === 'maint'){ if(isOpen('#mlogPage')) closeMlog(); if(!isOpen('#reportsDrawer')) $('#reportsBtn').click(); }
       else if(a === 'routine'){ if(!isOpen('#mlogPage')) $('#mlogBtn').click(); }
-      else if(a === 'guide') $('#guideBtn').click();
+      else if(a === 'guide'){ if(isOpen('#mlogPage')) closeMlog(); if(!isOpen('#guideModal')) $('#guideBtn').click(); }
       else if(a === 'history') $('#historyBtn').click();
       else if(a === 'theme') $('#themeToggleBtn').click();
       else if(a === 'settings') $('#settingsBtn').click();
       setTimeout(arSync, 30);
     });
     const mo = new MutationObserver(arSync);
-    ['#mlogPage','#reportsDrawer','#reportsBadge'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
+    ['#mlogPage','#reportsDrawer','#reportsBadge','#guideModal'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
     arSync();
     // Calendar / List / Board: tabs under the header on a computer, the floating switcher elsewhere
     const dock = $('#modeDock'), left = document.querySelector('.topbar .topbar-left'), home = dock ? dock.parentNode : null, next = dock ? dock.nextSibling : null;
@@ -11546,7 +11751,7 @@
   });
   $('#settingsBody').addEventListener('scroll', ()=>{
     const body = $('#settingsBody');
-    const ids = ['stAppearance','stGuide','stWeather','stSync','stWorkers','stData'];
+    const ids = ['stAppearance','stWeather','stSync','stWorkers','stData'];
     let current = ids[0];
     ids.forEach(id=>{ const el = document.getElementById(id); if(el && el.offsetTop - body.offsetTop - 40 <= body.scrollTop) current = id; });
     if(Date.now() < stTabPinnedUntil) return;   // a tab was just tapped: keep it highlighted
@@ -11890,7 +12095,8 @@
     }, { passive:true });
   })();
 
-  $('#fabRefreshBtn').addEventListener('click', async ()=>{
+  // (Refresh removed from the quick-actions menu: syncing runs by itself)
+  if($('#fabRefreshBtn')) $('#fabRefreshBtn').addEventListener('click', async ()=>{
     const btn = $('#fabRefreshBtn');
     if(btn.classList.contains('spinning')) return;
     btn.classList.add('spinning');
