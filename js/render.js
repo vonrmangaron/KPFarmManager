@@ -230,6 +230,13 @@ async function historyPopulatePage() {
   listEl.querySelectorAll('[data-history-delete]').forEach(b => b.addEventListener('click', () => historyDeleteFromUi(b.dataset.historyDelete)));
 }
 
+const HR_SVG=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const HR_ICONS={
+  restore:HR_SVG('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'),
+  download:HR_SVG('<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>'),
+  pin:HR_SVG('<path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>'),
+  trash:HR_SVG('<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>')
+};
 function historyRowHtml(s) {
   const when = new Date(s.timestamp);
   const time = String(when.getHours()).padStart(2,'0') + ':' + String(when.getMinutes()).padStart(2,'0');
@@ -249,7 +256,7 @@ function historyRowHtml(s) {
     <div class="history-row-time">${time}</div>
     <div class="history-row-info">
       <div class="history-row-label">
-        ${pinned ? '<span class="history-pin-chip">📌</span>' : ''}
+        ${pinned ? `<span class="history-pin-chip" title="Pinned — never expires">${HR_ICONS.pin}</span>` : ''}
         <span class="history-row-source">${sourceLabel}</span>
         ${s.label ? `<span class="history-row-sep">·</span><span class="history-row-custom">${escapeHtml(s.label)}</span>` : ''}
         ${batchBadge}
@@ -257,10 +264,10 @@ function historyRowHtml(s) {
       <div class="history-row-summary">${summary}</div>
     </div>
     <div class="history-row-actions">
-      <button type="button" title="Restore this version" data-history-restore="${escapeAttr(s.id)}">↺ Restore</button>
-      <button type="button" title="Download JSON" data-history-download="${escapeAttr(s.id)}">📥</button>
-      <button type="button" title="${pinned?'Unpin':'Pin this version'}" data-history-pin="${escapeAttr(s.id)}">${pinned?'📌':'📍'}</button>
-      <button type="button" class="danger" title="Delete" data-history-delete="${escapeAttr(s.id)}">✕</button>
+      <button type="button" class="hr-restore" title="Restore this version" data-history-restore="${escapeAttr(s.id)}">${HR_ICONS.restore}<span>Restore</span></button>
+      <button type="button" class="hr-ic" title="Download this version (JSON)" aria-label="Download this version" data-history-download="${escapeAttr(s.id)}">${HR_ICONS.download}</button>
+      <button type="button" class="hr-ic${pinned?' on':''}" title="${pinned?'Unpin — it can expire again':'Pin — keep this version for good'}" aria-label="${pinned?'Unpin':'Pin this version'}" aria-pressed="${!!pinned}" data-history-pin="${escapeAttr(s.id)}">${HR_ICONS.pin}</button>
+      <button type="button" class="hr-ic danger" title="Delete this version" aria-label="Delete this version" data-history-delete="${escapeAttr(s.id)}">${HR_ICONS.trash}</button>
     </div>
   </div>`;
 }
