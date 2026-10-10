@@ -1542,7 +1542,7 @@ function renderLoadsModalBody(){
     </div>
     <div class="loads-top">
       ${currentLoadHtml(loadNumberMap)}
-      <div class="lt-tile"><div class="lbl">Received</div><div class="val ok">${tot.rec.length} load${tot.rec.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.recKg)}${tot.recEst?` · ${tot.recEst} without a docket weight`:' on dockets'}</div></div>
+      <div class="lt-tile"><div class="lbl">Received</div><div class="val ok">${tot.rec.length} load${tot.rec.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.recKg+coTotal)}${coTotal>0?` incl. ${fmtFeed(coTotal)} carried over`:tot.recEst?` · ${tot.recEst} without a docket weight`:' on dockets'}</div></div>
       <div class="lt-tile"><div class="lbl">Upcoming</div><div class="val">${tot.up.length} load${tot.up.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.upKg)} planned${nextUp?` · next ${fmtShortNoYear(nextUp.date)}`:''}</div></div>
       <div class="lt-tile"><label class="lbl" for="loadsCarryInput">Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
     </div>`;
@@ -1728,13 +1728,12 @@ function loadsSummaryData(){
 }
 function loadsSummaryText(){
   const d=loadsSummaryData();const batch=(farmData&&farmData.batchNumber)?`Batch ${farmData.batchNumber} · `:'';
-  const ln=[`Feed loads — ${batch}${fmtShort(new Date())}`,'',`RECEIVED (${d.rec.length})`];
+  const ln=[`Feed loads — ${batch}${fmtShort(new Date())}`,'',`RECEIVED (${d.rec.length}${d.co>0?' + carried over':''})`];
+  if(d.co>0)ln.push(`Carried over from last batch · ${fmtFeed(d.co)}`);
   d.rec.forEach(l=>ln.push(`${fmtShortNoYear(l.date)} · ${feedTypeLabel(l.feedType)} · ${l.docket?'docket '+l.docket:'no docket'} · ${l.actualKg!=null?fmtFeed(l.actualKg):fmtFeed(l.plannedKg)+' est'}`));
-  ln.push(`Total received: ${fmtFeed(d.recKg)}`,'',`UPCOMING (${d.up.length})`);
+  ln.push(`Total received${d.co>0?' (incl. carried over)':''}: ${fmtFeed(d.recKg+d.co)}`,'',`UPCOMING (${d.up.length})`);
   d.up.forEach(l=>ln.push(`${fmtShortNoYear(l.date)} · ${feedTypeLabel(l.feedType)} · Sheds ${loadPairsText(l)||'—'} · ${fmtFeed(l.plannedKg)}`));
   ln.push(`Total upcoming: ${fmtFeed(d.upKg)}`);
-  if(d.co>0)ln.push('',`Carried over: ${fmtFeed(d.co)}`);
-  ln.push(`Batch total (received + upcoming${d.co>0?' + carried over':''}): ${fmtFeed(d.recKg+d.upKg+d.co)}`);
   return ln.join('\n');
 }
 function openLoadsSummary(){
@@ -1744,13 +1743,12 @@ function openLoadsSummary(){
   const upRows=d.up.map(l=>{const late=dateOnly(l.date)<today;return `<tr${late?' class="ls-late"':''}><td>${fmtShortNoYear(l.date)}${late?' <span class="ls-tag">overdue</span>':dateOnly(l.date).getTime()===today.getTime()?' <span class="ls-tag today">today</span>':''}</td><td>${feedTypeTagHtml(l.feedType)}</td><td>${loadPairsText(l)||'—'}</td><td class="num">${fmtFeed(l.plannedKg)}</td></tr>`;}).join('');
   const batch=(farmData&&farmData.batchNumber)?`Batch ${escapeHtml(String(farmData.batchNumber))} · `:'';
   body.innerHTML=`<div class="ls-sub">${batch}as of ${fmtShort(new Date())}</div>
-    <section class="ls-sec rec"><div class="ls-h"><span class="ls-dot"></span><b>Received</b><span class="ls-n">${d.rec.length} load${d.rec.length===1?'':'s'}</span></div>
-      ${d.rec.length?`<table class="ls-table"><thead><tr><th>Date</th><th>Type</th><th>Docket</th><th class="num">Actual</th></tr></thead><tbody>${recRows}</tbody></table>`:'<div class="ls-empty">No loads received yet.</div>'}
-      <div class="ls-total"><span>Total received</span><b>${fmtFeed(d.recKg)}</b></div></section>
+    <section class="ls-sec rec"><div class="ls-h"><span class="ls-dot"></span><b>Received</b><span class="ls-n">${d.rec.length} load${d.rec.length===1?'':'s'}${d.co>0?' + carried over':''}</span></div>
+      ${d.rec.length||d.co>0?`<table class="ls-table"><thead><tr><th>Date</th><th>Type</th><th>Docket</th><th class="num">Actual</th></tr></thead><tbody>${d.co>0?`<tr class="ls-co"><td colspan="3">Carried over from last batch <span class="ls-muted">· withdrawal</span></td><td class="num">${fmtFeed(d.co)}</td></tr>`:''}${recRows}</tbody></table>`:'<div class="ls-empty">No loads received yet.</div>'}
+      <div class="ls-total"><span>Total received${d.co>0?' (incl. carried over)':''}</span><b>${fmtFeed(d.recKg+d.co)}</b></div></section>
     <section class="ls-sec up"><div class="ls-h"><span class="ls-dot"></span><b>Upcoming</b><span class="ls-n">${d.up.length} load${d.up.length===1?'':'s'}</span></div>
       ${d.up.length?`<table class="ls-table"><thead><tr><th>Date</th><th>Type</th><th>Sheds</th><th class="num">Planned</th></tr></thead><tbody>${upRows}</tbody></table>`:'<div class="ls-empty">Nothing else planned.</div>'}
       <div class="ls-total"><span>Total upcoming</span><b>${fmtFeed(d.upKg)}</b></div></section>
-    <div class="ls-foot"><span>${d.co>0?`Carried over ${fmtFeed(d.co)}`:''}</span><span>Batch total <b>${fmtFeed(d.recKg+d.upKg+d.co)}</b></span></div>
     <div class="ls-actions"><button type="button" class="ls-copy" id="loadsSumCopy">Copy summary</button><button type="button" class="ls-close" id="loadsSumDone">Close</button></div>`;
   document.getElementById('loadsSumCopy').addEventListener('click',()=>{
     const txt=loadsSummaryText();
