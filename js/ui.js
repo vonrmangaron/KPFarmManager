@@ -1436,6 +1436,7 @@ function openLoadsModal(){
   closeSettingsDrawer();loadsModalState.open=true;
   const m=document.getElementById('loadsModal');
   if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}
+  const lb=document.getElementById('loadsBody');if(lb)lb.scrollTop=0;
   renderLoadsModalBody();
 }
 function closeLoadsModal(){

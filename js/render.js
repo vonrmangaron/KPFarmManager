@@ -1079,6 +1079,8 @@ function renderViewDock(){
 function render(){
   try{
     const pageKey=currentPageKey();
+    // Went to another page while a tool was showing: the tool closes
+    if(typeof toolPageOpen!=='undefined'&&toolPageOpen&&toolPageKey&&pageKey!==toolPageKey){toolPageKey=null;closeToolPages();}
     if(pageKey!==lastPageKey){
       const appEl=document.getElementById('app');
       if(appEl&&lastPageKey!==null){

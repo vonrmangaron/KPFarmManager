@@ -384,13 +384,17 @@ const TOOL_PAGES={
   mortModal:{btn:'mortBtn',close:()=>closeMortModal(),title:'Mortality',sub:'Total morts per shed'},
   compareFeedModal:{btn:'toolsCompareBtn',close:()=>closeCompareModal(),title:'Compare feed',sub:'Feed balance for every pair, side by side'},
 };
-let toolPageOpen=null;
+let toolPageOpen=null,toolPageKey=null;
 function syncToolPages(changed){
   const open=Object.keys(TOOL_PAGES).filter(id=>document.getElementById(id)?.classList.contains('open'));
   // Only one tool page at a time: the newest one stays
   if(open.length>1){const keep=changed&&open.includes(changed)?changed:open[open.length-1];open.filter(id=>id!==keep).forEach(id=>{try{TOOL_PAGES[id].close();}catch(e){}});toolPageOpen=keep;}
   else toolPageOpen=open[0]||null;
+  // remember which page was showing, so going to any other page closes the tool
+  if(toolPageOpen&&changed)toolPageKey=typeof currentPageKey==='function'?currentPageKey():null;
+  if(!toolPageOpen)toolPageKey=null;
   document.body.classList.toggle('tool-open',!!toolPageOpen);
+  if(toolPageOpen&&changed){const m=document.getElementById(toolPageOpen);const b=m&&m.querySelector('.compare-modal-body');if(b)b.scrollTop=0;}
   // the page sits under the app header, which shows the tool's name
   const ph=document.getElementById('pageHeader');if(ph)document.body.style.setProperty('--ph-h',ph.offsetHeight+'px');
   if(typeof updatePageHeader==='function')updatePageHeader();
@@ -400,13 +404,15 @@ function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getEl
 document.addEventListener('DOMContentLoaded',()=>{
   let rail=false;try{rail=localStorage.getItem(SB_RAIL_KEY)==='1';}catch(e){}setSidebarRail(rail);
   const obs=new MutationObserver(muts=>{let changed=null;muts.forEach(m=>{if(m.target&&m.target.id&&TOOL_PAGES[m.target.id]&&m.target.classList.contains('open'))changed=m.target.id;});syncToolPages(changed);});
-  Object.keys(TOOL_PAGES).forEach(id=>{const m=document.getElementById(id);if(m){m.classList.add('tool-page');obs.observe(m,{attributes:true,attributeFilter:['class']});}});
+  // Each tool is a real section of the main area (after #app), shown in place of the page — not a window on top
+  const app=document.getElementById('app');
+  Object.keys(TOOL_PAGES).forEach(id=>{const m=document.getElementById(id);if(m){m.classList.add('tool-page');if(app&&app.parentElement)app.parentElement.insertBefore(m,app.nextSibling);obs.observe(m,{attributes:true,attributeFilter:['class']});}});
   const nav=document.getElementById('sidebarNav');if(nav)new MutationObserver(()=>syncToolPages(null)).observe(nav,{childList:true});
 });
 // Going anywhere else closes the tool page
 document.addEventListener('click',e=>{
   if(e.target.closest('#sbRailBtn')){document.body.classList.add('sb-anim');setSidebarRail(!document.body.classList.contains('sb-rail'));clearTimeout(window.__sbAnimT);window.__sbAnimT=setTimeout(()=>document.body.classList.remove('sb-anim'),360);return;}
   if(!toolPageOpen)return;
-  const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info]');
+  const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info],[data-alert-shed],[data-alert-feed],[data-mgr-feed],[data-goto-shedgroup]');
   if(nav&&!e.target.closest('.compare-modal'))closeToolPages();
 },true);
