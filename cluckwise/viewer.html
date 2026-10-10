@@ -908,6 +908,9 @@
   }
 
   .task-doneby{ display:block; font-size:12px; font-weight:700; color:var(--success); margin-top:2px; }
+
+  .task-status-btn.locked{ background:var(--surface-soft) !important; color:var(--muted) !important; border:1.5px dashed var(--line) !important; }
+  .task-status-btn.locked svg{ width:16px; height:16px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -1415,9 +1418,13 @@
   Object.assign(TRANSLATIONS.es, {"noteLbl": "Nota", "sortSort": "Ordenar", "sortAZ": "A–Z", "sortTip": "Ordenar por nombre (las urgentes quedan arriba)", "sortOnMsg": "Orden A–Z · las urgentes quedan arriba", "sortOffMsg": "Orden del encargado"});
   Object.assign(TRANSLATIONS.tl, {"noteLbl": "Tala", "sortSort": "Ayusin", "sortAZ": "A–Z", "sortTip": "Ayusin ayon sa pangalan (nasa itaas ang urgent)", "sortOnMsg": "Naka-A–Z · nasa itaas ang urgent", "sortOffMsg": "Balik sa ayos ng manager"});
   Object.assign(TRANSLATIONS.id, {"noteLbl": "Catatan", "sortSort": "Urutkan", "sortAZ": "A–Z", "sortTip": "Urutkan menurut nama (tugas penting tetap di atas)", "sortOnMsg": "Urut A–Z · tugas penting tetap di atas", "sortOffMsg": "Kembali ke urutan manajer"});
+  Object.assign(TRANSLATIONS.en, {"mcLocked": "Finish the {n} maintenance job(s) first"});
   Object.assign(TRANSLATIONS.en, {"mcTitle": "Maintenance for today", "mcTitleDay": "Maintenance", "mcSub": "The maintenance jobs set for today. Tap a photo to see it full size.", "mcBack": "Today's tasks", "mcLeft": "to do", "mcDoneN": "done", "mcDone": "Done checking", "mcDoneSub": "Ticks the check and goes back to Today", "mcBackOnly": "Back to today's tasks", "mcEmpty": "No maintenance jobs set for today.", "mcAllDone": "All maintenance jobs done.", "mcAllDoneShort": "All done", "mcNone": "None set", "mcCard": "Maintenance for today"});
+  Object.assign(TRANSLATIONS.es, {"mcLocked": "Termina primero los {n} trabajo(s) de mantenimiento"});
   Object.assign(TRANSLATIONS.es, {"mcTitle": "Mantenimiento de hoy", "mcTitleDay": "Mantenimiento", "mcSub": "Los trabajos de mantenimiento de hoy. Toca una foto para verla completa.", "mcBack": "Tareas de hoy", "mcLeft": "pendientes", "mcDoneN": "hechos", "mcDone": "Revisión hecha", "mcDoneSub": "Marca la revisión y vuelve a Hoy", "mcBackOnly": "Volver a las tareas de hoy", "mcEmpty": "No hay trabajos de mantenimiento para hoy.", "mcAllDone": "Todo el mantenimiento está hecho.", "mcAllDoneShort": "Todo hecho", "mcNone": "Ninguno", "mcCard": "Mantenimiento de hoy"});
+  Object.assign(TRANSLATIONS.tl, {"mcLocked": "Tapusin muna ang {n} maintenance na gawain"});
   Object.assign(TRANSLATIONS.tl, {"mcTitle": "Maintenance ngayong araw", "mcTitleDay": "Maintenance", "mcSub": "Ang mga maintenance na gawain ngayong araw. I-tap ang litrato para makita nang buo.", "mcBack": "Mga gawain ngayon", "mcLeft": "gagawin", "mcDoneN": "tapos", "mcDone": "Tapos nang tingnan", "mcDoneSub": "Itsi-tsek ito at babalik sa Ngayon", "mcBackOnly": "Bumalik sa mga gawain ngayon", "mcEmpty": "Walang maintenance na gawain ngayong araw.", "mcAllDone": "Tapos na lahat ng maintenance.", "mcAllDoneShort": "Tapos lahat", "mcNone": "Wala", "mcCard": "Maintenance ngayong araw"});
+  Object.assign(TRANSLATIONS.id, {"mcLocked": "Selesaikan dulu {n} pekerjaan perawatan"});
   Object.assign(TRANSLATIONS.id, {"mcTitle": "Perawatan hari ini", "mcTitleDay": "Perawatan", "mcSub": "Pekerjaan perawatan untuk hari ini. Ketuk foto untuk melihat ukuran penuh.", "mcBack": "Tugas hari ini", "mcLeft": "belum", "mcDoneN": "selesai", "mcDone": "Selesai dicek", "mcDoneSub": "Mencentang cek ini dan kembali ke Hari ini", "mcBackOnly": "Kembali ke tugas hari ini", "mcEmpty": "Tidak ada pekerjaan perawatan hari ini.", "mcAllDone": "Semua perawatan selesai.", "mcAllDoneShort": "Semua selesai", "mcNone": "Tidak ada", "mcCard": "Perawatan hari ini"});
   Object.assign(TRANSLATIONS.en, {"navGuide": "Guide", "issTitle": "Issues", "issMine": "Mine", "issAll": "All farm", "issOpenN": "{n} open", "issNone": "No open issues", "issNoneMine": "You haven't sent any reports yet.", "issOpen": "Open", "issProgress": "In progress", "issResolved": "Resolved", "issFixed": "Fixed"});
   Object.assign(TRANSLATIONS.es, {"navGuide": "Guía", "issTitle": "Problemas", "issMine": "Míos", "issAll": "Toda la granja", "issOpenN": "{n} abiertos", "issNone": "No hay problemas abiertos", "issNoneMine": "Aún no has enviado reportes.", "issOpen": "Abierto", "issProgress": "En curso", "issResolved": "Resuelto", "issFixed": "Solución"});
@@ -3073,9 +3080,18 @@
       });
     }
     const statusBtn = card.querySelector('.task-status-btn');
+    // The maintenance check can only be ticked once every maintenance job that day is done
+    const mcLeftN = mcheck && tk.status !== 'done' ? maintCounts(tk.date).left : 0;
+    if(mcLeftN){
+      statusBtn.classList.add('locked');
+      statusBtn.title = t('mcLocked').replace('{n}', mcLeftN);
+      statusBtn.setAttribute('aria-label', statusBtn.title);
+      statusBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+    }
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(!ghPath){ showToast(t('connectToSave'), true); return; }
+      if(mcLeftN){ showToast(t('mcLocked').replace('{n}', mcLeftN), true); openMaintPage(tk.id); return; }
       toggleTaskDoneInViewer(tk.id);
     });
     return card;
