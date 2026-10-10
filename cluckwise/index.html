@@ -5247,7 +5247,7 @@
     const urgent = r.urgent && sc !== 'resolved';
     const seen = seenReportIds();
     const isNew = !!seen && !seen.has(r.id) && sc !== 'resolved';
-    const photo = (r.photoUrls || [])[0];
+    const photo = rpPhoto(r);
     const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
     const today = dateKey(new Date());
     const el = document.createElement('div');
@@ -5291,7 +5291,7 @@
       return;
     }
     const sc = rpStatusClass(r);
-    const photo = (r.photoUrls || [])[0];
+    const photo = rpPhoto(r);
     const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
     const st = (v, label) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}" title="Set to ${label}">${label}</button>`;
     pane.innerHTML = `
@@ -5333,7 +5333,7 @@
     if(photo){
       const a = pane.querySelector('.rpd-photo'), img = a.querySelector('img'), note = a.querySelector('.rpd-photo-note');
       a.href = photo;
-      img.onerror = ()=>{ img.hidden = true; note.hidden = false; a.removeAttribute('href'); };
+      img.onerror = ()=>{ if(!(r.photoUrls || []).length){ a.remove(); return; } img.hidden = true; note.hidden = false; a.removeAttribute('href'); };
       img.src = photo;
     }
     if(task){
@@ -11209,6 +11209,15 @@
   const PHOTO_WORKER_URL = 'https://cluckwise-photos.vonrmangaron.workers.dev';
   const NR_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   let nr = { type:null, urgent:false, loc:'shed', file:null };
+  // A report's photo. If the link was lost (the upload looked like it failed on a weak signal but the
+  // photo did arrive), try the photo's usual address; reports from before photos existed have none.
+  // (literals, not the consts below: this can run while the page is still loading)
+  function rpPhoto(r){
+    const u = (r && r.photoUrls || [])[0];
+    if(u) return u;
+    if(!r || !r.id || !ghFarmName || String(r.createdAt || '') < '2026-10-03') return '';
+    return `https://cluckwise-photos.vonrmangaron.workers.dev/photo/${nrFarmSlug()}/${r.id}.jpg`;
+  }
   function nrFarmSlug(){ return ghFarmName ? sanitizeFarmFileName(ghFarmName).replace('.json','') : 'farm'; }
   function nrUpdate(){
     const other = ($('#nrOtherInput').value || '').trim();
@@ -11276,8 +11285,13 @@
         const res = await fetch(report.photoUrls[0], { method:'PUT', headers:{ 'Content-Type':'image/jpeg' }, body: blob });
         if(!res.ok && res.status !== 409) throw new Error('upload ' + res.status);
       }catch(e){
-        report.photoUrls = []; report.updatedAt = new Date().toISOString(); scheduleReportsPush(); renderAll();
-        showToast('Report saved, but the photo could not be uploaded.', true);
+        // The photo may have arrived even though the reply was lost; keep the link if it did
+        let arrived = false;
+        try{ arrived = (await fetch(report.photoUrls[0], { method:'GET', cache:'no-store' })).ok; }catch(e2){}
+        if(!arrived){
+          report.photoUrls = []; report.updatedAt = new Date().toISOString(); scheduleReportsPush(); renderAll();
+          showToast('Report saved, but the photo could not be uploaded.', true);
+        }
       }
     }
   }

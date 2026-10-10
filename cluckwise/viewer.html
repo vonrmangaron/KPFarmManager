@@ -3734,7 +3734,9 @@
     const el = document.createElement('div');
     el.className = 'mtt-card' + (done ? ' res' : '') + (tk.priority === 'high' && !done ? ' urgent' : '');
     el.dataset.id = tk.id;
-    const photos = r ? (r.photoUrls || []).filter(Boolean) : [];
+    // A lost link (weak signal during upload) falls back to the photo's usual address; the wrench shows if there is none
+    let photos = r ? (r.photoUrls || []).filter(Boolean) : [];
+    if(r && !photos.length && String(r.createdAt || '') >= '2026-10-03') photos = [reportPhotoUrl(r.id)];
     el.innerHTML = `<button type="button" class="mtt-ph${photos.length ? '' : ' nophoto'}">${MC_WRENCH}</button><div class="mtt-body"><div class="mtt-type"></div><div class="mtt-place" hidden></div><div class="mtt-notes" hidden></div><div class="mtt-who" hidden></div></div><button class="task-status-btn ${done ? 'done' : 'open'}" type="button">${done ? UNDO_ICON_SVG : CHECK_ICON_SVG}</button>`;
     const ph = el.querySelector('.mtt-ph');
     if(photos.length){
