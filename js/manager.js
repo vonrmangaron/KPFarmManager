@@ -127,7 +127,7 @@ function renderHomeView(){
       <div class="mgr-silos"><span class="mgr-k">Silos run low (with booked loads)</span>${siloRows}</div>
       <div class="mgr-actions">
         <button type="button" class="mgr-btn primary" data-mgr-loads>Feed loads</button>
-        <button type="button" class="mgr-btn" data-mgr-feed="${firstLow?firstLow.g:1}" title="Opens the pair's feed plan: tap a day to add a test delivery">Test a delivery${firstLow?` · ${escapeHtml(pairLabel(firstLow.g))}`:''}</button>
+        <button type="button" class="mgr-btn" data-mgr-feed="${firstLow?firstLow.g:1}" data-mgr-compare="1" title="Opens Compare feed with this pair: tap a day to add a test delivery">Test a delivery${firstLow?` · ${escapeHtml(pairLabel(firstLow.g))}`:''}</button>
       </div>
     </section>`;
   const weekHtml=`<section class="mgr-card mgr-week">
@@ -361,7 +361,10 @@ function pairOverviewHtml(g){
   const weekHtml=`<section class="mgr-card mgr-week"><span class="mgr-k">This week · ${escapeHtml(pairLabel(g))}</span>${week.length?week.map(w=>`<div class="mgr-week-row"><span class="mgr-week-day">${escapeHtml(mgrWhen(w.date))}</span><span>${escapeHtml([...new Set(w.parts)].join(' · '))}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups this week.</p>'}</section>`;
   return `<div class="pair-overview">${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
 }
-document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);activeTab='g'+g;shedViewByGroup[g]='planner';saveShedViews();render();}});
+document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);
+  // Home's Test a delivery opens Compare feed with that pair selected (tablet and desktop); a phone gets the pair's feed plan
+  if(f.dataset.mgrCompare&&typeof isCompareAvailable==='function'&&isCompareAvailable()){openCompareModal([g]);return;}
+  activeTab='g'+g;shedViewByGroup[g]='planner';saveShedViews();render();}});
 
 // Predictions now live on each pair's page: anything that used to open the
 // Predictions page opens the matching tab instead.
@@ -413,6 +416,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 document.addEventListener('click',e=>{
   if(e.target.closest('#sbRailBtn')){document.body.classList.add('sb-anim');setSidebarRail(!document.body.classList.contains('sb-rail'));clearTimeout(window.__sbAnimT);window.__sbAnimT=setTimeout(()=>document.body.classList.remove('sb-anim'),360);return;}
   if(!toolPageOpen)return;
-  const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info],[data-alert-shed],[data-alert-feed],[data-mgr-feed],[data-goto-shedgroup]');
+  const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info],[data-alert-shed],[data-alert-feed],[data-mgr-feed]:not([data-mgr-compare]),[data-goto-shedgroup]');
   if(nav&&!e.target.closest('.compare-modal'))closeToolPages();
 },true);

@@ -1926,11 +1926,12 @@ function renderLoadModal(){
 }
 
 /* ---------- Compare modal ---------- */
-function openCompareModal(){
+function openCompareModal(groups){
   if(!isCompareAvailable()){showToast('📱 Comparison is only available on tablet and desktop screens.',true);return;}
   closeSettingsDrawer();inlineDeliveryState=null;inlinePickupState=null;feedCompareState.modalOpen=true;
   // Always open with nothing selected — the user picks which groups to compare.
-  feedCompareState.selectedGroups=[];
+  // A pair can be passed in (e.g. Home's Test a delivery) — otherwise nothing is selected
+  feedCompareState.selectedGroups=Array.isArray(groups)?groups.map(Number).filter(g=>[1,2,3,4].includes(g)):[];
   feedCompareState.layoutMode='auto';
   feedCompareState.visibleColumns={date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true};
   const m=document.getElementById('compareFeedModal');
