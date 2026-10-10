@@ -231,6 +231,8 @@
 
   .frequent-list{display:flex;flex-direction:column;gap:8px;min-height:20px;max-height:220px;overflow-y:auto;padding-right:2px;}
   .frequent-chip{border-style:dashed !important;}
+  .mc-chip{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:800; line-height:1.5; vertical-align:1px; background:var(--danger-soft, #FDE8E4); color:var(--danger, #DC4A36); white-space:nowrap; }
+  .mc-chip.none{ background:var(--success-soft, #DFF4EF); color:var(--success, #0F8A75); }
 
   .batches-list, .events-list{display:flex;flex-direction:column;gap:14px;}
   .batches-list > *, .events-list > *{ margin-bottom:14px; }
@@ -3656,6 +3658,20 @@
     if(aDone !== bDone) return aDone - bDone;
     return (a.order||0) - (b.order||0);
   }
+  // Daily maintenance check: one built-in frequent task (fixed id, so devices never add it twice).
+  // Added once per farm; if the manager deletes it, it stays deleted (settings.mcheckTpl).
+  const MCHECK_TPL_ID = 'tpl-mcheck';
+  const MCHECK_NAME = 'Check maintenance for today';
+  function isMaintCheckTask(t){ const n = (t && t.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
+  function seedMaintCheckTemplate(){
+    if(!ghFarmName || settings.mcheckTpl) return;
+    setTimeout(()=>{
+      if(settings.mcheckTpl) return;
+      settings.mcheckTpl = 1;
+      if(!frequentTemplates.some(f=> f.id === MCHECK_TPL_ID || isMaintCheckTask(f))) frequentTemplates.push({ id: MCHECK_TPL_ID, name: MCHECK_NAME, icon: '🔧' });
+      persist(); renderAll();
+    }, 0);
+  }
   function migrateTaskOrder(){
     let needsOrder = false;
     tasks.forEach(t=>{ if(typeof t.order !== 'number') needsOrder = true; });
@@ -3941,6 +3957,7 @@
     frequentTemplates = d.frequentTemplates;
     maintenance = d.maintenance || [];
     migrateTaskOrder();
+    seedMaintCheckTemplate();
     applySettings();
     // Don't wipe what the user is typing into an inline "+ Add task" box;
     // the data is already updated and the next render will show it.
@@ -4394,6 +4411,7 @@
       // Opening view applies once per launch; later syncs must not move the user off their current view.
       if(!openingViewApplied){ viewMode = openingViewMode(); openingViewApplied = true; syncViewButtons(); }
       migrateTaskOrder();
+      seedMaintCheckTemplate();
       applySettings(); updateBatchColorDefault(); updateEventColorDefault(); renderAll();
     }catch(e){ showToast('Could not read that synced data.', true); }
   }
@@ -5900,6 +5918,11 @@
     closeAllTaskMenus();
   }, true);
 
+  // Open problems on the farm, shown on the maintenance check task (workers open the list in the Viewer)
+  function mcheckChipHtml(){
+    const n = (reports || []).filter(r=> r.status !== 'Resolved').length;
+    return `<span class="mc-chip${n ? '' : ' none'}" title="${n ? n + ' open problem' + (n === 1 ? '' : 's') + ' — workers see them with photos when they open this task in the Viewer' : 'No open problems'}">${n ? n + ' open' : 'All clear'}</span>`;
+  }
   function buildTaskCard(task, selectable, opts){
     opts = opts || {};
     const card = document.createElement('div');
@@ -5927,7 +5950,7 @@
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
-        <span class="task-body"><span class="task-name"></span>${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
+        <span class="task-body"><span class="task-name"></span>${isMaintCheckTask(task) ? mcheckChipHtml() : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
