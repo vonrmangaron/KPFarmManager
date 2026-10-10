@@ -2519,6 +2519,7 @@
   .rp-search svg{ width:16px; height:16px; flex-shrink:0; }
   .rp-search input{ flex:1; min-width:0; border:none; background:transparent; outline:none; font:13.5px 'Inter',sans-serif; color:var(--ink); }
   .rp-search:focus-within{ border-color:var(--primary); background:var(--surface); }
+  .rp-head-btn.primary{ background:var(--primary); border-color:var(--primary); color:#241A08; font-weight:700; }
   .rp-head-btn{ height:40px; padding:0 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:600 13px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; }
   .rp-head-btn:hover{ border-color:var(--primary); }
   .mt-page .rp-alert-btn{ height:40px; border-radius:10px; padding:0 14px; font-size:13px; }
@@ -3006,6 +3007,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
+    <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">+ New report</button>
     <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
     <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
     <button type="button" class="rp-close" id="closeReports" aria-label="Close" title="Close">✕</button>
@@ -3528,24 +3530,12 @@
   <div class="form-modal-body nr-body">
     <label>Photo <span class="nr-opt">(optional)</span></label>
     <label class="nr-photo" id="nrPhotoBox">
-      <input type="file" accept="image/*" capture="environment" id="nrPhotoInput" hidden>
-      <span class="nr-photo-empty" id="nrPhotoEmpty">📷 Tap to add a photo</span>
+      <input type="file" accept="image/*" id="nrPhotoInput" hidden>
+      <span class="nr-photo-empty" id="nrPhotoEmpty">📷 Add a photo — or skip it, you can save without one</span>
       <img id="nrPhotoPreview" alt="" hidden>
     </label>
     <label>What's the problem?</label>
-    <div class="nr-types" id="nrTypes">
-      <button type="button" class="nr-type" data-type="Feed Spill"><span>🌾</span>Feed spill</button>
-      <button type="button" class="nr-type" data-type="Feeder Line/Auger"><span>⚙️</span>Feeder line / auger</button>
-      <button type="button" class="nr-type" data-type="Water Leak"><span>💧</span>Water leak</button>
-      <button type="button" class="nr-type" data-type="Fan"><span>🌬️</span>Fan</button>
-      <button type="button" class="nr-type" data-type="Pop Door"><span>🚪</span>Pop door</button>
-      <button type="button" class="nr-type" data-type="Silo"><span>🛢️</span>Silo</button>
-      <button type="button" class="nr-type" data-type="Safety"><span>⚠️</span>Safety</button>
-      <button type="button" class="nr-type" data-type="Lighting"><span>💡</span>Lighting</button>
-      <button type="button" class="nr-type" data-type="Electricity"><span>⚡</span>Electricity</button>
-      <button type="button" class="nr-type" data-type="Biosecurity"><span>🛡️</span>Biosecurity</button>
-      <button type="button" class="nr-type nr-other" data-type="Other"><span>❓</span>Others</button>
-    </div>
+    <div class="nr-types" id="nrTypes"></div>
     <input type="text" id="nrOtherInput" maxlength="40" placeholder="Type the problem, e.g. Broken gate" hidden>
     <label>How urgent?</label>
     <div class="nr-seg" id="nrUrgSeg"><button type="button" class="active" data-urgent="0">Can wait</button><button type="button" data-urgent="1">🔴 Urgent</button></div>
@@ -11231,9 +11221,13 @@
     $('#nrHint').textContent = miss.length ? 'Still needed: ' + miss.join(', ') : '';
   }
   function openNewReport(){
+    const fromMt = $('#reportsDrawer').classList.contains('open');
     closeOverlays();
-    nr = { type:null, urgent:false, loc:'shed', file:null };
-    document.querySelectorAll('#nrTypes .nr-type').forEach(b=> b.classList.remove('selected'));
+    nr = { type:null, urgent:false, loc:'shed', file:null, fromMt };
+    // The manager's own problem list (Maintenance › Problem types), then Other
+    const box = $('#nrTypes'); box.innerHTML = '';
+    problemTypes().forEach(p=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'nr-type'; b.dataset.type = p.name; b.textContent = p.name; box.appendChild(b); });
+    const ob = document.createElement('button'); ob.type = 'button'; ob.className = 'nr-type nr-other'; ob.dataset.type = 'Other'; ob.textContent = 'Other'; box.appendChild(ob);
     $('#nrOtherInput').value = ''; $('#nrOtherInput').hidden = true;
     document.querySelectorAll('#nrUrgSeg button').forEach(b=> b.classList.toggle('active', b.dataset.urgent === '0'));
     document.querySelectorAll('#nrLocSeg button').forEach(b=> b.classList.toggle('active', b.dataset.loc === 'shed'));
@@ -11278,7 +11272,8 @@
     scheduleReportsPush();
     closeOverlays();
     renderAll();
-    showToast('Report saved.');
+    if(nr.fromMt) openReportsDrawer(id);
+    showToast(file ? 'Report saved.' : 'Report saved without a photo.');
     if(report.photoUrls.length){
       try{
         const blob = await nrShrink(file);
@@ -11296,6 +11291,7 @@
     }
   }
   $('#fabReportBtn').addEventListener('click', openNewReport);
+  $('#rpNewBtn').addEventListener('click', openNewReport);
   $('#closeNewReportModal').addEventListener('click', closeOverlays);
   $('#nrTypes').addEventListener('click', (e)=>{
     const b = e.target.closest('.nr-type'); if(!b) return;
