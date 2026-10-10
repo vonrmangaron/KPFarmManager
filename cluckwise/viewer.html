@@ -807,6 +807,7 @@
   .mc-meta.ok{ background:var(--success-soft); color:var(--success); }
   .task-card.done .mc-meta{ opacity:.6; }
   .task-card.mc-card{ cursor:pointer; }
+  .mc-open{ flex-shrink:0; width:42px; text-align:center; font-size:26px; line-height:1; color:var(--muted); }
   .mtt-page{ padding-top:14px; }
   .mtt-back{ display:inline-flex; align-items:center; gap:4px; height:42px; padding:0 14px 0 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:14px; cursor:pointer; box-shadow:var(--shadow-sm); }
   .mtt-back svg{ width:20px; height:20px; }
@@ -814,7 +815,7 @@
   .mtt-title{ margin:16px 2px 2px; font-family:'Sora',sans-serif; font-weight:800; font-size:23px; color:var(--ink); }
   .mtt-sub{ margin:0 2px 12px; font-size:13.5px; color:var(--muted); }
   .mtt-note{ display:flex; gap:8px; padding:10px 12px; margin-bottom:12px; border-radius:12px; background:var(--primary-soft); border:1px solid var(--primary); font-size:13.5px; color:var(--ink); white-space:pre-wrap; }
-  .mtt-stats{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+  .mtt-stats{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-bottom:12px; }
   .mtt-stat{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px; }
   .mtt-stat b{ display:block; font-family:'Sora',sans-serif; font-size:21px; font-weight:800; line-height:1.2; font-variant-numeric:tabular-nums; }
   .mtt-stat span{ font-size:12px; font-weight:700; color:var(--muted); }
@@ -839,6 +840,11 @@
   .mtt-who{ font-size:12.5px; color:var(--muted); }
   .mtt-task{ font-size:12.5px; font-weight:700; color:var(--primary-dark); }
   .mtt-fix{ font-size:12.5px; font-weight:600; color:var(--success); }
+  .mtt-card > .task-status-btn{ align-self:center; flex-shrink:0; }
+  .mtt-card.res{ opacity:.7; }
+  .mtt-card.res .mtt-type{ text-decoration:line-through; color:var(--muted); }
+  .mtt-who .task-people{ margin-top:2px; }
+  .mtt-empty.none{ background:var(--surface-soft); color:var(--muted); }
   .mtt-empty{ padding:22px 16px; border-radius:16px; background:var(--success-soft); color:var(--success); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; text-align:center; }
   .mtt-fixed-tog{ margin:8px 0 0; padding:10px 2px; border:none; background:none; text-align:left; font-size:12.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
   .mtt-foot{ margin-top:18px; }
@@ -1414,10 +1420,10 @@
   Object.assign(TRANSLATIONS.es, {"noteLbl": "Nota", "sortSort": "Ordenar", "sortAZ": "A–Z", "sortTip": "Ordenar por nombre (las urgentes quedan arriba)", "sortOnMsg": "Orden A–Z · las urgentes quedan arriba", "sortOffMsg": "Orden del encargado"});
   Object.assign(TRANSLATIONS.tl, {"noteLbl": "Tala", "sortSort": "Ayusin", "sortAZ": "A–Z", "sortTip": "Ayusin ayon sa pangalan (nasa itaas ang urgent)", "sortOnMsg": "Naka-A–Z · nasa itaas ang urgent", "sortOffMsg": "Balik sa ayos ng manager"});
   Object.assign(TRANSLATIONS.id, {"noteLbl": "Catatan", "sortSort": "Urutkan", "sortAZ": "A–Z", "sortTip": "Urutkan menurut nama (tugas penting tetap di atas)", "sortOnMsg": "Urut A–Z · tugas penting tetap di atas", "sortOffMsg": "Kembali ke urutan manajer"});
-  Object.assign(TRANSLATIONS.en, {"mcTitle": "Maintenance for today", "mcSub": "Open problems on the farm. Tap a photo to see it full size.", "mcBack": "Today's tasks", "mcToFix": "to fix", "mcProg": "in progress", "mcFixedToday": "fixed today", "mcFixedSec": "Fixed today", "mcDone": "Done checking", "mcDoneSub": "Ticks this task and goes back to Today", "mcBackOnly": "Back to today's tasks", "mcAllClear": "No open problems. All clear.", "mcAllClearShort": "All clear", "mcReportedBy": "Reported by {n}", "mcTask": "Task", "mcChecked": "Maintenance checked"});
-  Object.assign(TRANSLATIONS.es, {"mcTitle": "Mantenimiento de hoy", "mcSub": "Problemas abiertos en la granja. Toca una foto para verla completa.", "mcBack": "Tareas de hoy", "mcToFix": "por arreglar", "mcProg": "en curso", "mcFixedToday": "arreglados hoy", "mcFixedSec": "Arreglados hoy", "mcDone": "Revisión hecha", "mcDoneSub": "Marca esta tarea y vuelve a Hoy", "mcBackOnly": "Volver a las tareas de hoy", "mcAllClear": "No hay problemas abiertos. Todo bien.", "mcAllClearShort": "Todo bien", "mcReportedBy": "Reportado por {n}", "mcTask": "Tarea", "mcChecked": "Mantenimiento revisado"});
-  Object.assign(TRANSLATIONS.tl, {"mcTitle": "Maintenance ngayong araw", "mcSub": "Mga bukas na problema sa bukid. I-tap ang litrato para makita nang buo.", "mcBack": "Mga gawain ngayon", "mcToFix": "aayusin", "mcProg": "ginagawa", "mcFixedToday": "naayos ngayon", "mcFixedSec": "Naayos ngayon", "mcDone": "Tapos nang tingnan", "mcDoneSub": "Itsi-tsek ang gawaing ito at babalik sa Ngayon", "mcBackOnly": "Bumalik sa mga gawain ngayon", "mcAllClear": "Walang bukas na problema. Ayos lahat.", "mcAllClearShort": "Ayos lahat", "mcReportedBy": "Ini-report ni {n}", "mcTask": "Gawain", "mcChecked": "Natingnan ang maintenance"});
-  Object.assign(TRANSLATIONS.id, {"mcTitle": "Perawatan hari ini", "mcSub": "Masalah terbuka di kandang. Ketuk foto untuk melihat ukuran penuh.", "mcBack": "Tugas hari ini", "mcToFix": "perlu diperbaiki", "mcProg": "sedang dikerjakan", "mcFixedToday": "diperbaiki hari ini", "mcFixedSec": "Diperbaiki hari ini", "mcDone": "Selesai dicek", "mcDoneSub": "Mencentang tugas ini dan kembali ke Hari ini", "mcBackOnly": "Kembali ke tugas hari ini", "mcAllClear": "Tidak ada masalah terbuka. Semua aman.", "mcAllClearShort": "Semua aman", "mcReportedBy": "Dilaporkan oleh {n}", "mcTask": "Tugas", "mcChecked": "Perawatan sudah dicek"});
+  Object.assign(TRANSLATIONS.en, {"mcTitle": "Maintenance for today", "mcTitleDay": "Maintenance", "mcSub": "The maintenance jobs set for today. Tap a photo to see it full size.", "mcBack": "Today's tasks", "mcLeft": "to do", "mcDoneN": "done", "mcDone": "Done checking", "mcDoneSub": "Ticks the check and goes back to Today", "mcBackOnly": "Back to today's tasks", "mcEmpty": "No maintenance jobs set for today.", "mcAllDone": "All maintenance jobs done.", "mcAllDoneShort": "All done", "mcNone": "None set", "mcCard": "Maintenance for today"});
+  Object.assign(TRANSLATIONS.es, {"mcTitle": "Mantenimiento de hoy", "mcTitleDay": "Mantenimiento", "mcSub": "Los trabajos de mantenimiento de hoy. Toca una foto para verla completa.", "mcBack": "Tareas de hoy", "mcLeft": "pendientes", "mcDoneN": "hechos", "mcDone": "Revisión hecha", "mcDoneSub": "Marca la revisión y vuelve a Hoy", "mcBackOnly": "Volver a las tareas de hoy", "mcEmpty": "No hay trabajos de mantenimiento para hoy.", "mcAllDone": "Todo el mantenimiento está hecho.", "mcAllDoneShort": "Todo hecho", "mcNone": "Ninguno", "mcCard": "Mantenimiento de hoy"});
+  Object.assign(TRANSLATIONS.tl, {"mcTitle": "Maintenance ngayong araw", "mcTitleDay": "Maintenance", "mcSub": "Ang mga maintenance na gawain ngayong araw. I-tap ang litrato para makita nang buo.", "mcBack": "Mga gawain ngayon", "mcLeft": "gagawin", "mcDoneN": "tapos", "mcDone": "Tapos nang tingnan", "mcDoneSub": "Itsi-tsek ito at babalik sa Ngayon", "mcBackOnly": "Bumalik sa mga gawain ngayon", "mcEmpty": "Walang maintenance na gawain ngayong araw.", "mcAllDone": "Tapos na lahat ng maintenance.", "mcAllDoneShort": "Tapos lahat", "mcNone": "Wala", "mcCard": "Maintenance ngayong araw"});
+  Object.assign(TRANSLATIONS.id, {"mcTitle": "Perawatan hari ini", "mcTitleDay": "Perawatan", "mcSub": "Pekerjaan perawatan untuk hari ini. Ketuk foto untuk melihat ukuran penuh.", "mcBack": "Tugas hari ini", "mcLeft": "belum", "mcDoneN": "selesai", "mcDone": "Selesai dicek", "mcDoneSub": "Mencentang cek ini dan kembali ke Hari ini", "mcBackOnly": "Kembali ke tugas hari ini", "mcEmpty": "Tidak ada pekerjaan perawatan hari ini.", "mcAllDone": "Semua perawatan selesai.", "mcAllDoneShort": "Semua selesai", "mcNone": "Tidak ada", "mcCard": "Perawatan hari ini"});
   Object.assign(TRANSLATIONS.en, {"navGuide": "Guide", "issTitle": "Issues", "issMine": "Mine", "issAll": "All farm", "issOpenN": "{n} open", "issNone": "No open issues", "issNoneMine": "You haven't sent any reports yet.", "issOpen": "Open", "issProgress": "In progress", "issResolved": "Resolved", "issFixed": "Fixed"});
   Object.assign(TRANSLATIONS.es, {"navGuide": "Guía", "issTitle": "Problemas", "issMine": "Míos", "issAll": "Toda la granja", "issOpenN": "{n} abiertos", "issNone": "No hay problemas abiertos", "issNoneMine": "Aún no has enviado reportes.", "issOpen": "Abierto", "issProgress": "En curso", "issResolved": "Resuelto", "issFixed": "Solución"});
   Object.assign(TRANSLATIONS.tl, {"navGuide": "Gabay", "issTitle": "Mga isyu", "issMine": "Akin", "issAll": "Buong bukid", "issOpenN": "{n} bukas", "issNone": "Walang bukas na isyu", "issNoneMine": "Wala ka pang naipadalang report.", "issOpen": "Bukas", "issProgress": "Inaayos", "issResolved": "Naayos na", "issFixed": "Ginawa"});
@@ -3005,7 +3011,18 @@
   const CHECK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const UNDO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 13a8 8 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const openNotes = new Set();
+  function buildMaintEntryCard(tk){
+    const c = maintCounts(tk.date);
+    const card = document.createElement('div');
+    card.className = 'task-card mc-card' + (c.left ? '' : ' done');
+    card.innerHTML = `<div class="task-card-row"><span class="task-icon sb-ic tone-muted">${MC_WRENCH}</span><span class="task-body"><span class="task-name"></span><span class="task-people"><span class="mc-meta${c.left ? '' : ' ok'}"></span></span></span><span class="mc-open" aria-hidden="true">›</span></div>`;
+    card.querySelector('.task-name').textContent = tk.name;
+    card.querySelector('.mc-meta').textContent = c.left ? `${c.left} ${t('mcLeft')}` : `✓ ${t('mcAllDoneShort')}`;
+    card.addEventListener('click', ()=> openMaintPage(null));
+    return card;
+  }
   function buildReadOnlyTaskCard(tk){
+    if(tk.__maintEntry) return buildMaintEntryCard(tk);
     const card=document.createElement('div');
     const isHighPriority = tk.priority === 'high' && tk.status!=='done';
     card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'')+(tk.notes?' has-note':'')+(tk.notes&&openNotes.has(tk.id)?' note-open':'');
@@ -3017,13 +3034,11 @@
     if(mcheck){
       // One normal-size card: a short count line, the list itself opens on its own page
       card.classList.add('mc-card'); card.classList.remove('has-note', 'note-open');
-      const c = maintCounts();
-      // The counts ride on the same row as the name chips, so this card is no taller than any other task
+      const c = maintCounts(tk.date);
+      // The count rides on the same row as the name chips, so this card is no taller than any other task
       const meta = document.createElement('span');
-      meta.className = 'mc-meta' + (c.open || c.prog ? '' : ' ok');
-      meta.textContent = (c.open || c.prog)
-        ? [c.open ? `${c.open} ${t('mcToFix')}` : '', c.prog ? `${c.prog} ${t('mcProg')}` : ''].filter(Boolean).join(' · ') + ' ›'
-        : `✓ ${t('mcAllClearShort')} ›`;
+      meta.className = 'mc-meta' + (c.left ? '' : ' ok');
+      meta.textContent = c.left ? `${c.left} ${t('mcLeft')} ›` : c.total ? `✓ ${t('mcAllDoneShort')} ›` : `${t('mcNone')} ›`;
       const nt = card.querySelector('.note-tag'); if(nt) nt.remove();
       const cl = card.querySelector('.task-note-callout'); if(cl) cl.remove();
       const people = card.querySelector('.task-people');
@@ -3265,7 +3280,15 @@
     }
     const groups={}; dated.forEach(tk=>{ (groups[tk.date]=groups[tk.date]||[]).push(tk); });
     if(agendaFilter==='today'){
-      const open = dated.filter(tk=> tk.status!=='done'), done = dated.filter(tk=> tk.status==='done');
+      // Maintenance jobs stay on their own page; one card opens it (the check task, or a stand-in card)
+      const dk = agendaDayKey();
+      const maint = dated.filter(isMaintTask);
+      const main = dated.filter(tk=> !isMaintTask(tk));
+      const needsEntry = maint.length && !main.some(isMaintCheck);
+      const maintLeft = maint.some(tk=> tk.status !== 'done');
+      const open = main.filter(tk=> tk.status!=='done'), done = main.filter(tk=> tk.status==='done');
+      if(needsEntry && maintLeft) open.unshift({ __maintEntry: true, id: '__maint', name: t('mcCard'), date: dk, status: 'open' });
+      else if(needsEntry) done.unshift({ __maintEntry: true, id: '__maint', name: t('mcCard'), date: dk, status: 'done' });
       if(!open.length){
         const fin = document.createElement('div'); fin.className = 'all-done-card';
         fin.innerHTML = '<span class="adc-icon">🎉</span><span class="adc-text"></span>';
@@ -3682,21 +3705,22 @@
 
   // ---------- Maintenance for today: opened from the "Check maintenance for today" task ----------
   function isMaintCheck(tk){ const n = (tk && tk.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
-  function rpDayKey(v){ if(!v) return ''; const d = new Date(v); return isNaN(d) ? '' : dateKey(d); }
-  function maintCounts(){
-    const today = dateKey(new Date());
-    let open = 0, prog = 0, fixed = 0;
-    reports.forEach(r=>{
-      if(r.status === 'Resolved'){ if(rpDayKey(r.resolvedAt) === today) fixed++; }
-      else if(r.status === 'In Progress') prog++;
-      else open++;
-    });
-    return { open, prog, fixed };
+  // Maintenance tasks: the manager ticked "Maintenance", or the task was made from a report.
+  // They live on the Maintenance page, not in the main Today list.
+  function isMaintTask(tk){ return !!tk && !isMaintCheck(tk) && (tk.cat === 'maintenance' || !!tk.linkedReportId || reports.some(r=> r.linkedTaskId === tk.id)); }
+  function maintTasksFor(key){ return tasks.filter(tk=> tk.date === key && isMaintTask(tk)).sort(taskCmp); }
+  function reportForTask(tk){ return reports.find(r=> r.id === tk.linkedReportId || r.linkedTaskId === tk.id) || null; }
+  function maintCounts(key){
+    const list = maintTasksFor(key || agendaDayKey());
+    const done = list.filter(tk=> tk.status === 'done').length;
+    return { total: list.length, done, left: list.length - done };
   }
-  let mcTaskId = null, mcShowFixed = false;
+  let mcTaskId = null, mcDay = null, mcShowDone = false;
   function mcOpen(){ return !$('#mtTodayPage').hidden; }
   function openMaintPage(taskId){
     mcTaskId = taskId || null;
+    const tk = taskId ? tasks.find(x=> x.id === taskId) : null;
+    mcDay = (tk && tk.date) || agendaDayKey();
     closeOverlays();
     $('#dashboardWrap').hidden = true; $('#batchPage').hidden = true; $('#guidePage').hidden = true;
     $('#mtTodayPage').hidden = false;
@@ -3712,13 +3736,15 @@
     showTab('today');
   }
   window.addEventListener('popstate', ()=>{ if(mcOpen()) closeMaintPage(true); });
-  const MC_WRENCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
-  function maintCard(r){
-    const st = r.status === 'Resolved' ? 'res' : r.status === 'In Progress' ? 'prog' : 'open';
+  var MC_WRENCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+  function maintCard(tk){
+    const done = tk.status === 'done';
+    const r = reportForTask(tk);
     const el = document.createElement('div');
-    el.className = 'mtt-card ' + st + (r.urgent && st !== 'res' ? ' urgent' : '');
-    const photos = (r.photoUrls || []).filter(Boolean);
-    el.innerHTML = `<button type="button" class="mtt-ph${photos.length ? '' : ' nophoto'}">${MC_WRENCH}</button><div class="mtt-body"><div class="mtt-top"><span class="mtt-type"></span><span class="mtt-pill"></span></div><div class="mtt-place"></div><div class="mtt-notes" hidden></div><div class="mtt-who"></div><div class="mtt-task" hidden></div><div class="mtt-fix" hidden></div></div>`;
+    el.className = 'mtt-card' + (done ? ' res' : '') + (tk.priority === 'high' && !done ? ' urgent' : '');
+    el.dataset.id = tk.id;
+    const photos = r ? (r.photoUrls || []).filter(Boolean) : [];
+    el.innerHTML = `<button type="button" class="mtt-ph${photos.length ? '' : ' nophoto'}">${MC_WRENCH}</button><div class="mtt-body"><div class="mtt-type"></div><div class="mtt-place" hidden></div><div class="mtt-notes" hidden></div><div class="mtt-who" hidden></div></div><button class="task-status-btn ${done ? 'done' : 'open'}" type="button">${done ? UNDO_ICON_SVG : CHECK_ICON_SVG}</button>`;
     const ph = el.querySelector('.mtt-ph');
     if(photos.length){
       ph.setAttribute('aria-label', 'View photo');
@@ -3728,54 +3754,51 @@
       if(photos.length > 1){ const n = document.createElement('span'); n.className = 'mtt-ph-n'; n.textContent = photos.length; ph.appendChild(n); }
       ph.addEventListener('click', ()=>{ if(!ph.classList.contains('nophoto')) openMaintPhoto(photos[0]); });
     } else { ph.disabled = true; ph.setAttribute('aria-hidden', 'true'); }
-    el.querySelector('.mtt-type').textContent = (r.urgent && st !== 'res' ? '🔴 ' : '') + String(r.problemType || 'Report').replace(/^Other\s*[—–-]\s*/, '');
-    el.querySelector('.mtt-pill').textContent = st === 'res' ? t('issFixed') : st === 'prog' ? t('issProgress') : t('issOpen');
-    el.querySelector('.mtt-place').textContent = [r.shed ? `${t('bpShed')} ${r.shed}` : '', r.location || ''].filter(Boolean).join(' · ');
-    if(r.notes){ const nn = el.querySelector('.mtt-notes'); nn.hidden = false; nn.textContent = r.notes; }
-    const when = r.createdAt ? new Date(r.createdAt).toLocaleString(undefined, rpDayKey(r.createdAt) === dateKey(new Date()) ? { hour:'numeric', minute:'2-digit' } : { day:'numeric', month:'short' }) : '';
-    el.querySelector('.mtt-who').textContent = [r.createdBy ? t('mcReportedBy').replace('{n}', r.createdBy) : '', when].filter(Boolean).join(' · ');
-    const lt = r.linkedTaskId && tasks.find(x=> x.id === r.linkedTaskId);
-    if(lt && st !== 'res'){
-      const tEl = el.querySelector('.mtt-task'); tEl.hidden = false;
-      const who = (lt.assignees || []).map(a=> (a && (a.name || a)) || '').filter(Boolean).join(', ');
-      tEl.textContent = `${t('mcTask')}: ${lt.name}${who ? ' · ' + who : ''}`;
+    el.querySelector('.mtt-type').textContent = (tk.priority === 'high' && !done ? '🔥 ' : '') + tk.name;
+    if(r){
+      const place = [r.shed ? `${t('bpShed')} ${r.shed}` : '', r.location || ''].filter(Boolean).join(' · ');
+      if(place){ const pl = el.querySelector('.mtt-place'); pl.hidden = false; pl.textContent = place; }
     }
-    if(st === 'res'){
-      const fx = el.querySelector('.mtt-fix'); fx.hidden = false;
-      const parts = [r.resolvedBy, r.resolutionNotes].filter(Boolean);
-      fx.textContent = '✓ ' + (parts.length ? parts.join(' — ') : t('issFixed'));
-    }
+    const noteText = tk.notes || (r && r.notes) || '';
+    if(noteText){ const nn = el.querySelector('.mtt-notes'); nn.hidden = false; nn.textContent = noteText; }
+    if(tk.assignees && tk.assignees.length){ const w = el.querySelector('.mtt-who'); w.hidden = false; w.innerHTML = buildAssigneeNamesHtml(tk.assignees); }
+    const btn = el.querySelector('.task-status-btn');
+    btn.title = done ? 'Reopen' : 'Mark done';
+    btn.setAttribute('aria-label', done ? 'Reopen task' : 'Mark task done');
+    btn.addEventListener('click', ()=>{
+      if(!ghPath){ showToast(t('connectToSave'), true); return; }
+      toggleTaskDoneInViewer(tk.id);
+    });
     return el;
   }
   function renderMaintPage(){
     if(!mcOpen()) return;
-    const today = dateKey(new Date());
+    const day = mcDay || agendaDayKey();
     const tk = mcTaskId ? tasks.find(x=> x.id === mcTaskId) : null;
     $('#mttBackLbl').textContent = t('mcBack');
-    $('#mttTitle').textContent = t('mcTitle');
+    $('#mttTitle').textContent = day === dateKey(new Date()) ? t('mcTitle') : `${t('mcTitleDay')} · ${toDateObj(day).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' })}`;
     $('#mttSub').textContent = t('mcSub');
     const note = $('#mttNote'); note.hidden = !(tk && tk.notes); if(tk && tk.notes) note.textContent = '📝 ' + tk.notes;
-    const c = maintCounts();
-    $('#mttStats').innerHTML = `<div class="mtt-stat fix"><b>${c.open}</b><span>${escapeHtml(t('mcToFix'))}</span></div><div class="mtt-stat prog"><b>${c.prog}</b><span>${escapeHtml(t('mcProg'))}</span></div><div class="mtt-stat ok"><b>${c.fixed}</b><span>${escapeHtml(t('mcFixedToday'))}</span></div>`;
-    const list = $('#mttList'); list.innerHTML = '';
-    const rank = r=> r.urgent ? 0 : r.status === 'In Progress' ? 2 : 1;
-    const live = reports.filter(r=> r.status !== 'Resolved').sort((a,b)=> rank(a) - rank(b) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-    const fixed = reports.filter(r=> r.status === 'Resolved' && rpDayKey(r.resolvedAt) === today);
-    if(!live.length){ const e = document.createElement('div'); e.className = 'mtt-empty'; e.textContent = '✓ ' + t('mcAllClear'); list.appendChild(e); }
-    live.slice(0, 80).forEach(r=> list.appendChild(maintCard(r)));
-    if(fixed.length){
+    const list = maintTasksFor(day);
+    const open = list.filter(x=> x.status !== 'done'), done = list.filter(x=> x.status === 'done');
+    $('#mttStats').innerHTML = `<div class="mtt-stat fix"><b>${open.length}</b><span>${escapeHtml(t('mcLeft'))}</span></div><div class="mtt-stat ok"><b>${done.length}</b><span>${escapeHtml(t('mcDoneN'))}</span></div>`;
+    const box = $('#mttList'); box.innerHTML = '';
+    if(!list.length){ const e = document.createElement('div'); e.className = 'mtt-empty none'; e.textContent = t('mcEmpty'); box.appendChild(e); }
+    else if(!open.length){ const e = document.createElement('div'); e.className = 'mtt-empty'; e.textContent = '✓ ' + t('mcAllDone'); box.appendChild(e); }
+    open.forEach(x=> box.appendChild(maintCard(x)));
+    if(done.length){
       const tog = document.createElement('button'); tog.type = 'button'; tog.className = 'mtt-fixed-tog';
-      tog.setAttribute('aria-expanded', String(mcShowFixed));
-      tog.textContent = `${t('mcFixedSec')} · ${fixed.length} ${mcShowFixed ? '▴' : '▾'}`;
-      tog.addEventListener('click', ()=>{ mcShowFixed = !mcShowFixed; renderMaintPage(); });
-      list.appendChild(tog);
-      if(mcShowFixed) fixed.forEach(r=> list.appendChild(maintCard(r)));
+      tog.setAttribute('aria-expanded', String(mcShowDone));
+      tog.textContent = `✓ ${t('doneCount').replace('{n}', done.length)} ${mcShowDone ? '▴' : '▾'}`;
+      tog.addEventListener('click', ()=>{ mcShowDone = !mcShowDone; renderMaintPage(); });
+      box.appendChild(tog);
+      if(mcShowDone) done.forEach(x=> box.appendChild(maintCard(x)));
     }
-    const done = $('#mttDone'), sub = $('#mttDoneSub');
+    const btn = $('#mttDone'), sub = $('#mttDoneSub');
     const canTick = tk && tk.status !== 'done';
-    done.classList.toggle('back', !canTick);
-    done.innerHTML = canTick ? `${CHECK_ICON_SVG}<span></span>` : '<span></span>';
-    done.querySelector('span').textContent = canTick ? t('mcDone') : t('mcBackOnly');
+    btn.classList.toggle('back', !canTick);
+    btn.innerHTML = canTick ? `${CHECK_ICON_SVG}<span></span>` : '<span></span>';
+    btn.querySelector('span').textContent = canTick ? t('mcDone') : t('mcBackOnly');
     sub.textContent = canTick ? t('mcDoneSub') : '';
     sub.hidden = !canTick;
   }

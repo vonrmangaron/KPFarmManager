@@ -232,6 +232,10 @@
   .frequent-list{display:flex;flex-direction:column;gap:8px;min-height:20px;max-height:220px;overflow-y:auto;padding-right:2px;}
   .frequent-chip{border-style:dashed !important;}
   .mc-chip{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:800; line-height:1.5; vertical-align:1px; background:var(--danger-soft, #FDE8E4); color:var(--danger, #DC4A36); white-space:nowrap; }
+  /* Maintenance task: a small wrench badge on the icon corner, so cards keep their height */
+  .task-card.is-maint .task-icon{ position:relative; overflow:visible; }
+  .task-card.is-maint .task-icon::after{ content:''; position:absolute; right:-4px; bottom:-4px; width:13px; height:13px; border-radius:50%; background:#16191B url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F0A21A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E") center/8px no-repeat; box-shadow:0 0 0 1.5px var(--surface); pointer-events:none; }
+  .tmi-ic svg{ width:15px; height:15px; vertical-align:-2px; }
   .mc-chip.none{ background:var(--success-soft, #DFF4EF); color:var(--success, #0F8A75); }
 
   .batches-list, .events-list{display:flex;flex-direction:column;gap:14px;}
@@ -1040,6 +1044,7 @@
   .form-modal-body > *:last-child{ margin-bottom:0; }
   .form-modal-body label{font-size:12px;color:var(--muted);font-weight:600;}
   .name-label-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .name-checks{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .priority-inline-check{ display:flex; align-items:center; gap:5px; font-size:12.5px !important; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap; }
   .priority-inline-check input[type="checkbox"]{ width:15px; height:15px; margin:0; accent-color:var(--primary); flex-shrink:0; }
   .form-modal-body input:not([type="checkbox"]), .form-modal-body select{ border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:16px;width:100%;color:var(--ink); }
@@ -3279,7 +3284,7 @@
   <div class="form-modal-body">
     <div class="name-label-row">
       <label for="editTaskNameInput">Task name</label>
-      <label class="priority-inline-check" for="editTaskPriorityInput"><input type="checkbox" id="editTaskPriorityInput"> 🔥 High priority</label>
+      <span class="name-checks"><label class="priority-inline-check" for="editTaskMaintInput" title="Workers see it on the Maintenance for today page in the Viewer, not in their main list"><input type="checkbox" id="editTaskMaintInput"> Maintenance</label><label class="priority-inline-check" for="editTaskPriorityInput"><input type="checkbox" id="editTaskPriorityInput"> 🔥 High priority</label></span>
     </div>
     <input type="text" id="editTaskNameInput" maxlength="50">
     <div class="char-count" id="editTaskNameCharCount">0 / 50</div>
@@ -3315,7 +3320,7 @@
     </div>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Repeating creates individual occurrences up to the date above — you can still edit or delete any single one later.</p>
     <div id="editTaskSeriesRow" style="display:none;">
-      <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskApplySeriesInput"> 🔁 Also apply name, notes, priority and assignees to all future occurrences in this series</label>
+      <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskApplySeriesInput"> 🔁 Also apply name, notes, priority, maintenance and assignees to all future occurrences in this series</label>
     </div>
     <div id="editTaskCreateOnlyRow" style="display:none;">
       <label class="checkbox-row" style="margin-top:10px;"><input type="checkbox" id="editTaskFrequentBox"> Save as a frequent task (reusable template)</label>
@@ -3663,12 +3668,19 @@
   const MCHECK_TPL_ID = 'tpl-mcheck';
   const MCHECK_NAME = 'Check maintenance for today';
   function isMaintCheckTask(t){ const n = (t && t.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
+  // A maintenance task: ticked "Maintenance", or made from a report. Workers see these on the
+  // Maintenance for today page (opened from the check task), not in their main list.
+  function isMaintTask(t){ return !!t && !isMaintCheckTask(t) && (t.cat === 'maintenance' || !!t.linkedReportId); }
+  // It goes FIRST in the list (the sidebar only shows the first few). mcheckTpl 2 = placed at the top once.
   function seedMaintCheckTemplate(){
-    if(!ghFarmName || settings.mcheckTpl) return;
+    if(!ghFarmName || settings.mcheckTpl >= 2) return;
     setTimeout(()=>{
-      if(settings.mcheckTpl) return;
-      settings.mcheckTpl = 1;
-      if(!frequentTemplates.some(f=> f.id === MCHECK_TPL_ID || isMaintCheckTask(f))) frequentTemplates.push({ id: MCHECK_TPL_ID, name: MCHECK_NAME, icon: '🔧' });
+      if(settings.mcheckTpl >= 2) return;
+      const had = settings.mcheckTpl;
+      settings.mcheckTpl = 2;
+      const i = frequentTemplates.findIndex(f=> f.id === MCHECK_TPL_ID);
+      if(i > 0) frequentTemplates.unshift(frequentTemplates.splice(i, 1)[0]);
+      else if(i < 0 && !had && !frequentTemplates.some(isMaintCheckTask)) frequentTemplates.unshift({ id: MCHECK_TPL_ID, name: MCHECK_NAME, icon: '🔧' });
       persist(); renderAll();
     }, 0);
   }
@@ -4668,6 +4680,7 @@
   function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };
     if(meta) Object.assign(t, meta);
+    if(!t.cat){ const f = frequentTemplates.find(x=> x.cat && (x.name || '').trim().toLowerCase() === String(name || '').trim().toLowerCase()); if(f) t.cat = f.cat; }
     tasks.push(t);
     addHistory('Added', `"${name}" added to ${dateVal ? formatFull(dateVal) : 'backlog'}`);
     return t;
@@ -4850,13 +4863,13 @@
       else if(rule==='biweekly'){ cur = addDaysStr(cur, 14); }
       else break;
       if(cur > untilDate) break;
-      addTask(baseTask.name, baseTask.icon, cur, { seriesId, assignees: (baseTask.assignees || []).slice() });
+      addTask(baseTask.name, baseTask.icon, cur, Object.assign({ seriesId, assignees: (baseTask.assignees || []).slice() }, baseTask.cat ? { cat: baseTask.cat } : {}));
       count++;
     }
     if(count>0) addHistory('Recurring task created', `"${baseTask.name}" repeats ${(REPEAT_LABELS[rule]||rule).toLowerCase()} — ${count} occurrence(s) added through ${formatFull(untilDate)}`);
     return count;
   }
-  function editTask(id, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries){
+  function editTask(id, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
     const oldLabel = taskLabel(t);
@@ -4866,6 +4879,7 @@
     t.assignees = assignees ? assignees.slice() : [];
     t.notes = notes || '';
     t.priority = priority || null;
+    if(cat) t.cat = cat; else delete t.cat;
     let seriesCount = 0;
     if(applyToSeries && t.seriesId){
       tasks.forEach(sib=>{
@@ -4873,6 +4887,7 @@
           sib.name = name;
           sib.notes = notes || '';
           sib.priority = priority || null;
+          if(cat) sib.cat = cat; else delete sib.cat;
           sib.assignees = assignees ? assignees.slice() : [];
           seriesCount++;
         }
@@ -5458,6 +5473,7 @@
     updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
     $('#editTaskNotesInput').value = `${r.createdBy ? 'Reported by ' + r.createdBy : 'From a report'}${r.notes ? '\n' + r.notes : ''}`.trim();
     $('#editTaskPriorityInput').checked = true;
+    $('#editTaskMaintInput').checked = true;
     $('#editTaskDateInput').value = '';
     $('#editTaskCreateOnlyRow').style.display = 'none';   // not a frequent task
     $('#editTaskFrequentBox').checked = false;
@@ -5466,6 +5482,7 @@
     const r = reports.find(x => x.id === reportId);
     if(!r || !t) return;
     t.linkedReportId = r.id;
+    t.cat = 'maintenance';
     r.linkedTaskId = t.id;
     r.status = 'In Progress';
     r.autoResolved = false;
@@ -5485,6 +5502,7 @@
     // Goes to the Backlog so the manager can schedule it.
     const t = addTask(taskName, guessIcon(taskName), null, {
       priority: 'high',
+      cat: 'maintenance',
       linkedReportId: r.id,
       notes: noteText
     });
@@ -5919,9 +5937,13 @@
   }, true);
 
   // Open problems on the farm, shown on the maintenance check task (workers open the list in the Viewer)
-  function mcheckChipHtml(){
-    const n = (reports || []).filter(r=> r.status !== 'Resolved').length;
-    return `<span class="mc-chip${n ? '' : ' none'}" title="${n ? n + ' open problem' + (n === 1 ? '' : 's') + ' — workers see them with photos when they open this task in the Viewer' : 'No open problems'}">${n ? n + ' open' : 'All clear'}</span>`;
+  const WRENCH_TAG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+  // The check task shows how many maintenance tasks are left on its day
+  function mcheckChipHtml(task){
+    const day = tasks.filter(x=> x.date && x.date === task.date && isMaintTask(x));
+    const left = day.filter(x=> x.status !== 'done').length;
+    const tip = day.length ? `${left} of ${day.length} maintenance task${day.length === 1 ? '' : 's'} left on this day — workers see them, with photos, when they open this task in the Viewer` : 'No maintenance tasks on this day. Tick "Maintenance" on a task to add it.';
+    return `<span class="mc-chip${left ? '' : ' none'}" title="${tip}">${day.length ? (left ? left + ' to do' : 'All done') : 'None'}</span>`;
   }
   function buildTaskCard(task, selectable, opts){
     opts = opts || {};
@@ -5950,7 +5972,7 @@
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
-        <span class="task-body"><span class="task-name"></span>${isMaintCheckTask(task) ? mcheckChipHtml() : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
+        <span class="task-body"><span class="task-name"></span>${isMaintCheckTask(task) ? mcheckChipHtml(task) : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
@@ -5967,6 +5989,7 @@
       </div>` : ''}`;
     card.querySelector('.task-icon').innerHTML = '';
     renderTaskIcon(card.querySelector('.task-icon'), task.name, task.icon);
+    if(isMaintTask(task)){ card.classList.add('is-maint'); card.querySelector('.task-icon').title = 'Maintenance task — workers see it on the Maintenance for today page'; }
     const completeBtn = card.querySelector('.task-complete-btn');
     if(completeBtn){
       completeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); toggleDone(task.id); });
@@ -6027,6 +6050,7 @@
       </div>
       <div class="task-menu-popup">
         <button class="task-menu-item btn-freq-edit-item" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        ${isMaintCheckTask(item) ? '' : `<button class="task-menu-item btn-freq-maint" type="button"><span class="tmi-ic">${WRENCH_TAG_SVG}</span>${item.cat === 'maintenance' ? 'Not maintenance' : 'Mark as maintenance'}</button>`}
         <button class="task-menu-item btn-freq-delete-item danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>
       </div>
       <div class="freq-edit-row">
@@ -6037,6 +6061,15 @@
       </div>`;
     renderTaskIcon(card.querySelector('.task-icon'), item.name, item.icon);
     card.querySelector('.task-name').textContent = item.name;
+    if(item.cat === 'maintenance'){ card.classList.add('is-maint'); card.querySelector('.task-icon').title = 'Maintenance task'; }
+    const maintBtn = card.querySelector('.btn-freq-maint');
+    if(maintBtn) maintBtn.addEventListener('click', (e)=>{
+      e.stopPropagation(); closeAllTaskMenus();
+      const f = frequentTemplates.find(x=> x.id === item.id); if(!f) return;
+      if(f.cat === 'maintenance') delete f.cat; else f.cat = 'maintenance';
+      persist(); renderAll();
+      showToast(f.cat ? `"${f.name}" will be a maintenance task when you add it.` : `"${f.name}" is a normal task again.`);
+    });
     card.addEventListener('click', (e)=>{
       if(suppressNextClick || !useAddTasksSheet()) return;
       if(e.target.closest('.task-menu-btn, .task-menu-popup, .freq-edit-row')) return;
@@ -8827,6 +8860,7 @@
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
     $('#editTaskNotesInput').value = t.notes || '';
     $('#editTaskPriorityInput').checked = t.priority === 'high';
+    $('#editTaskMaintInput').checked = t.cat === 'maintenance' || !!t.linkedReportId;
     const seriesRow = $('#editTaskSeriesRow');
     if(t.seriesId){ seriesRow.style.display = 'block'; $('#editTaskApplySeriesInput').checked = false; }
     else { seriesRow.style.display = 'none'; }
@@ -8851,6 +8885,7 @@
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
     $('#editTaskNotesInput').value = '';
     $('#editTaskPriorityInput').checked = false;
+    $('#editTaskMaintInput').checked = false;
     $('#editTaskSeriesRow').style.display = 'none';
     $('#editTaskCreateOnlyRow').style.display = 'block';
     $('#editTaskFrequentBox').checked = false;
@@ -11032,6 +11067,7 @@
     const untilDate = $('#editTaskUntilInput').value || null;
     const notes = $('#editTaskNotesInput').value.trim();
     const priority = $('#editTaskPriorityInput').checked ? 'high' : null;
+    const cat = $('#editTaskMaintInput').checked ? 'maintenance' : null;
     const applyToSeries = $('#editTaskSeriesRow').style.display!=='none' && $('#editTaskApplySeriesInput').checked;
     if(repeatRule!=='none' && !dateVal){ showToast('Pick a date before setting a repeat rule.', true); return; }
     if(repeatRule!=='none' && (!untilDate || untilDate<=dateVal)){ showToast('Pick a valid "Repeat until" date after the task date.', true); return; }
@@ -11039,6 +11075,7 @@
       const saveAsFrequent = $('#editTaskFrequentBox').checked;
       if(saveAsFrequent){
         addFrequentTemplate(name, guessIcon(name));
+        if(cat){ const f = frequentTemplates.find(x=> x.name.trim().toLowerCase() === name.toLowerCase()); if(f) f.cat = cat; }
         persist(); renderAll();
         closeOverlays();
         showToast(`"${name}" saved as a frequent task.`);
@@ -11048,6 +11085,7 @@
       if(assignees.length) meta.assignees = assignees;
       if(notes) meta.notes = notes;
       if(priority) meta.priority = priority;
+      if(cat) meta.cat = cat;
       const newTask = addTask(name, guessIcon(name), dateVal, Object.keys(meta).length ? meta : null);
       const fromReport = pendingReportTask;
       if(fromReport) linkTaskToReport(newTask, fromReport);
@@ -11066,7 +11104,7 @@
       return;
     }
     if(!editingTaskId) return;
-    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries);
+    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat);
     closeOverlays();
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
   });
