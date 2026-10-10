@@ -717,6 +717,17 @@ function updateAlertsBell() {
   if (popover && popover.classList.contains('open')) popover.innerHTML = renderAlertsPopoverBody();
 }
 
+// The alerts list lives at the top level of the page (moved out of the header on first use),
+// so tool pages and other layers can never cover it; it is placed just under the bell.
+function placeAlertsPopover(){
+  const pop=document.getElementById('alertsPopover'),bell=document.getElementById('alertsBellBtn');if(!pop||!bell)return;
+  if(pop.parentElement!==document.body)document.body.appendChild(pop);
+  const r=bell.getBoundingClientRect();
+  pop.style.top=Math.round(r.bottom+8)+'px';
+  pop.style.right=Math.round(Math.max(12,window.innerWidth-r.right))+'px';
+}
+window.addEventListener('resize',()=>{const pop=document.getElementById('alertsPopover');if(pop&&pop.classList.contains('open'))placeAlertsPopover();});
+
 // ─────────────────────────────────────────────────────────────
 // Per-group status grid — quick Age/Live/Weight/FCR/Feed summary
 // for each of the 4 groups, one click away from that group's page.

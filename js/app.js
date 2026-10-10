@@ -59,12 +59,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-bulk-delete]')){bulkDelete();return;}
     // Alerts bell popover — checked first so any click outside it always closes it
     const alertsPop=document.getElementById('alertsPopover');
-    if(alertsPop&&alertsPop.classList.contains('open')&&!e.target.closest('.alerts-bell-wrap')){alertsPop.classList.remove('open');}
+    if(alertsPop&&alertsPop.classList.contains('open')&&!e.target.closest('.alerts-bell-wrap')&&!e.target.closest('#alertsPopover')){alertsPop.classList.remove('open');}
     const bellBtn=e.target.closest('#alertsBellBtn');
     if(bellBtn){
       const isOpen=alertsPop.classList.contains('open');
       if(isOpen){alertsPop.classList.remove('open');}
-      else{alertsPop.innerHTML=renderAlertsPopoverBody();alertsPop.classList.add('open');}
+      else{alertsPop.innerHTML=renderAlertsPopoverBody();placeAlertsPopover();alertsPop.classList.add('open');}
       return;
     }
     const alertItem=e.target.closest('.alerts-popover [data-tab]');
