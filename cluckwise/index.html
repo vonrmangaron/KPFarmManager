@@ -2773,9 +2773,17 @@
     .ar-badge[hidden]{ display:none; }
     .sidebar{ grid-column:2; }
     .topbar, .calendar-wrap-outer, .shell > .app-footer{ grid-column:3; }
-    /* the side panel collapses to its small icon strip, next to the rail */
-    body.sb-collapsed .shell{ grid-template-columns:84px 76px minmax(0,1fr); }
-    body.sb-collapsed .sr-logo{ display:none; }
+    /* the side panel hides; its small icons show inside the one rail */
+    body.sb-collapsed .shell{ grid-template-columns:84px 0 minmax(0,1fr); }
+    body.sb-collapsed .sidebar{ display:none !important; }
+    .sb-rail.in-rail{ display:none; }
+    body.sb-collapsed .app-rail{ gap:2px; padding-top:10px; }
+    body.sb-collapsed .app-rail .ar-logo{ margin-bottom:8px; }
+    body.sb-collapsed .ar-btn{ padding:6px 0 5px; gap:3px; }
+    body.sb-collapsed .sb-rail.in-rail .sr-btn{ height:40px; }
+    body.sb-collapsed .sb-rail.in-rail{ display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; padding:6px 0 0; margin-top:6px; border-top:1px solid #2C3236; }
+    body.theme-dark.sb-collapsed .sb-rail.in-rail{ border-top-color:var(--line); }
+    .sb-rail.in-rail .sr-logo, .sb-rail.in-rail .sr-expand, .sb-rail.in-rail .sr-sep:first-of-type{ display:none; }
     .sb-brand .brand-icon{ display:none; }
     /* the tools now live on the rail */
     .topbar .tb-group, .topbar #themeToggleBtn, .topbar #settingsBtn, .topbar .tb-divider{ display:none !important; }
@@ -2789,7 +2797,7 @@
     .mode-dock.in-topbar .md-btn.active .md-svg{ color:var(--primary-dark); }
     /* pages that cover the work area keep the rail visible */
     .reports-modal.mt-page{ left:364px; }
-    body.sb-collapsed .reports-modal.mt-page{ left:160px; }
+    body.sb-collapsed .reports-modal.mt-page{ left:84px; }
     .mlog-page{ left:84px; }
     /* day columns: one soft panel per day, today outlined */
     #calendarWrap .kanban-board{ gap:14px; padding:18px 4px 24px; }
@@ -2805,14 +2813,16 @@
     #calendarWrap .kcard .kbody{ padding:8px 10px 9px; align-items:flex-start; }
     #calendarWrap .kcard .kname{ font-size:14px; font-weight:600; white-space:normal; line-height:1.35; }
     #calendarWrap .kcard .task-avatars .task-avatar{ width:22px; height:22px; font-size:10px; }
+    .kb-expand-all{ display:inline-flex; align-items:center; gap:6px; margin:14px 0 0 4px; height:34px; padding:0 14px; border-radius:10px; border:1px solid var(--primary); background:var(--primary-soft); color:var(--ink); font:700 13px 'Inter',sans-serif; cursor:pointer; }
+    #calendarWrap .kanban-column.collapsed{ background:var(--surface-soft); border-radius:16px; }
     #calendarWrap .kanban-column .inline-add-trigger{ width:100%; justify-content:center; text-align:center; color:var(--muted); font-weight:600; }
   }
   @media (display-mode: window-controls-overlay) and (min-width: 1025px){
     .app-rail{ height:calc(100vh - var(--wco-h)); }
     body::before{ background:linear-gradient(to right, #16191B 0, #16191B 364px, var(--surface) 364px) !important; }
-    body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 160px, var(--surface) 160px) !important; }
+    body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 84px, var(--surface) 84px) !important; }
     body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 364px, #111A2B 364px) !important; }
-    body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 160px, #111A2B 160px) !important; }
+    body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
   }
 </style>
 <script>
@@ -8044,6 +8054,15 @@
       }
       board.appendChild(col);
     }
+    const nCollapsed = !kbPhone ? [...board.querySelectorAll('.kanban-column.collapsed')].length : 0;
+    if(nCollapsed){
+      const ex = document.createElement('button');
+      ex.type = 'button'; ex.className = 'kb-expand-all';
+      ex.textContent = nCollapsed === 7 ? 'Show all days' : `Expand ${nCollapsed} folded day${nCollapsed === 1 ? '' : 's'}`;
+      ex.title = 'Open every day of this week';
+      ex.addEventListener('click', ()=>{ for(let i=0;i<7;i++){ const d = new Date(monday); d.setDate(monday.getDate()+i); collapsedKanbanCols.delete(dateKey(d)); } saveCollapsedKanbanCols(); renderAll(); });
+      wrap.appendChild(ex);
+    }
     const canvas = document.createElement('div');
     canvas.className = 'kanban-canvas';
     canvas.appendChild(board);
@@ -11431,7 +11450,16 @@
       else if(dock.parentNode !== home){ home.insertBefore(dock, next); dock.classList.remove('in-topbar'); }
     }
     placeDock();
-    (desk.addEventListener ? desk.addEventListener('change', placeDock) : desk.addListener(placeDock));
+    // One rail: the side panel's small icons join the rail (shown when the panel is hidden)
+    const sbRail = $('#sbRail'), sbHome = sbRail ? sbRail.parentNode : null, sbNext = sbRail ? sbRail.nextSibling : null, arSpace = rail.querySelector('.ar-space');
+    function placeSbRail(){
+      if(!sbRail || !sbHome) return;
+      if(desk.matches){ if(sbRail.parentNode !== rail){ rail.insertBefore(sbRail, arSpace); sbRail.classList.add('in-rail'); } }
+      else if(sbRail.parentNode !== sbHome){ sbHome.insertBefore(sbRail, sbNext); sbRail.classList.remove('in-rail'); }
+    }
+    placeSbRail();
+    const onDesk = ()=>{ placeDock(); placeSbRail(); };
+    (desk.addEventListener ? desk.addEventListener('change', onDesk) : desk.addListener(onDesk));
   })();
 
   $('#rpNewBtn').addEventListener('click', openNewReport);
