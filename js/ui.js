@@ -2637,7 +2637,7 @@ function pkCalendarHtml(){
       list.forEach(x=>wk+=Number(x.p.birds)||0);
       const chips=list.map(x=>{const b=Number(x.p.birds)||0;const avg=pickupAvgKg(x.p);
         const tip=`Shed ${x.shed} · ${b.toLocaleString()} birds${avg?` · ${avg.toFixed(3)} kg${x.p.weightEstimated?' (est)':''}`:''}${x.p.isFinal?' · final':''} — tap to edit`;
-        return `<button type="button" class="pkc-chip${x.p.weightEstimated?' est':''}${x.p.isFinal?' final':''}" data-pickup-edit="${x.shed}|${k}" title="${escapeAttr(tip)}"><b>S${x.shed}</b><span class="pkc-n">${b.toLocaleString()}</span><span class="pkc-k">${k1(b)}</span></button>`;}).join('');
+        return `<div class="pkc-item"><button type="button" class="pkc-chip${x.p.weightEstimated?' est':''}${x.p.isFinal?' final':''}" data-pickup-edit="${x.shed}|${k}" title="${escapeAttr(tip)}"><b>S${x.shed}</b><span class="pkc-n">${b.toLocaleString()}</span><span class="pkc-k">${k1(b)}</span></button><button type="button" class="pkc-del" data-pickup-delete="${x.shed}|${k}" title="Delete the Shed ${x.shed} pickup on ${escapeAttr(fmtShortNoYear(d))}" aria-label="Delete the Shed ${x.shed} pickup on ${escapeAttr(fmtShortNoYear(d))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div>`;}).join('');
       const adding=pkAddDate===k;
       const picker=adding?`<div class="pkc-pick">${(farmData.sheds||[]).map(sh=>`<button type="button" data-pkc-shed="${sh.id}|${k}">S${sh.id}</button>`).join('')}<button type="button" class="pkc-x" data-pkc-add="" aria-label="Cancel">✕</button></div>`:'';
       cells+=`<div class="pkc-day${d.getMonth()!==pkMonth.getMonth()?' out':''}${k===iso(today)?' today':''}${d.getDay()===0||d.getDay()===6?' wk':''}"><div class="pkc-top"><span class="pkc-d">${d.getDate()}</span>${adding?'':`<button type="button" class="pkc-add" data-pkc-add="${k}" aria-label="Add a pickup on ${escapeAttr(fmtShortNoYear(d))}">+</button>`}</div>${chips}${picker}</div>`;
@@ -2647,7 +2647,7 @@ function pkCalendarHtml(){
   const head=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="pkc-h">${x}</div>`).join('')+'<div class="pkc-h pkc-wh">Week</div>';
   return `<div class="pkc-bar"><button type="button" class="pkc-nav" data-pkc-month="-1" aria-label="Previous month">‹</button><b class="pkc-title">${pkMonth.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><button type="button" class="pkc-nav" data-pkc-month="1" aria-label="Next month">›</button><button type="button" class="pkc-today" data-pkc-month="0">Today</button><span class="pkc-sum">${monthBirds.toLocaleString()} birds this month</span></div>
     <div class="pkc-grid">${head}${rows}</div>
-    <div class="pkc-legend"><span><i class="pkc-chip"></i>Weighed</span><span><i class="pkc-chip est"></i>Weight to come</span><span><i class="pkc-chip final"></i>Final</span><span>Tap a pickup to edit · + to add · predicted pickups aren't shown</span></div>`;
+    <div class="pkc-legend"><span><i class="pkc-chip"></i>Weighed</span><span><i class="pkc-chip est"></i>Weight to come</span><span><i class="pkc-chip final"></i>Final</span><span>Tap a pickup to edit · bin to delete · + to add · predicted pickups aren't shown</span></div>`;
 }
 function refreshPickupsModal(){
   if(!pickupsModalOpen)return;
