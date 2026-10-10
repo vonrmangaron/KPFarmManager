@@ -3015,6 +3015,11 @@
   @media (min-width: 1025px){
     #closeGuideModal{ display:none !important; }   /* leave through the rail, like the other pages */
   }
+
+  /* Who completed a task */
+  .kcard .kdoneby{ padding:0 10px 8px; font-size:11.5px; font-weight:700; color:var(--success); }
+  .task-doneby{ display:block; font-size:10.5px; font-weight:700; color:var(--success); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #detailDoneBy{ color:var(--success); font-weight:700; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3565,6 +3570,10 @@
     <div class="drow">
       <span class="dlabel">Batch</span>
       <span class="dvalue" id="detailBatch"></span>
+    </div>
+    <div class="drow" id="detailDoneByRow" style="display:none;">
+      <span class="dlabel">Done by</span>
+      <span class="dvalue" id="detailDoneBy"></span>
     </div>
     <div class="drow" id="detailAssigneeRow" style="display:none;">
       <span class="dlabel">Assignees</span>
@@ -5043,10 +5052,22 @@
     return wrap;
   }
 
+  // Who completed a task: workers' ticks carry their name from the Viewer; ticks here are the manager's
+  function stampDone(t){
+    if(t.status === 'done'){ t.doneBy = 'Manager'; t.doneAt = new Date().toISOString(); }
+    else { delete t.doneBy; delete t.doneAt; }
+  }
+  function doneByText(t, short){
+    if(!t || t.status !== 'done' || !t.doneBy) return '';
+    const d = t.doneAt ? new Date(t.doneAt) : null;
+    const when = d && !isNaN(d) ? (dateKey(d) === dateKey(new Date()) ? d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : d.toLocaleDateString(undefined, { day:'numeric', month:'short' }) + (short ? '' : ', ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }))) : '';
+    return `${t.doneBy}${when ? ' · ' + when : ''}`;
+  }
   function toggleDone(id){
     const t = tasks.find(t=>t.id===id);
     if(!t) return;
     t.status = t.status==='done' ? 'open' : 'done';
+    stampDone(t);
     addHistory(t.status==='done' ? 'Completed' : 'Reopened', taskLabel(t));
     if(t.linkedReportId){
       const r = reports.find(x => x.id === t.linkedReportId);
@@ -6304,6 +6325,11 @@
       completeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); e.preventDefault(); toggleDone(task.id); });
     }
     card.querySelector('.task-name').textContent = task.name;
+    if(task.status === 'done' && task.doneBy){
+      const db = document.createElement('span'); db.className = 'task-doneby'; db.textContent = '✓ ' + doneByText(task, true);
+      db.title = 'Completed by ' + doneByText(task, false);
+      card.querySelector('.task-body').appendChild(db);
+    }
     if(checkboxSelect){
       const cb = card.querySelector('.bulk-select-cb');
       cb.checked = selectedIds.has(task.id);
@@ -7971,7 +7997,7 @@
       let count = 0;
       bulkSelectedIds.forEach(id=>{
         const t = tasks.find(x=>x.id===id);
-        if(t && t.status!=='done'){ t.status='done'; addHistory('Completed', taskLabel(t)); count++; }
+        if(t && t.status!=='done'){ t.status='done'; stampDone(t); addHistory('Completed', taskLabel(t)); count++; }
       });
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
@@ -8149,6 +8175,7 @@
         <span class="kname"></span>
         <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
       </div>
+      ${task.status==='done' && task.doneBy ? `<div class="kdoneby" title="Completed by ${escapeHtmlAttr(doneByText(task, false))}">✓ ${escapeHtml(doneByText(task, true))}</div>` : ''}
       ${(kTags.length || task.notes || (task.assignees||[]).length) ? `<div class="kmeta">${kTags.join('')}${task.notes ? `<span class="knote" title="${escapeHtmlAttr(task.notes)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>Note</span>` : ''}<span class="kppl">${avatarsHtml}</span></div>` : ''}
       <div class="task-menu-popup">
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
@@ -9131,6 +9158,7 @@
     const pill = $('#detailStatusPill');
     pill.textContent = t.status==='done' ? 'Done' : 'Open';
     pill.className = 'status-pill-lg ' + (t.status==='done' ? 'done' : 'open');
+    { const db = doneByText(t, false); $('#detailDoneByRow').style.display = db ? 'flex' : 'none'; $('#detailDoneBy').textContent = db ? '✓ ' + db : ''; }
     $('#detailDate').textContent = t.date ? toDateObj(t.date).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'}) : 'Backlog (unscheduled)';
     const activeBatch = taskBatch(t);
     const batchEl = $('#detailBatch');

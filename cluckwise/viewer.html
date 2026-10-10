@@ -906,6 +906,8 @@
     --danger:#F06A5A; --danger-soft:#3A2028; --success:#4CC38A; --success-soft:#163328;
     --shadow-sm:none;
   }
+
+  .task-doneby{ display:block; font-size:12px; font-weight:700; color:var(--success); margin-top:2px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2531,10 +2533,19 @@
       if(attempt < 4) linkedReportTimer = setTimeout(()=> flushLinkedReports(attempt+1), 4000*attempt);
     }
   }
+  // Who ticked each task (and when), kept with the tick until it reaches the farm file
+  const TICK_WHO_KEY = 'cw-viewer-tick-who';
+  function loadTickWho(){ try{ return JSON.parse(localStorage.getItem(TICK_WHO_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function saveTickWho(m){ try{ localStorage.setItem(TICK_WHO_KEY, JSON.stringify(m)); }catch(e){} }
+  function tickerName(){ const me = loadMember(); return (me && me.name ? String(me.name).trim() : '') || 'Worker'; }
   function setTaskStatusLocal(id, status){
     const tk = tasks.find(x=> x.id === id);
     if(!tk) return null;
     tk.status = status;
+    const who = loadTickWho();
+    if(status === 'done'){ tk.doneBy = tickerName(); tk.doneAt = new Date().toISOString(); who[id] = { by: tk.doneBy, at: tk.doneAt }; }
+    else { delete tk.doneBy; delete tk.doneAt; who[id] = null; }
+    saveTickWho(who);
     queueLinkedReport(tk);
     pendingTicks.set(id, status);
     savePendingTicks();
@@ -2573,6 +2584,7 @@
     if(merged){
       // Only clear ticks that haven't been changed again since this batch was sent.
       batch.forEach((status, id)=>{ if(pendingTicks.get(id) === status) pendingTicks.delete(id); });
+      { const who = loadTickWho(); let ch = false; batch.forEach((st, id)=>{ if(!pendingTicks.has(id) && id in who){ delete who[id]; ch = true; } }); if(ch) saveTickWho(who); }
       savePendingTicks();
       tickRetryDelay = 0;
       offlineNoticeShown = false;
@@ -2626,9 +2638,15 @@
       const freshSha = result.sha;
       const freshContent = result.data;
       const freshTasks = freshContent.tasks || [];
+      const who = loadTickWho();
       batch.forEach((newStatus, id)=>{
         const idx = freshTasks.findIndex(tk=>tk.id===id);
-        if(idx!==-1) freshTasks[idx] = Object.assign({}, freshTasks[idx], { status:newStatus });
+        if(idx===-1) return;
+        const upd = Object.assign({}, freshTasks[idx], { status:newStatus });
+        const w = who[id];
+        if(newStatus === 'done' && w){ upd.doneBy = w.by; upd.doneAt = w.at; }
+        else if(newStatus !== 'done'){ delete upd.doneBy; delete upd.doneAt; }
+        freshTasks[idx] = upd;
       });
       const merged = Object.assign({}, freshContent, { tasks:freshTasks });
       // Belt & suspenders: reports are no longer in the main file, but if an old
@@ -3022,6 +3040,12 @@
     card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${tk.notes ? `<span class="note-tag"><span aria-hidden="true">📝</span>${escapeHtml(t('noteLbl'))}<span class="nt-car" aria-hidden="true">▾</span></span>` : ''}${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     card.querySelector('.task-name').textContent = tk.name;
+    if(tk.status === 'done' && tk.doneBy){
+      const db = document.createElement('span'); db.className = 'task-doneby';
+      const d = tk.doneAt ? new Date(tk.doneAt) : null;
+      db.textContent = '✓ ' + tk.doneBy + (d && !isNaN(d) ? ' · ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : '');
+      card.querySelector('.task-name').after(db);
+    }
     const mcheck = isMaintCheck(tk);
     if(mcheck){
       // One normal-size card: a short count line, the list itself opens on its own page
