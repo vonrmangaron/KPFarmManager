@@ -847,12 +847,6 @@
   .mtt-empty.none{ background:var(--surface-soft); color:var(--muted); }
   .mtt-empty{ padding:22px 16px; border-radius:16px; background:var(--success-soft); color:var(--success); font-family:'Sora',sans-serif; font-weight:800; font-size:15px; text-align:center; }
   .mtt-fixed-tog{ margin:8px 0 0; padding:10px 2px; border:none; background:none; text-align:left; font-size:12.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
-  .mtt-foot{ margin-top:18px; }
-  .mtt-done{ width:100%; height:52px; border:none; border-radius:14px; background:var(--success); color:#fff; font-family:'Sora',sans-serif; font-weight:800; font-size:15.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .mtt-done svg{ width:20px; height:20px; }
-  .mtt-done.back{ background:var(--surface); color:var(--ink); border:1px solid var(--line); }
-  .mtt-done:active{ transform:scale(0.99); }
-  .mtt-done-sub{ margin-top:6px; text-align:center; font-size:12px; color:var(--muted); }
   .mtt-viewer{ position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:16px; }
   .mtt-viewer img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; }
   .mtt-viewer-x{ position:absolute; top:calc(12px + env(safe-area-inset-top)); right:12px; width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.16); color:#fff; font-size:18px; cursor:pointer; }
@@ -1038,7 +1032,6 @@
   <div class="mtt-note" id="mttNote" hidden></div>
   <div class="mtt-stats" id="mttStats"></div>
   <div class="mtt-list" id="mttList"></div>
-  <div class="mtt-foot"><button type="button" class="mtt-done" id="mttDone"></button><div class="mtt-done-sub" id="mttDoneSub"></div></div>
 </main>
 <div class="mtt-viewer" id="mttPhotoView" hidden><img alt=""><button type="button" class="mtt-viewer-x" aria-label="Close">✕</button></div>
 
@@ -3060,8 +3053,6 @@
     statusBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(!ghPath){ showToast(t('connectToSave'), true); return; }
-      // The maintenance check is ticked from its list, so workers see the problems first
-      if(mcheck && tk.status !== 'done'){ openMaintPage(tk.id); return; }
       toggleTaskDoneInViewer(tk.id);
     });
     return card;
@@ -3794,25 +3785,8 @@
       box.appendChild(tog);
       if(mcShowDone) done.forEach(x=> box.appendChild(maintCard(x)));
     }
-    const btn = $('#mttDone'), sub = $('#mttDoneSub');
-    const canTick = tk && tk.status !== 'done';
-    btn.classList.toggle('back', !canTick);
-    btn.innerHTML = canTick ? `${CHECK_ICON_SVG}<span></span>` : '<span></span>';
-    btn.querySelector('span').textContent = canTick ? t('mcDone') : t('mcBackOnly');
-    sub.textContent = canTick ? t('mcDoneSub') : '';
-    sub.hidden = !canTick;
   }
   $('#mttBack').addEventListener('click', ()=> closeMaintPage());
-  $('#mttDone').addEventListener('click', ()=>{
-    const tk = mcTaskId ? tasks.find(x=> x.id === mcTaskId) : null;
-    if(tk && tk.status !== 'done'){
-      if(!ghPath){ showToast(t('connectToSave'), true); return; }
-      closeMaintPage();
-      toggleTaskDoneInViewer(tk.id);
-      return;
-    }
-    closeMaintPage();
-  });
   function openMaintPhoto(url){ const v = $('#mttPhotoView'); v.querySelector('img').src = url; v.hidden = false; }
   function closeMaintPhoto(){ const v = $('#mttPhotoView'); if(v && !v.hidden){ v.hidden = true; v.querySelector('img').removeAttribute('src'); } }
   $('#mttPhotoView').addEventListener('click', closeMaintPhoto);
