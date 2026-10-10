@@ -124,6 +124,7 @@ function docketToKg(n){return n>MAX_LOAD_T?n:n*1000;}
 // Repair: actuals over MAX_LOAD_T tonnes were kg typed into the tonnes box
 // (stored ×1000 too big) — divide back. Counted so the app can save/sync once.
 let loadUnitRepairs=0;
+// The old Note field held the docket number, so a load with no docket takes its note
 function normalizeLoad(load){
   if(!load||typeof load!=='object')return null;
   const dateObj=load.date?parseExcelDate(load.date):null;if(!dateObj)return null;
@@ -133,7 +134,7 @@ function normalizeLoad(load){
   const rawActual=load.actualKg;
   let actualKg=(rawActual!=null&&Number.isFinite(Number(rawActual))&&Number(rawActual)>0)?Number(rawActual):null;
   if(actualKg!=null&&actualKg>MAX_LOAD_T*1000){actualKg=actualKg/1000;loadUnitRepairs++;}
-  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),docket:String(load.docket||'').trim().slice(0,30),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString()),siloFor:normSiloFor(load.siloFor),...(typeof load.received==='boolean'?{received:load.received}:{})};
+  return {id:String(load.id||uid('load')),date:dateObj,feedType:FEED_TYPES.some(f=>f.id===load.feedType)?load.feedType:'',plannedKg,splitKg,actualKg,note:String(load.note||'').slice(0,60),docket:String(load.docket||load.note||'').trim().slice(0,30),migrated:!!load.migrated,createdAt:String(load.createdAt||new Date().toISOString()),siloFor:normSiloFor(load.siloFor),...(typeof load.received==='boolean'?{received:load.received}:{})};
 }
 // Delivered/received tick: set by the manager (needs the docket no. and actual). Older loads with no tick saved count as received once their actual was in.
 function loadReceived(l){return typeof l.received==='boolean'?l.received:(l.actualKg!=null);}
