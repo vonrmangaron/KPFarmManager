@@ -3167,7 +3167,8 @@
   .tr-age.warn{ color:var(--primary-dark); background:var(--primary-soft); }
   .tr-act{ display:flex; gap:6px; justify-content:flex-end; }
   .tr-btn{ height:32px; padding:0 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; }
-  .tr-btn.ok{ background:var(--success); border-color:var(--success); color:#fff; }
+  .tr-btn.ok{ background:var(--surface); border-color:var(--success); color:var(--success); }
+  .tr-btn.ok:hover{ background:var(--success); color:#fff; }
   .tr-fixed{ font-size:12.5px; font-weight:700; color:var(--success); }
   @media (max-width: 1100px){ .tr-row{ grid-template-columns:40px minmax(0,1fr) 110px 200px; } .tr-row > :nth-child(4){ display:none; } }
   @media (max-width: 760px){
@@ -5804,7 +5805,7 @@
       meta = task ? `<span class="tr-m">${escapeHtml((task.assignees || []).join(', ') || 'No one yet')}<small>task</small></span>`
                   : `<span class="tr-m tr-who">${rpWhoHtml(r.assignee)}${escapeHtml(r.assignee || 'Anyone')}</span>`;
       ageHtml = `<span class="tr-age${age >= 3 ? ' warn' : ''}" title="In progress since ${escapeHtmlAttr(rpShortDate(r.startedAt || r.createdAt))}">${escapeHtml(rpAgeText(age))}</span>`;
-      act = task ? rpTaskTag(task) : `<button type="button" class="tr-btn ok" data-tr-fix title="Mark this repair as fixed">✓ Fixed</button>`;
+      act = task ? rpTaskTag(task) : `<button type="button" class="tr-btn ok" data-tr-fix title="Tap when this repair is done — it moves to Fixed">Mark fixed</button>`;
     } else {
       meta = `<span class="tr-m">${escapeHtml(r.createdBy || 'Unknown')}<small>${escapeHtml(r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : '')}</small></span>`;
       ageHtml = `<span class="tr-age${age >= 2 ? ' warn' : ''}">${isNew ? 'new' : escapeHtml(rpAgeText(age))}</span>`;
