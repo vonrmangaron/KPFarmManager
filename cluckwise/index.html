@@ -3020,6 +3020,69 @@
   .kcard .kdoneby{ padding:0 10px 8px; font-size:11.5px; font-weight:700; color:var(--success); }
   .task-doneby{ display:block; font-size:10.5px; font-weight:700; color:var(--success); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #detailDoneBy{ color:var(--success); font-weight:700; }
+
+  /* ===== Maintenance v2: board, start dialog, routes ===== */
+  label:has(#editTaskMaintInput), .btn-freq-maint{ display:none !important; }
+  .rp-view-seg{ display:inline-flex; gap:2px; padding:3px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); }
+  .rp-view-seg button{ height:32px; padding:0 12px; border:none; border-radius:8px; background:transparent; color:var(--muted); font:700 13px 'Inter',sans-serif; cursor:pointer; }
+  .rp-view-seg button.active{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
+  .mt-board{ display:none; }
+  .reports-modal.view-board .rp-list-pane{ display:none !important; }
+  .reports-modal.view-board.rp-nosel .rp-detail-pane{ display:none !important; }
+  .reports-modal.view-board .rpd-back{ display:block; }
+  .reports-modal.view-board .mt-board{ display:grid; grid-template-columns:repeat(3, minmax(240px, 1fr)); gap:14px; flex:1; min-width:0; min-height:0; overflow:auto; align-items:start; }
+  .mtb-col{ background:var(--surface-soft); border:1px solid var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:200px; max-height:100%; box-sizing:border-box; }
+  .mtb-head{ display:flex; align-items:center; gap:8px; }
+  .mtb-head b{ font-family:'Sora',sans-serif; font-size:15px; color:var(--ink); }
+  .mtb-dot{ width:10px; height:10px; border-radius:50%; }
+  .mtb-open .mtb-dot{ background:var(--danger); } .mtb-prog .mtb-dot{ background:var(--primary); } .mtb-fixed .mtb-dot{ background:var(--success); }
+  .mtb-count{ font-size:12px; font-weight:700; color:var(--muted); background:var(--surface); border-radius:999px; padding:1px 8px; }
+  .mtb-arch{ margin-left:auto; font-size:11px; font-weight:600; color:var(--muted); }
+  .mtb-hint{ font-size:12px; font-weight:600; color:var(--muted); }
+  .mtb-list{ display:flex; flex-direction:column; gap:10px; min-height:60px; overflow:auto; padding-bottom:4px; }
+  .mtb-empty{ font-size:12.5px; color:var(--muted); text-align:center; padding:18px 8px; border:1.5px dashed var(--line); border-radius:12px; }
+  .mtb-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:5px; cursor:grab; }
+  .mtb-card:hover{ box-shadow:var(--shadow-md); }
+  .mtb-card.selected{ border-color:var(--primary); box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent); }
+  .mtb-card.mtb-locked{ cursor:pointer; }
+  .mtb-card.urgent{ border-color:var(--danger); }
+  .mtb-card.sortable-ghost{ opacity:.4; }
+  .mtb-fixed .mtb-card{ opacity:.8; }
+  .mtb-photo{ height:96px; border-radius:10px; overflow:hidden; background:var(--surface-soft); }
+  .mtb-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .mtb-top{ display:flex; align-items:flex-start; gap:6px; }
+  .mtb-title{ flex:1; font-size:14px; color:var(--ink); }
+  .mtb-urgent{ font-size:10.5px; font-weight:800; color:#fff; background:var(--danger); border-radius:999px; padding:1px 7px; }
+  .mtb-place{ font-size:12.5px; font-weight:600; color:var(--ink); }
+  .mtb-meta{ font-size:12px; color:var(--muted); }
+  .mtb-actions{ display:flex; gap:6px; margin-top:4px; }
+  .mtb-btn{ flex:1; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px 'Inter',sans-serif; cursor:pointer; }
+  .mtb-btn.primary{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .mtb-foot{ display:flex; align-items:center; gap:8px; padding-top:7px; margin-top:2px; border-top:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink); }
+  .mtb-foot.task{ color:var(--primary-dark); }
+  .mtb-foot.fixed{ color:var(--success); border-top:none; padding-top:0; }
+  .mtb-who{ display:inline-flex; align-items:center; gap:6px; }
+  .mtb-who .task-avatar{ width:20px; height:20px; font-size:9.5px; margin:0; border:none; }
+  .mtb-since{ margin-left:auto; color:var(--muted); font-weight:600; }
+  .rpd-next{ display:flex; gap:8px; flex-shrink:0; }
+  .sr-ic{ background:var(--primary-soft) !important; color:var(--primary-dark) !important; }
+  .pt-rt{ height:30px; padding:0 10px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font:800 11.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; }
+  .pt-rt.task{ background:color-mix(in srgb, #2F6BD8 15%, transparent); color:#3F7BE6; border-color:transparent; }
+  .pt-rt.repair{ background:var(--primary-soft); color:var(--primary-dark); border-color:transparent; }
+  .nr-route{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .nr-route button{ display:flex; flex-direction:column; gap:3px; text-align:left; padding:10px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; font-family:inherit; }
+  .nr-route button b{ font-size:13px; }
+  .nr-route button span{ font-size:11.5px; color:var(--muted); line-height:1.35; }
+  .nr-route button.active{ border-color:var(--primary); background:var(--primary-soft); }
+  .nr-route-opts{ display:flex; flex-direction:column; gap:6px; }
+  .nr-route-opts[hidden]{ display:none; }
+  .nr-days{ display:flex; gap:6px; flex-wrap:wrap; }
+  .nr-days button{ height:34px; padding:0 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 13px 'Inter',sans-serif; cursor:pointer; }
+  .nr-days button.active{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  @media (max-width: 760px){
+    .reports-modal.view-board .mt-board{ grid-template-columns:1fr; overflow:auto; }
+    .nr-route{ grid-template-columns:1fr; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3313,6 +3376,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
+    <div class="rp-view-seg" id="rpViewSeg" role="group" aria-label="View"><button type="button" data-rpv="board" class="active">Board</button><button type="button" data-rpv="list">List</button></div>
     <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">+ New report</button>
     <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
     <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
@@ -3320,6 +3384,7 @@
   </div>
   <div class="rp-kpis" id="rpSummary"></div>
   <div class="rp-body">
+    <section class="mt-board" id="mtBoard" aria-label="Maintenance board"></section>
     <section class="rp-list-pane" aria-label="Report list">
       <div class="reports-toolbar">
         <div class="reports-filter-row" id="reportsFilterRow">
@@ -3840,6 +3905,16 @@
   </div>
 </div>
 
+<div class="form-modal ev-wide" id="startRepairModal" role="dialog" aria-modal="true" aria-labelledby="srTitle">
+  <div class="form-modal-head"><span class="ev-head-ic sr-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><div class="bm-head-text"><h2 id="srTitle">Start repair</h2><div class="bm-head-sub" id="srSub"></div></div><button id="closeStartRepair" aria-label="Close">✕</button></div>
+  <div class="form-modal-body">
+    <label for="srWhoInput">Who <span class="nr-opt">(optional — leave empty for anyone)</span></label>
+    <input type="text" id="srWhoInput" list="assigneeList" maxlength="40" placeholder="e.g. Ben" autocomplete="off">
+    <div class="bm-color-note"><span class="bm-cn-dot"></span><span>No due date on the job. Workers see it in <b>Check maintenance</b>; its deadline is the day you put that task on.</span></div>
+  </div>
+  <div class="bm-foot"><button type="button" class="bm-cancel" id="srCancelBtn">Cancel</button><button class="btn-app" id="srStartBtn">Start repair</button></div>
+</div>
+
 <div class="form-modal" id="newReportModal">
   <div class="form-modal-head"><h2>New report</h2><button id="closeNewReportModal" aria-label="Close">✕</button></div>
   <div class="form-modal-body nr-body">
@@ -3862,6 +3937,17 @@
     <textarea id="nrNotesInput" rows="2" maxlength="200" placeholder="e.g. Back left corner, near feeder line 2"></textarea>
     <label for="nrByInput">Reported by</label>
     <input type="text" id="nrByInput" maxlength="40" placeholder="Your name">
+    <label>What happens next? <span class="nr-opt" id="nrRouteHint"></span></label>
+    <div class="nr-route" id="nrRoute" role="group" aria-label="What happens next">
+      <button type="button" data-route="task"><b>Make it a task</b><span>One-off job (clean-up, dead birds). Goes on a day or the Backlog with the photo.</span></button>
+      <button type="button" data-route="repair"><b>Repair job</b><span>Something broken. Goes to In progress on the Maintenance board.</span></button>
+      <button type="button" data-route="log"><b>Just log it</b><span>Nothing to do now. Stays Open as a record.</span></button>
+    </div>
+    <div class="nr-route-opts" id="nrTaskOpts">
+      <div class="nr-days" id="nrDays"><button type="button" data-day="0" class="active">Today</button><button type="button" data-day="1">Tomorrow</button><button type="button" data-day="pick">Pick a day</button><button type="button" data-day="backlog">Backlog</button></div>
+      <input type="date" id="nrDayInput" hidden aria-label="Task day">
+    </div>
+    <div class="nr-route-opts" id="nrWhoRow"><label for="nrWhoInput">Who <span class="nr-opt">(optional)</span></label><input type="text" id="nrWhoInput" list="assigneeList" maxlength="40" placeholder="e.g. Juan" autocomplete="off"></div>
     <p class="nr-hint" id="nrHint"></p>
     <button class="btn-app" id="nrSaveBtn" disabled>Save report</button>
   </div>
@@ -3981,7 +4067,7 @@
   function isMaintCheckTask(t){ const n = (t && t.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
   // A maintenance task: ticked "Maintenance", or made from a report. Workers see these on the
   // Maintenance for today page (opened from the check task), not in their main list.
-  function isMaintTask(t){ return !!t && !isMaintCheckTask(t) && (t.cat === 'maintenance' || !!t.linkedReportId); }
+  function isMaintTask(t){ return false; }   // maintenance v2: repairs live on the Maintenance board, not as tasks
   // It goes FIRST in the list (the sidebar only shows the first few). mcheckTpl 2 = placed at the top once.
   function seedMaintCheckTemplate(){
     if(!ghFarmName || settings.mcheckTpl >= 2) return;
@@ -4496,6 +4582,7 @@
       setTimeout(()=>{ runArchive(); loadArchives(); refreshWorkerBirdCounts(); }, 1500);
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
+      migrateMaintV2();
       if(!pushPending) flashSaved(); else renderSyncStatus();
       loadAccess(true);
       if(!silent) showToast('Synced.');
@@ -5066,6 +5153,11 @@
   function toggleDone(id){
     const t = tasks.find(t=>t.id===id);
     if(!t) return;
+    // The maintenance check is done only once every repair job in progress is fixed
+    if(t.status !== 'done' && isMaintCheckTask(t)){
+      const n = repairsInProgress().length;
+      if(n){ showToast(`${n} repair job${n === 1 ? ' is' : 's are'} still in progress — fix ${n === 1 ? 'it' : 'them'} first (Maintenance board or the Viewer).`, true); return; }
+    }
     t.status = t.status==='done' ? 'open' : 'done';
     stampDone(t);
     addHistory(t.status==='done' ? 'Completed' : 'Reopened', taskLabel(t));
@@ -5637,7 +5729,8 @@
           <span class="rpd-lbl">Task</span>
           ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div>`
                  : sc === 'resolved' ? `<div class="rpd-hint">No task.</div>`
-                 : `<div class="rpd-task"><div class="rpd-task-text"><span class="rpd-hint">No task yet. Make one to schedule the fix and choose who does it.</span></div><button type="button" class="rpd-btn primary" data-rp-assign title="Open the New task form, filled in from this report">Assign as task</button></div>`}
+                 : isRepairInProgress(r) ? `<div class="rpd-task"><div class="rpd-task-text"><b>Repair job · ${escapeHtml(r.assignee || 'anyone')}</b><span class="rpd-task-meta">On the Maintenance board — workers fix it from “Check maintenance”</span></div><button type="button" class="rpd-btn" data-rp-start title="Change who">Change who</button></div>`
+                 : `<div class="rpd-task"><div class="rpd-task-text"><span class="rpd-hint">What happens next? A <b>task</b> for a one-off job (it carries the photo), or a <b>repair</b> on the Maintenance board.</span></div><div class="rpd-next"><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'repair' ? ' primary' : ''}" data-rp-start title="Move to In progress on the Maintenance board">Start repair</button><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'task' ? ' primary' : ''}" data-rp-assign title="Open the New task form, filled in from this report">Make a task</button></div></div>`}
         </div>
         <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist"></div></div>
         <div class="rpd-controls">
@@ -5681,11 +5774,85 @@
     pane.querySelector('#rpdManagerNotes').value = r.managerNotes || '';
     const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
   }
+  // ----- Maintenance board: Open → In progress → Fixed (drag cards between columns) -----
+  let rpView = (()=>{ try{ return localStorage.getItem('cluckwise-mt-view') === 'list' ? 'list' : 'board'; }catch(e){ return 'board'; } })();
+  let mtSortables = [];
+  function mtCardHtml(r, col){
+    const photo = rpPhoto(r);
+    const when = r.createdAt ? new Date(r.createdAt).toLocaleDateString(undefined, { day:'numeric', month:'short' }) : '';
+    const task = r.linkedTaskId ? tasks.find(t=> t.id === r.linkedTaskId) : null;
+    let foot = '';
+    if(col === 'open'){
+      const sug = typeRoute(r.problemType);
+      foot = `<div class="mtb-actions"><button type="button" class="mtb-btn${sug === 'repair' ? ' primary' : ''}" data-mtb-start>Start repair</button><button type="button" class="mtb-btn${sug === 'task' ? ' primary' : ''}" data-mtb-task>Make a task</button></div>`;
+    } else if(col === 'prog' && task){
+      foot = `<div class="mtb-foot task">Task · ${escapeHtml(task.date ? formatShort(task.date) : 'Backlog')}${(task.assignees || []).length ? ' · ' + escapeHtml(task.assignees.join(', ')) : ''}</div>`;
+    } else if(col === 'prog'){
+      foot = `<div class="mtb-foot"><span class="mtb-who">${r.assignee ? `<span class="task-avatar" style="background:${colorForAssignee(r.assignee)}">${escapeHtml(initialsForAssignee(r.assignee))}</span>${escapeHtml(r.assignee)}` : 'Anyone'}</span><span class="mtb-since">since ${escapeHtml(new Date(r.startedAt || r.updatedAt || r.createdAt).toLocaleDateString(undefined, { day:'numeric', month:'short' }))}</span></div>`;
+    } else {
+      foot = `<div class="mtb-foot fixed">✓ Fixed${r.resolvedBy ? ' by ' + escapeHtml(r.resolvedBy) : ''}${r.resolvedAt ? ' · ' + escapeHtml(new Date(r.resolvedAt).toLocaleDateString(undefined, { day:'numeric', month:'short' })) : ''}</div>`;
+    }
+    return `<div class="mtb-card${col === 'prog' && task ? ' mtb-locked' : ''}${r.urgent && col !== 'fixed' ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}" data-id="${escapeHtmlAttr(r.id)}">
+      ${photo ? `<div class="mtb-photo"><img alt="" loading="lazy" src="${escapeHtmlAttr(photo)}"></div>` : ''}
+      <div class="mtb-top"><b class="mtb-title">${escapeHtml(rpTypeName(r))}</b>${r.urgent && col !== 'fixed' ? '<span class="mtb-urgent">Urgent</span>' : ''}</div>
+      <div class="mtb-place">${escapeHtml(reportPlace(r))}</div>
+      <div class="mtb-meta">${escapeHtml(r.createdBy || 'Unknown')} · ${escapeHtml(when)}</div>
+      ${foot}
+    </div>`;
+  }
+  function renderMtBoard(){
+    const box = $('#mtBoard'); if(!box) return;
+    $('#reportsDrawer').classList.toggle('view-board', rpView === 'board');
+    $('#reportsDrawer').classList.toggle('rp-nosel', !reports.some(r=> r.id === currentReportId));
+    document.querySelectorAll('#rpViewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.rpv === rpView));
+    if(rpView !== 'board'){ box.innerHTML = ''; return; }
+    const q = (reportsSearchQuery || '').trim().toLowerCase();
+    const match = r=> !q || [rpTypeName(r), reportPlace(r), r.notes, r.createdBy, r.assignee].join(' ').toLowerCase().includes(q);
+    const byNew = (a,b)=> String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+    const open = reports.filter(r=> r.status === 'Open' && match(r)).sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
+    const prog = reports.filter(r=> r.status === 'In Progress' && match(r)).sort((a,b)=> (rpHasTask(a)?1:0)-(rpHasTask(b)?1:0) || (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
+    const fixed = reports.filter(r=> r.status === 'Resolved' && !rpArchived(r) && match(r)).sort((a,b)=> String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || '')));
+    const archived = reports.filter(rpArchived).length;
+    const col = (key, title, list, hint, extra)=> `<div class="mtb-col mtb-${key}"><div class="mtb-head"><span class="mtb-dot"></span><b>${title}</b><span class="mtb-count">${list.length}</span>${extra || ''}</div>${hint ? `<div class="mtb-hint">${hint}</div>` : ''}<div class="mtb-list" data-col="${key}">${list.map(r=> mtCardHtml(r, key)).join('') || '<div class="mtb-empty">Nothing here</div>'}</div></div>`;
+    box.innerHTML = col('open', 'Open', open, 'New reports — drag to In progress, or choose below')
+      + col('prog', 'In progress', prog, 'Repairs here are what workers see in “Check maintenance”')
+      + col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">archived after ${RP_ARCHIVE_DAYS} days${archived ? ' · ' + archived : ''}</span>`);
+    box.querySelectorAll('.mtb-photo img').forEach(im=> im.addEventListener('error', ()=> im.parentElement.remove()));
+    mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
+    if(typeof Sortable !== 'undefined'){
+      box.querySelectorAll('.mtb-list').forEach(list=>{
+        mtSortables.push(Sortable.create(list, { group:'mtboard', animation:150, filter:'.mtb-locked, .mtb-empty, button', preventOnFilter:false, draggable:'.mtb-card:not(.mtb-locked)',
+          onEnd: ev=>{ const to = ev.to.dataset.col, from = ev.from.dataset.col, id = ev.item.dataset.id; if(to === from){ renderMtBoard(); return; } mtMove(id, to); } }));
+      });
+    }
+  }
+  function mtMove(id, to){
+    const r = reports.find(x=> x.id === id); if(!r){ renderMtBoard(); return; }
+    if(rpHasTask(r) && to !== 'fixed'){ showToast('This one is a task — it moves when the task is done or deleted.', true); renderMtBoard(); return; }
+    if(rpHasTask(r)){ const tk = tasks.find(t=> t.id === r.linkedTaskId); if(tk && tk.status !== 'done') toggleDone(tk.id); else renderMtBoard(); return; }
+    if(to === 'prog'){ askStartRepair(id); return; }
+    if(to === 'open'){ r.status = 'Open'; delete r.assignee; r.resolvedAt = null; r.autoResolved = false; delete r.resolvedBy; touchReport(r, 'moved back to Open'); return; }
+    if(to === 'fixed'){ r.status = 'Resolved'; r.resolvedAt = new Date().toISOString(); r.autoResolved = false; r.resolvedBy = 'Manager'; markResolvedSeen(r); touchReport(r, 'fixed'); showToast('Moved to Fixed.'); }
+  }
+  let srReportId = null;
+  function askStartRepair(id){
+    const r = reports.find(x=> x.id === id); if(!r) return;
+    srReportId = id;
+    $('#srTitle').textContent = isRepairInProgress(r) ? 'Who is on this repair?' : 'Start repair';
+    $('#srSub').textContent = `${rpTypeName(r)} · ${reportPlace(r)}`;
+    $('#srWhoInput').value = r.assignee || '';
+    $('#srStartBtn').textContent = isRepairInProgress(r) ? 'Save' : 'Start repair';
+    try{ refreshAssigneeDatalist(); }catch(e){}
+    $('#startRepairModal').classList.add('open');
+    setTimeout(()=> $('#srWhoInput').focus(), 120);
+  }
+  function closeStartRepair(){ $('#startRepairModal').classList.remove('open'); srReportId = null; renderMtBoard(); }
   // Re-render without wiping a note the manager is typing
   function renderReportsView(){
     if(!$('#reportsDrawer').classList.contains('open')) return;
     renderReportsSummary();
     renderReportsList();
+    renderMtBoard();
     const ae = document.activeElement;
     if(!(ae && ae.tagName === 'TEXTAREA' && ae.closest('#rpDetail'))) renderReportDetail();
   }
@@ -5772,6 +5939,54 @@
   function escapeHtmlAttr(s){ return escapeHtml(s); }
 
   function rpLabel(r){ return `${rpTypeName(r)} · ${reportPlace(r)}`; }
+  // ===== Maintenance v2 (2026-10-11): reports are the jobs =====
+  // A report goes one of three ways: a task (one-off clean-up job, photo on the task), a repair job
+  // (Maintenance board: Open → In progress → Fixed, worked through the "Check maintenance" task),
+  // or just logged (stays Open). Each problem type has a default way; feed spills and biosecurity are tasks.
+  const RP_TASK_KINDS = ['feedSpill','biosecurity'];
+  const RP_ARCHIVE_DAYS = 30;
+  function ptRoute(p){ if(!p) return 'repair'; if(p.rt === 'task' || p.rt === 'repair') return p.rt; return RP_TASK_KINDS.includes(p.k) ? 'task' : 'repair'; }
+  function typeRoute(name){
+    const n = String(name || '').replace(/^Other\s*—\s*/i, '').trim().toLowerCase();
+    const p = problemTypes().find(x=> String(x.name || '').trim().toLowerCase() === n);
+    return p ? ptRoute(p) : 'repair';
+  }
+  function rpHasTask(r){ return !!(r && r.linkedTaskId && tasks.some(t=> t.id === r.linkedTaskId)); }
+  function isRepairInProgress(r){ return !!r && r.status === 'In Progress' && !rpHasTask(r); }
+  function repairsInProgress(){ return reports.filter(isRepairInProgress); }
+  function rpArchived(r){ return r.status === 'Resolved' && r.resolvedAt && (Date.now() - new Date(r.resolvedAt).getTime()) > RP_ARCHIVE_DAYS * 86400000; }
+  // One-off move to maintenance v2 (runs once per farm, after both files are in):
+  // open tasks ticked "Maintenance" with no report become repair jobs In progress (keeping who);
+  // every other task drops the old maintenance mark (report tasks stay normal tasks with their photo).
+  function migrateMaintV2(){
+    if(!ghFarmName || settings.mtV2) return;
+    let made = 0, cleared = 0;
+    const keep = [];
+    tasks.forEach(t=>{
+      if(t.cat !== 'maintenance'){ keep.push(t); return; }
+      if(!t.linkedReportId && t.status !== 'done'){
+        const now = new Date().toISOString();
+        const id = 'rpt-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)));
+        reports.unshift({ id, code: `${nrFarmSlug()}-rpt-mt${(made + 1)}`, createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : now, createdBy: 'Manager',
+          shed: '', location: '', problemType: t.name, notes: t.notes || '', photoUrls: [], status: 'In Progress', route: 'repair',
+          assignee: (t.assignees || [])[0] || '', startedAt: now, urgent: t.priority === 'high', updatedAt: now, resolvedAt: null, managerNotes: '', resolutionNotes: '' });
+        made++;
+        return;   // the task itself goes: the job now lives on the Maintenance board
+      }
+      delete t.cat; cleared++; keep.push(t);
+    });
+    settings.mtV2 = 1;
+    if(made){ tasks = keep; addHistory('Maintenance moved', `${made} maintenance task${made === 1 ? '' : 's'} moved to the Maintenance board (In progress)`); scheduleReportsPush(); }
+    persist(); renderAll();
+    if(made) showToast(`${made} maintenance job${made === 1 ? '' : 's'} moved to the Maintenance board.`);
+  }
+  function startRepair(id, who){
+    const r = reports.find(x=> x.id === id); if(!r) return;
+    r.status = 'In Progress'; r.route = 'repair'; r.assignee = String(who || '').trim(); r.startedAt = new Date().toISOString();
+    r.autoResolved = false; r.resolvedAt = null; delete r.resolvedBy;
+    touchReport(r, `repair started${r.assignee ? ' — ' + r.assignee : ''}`);
+    showToast(`On the Maintenance board${r.assignee ? ' · ' + r.assignee : ''}. Workers see it in “Check maintenance”.`);
+  }
   function rpTypeName(r){ return String((r && r.problemType) || 'Report').replace(/^Other\s*—\s*/i, '').trim() || 'Report'; }
   function reportPlace(r){ return r.shed ? `Shed ${r.shed}` : (r.location || 'Around the farm'); }
   // A report whose converted task no longer exists goes back to Open (unless the manager resolved it by hand).
@@ -5803,7 +6018,6 @@
     updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount'));
     $('#editTaskNotesInput').value = `${r.createdBy ? 'Reported by ' + r.createdBy : 'From a report'}${r.notes ? '\n' + r.notes : ''}`.trim();
     $('#editTaskPriorityInput').checked = true;
-    $('#editTaskMaintInput').checked = true;
     $('#editTaskDateInput').value = '';
     $('#editTaskCreateOnlyRow').style.display = 'none';   // not a frequent task
     $('#editTaskFrequentBox').checked = false;
@@ -5812,8 +6026,8 @@
     const r = reports.find(x => x.id === reportId);
     if(!r || !t) return;
     t.linkedReportId = r.id;
-    t.cat = 'maintenance';
-    r.linkedTaskId = t.id;
+    delete t.cat;
+    r.linkedTaskId = t.id; r.route = 'task'; delete r.assignee;
     r.status = 'In Progress';
     r.autoResolved = false;
     r.updatedAt = new Date().toISOString();
@@ -6270,6 +6484,10 @@
   const WRENCH_TAG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
   // The check task shows how many maintenance tasks are left on its day
   function mcheckChipHtml(task){
+    if(task.status !== 'done'){
+      const n = repairsInProgress().length;
+      return `<span class="mc-chip${n ? '' : ' none'}" title="${n ? n + ' repair job' + (n === 1 ? '' : 's') + ' in progress on the Maintenance board — this task is done once they are all fixed' : 'No repair jobs in progress'}">${n ? n + ' in progress' : 'All clear'}</span>`;
+    }
     const day = tasks.filter(x=> x.date && x.date === task.date && isMaintTask(x));
     const left = day.filter(x=> x.status !== 'done').length;
     const tip = day.length ? `${left} of ${day.length} maintenance task${day.length === 1 ? '' : 's'} left on this day — workers see them, with photos, when they open this task in the Viewer` : 'No maintenance tasks on this day. Tick "Maintenance" on a task to add it.';
@@ -7997,7 +8215,7 @@
       let count = 0;
       bulkSelectedIds.forEach(id=>{
         const t = tasks.find(x=>x.id===id);
-        if(t && t.status!=='done'){ t.status='done'; stampDone(t); addHistory('Completed', taskLabel(t)); count++; }
+        if(t && t.status!=='done' && !(isMaintCheckTask(t) && repairsInProgress().length)){ t.status='done'; stampDone(t); addHistory('Completed', taskLabel(t)); count++; }
       });
       persist();
       bulkSelectedIds.clear(); bulkSelectMode = false;
@@ -10654,6 +10872,7 @@
     $('#addTasksSheet').classList.remove('open');
     $('#batchInfoModal').classList.remove('open');
     $('#guideModal').classList.remove('open'); document.body.classList.remove('guide-open');
+    $('#startRepairModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
     $('#backlogModal').classList.remove('open');
@@ -11311,6 +11530,7 @@
     list.forEach((p, i) => {
       const row = document.createElement('div'); row.className = 'pt-row';
       row.innerHTML = `<input type="text" maxlength="40" aria-label="Problem type name" title="Rename — press Enter to save">
+        <button type="button" class="pt-rt ${ptRoute(p)}" data-pt-rt="${i}" title="What a new report of this type defaults to — tap to switch">${ptRoute(p) === 'task' ? 'Task' : 'Repair'}</button>
         <button type="button" class="pt-mv" data-pt-up="${i}" ${i === 0 ? 'disabled' : ''} title="Move up" aria-label="Move up">↑</button>
         <button type="button" class="pt-mv" data-pt-down="${i}" ${i === list.length - 1 ? 'disabled' : ''} title="Move down" aria-label="Move down">↓</button>
         <button type="button" class="pt-del${ptConfirm === p.id ? ' confirm' : ''}" data-pt-del="${i}" title="${ptConfirm === p.id ? 'Tap again to delete' : 'Delete'}">${ptConfirm === p.id ? 'Delete?' : 'Delete'}</button>`;
@@ -11320,7 +11540,7 @@
         if(!v){ inp.value = p.name; return; }
         if(v === p.name) return;
         if(list.some((x, j) => j !== i && x.name.trim().toLowerCase() === v.toLowerCase())){ showToast('That problem type is already in the list.', true); inp.value = p.name; return; }
-        const next = problemTypes(); next[i] = { id: p.id, name: v };   // renamed: shown as typed (no translation)
+        const next = problemTypes(); next[i] = { id: p.id, name: v, rt: ptRoute(p) };   // renamed: shown as typed (no translation); keeps its route
         // reports of this type take the new name too
         const now = new Date().toISOString(); let moved = 0;
         reports.forEach(r => { if(String(r.problemType || '').trim().toLowerCase() === p.name.trim().toLowerCase()){ r.problemType = v; r.updatedAt = now; moved++; } });
@@ -11338,6 +11558,7 @@
   $('#ptypesList').addEventListener('click', e => {
     const b = e.target.closest('button'); if(!b) return;
     const list = problemTypes();
+    if(b.dataset.ptRt !== undefined){ const i = +b.dataset.ptRt; const p = list[i]; if(!p) return; p.rt = ptRoute(p) === 'task' ? 'repair' : 'task'; saveProblemTypes(list, `New “${p.name}” reports will default to ${p.rt === 'task' ? 'a task' : 'a repair job'}.`); return; }
     if(b.dataset.ptUp !== undefined){ const i = +b.dataset.ptUp; if(i > 0){ [list[i-1], list[i]] = [list[i], list[i-1]]; saveProblemTypes(list); } return; }
     if(b.dataset.ptDown !== undefined){ const i = +b.dataset.ptDown; if(i < list.length - 1){ [list[i+1], list[i]] = [list[i], list[i+1]]; saveProblemTypes(list); } return; }
     if(b.dataset.ptDel !== undefined){
@@ -11561,6 +11782,7 @@
     if(t.dataset.rpStatus){ setReportStatus(id, t.dataset.rpStatus); return; }
     if(t.dataset.rpUrgent){ setReportUrgent(id, t.dataset.rpUrgent === '1'); return; }
     if(t.hasAttribute('data-rp-assign')){ openAssignTaskFromReport(id); return; }
+    if(t.hasAttribute('data-rp-start')){ askStartRepair(id); return; }
     if(t.hasAttribute('data-rp-viewtask')){
       const r = reports.find(x => x.id === id);
       if(!r || !r.linkedTaskId) return;
@@ -11591,6 +11813,16 @@
     return `https://cluckwise-photos.vonrmangaron.workers.dev/photo/${nrFarmSlug()}/${r.id}.jpg`;
   }
   function nrFarmSlug(){ return ghFarmName ? sanitizeFarmFileName(ghFarmName).replace('.json','') : 'farm'; }
+  function nrSyncRoute(){
+    document.querySelectorAll('#nrRoute button').forEach(b=> b.classList.toggle('active', b.dataset.route === nr.route));
+    document.querySelectorAll('#nrDays button').forEach(b=> b.classList.toggle('active', b.dataset.day === nr.day));
+    $('#nrTaskOpts').hidden = nr.route !== 'task';
+    $('#nrWhoRow').hidden = nr.route === 'log';
+    $('#nrDayInput').hidden = !(nr.route === 'task' && nr.day === 'pick');
+    $('#nrRouteHint').textContent = nr.type && !nr.routeSet ? `(suggested for “${nr.type === 'Other' ? 'Other' : nr.type}”)` : '';
+    const lbl = { task:'Save report + task', repair:'Save + start repair', log:'Save report' }[nr.route];
+    $('#nrSaveBtn').textContent = lbl;
+  }
   function nrUpdate(){
     const other = ($('#nrOtherInput').value || '').trim();
     const place = nr.loc === 'shed' ? ($('#nrShedInput').value || '').trim() : ($('#nrPlaceInput').value || '').trim();
@@ -11605,7 +11837,9 @@
   function openNewReport(){
     const fromMt = $('#reportsDrawer').classList.contains('open');
     closeOverlays();
-    nr = { type:null, urgent:false, loc:'shed', file:null, fromMt };
+    nr = { type:null, urgent:false, loc:'shed', file:null, fromMt, route:'task', routeSet:false, day:'0' };
+    $('#nrWhoInput').value = ''; $('#nrDayInput').value = ''; $('#nrDayInput').hidden = true;
+    try{ refreshAssigneeDatalist(); }catch(e){}
     // The manager's own problem list (Maintenance › Problem types), then Other
     const box = $('#nrTypes'); box.innerHTML = '';
     problemTypes().forEach(p=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'nr-type'; b.dataset.type = p.name; b.textContent = p.name; box.appendChild(b); });
@@ -11618,6 +11852,7 @@
     let by = ''; try{ by = localStorage.getItem('cluckwise-report-by') || ''; }catch(e){}
     $('#nrByInput').value = by || 'Manager';
     $('#nrPhotoInput').value = ''; $('#nrPhotoPreview').hidden = true; $('#nrPhotoPreview').removeAttribute('src'); $('#nrPhotoEmpty').hidden = false;
+    nrSyncRoute();
     nrUpdate();
     openDrawer('#newReportModal');
   }
@@ -11651,11 +11886,24 @@
     reports.unshift(report);
     markReportSeen(id);
     addHistory('Report added', `${report.code} (${reportPlace(report)} · ${report.problemType})`);
+    // What happens next: a task with the photo, a repair job in progress, or just logged
+    const who = ($('#nrWhoInput').value || '').trim();
+    let routedMsg = '';
+    if(nr.route === 'task'){
+      const day = nr.day === 'backlog' ? null : nr.day === 'pick' ? ($('#nrDayInput').value || null) : addDaysStr(dateKey(new Date()), Number(nr.day) || 0);
+      const t = addTask(`${rpTypeName(report)} — ${reportPlace(report)}`.slice(0, 50), null, day, Object.assign({ notes: report.notes || '' }, report.urgent ? { priority:'high' } : {}, who ? { assignees:[who] } : {}));
+      linkTaskToReport(t, id);
+      persist();
+      routedMsg = day ? ` Task on ${formatShort(day)}.` : ' Task in the Backlog.';
+    } else if(nr.route === 'repair'){
+      report.status = 'In Progress'; report.route = 'repair'; report.startedAt = now; if(who) report.assignee = who;
+      routedMsg = ' Repair job started.';
+    } else { report.route = 'log'; }
     scheduleReportsPush();
     closeOverlays();
     renderAll();
     if(nr.fromMt) openReportsDrawer(id);
-    showToast(file ? 'Report saved.' : 'Report saved without a photo.');
+    showToast((file ? 'Report saved.' : 'Report saved without a photo.') + routedMsg);
     if(report.photoUrls.length){
       try{
         const blob = await nrShrink(file);
@@ -11674,6 +11922,18 @@
   }
   $('#fabReportBtn').addEventListener('click', openNewReport);
   $('#topReportBtn').addEventListener('click', openNewReport);
+  $('#rpViewSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-rpv]'); if(!b) return; rpView = b.dataset.rpv; try{ localStorage.setItem('cluckwise-mt-view', rpView); }catch(err){} renderReportsView(); });
+  $('#mtBoard').addEventListener('click', (e)=>{
+    const card = e.target.closest('.mtb-card'); if(!card) return;
+    const id = card.dataset.id;
+    if(e.target.closest('[data-mtb-start]')){ askStartRepair(id); return; }
+    if(e.target.closest('[data-mtb-task]')){ openAssignTaskFromReport(id); return; }
+    openReportDetailModal(id);
+  });
+  $('#closeStartRepair').addEventListener('click', closeStartRepair);
+  $('#srCancelBtn').addEventListener('click', closeStartRepair);
+  $('#srStartBtn').addEventListener('click', ()=>{ const id = srReportId; const who = $('#srWhoInput').value; $('#startRepairModal').classList.remove('open'); srReportId = null; if(id) startRepair(id, who); });
+  $('#srWhoInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); $('#srStartBtn').click(); } });
   $('#sbFindInput').addEventListener('input', (e)=>{ sbFindQ = e.target.value.trim().toLowerCase(); renderFrequentTasks(); renderBacklog(); try{ initSortables(); }catch(err){} });
   // ===== Desktop icon rail + Calendar/List/Board tabs in the header (2026-10-10, board redesign) =====
   (function(){
@@ -11744,6 +12004,8 @@
   $('#nrTypes').addEventListener('click', (e)=>{
     const b = e.target.closest('.nr-type'); if(!b) return;
     nr.type = nr.type === b.dataset.type ? null : b.dataset.type;
+    if(nr.type && !nr.routeSet){ nr.route = nr.type === 'Other' ? 'task' : typeRoute(nr.type); }
+    nrSyncRoute();
     document.querySelectorAll('#nrTypes .nr-type').forEach(x=> x.classList.toggle('selected', x.dataset.type === nr.type));
     $('#nrOtherInput').hidden = nr.type !== 'Other'; if(nr.type === 'Other') $('#nrOtherInput').focus();
     nrUpdate();
@@ -11756,6 +12018,8 @@
     nr.file = f; const p = $('#nrPhotoPreview'); p.src = URL.createObjectURL(f); p.hidden = false; $('#nrPhotoEmpty').hidden = true;
   });
   $('#nrSaveBtn').addEventListener('click', saveNewReport);
+  $('#nrRoute').addEventListener('click', (e)=>{ const b = e.target.closest('[data-route]'); if(!b) return; nr.route = b.dataset.route; nr.routeSet = true; nrSyncRoute(); });
+  $('#nrDays').addEventListener('click', (e)=>{ const b = e.target.closest('[data-day]'); if(!b) return; nr.day = b.dataset.day; nrSyncRoute(); if(nr.day === 'pick') setTimeout(()=> $('#nrDayInput').focus(), 50); });
 
   $('#reportsDrawer').addEventListener('change', (e)=>{
     if(!currentReportId) return;
