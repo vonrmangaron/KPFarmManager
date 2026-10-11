@@ -3092,6 +3092,31 @@
     .reports-modal.view-board .mt-board{ grid-template-columns:1fr; overflow:auto; }
     .nr-route{ grid-template-columns:1fr; }
   }
+
+  /* ===== c43: board columns stand apart (task Board + Maintenance board) ===== */
+  :root{ --col-bg:#E8EBE4; --col-line:#D5DACF; --col-card:#FFFFFF; --col-card-line:#E1E4DC; --col-empty:#C9CFC2; }
+  body.theme-dark{ --col-bg:#141E33; --col-line:#2A3858; --col-card:#22304C; --col-card-line:#33446A; --col-empty:#3A4A6C; }
+  body #calendarWrap .kanban-board{ gap:18px; }
+  body #calendarWrap .kanban-column:not(.collapsed), body #calendarWrap .kanban-column.collapsed{ background:var(--col-bg) !important; border:1px solid var(--col-line) !important; border-radius:16px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
+  body.theme-dark #calendarWrap .kanban-column:not(.collapsed), body.theme-dark #calendarWrap .kanban-column.collapsed{ box-shadow:none; }
+  body #calendarWrap .kanban-column .col-head{ background:transparent !important; border:none !important; border-bottom:1px solid var(--col-line) !important; border-radius:0; padding:4px 4px 10px !important; margin-bottom:4px !important; }
+  body #calendarWrap .kanban-column.collapsed .col-head{ border-bottom:none !important; }
+  body #calendarWrap .kanban-column.today{ background:color-mix(in srgb, var(--primary) 9%, var(--col-bg)) !important; border-color:var(--primary) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent); }
+  body #calendarWrap .kanban-column .kcard{ background:var(--col-card); border-color:var(--col-card-line); box-shadow:0 1px 2px rgba(20,30,20,.07), 0 3px 8px rgba(20,30,20,.06); }
+  body.theme-dark #calendarWrap .kanban-column .kcard{ box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  body #calendarWrap .kanban-column .kcard:hover{ box-shadow:0 4px 14px rgba(20,30,20,.14); }
+  body #calendarWrap .kanban-column .empty-state, body #calendarWrap .kanban-column .kempty, body #calendarWrap .kanban-column .col-empty{ background:transparent !important; border:1.5px dashed var(--col-empty) !important; }
+  /* Maintenance board: each column carries its status colour */
+  .reports-modal.view-board .mt-board{ gap:18px; }
+  .mtb-col{ --mtc:var(--muted); background:color-mix(in srgb, var(--mtc) 7%, var(--col-bg)); border:1px solid color-mix(in srgb, var(--mtc) 22%, var(--col-line)); border-top:4px solid var(--mtc); }
+  .mtb-col.mtb-open{ --mtc:var(--danger); } .mtb-col.mtb-prog{ --mtc:var(--primary); } .mtb-col.mtb-fixed{ --mtc:var(--success); }
+  .mtb-head{ padding-bottom:8px; border-bottom:1px solid color-mix(in srgb, var(--mtc) 20%, var(--col-line)); }
+  .mtb-head b{ color:color-mix(in srgb, var(--mtc) 55%, var(--ink)); }
+  .mtb-count{ background:color-mix(in srgb, var(--mtc) 16%, transparent); color:color-mix(in srgb, var(--mtc) 70%, var(--ink)); }
+  .mtb-card{ background:var(--col-card); border-color:var(--col-card-line); box-shadow:0 1px 2px rgba(20,30,20,.07), 0 3px 8px rgba(20,30,20,.06); }
+  body.theme-dark .mtb-card{ box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  .mtb-card.urgent{ border-color:var(--danger); }
+  .mtb-empty{ border-color:color-mix(in srgb, var(--mtc) 30%, var(--col-empty)); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
