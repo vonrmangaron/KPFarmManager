@@ -3029,7 +3029,16 @@
   .mt-board{ display:none; }
   .reports-modal.view-board .rp-list-pane{ display:none !important; }
   .reports-modal.view-board.rp-nosel .rp-detail-pane{ display:none !important; }
-  .reports-modal.view-board .rpd-back{ display:block; }
+  /* Board view: a report opens as a pop-up over the board */
+  .rpd-backdrop{ display:none; }
+  .reports-modal.view-board:not(.rp-nosel) .rpd-backdrop{ display:block; position:fixed; inset:0; z-index:1200; background:rgba(12,18,32,.45); backdrop-filter:blur(2px); animation:rpdFade .15s ease; }
+  .reports-modal.view-board:not(.rp-nosel) .rp-detail-pane{ display:flex !important; position:fixed; z-index:1201; top:50%; left:50%; transform:translate(-50%, -50%); width:min(600px, calc(100vw - 32px)) !important; max-height:calc(100vh - 48px); height:auto; flex:none; border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,.28); animation:rpdPop .18s ease; }
+  @keyframes rpdFade{ from{ opacity:0; } }
+  @keyframes rpdPop{ from{ opacity:0; transform:translate(-50%, -48%) scale(.98); } }
+  .rpd-task.rpd-task-next{ flex-direction:column; align-items:stretch; gap:12px; }
+  .rpd-task-next .rpd-task-text{ min-width:0; }
+  .rpd-task-next .rpd-next{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .rpd-task-next .rpd-next .rpd-btn{ width:100%; justify-content:center; }
   .reports-modal.view-board .mt-board{ display:grid; grid-template-columns:repeat(3, minmax(240px, 1fr)); gap:14px; flex:1; min-width:0; min-height:0; overflow:auto; align-items:start; }
   .mtb-col{ background:var(--surface-soft); border:1px solid var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:200px; max-height:100%; box-sizing:border-box; }
   .mtb-head{ display:flex; align-items:center; gap:8px; }
@@ -3405,6 +3414,7 @@
       <div class="rp-thead" aria-hidden="true"><span>Problem</span><span>Place</span><span>Reported</span><span>Status</span><span>Task</span></div>
       <div class="reports-list" id="reportsList"></div>
     </section>
+    <div class="rpd-backdrop" id="rpdBackdrop" aria-hidden="true"></div>
     <section class="rp-detail-pane" id="rpDetail" aria-label="Report details"></section>
   </div>
 </div>
@@ -5730,7 +5740,7 @@
           ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div>`
                  : sc === 'resolved' ? `<div class="rpd-hint">No task.</div>`
                  : isRepairInProgress(r) ? `<div class="rpd-task"><div class="rpd-task-text"><b>Repair job · ${escapeHtml(r.assignee || 'anyone')}</b><span class="rpd-task-meta">On the Maintenance board — workers fix it from “Check maintenance”</span></div><button type="button" class="rpd-btn" data-rp-start title="Change who">Change who</button></div>`
-                 : `<div class="rpd-task"><div class="rpd-task-text"><span class="rpd-hint">What happens next? A <b>task</b> for a one-off job (it carries the photo), or a <b>repair</b> on the Maintenance board.</span></div><div class="rpd-next"><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'repair' ? ' primary' : ''}" data-rp-start title="Move to In progress on the Maintenance board">Start repair</button><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'task' ? ' primary' : ''}" data-rp-assign title="Open the New task form, filled in from this report">Make a task</button></div></div>`}
+                 : `<div class="rpd-task rpd-task-next"><div class="rpd-task-text"><span class="rpd-hint">What happens next? A <b>task</b> for a one-off job (it carries the photo), or a <b>repair</b> on the Maintenance board.</span></div><div class="rpd-next"><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'repair' ? ' primary' : ''}" data-rp-start title="Move to In progress on the Maintenance board">Start repair</button><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'task' ? ' primary' : ''}" data-rp-assign title="Open the New task form, filled in from this report">Make a task</button></div></div>`}
         </div>
         <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist"></div></div>
         <div class="rpd-controls">
@@ -5872,6 +5882,7 @@
     renderReportsView();
     const sc = $('#rpDetail .rpd-scroll'); if(sc) sc.scrollTop = 0;
   }
+  $('#rpdBackdrop').addEventListener('click', ()=> closeReportDetailOnly());
   function closeReportDetailOnly(){
     currentReportId = null;
     renderReportsView();
@@ -12305,7 +12316,7 @@
   document.addEventListener('keydown', (e)=>{
     if(e.key==='Escape'){
       // In the Reports window on a phone, Esc goes back from a report to the list
-      if($('#reportsDrawer').classList.contains('open') && currentReportId && window.innerWidth <= 760){
+      if($('#reportsDrawer').classList.contains('open') && currentReportId && (window.innerWidth <= 760 || rpView === 'board')){
         closeReportDetailOnly();
         return;
       }
