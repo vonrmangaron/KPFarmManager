@@ -68,6 +68,7 @@ function renderHomeView(){
   const first=sheds.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);
   const day=Math.max(0,mgrDays(first,today));
   const cleans=sheds.map(s=>s.cleanoutDate?dateOnly(s.cleanoutDate):null).filter(Boolean).sort((a,b)=>a-b);
+  const cycleDays=cleans.length?Math.max(1,mgrDays(first,cleans[cleans.length-1])):null;
   const fo=farmFeedToOrder();
   const silos=mgrSiloOutlook();
   const inSilos=silos.reduce((n,x)=>n+(x.stock||0),0),allRead=silos.length&&silos.every(x=>x.reading&&x.readAge===0);
@@ -141,7 +142,7 @@ function renderHomeView(){
     </section>`;
   const offHtml=off.length?`<button type="button" class="mgr-off" data-tab="farmsettings"><span><b>${off.length} farm setting${off.length===1?'':'s'} not at normal</b> and changing these numbers: ${escapeHtml(off.map(o=>o.short).join(', '))}</span><span class="mgr-off-go">Review ›</span></button>`:'';
   return `<div class="mgr-home">
-    <div class="mgr-head"><button type="button" class="mgr-batch" data-batch-info><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · Day ${day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
+    <div class="mgr-head"><button type="button" class="mgr-batch mgr-batchcard" data-batch-info title="Batch details"><span class="mbc-k">Current batch</span><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · Day ${day}${cycleDays?` <em>of ${cycleDays}</em>`:''}</b>${cycleDays?`<span class="mbc-bar"><i style="width:${Math.min(100,Math.round(day/cycleDays*100))}%"></i></span>`:''}<span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button><button type="button" class="mgr-detail-btn" data-tab="dashboard" title="Result detail: PIF, ALW, dockets and leftover">${navIcon('grid')}<span><b>Result detail</b><small>PIF, ALW, dockets &amp; leftover</small></span></button></div>
     <div class="mgr-row3">${finish}${birds}${needsHtml}</div>
     ${feed}
     <div class="mgr-row2">${shedsHtml}${weekHtml}</div>
@@ -200,7 +201,7 @@ function fsReset(key){
 }
 function fsResetAll(){const keys=farmSettingsNotNormal().map(o=>o.key);keys.forEach(k=>{if(k==='target'){const c=fsMostCommon([1,2,3,4].map(pairTargetKg));[1,2,3,4].forEach(g=>{predState.targetHarvestWeightKg[g]=c;});}else if(k.startsWith('feed:')){const s=farmData&&farmData.sheds[Number(k.slice(5))-1];if(s)s.feedAdjustPct=null;}else{const i=fsItem(k);if(i&&i.normal!=null)i.set(i.normal);}});fsAfterChange('All settings back to normal.');}
 
-function renderFarmSettingsView(){
+function renderFarmSettingsView(embedded){
   const off=farmSettingsNotNormal();
   const secs=[...new Set(FS_ITEMS.map(i=>i.sec))];
   const chev='<svg class="fs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
@@ -216,7 +217,7 @@ function renderFarmSettingsView(){
     <div class="fs-intro">These only change how ProdWise projects and plans. Your recorded data never changes, and every change is kept in History.</div>
     ${offHtml}
     <div class="fs-grid">${secHtml}
-      <section class="fs-group"><span class="fs-sec-label">Per pair and per shed</span><div class="fs-list"><button type="button" class="fs-row" data-toggle-adjustments="1"><span class="fs-row-text"><b>More adjustments</b><span>Scale correction per shed, mortality rate, no-pickup days</span></span>${chev}</button></div></section>
+      ${embedded?'':`<section class="fs-group"><span class="fs-sec-label">Per pair and per shed</span><div class="fs-list"><button type="button" class="fs-row" data-toggle-adjustments="1"><span class="fs-row-text"><b>More adjustments</b><span>Scale correction per shed, mortality rate, no-pickup days</span></span>${chev}</button></div></section>`}
     </div>
   </div>`;
 }
@@ -408,7 +409,7 @@ function syncToolPages(changed){
 // Desktop: a slim rail that never collapses. Sheds and Tools open the side panel; clicking the lit one again hides it.
 const PW_PANEL_KEY='prodwise_pw_panel_v1';
 let pwPanel='sheds';try{const v=localStorage.getItem(PW_PANEL_KEY);if(v==='sheds'||v==='tools'||v==='none')pwPanel=v;}catch(e){}
-const PW_SHED_PAGES=['dashboard','predictions','g1','g2','g3','g4'];
+const PW_SHED_PAGES=['predictions','g1','g2','g3','g4'];
 function setPwPanel(p){
   pwPanel=p;['sheds','tools','none'].forEach(k=>document.body.classList.toggle('pwp-'+k,p===k));
   try{localStorage.setItem(PW_PANEL_KEY,p);}catch(e){}
@@ -427,19 +428,37 @@ function buildPwRail(){
     +b('data-pw-panel="sheds"','shed','Sheds','<span class="pwr-badge" id="pwrShedBadge" hidden></span>')
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
-    +b('data-tab="farmsettings"','homes','Farm','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
     +'<span class="pwr-gap"></span>'
+    +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
+    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Farm profile"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Farm</span></button>`
     +b('data-tab="cluckwise"','cluckwise','CluckWise')
     +b('data-pwr-theme','moon','Theme')
-    +b('data-pwr-settings','gear','Settings');
+    +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>');
   lay.insertBefore(nav,lay.firstChild);
   const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
 }
 function syncPwRail(){
   const r=document.getElementById('pwRail');if(!r)return;
-  const page=toolPageOpen?null:activeTab;
-  r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===page));
-  r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===pwPanel||(pwPanel==='none'&&(k==='tools'?!!toolPageOpen:PW_SHED_PAGES.includes(page))));});
+  // One lit button: the section of the page you are on (the open panel shows itself)
+  const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':activeTab==='dashboard'?'home':activeTab;
+  r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===sec));
+  r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===sec);x.classList.toggle('open',k===pwPanel);});
+  // Sync and farm stay on the rail when the panel is hidden
+  const sd=document.getElementById('pwrSyncDot'),sl=document.getElementById('pwrSyncLbl');
+  if(sd&&typeof syncFarmName!=='undefined'){
+    const busy=syncState==='pulling'||syncState==='pushing';
+    const cls=!syncFarmName?'off':syncState==='error'?'err':busy?'busy':syncConnectedAt?'ok':'busy';
+    sd.className='pwr-sdot '+cls;
+    sl.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':'Synced';
+    const sb=r.querySelector('[data-pwr-sync]');if(sb)sb.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' · '+fmtRelativeTime(syncLastSyncAt):'')+' — tap to sync now';
+  }
+  const av=document.getElementById('pwrFarmAv'),fl=document.getElementById('pwrFarmLbl');
+  if(av&&typeof displayFarmName==='function'){
+    const shown=String(displayFarmName()||'').trim();
+    av.textContent=syncFarmName?(shown.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'F'):'–';
+    fl.textContent=shown?shown.split(/\s+/)[0].slice(0,9):'Farm';
+    const fb=r.querySelector('[data-pwr-farm]');if(fb)fb.title=(shown||'This device')+(syncFarmName?' · cloud sync on':' · not synced');
+  }
   const th=r.querySelector('[data-pwr-theme]');if(th){const dark=document.body.classList.contains('theme-dark');th.innerHTML=navIcon(dark?'sun':'moon')+'<span>Theme</span>';th.title=dark?'Switch to light':'Switch to dark';}
   let n=0;document.querySelectorAll('#sidebarNav .sb-link[data-tab^="g"] .sb-count').forEach(c=>n+=Number(c.textContent)||0);
   const sb=document.getElementById('pwrShedBadge');if(sb){sb.hidden=!n;sb.textContent=n>99?'99+':String(n);sb.title=n+' open alert'+(n===1?'':'s');}
@@ -448,8 +467,66 @@ function syncPwRail(){
 document.addEventListener('click',e=>{
   const pb=e.target.closest('[data-pw-panel]');if(pb){const k=pb.dataset.pwPanel;setPwPanel(pwPanel===k?'none':k);return;}
   if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
-  if(e.target.closest('[data-pwr-settings]')){document.getElementById('settingsBtn')?.click();return;}
+  if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
+  if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}
+  if(e.target.closest('[data-pwr-farm]')){goSettings('farm');return;}
+  const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;render();return;}
+  const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
+  if(e.target.closest('[data-set-adjust]')){predState.predGroup=setPair;adjModalOpen=false;toggleAdjCollapse();return;}
+  if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
+  const ap=e.target.closest('[data-adj-pair]');
+  if(ap){const g=Number(ap.dataset.adjPair);if(g&&g!==predState.predGroup){if(typeof adjIsDirty==='function'&&adjIsDirty()&&!confirm('Discard your unapplied changes?'))return;predState.predGroup=g;adjDraft=null;adjDraftBase='';const root=document.getElementById('adjModalRoot');if(root)root.dataset.g='';render();}return;}
 });
+// ── One Settings page (2026-10-11, canvas 9JEedo4bftZcokHZu3PAP9) ─────
+// Farm settings, the Settings drawer, the farm profile and the farm-wide half of Adjust were four places
+// for overlapping things; now one page with tabs. The old drawer calls land here.
+let setTab='predictions',setPair=1;
+const SET_TABS=[['predictions','Predictions'],['pairs','Per pair & shed'],['farm','Farm & sync'],['alerts','Alerts'],['app','App & data']];
+function goSettings(tab){
+  if(tab)setTab=tab;
+  if(typeof toolPageOpen!=='undefined'&&toolPageOpen)closeToolPages();
+  if(adjModalOpen){adjModalOpen=false;adjDraft=null;}
+  activeTab='farmsettings';render();window.scrollTo(0,0);
+}
+function settingsPairsHtml(){
+  if(!farmData)return '<p class="fs-allnormal">Load a batch to set things per shed.</p>';
+  const g=setPair,d=adjDraftFromState(g),sheds=shedsForGroup(g);
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const rows=sheds.map(sh=>{const ov=d.ovr[sh.id];const own=suggestScaleCorrection([sh]);
+    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${ov==null?`<span class="set-chip">farm ${d.scale.toFixed(1)}%</span>`:`<span class="set-chip own">own ${ov}%</span>`}</td><td class="set-muted">${own?`${(own.value*100).toFixed(1)}% from ${own.n} weighing${own.n===1?'':'s'}`:'No plant weighing yet'}</td></tr>`;}).join('');
+  return `<div class="set-pairs">${[1,2,3,4].map(x=>`<button type="button" class="adj-pair${x===g?' active':''}" data-set-pair="${x}" style="--pc:var(--pair${x})">${escapeHtml(pairLabel(x))}</button>`).join('')}</div>
+    <section class="fs-group"><span class="fs-sec-label">Scale correction per shed · ${escapeHtml(pairLabel(g))}</span>
+      <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th>Uses</th><th>From the kill sheets</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    <section class="fs-group"><span class="fs-sec-label">No-pickup days · farm-wide</span>
+      <div class="set-card set-line">${d.npd.length?d.npd.map(i=>`<span class="set-chip own">${DAYS[i]}</span>`).join(' '):'<span class="set-muted">None — pickups can land on any day</span>'}</div></section>
+    <div class="set-actions"><button type="button" class="set-btn primary" data-set-adjust>Edit ${escapeHtml(pairLabel(g))}</button><span class="set-muted">Per-shed scale, no-pickup days, auto-fill and clear pickups</span></div>`;
+}
+function settingsSectionHtml(t){
+  if(t==='predictions')return renderFarmSettingsView(true);
+  if(t==='pairs')return settingsPairsHtml();
+  if(t==='farm')return `<div class="set-cards">
+      <div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${escapeHtml(displayFarmName()||'This farm')}</h4></div></div><p class="settings-section-desc">The farm name you see on screen, and the numbers painted on your silos.</p><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>
+      ${renderSettingsSyncCard()}${renderSettingsBatchHistoryCard()}${renderSettingsFarmHistoryCard()}</div>`;
+  if(t==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
+  return `<div class="set-cards">${renderSettingsUnitsCard()}${renderSettingsDataCard()}${renderSettingsReportsCard()}
+    <div class="settings-foot settings-credit">Made by Von Mangaron · Personal use only · Not for commercial use</div></div>`;
+}
+function renderSettingsPage(){
+  const off=farmData?farmSettingsNotNormal().length:0;
+  if(!SET_TABS.some(x=>x[0]===setTab))setTab='predictions';
+  return `<div class="set-page"><nav class="set-tabs" aria-label="Settings sections">${SET_TABS.map(([k,l])=>`<button type="button" class="set-tab${k===setTab?' on':''}" data-set-tab="${k}"${k===setTab?' aria-current="page"':''}>${escapeHtml(l)}${k==='predictions'&&off?`<b>${off}</b>`:''}</button>`).join('')}</nav>
+    <div class="set-body set-${setTab}" id="setBody">${settingsSectionHtml(setTab)}</div></div>`;
+}
+// The old drawer re-render calls (sync state, farm history, units…) refresh this page's tab instead
+function renderSettingsTabBody(force){
+  const b=document.getElementById('setBody');if(!b||activeTab!=='farmsettings')return;
+  const ae=document.activeElement;
+  if(!force&&ae&&b.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
+  b.innerHTML=settingsSectionHtml(setTab);afterSettingsRender();
+}
+function afterSettingsRender(){if(setTab==='alerts'&&typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();}
+renderSettingsDrawerBody=function(){renderSettingsTabBody(false);};
+openSettingsDrawer=function(){goSettings(syncFarmName?null:'farm');};
 function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getElementById(id)?.classList.contains('open')){try{TOOL_PAGES[id].close();}catch(e){}}});}
 document.addEventListener('DOMContentLoaded',()=>{
   setSidebarRail(false);   // the old collapse is replaced by the icon rail + panel

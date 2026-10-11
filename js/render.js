@@ -412,13 +412,11 @@ function renderMoreSheet() {
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
-        ${row('moreFarmSettings', 'gear', 'Farm settings', farmData && farmSettingsNotNormal().length ? `${farmSettingsNotNormal().length} not at normal` : 'Settings that change your numbers')}
         ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}
       </div>
       <div class="more-group">
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
-        ${row('moreSettings', 'gear', 'Settings', 'Units, import Excel, sync, reports')}
-        ${row('moreProfile', 'home', 'Farm profile', escapeHtml(displayFarmName()||'Farm name and silo numbers'))}
+        ${row('moreSettings', 'gear', 'Settings', farmData && farmSettingsNotNormal().length ? `${farmSettingsNotNormal().length} prediction setting${farmSettingsNotNormal().length===1?'':'s'} not at normal` : 'Predictions, sheds, farm & sync, alerts, app')}
         ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
       </div>
       <div class="more-foot">
@@ -442,6 +440,7 @@ function renderSyncPill() {
     el.innerHTML = `<span class="sb-sync-dot"></span><span class="sb-sync-text"><b>Not connected</b></span>
       <button class="sb-sync-btn" id="sbConnectBtn" type="button">Connect</button>`;
     if (farmEl) farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">–</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(displayFarmName() || 'This device')}</span><span class="sb-farm-sub">Not synced</span></span>`;
+    if (typeof syncPwRail === 'function') syncPwRail();
     return;
   }
   const dotCls = syncState === 'error' ? 'error' : syncConnectedAt ? 'ok' : '';
@@ -454,6 +453,7 @@ function renderSyncPill() {
     const initials = String(shown).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'F';
     farmEl.innerHTML = `<span class="sb-avatar" aria-hidden="true">${escapeHtml(initials)}</span><span class="sb-farm-text"><span class="sb-farm-name">${escapeHtml(shown)}</span><span class="sb-farm-sub">Cloud sync on</span></span>`;
   }
+  if (typeof syncPwRail === 'function') syncPwRail();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -463,7 +463,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { home:'Home', history:'History', farmsettings:'Farm settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', history:'History', farmsettings:'Settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   // Desktop tool pages use this same header (their own window title bar is hidden)
   const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;
@@ -1135,7 +1135,7 @@ function render(){
       if(feedCompareState.modalOpen){feedCompareState.modalOpen=false;const cm=document.getElementById('compareFeedModal');if(cm)cm.classList.remove('open');}
     }
     else if(activeTab==='home'){app.innerHTML=renderHomeView();}
-    else if(activeTab==='farmsettings'){app.innerHTML=renderFarmSettingsView();}
+    else if(activeTab==='farmsettings'){app.innerHTML=renderSettingsPage();afterSettingsRender();}
     else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
     else if(activeTab==='predictions'){activeTab='g'+(predState.predGroup||1);app.innerHTML=groupViewHtml(predState.predGroup||1);}
     else{
@@ -1902,21 +1902,12 @@ function adjModalBodyHtml(){
   return `
   <section class="adj-sec">
     <h4 class="adj-sec-title">📐 Scale correction <span>in-yard (shed-scale) readings only — plant weights are never scaled</span></h4>
-    <div class="adj-row"><label>Farm-wide (global)</label><input type="range" data-adj="scale" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${d.scale}" /><input type="number" class="adj-num" data-adj="scale" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${d.scale}" /><span class="adj-unit">%</span>${adjSuggestHtml(sugG,'data-adj-suggest-global','plant weighing')}</div>
+    <p class="adj-hist-note">Farm-wide: <b>${d.scale.toFixed(1)}%</b> — change it in <b>Settings › Predictions</b>. Untick “Use global” to give a shed its own value.</p>
     <div class="adj-shed-list">${shedRows}</div>
   </section>
   <section class="adj-sec">
-    <h4 class="adj-sec-title">📊 Results</h4>
-    <div class="adj-row"><label>Target weight at harvest · ${pairLabel(g)}</label><input type="number" class="adj-num" data-adj="target" min="0.5" max="5" step="0.01" value="${d.target.toFixed(2)}" /><span class="adj-unit">kg</span><span class="adj-hint">The weight you're aiming to send birds to the plant. Also the reference for cFCR (Industry) = FCR − (ALW − target) ÷ 3.2. cFCR (Baiada) always uses 2.45 kg × 0.27.</span></div>
-    <div class="adj-row"><label>Final pickup weight vs thins</label><input type="number" class="adj-num" data-adj="uplift" min="0" max="15" step="1" value="${d.uplift}" /><span class="adj-unit">% heavier</span><span class="adj-hint">Final birds weigh more than thinned birds compared with the Ross standard — thins take lighter birds and the rest grow on with more room. Your 2606 and 2607 batches: +8–10%. 0% = use the growth curve as is.</span></div>
-  </section>
-  <section class="adj-sec">
-    <h4 class="adj-sec-title">🎯 Pickup planning <span>global defaults</span></h4>
+    <h4 class="adj-sec-title">📅 No-pickup days <span>farm-wide · the planner skips these days</span></h4>
     ${adjHistorySuggestionHtml(d)}
-    <div class="adj-row"><label>Trigger density</label><input type="number" class="adj-num" data-adj="trig" min="20" max="45" step="0.5" value="${d.trig}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Plan a pickup when density is forecast to reach this.</span></div>
-    <div class="adj-row"><label>Target after pickup</label><input type="number" class="adj-num" data-adj="tgt" min="15" max="35" step="0.5" value="${d.tgt}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Density to aim for after each pickup.</span></div>
-    <div class="adj-row"><label>Hard maximum</label><input type="number" class="adj-num" data-adj="max" min="28" max="45" step="0.5" value="${d.max}" /><span class="adj-unit">kg/m²</span><span class="adj-hint">Welfare ceiling.</span></div>
-    <div class="adj-row"><label>Target pickups per shed</label><input type="number" class="adj-num" data-adj="tp" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${d.tp}" /><span class="adj-unit">pickups</span><span class="adj-hint">Including the final clean-out (${MIN_PICKUPS_PER_SHED} or ${MAX_PICKUPS_PER_SHED}).</span></div>
     <div class="adj-row"><label>No-pickup days</label><div class="no-pickup-days">${npd}</div></div>
   </section>
   <section class="adj-sec adj-actions-sec">
@@ -1959,7 +1950,7 @@ function refreshAdjModal(bodyToo){
 }
 function renderAdjustmentModal(group){
   if(!adjDraft||adjDraft.group!==group){adjDraft=adjDraftFromState(group);adjDraftBase=JSON.stringify(adjDraft);}
-  return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Prediction adjustments <span>${pairLabel(group)}</span></h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-modal-body">${adjModalBodyHtml()}</div><div class="adj-modal-foot">${adjFooterHtml()}</div></div></div>`;
+  return `<div class="adj-modal" role="dialog" aria-modal="true" aria-labelledby="adjModalTitle"><div class="adj-modal-scrim" data-toggle-adjustments="1"></div><div class="adj-modal-panel"><div class="adj-modal-head"><h3 id="adjModalTitle">${navIcon('gear')}Per-shed adjustments</h3><button type="button" class="adj-modal-close" data-toggle-adjustments="1" aria-label="Close">✕</button></div><div class="adj-pairs" role="group" aria-label="Pair">${[1,2,3,4].map(g=>`<button type="button" class="adj-pair${g===group?' active':''}" data-adj-pair="${g}" style="--pc:var(--pair${g})"${g===group?' aria-pressed="true"':''}>${escapeHtml(pairLabel(g))}</button>`).join('')}</div><div class="adj-modal-body">${adjModalBodyHtml()}</div><div class="adj-modal-foot">${adjFooterHtml()}</div></div></div>`;
 }
 function applyAdjDraft(){
   const d=adjDraft;if(!d)return;

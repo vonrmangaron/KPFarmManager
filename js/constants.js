@@ -125,7 +125,7 @@ const NAV_ITEMS = [
   { id: 'mortality', label: 'Mortality', icon: 'mortality', modalBtnId: 'mortBtn' },
   { id: 'comparefeed', label: 'Compare Feed', icon: 'compare', modalBtnId: 'toolsCompareBtn' },
   { id: 'history', label: 'History', icon: 'history' },
-  { id: 'farmsettings', label: 'Farm settings', icon: 'gear' },
+  { id: 'farmsettings', label: 'Settings', icon: 'gear' },
   { section: 'APPS' },
   { id: 'cluckwise', label: 'CluckWise', icon: 'cluckwise', external: true },
 ];

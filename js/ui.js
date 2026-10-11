@@ -1402,7 +1402,7 @@ function liveUpdateShedMortality(shedIdx,rawValue){
   if(activeTab==='predictions')updateFarmKpiValues();
 }
 function toggleAdjCollapse(){
-  if(!adjModalOpen){adjModalOpen=true;adjDraft=null;adjDraftBase='';render();return;}
+  if(!adjModalOpen){const gm=/^g([1-4])$/.exec(activeTab);if(gm)predState.predGroup=Number(gm[1]);adjModalOpen=true;adjDraft=null;adjDraftBase='';render();return;}
   closeAdjModal(false);
 }
 // Close the adjustments modal (asks before discarding unapplied changes)
