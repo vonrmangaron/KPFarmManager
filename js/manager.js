@@ -448,8 +448,8 @@ function buildPwRail(){
   const logo=ic?ic.outerHTML.replace(/id="([\w-]+)"/g,'id="pwr-$1"').replace(/url\(#([\w-]+)\)/g,'url(#pwr-$1)'):'';
   const b=(attrs,icon,label,extra)=>`<button type="button" class="pwr-btn" ${attrs} title="${label}">${extra||''}${navIcon(icon)}<span>${label}</span></button>`;
   const nav=document.createElement('nav');nav.className='pw-rail';nav.id='pwRail';nav.setAttribute('aria-label','ProdWise');
-  nav.innerHTML=`<span class="pwr-logo">${logo}</span>`
-    +b('data-tab="home"','home','Home')
+  // No Home button: the logo goes home (Home is still the start page)
+  nav.innerHTML=`<button type="button" class="pwr-logo" data-tab="home" title="Home" aria-label="Home">${logo}</button>`
     +b('data-pw-panel="batch"','grid','Batch')
     +b('data-pw-panel="sheds"','shed','Sheds','<span class="pwr-badge" id="pwrShedBadge" hidden></span>')
     +b('data-pw-panel="tools"','loads','Tools')
