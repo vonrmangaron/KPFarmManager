@@ -402,10 +402,58 @@ function syncToolPages(changed){
   const ph=document.getElementById('pageHeader');if(ph)document.body.style.setProperty('--ph-h',ph.offsetHeight+'px');
   if(typeof updatePageHeader==='function')updatePageHeader();
   Object.entries(TOOL_PAGES).forEach(([id,t])=>{const b=document.getElementById(t.btn);if(b)b.classList.toggle('active',id===toolPageOpen);});
+  syncPwRail();
 }
+// ── Icon rail + side panel, like CluckWise (2026-10-11, mockup QW7BBs25AAbiLRddm8s14L) ─────
+// Desktop: a slim rail that never collapses. Sheds and Tools open the side panel; clicking the lit one again hides it.
+const PW_PANEL_KEY='prodwise_pw_panel_v1';
+let pwPanel='sheds';try{const v=localStorage.getItem(PW_PANEL_KEY);if(v==='sheds'||v==='tools'||v==='none')pwPanel=v;}catch(e){}
+const PW_SHED_PAGES=['dashboard','predictions','g1','g2','g3','g4'];
+function setPwPanel(p){
+  pwPanel=p;['sheds','tools','none'].forEach(k=>document.body.classList.toggle('pwp-'+k,p===k));
+  try{localStorage.setItem(PW_PANEL_KEY,p);}catch(e){}
+  const t=document.getElementById('sbPanelTitle');if(t)t.textContent=p==='tools'?'Tools':'Sheds';
+  syncPwRail();
+}
+function buildPwRail(){
+  const lay=document.querySelector('.app-layout');if(!lay||document.getElementById('pwRail'))return;
+  // the logo, with its gradient ids renamed so the copy never depends on the panel being shown
+  const ic=document.querySelector('.sb-brand-icon');
+  const logo=ic?ic.outerHTML.replace(/id="([\w-]+)"/g,'id="pwr-$1"').replace(/url\(#([\w-]+)\)/g,'url(#pwr-$1)'):'';
+  const b=(attrs,icon,label,extra)=>`<button type="button" class="pwr-btn" ${attrs} title="${label}">${extra||''}${navIcon(icon)}<span>${label}</span></button>`;
+  const nav=document.createElement('nav');nav.className='pw-rail';nav.id='pwRail';nav.setAttribute('aria-label','ProdWise');
+  nav.innerHTML=`<span class="pwr-logo">${logo}</span>`
+    +b('data-tab="home"','home','Home')
+    +b('data-pw-panel="sheds"','shed','Sheds','<span class="pwr-badge" id="pwrShedBadge" hidden></span>')
+    +b('data-pw-panel="tools"','loads','Tools')
+    +b('data-tab="history"','history','History')
+    +b('data-tab="farmsettings"','homes','Farm','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
+    +'<span class="pwr-gap"></span>'
+    +b('data-tab="cluckwise"','cluckwise','CluckWise')
+    +b('data-pwr-theme','moon','Theme')
+    +b('data-pwr-settings','gear','Settings');
+  lay.insertBefore(nav,lay.firstChild);
+  const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
+}
+function syncPwRail(){
+  const r=document.getElementById('pwRail');if(!r)return;
+  const page=toolPageOpen?null:activeTab;
+  r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===page));
+  r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===pwPanel||(pwPanel==='none'&&(k==='tools'?!!toolPageOpen:PW_SHED_PAGES.includes(page))));});
+  const th=r.querySelector('[data-pwr-theme]');if(th){const dark=document.body.classList.contains('theme-dark');th.innerHTML=navIcon(dark?'sun':'moon')+'<span>Theme</span>';th.title=dark?'Switch to light':'Switch to dark';}
+  let n=0;document.querySelectorAll('#sidebarNav .sb-link[data-tab^="g"] .sb-count').forEach(c=>n+=Number(c.textContent)||0);
+  const sb=document.getElementById('pwrShedBadge');if(sb){sb.hidden=!n;sb.textContent=n>99?'99+':String(n);sb.title=n+' open alert'+(n===1?'':'s');}
+  const fc=document.querySelector('#sidebarNav .sb-link[data-tab="farmsettings"] .sb-count');const fb=document.getElementById('pwrFarmBadge');if(fb){fb.hidden=!fc;fb.textContent=fc?fc.textContent:'';}
+}
+document.addEventListener('click',e=>{
+  const pb=e.target.closest('[data-pw-panel]');if(pb){const k=pb.dataset.pwPanel;setPwPanel(pwPanel===k?'none':k);return;}
+  if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
+  if(e.target.closest('[data-pwr-settings]')){document.getElementById('settingsBtn')?.click();return;}
+});
 function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getElementById(id)?.classList.contains('open')){try{TOOL_PAGES[id].close();}catch(e){}}});}
 document.addEventListener('DOMContentLoaded',()=>{
-  let rail=false;try{rail=localStorage.getItem(SB_RAIL_KEY)==='1';}catch(e){}setSidebarRail(rail);
+  setSidebarRail(false);   // the old collapse is replaced by the icon rail + panel
+  buildPwRail();setPwPanel(pwPanel);
   const obs=new MutationObserver(muts=>{let changed=null;muts.forEach(m=>{if(m.target&&m.target.id&&TOOL_PAGES[m.target.id]&&m.target.classList.contains('open'))changed=m.target.id;});syncToolPages(changed);});
   // Each tool is a real section of the main area (after #app), shown in place of the page — not a window on top
   const app=document.getElementById('app');

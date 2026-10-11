@@ -303,7 +303,7 @@ function sidebarHtml() {
   const chev = '<svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
   return NAV_ITEMS.map(item => {
     if (item.section) {
-      return `<span class="sb-section-label">${escapeHtml(item.section)}</span>`;
+      return `<span class="sb-section-label" data-sec="${escapeAttr(item.section)}">${escapeHtml(item.section)}</span>`;
     }
     if (item.modalBtnId) {
       const dot = item.modalBtnId === 'loadsBtn' ? '<span class="loads-dot" id="loadsDot"></span>' : '';
@@ -463,7 +463,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { home:'Home', farmsettings:'Farm settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', history:'History', farmsettings:'Farm settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   // Desktop tool pages use this same header (their own window title bar is hidden)
   const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;

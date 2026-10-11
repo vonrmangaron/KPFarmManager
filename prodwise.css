@@ -4639,3 +4639,34 @@ body.tool-open .main-wrap > #app{display:none}
 .history-row-actions .hr-ic.on svg{fill:currentColor}
 .history-pin-chip{display:inline-flex;color:var(--primary-dark)}
 .history-pin-chip svg{width:13px;height:13px;fill:currentColor}
+
+/* ── Icon rail + side panel, like CluckWise (2026-10-11) ─────────────── */
+.pw-rail{display:none}
+.sb-panel-title{display:none}
+@media (min-width:769px){
+  body.pwp-sheds,body.pwp-tools{--sb-w:332px}
+  body.pwp-none{--sb-w:84px}
+  .pw-rail{display:flex;flex-direction:column;align-items:center;gap:4px;width:84px;flex-shrink:0;background:#16191B;padding:12px 0;box-sizing:border-box;z-index:201;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+  .pw-rail::-webkit-scrollbar{display:none}
+  body.theme-dark .pw-rail{background:#0A101C}
+  .pwr-logo{display:flex;margin-bottom:10px}
+  .pwr-logo svg{width:40px;height:40px}
+  .pwr-btn{position:relative;width:68px;padding:9px 0 8px;border-radius:12px;border:none;background:transparent;color:#A2A9AE;display:flex;flex-direction:column;align-items:center;gap:5px;font:600 10.5px Inter,system-ui,sans-serif;cursor:pointer;flex-shrink:0}
+  .pwr-btn svg{width:21px;height:21px}
+  .pwr-btn:hover{color:#FFFFFF;background:#212A42}
+  .pwr-btn.on{color:#FFC56B;background:#2C2A22}
+  .pwr-badge{position:absolute;top:3px;right:12px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#DC4A36;color:#fff;font:800 10px/17px Inter,sans-serif;text-align:center}
+  .pwr-gap{flex:1 1 auto;min-height:8px}
+  body.pwp-none .sidebar{display:none}
+  .sidebar{border-left:1px solid #23282B}
+  .sidebar .sb-brand{display:none!important}
+  .sb-panel-title{display:block;font:800 17px Sora,sans-serif;color:#FFFFFF;padding:18px 18px 6px}
+  .sb-foot .sb-theme-seg,.sb-foot #settingsBtn{display:none!important}
+  /* Sheds panel: batch, result detail, the pairs */
+  body.pwp-sheds .sb-link[data-tab="home"],body.pwp-sheds #loadsBtn,body.pwp-sheds #pickupsBtn,body.pwp-sheds #mortBtn,body.pwp-sheds #toolsCompareBtn,
+  body.pwp-sheds .sb-link[data-tab="history"],body.pwp-sheds .sb-link[data-tab="farmsettings"],body.pwp-sheds .sb-link[data-tab="cluckwise"],
+  body.pwp-sheds .sb-section-label[data-sec="TOOLS"],body.pwp-sheds .sb-section-label[data-sec="APPS"]{display:none!important}
+  /* Tools panel: feed loads, pickups, mortality, compare feed */
+  body.pwp-tools .sb-batch,body.pwp-tools .sb-section-label[data-sec="TOOLS"],body.pwp-tools .sb-link[data-tab],body.pwp-tools [data-sb-pred],body.pwp-tools .sb-subnav,
+  body.pwp-tools .sb-section-label[data-sec="OVERVIEW"],body.pwp-tools .sb-section-label[data-sec="SHEDS"],body.pwp-tools .sb-section-label[data-sec="APPS"]{display:none!important}
+}
