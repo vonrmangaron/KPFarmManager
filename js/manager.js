@@ -403,7 +403,7 @@ function syncToolPages(changed){
   const ph=document.getElementById('pageHeader');if(ph)document.body.style.setProperty('--ph-h',ph.offsetHeight+'px');
   if(typeof updatePageHeader==='function')updatePageHeader();
   Object.entries(TOOL_PAGES).forEach(([id,t])=>{const b=document.getElementById(t.btn);if(b)b.classList.toggle('active',id===toolPageOpen);});
-  syncPwRail();
+  renderPwBatchPanel();syncPwRail();
 }
 // ── Icon rail + side panel, like CluckWise (2026-10-11, mockup QW7BBs25AAbiLRddm8s14L) ─────
 // Desktop: a slim rail that never collapses. Sheds and Tools open the side panel; clicking the lit one again hides it.
@@ -436,10 +436,11 @@ function renderPwBatchPanel(){
     card=`<button type="button" class="pwb-card" data-batch-info title="Batch details"><span class="pwb-k">Current batch</span><b>${batch?'Batch '+escapeHtml(String(batch)):'This batch'}</b><span class="pwb-day">Day ${day}${cyc?` of ${cyc}`:''}</span>${cyc?`<span class="pwb-bar"><i style="width:${Math.min(100,Math.round(day/cyc*100))}%"></i></span>`:''}<span class="pwb-sub">${cleans.length?(left>0?`First clean-out in ${left} day${left===1?'':'s'} · ${escapeHtml(fmtShortNoYear(cleans[0]))}`:`Clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}`):'No clean-out date yet'}</span></button>`;
   }
   const on=activeTab==='dashboard'&&!toolPageOpen;
+  const onHome=activeTab==='home'&&!toolPageOpen;
   el.innerHTML=card+`<div class="pwb-links">
-    <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button>
-    <button type="button" class="sb-link" data-batch-info>${navIcon('home')}<span class="sb-link-label">Sheds, ages &amp; clean-out</span></button>
-    <button type="button" class="sb-link" data-pwb-newbatch>${navIcon('refresh')}<span class="sb-link-label">New batch</span></button></div>`;
+    <button type="button" class="sb-link${onHome?' active':''}" data-tab="home">${navIcon('home')}<span class="sb-link-label">Home</span></button>
+    <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button></div>
+    <button type="button" class="pwb-new" data-pwb-newbatch>${navIcon('refresh')}<span>New batch</span></button>`;
 }
 function buildPwRail(){
   const lay=document.querySelector('.app-layout');if(!lay||document.getElementById('pwRail'))return;
@@ -466,9 +467,10 @@ function buildPwRail(){
 function syncPwRail(){
   const r=document.getElementById('pwRail');if(!r)return;
   // One lit button: the section of the page you are on (the open panel shows itself)
-  const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':activeTab==='dashboard'?'batch':activeTab;
+  const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':(activeTab==='dashboard'||activeTab==='home')?'batch':activeTab;
   r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===sec));
-  r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===sec);x.classList.toggle('open',k===pwPanel);});
+  // Like CluckWise: the button of the open panel is lit; with the panel shut, the section you are in gets a softer mark
+  r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===pwPanel);x.classList.toggle('cur',k===sec&&k!==pwPanel);});
   // Sync and farm stay on the rail when the panel is hidden
   const sd=document.getElementById('pwrSyncDot'),sl=document.getElementById('pwrSyncLbl');
   if(sd&&typeof syncFarmName!=='undefined'){
@@ -491,7 +493,17 @@ function syncPwRail(){
   const fc=document.querySelector('#sidebarNav .sb-link[data-tab="farmsettings"] .sb-count');const fb=document.getElementById('pwrFarmBadge');if(fb){fb.hidden=!fc;fb.textContent=fc?fc.textContent:'';}
 }
 document.addEventListener('click',e=>{
-  const pb=e.target.closest('[data-pw-panel]');if(pb){const k=pb.dataset.pwPanel;setPwPanel(pwPanel===k?'none':k,true);return;}
+  const pb=e.target.closest('[data-pw-panel]');
+  if(pb){const k=pb.dataset.pwPanel;
+    if(pwPanel===k){setPwPanel('none',true);return;}
+    setPwPanel(k,true);
+    // and goes to the first page of that section: Batch → Home, Sheds → Sheds 1–2, Tools → Feed loads
+    if(k==='tools'){if(toolPageOpen!=='loadsModal'&&typeof openLoadsModal==='function')openLoadsModal();return;}
+    if(toolPageOpen)closeToolPages();
+    if(k==='batch'){activeTab='home';render();}
+    else if(k==='sheds'){if(typeof gotoPair==='function')gotoPair(1,'overview');else{activeTab='g1';render();}}
+    return;}
+  const gs=e.target.closest('[data-pw-goset]');if(gs){goSettings(gs.dataset.pwGoset);return;}
   if(e.target.closest('[data-pwb-newbatch]')){if(typeof openNewBatchModal==='function')openNewBatchModal();return;}
   if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
   if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
@@ -520,13 +532,14 @@ function settingsPairsHtml(){
   const g=setPair,d=adjDraftFromState(g),sheds=shedsForGroup(g);
   const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const rows=sheds.map(sh=>{const ov=d.ovr[sh.id];const own=suggestScaleCorrection([sh]);
-    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${ov==null?`<span class="set-chip">farm ${d.scale.toFixed(1)}%</span>`:`<span class="set-chip own">own ${ov}%</span>`}</td><td class="set-muted">${own?`${(own.value*100).toFixed(1)}% from ${own.n} weighing${own.n===1?'':'s'}`:'No plant weighing yet'}</td></tr>`;}).join('');
+    const mr=shedMortRate(sh);
+    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${ov==null?`<span class="set-chip">farm ${d.scale.toFixed(1)}%</span>`:`<span class="set-chip own">own ${ov}%</span>`}</td><td class="set-muted">${own?`${(own.value*100).toFixed(1)}% from ${own.n} weighing${own.n===1?'':'s'}`:'No plant weighing yet'}</td><td><label class="set-mort"><input type="number" class="set-num" data-set-mortrate="${escapeAttr(String(sh.id))}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${mr.toFixed(2)}" aria-label="Daily morts for Shed ${escapeAttr(String(sh.id))}" /> % / day</label></td></tr>`;}).join('');
   return `<div class="set-pairs">${[1,2,3,4].map(x=>`<button type="button" class="adj-pair${x===g?' active':''}" data-set-pair="${x}" style="--pc:var(--pair${x})">${escapeHtml(pairLabel(x))}</button>`).join('')}</div>
-    <section class="fs-group"><span class="fs-sec-label">Scale correction per shed · ${escapeHtml(pairLabel(g))}</span>
-      <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th>Uses</th><th>From the kill sheets</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    <section class="fs-group"><span class="fs-sec-label">Per shed · ${escapeHtml(pairLabel(g))}</span>
+      <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th>Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <section class="fs-group"><span class="fs-sec-label">No-pickup days · farm-wide</span>
       <div class="set-card set-line">${d.npd.length?d.npd.map(i=>`<span class="set-chip own">${DAYS[i]}</span>`).join(' '):'<span class="set-muted">None — pickups can land on any day</span>'}</div></section>
-    <div class="set-actions"><button type="button" class="set-btn primary" data-set-adjust>Edit ${escapeHtml(pairLabel(g))}</button><span class="set-muted">Per-shed scale, no-pickup days, auto-fill and clear pickups</span></div>`;
+    <div class="set-actions"><button type="button" class="set-btn primary" data-set-adjust>Edit ${escapeHtml(pairLabel(g))}</button><span class="set-muted">Change scale correction and no-pickup days, auto-fill or clear pickups. Daily morts save when you press Enter or leave the box.</span></div>`;
 }
 function settingsSectionHtml(t){
   if(t==='predictions')return renderFarmSettingsView(true);
@@ -551,6 +564,12 @@ function renderSettingsTabBody(force){
   if(!force&&ae&&b.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
   b.innerHTML=settingsSectionHtml(setTab);afterSettingsRender();
 }
+document.addEventListener('change',e=>{
+  const m=e.target.closest&&e.target.closest('[data-set-mortrate]');if(!m)return;
+  const v=Number(m.value);if(!Number.isFinite(v)||v<0){m.value=shedMortRate(farmData.sheds[Number(m.dataset.setMortrate)-1]).toFixed(2);return;}
+  setShedMortRate(Number(m.dataset.setMortrate),v);
+  if(typeof showToast==='function')showToast(`Shed ${m.dataset.setMortrate}: daily morts ${Math.min(MAX_MORT_RATE_PCT,v).toFixed(2)}% — forecast updated`);
+});
 function afterSettingsRender(){if(setTab==='alerts'&&typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();}
 renderSettingsDrawerBody=function(){renderSettingsTabBody(false);};
 openSettingsDrawer=function(){goSettings(syncFarmName?null:'farm');};
