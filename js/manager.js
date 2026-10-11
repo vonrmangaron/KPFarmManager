@@ -142,7 +142,7 @@ function renderHomeView(){
     </section>`;
   const offHtml=off.length?`<button type="button" class="mgr-off" data-tab="farmsettings"><span><b>${off.length} farm setting${off.length===1?'':'s'} not at normal</b> and changing these numbers: ${escapeHtml(off.map(o=>o.short).join(', '))}</span><span class="mgr-off-go">Review ›</span></button>`:'';
   return `<div class="mgr-home">
-    <div class="mgr-head"><button type="button" class="mgr-batch mgr-batchcard" data-batch-info title="Batch details"><span class="mbc-k">Current batch</span><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · Day ${day}${cycleDays?` <em>of ${cycleDays}</em>`:''}</b>${cycleDays?`<span class="mbc-bar"><i style="width:${Math.min(100,Math.round(day/cycleDays*100))}%"></i></span>`:''}<span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button><button type="button" class="mgr-detail-btn" data-tab="dashboard" title="Result detail: PIF, ALW, dockets and leftover">${navIcon('grid')}<span><b>Result detail</b><small>PIF, ALW, dockets &amp; leftover</small></span></button></div>
+    <div class="mgr-head"><button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · Day ${day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
     <div class="mgr-row3">${finish}${birds}${needsHtml}</div>
     ${feed}
     <div class="mgr-row2">${shedsHtml}${weekHtml}</div>
@@ -408,13 +408,38 @@ function syncToolPages(changed){
 // ── Icon rail + side panel, like CluckWise (2026-10-11, mockup QW7BBs25AAbiLRddm8s14L) ─────
 // Desktop: a slim rail that never collapses. Sheds and Tools open the side panel; clicking the lit one again hides it.
 const PW_PANEL_KEY='prodwise_pw_panel_v1';
-let pwPanel='sheds';try{const v=localStorage.getItem(PW_PANEL_KEY);if(v==='sheds'||v==='tools'||v==='none')pwPanel=v;}catch(e){}
+let pwPanel='sheds';try{const v=localStorage.getItem(PW_PANEL_KEY);if(['batch','sheds','tools','none'].includes(v))pwPanel=v;}catch(e){}
+const PW_PANEL_TITLES={batch:'Batch Details',sheds:'Sheds Details',tools:'Tools'};
 const PW_SHED_PAGES=['predictions','g1','g2','g3','g4'];
-function setPwPanel(p){
-  pwPanel=p;['sheds','tools','none'].forEach(k=>document.body.classList.toggle('pwp-'+k,p===k));
+function setPwPanel(p,animate){
+  // smooth like CluckWise: the panel slides open/shut and its content fades in (only after a click)
+  if(animate&&window.matchMedia('(min-width:769px)').matches){document.body.classList.add('sb-anim');clearTimeout(window.__sbAnimT);window.__sbAnimT=setTimeout(()=>document.body.classList.remove('sb-anim'),360);}
+  if(p!=='none'){const pane=document.querySelector('.sidebar');if(pane&&animate){pane.classList.remove('pw-fade');void pane.offsetWidth;pane.classList.add('pw-fade');}}
+  pwPanel=p;['batch','sheds','tools','none'].forEach(k=>document.body.classList.toggle('pwp-'+k,p===k));
   try{localStorage.setItem(PW_PANEL_KEY,p);}catch(e){}
-  const t=document.getElementById('sbPanelTitle');if(t)t.textContent=p==='tools'?'Tools':'Sheds';
-  syncPwRail();
+  const t=document.getElementById('sbPanelTitle');if(t&&PW_PANEL_TITLES[p])t.textContent=PW_PANEL_TITLES[p];
+  renderPwBatchPanel();syncPwRail();
+}
+// Batch Details panel: the current batch card, then Result detail and batch details
+function renderPwBatchPanel(){
+  const el=document.getElementById('sbBatchPanel');if(!el)return;
+  if(!farmData){el.innerHTML='<p class="pwb-empty">No batch yet — import the sheds file or start a new batch.</p>';return;}
+  const sheds=mgrPlaced(),today=mgrToday();
+  const batch=predState.batchNumber||farmData.batchNumber||'';
+  let card='';
+  if(sheds.length){
+    const first=sheds.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);
+    const day=Math.max(0,mgrDays(first,today));
+    const cleans=sheds.map(s=>s.cleanoutDate?dateOnly(s.cleanoutDate):null).filter(Boolean).sort((a,b)=>a-b);
+    const cyc=cleans.length?Math.max(1,mgrDays(first,cleans[cleans.length-1])):null;
+    const left=cleans.length?mgrDays(today,cleans[0]):null;
+    card=`<button type="button" class="pwb-card" data-batch-info title="Batch details"><span class="pwb-k">Current batch</span><b>${batch?'Batch '+escapeHtml(String(batch)):'This batch'}</b><span class="pwb-day">Day ${day}${cyc?` of ${cyc}`:''}</span>${cyc?`<span class="pwb-bar"><i style="width:${Math.min(100,Math.round(day/cyc*100))}%"></i></span>`:''}<span class="pwb-sub">${cleans.length?(left>0?`First clean-out in ${left} day${left===1?'':'s'} · ${escapeHtml(fmtShortNoYear(cleans[0]))}`:`Clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}`):'No clean-out date yet'}</span></button>`;
+  }
+  const on=activeTab==='dashboard'&&!toolPageOpen;
+  el.innerHTML=card+`<div class="pwb-links">
+    <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button>
+    <button type="button" class="sb-link" data-batch-info>${navIcon('home')}<span class="sb-link-label">Sheds, ages &amp; clean-out</span></button>
+    <button type="button" class="sb-link" data-pwb-newbatch>${navIcon('refresh')}<span class="sb-link-label">New batch</span></button></div>`;
 }
 function buildPwRail(){
   const lay=document.querySelector('.app-layout');if(!lay||document.getElementById('pwRail'))return;
@@ -425,22 +450,23 @@ function buildPwRail(){
   const nav=document.createElement('nav');nav.className='pw-rail';nav.id='pwRail';nav.setAttribute('aria-label','ProdWise');
   nav.innerHTML=`<span class="pwr-logo">${logo}</span>`
     +b('data-tab="home"','home','Home')
+    +b('data-pw-panel="batch"','grid','Batch')
     +b('data-pw-panel="sheds"','shed','Sheds','<span class="pwr-badge" id="pwrShedBadge" hidden></span>')
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
     +'<span class="pwr-gap"></span>'
-    +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
-    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Farm profile"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Farm</span></button>`
-    +b('data-tab="cluckwise"','cluckwise','CluckWise')
+    +`<button type="button" class="pwr-btn" data-tab="cluckwise" title="Open CluckWise in a new tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span>CluckWise</span></button>`
     +b('data-pwr-theme','moon','Theme')
-    +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>');
+    +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
+    +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
+    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Farm profile"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Profile</span></button>`;
   lay.insertBefore(nav,lay.firstChild);
   const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
 }
 function syncPwRail(){
   const r=document.getElementById('pwRail');if(!r)return;
   // One lit button: the section of the page you are on (the open panel shows itself)
-  const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':activeTab==='dashboard'?'home':activeTab;
+  const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':activeTab==='dashboard'?'batch':activeTab;
   r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===sec));
   r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===sec);x.classList.toggle('open',k===pwPanel);});
   // Sync and farm stay on the rail when the panel is hidden
@@ -456,7 +482,7 @@ function syncPwRail(){
   if(av&&typeof displayFarmName==='function'){
     const shown=String(displayFarmName()||'').trim();
     av.textContent=syncFarmName?(shown.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'F'):'–';
-    fl.textContent=shown?shown.split(/\s+/)[0].slice(0,9):'Farm';
+    fl.textContent='Profile';
     const fb=r.querySelector('[data-pwr-farm]');if(fb)fb.title=(shown||'This device')+(syncFarmName?' · cloud sync on':' · not synced');
   }
   const th=r.querySelector('[data-pwr-theme]');if(th){const dark=document.body.classList.contains('theme-dark');th.innerHTML=navIcon(dark?'sun':'moon')+'<span>Theme</span>';th.title=dark?'Switch to light':'Switch to dark';}
@@ -465,7 +491,8 @@ function syncPwRail(){
   const fc=document.querySelector('#sidebarNav .sb-link[data-tab="farmsettings"] .sb-count');const fb=document.getElementById('pwrFarmBadge');if(fb){fb.hidden=!fc;fb.textContent=fc?fc.textContent:'';}
 }
 document.addEventListener('click',e=>{
-  const pb=e.target.closest('[data-pw-panel]');if(pb){const k=pb.dataset.pwPanel;setPwPanel(pwPanel===k?'none':k);return;}
+  const pb=e.target.closest('[data-pw-panel]');if(pb){const k=pb.dataset.pwPanel;setPwPanel(pwPanel===k?'none':k,true);return;}
+  if(e.target.closest('[data-pwb-newbatch]')){if(typeof openNewBatchModal==='function')openNewBatchModal();return;}
   if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
   if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
   if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}

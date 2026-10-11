@@ -1113,6 +1113,7 @@ function render(){
     if(moreSheetOpen)renderMoreSheet();
     renderSyncPill();
     renderSidebarBatch();
+    if (typeof renderPwBatchPanel === 'function') renderPwBatchPanel();
     // Phones/tablets: the shed-pair switcher is one floating button that expands upwards
     const gdRoot=document.getElementById('groupDockRoot');
     if(gdRoot){const gm=/^g([1-4])$/.exec(activeTab);const ctx=gm?'sheds':activeTab==='predictions'?'pred':null;const g=gm?Number(gm[1]):predState.predGroup;
