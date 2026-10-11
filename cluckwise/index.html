@@ -3106,17 +3106,76 @@
   body.theme-dark #calendarWrap .kanban-column .kcard{ box-shadow:0 2px 8px rgba(0,0,0,.35); }
   body #calendarWrap .kanban-column .kcard:hover{ box-shadow:0 4px 14px rgba(20,30,20,.14); }
   body #calendarWrap .kanban-column .empty-state, body #calendarWrap .kanban-column .kempty, body #calendarWrap .kanban-column .col-empty{ background:transparent !important; border:1.5px dashed var(--col-empty) !important; }
-  /* Maintenance board: each column carries its status colour */
-  .reports-modal.view-board .mt-board{ gap:18px; }
-  .mtb-col{ --mtc:var(--muted); background:color-mix(in srgb, var(--mtc) 7%, var(--col-bg)); border:1px solid color-mix(in srgb, var(--mtc) 22%, var(--col-line)); border-top:4px solid var(--mtc); }
+  /* ===== c44: Maintenance = slim lanes (Board) + triage list (List) ===== */
+  .mt-page .rp-kpis{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 22px; padding:12px 28px 0; }
+  .rp-stat{ font-size:13px; font-weight:600; color:var(--muted); white-space:nowrap; }
+  .rp-stat b{ font-family:'Sora',sans-serif; font-size:15px; color:var(--ink); }
+  .rp-stat.open b, .rp-stat.late b{ color:var(--danger); } .rp-stat.prog b{ color:var(--primary-dark); } .rp-stat.fixed b{ color:var(--success); }
+  .rp-stat-urg{ font-style:normal; font-size:11px; font-weight:800; color:#fff; background:var(--danger); border-radius:999px; padding:1px 7px; margin-left:4px; }
+  /* Board: three slim lanes, no boxes */
+  .reports-modal.view-board .mt-board{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(240px, .8fr); gap:28px; }
+  .mtb-col{ --mtc:var(--muted); background:transparent; border:none; border-radius:0; padding:0; gap:8px; min-height:0; }
   .mtb-col.mtb-open{ --mtc:var(--danger); } .mtb-col.mtb-prog{ --mtc:var(--primary); } .mtb-col.mtb-fixed{ --mtc:var(--success); }
-  .mtb-head{ padding-bottom:8px; border-bottom:1px solid color-mix(in srgb, var(--mtc) 20%, var(--col-line)); }
-  .mtb-head b{ color:color-mix(in srgb, var(--mtc) 55%, var(--ink)); }
-  .mtb-count{ background:color-mix(in srgb, var(--mtc) 16%, transparent); color:color-mix(in srgb, var(--mtc) 70%, var(--ink)); }
-  .mtb-card{ background:var(--col-card); border-color:var(--col-card-line); box-shadow:0 1px 2px rgba(20,30,20,.07), 0 3px 8px rgba(20,30,20,.06); }
-  body.theme-dark .mtb-card{ box-shadow:0 2px 8px rgba(0,0,0,.35); }
-  .mtb-card.urgent{ border-color:var(--danger); }
-  .mtb-empty{ border-color:color-mix(in srgb, var(--mtc) 30%, var(--col-empty)); }
+  .mtb-head{ display:flex; align-items:center; gap:8px; padding:0 2px 8px; border-bottom:2px solid var(--mtc); }
+  .mtb-head b{ font-family:'Sora',sans-serif; font-size:14px; color:var(--ink); }
+  .mtb-count{ font-size:11px; font-weight:800; color:var(--muted); background:var(--surface-soft); border:1px solid var(--line); border-radius:999px; padding:0 7px; }
+  .mtb-head .mtb-hint, .mtb-head .mtb-arch{ margin-left:auto; font-size:11.5px; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mtb-list{ gap:6px; padding:2px 0 6px; min-height:56px; }
+  .mtb-empty{ padding:12px 8px; border:1.5px dashed var(--line); background:transparent; }
+  .mtb-card{ flex-direction:row; align-items:center; gap:10px; padding:7px 9px; border-radius:10px; background:var(--surface); border:1px solid var(--line); box-shadow:0 1px 2px rgba(20,30,20,.06); }
+  body.theme-dark .mtb-card{ background:var(--surface); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .mtb-card.urgent{ border-color:var(--line); box-shadow:inset 3px 0 0 var(--danger), 0 1px 2px rgba(20,30,20,.06); }
+  .mtb-card.done{ opacity:.7; }
+  .mtb-card.selected{ border-color:var(--primary); }
+  .mtb-th, .tr-th{ width:34px; height:34px; border-radius:8px; overflow:hidden; flex-shrink:0; background:var(--surface-soft); color:var(--muted); display:flex; align-items:center; justify-content:center; }
+  .mtb-th img, .tr-th img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .mtb-th svg, .tr-th svg{ width:17px; height:17px; }
+  .mtb-txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .mtb-title{ font-size:13.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mtb-sub{ font-size:12px; font-weight:500; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mtb-rt{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .mtb-rt .task-avatar, .tr-who .task-avatar{ width:22px; height:22px; font-size:9.5px; margin:0; border:none; }
+  .rp-anyone{ background:var(--surface-soft) !important; color:var(--muted) !important; border:1px dashed var(--line) !important; }
+  .mtb-mini{ height:28px; padding:0 10px; border-radius:7px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12px 'Inter',sans-serif; cursor:pointer; }
+  .mtb-mini.pri, .tr-btn.pri{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .mtb-age{ font-size:11.5px; font-weight:700; color:var(--muted); }
+  .mtb-age.warn{ color:var(--primary-dark); }
+  .mtb-ok{ color:var(--success); font-weight:800; font-size:14px; }
+  .rp-tasktag{ font-size:11.5px; font-weight:700; color:var(--primary-dark); background:var(--primary-soft); border-radius:999px; padding:2px 8px; white-space:nowrap; }
+  .rp-tasktag.late{ color:#fff; background:var(--danger); }
+  /* List: grouped triage rows */
+  .mt-page .rp-thead{ display:none !important; }
+  .tr-grp{ display:flex; align-items:center; gap:8px; padding:14px 16px 6px; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .tr-dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
+  .tr-open .tr-dot{ background:var(--danger); } .tr-prog .tr-dot{ background:var(--primary); } .tr-fixed .tr-dot{ background:var(--success); }
+  .tr-gn{ font-size:11px; letter-spacing:0; color:var(--muted); background:var(--surface-soft); border-radius:999px; padding:0 7px; }
+  .tr-fold{ margin-left:auto; border:none; background:transparent; color:var(--success); font:700 12px 'Inter',sans-serif; letter-spacing:0; text-transform:none; cursor:pointer; }
+  .tr-row{ display:grid; grid-template-columns:40px minmax(0,1fr) 140px 76px 210px; align-items:center; gap:14px; padding:8px 16px; border-top:1px solid var(--line); cursor:pointer; }
+  .tr-row:hover{ background:var(--surface-soft); }
+  .tr-row.selected{ background:var(--primary-soft); box-shadow:inset 3px 0 0 var(--primary); }
+  .tr-row.urgent{ box-shadow:inset 3px 0 0 var(--danger); }
+  .tr-row.tr-resolved{ opacity:.75; }
+  .tr-row .tr-th{ width:40px; height:40px; border-radius:9px; }
+  .tr-txt{ min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .tr-t1{ display:flex; align-items:center; gap:6px; min-width:0; }
+  .tr-t1 b{ font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tr-t2{ font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tr-m{ font-size:12.5px; font-weight:600; color:var(--ink); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tr-m small{ display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
+  .tr-who{ display:flex; align-items:center; gap:6px; }
+  .tr-age{ justify-self:start; font-size:12px; font-weight:700; color:var(--muted); background:var(--surface-soft); border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .tr-age.warn{ color:var(--primary-dark); background:var(--primary-soft); }
+  .tr-act{ display:flex; gap:6px; justify-content:flex-end; }
+  .tr-btn{ height:32px; padding:0 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; }
+  .tr-btn.ok{ background:var(--success); border-color:var(--success); color:#fff; }
+  .tr-fixed{ font-size:12.5px; font-weight:700; color:var(--success); }
+  @media (max-width: 1100px){ .tr-row{ grid-template-columns:40px minmax(0,1fr) 110px 200px; } .tr-row > :nth-child(4){ display:none; } }
+  @media (max-width: 760px){
+    .tr-row{ grid-template-columns:40px minmax(0,1fr); gap:8px 12px; }
+    .tr-row > .tr-m, .tr-row > :nth-child(4){ display:none; }
+    .tr-act{ grid-column:1 / -1; }
+    .reports-modal.view-board .mt-board{ grid-template-columns:1fr; gap:20px; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4157,6 +4216,7 @@
   let overdueModalOpen = false;
 
   let reportsFilterStatus = 'active';
+  let rpListShowFixed = false;
   let reportsSortMode = 'newest';
   let reportsSearchQuery = '';
   let reportsShedFilter = '';
@@ -5620,13 +5680,14 @@
       .map(r => (Date.parse(r.resolvedAt) - Date.parse(r.createdAt)) / 864e5).filter(d => d >= 0);
     const avg = spans.length ? spans.reduce((a, b) => a + b, 0) / spans.length : null;
     const avgTxt = avg == null ? '—' : avg < 1 ? `${Math.max(1, Math.round(avg * 24))} h` : `${avg.toFixed(1)} days`;
-    const card = (lbl, val, sub, cls, tip) => `<div class="rp-kpi${cls ? ' ' + cls : ''}" title="${escapeHtmlAttr(tip)}"><span class="rp-kpi-l">${lbl}</span><b>${val}</b><span class="rp-kpi-s">${sub}</span></div>`;
+    // One quiet line of numbers (the old five boxes took half the screen)
+    const stat = (val, lbl, cls, tip) => `<span class="rp-stat${cls ? ' ' + cls : ''}" title="${escapeHtmlAttr(tip)}"><b>${val}</b> ${lbl}</span>`;
     el.innerHTML =
-      card('Open', open, urgent ? `${urgent} urgent` : 'none urgent', urgent ? 'bad-sub' : '', 'Reported, not yet a task') +
-      card('In progress', prog.length, noTask ? `${noTask} without a task` : (prog.length ? 'all have a task' : '—'), '', 'Being worked on') +
-      card('Overdue', overdue, 'task past its day', overdue ? 'bad' : '', 'Problems whose task is past its day and not done') +
-      card('Fixed this week', fixedWeek.length, escapeHtml(whoTxt) || '—', 'ok', 'Fixed in the last 7 days') +
-      card('Average time to fix', avgTxt, 'last 30 days', '', 'From the report to fixed, for problems fixed in the last 30 days');
+      stat(open, 'open' + (urgent ? ` <em class="rp-stat-urg">${urgent} urgent</em>` : ''), 'open', 'Reported, waiting for your decision') +
+      stat(prog.length, 'in progress', 'prog', noTask ? `${noTask} repair job${noTask === 1 ? '' : 's'} (no task)` : 'Being worked on') +
+      (overdue ? stat(overdue, 'overdue', 'late', 'Problems whose task is past its day and not done') : '') +
+      stat(fixedWeek.length, 'fixed this week', 'fixed', whoTxt || 'Fixed in the last 7 days') +
+      stat(avgTxt, 'average to fix', '', 'From the report to fixed, for problems fixed in the last 30 days');
     const ab = $('#rpAlertBtn');
     if(ab){
       const supported = 'Notification' in window;
@@ -5658,8 +5719,7 @@
     const names = { active:'Active', Open:'Open', 'In Progress':'In progress', Resolved:'Fixed', all:'All' };
     document.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
     let filtered = reports.slice();
-    if(reportsFilterStatus === 'active') filtered = filtered.filter(r => r.status !== 'Resolved');
-    else if(reportsFilterStatus !== 'all') filtered = filtered.filter(r => r.status === reportsFilterStatus);
+    if(reportsFilterStatus !== 'all' && reportsFilterStatus !== 'active') filtered = filtered.filter(r => r.status === reportsFilterStatus);
     if(reportsShedFilter){
       filtered = filtered.filter(r => reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter));
     }
@@ -5674,17 +5734,30 @@
         (r.createdBy || '').toLowerCase().includes(q)
       );
     }
-    // Urgent, unresolved reports always sit on top
+    // Grouped like a to-do list: Open (needs a decision) → In progress → Fixed (folded while showing Active)
     const pin = r => (r.urgent && r.status !== 'Resolved') ? 0 : 1;
-    filtered.sort((a, b) => pin(a) - pin(b) || (reportsSortMode === 'oldest'
+    const byMode = (a, b) => pin(a) - pin(b) || (reportsSortMode === 'oldest'
       ? (a.createdAt || '').localeCompare(b.createdAt || '')
-      : (b.createdAt || '').localeCompare(a.createdAt || '')));
-
-    if(filtered.length === 0){
+      : (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const showArchived = reportsFilterStatus === 'Resolved' || reportsFilterStatus === 'all';
+    const groups = [
+      { key:'open', title:'Open · needs a decision', list: filtered.filter(r => r.status === 'Open').sort(byMode) },
+      { key:'prog', title:'In progress', list: filtered.filter(r => r.status === 'In Progress').sort((a, b) => (rpHasTask(a) ? 1 : 0) - (rpHasTask(b) ? 1 : 0) || byMode(a, b)) },
+      { key:'fixed', title: showArchived ? 'Fixed' : `Fixed · last ${RP_ARCHIVE_DAYS} days`, list: filtered.filter(r => r.status === 'Resolved' && (showArchived || !rpArchived(r))).sort((a, b) => String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || ''))) }
+    ].filter(g => g.list.length);
+    if(!groups.length){
       list.innerHTML = `<div class="rp-empty-list">${reports.length ? 'No reports match these filters.' : 'No reports yet. Workers send them from the CluckWise Viewer.'}</div>`;
       return;
     }
-    filtered.forEach(r => list.appendChild(buildReportCard(r)));
+    groups.forEach(g => {
+      const folded = g.key === 'fixed' && reportsFilterStatus === 'active' && !rpListShowFixed;
+      const head = document.createElement('div');
+      head.className = `tr-grp tr-${g.key}`;
+      head.innerHTML = `<span class="tr-dot"></span><span class="tr-gt"></span><span class="tr-gn">${g.list.length}</span>${g.key === 'fixed' && reportsFilterStatus === 'active' ? `<button type="button" class="tr-fold" data-tr-fold>${folded ? 'Show ▾' : 'Hide ▴'}</button>` : ''}`;
+      head.querySelector('.tr-gt').textContent = g.title;
+      list.appendChild(head);
+      if(!folded) g.list.forEach(r => list.appendChild(buildReportCard(r)));
+    });
   }
   // Problem-type icon for a report (emoji, matches the report form)
   // A report without a photo shows the maintenance (wrench) icon
@@ -5699,43 +5772,56 @@
     if(d >= addDaysStr(today, -6)) return 'This week';
     return 'Earlier';
   }
+  function rpAgeDays(r){ const from = Date.parse(r.startedAt || r.createdAt || ''); return from ? Math.floor((Date.now() - from) / 864e5) : null; }
+  function rpAgeText(d){ return d == null ? '' : d < 1 ? 'today' : d === 1 ? '1 day' : `${d} days`; }
+  function rpThumbHtml(r, cls){ const ph = rpPhoto(r); return `<span class="${cls}${ph ? '' : ' none'}">${ph ? `<img alt="" loading="lazy" src="${escapeHtmlAttr(ph)}">` : RP_WRENCH}</span>`; }
+  function rpWhoHtml(name){ return name ? `<span class="task-avatar" style="background:${colorForAssignee(name)}" title="${escapeHtmlAttr(name)}">${escapeHtml(initialsForAssignee(name))}</span>` : '<span class="task-avatar rp-anyone" title="Anyone">?</span>'; }
+  function rpShortDate(iso){ const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleDateString(undefined, { day:'numeric', month:'short' }) : ''; }
+  function rpTaskTag(task){
+    const today = dateKey(new Date());
+    const late = task.status !== 'done' && task.date && task.date < today;
+    const when = task.status === 'done' ? 'done' : !task.date ? 'Backlog' : task.date === today ? 'today' : formatShort(task.date);
+    return `<span class="rp-tasktag${late ? ' late' : ''}" title="This problem is a task${(task.assignees || []).length ? ' for ' + escapeHtmlAttr(task.assignees.join(', ')) : ''}">Task · ${escapeHtml(when)}</span>`;
+  }
+  // One row of the List view: photo · problem · who/when · age · one-tap actions
   function buildReportCard(r){
     const sc = rpStatusClass(r);
     const urgent = r.urgent && sc !== 'resolved';
     const seen = seenReportIds();
     const isNew = !!seen && !seen.has(r.id) && sc !== 'resolved';
-    const photo = rpPhoto(r);
-    const task = r.linkedTaskId ? tasks.find(t => t.id === r.linkedTaskId) : null;
-    const today = dateKey(new Date());
+    const task = rpHasTask(r) ? tasks.find(t => t.id === r.linkedTaskId) : null;
+    const age = rpAgeDays(r);
     const el = document.createElement('div');
     el.setAttribute('role', 'button'); el.tabIndex = 0;
-    el.className = `rp-row status-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
+    el.className = `tr-row tr-${sc}${urgent ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}`;
+    el.dataset.id = r.id;
     el.title = 'Open this problem';
-    el.innerHTML = `<span class="rp-c-prob"><span class="rp-thumb"></span><span class="rp-prob-text"><span class="rp-prob-top"><b class="rp-prob-name"></b>${urgent ? '<span class="rp-tag urgent">Urgent</span>' : ''}${isNew ? '<span class="rp-tag new">New</span>' : ''}</span><span class="rp-prob-sub"></span></span></span>
-      <span class="rp-c-place" data-label="Place"></span>
-      <span class="rp-c-rep" data-label="Reported"></span>
-      <span class="rp-c-status" data-label="Status"><span class="rp-st st-${sc}"></span></span>
-      <span class="rp-c-task" data-label="Task"></span>`;
-    const thumb = el.querySelector('.rp-thumb');
-    if(photo){ const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.onerror = ()=>{ img.remove(); thumb.innerHTML = RP_WRENCH; }; img.src = photo; thumb.appendChild(img); }
-    else thumb.innerHTML = RP_WRENCH;
-    el.querySelector('.rp-prob-name').textContent = rpTypeName(r);
-    el.querySelector('.rp-prob-sub').textContent = (r.notes || '').replace(/\s+/g, ' ').trim();
-    el.querySelector('.rp-c-place').textContent = reportPlace(r);
-    el.querySelector('.rp-c-rep').textContent = [r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
-    el.querySelector('.rp-st').textContent = sc === 'resolved' ? (r.resolvedBy ? `Fixed by ${r.resolvedBy}` : 'Fixed') : (RP_STATUS_LABEL[r.status] || r.status || 'Open');
-    const tc = el.querySelector('.rp-c-task');
-    if(task){
-      const who = (task.assignees || []).join(', ');
-      const late = task.status !== 'done' && task.date && task.date < today;
-      const when = task.status === 'done' ? 'done' : !task.date ? 'Backlog' : task.date === today ? 'today' : late ? `${Math.round((toDateObj(today) - toDateObj(task.date)) / 864e5)} days late` : formatShort(task.date);
-      tc.innerHTML = `<span class="rp-task-who"></span><span class="rp-task-when${late ? ' late' : task.date === today && task.status !== 'done' ? ' due' : ''}"></span>`;
-      tc.querySelector('.rp-task-who').textContent = (who || 'no one yet') + ' · ';
-      tc.querySelector('.rp-task-when').textContent = when;
-    } else if(sc !== 'resolved'){
-      tc.innerHTML = `<button type="button" class="rp-link" data-rp-assign-row="${escapeHtmlAttr(r.id)}" title="Make a task for this problem">Assign as task</button>`;
-    } else tc.innerHTML = '<span class="rp-muted">—</span>';
-    el.addEventListener('click', (e) => { if(e.target.closest('[data-rp-assign-row]')){ e.stopPropagation(); openAssignTaskFromReport(r.id); return; } openReportDetailModal(r.id); });
+    let meta, ageHtml = '', act;
+    if(sc === 'resolved'){
+      meta = `<span class="tr-m">${escapeHtml(r.resolvedBy || (r.autoResolved ? 'Task done' : 'Manager'))}<small>${escapeHtml(rpShortDate(r.resolvedAt))}</small></span>`;
+      act = `<span class="tr-fixed">✓ Fixed${rpArchived(r) ? ' · archived' : ''}</span>`;
+    } else if(r.status === 'In Progress'){
+      meta = task ? `<span class="tr-m">${escapeHtml((task.assignees || []).join(', ') || 'No one yet')}<small>task</small></span>`
+                  : `<span class="tr-m tr-who">${rpWhoHtml(r.assignee)}${escapeHtml(r.assignee || 'Anyone')}</span>`;
+      ageHtml = `<span class="tr-age${age >= 3 ? ' warn' : ''}" title="In progress since ${escapeHtmlAttr(rpShortDate(r.startedAt || r.createdAt))}">${escapeHtml(rpAgeText(age))}</span>`;
+      act = task ? rpTaskTag(task) : `<button type="button" class="tr-btn ok" data-tr-fix title="Mark this repair as fixed">✓ Fixed</button>`;
+    } else {
+      meta = `<span class="tr-m">${escapeHtml(r.createdBy || 'Unknown')}<small>${escapeHtml(r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : '')}</small></span>`;
+      ageHtml = `<span class="tr-age${age >= 2 ? ' warn' : ''}">${isNew ? 'new' : escapeHtml(rpAgeText(age))}</span>`;
+      const sug = typeRoute(r.problemType);
+      act = `<button type="button" class="tr-btn${sug === 'task' ? ' pri' : ''}" data-tr-task title="Make a task (with the photo)">Make a task</button><button type="button" class="tr-btn${sug === 'repair' ? ' pri' : ''}" data-tr-start title="Move to In progress as a repair job">Start repair</button>`;
+    }
+    const sub = [reportPlace(r), (r.notes || '').replace(/\s+/g, ' ').trim()].filter(Boolean).join(' · ');
+    el.innerHTML = `${rpThumbHtml(r, 'tr-th')}<span class="tr-txt"><span class="tr-t1"><b></b>${urgent ? '<span class="rp-tag urgent">Urgent</span>' : ''}</span><span class="tr-t2"></span></span>${meta}${ageHtml || '<span></span>'}<span class="tr-act">${act}</span>`;
+    el.querySelector('.tr-t1 b').textContent = rpTypeName(r);
+    el.querySelector('.tr-t2').textContent = sub;
+    const im = el.querySelector('.tr-th img'); if(im) im.addEventListener('error', ()=>{ im.parentElement.classList.add('none'); im.parentElement.innerHTML = RP_WRENCH; });
+    el.addEventListener('click', (e) => {
+      if(e.target.closest('[data-tr-task]')){ e.stopPropagation(); openAssignTaskFromReport(r.id); return; }
+      if(e.target.closest('[data-tr-start]')){ e.stopPropagation(); askStartRepair(r.id); return; }
+      if(e.target.closest('[data-tr-fix]')){ e.stopPropagation(); mtMove(r.id, 'fixed'); return; }
+      openReportDetailModal(r.id);
+    });
     el.addEventListener('keydown', (e) => { if((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); openReportDetailModal(r.id); } });
     return el;
   }
@@ -5812,27 +5898,25 @@
   // ----- Maintenance board: Open → In progress → Fixed (drag cards between columns) -----
   let rpView = (()=>{ try{ return localStorage.getItem('cluckwise-mt-view') === 'list' ? 'list' : 'board'; }catch(e){ return 'board'; } })();
   let mtSortables = [];
+  // Slim board card: one line — photo, problem, place · who · when, then the next step
   function mtCardHtml(r, col){
-    const photo = rpPhoto(r);
-    const when = r.createdAt ? new Date(r.createdAt).toLocaleDateString(undefined, { day:'numeric', month:'short' }) : '';
-    const task = r.linkedTaskId ? tasks.find(t=> t.id === r.linkedTaskId) : null;
-    let foot = '';
+    const task = rpHasTask(r) ? tasks.find(t=> t.id === r.linkedTaskId) : null;
+    const urgent = r.urgent && col !== 'fixed';
+    let sub, rt;
     if(col === 'open'){
       const sug = typeRoute(r.problemType);
-      foot = `<div class="mtb-actions"><button type="button" class="mtb-btn${sug === 'repair' ? ' primary' : ''}" data-mtb-start>Start repair</button><button type="button" class="mtb-btn${sug === 'task' ? ' primary' : ''}" data-mtb-task>Make a task</button></div>`;
-    } else if(col === 'prog' && task){
-      foot = `<div class="mtb-foot task">Task · ${escapeHtml(task.date ? formatShort(task.date) : 'Backlog')}${(task.assignees || []).length ? ' · ' + escapeHtml(task.assignees.join(', ')) : ''}</div>`;
+      sub = [reportPlace(r), r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
+      rt = `<button type="button" class="mtb-mini${sug === 'task' ? ' pri' : ''}" data-mtb-task title="Make a task (with the photo)">Task</button><button type="button" class="mtb-mini${sug === 'repair' ? ' pri' : ''}" data-mtb-start title="Start a repair job">Start</button>`;
     } else if(col === 'prog'){
-      foot = `<div class="mtb-foot"><span class="mtb-who">${r.assignee ? `<span class="task-avatar" style="background:${colorForAssignee(r.assignee)}">${escapeHtml(initialsForAssignee(r.assignee))}</span>${escapeHtml(r.assignee)}` : 'Anyone'}</span><span class="mtb-since">since ${escapeHtml(new Date(r.startedAt || r.updatedAt || r.createdAt).toLocaleDateString(undefined, { day:'numeric', month:'short' }))}</span></div>`;
+      const d = rpAgeDays(r);
+      sub = reportPlace(r);
+      rt = task ? rpTaskTag(task) : `<span class="mtb-age${d >= 3 ? ' warn' : ''}" title="In progress since ${escapeHtmlAttr(rpShortDate(r.startedAt || r.createdAt))}">${d < 1 ? 'today' : d + ' d'}</span>${rpWhoHtml(r.assignee)}`;
     } else {
-      foot = `<div class="mtb-foot fixed">✓ Fixed${r.resolvedBy ? ' by ' + escapeHtml(r.resolvedBy) : ''}${r.resolvedAt ? ' · ' + escapeHtml(new Date(r.resolvedAt).toLocaleDateString(undefined, { day:'numeric', month:'short' })) : ''}</div>`;
+      sub = [reportPlace(r), r.resolvedBy, rpShortDate(r.resolvedAt)].filter(Boolean).join(' · ');
+      rt = '<span class="mtb-ok" aria-label="Fixed">✓</span>';
     }
-    return `<div class="mtb-card${col === 'prog' && task ? ' mtb-locked' : ''}${r.urgent && col !== 'fixed' ? ' urgent' : ''}${r.id === currentReportId ? ' selected' : ''}" data-id="${escapeHtmlAttr(r.id)}">
-      ${photo ? `<div class="mtb-photo"><img alt="" loading="lazy" src="${escapeHtmlAttr(photo)}"></div>` : ''}
-      <div class="mtb-top"><b class="mtb-title">${escapeHtml(rpTypeName(r))}</b>${r.urgent && col !== 'fixed' ? '<span class="mtb-urgent">Urgent</span>' : ''}</div>
-      <div class="mtb-place">${escapeHtml(reportPlace(r))}</div>
-      <div class="mtb-meta">${escapeHtml(r.createdBy || 'Unknown')} · ${escapeHtml(when)}</div>
-      ${foot}
+    return `<div class="mtb-card${col === 'prog' && task ? ' mtb-locked' : ''}${urgent ? ' urgent' : ''}${col === 'fixed' ? ' done' : ''}${r.id === currentReportId ? ' selected' : ''}" data-id="${escapeHtmlAttr(r.id)}" title="${escapeHtmlAttr(rpTypeName(r) + (urgent ? ' · urgent' : ''))}">
+      ${rpThumbHtml(r, 'mtb-th')}<span class="mtb-txt"><b class="mtb-title">${escapeHtml(rpTypeName(r))}</b><span class="mtb-sub">${escapeHtml(sub)}</span></span><span class="mtb-rt">${rt}</span>
     </div>`;
   }
   function renderMtBoard(){
@@ -5848,11 +5932,11 @@
     const prog = reports.filter(r=> r.status === 'In Progress' && match(r)).sort((a,b)=> (rpHasTask(a)?1:0)-(rpHasTask(b)?1:0) || (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
     const fixed = reports.filter(r=> r.status === 'Resolved' && !rpArchived(r) && match(r)).sort((a,b)=> String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || '')));
     const archived = reports.filter(rpArchived).length;
-    const col = (key, title, list, hint, extra)=> `<div class="mtb-col mtb-${key}"><div class="mtb-head"><span class="mtb-dot"></span><b>${title}</b><span class="mtb-count">${list.length}</span>${extra || ''}</div>${hint ? `<div class="mtb-hint">${hint}</div>` : ''}<div class="mtb-list" data-col="${key}">${list.map(r=> mtCardHtml(r, key)).join('') || '<div class="mtb-empty">Nothing here</div>'}</div></div>`;
-    box.innerHTML = col('open', 'Open', open, 'New reports — drag to In progress, or choose below')
-      + col('prog', 'In progress', prog, 'Repairs here are what workers see in “Check maintenance”')
-      + col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">archived after ${RP_ARCHIVE_DAYS} days${archived ? ' · ' + archived : ''}</span>`);
-    box.querySelectorAll('.mtb-photo img').forEach(im=> im.addEventListener('error', ()=> im.parentElement.remove()));
+    const col = (key, title, list, hint, extra)=> `<div class="mtb-col mtb-${key}"><div class="mtb-head"><b>${title}</b><span class="mtb-count">${list.length}</span>${hint ? `<span class="mtb-hint">${hint}</span>` : ''}${extra || ''}</div><div class="mtb-list" data-col="${key}">${list.map(r=> mtCardHtml(r, key)).join('') || '<div class="mtb-empty">Nothing here</div>'}</div></div>`;
+    box.innerHTML = col('open', 'Open', open, 'drag right to start')
+      + col('prog', 'In progress', prog, 'shown in “Check maintenance”')
+      + col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">${RP_ARCHIVE_DAYS}-day archive${archived ? ' · ' + archived : ''}</span>`);
+    box.querySelectorAll('.mtb-th img').forEach(im=> im.addEventListener('error', ()=>{ const p = im.parentElement; p.classList.add('none'); p.innerHTML = RP_WRENCH; }));
     mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
     if(typeof Sortable !== 'undefined'){
       box.querySelectorAll('.mtb-list').forEach(list=>{
@@ -11959,6 +12043,7 @@
   $('#fabReportBtn').addEventListener('click', openNewReport);
   $('#topReportBtn').addEventListener('click', openNewReport);
   $('#rpViewSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-rpv]'); if(!b) return; rpView = b.dataset.rpv; try{ localStorage.setItem('cluckwise-mt-view', rpView); }catch(err){} renderReportsView(); });
+  $('#reportsList').addEventListener('click', (e)=>{ if(e.target.closest('[data-tr-fold]')){ rpListShowFixed = !rpListShowFixed; renderReportsList(); } });
   $('#mtBoard').addEventListener('click', (e)=>{
     const card = e.target.closest('.mtb-card'); if(!card) return;
     const id = card.dataset.id;
