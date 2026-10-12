@@ -8,6 +8,14 @@
 function mgrToday(){return dateOnly(new Date());}
 function mgrDays(a,b){return Math.round((dateOnly(b)-dateOnly(a))/864e5);}
 function mgrWhen(d){const n=mgrDays(mgrToday(),d);return n===0?'Today':n===1?'Tomorrow':fmtShortNoYear(d);}
+// A small calendar tile for a day: weekday over the date number; today filled amber, tomorrow outlined
+function mgrDayTile(d){
+  const dt=dateOnly(d),n=mgrDays(mgrToday(),dt);
+  const wd=dt.toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase(),mo=dt.toLocaleDateString('en-GB',{month:'short'});
+  const cls=n===0?' today':n===1?' tomorrow':'';
+  const tip=n===0?'Today':n===1?'Tomorrow':dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  return `<span class="mgr-day${cls}" title="${escapeAttr(tip)}"><span class="mgr-day-wd">${n===0?'TODAY':wd}</span><b>${dt.getDate()}</b><span class="mgr-day-mo">${escapeHtml(mo)}</span></span>`;
+}
 function mgrT(kg){return `${Math.round((Number(kg)||0)/1000).toLocaleString('en-US')} t`;}
 function mgrPlaced(){return (farmData&&farmData.sheds||[]).filter(s=>s.placementDate);}
 
@@ -133,7 +141,7 @@ function renderHomeView(){
     </section>`;
   const weekHtml=`<section class="mgr-card mgr-week">
       <span class="mgr-k">Next 7 days</span>
-      ${week.length?week.map(w=>`<div class="mgr-week-row"><span class="mgr-week-day">${escapeHtml(mgrWhen(w.date))}</span><span>${escapeHtml(w.text)}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups in the next 7 days.</p>'}
+      ${week.length?week.map(w=>`<div class="mgr-week-row">${mgrDayTile(w.date)}<span>${escapeHtml(w.text)}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups in the next 7 days.</p>'}
     </section>`;
   const shedRows=sheds.map(s=>{const nx=mgrComingPickups(s)[0];return `<tr><td><b>${s.id}</b></td><td>${ageInDays(s,today)} d</td><td class="num">${Math.max(0,liveAtStartOfDay(s,today)).toLocaleString('en-US')}</td><td>${nx?`${escapeHtml(fmtShortNoYear(nx.date))} · ${nx.birds.toLocaleString('en-US')}${nx.planned?' <span class="mgr-plan">plan</span>':''}`:'—'}</td><td>${s.cleanoutDate?escapeHtml(fmtShortNoYear(s.cleanoutDate)):'—'}</td></tr>`;}).join('');
   const shedsHtml=`<section class="mgr-card mgr-sheds">
@@ -359,7 +367,7 @@ function pairOverviewHtml(g){
   farmLoads.forEach(l=>{if(!l.date)return;const d=dateOnly(l.date),kg=Number(l.splitKg&&l.splitKg[g])||0;if(d<today||d>end||!kg)return;day(d).parts.push(`Feed ${mgrT(kg)}${l.feedType?' '+l.feedType:''}`);});
   sheds.forEach(s=>(s.pickups||[]).concat(s.predictedPickups||[]).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date);if(d<today||d>end)return;day(d).parts.push(`Pickup Shed ${s.id} · ${(Number(p.birds)||0).toLocaleString('en-US')}`);}));
   const week=[...days.values()].sort((a,b)=>a.date-b.date);
-  const weekHtml=`<section class="mgr-card mgr-week"><span class="mgr-k">This week · ${escapeHtml(pairLabel(g))}</span>${week.length?week.map(w=>`<div class="mgr-week-row"><span class="mgr-week-day">${escapeHtml(mgrWhen(w.date))}</span><span>${escapeHtml([...new Set(w.parts)].join(' · '))}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups this week.</p>'}</section>`;
+  const weekHtml=`<section class="mgr-card mgr-week"><span class="mgr-k">This week · ${escapeHtml(pairLabel(g))}</span>${week.length?week.map(w=>`<div class="mgr-week-row">${mgrDayTile(w.date)}<span>${escapeHtml([...new Set(w.parts)].join(' · '))}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups this week.</p>'}</section>`;
   return `<div class="pair-overview">${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
 }
 document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);

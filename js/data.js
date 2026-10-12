@@ -26,8 +26,12 @@ function applyTheme(theme){
     btn.setAttribute('aria-pressed',active?'true':'false');
   });
   const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta)meta.setAttribute('content',isDark?'#111A2B':'#FFFFFF'); // installed-app window bar matches the page header
+  // installed-app window bar matches the page header; in the desktop app with the title bar hidden, the corner
+  // behind the window buttons sits above the dark rail, so it takes the rail colour
+  const wcoDesk=window.matchMedia&&window.matchMedia('(display-mode: window-controls-overlay) and (min-width:769px)').matches;
+  if(meta)meta.setAttribute('content',wcoDesk?(isDark?'#0A101C':'#16191B'):(isDark?'#111A2B':'#FFFFFF'));
 }
+try{const mq=window.matchMedia('(display-mode: window-controls-overlay) and (min-width:769px)');mq.addEventListener('change',()=>applyTheme(document.body.classList.contains('theme-dark')?'dark':'light'));}catch(e){}
 function loadTheme(){try{const t=localStorage.getItem(THEME_KEY);return (t==='dark'||t==='light')?t:'light';}catch(e){return 'light';}}
 function saveTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}}
 function setTheme(theme){if(theme!=='dark'&&theme!=='light')return;applyTheme(theme);saveTheme(theme);schedulePush();}
