@@ -286,7 +286,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&fsEditKey){closeFar
 // Replaces the three planning controls on the silo screens: one line + a link
 function siloSettingsLineHtml(){
   const conf=Math.round(siloConfidence()*100),safety=siloSafetyDays();
-  return `<div class="silo-set-line">Reading accuracy <b>${conf}%</b> · safety stock <b>${safety} day${safety===1?'':'s'}</b> · trucks <b>${deliveryTimingEarly()?'early morning':'during the day'}</b><button type="button" class="silo-set-link" data-open-farmsettings>Change in Farm settings ›</button></div>`;
+  return `<div class="silo-set-line">Reading accuracy <b>${conf}%</b> · safety stock <b>${safety} day${safety===1?'':'s'}</b> · trucks <b>${deliveryTimingEarly()?'early morning':'during the day'}</b><button type="button" class="silo-set-link" data-open-farmsettings>Change in Settings ›</button></div>`;
 }
 
 // ── One page per pair (Sheds + Predictions combined, 2026-10) ──────────
@@ -519,7 +519,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwr-farm]')){goSettings('farm');return;}
   const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;render();return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
-  if(e.target.closest('[data-set-adjust]')){predState.predGroup=setPair;adjModalOpen=false;toggleAdjCollapse();return;}
+  const ss=e.target.closest('[data-set-scale-sug]');if(ss){setShedScale(ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
+  if(e.target.closest('[data-set-use-history]')){const p=historyDensityPrior();if(p){const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};dg.triggerDensity=p.trig;dg.targetDensity=p.tgt;dg.maxDensity=Math.max(28,p.max);if(p.tp)dg.targetPickups=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));predState.densityGlobal=dg;savePredState();schedulePush();render();showToast('Pickup planning set from your last batches.');}return;}
   if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
   const ap=e.target.closest('[data-adj-pair]');
   if(ap){const g=Number(ap.dataset.adjPair);if(g&&g!==predState.predGroup){if(typeof adjIsDirty==='function'&&adjIsDirty()&&!confirm('Discard your unapplied changes?'))return;predState.predGroup=g;adjDraft=null;adjDraftBase='';const root=document.getElementById('adjModalRoot');if(root)root.dataset.g='';render();}return;}
@@ -537,20 +538,36 @@ function goSettings(tab){
 }
 function settingsPairsHtml(){
   if(!farmData)return '<p class="fs-allnormal">Load a batch to set things per shed.</p>';
-  const g=setPair,d=adjDraftFromState(g),sheds=shedsForGroup(g);
-  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const rows=sheds.map(sh=>{const ov=d.ovr[sh.id];const own=suggestScaleCorrection([sh]);
-    const mr=shedMortRate(sh);
-    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${ov==null?`<span class="set-chip">farm ${d.scale.toFixed(1)}%</span>`:`<span class="set-chip own">own ${ov}%</span>`}</td><td class="set-muted">${own?`${(own.value*100).toFixed(1)}% from ${own.n} weighing${own.n===1?'':'s'}`:'No plant weighing yet'}</td><td><label class="set-mort"><input type="number" class="set-num" data-set-mortrate="${escapeAttr(String(sh.id))}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${mr.toFixed(2)}" aria-label="Daily morts for Shed ${escapeAttr(String(sh.id))}" /> % / day</label></td></tr>`;}).join('');
+  const g=setPair,sheds=shedsForGroup(g),farmPct=Math.round(currentBiasFactor()*1000)/10;
+  const rows=sheds.map(sh=>{
+    const sid=escapeAttr(String(sh.id));
+    const ov=(sh.scaleOverride!=null&&Number(sh.scaleOverride)>0)?Math.round(Number(sh.scaleOverride)*1000)/10:null;
+    const own=suggestScaleCorrection([sh]);const sugPct=own?Math.round(own.value*1000)/10:null;
+    const cur=ov==null?farmPct:ov;
+    const scale=`<div class="set-scale"><label class="set-chk"><input type="checkbox" data-set-useglobal="${sid}" ${ov==null?'checked':''} /> Farm-wide${ov==null?` <b>${farmPct.toFixed(1)}%</b>`:''}</label>${ov==null?'':`<label class="set-mort"><input type="number" class="set-num" data-set-scale="${sid}" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${ov}" aria-label="Scale correction for Shed ${sid}" /> %</label>`}</div>`;
+    const kill=own?`<span>${sugPct.toFixed(1)}% <span class="set-muted">· ${own.n} weighing${own.n===1?'':'s'}</span></span>${Math.abs(sugPct-cur)>=0.1?` <button type="button" class="set-mini" data-set-scale-sug="${sid}" data-pct="${sugPct}">Use ${sugPct.toFixed(1)}%</button>`:' <span class="set-chip own">in use</span>'}`:'<span class="set-muted">No plant weighing yet</span>';
+    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${scale}</td><td>${kill}</td><td><label class="set-mort"><input type="number" class="set-num" data-set-mortrate="${sid}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${shedMortRate(sh).toFixed(2)}" aria-label="Daily morts for Shed ${sid}" /> % / day</label></td></tr>`;}).join('');
   return `<div class="set-pairs">${[1,2,3,4].map(x=>`<button type="button" class="adj-pair${x===g?' active':''}" data-set-pair="${x}" style="--pc:var(--pair${x})">${escapeHtml(pairLabel(x))}</button>`).join('')}</div>
     <section class="fs-group"><span class="fs-sec-label">Per shed · ${escapeHtml(pairLabel(g))}</span>
-      <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th>Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    <section class="fs-group"><span class="fs-sec-label">No-pickup days · farm-wide</span>
-      <div class="set-card set-line">${d.npd.length?d.npd.map(i=>`<span class="set-chip own">${DAYS[i]}</span>`).join(' '):'<span class="set-muted">None — pickups can land on any day</span>'}</div></section>
-    <div class="set-actions"><button type="button" class="set-btn primary" data-set-adjust>Edit ${escapeHtml(pairLabel(g))}</button><span class="set-muted">Change scale correction and no-pickup days, auto-fill or clear pickups. Daily morts save when you press Enter or leave the box.</span></div>`;
+      <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th title="In-yard (shed-scale) readings only — plant weights are never scaled">Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    <p class="set-muted">Changes save straight away and update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="predictions">Predictions</button>.</p>`;
+}
+// Farm-wide pickup tools under Predictions: no-pickup days, last batches' pattern, and the planner actions
+function settingsPickupExtrasHtml(){
+  if(!farmData)return '';
+  const p=historyDensityPrior(),dg=predState.densityGlobal||DEFAULT_DENSITY_GLOBAL;
+  const same=p&&Number(dg.triggerDensity)===p.trig&&Number(dg.targetDensity)===p.tgt&&Number(dg.maxDensity)===p.max&&(!p.tp||Number(dg.targetPickups)===p.tp);
+  const hist=p?`<div class="set-card set-pad set-hist"><div><b>From your last batch${p.n>1?'es':''}</b><span class="set-muted"> ${escapeHtml(p.batches.slice(0,3).join(', '))}: thin at ${p.trig} · down to ${p.tgt} · max ${p.max} kg/m²${p.tp?` · ${p.tp} pickups`:''}</span></div><button type="button" class="set-btn" data-set-use-history ${same?'disabled':''}>${same?'In use':'Use these'}</button></div>`
+    :`<p class="set-muted">Finished batches in Farm history will suggest pickup planning numbers here.</p>`;
+  let blocked=0;farmData.sheds.forEach(s=>{blocked+=countPredictedPickupsOnBlockedDays(s);});
+  return `<section class="fs-group set-wide"><span class="fs-sec-label">Pickups · farm-wide</span>
+    <div class="set-npd">${renderNoPickupDaysRow()}</div>
+    ${hist}
+    <div class="set-actions"><button type="button" class="set-btn primary" data-global-autofill="1">Auto-fill all sheds</button><button type="button" class="set-btn" data-global-clear-pickups="1">Clear all planned pickups</button>${blocked?`<button type="button" class="set-btn" data-replan-blocked="1">Re-plan ${blocked} on blocked days</button>`:''}<span class="set-muted">Planned pickups only — recorded pickups never change.</span></div>
+  </section>`;
 }
 function settingsSectionHtml(t){
-  if(t==='predictions')return renderFarmSettingsView(true);
+  if(t==='predictions')return renderFarmSettingsView(true)+settingsPickupExtrasHtml();
   if(t==='pairs')return settingsPairsHtml();
   if(t==='farm')return `<div class="set-cards">
       <div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${escapeHtml(displayFarmName()||'This farm')}</h4></div></div><p class="settings-section-desc">The farm name you see on screen, and the numbers painted on your silos.</p><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>
@@ -572,7 +589,17 @@ function renderSettingsTabBody(force){
   if(!force&&ae&&b.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
   b.innerHTML=settingsSectionHtml(setTab);afterSettingsRender();
 }
+function setShedScale(id,pct){
+  const sh=farmData&&farmData.sheds.find(x=>String(x.id)===String(id));if(!sh)return;
+  sh.scaleOverride=pct==null?null:Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,Number(pct)/100));
+  saveState();schedulePush();render();
+  showToast(`Shed ${id}: scale correction ${pct==null?'back to farm-wide':Math.round(sh.scaleOverride*1000)/10+'%'} — forecast updated`);
+}
 document.addEventListener('change',e=>{
+  const ug=e.target.closest&&e.target.closest('[data-set-useglobal]');
+  if(ug){setShedScale(ug.dataset.setUseglobal,ug.checked?null:Math.round(currentBiasFactor()*1000)/10);return;}
+  const sc=e.target.closest&&e.target.closest('[data-set-scale]');
+  if(sc){const v=Number(sc.value);if(Number.isFinite(v)&&v>0)setShedScale(sc.dataset.setScale,v);else render();return;}
   const m=e.target.closest&&e.target.closest('[data-set-mortrate]');if(!m)return;
   const v=Number(m.value);if(!Number.isFinite(v)||v<0){m.value=shedMortRate(farmData.sheds[Number(m.dataset.setMortrate)-1]).toFixed(2);return;}
   setShedMortRate(Number(m.dataset.setMortrate),v);
@@ -580,6 +607,7 @@ document.addEventListener('change',e=>{
 });
 function afterSettingsRender(){if(setTab==='alerts'&&typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();}
 renderSettingsDrawerBody=function(){renderSettingsTabBody(false);};
+toggleAdjCollapse=function(){const gm=/^g([1-4])$/.exec(activeTab);setPair=gm?Number(gm[1]):(predState.predGroup||setPair||1);adjModalOpen=false;adjDraft=null;goSettings('pairs');};
 openSettingsDrawer=function(){goSettings(syncFarmName?null:'farm');};
 function closeToolPages(){Object.keys(TOOL_PAGES).forEach(id=>{if(document.getElementById(id)?.classList.contains('open')){try{TOOL_PAGES[id].close();}catch(e){}}});}
 document.addEventListener('DOMContentLoaded',()=>{
