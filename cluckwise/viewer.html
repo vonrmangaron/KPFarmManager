@@ -1470,8 +1470,12 @@
   function colorForBatchNumber(number){
     const b=batches.find(x=>x.number===number);
     if(!b) return '#8A7A5C';
-    // Same rule as the main app: orange while running, grey once ended
-    return (!b.end || b.end >= dateKey(new Date())) ? '#F0A21A' : '#9AA3A8';
+    // Same rule as the main app: orange while running, grey once ended; while two overlap, the newer (starting) is blue
+    const today=dateKey(new Date());
+    if(b.end && b.end < today) return '#9AA3A8';
+    const soon=addDaysStr(today,60);
+    const live=batches.filter(x=>x.start&&x.end&&x.end>=today&&x.start<=soon).sort((x,y)=>x.start.localeCompare(y.start)||String(x.number).localeCompare(String(y.number)));
+    return (live.length>1&&live[live.length-1].number===b.number)?'#5B8DEF':'#F0A21A';
   }
   function renderIconInto(el, icon){
     if(icon && /^https?:\/\//.test(icon)){ el.innerHTML=''; const img=document.createElement('img'); img.src=icon; img.alt=''; el.appendChild(img); }

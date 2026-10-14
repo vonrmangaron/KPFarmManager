@@ -3179,6 +3179,40 @@
     .tr-act{ grid-column:1 / -1; }
     .reports-modal.view-board .mt-board{ grid-template-columns:1fr; gap:20px; }
   }
+
+  /* ===== c48: overlapping batches (Finishing / Starting), from ProdWise, changeover ===== */
+  .cur-batch.cb-phase{ display:flex; flex-direction:column; gap:6px; align-items:stretch; text-align:left; margin-bottom:10px; padding:12px 14px; border-radius:14px; }
+  .cur-batch.cb-phase.finishing{ border:2px solid #F0A21A; background:#2C2A22; color:#fff; }
+  .cur-batch.cb-phase.starting{ border:2px solid #5B8DEF; background:#1C2638; color:#fff; }
+  .cb-phase .cb-top{ display:flex; align-items:center; gap:6px; }
+  .cb-phase .cb-k{ font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .cb-phase.finishing .cb-k{ color:#E3B45C; } .cb-phase.starting .cb-k{ color:#8FB4E8; }
+  .cb-pw{ margin-left:auto; font-size:10px; font-weight:800; border-radius:999px; padding:2px 7px; background:#2A3346; color:#C9D6EE; }
+  .cb-phase .cb-num{ font-family:'Sora',sans-serif; font-size:18px; font-weight:800; color:#fff; }
+  .cb-phase .cb-line{ font-size:13px; font-weight:600; }
+  .cb-phase.finishing .cb-line{ color:#C9B892; } .cb-phase.starting .cb-line{ color:#9DB3D6; }
+  .cb-phase .cb-bar{ display:block; height:6px; border-radius:3px; overflow:hidden; background:#3A3428; }
+  .cb-phase.starting .cb-bar{ background:#25324A; }
+  .cb-phase .cb-bar span{ display:block; height:100%; border-radius:3px; background:#F0A21A; }
+  .cb-phase.starting .cb-bar span{ background:#5B8DEF; }
+  .cb-phase .cb-sub{ font-size:12px; color:#9AA3A8; }
+  .co-box{ border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:14px; background:var(--surface); }
+  .co-head{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .co-head b{ font-family:'Sora',sans-serif; font-size:16px; }
+  .co-head span{ font-size:12.5px; color:var(--muted); }
+  .co-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:8px; }
+  .co-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .co-legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .co-legend i.old, .co-seg.old{ background:#F0A21A; color:#241A08; }
+  .co-legend i.new, .co-seg.new{ background:#5B8DEF; color:#fff; }
+  .co-legend i.empty, .co-seg.empty{ background:repeating-linear-gradient(45deg,#D5DACF 0 5px,#EEF0EB 5px 10px); color:#5E666A; }
+  .co-legend i.today{ width:3px; background:#DC4A36; }
+  .co-row{ display:grid; grid-template-columns:70px 1fr; align-items:center; gap:10px; height:30px; }
+  .co-row b{ font-size:13px; }
+  .co-track{ position:relative; height:22px; background:var(--surface-soft); border-radius:6px; overflow:hidden; }
+  .co-seg{ position:absolute; top:0; bottom:0; border-radius:5px; font-size:10.5px; font-weight:800; display:flex; align-items:center; padding:0 6px; white-space:nowrap; overflow:hidden; box-sizing:border-box; }
+  .co-today{ position:absolute; top:-2px; bottom:-2px; width:2px; background:#DC4A36; }
+  body.theme-dark .co-legend i.empty, body.theme-dark .co-seg.empty{ background:repeating-linear-gradient(45deg,#26344F 0 5px,#1E2A42 5px 10px); color:#93A0BA; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4286,11 +4320,20 @@
     } else { el.textContent = icon || '📋'; }
   }
   function nextPaletteColor(){ return BATCH_PALETTE[batches.length % BATCH_PALETTE.length]; }
+  // Batches still running or about to start (within 60 days), oldest first
+  function liveBatches(){
+    const today = dateKey(new Date()), soon = addDaysStr(today, 60);
+    return batches.filter(b=> b.start && b.end && b.end >= today && b.start <= soon).sort((a,b)=> a.start.localeCompare(b.start) || String(a.number).localeCompare(String(b.number)));
+  }
   function colorForBatchNumber(number){
     const b = batches.find(x=>x.number===number);
     if(!b) return '#8A7A5C';
-    // One colour rule (no custom colours): orange while the batch runs, grey once it has ended
-    return (!b.end || b.end >= dateKey(new Date())) ? '#F0A21A' : '#9AA3A8';
+    // One colour rule (no custom colours): orange while the batch runs, grey once it has ended;
+    // while two batches overlap, the newer one (starting) is blue
+    const today = dateKey(new Date());
+    if(b.end && b.end < today) return '#9AA3A8';
+    const live = liveBatches();
+    return (live.length > 1 && live[live.length - 1].number === b.number) ? '#5B8DEF' : '#F0A21A';
   }
   // Field Fresh light mode: calendar day tints stay soft on the white base (dark mode unchanged)
   function lightTint(a){ return document.body.classList.contains('theme-dark') ? a * 0.55 : a * 0.45; }
@@ -4683,6 +4726,7 @@
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
       migrateMaintV2();
+      syncBatchesFromProdWise(false);
       if(!pushPending) flashSaved(); else renderSyncStatus();
       loadAccess(true);
       if(!silent) showToast('Synced.');
@@ -7523,13 +7567,33 @@
     const box = $('#sbActiveBatch');
     if(!box) return;
     const today = dateKey(new Date());
-    const running = batches.filter(b=> today >= b.start && today <= b.end).sort((a,b)=> a.start.localeCompare(b.start));
-    if(running.length > 1){
-      // Multi-age: every batch that still has birds, oldest first
-      box.innerHTML = running.map(b=> `<button type="button" class="cur-batch cur-batch-multi" data-cb="${escapeHtmlAttr(b.number)}" title="Batch details"><span class="cb-text"><span class="cb-k">${b.number === running[running.length-1].number ? 'Newest batch' : 'Still running'}</span><span class="cb-v"><span class="batch-swatch" style="background:${colorForBatchNumber(b.number)}"></span> Batch ${escapeHtml(b.number)} <em>· Day ${batchAgeOn(b, today)}</em></span></span></button>`).join('');
+    const live = liveBatches();
+    if(live.length > 1){
+      // Changeover: the old batch finishing shed by shed, the new one being placed
+      box.innerHTML = live.map((b, i)=>{
+        const starting = i === live.length - 1;
+        const sh = (b.sheds || []);
+        const outs = sh.map(x=> x.cleanout).filter(Boolean).sort(), ins = sh.map(x=> x.placement).filter(Boolean).sort();
+        const placed = sh.filter(x=> x.placement && x.placement <= today).length;
+        const stillIn = sh.filter(x=> x.placement && x.placement <= today && (!x.cleanout || x.cleanout >= today)).length;
+        const total = Math.max(1, Math.round((toDateObj(b.end) - toDateObj(b.start)) / 86400000));
+        const pct = today >= b.start ? Math.min(100, Math.max(2, Math.round(batchAgeOn(b, today) / total * 100))) : 3;
+        const line = starting
+          ? (placed ? `${placed} of ${sh.length || '—'} sheds placed` : `First placement ${formatShort(ins[0] || b.start)} · 0 of ${sh.length || '—'} placed`)
+          : `Day ${batchAgeOn(b, today)} · ${sh.length ? stillIn + ' of ' + sh.length + ' sheds still in' : 'running'}`;
+        const sub = starting ? `Placements ${formatShort(ins[0] || b.start)} – ${formatShort(ins[ins.length - 1] || b.start)}`
+          : `Clean-outs ${formatShort(outs[0] || b.end)} – ${formatShort(outs[outs.length - 1] || b.end)}`;
+        return `<button type="button" class="cur-batch cb-phase ${starting ? 'starting' : 'finishing'}" data-cb="${escapeHtmlAttr(b.number)}" title="Batch details">
+          <span class="cb-top"><span class="cb-k">${starting ? 'Starting' : 'Finishing'}</span>${b.source === 'prodwise' ? '<span class="cb-pw" title="Made in ProdWise — dates come from there">from ProdWise</span>' : ''}</span>
+          <span class="cb-main"><b class="cb-num">#${escapeHtml(b.number)}</b></span>
+          <span class="cb-line">${escapeHtml(line)}</span>
+          <span class="cb-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>
+          <span class="cb-sub">${escapeHtml(sub)}</span></button>`;
+      }).join('');
       box.querySelectorAll('[data-cb]').forEach(el=> el.addEventListener('click', ()=> openBatchInfo(el.dataset.cb)));
       return;
     }
+    const running = live.filter(b=> today >= b.start);
     const active = running[0];
     const next = active ? null : batches.filter(b=> b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0];
     const b = active || next;
@@ -11285,6 +11349,55 @@
     return batches.filter(b=> b.start && b.end && today >= b.start && today <= b.end).sort((a,b)=> b.start.localeCompare(a.start))[0]
       || batches.filter(b=> b.start && b.start > today).sort((a,b)=> a.start.localeCompare(b.start))[0] || null;
   }
+  // ProdWise batches arrive by themselves (2026-10-14): the newest batch files are read (read-only)
+  // and become CluckWise batches with the same number, start (first placement), end (last
+  // clean-out) and per-shed dates. ProdWise owns those dates; tasks, audits and the rest stay here.
+  async function syncBatchesFromProdWise(force){
+    const farm = (ghFarmName || '').trim();
+    if(!farm || !navigator.onLine) return;
+    if(!force && Date.now() - (syncBatchesFromProdWise.at || 0) < 10 * 60 * 1000) return;
+    syncBatchesFromProdWise.at = Date.now();
+    let keys = [], base = null;
+    for(const name of [...new Set([farm, farm.toLowerCase()])]){
+      try{
+        const res = await fetch(`${WORKER_URL}/?repo=${encodeURIComponent(HARDCODED_REPO)}&prefix=${encodeURIComponent(name + '-feed')}`);
+        if(!res.ok) continue;
+        const j = await res.json();
+        const files = (j && Array.isArray(j.files)) ? j.files : [];
+        const pre = name + '-feed-';
+        keys = files.map(f=> String(f.name || '')).filter(n=> n.startsWith(pre) && n.endsWith('.json') && !n.endsWith('-file.json')).map(n=> n.slice(pre.length, -5)).filter(Boolean);
+        if(keys.length){ base = name; break; }
+      }catch(e){}
+    }
+    if(!keys.length) return;
+    keys.sort((a,b)=>{ const na = parseFloat(a), nb = parseFloat(b); return (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) ? nb - na : b.localeCompare(a); });
+    const today = dateKey(new Date()), toKey = v=>{ if(!v) return null; const d = new Date(v); return isNaN(d) ? null : dateKey(d); };
+    let added = [], changed = 0;
+    for(const no of keys.slice(0, 3)){
+      const d = await biLoadFeedData(no); if(!d || !d.farmData || !Array.isArray(d.farmData.sheds)) continue;
+      const sheds = d.farmData.sheds.map(x=> ({ shed: String(x.id), placement: toKey(x.placementDate), cleanout: toKey(x.cleanoutDate) })).filter(x=> x.placement);
+      if(!sheds.length) continue;
+      const start = sheds.map(x=> x.placement).sort()[0];
+      const outs = sheds.map(x=> x.cleanout).filter(Boolean).sort();
+      const end = outs.length ? outs[outs.length - 1] : addDaysStr(start, 69);
+      if(end < addDaysStr(today, -30)) continue;      // long finished: leave the history alone
+      const number = String(d.batchNumber || d.farmData.batchNumber || no);
+      const ex = batches.find(b=> String(b.number) === number);
+      const shedSig = x=> JSON.stringify((x || []).map(s=> [String(s.shed), s.placement || '', s.cleanout || '']).sort());
+      if(!ex){
+        const nb = upsertBatch(number, start, end);
+        nb.sheds = sheds; nb.source = 'prodwise'; added.push(number);
+      } else if(ex.start !== start || ex.end !== end || shedSig(ex.sheds) !== shedSig(sheds) || ex.source !== 'prodwise'){
+        ex.start = start; ex.end = end; ex.sheds = sheds; ex.source = 'prodwise'; changed++;
+      }
+    }
+    if(added.length || changed){
+      if(added.length) addHistory('Batch from ProdWise', `Batch #${added.join(', #')} picked up from ProdWise`);
+      if(changed) addHistory('Batch dates from ProdWise', `${changed} batch${changed === 1 ? '' : 'es'} updated from ProdWise`);
+      persist(); renderAll();
+      if(added.length) showToast(`Batch #${added.join(', #')} picked up from ProdWise.`);
+    }
+  }
   // The ProdWise batch file (<farm>-feed-<batch>), read-only, kept 10 minutes
   const biFeedCache = new Map();
   async function biLoadFeedData(no){
@@ -11344,6 +11457,31 @@
     return h;
   }
   let biShowing = null, biShowArchive = false;
+  // Each shed's changeover between the two live batches: old batch → empty (clean & prep) → new batch
+  function cwChangeoverHtml(){
+    const live = liveBatches(); if(live.length < 2) return '';
+    const old = live[0], nu = live[live.length - 1], today = dateKey(new Date());
+    const ids = [...new Set((old.sheds || []).map(x=> String(x.shed)).concat((nu.sheds || []).map(x=> String(x.shed))))].sort((a,b)=> a.localeCompare(b, undefined, { numeric:true }));
+    if(!ids.length) return '';
+    const all = [];
+    ids.forEach(id=>{ const o = (old.sheds || []).find(x=> String(x.shed) === id) || {}, n = (nu.sheds || []).find(x=> String(x.shed) === id) || {};
+      [o.placement, o.cleanout, n.placement, n.cleanout].forEach(d=> d && all.push(d)); });
+    const from = [today, ...all].filter(d=> d >= addDaysStr(today, -7)).sort()[0] || today;
+    const to = addDaysStr(from, 34);
+    const span = Math.round((toDateObj(to) - toDateObj(from)) / 86400000);
+    const x = d=> Math.max(0, Math.min(100, Math.round((toDateObj(d < from ? from : d > to ? to : d) - toDateObj(from)) / 86400000 / span * 1000) / 10));
+    const seg = (a, b, cls, label)=> (a && b && b > from && a < to) ? `<span class="co-seg ${cls}" style="left:${x(a)}%;width:${Math.max(1.5, x(b) - x(a))}%" title="${escapeHtmlAttr(label)}">${escapeHtml(label)}</span>` : '';
+    const rows = ids.map(id=>{
+      const o = (old.sheds || []).find(x=> String(x.shed) === id) || {}, n = (nu.sheds || []).find(x=> String(x.shed) === id) || {};
+      const oEnd = o.cleanout || old.end, nIn = n.placement || null;
+      return `<div class="co-row"><b>Shed ${escapeHtml(id)}</b><div class="co-track">
+        ${seg(o.placement || old.start, oEnd, 'old', '#' + old.number + ' · out ' + formatShort(oEnd))}
+        ${nIn ? seg(oEnd, nIn, 'empty', 'empty ' + Math.max(0, Math.round((toDateObj(nIn) - toDateObj(oEnd)) / 86400000)) + ' d') : ''}
+        ${nIn ? seg(nIn, n.cleanout || nu.end, 'new', '#' + nu.number + ' · in ' + formatShort(nIn)) : ''}
+        <span class="co-today" style="left:${x(today)}%" title="Today"></span></div></div>`; }).join('');
+    return `<section class="co-box"><div class="co-head"><b>Changeover</b><span>#${escapeHtml(old.number)} finishing · #${escapeHtml(nu.number)} starting · ${escapeHtml(formatShort(from))} – ${escapeHtml(formatShort(to))}</span></div>
+      <div class="co-legend"><span><i class="old"></i>#${escapeHtml(old.number)}</span><span><i class="empty"></i>Empty · clean &amp; prep</span><span><i class="new"></i>#${escapeHtml(nu.number)}</span><span><i class="today"></i>Today</span></div>${rows}</section>`;
+  }
   function openBatchInfo(number, showArchive){
     const b = batches.find(x=> String(x.number) === String(number)) || currentOrNextBatch();
     if(!b) return;
@@ -11354,7 +11492,7 @@
       birds: 'loading', events: events.map(e=> ({ name: e.name, date: e.date, color: e.color, batchNumber: e.batchNumber })) };
     biShowing = { b, info }; biShowArchive = !!showArchive;
     $('#biTitle').textContent = b.end < today ? `Batch #${b.number}` : today >= b.start ? 'Current batch' : 'Next batch';
-    const paint = ()=>{ $('#biBody').innerHTML = batchInfoHtml(info) + biExtraHtml(b, biShowArchive); };
+    const paint = ()=>{ $('#biBody').innerHTML = cwChangeoverHtml() + batchInfoHtml(info) + biExtraHtml(b, biShowArchive); };
     paint();
     openDrawer('#batchInfoModal');
     if(showArchive) loadArchives().then(()=>{ if(biShowing && biShowing.b === b && $('#batchInfoModal').classList.contains('open')) paint(); });
