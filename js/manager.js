@@ -524,6 +524,7 @@ document.addEventListener('click',e=>{
   const sd=e.target.closest('[data-set-std]');if(sd){predState.growthStd=sd.dataset.setStd;savePredState();schedulePush();gompertzCache=new Map();render();showToast(sd.dataset.setStd==='ross'?'Comparing against Ross 308.':`Comparing against the free-range standard (2.45 kg at day ${frCageTarget()}).`);return;}
   const ss=e.target.closest('[data-set-scale-sug]');if(ss){setShedScale(ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
   if(e.target.closest('[data-set-use-history]')){const p=historyDensityPrior();if(p){const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};dg.triggerDensity=p.trig;dg.targetDensity=p.tgt;dg.maxDensity=Math.max(28,p.max);if(p.tp)dg.targetPickups=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));predState.densityGlobal=dg;savePredState();schedulePush();render();showToast('Pickup planning set from your last batches.');}return;}
+  const og=e.target.closest('[data-pw-organize]');if(og){organiseCloudFiles(og);return;}
   if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
   const ap=e.target.closest('[data-adj-pair]');
   if(ap){const g=Number(ap.dataset.adjPair);if(g&&g!==predState.predGroup){if(typeof adjIsDirty==='function'&&adjIsDirty()&&!confirm('Discard your unapplied changes?'))return;predState.predGroup=g;adjDraft=null;adjDraftBase='';const root=document.getElementById('adjModalRoot');if(root)root.dataset.g='';render();}return;}
@@ -589,10 +590,28 @@ function settingsSectionHtml(t){
   if(t==='pairs')return settingsPairsHtml();
   if(t==='farm')return `<div class="set-cards">
       <div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${escapeHtml(displayFarmName()||'This farm')}</h4></div></div><p class="settings-section-desc">The farm name you see on screen, and the numbers painted on your silos.</p><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>
-      ${renderSettingsSyncCard()}${renderSettingsBatchHistoryCard()}${renderSettingsFarmHistoryCard()}</div>`;
+      ${settingsCloudFolderHtml()}${renderSettingsSyncCard()}${renderSettingsBatchHistoryCard()}${renderSettingsFarmHistoryCard()}</div>`;
   if(t==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
   return `<div class="set-cards">${renderSettingsUnitsCard()}${renderSettingsDataCard()}${renderSettingsReportsCard()}
     <div class="settings-foot settings-credit">Made by Von Mangaron · Personal use only · Not for commercial use</div></div>`;
+}
+// Cloud folder: where this farm's files live, and the one-tap move into it (both apps' files)
+function settingsCloudFolderHtml(){
+  if(!syncFarmName)return '';
+  const f=sanitizeUserFarmName(syncFarmName);
+  return `<div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Cloud folder</h4></div></div>
+    <p class="settings-section-desc">All of this farm's files live in one cloud folder: <b>${escapeHtml(f)}/prodwise</b> (batches, Excel copies, Farm history) and <b>${escapeHtml(f)}/cluckwise</b> (tasks, reports, workers, restore points). Files saved before the folders existed are moved in with one tap — same content, nothing changes for the apps or phones.</p>
+    <button type="button" class="set-btn" data-pw-organize>Organise cloud files</button></div>`;
+}
+async function organiseCloudFiles(btn){
+  if(!syncFarmName){showToast('Connect to a farm first.',true);return;}
+  if(!navigator.onLine){showToast('You are offline — try again when connected.',true);return;}
+  if(btn){btn.disabled=true;btn.textContent='Organising…';}
+  let r=null;try{r=window.FarmKey?await FarmKey.action('manage',{farm:syncFarmName,op:'organize'}):null;}catch(e){}
+  if(btn){btn.disabled=false;btn.textContent='Organise cloud files';}
+  if(!(r&&r.j&&r.j.ok)){showToast((r&&r.j&&r.j.error)||'Could not organise. Check your connection.',true);return;}
+  const n=r.j.moved||0;
+  showToast(n?`${n} file${n===1?'':'s'} moved into ${sanitizeUserFarmName(syncFarmName)}/ in the cloud.`:'Already organised — every file is in the farm folder.');
 }
 function renderSettingsPage(){
   const off=farmData?farmSettingsNotNormal().length:0;
