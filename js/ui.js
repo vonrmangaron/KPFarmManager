@@ -2616,6 +2616,15 @@ let pickupsModalOpen=false;
 function openPickupsModal(){pickupsModalOpen=true;const m=document.getElementById('pickupsModal');if(m){m.classList.add('open');m.setAttribute('aria-hidden','false');}refreshPickupsModal();}
 function closePickupsModal(){pickupsModalOpen=false;const m=document.getElementById('pickupsModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
 // ── Pickups tool: List or Calendar (catches by day; tap one to edit, + to add) ──
+// Short "vs standard" for a pickup: −2 behind, +1 ahead, 0 on standard (same calc and colours as the shed pages)
+function pkVsStdHtml(age,avg){
+  if(!(avg>0)||!(age>0))return '<span class="pk-vs-none">—</span>';
+  const dv=daysVsTarget(age,avg);if(dv==null)return '<span class="pk-vs-none">—</span>';
+  const n=Math.round(dv),sev=daysBehindSeverity(dv);
+  const txt=n>0?'+'+n:n<0?'−'+Math.abs(n):'0';
+  const tip=n<0?`${Math.abs(dv).toFixed(1)} days behind Ross 308`:n>0?`${dv.toFixed(1)} days ahead of Ross 308`:'On the Ross 308 standard';
+  return `<span class="pk-vs-badge ${sev}" title="${tip}">${txt}</span>`;
+}
 let pkView=(()=>{try{return localStorage.getItem('pw-pk-view')==='cal'?'cal':'list';}catch(e){return 'list';}})(),pkMonth=null,pkAddDate=null;
 function pkViewBarHtml(){
   return `<div class="pk-viewbar"><span class="pk-seg" role="group" aria-label="View"><button type="button" class="${pkView==='list'?'on':''}" data-pk-view="list" aria-pressed="${pkView==='list'}">List</button><button type="button" class="${pkView==='cal'?'on':''}" data-pk-view="cal" aria-pressed="${pkView==='cal'}">Calendar</button></span></div>`;
@@ -2668,6 +2677,7 @@ function refreshPickupsModal(){
       return `<tr class="${p.isFinal?'is-final':''}">
         <td>${escapeHtml(fmtShortNoYear(p.date))}${p.isFinal?' <span class="pk-final">Final</span>':''}${p.weightEstimated?' <span class="est-chip">est</span>':''}</td>
         <td class="num pk-age">${pickupAge(shed,p)}d</td>
+        <td class="num pk-vs">${pkVsStdHtml(pickupAge(shed,p),avg)}</td>
         <td class="num" data-label="Birds"><input class="pred-pickup-input pk-birds" type="number" min="1" step="1" inputmode="numeric" value="${b||''}" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="birds" aria-label="Birds"></td>
         <td class="num" data-label="Total kg"><input class="pred-pickup-input" type="number" min="0" step="1" inputmode="decimal" value="${tot!=null?Math.round(tot):''}" placeholder="total kg" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="total" aria-label="Total weight kg"></td>
         <td class="num" data-label="Avg kg"><input class="pred-pickup-input" type="number" min="0" step="0.001" inputmode="decimal" value="${avg!=null?Number(avg.toFixed(3)):''}" placeholder="kg/bird" data-pickup-shed="${shed.id}" data-pickup-date="${d}" data-pickup-field="avg" aria-label="Average weight kg"></td>
@@ -2679,7 +2689,7 @@ function refreshPickupsModal(){
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
         <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
-      ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
+      ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num" title="Days vs the Ross 308 standard at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
     </section>`;
   }).join('');
   body.innerHTML=pkViewBarHtml()+`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;

@@ -4842,3 +4842,35 @@ body.theme-dark .mbc-bar{background:#4A3F28}
 .set-wide{margin-top:6px}
 .set-btn:disabled{opacity:.55;cursor:default}
 .cmp-autofill-btn{margin-right:8px}
+
+/* v178: Compare feed clear planned pickups */
+.cmp-clear-btn{margin-right:8px}
+.cmp-clear-btn:hover{border-color:var(--danger);color:var(--danger)}
+/* v178: three buttons beside the settings line (wide screens); their own row when narrower */
+@media (min-width:769px){
+  #compareFeedBody > .silo-set-line:first-child{padding-right:580px}
+}
+@media (min-width:769px) and (max-width:1399px){
+  #compareFeedModal.tool-page .compare-modal-head{position:static;justify-content:flex-start;padding:16px 28px 0}
+  #compareFeedModal.tool-page .cmp-head-actions{flex-wrap:wrap}
+  #compareFeedBody > .silo-set-line:first-child{padding-right:2px}
+}
+/* v178: Settings content shares one width and one left edge (the embedded Farm settings block was centred at 800px) */
+.set-body{max-width:1120px}
+.set-body .fs-page{max-width:none;margin:0;width:100%}
+.set-body .fs-grid{width:100%}
+.set-body .set-card{overflow-x:auto;max-width:100%}
+.set-body .set-table{min-width:560px}
+/* v178: Pickups list — short "vs std" days (−2 behind, +1 ahead) */
+.pk-vs{white-space:nowrap}
+.pk-vs-badge{display:inline-block;min-width:30px;padding:2px 7px;border-radius:999px;font:800 12px Inter,sans-serif;text-align:center;font-variant-numeric:tabular-nums}
+.pk-vs-badge.ok{background:var(--success-soft,#DFF4EF);color:var(--success,#0F8A75)}
+.pk-vs-badge.warn{background:var(--primary-soft);color:var(--primary-dark)}
+.pk-vs-badge.bad{background:var(--danger-soft,#FDE8E4);color:var(--danger)}
+.pk-vs-none{color:var(--muted)}
+@media (max-width: 768px){
+  .pk-table td:nth-child(1){ grid-column:1 / 2; }
+  .pk-table td.pk-vs{ grid-column:2; grid-row:1; align-self:center; text-align:right; }
+  .pk-table td[data-label]:nth-child(5){ grid-column:auto; }
+  .pk-table td[data-label]:nth-child(6){ grid-column:3 / 5; }
+}
