@@ -1264,6 +1264,8 @@
   .st-note{ font-size:11.5px; color:var(--muted); margin:8px 4px 0; line-height:1.45; }
   .st-center{ text-align:center; }
   .st-warn{ font-size:11.5px; color:var(--danger); font-weight:600; margin:0; line-height:1.4; }
+  .mgr-name{ font:700 16px 'Sora',sans-serif; color:var(--ink); margin:2px 0; }
+  .mgr-name.none{ color:var(--muted); font-weight:600; }
   .st-seg-source{ display:none !important; }
   .st-seg{ display:inline-flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; flex-shrink:0; }
   .st-seg button{ border:none; background:transparent; color:var(--muted); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px; padding:6px 11px; border-radius:7px; cursor:pointer; white-space:nowrap; min-width:34px; transition:background .12s ease, color .12s ease; }
@@ -3642,9 +3644,7 @@
           <div class="st-sync-status"><span class="st-badge" id="syncBadge">Not connected</span><span class="st-status" id="githubStatus">Not connected</span></div>
           <label class="st-label" for="githubPathInput">Farm name</label>
           <input type="text" id="githubPathInput" class="st-input" placeholder="e.g. Riverside Farm">
-          <label class="st-label" for="syncManagerInput">Your name (manager)</label>
-          <input type="text" id="syncManagerInput" class="st-input" placeholder="e.g. Von" maxlength="40" autocomplete="name">
-          <p class="st-warn">⚠️ Use exactly the same name on every device — it's how they find the same data.</p>
+          <p class="st-hint">Use exactly the same farm name on every device — it's how they find the same data. New farms are created in ProdWise.</p>
           <div class="st-btn-pair">
             <button class="st-btn st-btn-primary" id="connectGithubBtn" type="button">Connect</button>
             <button class="st-btn st-btn-ghost" id="syncGithubBtn" type="button">🔄 Sync now</button>
@@ -3657,8 +3657,7 @@
       <div class="st-section-head"><span class="st-ic">👥</span><div><h3>Workers</h3></div></div>
       <div class="st-card">
         <div class="st-row st-row-stack">
-          <div class="st-row-text"><label class="st-label" for="managerNameInput">Manager</label><span class="st-hint">Set when you connect this farm. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
-          <input type="text" id="managerNameInput" class="st-input" placeholder="Manager's name" maxlength="40" autocomplete="name">
+          <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>ProdWise › Account › Farm profile</b>. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
         </div>
         <div class="st-row st-row-stack fk-panel" id="fkPanel"><div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint">Connect to a farm first (Sync tab).</span></div></div>
         <div class="st-row st-row-stack">
@@ -4667,21 +4666,14 @@
   }
   function showLoadingOverlay(){ const el = $('#loadingOverlay'); if(el) el.classList.add('show'); }
   function hideLoadingOverlay(){ const el = $('#loadingOverlay'); if(el) el.classList.remove('show'); }
+  // The manager's name is farm-wide and set in ProdWise › Account; it arrives here with the farm file.
   function renderManagerFields(){
+    const el = $('#managerNameShow'); if(!el) return;
     const m = managerName();
-    ['#managerNameInput', '#syncManagerInput'].forEach(id=>{ const el = $(id); if(el && document.activeElement !== el) el.value = m; });
+    el.textContent = m || 'Not set'; el.classList.toggle('none', !m);
   }
-  function setManagerName(v){
-    v = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 40);
-    if(v === managerName()) return;
-    const old = managerName();
-    settings.manager = v; persist(); renderManagerFields(); refreshAssigneeDatalist();
-    if(v) addHistory('Settings', old ? `Manager changed from ${old} to ${v}` : `Manager set to ${v}`);
-  }
-  ['#managerNameInput', '#syncManagerInput'].forEach(id=> $(id).addEventListener('change', (e)=> setManagerName(e.target.value)));
   async function connectGithub(){
     const name = $('#githubPathInput').value.trim();
-    const mgr = ($('#syncManagerInput').value || '').trim();
     if(!name){ showToast('Enter a name for this farm.', true); return; }
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
@@ -4690,7 +4682,7 @@
     reportsSha = null;
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
     await pullFromGithub();
-    if(mgr) setManagerName(mgr);
+    renderManagerFields(); refreshAssigneeDatalist();
     updateGithubStatusUI();
     renderSyncStatus();
   }
@@ -9058,6 +9050,7 @@
 
   function renderAll(){
     closeAllTaskMenus();
+    renderManagerFields();
     renderBacklog();
     renderFrequentTasks();
     renderBatches();

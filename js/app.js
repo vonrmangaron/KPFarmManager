@@ -385,6 +385,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
   document.addEventListener('input',e=>{
     if(e.target&&e.target.id==='settingsDisplayName'){setFarmDisplayName(e.target.value);return;}
     if(e.target&&e.target.id==='fpFarmName'){fpSetName(e.target.value);return;}
+    if(e.target&&e.target.id==='fpManager'){fpSetManager(e.target.value);return;}
     // Adjustments modal fields update the draft only (no render → no re-pop)
     if(e.target&&e.target.dataset&&e.target.dataset.adj&&adjDraft){
       const f=e.target.dataset.adj;const v=Number(e.target.value);if(!Number.isFinite(v))return;

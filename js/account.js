@@ -10,7 +10,41 @@ function goAccount(tab){
   if(tab)accTab=tab;
   if(typeof toolPageOpen!=='undefined'&&toolPageOpen)closeToolPages();
   activeTab='account';render();window.scrollTo(0,0);
-  if(accTab==='security')accLoad();
+  accLoad();
+}
+// ── Manager name: one per farm, kept in CluckWise's farm file (settings.manager) so both apps
+// and the Viewer use the same one. Set here (Farm profile) and when a new farm is created.
+function farmFileUrl(slug){return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(slug)}&repo=${encodeURIComponent(SYNC_REPO)}`;}
+function cachedManager(){try{return localStorage.getItem('pw-manager-'+accSlug())||'';}catch(e){return '';}}
+function cacheManager(slug,name){try{localStorage.setItem('pw-manager-'+slug,name);}catch(e){}}
+function managerNameShown(){return cachedManager();}   // per farm, so switching farms never shows the old one
+async function loadManagerName(){
+  if(!syncFarmName||!navigator.onLine)return;
+  try{const r=await fetch(farmFileUrl(accSlug()));
+    if(r.status===404)cacheManager(accSlug(),'');
+    else if(r.ok){const j=await r.json();cacheManager(accSlug(),String((j.data&&j.data.settings&&j.data.settings.manager)||'').trim());}
+  }catch(e){}
+}
+// Writes the name into the farm file (creating it for a new farm). True when saved.
+async function saveManagerName(name,slug){
+  slug=slug||accSlug();name=String(name||'').trim().replace(/\s+/g,' ').slice(0,40);
+  for(let i=0;i<4;i++){
+    let r;try{r=await fetch(farmFileUrl(slug));}catch(e){return false;}
+    let sha=null,d={};
+    if(r.ok){const j=await r.json();sha=j.sha||null;d=j.data&&typeof j.data==='object'?j.data:{};}
+    else if(r.status!==404)return false;
+    const old=String((d.settings&&d.settings.manager)||'').trim();
+    if(old===name){cacheManager(slug,name);return true;}
+    d.settings=Object.assign({},d.settings,{manager:name});
+    ['tasks','history','batches','events','frequentTemplates','maintenance'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[];});
+    d.history.unshift({id:'pw-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),ts:Date.now(),action:'Settings',detail:old?`Manager changed from ${old} to ${name} (ProdWise)`:`Manager set to ${name} (ProdWise)`});
+    let p;try{p=await fetch(farmFileUrl(slug),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:d})});}catch(e){return false;}
+    if(p.status===409)continue;
+    if(!p.ok)return false;
+    cacheManager(slug,name);
+    return true;
+  }
+  return false;
 }
 function accSignedIn(){return !!(window.FarmKey&&syncFarmName&&accInfo&&accInfo.setup&&FarmKey.get(syncFarmName,'manager'));}
 function accSlug(){return sanitizeUserFarmName(syncFarmName||'');}
@@ -24,6 +58,7 @@ async function accLoad(){
     pwFarmKeyInfo=accInfo;
     accStatus=null;accAccess=null;
     if(accSignedIn()){const r=await FarmKey.action('manage',{farm:syncFarmName,op:'status'});accStatus=r.j&&r.j.ok?r.j:null;}
+    await loadManagerName();
     if(!accInfo&&navigator.onLine){try{const r=await fetch(accAccessUrl());const j=r.ok?await r.json():null;accAccess=j&&j.data&&typeof j.data==='object'?j.data:{};}catch(e){accAccess=null;}}
   }finally{accBusy=false;accLoaded=true;}
   accRefresh();
@@ -40,10 +75,11 @@ function accProfileHtml(){
   const sec=!syncFarmName?'Connect to a farm to set a password':!accLoaded?'Open Security to check':accInfo&&accInfo.setup?(accInfo.locked?'Passwords on · locked':'Passwords on · not locked'):accInfo?'Passwords off':accAccess&&accAccess.password?'Farm password set (Viewer only)':'Farm password off';
   return `<div class="set-cards">
     ${accCard('farm',escapeHtml(name),'',`<dl class="acc-dl">
+        <div><dt>Manager</dt><dd>${syncFarmName?(managerNameShown()?escapeHtml(managerNameShown()):'<span class="set-muted">Not set</span>'):'<span class="set-muted">Connect to a farm</span>'}</dd></div>
         <div><dt>Farm name</dt><dd>${escapeHtml(farmDisplayName||'—')}${farmDisplayName?'':' <span class="set-muted">uses the cloud farm ID</span>'}</dd></div>
         <div><dt>Cloud farm ID</dt><dd>${syncFarmName?escapeHtml(syncFarmName):'<span class="set-muted">Not connected</span>'}</dd></div>
         <div><dt>Silo numbers</dt><dd>${escapeHtml(silos)}</dd></div>
-      </dl><div class="set-actions"><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>`)}
+      </dl><div class="set-actions"><button type="button" class="set-btn" data-set-profile>Edit farm profile</button></div>`)}
     ${accCard('shield','Security',escapeHtml(sec)+'.',`<div class="set-actions"><button type="button" class="set-btn" data-acc-tab="security">Open Security</button></div>`)}
   </div>`;
 }

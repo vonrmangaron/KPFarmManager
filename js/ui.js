@@ -112,13 +112,20 @@ function renderSettingsDrawerBody(){
 let farmProfileOpen=false,fpDraft=null;
 // Edits are a draft until Save changes; Cancel (or ✕) leaves everything as it was
 function fpSiloNo(start,g,n){return start!=null?start+(g-1)*3+n-1:n;}
-function fpDirty(){return !!fpDraft&&(String(fpDraft.name||'')!==String(farmDisplayName||'')||fpDraft.start!==siloStart());}
+function fpManagerNow(){return typeof managerNameShown==='function'?managerNameShown():'';}
+function fpDirty(){return !!fpDraft&&(String(fpDraft.name||'')!==String(farmDisplayName||'')||fpDraft.start!==siloStart()||String(fpDraft.manager||'').trim()!==String(fpManagerNow()||''));}
 function farmProfileBodyHtml(){
   const d=fpDraft||{name:farmDisplayName,start:siloStart()};
   const cloudId=syncFarmName?`Your cloud farm ID stays <strong>${escapeHtml(syncFarmName)}</strong> — this only changes what you see.`:'Only changes what you see on this device.';
   const st=d.start;
   const preview=[1,2,3,4].map(g=>`<div class="fp-pair"><span>${pairLabel(g)}</span><b>${[1,2,3].map(n=>'Silo '+fpSiloNo(st,g,n)).join(' · ')}</b></div>`).join('');
+  const mgr=syncFarmName?`<input type="text" class="settings-input" id="fpManager" value="${escapeAttr(d.manager||'')}" placeholder="e.g. Von" autocomplete="name" maxlength="40" />
+      <p class="fp-note">One name for the whole farm. CluckWise and the Viewer use it: tasks assigned to the manager stay off workers' phones.</p>`:`<p class="fp-note">Connect this device to a farm to set the manager.</p>`;
   return `<div class="fp-sec">
+      <label class="fp-lbl" for="fpManager">Manager</label>
+      ${mgr}
+    </div>
+    <div class="fp-sec">
       <label class="fp-lbl" for="fpFarmName">Farm name</label>
       <input type="text" class="settings-input" id="fpFarmName" value="${escapeAttr(d.name||'')}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" autocomplete="off" maxlength="40" />
       <p class="fp-note">${cloudId} Leave empty to use the cloud farm ID.</p>
@@ -132,14 +139,24 @@ function farmProfileBodyHtml(){
     </div>
     <div class="fp-actions"><span class="fp-state" id="fpState">${fpDirty()?'Unsaved changes':'No changes'}</span><button type="button" class="fp-cancel" id="fpCancel">Cancel</button><button type="button" class="fp-save" id="fpSave"${fpDirty()?'':' disabled'}>Save changes</button></div>`;
 }
-function openFarmProfile(){const m=document.getElementById('farmProfileModal'),b=document.getElementById('farmProfileBody');if(!m||!b)return;fpDraft={name:farmDisplayName||'',start:siloStart()};b.innerHTML=farmProfileBodyHtml();farmProfileOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');}
+function openFarmProfile(){const m=document.getElementById('farmProfileModal'),b=document.getElementById('farmProfileBody');if(!m||!b)return;fpDraft={name:farmDisplayName||'',start:siloStart(),manager:fpManagerNow()};b.innerHTML=farmProfileBodyHtml();farmProfileOpen=true;m.classList.add('open');m.setAttribute('aria-hidden','false');}
 function closeFarmProfile(force){if(!force&&fpDirty()&&!confirm('Discard your changes to the farm profile?'))return;farmProfileOpen=false;fpDraft=null;const m=document.getElementById('farmProfileModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}render();}
 function refreshFarmProfile(){const b=document.getElementById('farmProfileBody');if(farmProfileOpen&&b)b.innerHTML=farmProfileBodyHtml();}
 function fpRefreshState(){const d=fpDirty();const st=document.getElementById('fpState'),sv=document.getElementById('fpSave');if(st)st.textContent=d?'Unsaved changes':'No changes';if(sv)sv.disabled=!d;}
 // Draft edits (nothing is saved until Save changes)
 function fpSetName(v){if(!fpDraft)return;fpDraft.name=String(v||'').slice(0,40);fpRefreshState();}
+function fpSetManager(v){if(!fpDraft)return;fpDraft.manager=String(v||'').slice(0,40);fpRefreshState();}
 function fpSetStart(v){if(!fpDraft)return;const n=Number(v);fpDraft.start=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;refreshFarmProfile();}
-function saveFarmProfile(){if(!fpDraft)return;const d=fpDraft;if(String(d.name||'')!==String(farmDisplayName||''))setFarmDisplayName(d.name);if(d.start!==siloStart())setSiloStart(d.start==null?'':d.start);closeFarmProfile(true);showToast('Farm profile saved.');}
+async function saveFarmProfile(){if(!fpDraft)return;const d=fpDraft;
+  const mgr=String(d.manager||'').trim().replace(/\s+/g,' ');
+  if(syncFarmName&&mgr!==String(fpManagerNow()||'')){
+    if(!mgr){showToast('Enter the manager’s name.',true);document.getElementById('fpManager')?.focus();return;}
+    const sv=document.getElementById('fpSave');if(sv){sv.disabled=true;sv.textContent='Saving…';}
+    const ok=await saveManagerName(mgr);
+    if(sv){sv.textContent='Save changes';sv.disabled=false;}
+    if(!ok){showToast('Could not save the manager name. Check your connection.',true);return;}
+  }
+  if(String(d.name||'')!==String(farmDisplayName||''))setFarmDisplayName(d.name);if(d.start!==siloStart())setSiloStart(d.start==null?'':d.start);closeFarmProfile(true);showToast('Farm profile saved.');}
 // from = first silo number (the range is always 12: 3 per pair)
 function setSiloStart(v){const n=Number(v);predState.siloStart=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;savePredState();schedulePush();refreshFarmProfile();render();}
 function renderSettingsUnitsCard(){
@@ -443,16 +460,33 @@ async function handleConnectFarm(farmName){
     if(isSwitch&&syncConnectedAt&&pushPending){try{await runScheduledPush();}catch(e){}}
     const listing=await listFarmBatches(clean);
     if(!listing.ok){showToast(listing.reason==='timeout'?'⏱️ Cloud did not respond — check your connection and try again.':'Could not reach the cloud — check your connection.',true);return;}
-    if(listing.files.length===0){
-      if(!confirm(`Farm "${clean}" not found in the cloud.\n\nCreate a new farm?`))return;
-      syncFarmName=clean;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
-      predState.batchNumber='';predState.farmHistory=[];predState.farmHistoryDeleted=[];savePredState();farmData=null;saveState();saveSyncState();
-      closeSyncModal();closeSettingsDrawer();openNewBatchModal('batchNumber');
-      return;
-    }
+    if(listing.files.length===0){showCreateFarmForm(clean);return;}
     if(listing.files.length===1){await loadFarmBatchFromCloud(clean,listing.files[0].batchKey);return;}
     syncFarmName=clean;closeSettingsDrawer();openFarmBatchPickerModal(clean,listing.files);
   }finally{if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
+}
+// A farm that isn't in the cloud yet: name its manager, then start the first batch
+function showCreateFarmForm(clean){
+  const body=document.getElementById('syncModalBody');if(!body)return;
+  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">New farm</span><span class="val ok">${escapeHtml(clean)}</span></div></div><div class="sync-hint">This farm isn't in the cloud yet. Who manages it? CluckWise and the Viewer use this name; you can change it later in Account › Farm profile.</div><label for="syncManagerInput">Manager</label><input id="syncManagerInput" type="text" placeholder="e.g. Von" autocomplete="name" maxlength="40" /><button class="btn-sync-primary" id="syncCreateBtn">Create farm</button><button class="btn-sync-primary ghost" id="syncCreateBack">Back</button>`;
+  const input=document.getElementById('syncManagerInput');setTimeout(()=>input&&input.focus(),100);
+  const go=async()=>{
+    const mgr=input.value.trim();if(!mgr){showToast('Enter the manager’s name.',true);input.focus();return;}
+    const b=document.getElementById('syncCreateBtn');b.disabled=true;b.textContent='Creating…';
+    const ok=await saveManagerName(mgr,clean);
+    b.disabled=false;b.textContent='Create farm';
+    if(!ok){showToast('Could not reach the cloud — check your connection.',true);return;}
+    createNewFarm(clean);
+  };
+  document.getElementById('syncCreateBtn').addEventListener('click',go);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  document.getElementById('syncCreateBack').addEventListener('click',()=>showConnectForm());
+}
+function createNewFarm(clean){
+  syncFarmName=clean;
+  syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
+  predState.batchNumber='';predState.farmHistory=[];predState.farmHistoryDeleted=[];savePredState();farmData=null;saveState();saveSyncState();
+  closeSyncModal();closeSettingsDrawer();openNewBatchModal('batchNumber');
 }
 // Send any edits still waiting to go to the cloud before this batch is closed. False = couldn't (no signal).
 async function flushBeforeLeavingBatch(){
