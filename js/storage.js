@@ -69,6 +69,7 @@ function loadPredState(){
     {const u=Number(v.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     if(Array.isArray(v.projectionLog))predState.projectionLog=v.projectionLog.map(normalizeSnap).filter(Boolean).slice(-120);
     if(Array.isArray(v.farmHistoryDeleted))predState.farmHistoryDeleted=v.farmHistoryDeleted.map(String).slice(-200);
+    if(v.farmHistoryPending&&typeof v.farmHistoryPending==='object')predState.farmHistoryPending={...v.farmHistoryPending};
   }catch(e){}
 }
 

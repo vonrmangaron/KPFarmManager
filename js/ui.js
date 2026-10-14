@@ -554,9 +554,17 @@ function renderNewBatchNumberPhase(body){
 function renderNewBatchProceedPhase(body){
   const clean=pendingNewBatchClean||'';
   const downloadBackup=pendingNewBatchDownload;
-  body.innerHTML=`<div class="farm-found-icon">✅</div><div class="farm-found-title">Batch <strong>${escapeHtml(clean)}</strong> ready</div><div class="farm-found-sub">All shed fields will be reset to defaults: <strong>52,000 birds placed</strong> per shed, 0 mortality, 0.044 kg chick weight, empty placement &amp; cleanout dates.</div><div class="nb-question">How would you like to proceed?</div><div class="ff-choices"><button class="ff-choice primary" id="nbProceedUploadBtn" type="button"><span class="ff-icon">📥</span><div><div class="ff-choice-title">Upload Excel now</div><div class="ff-choice-sub">Replace the defaults with real shed data from your Excel file</div></div></button><button class="ff-choice secondary" id="nbProceedDefaultsBtn" type="button"><span class="ff-icon">▶️</span><div><div class="ff-choice-title">Continue with defaults</div><div class="ff-choice-sub">Start the batch with 8 default sheds — you can plan by hand and import later</div></div></button></div><button class="ff-cancel" id="nbProceedCancelBtn" type="button">← Back</button>`;
-  document.getElementById('nbProceedUploadBtn').addEventListener('click',async()=>{await startNewBatch(clean,{downloadBackup,openFilePicker:true});});
-  document.getElementById('nbProceedDefaultsBtn').addEventListener('click',async()=>{await startNewBatch(clean,{downloadBackup,openFilePicker:false});});
+  const curSum=typeof pwCurrentSummary==='function'?pwCurrentSummary():null;
+  const stillRunning=!!(curSum&&curSum.running);
+  const curKey=currentBatchKey()||'the current batch';
+  const along=stillRunning?`<div class="nb-along" role="radiogroup" aria-label="What happens to batch ${escapeAttr(curKey)}">
+      <label class="nb-opt on"><input type="radio" name="nbAlong" value="along" checked><span><b>Run ${escapeHtml(clean)} alongside ${escapeHtml(curKey)}</b> <em>Recommended</em><small>${escapeHtml(curKey)} keeps running (${curSum.stillIn} of ${curSum.total} sheds still in${curSum.lastOut?', last clean-out '+escapeHtml(fmtShortNoYear(curSum.lastOut)):''}) and is saved to Farm history when its last shed is cleaned out. Both show in Batch Details — tap to switch.${curSum.firstOut?` Placements are filled in from each shed's clean-out + ${PW_TURNAROUND_DAYS} days; change them any time.`:''}</small></span></label>
+      <label class="nb-opt"><input type="radio" name="nbAlong" value="finish"><span><b>Finish ${escapeHtml(curKey)} now</b><small>Only when every ${escapeHtml(curKey)} shed is already empty — saves it to Farm history with today's numbers.</small></span></label></div>`:'';
+  body.innerHTML=along+`<div class="farm-found-icon">✅</div><div class="farm-found-title">Batch <strong>${escapeHtml(clean)}</strong> ready</div><div class="farm-found-sub">All shed fields will be reset to defaults: <strong>52,000 birds placed</strong> per shed, 0 mortality, 0.044 kg chick weight, empty placement &amp; cleanout dates.</div><div class="nb-question">How would you like to proceed?</div><div class="ff-choices"><button class="ff-choice primary" id="nbProceedUploadBtn" type="button"><span class="ff-icon">📥</span><div><div class="ff-choice-title">Upload Excel now</div><div class="ff-choice-sub">Replace the defaults with real shed data from your Excel file</div></div></button><button class="ff-choice secondary" id="nbProceedDefaultsBtn" type="button"><span class="ff-icon">▶️</span><div><div class="ff-choice-title">Continue with defaults</div><div class="ff-choice-sub">Start the batch with 8 default sheds — you can plan by hand and import later</div></div></button></div><button class="ff-cancel" id="nbProceedCancelBtn" type="button">← Back</button>`;
+  const alongside=()=>stillRunning&&((body.querySelector('input[name="nbAlong"]:checked')||{}).value==='along');
+  body.querySelectorAll('input[name="nbAlong"]').forEach(r=>r.addEventListener('change',()=>body.querySelectorAll('.nb-opt').forEach(o=>o.classList.toggle('on',o.querySelector('input').checked))));
+  document.getElementById('nbProceedUploadBtn').addEventListener('click',async()=>{await startNewBatch(clean,{downloadBackup,openFilePicker:true,alongside:alongside()});});
+  document.getElementById('nbProceedDefaultsBtn').addEventListener('click',async()=>{await startNewBatch(clean,{downloadBackup,openFilePicker:false,alongside:alongside()});});
   document.getElementById('nbProceedCancelBtn').addEventListener('click',()=>{newBatchModalPhase='batchNumber';renderNewBatchModalBody();});
 }
 function downloadCurrentBatchAsJson(){
@@ -586,8 +594,15 @@ async function startNewBatch(cleanBatchNumber,opts){
   try { await historyAutoSnapshot('auto-newbatch', `Before batch "${clean}"`); } catch(e) { console.warn('Snapshot before new batch failed', e); }
   syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=null;syncLastSyncAt=null;
   // Keep the finished batch's results with the farm before resetting
-  let archived=null;try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}
+  let archived=null;
+  const prevKey=currentBatchKey();
+  const prevOuts=(farmData&&farmData.sheds||[]).map(s=>({id:s.id,out:s.cleanoutDate?dateOnly(new Date(s.cleanoutDate)):null}));
+  if(opts.alongside){if(typeof pwMarkPending==='function')pwMarkPending(prevKey);}
+  else{try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}}
   saveSyncState();resetAllToDefaults(clean,{keepHistory:true});
+  // Alongside: each shed's placement = its clean-out in the old batch + the usual turnaround
+  if(opts.alongside&&farmData)farmData.sheds.forEach(s=>{const p=prevOuts.find(x=>String(x.id)===String(s.id));if(p&&p.out)s.placementDate=addDays(p.out,PW_TURNAROUND_DAYS);});
+  if(opts.alongside){saveState();scheduleHistoryPush();}
   if(farmToKeep){
     syncFarmName=farmToKeep;syncConnectedAt=Date.now();syncLastSyncAt=null;saveSyncState();
     closeNewBatchModal();renderSettingsDrawerBody();render();
@@ -597,6 +612,8 @@ async function startNewBatch(cleanBatchNumber,opts){
   else showToast(`✅ Batch "${clean}" started with default sheds.`);
   if(archived){scheduleHistoryPush();}
   if(archived)setTimeout(()=>showToast(`📚 Last batch saved to Farm history — FCR ${historyKpis(archived).fcr.toFixed(3)}, ${archived.avgAge.toFixed(1)} d.`),2600);
+  if(opts.alongside)setTimeout(()=>showToast(`Batch ${prevKey} keeps running alongside ${clean} — switch from Batch Details.`),2600);
+  if(typeof refreshRunningBatches==='function')refreshRunningBatches(true);
 }
 function openBatchHistoryModal(){
   closeSettingsDrawer();batchHistoryPage=0;batchHistoryCache=null;
@@ -666,11 +683,11 @@ function renderBatchListPage(){
   });
 }
 function showBatchListError(msg){const el=document.getElementById('batchListStatus');if(el){el.textContent=msg;el.classList.add('error');}}
-async function openPastBatch(targetBatchKey){
+async function openPastBatch(targetBatchKey,opts){
   if(!syncFarmName)return;
   const targetLabel=targetBatchKey?`Batch ${targetBatchKey}`:'the Legacy batch';
   const currentLabel=currentBatchKey()||'the Legacy batch';
-  if(!confirm(`Switch to ${targetLabel}?\n\nYour current work on ${currentLabel} will be saved to the cloud first, then the app will load ${targetLabel}.`))return;
+  if(!(opts&&opts.quiet)&&!confirm(`Switch to ${targetLabel}?\n\nYour current work on ${currentLabel} will be saved to the cloud first, then the app will load ${targetLabel}.`))return;
   if(syncFarmName&&syncConnectedAt&&syncSha){
     clearTimeout(pushDebounceTimer);pushDebounceTimer=null;clearTimeout(pushMaxWaitTimer);pushMaxWaitTimer=null;pushPending=false;
     const ok=await pushToCloud();

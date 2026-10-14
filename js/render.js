@@ -415,6 +415,7 @@ function renderMoreSheet() {
         ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}
       </div>
       <div class="more-group">
+        ${(()=>{const l=typeof pwRunningList==='function'?pwRunningList():[];const o=l.length>1?l.find(x=>x.key!==currentBatchKey()):null;return o?`<button type="button" class="more-row" data-switch-batch="${escapeAttr(o.key)}"><span class="more-row-ic">${navIcon('refresh')}</span><span class="more-row-text"><span class="more-row-label">Switch to batch ${escapeHtml(o.key)}</span><span class="more-row-sub">You are in ${escapeHtml(currentBatchKey())} — it is saved first</span></span></button>`:'';})()}
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
         ${row('moreSettings', 'gear', 'Settings', farmData && farmSettingsNotNormal().length ? `${farmSettingsNotNormal().length} prediction setting${farmSettingsNotNormal().length===1?'':'s'} not at normal` : 'Predictions, sheds, farm & sync, alerts, app')}
         ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
@@ -1114,6 +1115,7 @@ function render(){
     renderSyncPill();
     renderSidebarBatch();
     if (typeof renderPwBatchPanel === 'function') renderPwBatchPanel();
+    if (typeof updateRunningUI === 'function') updateRunningUI();
     // Phones/tablets: the shed-pair switcher is one floating button that expands upwards
     const gdRoot=document.getElementById('groupDockRoot');
     if(gdRoot){const gm=/^g([1-4])$/.exec(activeTab);const ctx=gm?'sheds':activeTab==='predictions'?'pred':null;const g=gm?Number(gm[1]):predState.predGroup;

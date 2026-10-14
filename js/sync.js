@@ -120,7 +120,7 @@ async function fetchFromCloud(){
 // Always merged with this device's copy (mergeCloudFarmHistory), never replaced.
 let historySha=null,historyPushTimer=null;
 function buildHistoryUrl(farmName){return `${SYNC_WORKER_URL}/?farm=${encodeURIComponent(sanitizeUserFarmName(farmName)+'-prodwise-history')}&repo=${encodeURIComponent(SYNC_REPO)}`;}
-function historyKey(){return JSON.stringify([(predState.farmHistory||[]).map(r=>r.id+':'+r.savedAt).sort(),(predState.farmHistoryDeleted||[]).slice().sort()]);}
+function historyKey(){return JSON.stringify([(predState.farmHistory||[]).map(r=>r.id+':'+r.savedAt).sort(),(predState.farmHistoryDeleted||[]).slice().sort(),Object.entries(predState.farmHistoryPending||{}).sort()]);}
 async function pullFarmHistory(){
   if(!syncFarmName)return;
   try{
@@ -131,14 +131,14 @@ async function pullFarmHistory(){
     if(j.notFound||!j.data){historySha=null;if(farmHistory().length)scheduleHistoryPush();return;}
     historySha=j.sha||null;
     const before=historyKey();mergeCloudFarmHistory(j.data);
-    const remote=JSON.stringify([((j.data.farmHistory)||[]).map(r=>r.id+':'+r.savedAt).sort(),((j.data.farmHistoryDeleted)||[]).slice().sort()]);
+    const remote=JSON.stringify([((j.data.farmHistory)||[]).map(r=>r.id+':'+r.savedAt).sort(),((j.data.farmHistoryDeleted)||[]).slice().sort(),Object.entries(j.data.farmHistoryPending||{}).sort()]);
     if(historyKey()!==before){savePredState();render();if(settingsDrawerOpen)renderSettingsDrawerBody();}
     if(historyKey()!==remote)scheduleHistoryPush();   // this device had records the cloud didn't
   }catch(e){}
 }
 async function pushFarmHistory(){
   if(!syncFarmName)return;
-  const put=()=>fetch(buildHistoryUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:historySha,data:{app:SYNC_APP_TAG,kind:'farm-history',farmName:syncFarmName,updatedAt:new Date().toISOString(),farmHistory:predState.farmHistory||[],farmHistoryDeleted:predState.farmHistoryDeleted||[]}})});
+  const put=()=>fetch(buildHistoryUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:historySha,data:{app:SYNC_APP_TAG,kind:'farm-history',farmName:syncFarmName,updatedAt:new Date().toISOString(),farmHistory:predState.farmHistory||[],farmHistoryDeleted:predState.farmHistoryDeleted||[],farmHistoryPending:predState.farmHistoryPending||{}}})});
   try{
     let res=await put();
     if(res.status===409){const fresh=await fetch(buildHistoryUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);if(fresh){historySha=fresh.sha||null;if(fresh.data){mergeCloudFarmHistory(fresh.data);savePredState();}}res=await put();}

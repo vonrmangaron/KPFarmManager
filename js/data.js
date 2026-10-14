@@ -165,6 +165,10 @@ function mergeCloudFarmHistory(p){
   const byId=new Map();
   [...farmHistory(),...(Array.isArray(p.farmHistory)?p.farmHistory:[])].forEach(raw=>{const r=normalizeHistoryRec(raw);if(!r||del.has(r.id))return;const cur=byId.get(r.id);if(!cur||r.savedAt>cur.savedAt)byId.set(r.id,r);});
   predState.farmHistory=[...byId.values()];predState.farmHistoryDeleted=[...del].slice(-200);
+  // batches to file once finished: union of both sides, 'done' wins
+  const pend={...(predState.farmHistoryPending||{})};
+  Object.entries((p.farmHistoryPending&&typeof p.farmHistoryPending==='object')?p.farmHistoryPending:{}).forEach(([k,v])=>{if(v==='done'||!pend[k])pend[k]=v==='done'?'done':'pending';});
+  predState.farmHistoryPending=pend;
 }
 // ── Projection log: one snapshot of the projected result per day ──
 // Saved locally and sent with the next normal sync (viewing never pushes);
