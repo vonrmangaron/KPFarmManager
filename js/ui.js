@@ -295,7 +295,7 @@ function renderSettingsNotificationsCard(){
     <p class="settings-section-desc">Choose which alerts appear in the bell icon at the top of the app.</p>
     <label class="settings-toggle-row">
       <input type="checkbox" id="notifShedPerf" ${notifPrefs.shedPerformance?'checked':''} />
-      <span class="settings-toggle-text"><strong>Shed performance</strong><br><span class="settings-toggle-sub">Warns when a shed falls significantly behind the Ross 308 growth standard.</span></span>
+      <span class="settings-toggle-text"><strong>Shed performance</strong><br><span class="settings-toggle-sub">Warns when a shed falls significantly behind the growth standard (Settings › Predictions: free range or Ross 308).</span></span>
     </label>
     <label class="settings-toggle-row">
       <input type="checkbox" id="notifFeedBalance" ${notifPrefs.feedBalance?'checked':''} />
@@ -2650,7 +2650,7 @@ function pkVsStdHtml(age,avg){
   const dv=daysVsTarget(age,avg);if(dv==null)return '<span class="pk-vs-none">—</span>';
   const n=Math.round(dv),sev=daysBehindSeverity(dv);
   const txt=n>0?'+'+n:n<0?'−'+Math.abs(n):'0';
-  const tip=n<0?`${Math.abs(dv).toFixed(1)} days behind Ross 308`:n>0?`${dv.toFixed(1)} days ahead of Ross 308`:'On the Ross 308 standard';
+  const tip=n<0?`${Math.abs(dv).toFixed(1)} days behind ${stdName()}`:n>0?`${dv.toFixed(1)} days ahead of ${stdName()}`:`On ${stdName()}`;
   return `<span class="pk-vs-badge ${sev}" title="${tip}">${txt}</span>`;
 }
 let pkView=(()=>{try{return localStorage.getItem('pw-pk-view')==='cal'?'cal':'list';}catch(e){return 'list';}})(),pkMonth=null,pkAddDate=null;
@@ -2717,7 +2717,7 @@ function refreshPickupsModal(){
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
         <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
-      ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th class="num" title="Days vs the Ross 308 standard at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
+      ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th class="num" title="Days vs the growth standard (Settings › Predictions) at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
     </section>`;
   }).join('');
   body.innerHTML=pkViewBarHtml()+`<div class="pk-top"><span><b>${farmBirds.toLocaleString()}</b> birds picked up</span>${farmWeighed>0?`<span>avg <b>${(farmKg/farmWeighed).toFixed(3)} kg</b> (weighed pickups)</span>`:''}<span class="pk-hint">Change birds, total or average right in the list — it saves when you leave the box.</span></div>${sheds}`;

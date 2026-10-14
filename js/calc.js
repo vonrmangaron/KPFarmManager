@@ -629,5 +629,18 @@ function forecastWeightModeAware(shed,date){
   if(hasTargetCurve(shed)){const kg=forecastFromTargetCurve(shed,date);if(kg!=null)return {kg,mode:'ai-target',band:0.12};}
   return {kg:rossWeightKg(age),mode:'standard',band:0.15};
 }
-function daysVsTarget(currentAge,currentWeightKg){if(!Number.isFinite(currentAge)||!Number.isFinite(currentWeightKg)||currentWeightKg<=0)return null;const rossAge=findRossAgeForWeight(currentWeightKg);return rossAge-currentAge;}
+// ── Growth standard (2026-10-14): Ross 308, or a free-range curve set by one number —
+// the age the birds reach 2.45 kg (Baiada's Cage2.45 target, default 38). Days 0–14 follow
+// Ross 308 from the 44 g chick; after that the Ross shape is slowed so 2.45 kg lands on the target.
+const FR_CAGE_DEFAULT=38,FR_BROOD_DAYS=14,FR_REF_KG=2.45;
+function growthStd(){return predState.growthStd==='ross'?'ross':'freerange';}
+function frCageTarget(){const v=Number(predState.frCage);return Number.isFinite(v)&&v>=25&&v<=60?v:FR_CAGE_DEFAULT;}
+function frSlow(){const A=findRossAgeForWeight(FR_REF_KG),X=frCageTarget();return X>FR_BROOD_DAYS?(A-FR_BROOD_DAYS)/(X-FR_BROOD_DAYS):1;}
+function freeRangeWeightKg(age){if(!Number.isFinite(age))return rossWeightKg(age);return rossWeightKg(age<=FR_BROOD_DAYS?age:FR_BROOD_DAYS+(age-FR_BROOD_DAYS)*frSlow());}
+function stdWeightKg(age){return growthStd()==='ross'?rossWeightKg(age):freeRangeWeightKg(age);}
+function stdAgeForWeight(w){const r=findRossAgeForWeight(w);if(growthStd()==='ross'||r<=FR_BROOD_DAYS)return r;return FR_BROOD_DAYS+(r-FR_BROOD_DAYS)/frSlow();}
+function stdName(){return growthStd()==='ross'?'Ross 308':'the free-range standard';}
+function stdShort(){return growthStd()==='ross'?'Ross 308':'Free range';}
+// Days ahead (+) or behind (−) the chosen standard at this weight
+function daysVsTarget(currentAge,currentWeightKg){if(!Number.isFinite(currentAge)||!Number.isFinite(currentWeightKg)||currentWeightKg<=0)return null;return stdAgeForWeight(currentWeightKg)-currentAge;}
 function ageInDays(shed,onDate=new Date()){if(!shed.placementDate)return 0;return Math.max(0,daysBetween(shed.placementDate,onDate));}

@@ -67,6 +67,8 @@ function loadPredState(){
     if(v.feedQuota&&typeof v.feedQuota==='object'){const q={};Object.keys(DEFAULT_FEED_QUOTA).forEach(k=>{const n=Number(v.feedQuota[k]);q[k]=Number.isFinite(n)&&n>=0&&n<=10?n:DEFAULT_FEED_QUOTA[k];});predState.feedQuota=q;}
     if(v.truckSplitMode==='any15'||v.truckSplitMode==='simple')predState.truckSplitMode=v.truckSplitMode;
     {const u=Number(v.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
+    if(v.growthStd==='ross'||v.growthStd==='freerange')predState.growthStd=v.growthStd;
+    {const c=Number(v.frCage);if(Number.isFinite(c)&&c>=25&&c<=60)predState.frCage=c;}
     if(Array.isArray(v.projectionLog))predState.projectionLog=v.projectionLog.map(normalizeSnap).filter(Boolean).slice(-120);
     if(Array.isArray(v.farmHistoryDeleted))predState.farmHistoryDeleted=v.farmHistoryDeleted.map(String).slice(-200);
     if(v.farmHistoryPending&&typeof v.farmHistoryPending==='object')predState.farmHistoryPending={...v.farmHistoryPending};

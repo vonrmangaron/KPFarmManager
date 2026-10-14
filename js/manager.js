@@ -316,7 +316,7 @@ function pairGrowthChip(shed,today){
   const dv=daysVsTarget(age,f.kg);if(dv==null)return '';
   const sev=daysBehindSeverity(dv);
   const txt=Math.abs(dv)<0.5?'On standard':dv>0?`${dv.toFixed(1)} days ahead`:`${(-dv).toFixed(1)} days behind`;
-  return `<span class="pair-chip ${sev}" title="Growth vs the Ross 308 standard">${txt}</span>`;
+  return `<span class="pair-chip ${sev}" title="Growth vs ${stdName()}">${txt}</span>`;
 }
 function pairOverviewHtml(g){
   const today=mgrToday(),sheds=shedsForGroup(g).filter(s=>s.placementDate);
@@ -521,6 +521,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwr-farm]')){goSettings('farm');return;}
   const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;render();return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
+  const sd=e.target.closest('[data-set-std]');if(sd){predState.growthStd=sd.dataset.setStd;savePredState();schedulePush();gompertzCache=new Map();render();showToast(sd.dataset.setStd==='ross'?'Comparing against Ross 308.':`Comparing against the free-range standard (2.45 kg at day ${frCageTarget()}).`);return;}
   const ss=e.target.closest('[data-set-scale-sug]');if(ss){setShedScale(ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
   if(e.target.closest('[data-set-use-history]')){const p=historyDensityPrior();if(p){const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};dg.triggerDensity=p.trig;dg.targetDensity=p.tgt;dg.maxDensity=Math.max(28,p.max);if(p.tp)dg.targetPickups=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));predState.densityGlobal=dg;savePredState();schedulePush();render();showToast('Pickup planning set from your last batches.');}return;}
   if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
@@ -554,6 +555,21 @@ function settingsPairsHtml(){
       <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th title="In-yard (shed-scale) readings only — plant weights are never scaled">Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <p class="set-muted">Changes save straight away and update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="predictions">Predictions</button>.</p>`;
 }
+// Growth standard: what "vs std", the days-behind alerts, shed colours and the growth chart compare against
+function settingsGrowthStdHtml(){
+  const fr=growthStd()==='freerange',X=frCageTarget();
+  const days=[7,14,21,28,35,42,49,56];
+  const rows=days.map(d=>{const w=freeRangeWeightKg(d),r=rossWeightKg(d);return `<td><b>${Math.round(w*1000).toLocaleString()} g</b><small>${Math.round(w/r*100)}%</small></td>`;}).join('');
+  return `<section class="fs-group set-wide"><span class="fs-sec-label">Growth standard</span>
+    <div class="set-card set-pad set-std">
+      <div class="set-std-top">
+        <div class="set-seg" role="group" aria-label="Growth standard"><button type="button" class="${fr?'on':''}" data-set-std="freerange">Free range</button><button type="button" class="${fr?'':'on'}" data-set-std="ross">Ross 308</button></div>
+        <label class="set-mort${fr?'':' set-dim'}">Free range reaches 2.45 kg at day <input type="number" class="set-num" data-set-frcage min="25" max="60" step="0.5" value="${X}" ${fr?'':'disabled'} aria-label="Age the free-range birds reach 2.45 kg"></label>
+      </div>
+      <p class="set-muted">${fr?`Ross 308 shape from a 44 g chick: the same as Ross to day 14, then slower so 2.45 kg lands on day ${X} — your Cage2.45 target. Used by the vs std badges, the days-behind alerts, shed colours and the growth chart (Ross 308 is still drawn for reference).`:'Everything compares against the Ross 308 performance objectives.'}</p>
+      ${fr?`<div class="co-scroll"><table class="set-table set-std-tbl"><thead><tr><th>Day</th>${days.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody><tr><th>Free range</th>${rows}</tr><tr><th>Ross 308</th>${days.map(d=>`<td>${Math.round(rossWeightKg(d)*1000).toLocaleString()} g</td>`).join('')}</tr></tbody></table></div>`:''}
+    </div></section>`;
+}
 // Farm-wide pickup tools under Predictions: no-pickup days, last batches' pattern, and the planner actions
 function settingsPickupExtrasHtml(){
   if(!farmData)return '';
@@ -569,7 +585,7 @@ function settingsPickupExtrasHtml(){
   </section>`;
 }
 function settingsSectionHtml(t){
-  if(t==='predictions')return renderFarmSettingsView(true)+settingsPickupExtrasHtml();
+  if(t==='predictions')return renderFarmSettingsView(true)+settingsGrowthStdHtml()+settingsPickupExtrasHtml();
   if(t==='pairs')return settingsPairsHtml();
   if(t==='farm')return `<div class="set-cards">
       <div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${escapeHtml(displayFarmName()||'This farm')}</h4></div></div><p class="settings-section-desc">The farm name you see on screen, and the numbers painted on your silos.</p><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>
@@ -598,6 +614,8 @@ function setShedScale(id,pct){
   showToast(`Shed ${id}: scale correction ${pct==null?'back to farm-wide':Math.round(sh.scaleOverride*1000)/10+'%'} — forecast updated`);
 }
 document.addEventListener('change',e=>{
+  const fc=e.target.closest&&e.target.closest('[data-set-frcage]');
+  if(fc){const v=Number(fc.value);if(Number.isFinite(v)&&v>=25&&v<=60){predState.frCage=Math.round(v*2)/2;savePredState();schedulePush();render();showToast(`Free-range standard: 2.45 kg at day ${predState.frCage}.`);}else render();return;}
   const ug=e.target.closest&&e.target.closest('[data-set-useglobal]');
   if(ug){setShedScale(ug.dataset.setUseglobal,ug.checked?null:Math.round(currentBiasFactor()*1000)/10);return;}
   const sc=e.target.closest&&e.target.closest('[data-set-scale]');

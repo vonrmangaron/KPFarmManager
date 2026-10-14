@@ -29,6 +29,8 @@ function renderGrowthChartSvg() {
   // Ross 308 target line points (key milestones)
   const rossAges = [0, 7, 14, 21, 28, 35, 42, 49, 56].filter(a => a <= maxAge);
   const rossPath = rossAges.map((a,i) => `${i===0?'M':'L'}${xScale(a).toFixed(1)},${yScale(rossWeightKg(a)).toFixed(1)}`).join(' ');
+  // The free-range standard (when chosen), drawn daily so its bend after day 14 shows
+  const frPath = growthStd()==='freerange' ? Array.from({length: Math.floor(maxAge)+1}, (_, a) => `${a===0?'M':'L'}${xScale(a).toFixed(1)},${yScale(freeRangeWeightKg(a)).toFixed(1)}`).join(' ') : '';
 
   // Actual farm ALW per day — blends in-yard samples & pickups via
   // each shed's Gompertz fit (the same growth model used elsewhere
@@ -117,9 +119,10 @@ function renderGrowthChartSvg() {
 
   return `<div class="dash-card">
     <div class="dash-card-head">
-      <h2 class="dash-card-title">Growth vs Ross 308</h2>
+      <h2 class="dash-card-title">Growth vs ${growthStd()==='ross'?'Ross 308':'free-range standard'}</h2>
       <div style="display:flex;gap:16px;align-items:center;font-size:11px;color:var(--muted)">
         <span style="display:flex;align-items:center;gap:5px"><span style="width:18px;height:2.5px;background:var(--primary-dark);border-radius:2px;display:inline-block"></span>${alwLineLabel}</span>
+        ${frPath ? `<span style="display:flex;align-items:center;gap:5px" title="Ross 308 shape from a 44 g chick, reaching 2.45 kg at day ${frCageTarget()}"><span style="width:18px;height:2.5px;background:#2E9E6B;border-radius:2px;display:inline-block"></span>Free range (2.45 kg at day ${frCageTarget()})</span>` : ''}
         <span style="display:flex;align-items:center;gap:5px"><span style="width:18px;height:0;border-top:2px dashed var(--muted);display:inline-block"></span>Ross 308</span>
         ${projPath ? `<span style="display:flex;align-items:center;gap:5px"><span style="width:18px;height:0;border-top:2.5px dotted var(--primary);display:inline-block"></span>Projected</span>` : ''}
       </div>
@@ -131,6 +134,7 @@ function renderGrowthChartSvg() {
       ${todayLine}
       <!-- Ross 308 target -->
       <path d="${rossPath}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.7"/>
+      ${frPath ? `<path d="${frPath}" fill="none" stroke="#2E9E6B" stroke-width="2" opacity="0.9"/>` : ''}
       <!-- Projection -->
       ${projPath ? `<path d="${projPath}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round" opacity="0.8"/>` : ''}
       <!-- Actual ALW -->
@@ -690,7 +694,7 @@ function computeFarmAlerts() {
       const daysVar = daysVsTarget(age, est.kg);
       if (daysBehindSeverity(daysVar) === 'bad') {
         const g = Math.ceil(shed.id / 2);
-        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — ${Math.abs(daysVar).toFixed(1)} days behind Ross 308 standard`, tab: 'g'+g, shedId: shed.id });
+        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — ${Math.abs(daysVar).toFixed(1)} days behind ${stdName()}`, tab: 'g'+g, shedId: shed.id });
       }
     });
   }
@@ -837,7 +841,7 @@ function renderCleanoutDashCard(){
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
       <thead>
         <tr class="dco-group"><th></th><th colspan="2">Today</th><th colspan="4">To clean-out</th></tr>
-        <tr><th>Shed</th><th class="num">Age · birds</th><th class="num">Weight · vs Ross</th><th>Clean-out</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr>
+        <tr><th>Shed</th><th class="num">Age · birds</th><th class="num" title="Days ahead or behind the growth standard (Settings › Predictions)">Weight · vs ${growthStd()==='ross'?'Ross':'std'}</th><th>Clean-out</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr>
       </thead>
       <tbody>${rows}</tbody>
       ${setAll}
@@ -1788,7 +1792,7 @@ function renderFarmKpiCard(){
     <div class="farm-kpi-tile green"><div class="fkt-lbl fkt-exact">Cfcr2.45</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><span id="kpiCFCRRange">${rg.cfcr}</span>${lk?vs(t.cfcr,lk.cfcr,3,'',true):''}<div class="fkt-sub" id="kpiCFCRSub" title="FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}">${cfcrSubText(t)}</div></div>
     <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub" title="FCR − (ALW − target) ÷ 3.2">${cfcrIndSubText(t)}</div></div>
     <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(0)}</div><span id="kpiPIFRange">${rg.pif}</span>${lk?vs(t.pif,lk.pif,0,'',false):''}</div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl fkt-exact">Cage2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Corrected age (Baiada Cage2.45): the age your birds reach 2.45 kg on each shed's growth curve, weighted by birds placed. Lower is better — they got there sooner.">Age at 2.45 kg · lower is better</div></div>
+    <div class="farm-kpi-tile blue"><div class="fkt-lbl fkt-exact">Cage2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Corrected age (Baiada Cage2.45): the age your birds reach 2.45 kg on each shed's growth curve, weighted by birds placed. Lower is better — they got there sooner.">${t.cage&&growthStd()==='freerange'?`Target ${frCageTarget()} d · ${t.cage-frCageTarget()<=0?'on target':'+'+(t.cage-frCageTarget()).toFixed(1)+' d'} · lower is better`:'Age at 2.45 kg · lower is better'}</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub" id="kpiPIFSub">avg age ${t.weightedAge.toFixed(1)} d</div>${lk?vs(t.avgWeight,lk.alw,2,' kg',false):''}<div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(2)}</b></span>`:'';}).join('')}</div></div>
     <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed</div>${lk?vs(t.livability,lk.livability,1,'%',false):''}</div>
     <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
@@ -2075,7 +2079,7 @@ function renderDailyPerformance(shed){
     const pickupsBirds=pickupsToday.reduce((s,p)=>s+p.birds,0);
     const hasPredicted=pickupsToday.some(p=>p.__source==='predicted');
     const isToday=iso(d)===iso(today);const isPast=d<today;const wknd=isWeekend(d);
-    const standard=age>0?rossWeightKg(age):0;
+    const standard=age>0?stdWeightKg(age):0;
     const isMilestone=isMilestoneDay(age);
     const gridVal=(shed.targetCurve&&shed.targetCurve[age]!=null&&Number(shed.targetCurve[age])>0)?Number(shed.targetCurve[age]):null;
     const customOn=(shed.inYardSamples||[]).find(x=>sampleAge(shed,x)===age);
