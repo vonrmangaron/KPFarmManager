@@ -10834,17 +10834,17 @@
         <button type="button" class="access-remove" data-id="${escapeHtmlAttr(m.id)}" aria-label="Remove ${escapeHtmlAttr(name)} from this farm${devs.length > 1 ? ' (all ' + devs.length + ' devices)' : ''}">Remove</button></div>`;
     }).join('');
   }
-  // ==================== FARM PASSWORD (sync server keys, see ../js/farmkey.js) ====================
-  // One password per farm, set in ProdWise › Account › Security. This app signs in with it as
-  // the manager, the Viewer as a worker. Here it only shows the state and signs this device in.
+  // ==================== PASSWORDS (sync server keys, see ../js/farmkey.js) ====================
+  // Set in ProdWise › Account › Security: the manager password (this app and ProdWise) and the
+  // farm password (workers in the Viewer). Here it only shows the state and signs this device in.
   let fkInfo = null, fkLoading = false;
   const FK_TEXT = { wrong:'That password is not right.', wait:'Too many tries. Wait 15 minutes and try again.', noSetup:'This farm has no farm password yet.', offline:'No connection. Try again when you have signal.' };
   function fkSignedIn(){ return !!(window.FarmKey && ghFarmName && fkInfo && fkInfo.setup && FarmKey.get(ghFarmName, 'manager')); }
   function fkPromptSignIn(j){
     if(!ghFarmName || !window.FarmKey) return;
     FarmKey.prompt({ title:`Sign in to ${ghFarmName}`,
-      text: j && j.needKey ? 'This farm is locked. Enter the farm password once on this device to keep syncing.' : j && j.signedOut ? 'This device was signed out of the farm. Enter the farm password to sync again.' : 'This farm now uses a farm password. Enter it once on this device.',
-      label:'Farm password', button:'Sign in', later: j ? null : 'Later',
+      text: j && j.needKey ? 'This farm is locked. Enter the manager password once on this device to keep syncing.' : j && j.signedOut ? 'This device was signed out of the farm. Enter the manager password to sync again.' : 'This farm now uses passwords. Enter the manager password once on this device.',
+      label:'Manager password', button:'Sign in', later: j ? null : 'Later',
       onSubmit: async pw=>{
         const e = await FarmKey.signIn(ghFarmName, pw, (settings.manager || 'Manager') + ' · CluckWise');
         if(e) return e;
@@ -10874,14 +10874,14 @@
     else if(fkInfo && fkInfo.setup){
       const mine = !!FarmKey.get(ghFarmName, 'manager');
       chips = `<span class="fk-chip on">On</span>${fkInfo.locked ? '<span class="fk-chip lock">Locked</span>' : '<span class="fk-chip">Not locked</span>'}`;
-      hint = mine ? `This device is signed in. Change the password, lock the farm or sign out devices in ${where}.` : 'This farm uses a farm password. Sign in once on this device.';
+      hint = mine ? `This device is signed in. Change passwords, lock the farm or sign out devices in ${where}.` : 'This farm uses passwords. Sign in once on this device with the manager password.';
       if(!mine) btn = '<button class="st-btn st-btn-primary" id="fkSignInBtn" type="button">Sign in</button>';
     } else {
       const has = !!(accessData && accessData.password);
       chips = `<span class="fk-chip${has ? ' on' : ''}">${has ? 'Set' : 'Not set'}</span>`;
       hint = `${has ? 'Workers type it once to join the Viewer.' : 'Anyone with the farm name can join the Viewer.'} Set it in ${where}.`;
     }
-    panel.innerHTML = `<div class="st-row-text"><span class="st-label">Farm password</span>${chips ? `<span class="fk-state">${chips}</span>` : ''}<span class="st-hint">${hint}</span></div>${btn}`;
+    panel.innerHTML = `<div class="st-row-text"><span class="st-label">${fkInfo && fkInfo.setup ? 'Passwords' : 'Farm password'}</span>${chips ? `<span class="fk-state">${chips}</span>` : ''}<span class="st-hint">${hint}</span></div>${btn}`;
     const sb = $('#fkSignInBtn'); if(sb) sb.addEventListener('click', ()=> fkPromptSignIn(null));
   }
 

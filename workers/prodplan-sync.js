@@ -12,19 +12,19 @@
 //   PUT  ?farm=<file>            body { sha, data } → { ok, sha }   (409 { conflict:true })
 //   GET  ?prefix=<text>          → { files:[{ name, sha, size }] }   (manager only)
 //
-// Farm password (POST ?action=…, JSON body). One password per farm, set in
-// ProdWise › Account › Security. The app decides the role: ProdWise and CluckWise
-// sign in as manager, the Viewer as worker.
+// Farm passwords (POST ?action=…, JSON body), set in ProdWise › Account › Security:
+// the manager password (ProdWise and CluckWise) and the farm password (workers in
+// the Viewer). A farm can also be turned on with one shared `password`; the manager
+// then sets a manager password of their own.
 //   info    { farm } → { setup, locked, oldPassword, single }   (public)
-//   setup   { farm, password, current?, deviceId, name, device }
+//   setup   { farm, managerPassword, farmPassword (or one shared password), current?, deviceId, name, device }
 //           first time only. If the farm already has a password from the old CluckWise
-//           Workers screen, `current` must be that password. (Older apps sent
-//           managerPassword + farmPassword; that still works.)
+//           Workers screen, `current` must be that password.
 //   join    { farm, role:'manager'|'worker', password, deviceId, name, device } → { key, role }
 //   leave   (with key) this phone signs itself out
 //   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock' | 'organize', … }
-//           passwords { password } changes the one password: other manager devices sign in
-//           again, workers already signed in stay connected.
+//           passwords { managerPassword } other manager devices sign in again;
+//           { farmPassword } workers already signed in stay connected.
 //
 // A phone sends X-Farm-Device and X-Farm-Key with every request. The farm is always
 // worked out here from the file name (never taken from the phone).
@@ -424,6 +424,9 @@ async function handleAction(action, request, env, ctx, gh) {
       next.farmPwAt = next.mgrPwAt = Date.now();
       next.mgrGen = (rec.mgrGen || 1) + 1;                                            // other manager devices sign in again; workers stay
     }
+    // Two passwords from here on: the manager password must not open the Viewer's door and vice versa.
+    if (b.managerPassword != null && await checkPassword(rec.farmPw, b.managerPassword)) return json({ error: 'Use a different manager password from the farm password' }, 400);
+    if (b.farmPassword != null && b.managerPassword == null && !rec.single && await checkPassword(rec.mgrPw, b.farmPassword)) return json({ error: 'Use a different farm password from the manager password' }, 400);
     if (b.farmPassword != null) {
       if (String(b.farmPassword).length < 4) return json({ error: 'Farm password: at least 4 characters' }, 400);
       next.farmPw = await makePassword(b.farmPassword); next.farmPwAt = Date.now();   // workers already in stay in
@@ -433,6 +436,7 @@ async function handleAction(action, request, env, ctx, gh) {
       next.mgrPw = await makePassword(b.managerPassword); next.mgrPwAt = Date.now();
       next.mgrGen = (rec.mgrGen || 1) + 1;                                            // other manager phones sign in again
     }
+    if (b.password == null && (b.managerPassword != null || b.farmPassword != null)) next.single = false;
     await putJson(env, farmKey(farm), next);
     if (next.mgrGen !== rec.mgrGen) await putJson(env, devKey(farm, who.deviceId), { ...who.dev, gen: next.mgrGen });
     return json({ ok: true });

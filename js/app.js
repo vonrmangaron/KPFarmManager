@@ -426,7 +426,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
   window.addEventListener('beforeunload',flushPendingPush);
 });
 
-// ── Farm password: ProdWise signs in once with it as the manager (see js/farmkey.js, js/account.js) ──
+// ── Passwords: ProdWise signs in once with the manager password (see js/farmkey.js, js/account.js) ──
 let pwFarmKeyInfo=null;
 function installFarmKey(){
   if(!window.FarmKey)return;
@@ -437,8 +437,8 @@ function installFarmKey(){
 function farmKeyPrompt(j){
   if(!syncFarmName||!window.FarmKey)return;
   FarmKey.prompt({title:`Sign in to ${syncFarmName}`,
-    text:j&&j.needKey?'This farm is locked. Enter the farm password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the farm password to sync again.':'This farm now uses a farm password. Enter it once on this device.',
-    label:'Farm password',button:'Sign in',later:j?null:'Later',
+    text:j&&j.needKey?'This farm is locked. Enter the manager password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the manager password to sync again.':'This farm now uses passwords. Enter the manager password once on this device.',
+    label:'Manager password',button:'Sign in',later:j?null:'Later',
     onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}if(activeTab==='account'&&typeof accLoad==='function')accLoad();pullFromCloud(true).catch(()=>{});return null;}});
 }
 // Once a day: if the farm uses passwords and this device isn't signed in yet, ask (with "Later").
