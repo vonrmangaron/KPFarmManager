@@ -542,7 +542,7 @@ function computeShedGompertzFit(shed){
 // cFCR (Baiada) = FCR − (ALW − 2.45) × β (0.27)
 // cFCR (Industry) = FCR − (ALW − target) ÷ 3.2 (target from Adjust)
 // PIF = livability × ALW ÷ (avg age × FCR) × 100
-const CFCR_REF_KG=2.45,CFCR_BAIADA_BETA=0.27,CFCR_INDUSTRY_DIV=3.2,CAGE_FCR=2.45;
+const CFCR_REF_KG=2.45,CFCR_BAIADA_BETA=0.27,CFCR_INDUSTRY_DIV=3.2,CAGE_KG=2.45;
 function batchKpis(o){
   const feed=Number(o.feedKg)||0,lw=Number(o.liveWeightKg)||0,birds=Number(o.birds)||0,placed=Number(o.placed)||0;
   const fcr=lw>0?feed/lw:0;
@@ -558,18 +558,19 @@ function batchKpis(o){
 }
 function finalUpliftFactor(){const v=Number(predState.finalUpliftPct);return 1+(Number.isFinite(v)&&v>=0&&v<=20?v:DEFAULT_FINAL_UPLIFT_PCT)/100;}
 function pairTargetKg(g){return Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;}
-// CAge2.45: age (days) when a bird's cumulative FCR reaches 2.45 — its
-// cumulative intake ÷ its weight, along the shed's growth curve. Beyond
-// day 60 intake stays at the table's last value. null = not within 100 d.
+// CAge2.45 (Baiada "corrected age"): the age the flock reaches 2.45 kg — read off each shed's own
+// growth curve (the fitted curve from its weighings, Ross 308 only when there is no fit yet),
+// interpolated to a tenth of a day. Lower is better: the birds got to 2.45 kg sooner.
+// Until it is checked against Baiada's result file this is an estimate of their figure.
 function shedCAge245(shed){
   if(!shed||!shed.placementDate)return null;
   const fit=getShedGompertzFit(shed);
-  let cum=0;
-  for(let a=1;a<=100;a++){
-    cum+=feedPerBirdKg(shed,a);
-    if(a<14)continue;
-    const w=(fit&&gompertzWeightAt(fit,a))||rossWeightKg(a);
-    if(w>0&&cum/w>=CAGE_FCR)return a;
+  const wAt=a=>(fit&&gompertzWeightAt(fit,a))||rossWeightKg(a);
+  let prev=wAt(0);
+  for(let a=1;a<=90;a++){
+    const w=wAt(a);
+    if(w>=CAGE_KG){const t=(CAGE_KG-prev)/((w-prev)||1);return Math.round((a-1+Math.max(0,Math.min(1,t)))*10)/10;}
+    prev=w;
   }
   return null;
 }

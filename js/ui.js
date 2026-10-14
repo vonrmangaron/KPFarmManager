@@ -190,7 +190,7 @@ function fhRowHtml(r){
   const detail=open?`<div class="fh-detail">
       <dl class="fh-grid">
         ${dd('ALW',`${k.alw.toFixed(3)} kg`)}${dd('Avg age',`${r.avgAge.toFixed(1)} d`)}
-        ${dd('cFCR (Baiada)',k.cfcr.toFixed(3))}${dd('cFCR (Industry)',k.cfcrInd.toFixed(3))}
+        ${dd('Cfcr2.45',k.cfcr.toFixed(3))}${dd('cFCR (Industry)',k.cfcrInd.toFixed(3))}
         ${dd('Livability',`${k.livability.toFixed(1)}%`)}${dd('PIF',Math.round(k.pif))}
         ${dd('Placed',r.placed.toLocaleString())}${dd('Picked up',r.picked.toLocaleString())}
         ${dd('Live weight',`${Math.round(r.liveWeightKg).toLocaleString()} kg`)}${dd('Feed',fmtFeed(r.feedKg))}
@@ -205,7 +205,7 @@ function fhRowHtml(r){
       <button type="button" class="fh-sum" data-fh-toggle="${escapeAttr(r.id)}" aria-expanded="${open}">
         <span class="fh-id"><b>${escapeHtml(r.batch||'Batch')}</b><small>${end?escapeHtml(end)+' · ':''}${birdsK} birds</small></span>
         <span class="fh-stat"><small>FCR</small><b>${k.fcr.toFixed(3)}</b></span>
-        <span class="fh-stat" title="cFCR (Baiada): FCR − (ALW − 2.45) × 0.27"><small>cFCR</small><b>${k.cfcr.toFixed(3)}</b></span>
+        <span class="fh-stat" title="Cfcr2.45: FCR − (ALW − 2.45) × 0.27"><small>Cfcr2.45</small><b>${k.cfcr.toFixed(3)}</b></span>
         <span class="fh-stat"><small>PIF</small><b>${Math.round(k.pif)}</b></span>
         <svg class="fh-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </button>${detail}
@@ -2052,11 +2052,11 @@ function buildBatchReportHTML(){
       <tr><th>Est. Total Live Weight</th><td class="num">${fmtKgAlways(t.totalLiveWeight)}</td></tr>
       <tr><th>Est. Total Feed Consumption</th><td class="num">${fmtTonnesAlways(t.totalFeed)}</td></tr>
       <tr><th>Est. FCR</th><td class="num">${t.fcr.toFixed(3)}</td></tr>
-      <tr><th>Est. cFCR (Baiada)</th><td class="num">${t.cfcr.toFixed(3)}</td></tr>
+      <tr><th>Cfcr2.45</th><td class="num">${t.cfcr.toFixed(3)}</td></tr>
       <tr><th>Est. cFCR (Industry, target ${t.targetKg.toFixed(2)} kg)</th><td class="num">${t.cfcrInd.toFixed(3)}</td></tr>
       <tr><th>Est. PIF</th><td class="num">${t.pif.toFixed(2)}</td></tr>
       <tr><th>Est. Average Age</th><td class="num">${t.weightedAge.toFixed(1)} days</td></tr>
-      <tr><th>Est. CAge 2.45</th><td class="num">${t.cage?t.cage.toFixed(1)+' days':'—'}</td></tr>
+      <tr><th>Cage2.45</th><td class="num">${t.cage?t.cage.toFixed(1)+' days':'—'}</td></tr>
       <tr><th>Est. Total Average Weight</th><td class="num">${t.avgWeight.toFixed(3)} kg</td></tr>
       <tr><th>Est. Livability</th><td class="num">${t.livability.toFixed(2)}%</td></tr>
       <tr><th>Est. Total Mortality</th><td class="num">${t.mortality.toLocaleString()}</td></tr>
@@ -2218,7 +2218,7 @@ function buildBatchReportHTML(){
       html+=`<div class="rpt-shed-line" style="margin-top:5px;font-style:italic;">No pickups recorded.</div>`;
     }
     html+=`<div class="rpt-shed-sub">Estimates</div>
-      <div class="rpt-shed-line">Last pickup avg: <strong>${pred.estFinalALW.toFixed(3)} kg</strong> · ALW (all pickups): <strong>${pred.alw.toFixed(3)} kg</strong> · Avg age: <strong>${pred.avgAge.toFixed(1)} d</strong> · FCR: <strong>${pred.fcr.toFixed(3)}</strong> · cFCR (Baiada): <strong>${pred.cfcr.toFixed(3)}</strong> · cFCR (Industry): <strong>${pred.cfcrInd.toFixed(3)}</strong> · PIF: <strong>${pred.pif.toFixed(2)}</strong></div>
+      <div class="rpt-shed-line">Last pickup avg: <strong>${pred.estFinalALW.toFixed(3)} kg</strong> · ALW (all pickups): <strong>${pred.alw.toFixed(3)} kg</strong> · Avg age: <strong>${pred.avgAge.toFixed(1)} d</strong> · FCR: <strong>${pred.fcr.toFixed(3)}</strong> · Cfcr2.45: <strong>${pred.cfcr.toFixed(3)}</strong> · cFCR (Industry): <strong>${pred.cfcrInd.toFixed(3)}</strong> · PIF: <strong>${pred.pif.toFixed(2)}</strong></div>
       <div class="rpt-shed-line">Confidence: ${pred.confidence}% ${confidenceLabel(pred.confidence).label}</div>
     </div>`;
   });

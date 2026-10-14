@@ -103,7 +103,7 @@ function renderHomeView(){
   const finish=`<section class="mgr-card mgr-finish">
       <span class="mgr-k">Where we'll finish</span>
       <div class="mgr-ftiles">
-        <div class="mgr-ftile main" title="Projected cFCR at clean-out"><span class="mgr-ft-k">cFCR</span><b class="mgr-ft-v">${rv(rc,3)}</b><span class="mgr-ft-s">corrected FCR</span></div>
+        <div class="mgr-ftile main" title="Projected Cfcr2.45 at clean-out (FCR corrected to 2.45 kg)"><span class="mgr-ft-k">Cfcr2.45</span><b class="mgr-ft-v">${rv(rc,3)}</b><span class="mgr-ft-s">FCR corrected to 2.45 kg</span></div>
         <div class="mgr-ftile" title="Projected FCR at clean-out"><span class="mgr-ft-k">FCR</span><b class="mgr-ft-v">${rv(rf,3)}</b><span class="mgr-ft-s">feed ÷ live weight</span></div>
       </div>
       ${lk?`<div class="mgr-lastrow"><span class="mgr-lr-k">Last batch ${escapeHtml(String(lr.batch||''))}</span><b>${lk.cfcr.toFixed(3)}</b>${verdict}</div>`:''}
@@ -174,7 +174,7 @@ const FS_ITEMS=[
   {key:'carry',sec:'Silos and feed',label:'Carried over from last batch',hint:'Feed left in the silos when the chicks arrived',kind:'step',min:0,max:300,step:1,fmt:v=>`${v} t`,normal:null,
     get:()=>Math.round(carryoverTotalKg()/100)/10,set:v=>{predState.carryoverFarmKg=Math.round(v*1000);predState.carryoverKg={1:0,2:0,3:0,4:0};},changes:['Feed eaten, and FCR once the batch is finished','Silo stock'],typeIn:true},
   {key:'target',sec:'Weights and result',label:'Target weight',hint:'Per pair, used for cFCR (Industry)',kind:'pairs',normal:null,
-    fmt:()=>[1,2,3,4].map(g=>pairTargetKg(g).toFixed(2)).join(' · '),get:()=>[1,2,3,4].map(g=>pairTargetKg(g)),set:v=>{[1,2,3,4].forEach((g,i)=>{const n=Number(v[i]);if(Number.isFinite(n)&&n>0)predState.targetHarvestWeightKg[g]=Math.max(0.5,Math.min(5,n));});},changes:['cFCR (Industry)'],not:'FCR or cFCR (Baiada)'},
+    fmt:()=>[1,2,3,4].map(g=>pairTargetKg(g).toFixed(2)).join(' · '),get:()=>[1,2,3,4].map(g=>pairTargetKg(g)),set:v=>{[1,2,3,4].forEach((g,i)=>{const n=Number(v[i]);if(Number.isFinite(n)&&n>0)predState.targetHarvestWeightKg[g]=Math.max(0.5,Math.min(5,n));});},changes:['cFCR (Industry)'],not:'FCR or Cfcr2.45'},
   {key:'bias',sec:'Weights and result',label:'Shed weight to plant weight',hint:'Shed weighings × this = plant weight; set from your kill sheets',kind:'step',min:Math.round(MIN_BIAS_FACTOR*100),max:Math.round(MAX_BIAS_FACTOR*100),step:0.5,fmt:v=>`${v}%`,normal:null,
     get:()=>Math.round(currentBiasFactor()*1000)/10,set:v=>{if(farmData){farmData.biasFactor=Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,v/100));saveState();}},changes:['Projected weights and the result'],not:'Your recorded weighings'},
   {key:'uplift',sec:'Weights and result',label:'Last pickup heavier',hint:'Final birds vs thinning birds at the same age',kind:'step',min:0,max:15,step:1,fmt:v=>`+${v}%`,normal:DEFAULT_FINAL_UPLIFT_PCT,
@@ -322,7 +322,7 @@ function pairOverviewHtml(g){
   if(!sheds.length)return `<div class="empty-card">${pairLabel(g)} has no birds yet.</div>`;
   const gp=computeGroupPredictions(g);
   const result=gp&&gp.hasData?`<section class="mgr-card pair-result"><div class="pair-result-k"><span class="mgr-k">Pair result</span><span class="mgr-sub">projected at clean-out</span></div>
-      <div><span class="mgr-lbl">cFCR</span><b class="pr-big">${gp.cfcr.toFixed(3)}</b></div>
+      <div><span class="mgr-lbl">Cfcr2.45</span><b class="pr-big">${gp.cfcr.toFixed(3)}</b></div>
       <div><span class="mgr-lbl">FCR</span><b>${gp.fcr.toFixed(3)}</b></div>
       <div><span class="mgr-lbl">Average weight</span><b>${gp.avgWeight.toFixed(2)} kg</b></div>
       <div><span class="mgr-lbl">Livability</span><b>${gp.livability.toFixed(1)}%</b></div>
