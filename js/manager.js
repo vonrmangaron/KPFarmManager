@@ -470,7 +470,7 @@ function buildPwRail(){
     +b('data-pwr-theme','moon','Theme')
     +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
     +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
-    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Farm profile"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Profile</span></button>`;
+    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm data-tab="account" title="Account"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Account</span></button>`;
   lay.insertBefore(nav,lay.firstChild);
   const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
 }
@@ -494,8 +494,8 @@ function syncPwRail(){
   if(av&&typeof displayFarmName==='function'){
     const shown=String(displayFarmName()||'').trim();
     av.textContent=syncFarmName?(shown.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'F'):'–';
-    fl.textContent='Profile';
-    const fb=r.querySelector('[data-pwr-farm]');if(fb)fb.title=(shown||'This device')+(syncFarmName?' · cloud sync on':' · not synced');
+    fl.textContent='Account';
+    const fb=r.querySelector('[data-pwr-farm]');if(fb)fb.title='Account · '+(shown||'This device')+(syncFarmName?' · cloud sync on':' · not synced');
   }
   const th=r.querySelector('[data-pwr-theme]');if(th){const dark=document.body.classList.contains('theme-dark');th.innerHTML=navIcon(dark?'sun':'moon')+'<span>Theme</span>';th.title=dark?'Switch to light':'Switch to dark';}
   let n=0;document.querySelectorAll('#sidebarNav .sb-link[data-tab^="g"] .sb-count').forEach(c=>n+=Number(c.textContent)||0);
@@ -518,7 +518,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
   if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
   if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}
-  if(e.target.closest('[data-pwr-farm]')){goSettings('farm');return;}
+  if(e.target.closest('[data-pwr-farm]')){goAccount('profile');return;}
   const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;render();return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
   const sd=e.target.closest('[data-set-std]');if(sd){predState.growthStd=sd.dataset.setStd;savePredState();schedulePush();gompertzCache=new Map();render();showToast(sd.dataset.setStd==='ross'?'Comparing against Ross 308.':`Comparing against the free-range standard (2.45 kg at day ${frCageTarget()}).`);return;}
@@ -589,7 +589,6 @@ function settingsSectionHtml(t){
   if(t==='predictions')return renderFarmSettingsView(true)+settingsGrowthStdHtml()+settingsPickupExtrasHtml();
   if(t==='pairs')return settingsPairsHtml();
   if(t==='farm')return `<div class="set-cards">
-      <div class="settings-section"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('farm')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${escapeHtml(displayFarmName()||'This farm')}</h4></div></div><p class="settings-section-desc">The farm name you see on screen, and the numbers painted on your silos.</p><button type="button" class="set-btn" data-set-profile>Edit farm name and silos</button></div>
       ${settingsCloudFolderHtml()}${renderSettingsSyncCard()}${renderSettingsBatchHistoryCard()}${renderSettingsFarmHistoryCard()}</div>`;
   if(t==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
   return `<div class="set-cards">${renderSettingsUnitsCard()}${renderSettingsDataCard()}${renderSettingsReportsCard()}

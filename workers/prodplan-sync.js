@@ -12,14 +12,19 @@
 //   PUT  ?farm=<file>            body { sha, data } → { ok, sha }   (409 { conflict:true })
 //   GET  ?prefix=<text>          → { files:[{ name, sha, size }] }   (manager only)
 //
-// Farm passwords (POST ?action=…, JSON body):
-//   info    { farm } → { setup, locked, oldPassword }   (public)
-//   setup   { farm, managerPassword, farmPassword, current?, deviceId, name, device }
-//           first time only. If the farm already has a password from the CluckWise
-//           Workers screen, `current` must be that password.
+// Farm password (POST ?action=…, JSON body). One password per farm, set in
+// ProdWise › Account › Security. The app decides the role: ProdWise and CluckWise
+// sign in as manager, the Viewer as worker.
+//   info    { farm } → { setup, locked, oldPassword, single }   (public)
+//   setup   { farm, password, current?, deviceId, name, device }
+//           first time only. If the farm already has a password from the old CluckWise
+//           Workers screen, `current` must be that password. (Older apps sent
+//           managerPassword + farmPassword; that still works.)
 //   join    { farm, role:'manager'|'worker', password, deviceId, name, device } → { key, role }
 //   leave   (with key) this phone signs itself out
 //   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock' | 'organize', … }
+//           passwords { password } changes the one password: other manager devices sign in
+//           again, workers already signed in stay connected.
 //
 // A phone sends X-Farm-Device and X-Farm-Key with every request. The farm is always
 // worked out here from the file name (never taken from the phone).
@@ -329,15 +334,17 @@ async function handleAction(action, request, env, ctx, gh) {
     const rec = await getJson(env, farmKey(farm));
     let oldPassword = false;
     if (!rec) { const a = await gh.read(farm + '-access'); oldPassword = !!(a.data && a.data.password && a.data.password.hash); }
-    return json({ ok: true, setup: !!rec, locked: !!(rec && rec.locked), oldPassword });
+    return json({ ok: true, setup: !!rec, locked: !!(rec && rec.locked), oldPassword, single: !!(rec && rec.single) });
   }
 
   if (action === 'setup') {
     if (await getJson(env, farmKey(farm))) return json({ error: 'This farm already has passwords', exists: true }, 409);
     if (await tooManyFails(env, farm)) return json({ error: 'Too many tries. Wait 15 minutes.', wait: true }, 429);
-    const mp = String(b.managerPassword || ''), fp = String(b.farmPassword || '');
-    if (mp.length < 6 || fp.length < 4) return json({ error: 'Manager password: at least 6 characters. Farm password: at least 4.' }, 400);
-    if (mp === fp) return json({ error: 'Use a different manager password from the farm password' }, 400);
+    const single = b.password != null;
+    const mp = String(single ? b.password : b.managerPassword || ''), fp = String(single ? b.password : b.farmPassword || '');
+    if (single && mp.length < 6) return json({ error: 'Farm password: at least 6 characters' }, 400);
+    if (!single && (mp.length < 6 || fp.length < 4)) return json({ error: 'Manager password: at least 6 characters. Farm password: at least 4.' }, 400);
+    if (!single && mp === fp) return json({ error: 'Use a different manager password from the farm password' }, 400);
     // A password set earlier on CluckWise's Workers screen proves this is the farm's manager.
     const access = await gh.read(farm + '-access');
     const old = access.data && access.data.password;
@@ -345,8 +352,11 @@ async function handleAction(action, request, env, ctx, gh) {
       const h = await sha256(`${old.salt}|${farm}|${String(b.current || '')}`);
       if (!same(h, old.hash)) { await noteFail(env, farm); return json({ error: 'The current farm password is not right', wrongCurrent: true }, 403); }
     }
-    const rec = { farmPw: await makePassword(fp), mgrPw: await makePassword(mp), locked: false, mgrGen: 1, setAt: Date.now() };
+    const pw = single ? await makePassword(mp) : null;
+    const rec = { farmPw: pw || await makePassword(fp), mgrPw: pw || await makePassword(mp), single, locked: false, mgrGen: 1, setAt: Date.now() };
     await putJson(env, farmKey(farm), rec);
+    // The server checks the password from now on: drop the old Workers-screen hash from the access file.
+    if (old && old.hash) ctx.waitUntil(updateAccessFile(gh, farm, d => { delete d.password; }));
     return json({ ok: true, ...(await issueKey(env, farm, rec, 'manager', b)) });
   }
 
@@ -407,6 +417,13 @@ async function handleAction(action, request, env, ctx, gh) {
 
   if (b.op === 'passwords') {
     const next = { ...rec };
+    if (b.password != null) {
+      if (String(b.password).length < 6) return json({ error: 'Farm password: at least 6 characters' }, 400);
+      const pw = await makePassword(b.password);
+      next.farmPw = pw; next.mgrPw = pw; next.single = true;
+      next.farmPwAt = next.mgrPwAt = Date.now();
+      next.mgrGen = (rec.mgrGen || 1) + 1;                                            // other manager devices sign in again; workers stay
+    }
     if (b.farmPassword != null) {
       if (String(b.farmPassword).length < 4) return json({ error: 'Farm password: at least 4 characters' }, 400);
       next.farmPw = await makePassword(b.farmPassword); next.farmPwAt = Date.now();   // workers already in stay in

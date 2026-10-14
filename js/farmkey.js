@@ -1,8 +1,8 @@
 // Farm passwords — shared by ProdWise, CluckWise and the CluckWise Viewer.
 //
-// Once the manager turns passwords on (CluckWise → Settings → Workers), the sync
-// server only trusts phones that signed in once: the manager password in ProdWise
-// and CluckWise, the farm password in the Viewer. The server gives the phone a key,
+// Once the manager turns the farm password on (ProdWise → Account → Security), the
+// sync server only trusts phones that signed in once with it: ProdWise and CluckWise
+// as the manager, the Viewer as a worker. The server gives the phone a key,
 // kept here and sent with every request to the sync and photo servers.
 // Until the manager locks the farm, phones without a key keep working as before.
 (function(){

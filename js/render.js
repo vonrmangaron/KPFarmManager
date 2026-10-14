@@ -379,7 +379,7 @@ function mobileNavHtml() {
       <span class="mob-nav-fab">${navIcon('silo')}</span>Silo reading
     </button>
     <button class="mob-nav-btn" id="feedBtnMob" type="button"><span class="mob-nav-pill">${navIcon('loads')}${summary.needsActual > 0 ? '<span class="mob-nav-dot" aria-hidden="true"></span>' : ''}</span>Feed</button>
-    <button class="mob-nav-btn${['history','predictions','dashboard','farmsettings'].includes(activeTab) ? ' active' : ''}" id="moreBtnMob" type="button" aria-haspopup="dialog">
+    <button class="mob-nav-btn${['history','predictions','dashboard','farmsettings'].includes(activeTab) || activeTab === 'account' ? ' active' : ''}" id="moreBtnMob" type="button" aria-haspopup="dialog">
       <span class="mob-nav-pill">${navIcon('more')}${moreDot}</span>More
     </button>
   </div>`;
@@ -422,6 +422,7 @@ function renderMoreSheet() {
         ${(()=>{const l=typeof pwRunningList==='function'?pwRunningList():[];const o=l.length>1?l.find(x=>x.key!==currentBatchKey()):null;return o?`<button type="button" class="more-row" data-switch-batch="${escapeAttr(o.key)}"><span class="more-row-ic">${navIcon('refresh')}</span><span class="more-row-text"><span class="more-row-label">Switch to batch ${escapeHtml(o.key)}</span><span class="more-row-sub">You are in ${escapeHtml(currentBatchKey())} — it is saved first</span></span></button>`:'';})()}
         ${row('moreNewBatch', 'refresh', 'New batch', 'Start the next production batch')}
         ${row('moreSettings', 'gear', 'Settings', farmData && farmSettingsNotNormal().length ? `${farmSettingsNotNormal().length} prediction setting${farmSettingsNotNormal().length===1?'':'s'} not at normal` : 'Predictions, sheds, farm & sync, alerts, app')}
+        ${row('moreProfile', 'user', 'Account', 'Farm profile and the farm password')}
         ${row('moreSync', 'cloud', syncFarmName ? escapeHtml(displayFarmName()) : 'Cloud sync', escapeHtml(syncLine))}
       </div>
       <div class="more-foot">
@@ -468,7 +469,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { home:'Home', history:'History', farmsettings:'Settings', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', history:'History', farmsettings:'Settings', account:'Account', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   // Desktop tool pages use this same header (their own window title bar is hidden)
   const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;
@@ -1137,6 +1138,7 @@ function render(){
     // Main content
     const app=document.getElementById('app');
     if(activeTab==='history'){app.innerHTML=renderHistoryView();}
+    else if(activeTab==='account'){app.innerHTML=renderAccountPage();}
     else if(!farmData){
       if(activeTab!=='dashboard'&&activeTab!=='home')activeTab='home';
       app.innerHTML=renderDashboardView();

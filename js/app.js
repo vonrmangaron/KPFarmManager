@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:openFarmProfile,morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
+      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#batchInfoClose')||(batchInfoOpen&&e.target.id==='batchInfoModal')){closeBatchInfoModal();return;}
     if(e.target.closest('#farmProfileClose')||e.target.closest('#fpCancel')||(farmProfileOpen&&e.target.id==='farmProfileModal')){closeFarmProfile();return;}
     if(e.target.closest('#fpSave')){saveFarmProfile();return;}
-    if(e.target.closest('#sbFarm')){openFarmProfile();return;}
+    if(e.target.closest('#sbFarm')){goAccount('profile');return;}
     if(e.target.closest('#fpSiloClear')){fpSetStart('');return;}
     if(e.target.closest('#loadsSumClose')||e.target.id==='loadsSumModal'){closeLoadsSummary();return;}
     if(e.target.closest('#loadsClose')){closeLoadsModal();return;}
@@ -426,7 +426,7 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
   window.addEventListener('beforeunload',flushPendingPush);
 });
 
-// ── Farm passwords: ProdWise signs in once with the manager password (see js/farmkey.js) ──
+// ── Farm password: ProdWise signs in once with it as the manager (see js/farmkey.js, js/account.js) ──
 let pwFarmKeyInfo=null;
 function installFarmKey(){
   if(!window.FarmKey)return;
@@ -437,9 +437,9 @@ function installFarmKey(){
 function farmKeyPrompt(j){
   if(!syncFarmName||!window.FarmKey)return;
   FarmKey.prompt({title:`Sign in to ${syncFarmName}`,
-    text:j&&j.needKey?'This farm is locked. Enter the manager password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the manager password to sync again.':'This farm now uses passwords. Enter the manager password once on this device.',
-    label:'Manager password',button:'Sign in',later:j?null:'Later',
-    onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}pullFromCloud(true).catch(()=>{});return null;}});
+    text:j&&j.needKey?'This farm is locked. Enter the farm password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the farm password to sync again.':'This farm now uses a farm password. Enter it once on this device.',
+    label:'Farm password',button:'Sign in',later:j?null:'Later',
+    onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}if(activeTab==='account'&&typeof accLoad==='function')accLoad();pullFromCloud(true).catch(()=>{});return null;}});
 }
 // Once a day: if the farm uses passwords and this device isn't signed in yet, ask (with "Later").
 async function farmKeyCheck(){
