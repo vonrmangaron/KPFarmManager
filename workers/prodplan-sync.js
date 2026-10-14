@@ -312,11 +312,17 @@ const memberKey = n => String(n || '').trim().replace(/\s+/g, ' ').toLowerCase()
 
 // ── Actions ─────────────────────────────────────────────────
 async function handleAction(action, request, env, ctx, gh) {
-  if (!env.KEYS) return json({ error: 'Passwords are not set up on the sync server yet (KEYS storage missing)' }, 501);
   let b;
   try { b = await request.json(); } catch (e) { return json({ error: 'Invalid JSON body' }, 400); }
   const farm = slugify(b.farm);
   if (!farm) return json({ error: 'Missing farm' }, 400);
+  // A farm without passwords (or a server without password storage) is open to every phone
+  // already, so its manager can organise its files too. The move never changes a file's content.
+  if (action === 'manage' && b.op === 'organize' && (!env.KEYS || !(await getJson(env, farmKey(farm))))) {
+    const out = await gh.organize(farm);
+    return json({ ok: true, moved: out.moved.length, skipped: out.skipped });
+  }
+  if (!env.KEYS) return json({ error: 'Passwords are not set up on the sync server yet (KEYS storage missing)' }, 501);
 
   if (action === 'info') {
     // Public: does this farm use passwords yet, is it locked. Nothing else.

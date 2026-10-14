@@ -3661,6 +3661,8 @@
           <input type="text" id="managerNameInput" class="st-input" placeholder="Manager's name" maxlength="40" autocomplete="name">
         </div>
         <div class="st-row st-row-stack fk-panel" id="fkPanel" hidden></div>
+        <div class="st-row st-row-stack" id="cloudFilesRow" hidden><div class="st-row-text"><span class="st-label">Cloud files</span><span class="st-hint">Puts all of this farm's files in its own cloud folder — ProdWise (batches, Excel copies, history) and CluckWise (tasks, reports, workers, restore points). One quick move; safe to run any time, nothing changes for the apps.</span></div>
+          <div class="fk-actions"><button class="st-btn st-btn-ghost" id="cfOrganizeBtn" type="button">Organise cloud files</button></div></div>
         <div class="st-row st-row-stack" id="accessPwRow">
           <div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint" id="accessPwStatus">Connect to a farm first (Sync tab).</span></div>
           <div class="st-input-row">
@@ -10871,6 +10873,17 @@
         return null;
       } });
   }
+  // Cloud files: move this farm's files into its own folder (signed-in manager on a protected farm, anyone on an open one)
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('#cfOrganizeBtn'); if(!btn || !ghPath) return;
+    btn.disabled = true; btn.textContent = 'Organising…';
+    let r = null;
+    try{ r = window.FarmKey ? await FarmKey.action('manage', { farm: ghFarmName, op:'organize' }) : null; }catch(err){}
+    btn.disabled = false; btn.textContent = 'Organise cloud files';
+    if(!(r && r.j && r.j.ok)){ showToast((r && r.j && r.j.error) || 'Could not organise. Check your connection.', true); return; }
+    if(r.j.moved) addHistory('Cloud files', `Cloud files organised into the farm folder (${r.j.moved} moved)`);
+    showToast(r.j.moved ? `${r.j.moved} file${r.j.moved === 1 ? '' : 's'} moved into this farm's folder.` : 'Already organised.');
+  });
   async function fkRefresh(){
     if(!window.FarmKey || !ghPath || fkLoading){ if(!ghPath){ fkInfo = null; renderFkPanel(); } return; }
     fkLoading = true;
@@ -10895,6 +10908,7 @@
     clearTimeout(btn._t); btn.dataset.pending = ''; fn();
   }
   function renderFkPanel(){
+    { const cf = $('#cloudFilesRow'); if(cf) cf.hidden = !ghPath; }
     const panel = $('#fkPanel'), oldRow = $('#accessPwRow');
     if(!panel) return;
     if(!fkInfo){ panel.hidden = true; if(oldRow) oldRow.hidden = false; return; }
@@ -10938,20 +10952,11 @@
         <button class="st-btn ${locked ? 'st-btn-ghost' : 'st-btn-primary'}" id="fkLockBtn" type="button">${locked ? 'Unlock farm' : 'Lock farm'}</button>
         <button class="st-btn st-btn-ghost" id="fkSignoutAllBtn" type="button">Sign out all other devices</button>
       </div>
-      <div class="fk-sub"><span class="st-label">Cloud files</span><span class="st-hint">Puts all of this farm's files in its own cloud folder — ProdWise (batches, Excel copies, history) and CluckWise (tasks, reports, workers, restore points). One quick move; safe to run any time, nothing changes for the apps.</span>
-        <div class="fk-actions"><button class="st-btn st-btn-ghost" id="fkOrganizeBtn" type="button">Organise cloud files</button></div></div>`;
+      `;
     $('#fkFarmBtn').addEventListener('click', ()=> fkChange('farmPassword', $('#fkNewFarm').value, 4));
     $('#fkMgrBtn').addEventListener('click', ()=> fkChange('managerPassword', $('#fkNewMgr').value, 6));
     $('#fkLockBtn').addEventListener('click', function(){ fkConfirmBtn(this, locked ? 'Tap again to unlock' : 'Tap again to lock', ()=> fkManage({ op:'lock', locked: !locked }, locked ? 'Farm unlocked.' : 'Farm locked. Only signed-in devices can sync.', locked ? 'Farm unlocked' : 'Farm locked')); });
     $('#fkSignoutAllBtn').addEventListener('click', function(){ fkConfirmBtn(this, 'Tap again: everyone signs in again', ()=> fkManage({ op:'signoutAll' }, 'All other devices signed out.', 'All other devices signed out')); });
-    $('#fkOrganizeBtn').addEventListener('click', async function(){
-      this.disabled = true; this.textContent = 'Organising…';
-      const r = await FarmKey.action('manage', { farm: ghFarmName, op:'organize' });
-      this.disabled = false; this.textContent = 'Organise cloud files';
-      if(!(r.j && r.j.ok)){ showToast((r.j && r.j.error) || 'Could not organise. Check your connection.', true); return; }
-      if(r.j.moved) addHistory('Workers', `Cloud files organised into the farm folder (${r.j.moved} moved)`);
-      showToast(r.j.moved ? `${r.j.moved} file${r.j.moved === 1 ? '' : 's'} moved into this farm's folder.` : 'Already organised.');
-    });
     panel.querySelectorAll('[data-fk-revoke]').forEach(b=> b.addEventListener('click', function(){ fkConfirmBtn(this, 'Confirm', ()=> fkManage({ op:'revoke', deviceIds:[this.dataset.fkRevoke] }, 'Device signed out.', 'A device was signed out')); }));
   }
   async function fkManage(body, okMsg, historyMsg){
