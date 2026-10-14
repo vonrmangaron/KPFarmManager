@@ -601,7 +601,7 @@ async function startNewBatch(cleanBatchNumber,opts){
   else{try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}}
   saveSyncState();resetAllToDefaults(clean,{keepHistory:true});
   // Alongside: each shed's placement = its clean-out in the old batch + the usual turnaround
-  if(opts.alongside&&farmData)farmData.sheds.forEach(s=>{const p=prevOuts.find(x=>String(x.id)===String(s.id));if(p&&p.out)s.placementDate=addDays(p.out,PW_TURNAROUND_DAYS);});
+  if(opts.alongside&&farmData)farmData.sheds.forEach(s=>{const p=prevOuts.find(x=>String(x.id)===String(s.id));if(p&&p.out){s.placementDate=addDays(p.out,PW_TURNAROUND_DAYS);s.cleanoutDate=addDays(s.placementDate,DEFAULT_CLEANOUT_DAYS);s.cleanoutAuto=true;}});
   if(opts.alongside){saveState();scheduleHistoryPush();}
   if(farmToKeep){
     syncFarmName=farmToKeep;syncConnectedAt=Date.now();syncLastSyncAt=null;saveSyncState();
@@ -1296,8 +1296,19 @@ function updateShedField(shedIdx,key,rawValue){
   if(!farmData)return;
   const shed=farmData.sheds[shedIdx];if(!shed)return;
   if(key==='placementDate'||key==='cleanoutDate'){
+    // Clean-out defaults to placement + 52 days; a date the manager types is kept as typed
+    const autoBefore=!shed.cleanoutDate||!!shed.cleanoutAuto;
     shed[key]=rawValue?parseExcelDate(rawValue):null;
-    if(key==='cleanoutDate'){const fp=finalPickupOf(shed);if(fp)shed.cleanoutDate=dateOnly(fp.date);reconcilePredictedPickups(shed);}
+    const fp=finalPickupOf(shed);
+    if(key==='placementDate'&&autoBefore&&!fp){
+      if(shed.placementDate){shed.cleanoutDate=addDays(shed.placementDate,DEFAULT_CLEANOUT_DAYS);shed.cleanoutAuto=true;}
+      else{shed.cleanoutDate=null;shed.cleanoutAuto=false;}
+      reconcilePredictedPickups(shed);
+    }
+    if(key==='cleanoutDate'){
+      shed.cleanoutAuto=false;
+      if(!shed.cleanoutDate&&shed.placementDate&&!fp){shed.cleanoutDate=addDays(shed.placementDate,DEFAULT_CLEANOUT_DAYS);shed.cleanoutAuto=true;}
+      if(fp)shed.cleanoutDate=dateOnly(fp.date);reconcilePredictedPickups(shed);}
   }else if(key==='initialPopulation'){const n=Number(rawValue);shed.initialPopulation=Number.isFinite(n)&&n>=0?Math.floor(n):0;}
   else if(key==='mortality'){const n=Number(rawValue);shed.mortality=Number.isFinite(n)&&n>=0?Math.floor(n):0;shed.mortalityUpdatedAt=dateOnly(new Date());}
   else if(key==='feedAdjustPct'){const s=String(rawValue??'').trim();const n=Number(s);shed.feedAdjustPct=(s===''||!Number.isFinite(n)||n<=0)?null:Math.max(50,Math.min(150,Math.round(n)));shed.customFeedKg=null;}
@@ -1312,7 +1323,7 @@ function setAllCleanoutDates(rawValue){
   if(!farmData||!rawValue)return 0;
   const d=parseExcelDate(rawValue);if(!d)return 0;
   let n=0;
-  farmData.sheds.forEach(shed=>{if(!shed.placementDate||finalPickupOf(shed))return;shed.cleanoutDate=d;reconcilePredictedPickups(shed);n++;});
+  farmData.sheds.forEach(shed=>{if(!shed.placementDate||finalPickupOf(shed))return;shed.cleanoutDate=d;shed.cleanoutAuto=false;reconcilePredictedPickups(shed);n++;});
   if(n){saveState();schedulePush();render();showToast(`Clean-out set to ${fmtShortNoYear(d)} for ${n} shed${n>1?'s':''}.`);}
   return n;
 }

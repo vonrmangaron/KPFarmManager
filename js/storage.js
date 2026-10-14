@@ -96,8 +96,9 @@ function parseShedsFromWorkbook(workbook){
     if(Number.isFinite(mortality))sheds[idx].mortality=Math.floor(mortality);
     if(Number.isFinite(customFeed)&&customFeed>0)sheds[idx].customFeedKg=customFeed;
     let cleanout=parseExcelDate(cleanoutRaw);
-    if(isInvalidCleanout(cleanoutRaw)&&placement)cleanout=addDays(placement,52);
-    sheds[idx].cleanoutDate=cleanout;
+    const autoOut=isInvalidCleanout(cleanoutRaw)&&!!placement;
+    if(autoOut)cleanout=addDays(placement,DEFAULT_CLEANOUT_DAYS);
+    sheds[idx].cleanoutDate=cleanout;sheds[idx].cleanoutAuto=autoOut;
     const pickups=[];
     for(let p=1;p<=5;p++){
       const dRaw=getVal(row,[`Pickup${p}Date`,`Pickup ${p} Date`,`P${p}Date`,`P${p} Date`]);

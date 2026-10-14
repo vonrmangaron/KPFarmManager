@@ -1100,6 +1100,8 @@ function render(){
       lastPageKey=pageKey;
     }
     gompertzCache=new Map();autoPlanCache=new Map();farmRangeCache=null;thinPatternCache=null;intakeCalCache=null;finalPickupCache=null;
+    // A placed shed with no clean-out gets the default (placement + 52 days), marked automatic
+    if(farmData){let outFilled=false;(farmData.sheds||[]).forEach(s=>{if(s.placementDate&&!s.cleanoutDate&&!finalPickupOf(s)){s.cleanoutDate=addDays(dateOnly(s.placementDate),DEFAULT_CLEANOUT_DAYS);s.cleanoutAuto=true;outFilled=true;}});if(outFilled){saveState();schedulePush();}}
     if(farmData){let estMoved=false;(farmData.sheds||[]).forEach(s=>{if(refreshEstimatedPickupWeights(s))estMoved=true;});if(estMoved){autoPlanCache=new Map();finalPickupCache=null;saveState();schedulePush();}}
     // Batch number field
     const batchEl=document.getElementById('batchNumber');
