@@ -70,18 +70,63 @@ async function checkPassword(rec, pw) {
 }
 
 // ── GitHub ──────────────────────────────────────────────────
-// Files are kept in one folder per app:
-//   prodwise/   <farm>-feed-<batch>, its Excel copy (-file), <farm>-prodwise-history
-//   cluckwise/  everything else (tasks, reports, workers list, restore points, archives)
-// Files not moved yet stay readable at the top of the repo; the manager's
-// "Organise cloud files" (action manage, op organize) moves them.
-const folderFor = slug => (/-feed(-|$)/.test(slug) || /-prodwise-history$/.test(slug)) ? 'prodwise' : 'cluckwise';
+// One folder per farm, then per app (2026-10-14):
+//   <farm>/prodwise/batches/<batch>.json      ← <farm>-feed-<batch>        (no batch: legacy.json)
+//   <farm>/prodwise/excel/<batch>.json        ← <farm>-feed-<batch>-file
+//   <farm>/prodwise/history.json              ← <farm>-prodwise-history
+//   <farm>/cluckwise/tasks.json               ← <farm>
+//   <farm>/cluckwise/reports.json             ← <farm>-reports
+//   <farm>/cluckwise/access.json              ← <farm>-access
+//   <farm>/cluckwise/restore-points/<slot>.json ← <farm>-snap-<slot>
+//   <farm>/cluckwise/restore-points/old-all-in-one.json ← <farm>-snapshots (old single-file store)
+//   <farm>/cluckwise/archive/<name>.json      ← <farm>-archive-<name>
+// The apps keep using the same file names (slugs); only this server maps them to paths.
+// Files not moved yet are still found where they were: prodwise/ or cluckwise/ (the old
+// app folders) or the top of the repo. New farms are written straight into their folder.
+// "Organise cloud files" (action manage, op organize) moves a farm in one commit.
+function pathFor(slug) {
+  let m;
+  if ((m = /^(.+?)-feed-file$/.exec(slug))) return `${m[1]}/prodwise/excel/legacy.json`;
+  if ((m = /^(.+?)-feed-(.+)-file$/.exec(slug))) return `${m[1]}/prodwise/excel/${m[2]}.json`;
+  if ((m = /^(.+?)-feed$/.exec(slug))) return `${m[1]}/prodwise/batches/legacy.json`;
+  if ((m = /^(.+?)-feed-(.+)$/.exec(slug))) return `${m[1]}/prodwise/batches/${m[2]}.json`;
+  if ((m = /^(.+?)-prodwise-history$/.exec(slug))) return `${m[1]}/prodwise/history.json`;
+  if ((m = /^(.+?)-reports$/.exec(slug))) return `${m[1]}/cluckwise/reports.json`;
+  if ((m = /^(.+?)-access$/.exec(slug))) return `${m[1]}/cluckwise/access.json`;
+  if ((m = /^(.+?)-snapshots$/.exec(slug))) return `${m[1]}/cluckwise/restore-points/old-all-in-one.json`;
+  if ((m = /^(.+?)-snap-(.+)$/.exec(slug))) return `${m[1]}/cluckwise/restore-points/${m[2]}.json`;
+  if ((m = /^(.+?)-archive-(.+)$/.exec(slug))) return `${m[1]}/cluckwise/archive/${m[2]}.json`;
+  return `${slug}/cluckwise/tasks.json`;
+}
+// The other way: a path in the farm layout back to the file name the apps use
+function slugForPath(path) {
+  const m = /^([^/]+)\/(prodwise|cluckwise)\/(.+)\.json$/.exec(path); if (!m) return null;
+  const [, farm, app, rest] = m;
+  if (app === 'prodwise') {
+    let r;
+    if ((r = /^batches\/(.+)$/.exec(rest))) return r[1] === 'legacy' ? `${farm}-feed` : `${farm}-feed-${r[1]}`;
+    if ((r = /^excel\/(.+)$/.exec(rest))) return r[1] === 'legacy' ? `${farm}-feed-file` : `${farm}-feed-${r[1]}-file`;
+    if (rest === 'history') return `${farm}-prodwise-history`;
+    return null;
+  }
+  if (rest === 'tasks') return farm;
+  if (rest === 'reports') return `${farm}-reports`;
+  if (rest === 'access') return `${farm}-access`;
+  if (rest === 'restore-points/old-all-in-one') return `${farm}-snapshots`;
+  let r;
+  if ((r = /^restore-points\/(.+)$/.exec(rest))) return `${farm}-snap-${r[1]}`;
+  if ((r = /^archive\/(.+)$/.exec(rest))) return `${farm}-archive-${r[1]}`;
+  return null;
+}
+const appFolderFor = slug => (/-feed(-|$)/.test(slug) || /-prodwise-history$/.test(slug)) ? 'prodwise' : 'cluckwise';
+// Where a file may still be, oldest layout last
+const oldPaths = slug => [`${appFolderFor(slug)}/${slug}.json`, `${slug}.json`];
+
 function github(env) {
   const repo = env.REPO || DEFAULT_REPO;
   const headers = { Authorization: `token ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'ProdPlanWorker' };
-  const pathUrl = path => `https://api.github.com/repos/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
-  const newPath = slug => `${folderFor(slug)}/${slug}.json`;
-  const oldPath = slug => `${slug}.json`;
+  const api = `https://api.github.com/repos/${repo}`;
+  const pathUrl = path => `${api}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
   async function readAt(path) {
     const res = await fetch(pathUrl(path), { headers });
     if (res.status === 404) return { notFound: true };
@@ -96,10 +141,10 @@ function github(env) {
       if (!raw.ok) return { error: raw.status };
       text = await raw.text();
     }
-    return { sha: meta.sha, data: JSON.parse(text), text };
+    return { sha: meta.sha, data: JSON.parse(text) };
   }
-  async function writeAt(path, sha, data, text) {
-    const body = { message: `ProdPlan.VM update ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(text != null ? text : JSON.stringify(data, null, 2)))) };
+  async function writeAt(path, sha, data) {
+    const body = { message: `ProdPlan.VM update ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) };
     if (sha) body.sha = sha;
     const res = await fetch(pathUrl(path), { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (res.status === 409 || res.status === 422) return { conflict: true };
@@ -114,51 +159,72 @@ function github(env) {
     const meta = await res.json();
     return meta.sha || null;
   }
-  async function listDir(dir) {
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${dir}`, { headers });
-    if (res.status === 404) return [];
-    if (!res.ok) throw new Error('GitHub error ' + res.status);
-    const items = await res.json();
-    return (Array.isArray(items) ? items : []).filter(i => i.type === 'file' && i.name.endsWith('.json'));
+  // The whole repo as { path → blob sha } in one call (plus the branch head for commits)
+  async function snapshot() {
+    const info = await fetch(api, { headers }).then(r => r.json());
+    const branch = info.default_branch || 'main';
+    const ref = await fetch(`${api}/git/ref/heads/${branch}`, { headers }).then(r => r.json());
+    const commitSha = ref.object && ref.object.sha;
+    const commit = await fetch(`${api}/git/commits/${commitSha}`, { headers }).then(r => r.json());
+    const tree = await fetch(`${api}/git/trees/${commit.tree.sha}?recursive=1`, { headers }).then(r => r.json());
+    const files = new Map();
+    (tree.tree || []).forEach(t => { if (t.type === 'blob' && t.path.endsWith('.json')) files.set(t.path, { sha: t.sha, size: t.size || 0 }); });
+    return { branch, commitSha, treeSha: commit.tree.sha, files };
   }
   return {
     async read(slug) {
-      const r = await readAt(newPath(slug));
-      if (!r.notFound) { delete r.text; return r; }
-      const o = await readAt(oldPath(slug));
-      delete o.text;
-      return o;
+      for (const path of [pathFor(slug), ...oldPaths(slug)]) {
+        const r = await readAt(path);
+        if (!r.notFound) return r;
+      }
+      return { notFound: true };
     },
-    // Writes where the file is now: its folder, or the top of the repo until it's organised. New files go to the folder.
+    // Writes where the file is now; a file that isn't anywhere yet goes into the farm folder.
     async write(slug, sha, data) {
-      const inFolder = await exists(newPath(slug));
-      const atTop = inFolder ? null : await exists(oldPath(slug));
-      return writeAt(atTop ? oldPath(slug) : newPath(slug), sha, data);
+      for (const path of [pathFor(slug), ...oldPaths(slug)]) {
+        if (await exists(path)) return writeAt(path, sha, data);
+      }
+      return writeAt(pathFor(slug), sha, data);
     },
     async list(prefix) {
+      const snap = await snapshot();
       const seen = new Map();
-      for (const dir of ['', 'cluckwise', 'prodwise']) {
-        for (const i of await listDir(dir)) if (i.name.startsWith(prefix) && !seen.has(i.name)) seen.set(i.name, { name: i.name, sha: i.sha, size: i.size });
+      for (const [path, f] of snap.files) {
+        let slug = slugForPath(path);
+        if (!slug) { const m = /^(?:(?:cluckwise|prodwise)\/)?([^/]+)\.json$/.exec(path); slug = m ? m[1] : null; }
+        if (!slug || !slug.startsWith(prefix) || seen.has(slug)) continue;
+        seen.set(slug, { name: `${slug}.json`, sha: f.sha, size: f.size });
       }
       return { files: [...seen.values()] };
     },
-    // Moves one farm's files from the top of the repo into their app folder. Same content, so the
-    // file's version id (sha) stays the same and phones never see a conflict.
+    // Moves one farm's files into <farm>/… in ONE commit: same file contents (same blob), new path,
+    // old path removed. Nothing is downloaded or rewritten, so size doesn't matter and phones
+    // keep the same version id (sha). If someone saves at the same moment, it starts again.
     async organize(farm) {
-      const moved = [], skipped = [];
-      for (const i of await listDir('')) {
-        const slug = i.name.replace(/\.json$/, '');
-        if (!(slug === farm || slug.startsWith(farm + '-'))) continue;
-        const cur = await readAt(oldPath(slug));
-        if (cur.error || cur.notFound) { skipped.push(slug); continue; }
-        if (!(await exists(newPath(slug)))) {
-          const w = await writeAt(newPath(slug), null, null, cur.text);
-          if (!w.ok) { skipped.push(slug); continue; }
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const snap = await snapshot();
+        const entries = [], moved = [], skipped = [];
+        for (const [path, f] of snap.files) {
+          const m = /^(?:(cluckwise|prodwise)\/)?([^/]+)\.json$/.exec(path); if (!m) continue;
+          const slug = m[2];
+          if (!(slug === farm || slug.startsWith(farm + '-'))) continue;
+          const target = pathFor(slug);
+          const there = snap.files.get(target);
+          if (there && there.sha !== f.sha) { skipped.push(slug); continue; }   // a different copy is already in place: leave both
+          if (!there) entries.push({ path: target, mode: '100644', type: 'blob', sha: f.sha });
+          entries.push({ path, mode: '100644', type: 'blob', sha: null });
+          moved.push(slug);
         }
-        const del = await fetch(pathUrl(oldPath(slug)), { method: 'DELETE', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Organise: ${slug} → ${folderFor(slug)}/`, sha: cur.sha }) });
-        (del.ok ? moved : skipped).push(slug);
+        if (!entries.length) return { moved: [], skipped };
+        const tree = await fetch(`${api}/git/trees`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ base_tree: snap.treeSha, tree: entries }) }).then(r => r.json());
+        if (!tree.sha) throw new Error('Could not build the new folder layout');
+        const commit = await fetch(`${api}/git/commits`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Organise ${farm}: ${moved.length} files into ${farm}/prodwise and ${farm}/cluckwise`, tree: tree.sha, parents: [snap.commitSha] }) }).then(r => r.json());
+        if (!commit.sha) throw new Error('Could not save the new folder layout');
+        const upd = await fetch(`${api}/git/refs/heads/${snap.branch}`, { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ sha: commit.sha }) });
+        if (upd.ok) return { moved, skipped };
+        if (upd.status !== 422) throw new Error('GitHub error ' + upd.status);   // 422: a phone saved meanwhile — try again
       }
-      return { moved, skipped };
+      throw new Error('The farm files kept changing — try again in a minute');
     },
   };
 }

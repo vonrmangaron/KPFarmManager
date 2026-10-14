@@ -10938,7 +10938,7 @@
         <button class="st-btn ${locked ? 'st-btn-ghost' : 'st-btn-primary'}" id="fkLockBtn" type="button">${locked ? 'Unlock farm' : 'Lock farm'}</button>
         <button class="st-btn st-btn-ghost" id="fkSignoutAllBtn" type="button">Sign out all other devices</button>
       </div>
-      <div class="fk-sub"><span class="st-label">Cloud files</span><span class="st-hint">Puts this farm's files into a CluckWise folder and a ProdWise folder in the cloud. Safe to run any time; nothing changes for the apps.</span>
+      <div class="fk-sub"><span class="st-label">Cloud files</span><span class="st-hint">Puts all of this farm's files in its own cloud folder — ProdWise (batches, Excel copies, history) and CluckWise (tasks, reports, workers, restore points). One quick move; safe to run any time, nothing changes for the apps.</span>
         <div class="fk-actions"><button class="st-btn st-btn-ghost" id="fkOrganizeBtn" type="button">Organise cloud files</button></div></div>`;
     $('#fkFarmBtn').addEventListener('click', ()=> fkChange('farmPassword', $('#fkNewFarm').value, 4));
     $('#fkMgrBtn').addEventListener('click', ()=> fkChange('managerPassword', $('#fkNewMgr').value, 6));
@@ -10949,8 +10949,8 @@
       const r = await FarmKey.action('manage', { farm: ghFarmName, op:'organize' });
       this.disabled = false; this.textContent = 'Organise cloud files';
       if(!(r.j && r.j.ok)){ showToast((r.j && r.j.error) || 'Could not organise. Check your connection.', true); return; }
-      if(r.j.moved) addHistory('Workers', `Cloud files organised into app folders (${r.j.moved} moved)`);
-      showToast(r.j.moved ? `${r.j.moved} file${r.j.moved === 1 ? '' : 's'} moved into the CluckWise and ProdWise folders.` : 'Already organised.');
+      if(r.j.moved) addHistory('Workers', `Cloud files organised into the farm folder (${r.j.moved} moved)`);
+      showToast(r.j.moved ? `${r.j.moved} file${r.j.moved === 1 ? '' : 's'} moved into this farm's folder.` : 'Already organised.');
     });
     panel.querySelectorAll('[data-fk-revoke]').forEach(b=> b.addEventListener('click', function(){ fkConfirmBtn(this, 'Confirm', ()=> fkManage({ op:'revoke', deviceIds:[this.dataset.fkRevoke] }, 'Device signed out.', 'A device was signed out')); }));
   }
