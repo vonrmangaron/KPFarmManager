@@ -74,13 +74,26 @@
   // { setup, locked, oldPassword } or null (old server / no signal)
   async function info(farm){ const r = await action('info', { farm }); return r.j && r.j.ok ? r.j : null; }
 
+  // After 5 wrong passwords the server locks sign-in for 10 minutes; this device remembers
+  // until when, so the box shows the time left without asking the server again.
+  const LOCKS = 'farm-keys-lock';
+  function lockedUntil(farm){ try{ return (JSON.parse(localStorage.getItem(LOCKS) || '{}') || {})[slug(farm)] || 0; }catch(e){ return 0; } }
+  function setLock(farm, until){ try{ const a = JSON.parse(localStorage.getItem(LOCKS) || '{}') || {}; if(until) a[slug(farm)] = until; else delete a[slug(farm)]; localStorage.setItem(LOCKS, JSON.stringify(a)); }catch(e){} }
+  // The app's wording, with {n} (attempts left) and {m} (minutes) filled in
+  function say(k, v){ return String(cfg.text(k) || '').replace('{n}', v).replace('{m}', v); }
+  function waitText(ms){ const m = Math.max(1, Math.ceil(ms / 60e3)); return say(m === 1 ? 'wait1' : 'wait', m); }
+  let lastLock = 0;
   // Sign this phone in. Returns null when it worked, or the message to show.
   // deviceId: the Viewer passes the id it already joined with, so the Workers list stays one entry per phone.
   async function signIn(farm, password, name, deviceId){
     const role = cfg.role;
+    lastLock = lockedUntil(farm);
+    if(lastLock > Date.now()) return waitText(lastLock - Date.now());
     const r = await action('join', { farm, role, password, name: name || '', device: deviceLabel(), deviceId: deviceId || (get(farm, role) || {}).deviceId || newDeviceId(role) });
-    if(r.j && r.j.key){ set(farm, role, { key: r.j.key, deviceId: r.j.deviceId, role, at: Date.now() }); return null; }
-    return cfg.text(r.j && r.j.wrongPassword ? 'wrong' : r.j && r.j.wait ? 'wait' : r.j && r.j.noSetup ? 'noSetup' : 'offline');
+    if(r.j && r.j.key){ set(farm, role, { key: r.j.key, deviceId: r.j.deviceId, role, at: Date.now() }); setLock(farm, 0); return null; }
+    if(r.j && r.j.wait){ lastLock = Date.now() + (r.j.retryAfter || 600) * 1000; setLock(farm, lastLock); return waitText(lastLock - Date.now()); }
+    if(r.j && r.j.wrongPassword) return say('wrong') + (r.j.left != null ? ' ' + say(r.j.left === 1 ? 'left1' : 'left', r.j.left) : '');
+    return say(r.j && r.j.noSetup ? 'noSetup' : 'offline');
   }
 
   // A small sign-in box over the app. opts: { title, text, label, button, later, onSubmit(pw) → error|null }
@@ -106,7 +119,21 @@
       go.disabled = true; err.textContent = '';
       const msg = await opts.onSubmit(input.value);
       go.disabled = false;
-      if(msg){ err.textContent = msg; input.select(); return; }
+      if(msg){
+        err.textContent = msg; input.select();
+        // Locked: keep the button off and count down, then let them try again
+        if(lastLock > Date.now()){
+          go.disabled = input.disabled = true; input.value = '';
+          clearInterval(wrap._t);
+          wrap._t = setInterval(() => {
+            if(!wrap.isConnected){ clearInterval(wrap._t); return; }
+            const ms = lastLock - Date.now();
+            if(ms > 0){ err.textContent = waitText(ms); return; }
+            clearInterval(wrap._t); lastLock = 0; err.textContent = ''; go.disabled = input.disabled = false; input.value = ''; input.focus();
+          }, 5000);
+        }
+        return;
+      }
       wrap.remove();
     });
     document.body.appendChild(wrap);
@@ -139,5 +166,5 @@
     document.head.appendChild(st);
   }
 
-  window.FarmKey = { slug, get, set, install, action, info, signIn, prompt, deviceLabel, newDeviceId };
+  window.FarmKey = { slug, get, set, install, action, info, signIn, prompt, deviceLabel, newDeviceId, lockedUntil, waitText };
 })();

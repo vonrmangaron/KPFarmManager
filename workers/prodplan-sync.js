@@ -35,8 +35,8 @@
 
 const DEFAULT_REPO = 'vonrmangaron/farmdata';
 const PBKDF2_ITERATIONS = 20000;
-const MAX_FAILS = 10;              // wrong passwords per farm…
-const FAIL_WINDOW_MS = 15 * 60e3;  // …within 15 minutes, then wait
+const MAX_TRIES = 5;               // wrong passwords in a row (per farm and network)…
+const LOCK_MS = 10 * 60e3;         // …then sign-in is locked for 10 minutes
 const SEEN_EVERY_MS = 12 * 3600e3; // refresh a phone's "last seen" at most twice a day (KV writes are limited)
 
 const CORS = {
@@ -237,20 +237,33 @@ function github(env) {
 // ── Farm records (KV) ───────────────────────────────────────
 //   farm:<farm>              { farmPw, mgrPw, locked, mgrGen, setAt }
 //   dev:<farm>:<deviceId>    { keyHash, role, name, device, gen, at, seen }
-//   fail:<farm>              { n, since }
+//   fail:<farm>:<ip>         { n, last, until }   wrong passwords from one network
 const farmKey = farm => `farm:${farm}`;
 const devKey = (farm, id) => `dev:${farm}:${id}`;
 const getJson = async (env, k) => { const v = await env.KEYS.get(k); return v ? JSON.parse(v) : null; };
 const putJson = (env, k, v) => env.KEYS.put(k, JSON.stringify(v));
 
-async function tooManyFails(env, farm) {
-  const f = await getJson(env, `fail:${farm}`);
-  return !!f && f.n >= MAX_FAILS && Date.now() - f.since < FAIL_WINDOW_MS;
+// Wrong passwords: 5 in a row from one network locks sign-in there for 10 minutes. Counted per
+// network so someone guessing can't lock the farm's own phones out; a right password clears it.
+const failKey = (farm, request) => `fail:${farm}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`;
+const minutes = ms => Math.max(1, Math.ceil(ms / 60e3));
+const lockedReply = ms => json({ error: `Too many incorrect attempts. Please try again in ${minutes(ms)} minute${minutes(ms) === 1 ? '' : 's'}.`, wait: true, retryAfter: Math.ceil(ms / 1000) }, 429);
+async function lockLeft(env, k) {
+  const f = await getJson(env, k);
+  return f && f.until && f.until > Date.now() ? f.until - Date.now() : 0;
 }
-async function noteFail(env, farm) {
-  const f = await getJson(env, `fail:${farm}`);
-  const fresh = !f || Date.now() - f.since >= FAIL_WINDOW_MS;
-  await env.KEYS.put(`fail:${farm}`, JSON.stringify({ n: fresh ? 1 : f.n + 1, since: fresh ? Date.now() : f.since }), { expirationTtl: 3600 });
+async function noteFail(env, k) {
+  const f = await getJson(env, k), now = Date.now();
+  const fresh = !f || (f.until && f.until <= now) || now - (f.last || 0) > LOCK_MS;
+  const n = (fresh ? 0 : f.n) + 1;
+  const until = n >= MAX_TRIES ? now + LOCK_MS : 0;
+  await env.KEYS.put(k, JSON.stringify({ n, last: now, until }), { expirationTtl: 1800 });
+  return { left: Math.max(0, MAX_TRIES - n), lockMs: until ? LOCK_MS : 0 };
+}
+// The reply for a wrong password: attempts left, or the lock that just started
+function wrongReply(fail, what, extra) {
+  if (fail.lockMs) return lockedReply(fail.lockMs);
+  return json({ error: `Incorrect ${what}. ${fail.left} attempt${fail.left === 1 ? '' : 's'} remaining.`, left: fail.left, ...extra }, 403);
 }
 async function issueKey(env, farm, rec, role, b) {
   const deviceId = String(b.deviceId || '').slice(0, 80) || randomHex(8);
@@ -339,7 +352,8 @@ async function handleAction(action, request, env, ctx, gh) {
 
   if (action === 'setup') {
     if (await getJson(env, farmKey(farm))) return json({ error: 'This farm already has passwords', exists: true }, 409);
-    if (await tooManyFails(env, farm)) return json({ error: 'Too many tries. Wait 15 minutes.', wait: true }, 429);
+    const fk = failKey(farm, request), wait = await lockLeft(env, fk);
+    if (wait) return lockedReply(wait);
     const single = b.password != null;
     const mp = String(single ? b.password : b.managerPassword || ''), fp = String(single ? b.password : b.farmPassword || '');
     if (single && mp.length < 6) return json({ error: 'Farm password: at least 6 characters' }, 400);
@@ -350,8 +364,9 @@ async function handleAction(action, request, env, ctx, gh) {
     const old = access.data && access.data.password;
     if (old && old.hash) {
       const h = await sha256(`${old.salt}|${farm}|${String(b.current || '')}`);
-      if (!same(h, old.hash)) { await noteFail(env, farm); return json({ error: 'The current farm password is not right', wrongCurrent: true }, 403); }
+      if (!same(h, old.hash)) return wrongReply(await noteFail(env, fk), 'current password', { wrongCurrent: true });
     }
+    ctx.waitUntil(env.KEYS.delete(fk));
     const pw = single ? await makePassword(mp) : null;
     const rec = { farmPw: pw || await makePassword(fp), mgrPw: pw || await makePassword(mp), single, locked: false, mgrGen: 1, setAt: Date.now() };
     await putJson(env, farmKey(farm), rec);
@@ -363,12 +378,13 @@ async function handleAction(action, request, env, ctx, gh) {
   if (action === 'join') {
     const rec = await getJson(env, farmKey(farm));
     if (!rec) return json({ error: 'This farm has no passwords yet', noSetup: true }, 404);
-    if (await tooManyFails(env, farm)) return json({ error: 'Too many tries. Wait 15 minutes.', wait: true }, 429);
+    const fk = failKey(farm, request), wait = await lockLeft(env, fk);
+    if (wait) return lockedReply(wait);
     const role = b.role === 'manager' ? 'manager' : 'worker';
     if (!(await checkPassword(role === 'manager' ? rec.mgrPw : rec.farmPw, b.password))) {
-      await noteFail(env, farm);
-      return json({ error: 'That password is not right', wrongPassword: true }, 403);
+      return wrongReply(await noteFail(env, fk), 'password', { wrongPassword: true });
     }
+    ctx.waitUntil(env.KEYS.delete(fk));
     const out = await issueKey(env, farm, rec, role, b);
     if (role === 'worker' && String(b.name || '').trim()) {
       // Add the phone to the Workers list the manager sees in CluckWise.
