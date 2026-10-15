@@ -1979,9 +1979,9 @@ function applyAdjDraft(){
   showToast('✓ Adjustments applied.');
 }
 
-function renderNoPickupDaysRow(){
+function renderNoPickupDaysRow(draft){
   const DAYS=[{i:1,l:'Mon'},{i:2,l:'Tue'},{i:3,l:'Wed'},{i:4,l:'Thu'},{i:5,l:'Fri'},{i:6,l:'Sat'},{i:0,l:'Sun'}];
-  const blocked=predState.noPickupDays||[];
+  const blocked=draft||predState.noPickupDays||[];
   const pills=DAYS.map(d=>{
     const active=blocked.includes(d.i);
     return `<button class="npd-btn${active?' active':''}" type="button" data-npd="${d.i}" aria-pressed="${active?'true':'false'}">${d.l}</button>`;

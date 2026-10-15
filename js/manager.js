@@ -183,7 +183,7 @@ const FS_ITEMS=[
   {key:'trig',sec:'Pickup planning',label:'Thin when density reaches',hint:'',kind:'step',min:15,max:45,step:0.5,fmt:v=>`${v} kg/m²`,normal:null,get:()=>Number(fsDens().triggerDensity),set:v=>fsSetDens('triggerDensity',v),changes:['Auto-planned pickups in the projection']},
   {key:'tgt',sec:'Pickup planning',label:'Thin down to',hint:'',kind:'step',min:10,max:40,step:0.5,fmt:v=>`${v} kg/m²`,normal:null,get:()=>Number(fsDens().targetDensity),set:v=>fsSetDens('targetDensity',v),changes:['Auto-planned pickups in the projection']},
   {key:'max',sec:'Pickup planning',label:'Never above',hint:'',kind:'step',min:15,max:50,step:0.5,fmt:v=>`${v} kg/m²`,normal:null,get:()=>Number(fsDens().maxDensity),set:v=>fsSetDens('maxDensity',v),changes:['Auto-planned pickups in the projection']},
-  {key:'tp',sec:'Pickup planning',label:'Pickups per shed',hint:'',kind:'step',min:1,max:10,step:1,fmt:v=>String(v),normal:null,get:()=>Number(fsDens().targetPickups),set:v=>fsSetDens('targetPickups',v),changes:['Auto-planned pickups in the projection']},
+  {key:'tp',sec:'Pickup planning',label:'Pickups per shed',hint:'',kind:'step',min:MIN_PICKUPS_PER_SHED,max:MAX_PICKUPS_PER_SHED,step:1,fmt:v=>String(v),normal:null,get:()=>Number(fsDens().targetPickups),set:v=>fsSetDens('targetPickups',v),changes:['Auto-planned pickups in the projection']},
 ];
 function fsItem(key){return FS_ITEMS.find(i=>i.key===key);}
 // Settings that differ from normal, with how to reset each
@@ -521,8 +521,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwr-farm]')){goAccount('profile');return;}
   const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;render();return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
-  const sd=e.target.closest('[data-set-std]');if(sd){predState.growthStd=sd.dataset.setStd;savePredState();schedulePush();gompertzCache=new Map();render();showToast(sd.dataset.setStd==='ross'?'Comparing against Ross 308.':`Comparing against the free-range standard (2.45 kg at day ${frCageTarget()}).`);return;}
-  const ss=e.target.closest('[data-set-scale-sug]');if(ss){setShedScale(ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
+  const sd=e.target.closest('[data-set-std]');if(sd){sdSet('std',sd.dataset.setStd);return;}
+  const ss=e.target.closest('[data-set-scale-sug]');if(ss){sdSetShed('scale',ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
   if(e.target.closest('[data-set-use-history]')){const p=historyDensityPrior();if(p){const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};dg.triggerDensity=p.trig;dg.targetDensity=p.tgt;dg.maxDensity=Math.max(28,p.max);if(p.tp)dg.targetPickups=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));predState.densityGlobal=dg;savePredState();schedulePush();render();showToast('Pickup planning set from your last batches.');}return;}
   const og=e.target.closest('[data-pw-organize]');if(og){organiseCloudFiles(og);return;}
   if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
@@ -545,22 +545,25 @@ function settingsPairsHtml(){
   const g=setPair,sheds=shedsForGroup(g),farmPct=Math.round(currentBiasFactor()*1000)/10;
   const rows=sheds.map(sh=>{
     const sid=escapeAttr(String(sh.id));
-    const ov=(sh.scaleOverride!=null&&Number(sh.scaleOverride)>0)?Math.round(Number(sh.scaleOverride)*1000)/10:null;
+    const ov=sdScale(sh);
     const own=suggestScaleCorrection([sh]);const sugPct=own?Math.round(own.value*1000)/10:null;
     const cur=ov==null?farmPct:ov;
     const scale=`<div class="set-scale"><label class="set-chk"><input type="checkbox" data-set-useglobal="${sid}" ${ov==null?'checked':''} /> Farm-wide${ov==null?` <b>${farmPct.toFixed(1)}%</b>`:''}</label>${ov==null?'':`<label class="set-mort"><input type="number" class="set-num" data-set-scale="${sid}" min="${MIN_BIAS_FACTOR*100}" max="${MAX_BIAS_FACTOR*100}" step="0.5" value="${ov}" aria-label="Scale correction for Shed ${sid}" /> %</label>`}</div>`;
     const kill=own?`<span>${sugPct.toFixed(1)}% <span class="set-muted">· ${own.n} weighing${own.n===1?'':'s'}</span></span>${Math.abs(sugPct-cur)>=0.1?` <button type="button" class="set-mini" data-set-scale-sug="${sid}" data-pct="${sugPct}">Use ${sugPct.toFixed(1)}%</button>`:' <span class="set-chip own">in use</span>'}`:'<span class="set-muted">No plant weighing yet</span>';
-    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${scale}</td><td>${kill}</td><td><label class="set-mort"><input type="number" class="set-num" data-set-mortrate="${sid}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${shedMortRate(sh).toFixed(2)}" aria-label="Daily morts for Shed ${sid}" /> % / day</label></td></tr>`;}).join('');
+    return `<tr><td><b>Shed ${escapeHtml(String(sh.id))}</b></td><td>${scale}</td><td>${kill}</td><td><label class="set-mort"><input type="number" class="set-num" data-set-mortrate="${sid}" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${sdMort(sh).toFixed(2)}" aria-label="Daily morts for Shed ${sid}" /> % / day</label></td></tr>`;}).join('');
   return `<div class="set-pairs">${[1,2,3,4].map(x=>`<button type="button" class="adj-pair${x===g?' active':''}" data-set-pair="${x}" style="--pc:var(--pair${x})">${escapeHtml(pairLabel(x))}</button>`).join('')}</div>
     <section class="fs-group"><span class="fs-sec-label">Per shed · ${escapeHtml(pairLabel(g))}</span>
       <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th title="In-yard (shed-scale) readings only — plant weights are never scaled">Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    <p class="set-muted">Changes save straight away and update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="predictions">Predictions</button>.</p>`;
+    <p class="set-muted">Changes wait for <b>Apply</b> at the bottom, then update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="predictions">Predictions</button>.</p>`;
 }
 // Growth standard: what "vs std", the days-behind alerts, shed colours and the growth chart compare against
 function settingsGrowthStdHtml(){
-  const fr=growthStd()==='freerange',X=frCageTarget();
+  const fr=sdStd()==='freerange',X=sdFrCage();
   const days=[7,14,21,28,35,42,49,56];
+  // the table previews the day you typed (before Apply)
+  const keep=predState.frCage;predState.frCage=X;
   const rows=days.map(d=>{const w=freeRangeWeightKg(d),r=rossWeightKg(d);return `<td><b>${Math.round(w*1000).toLocaleString()} g</b><small>${Math.round(w/r*100)}%</small></td>`;}).join('');
+  predState.frCage=keep;
   return `<section class="fs-group set-wide"><span class="fs-sec-label">Growth standard</span>
     <div class="set-card set-pad set-std">
       <div class="set-std-top">
@@ -580,7 +583,7 @@ function settingsPickupExtrasHtml(){
     :`<p class="set-muted">Finished batches in Farm history will suggest pickup planning numbers here.</p>`;
   let blocked=0;farmData.sheds.forEach(s=>{blocked+=countPredictedPickupsOnBlockedDays(s);});
   return `<section class="fs-group set-wide"><span class="fs-sec-label">Pickups · farm-wide</span>
-    <div class="set-npd">${renderNoPickupDaysRow()}</div>
+    <div class="set-npd">${renderNoPickupDaysRow(setDraft&&setDraft.npd)}</div>
     ${hist}
     <div class="set-actions"><button type="button" class="set-btn primary" data-global-autofill="1">Auto-fill all sheds</button><button type="button" class="set-btn" data-global-clear-pickups="1">Clear all planned pickups</button>${blocked?`<button type="button" class="set-btn" data-replan-blocked="1">Re-plan ${blocked} on blocked days</button>`:''}<span class="set-muted">Planned pickups only — recorded pickups never change.</span></div>
   </section>`;
@@ -616,7 +619,7 @@ function renderSettingsPage(){
   const off=farmData?farmSettingsNotNormal().length:0;
   if(!SET_TABS.some(x=>x[0]===setTab))setTab='predictions';
   return `<div class="set-page"><nav class="set-tabs" aria-label="Settings sections">${SET_TABS.map(([k,l])=>`<button type="button" class="set-tab${k===setTab?' on':''}" data-set-tab="${k}"${k===setTab?' aria-current="page"':''}>${escapeHtml(l)}${k==='predictions'&&off?`<b>${off}</b>`:''}</button>`).join('')}</nav>
-    <div class="set-body set-${setTab}" id="setBody">${settingsSectionHtml(setTab)}</div></div>`;
+    <div class="set-body set-${setTab}" id="setBody">${settingsSectionHtml(setTab)}</div>${setApplyBarHtml()}</div>`;
 }
 // The old drawer re-render calls (sync state, farm history, units…) refresh this page's tab instead
 function renderSettingsTabBody(force){
@@ -633,17 +636,16 @@ function setShedScale(id,pct){
 }
 document.addEventListener('change',e=>{
   const fc=e.target.closest&&e.target.closest('[data-set-frcage]');
-  if(fc){const v=Number(fc.value);if(Number.isFinite(v)&&v>=25&&v<=60){predState.frCage=Math.round(v*2)/2;savePredState();schedulePush();render();showToast(`Free-range standard: 2.45 kg at day ${predState.frCage}.`);}else render();return;}
+  if(fc){const v=Number(fc.value);if(Number.isFinite(v)&&v>=25&&v<=60)sdSet('frCage',Math.round(v*2)/2);else renderSettingsTabBody(true);return;}
   const ug=e.target.closest&&e.target.closest('[data-set-useglobal]');
-  if(ug){setShedScale(ug.dataset.setUseglobal,ug.checked?null:Math.round(currentBiasFactor()*1000)/10);return;}
+  if(ug){sdSetShed('scale',ug.dataset.setUseglobal,ug.checked?null:Math.round(currentBiasFactor()*1000)/10);return;}
   const sc=e.target.closest&&e.target.closest('[data-set-scale]');
-  if(sc){const v=Number(sc.value);if(Number.isFinite(v)&&v>0)setShedScale(sc.dataset.setScale,v);else render();return;}
+  if(sc){const v=Number(sc.value);if(Number.isFinite(v)&&v>0)sdSetShed('scale',sc.dataset.setScale,Math.max(MIN_BIAS_FACTOR*100,Math.min(MAX_BIAS_FACTOR*100,v)));else renderSettingsTabBody(true);return;}
   const m=e.target.closest&&e.target.closest('[data-set-mortrate]');if(!m)return;
-  const v=Number(m.value);if(!Number.isFinite(v)||v<0){m.value=shedMortRate(farmData.sheds[Number(m.dataset.setMortrate)-1]).toFixed(2);return;}
-  setShedMortRate(Number(m.dataset.setMortrate),v);
-  if(typeof showToast==='function')showToast(`Shed ${m.dataset.setMortrate}: daily morts ${Math.min(MAX_MORT_RATE_PCT,v).toFixed(2)}% — forecast updated`);
+  const v=Number(m.value);if(!Number.isFinite(v)||v<0){renderSettingsTabBody(true);return;}
+  sdSetShed('mort',m.dataset.setMortrate,Math.min(MAX_MORT_RATE_PCT,v));
 });
-function afterSettingsRender(){if(setTab==='alerts'&&typeof bindNotifCheckboxes==='function')bindNotifCheckboxes();}
+function afterSettingsRender(){}
 renderSettingsDrawerBody=function(){renderSettingsTabBody(false);};
 toggleAdjCollapse=function(){const gm=/^g([1-4])$/.exec(activeTab);setPair=gm?Number(gm[1]):(predState.predGroup||setPair||1);adjModalOpen=false;adjDraft=null;goSettings('pairs');};
 openSettingsDrawer=function(){goSettings(syncFarmName?null:'farm');};
@@ -664,3 +666,87 @@ document.addEventListener('click',e=>{
   const nav=e.target.closest('[data-tab],#moreBtnMob,[data-batch-info],[data-alert-shed],[data-alert-feed],[data-mgr-feed]:not([data-mgr-compare]),[data-goto-shedgroup]');
   if(nav&&!e.target.closest('.compare-modal'))closeToolPages();
 },true);
+
+// ── Settings wait for Apply ──
+// Every change on the Settings page is a draft until Apply (Discard puts it back). Pickup entries
+// and target pickup numbers still save as you type. The Predictions numbers have their own Save.
+let setDraft=null;   // {std, frCage, npd:[days], scale:{shed:pct|null}, mort:{shed:pct}, notif:{key:bool}, unit}
+function sdStd(){return setDraft&&setDraft.std!=null?setDraft.std:growthStd();}
+function sdFrCage(){return setDraft&&setDraft.frCage!=null?setDraft.frCage:frCageTarget();}
+function sdScaleNow(sh){return (sh.scaleOverride!=null&&Number(sh.scaleOverride)>0)?Math.round(Number(sh.scaleOverride)*1000)/10:null;}
+function sdScale(sh){const k=String(sh.id);return setDraft&&setDraft.scale&&k in setDraft.scale?setDraft.scale[k]:sdScaleNow(sh);}
+function sdMort(sh){const k=String(sh.id);return setDraft&&setDraft.mort&&k in setDraft.mort?setDraft.mort[k]:shedMortRate(sh);}
+function sdNotif(k){return setDraft&&setDraft.notif&&k in setDraft.notif?setDraft.notif[k]:!!notifPrefs[k];}
+function sdUnit(){return setDraft&&setDraft.unit?setDraft.unit:feedUnit();}
+function sdTouch(){if(!setDraft)setDraft={scale:{},mort:{},notif:{}};return setDraft;}
+// What's different from what's saved, as short lines for the bar
+function sdChanges(){
+  const d=setDraft;if(!d)return [];const out=[];
+  if(d.std!=null&&d.std!==growthStd())out.push(d.std==='ross'?'Growth standard: Ross 308':'Growth standard: free range');
+  if(d.frCage!=null&&d.frCage!==frCageTarget())out.push(`Free range 2.45 kg at day ${d.frCage}`);
+  if(d.npd){const a=[...d.npd].sort().join(),b=[...(predState.noPickupDays||[])].sort().join();if(a!==b)out.push('No-pickup days');}
+  if(farmData){
+    Object.keys(d.scale||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh&&d.scale[id]!==sdScaleNow(sh))out.push(`Shed ${id} scale ${d.scale[id]==null?'farm-wide':d.scale[id]+'%'}`);});
+    Object.keys(d.mort||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh&&Math.abs(d.mort[id]-shedMortRate(sh))>1e-9)out.push(`Shed ${id} daily morts ${d.mort[id].toFixed(2)}%`);});
+  }
+  Object.keys(d.notif||{}).forEach(k=>{if(d.notif[k]!==!!notifPrefs[k])out.push(`${k==='feedBalance'?'Feed balance':'Shed performance'} alerts ${d.notif[k]?'on':'off'}`);});
+  if(d.unit&&d.unit!==feedUnit())out.push(`Feed in ${d.unit==='t'?'tonnes':'kg'}`);
+  return out;
+}
+function setApplyBarHtml(){
+  const ch=sdChanges();if(!ch.length)return '<div class="set-apply" id="setApply" hidden></div>';
+  return `<div class="set-apply" id="setApply" role="region" aria-label="Unapplied changes"><div class="set-apply-txt"><b>${ch.length} change${ch.length===1?'':'s'} not applied</b><span>${escapeHtml(ch.join(' · '))}</span></div><button type="button" class="set-btn" data-set-discard>Discard</button><button type="button" class="set-btn primary" data-set-apply>Apply</button></div>`;
+}
+function sdRefresh(){renderSettingsTabBody(true);const bar=document.getElementById('setApply');if(bar)bar.outerHTML=setApplyBarHtml();}
+function sdSet(k,v){sdTouch()[k]=v;sdRefresh();}
+function sdSetShed(kind,id,v){sdTouch()[kind][String(id)]=v;sdRefresh();}
+function sdApply(){
+  const d=setDraft;if(!d)return;const n=sdChanges().length;
+  if(d.std!=null)predState.growthStd=d.std;
+  if(d.frCage!=null)predState.frCage=d.frCage;
+  if(d.npd)predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
+  if(farmData){
+    Object.keys(d.scale||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh)sh.scaleOverride=d.scale[id]==null?null:Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,Number(d.scale[id])/100));});
+    Object.keys(d.mort||{}).forEach(id=>setShedMortRate(Number(id),d.mort[id]));
+  }
+  Object.keys(d.notif||{}).forEach(k=>setNotifPref(k,d.notif[k]));
+  const unitChanged=d.unit&&d.unit!==feedUnit();if(unitChanged)setFeedUnit(d.unit);
+  setDraft=null;gompertzCache=new Map();
+  savePredState();saveState();schedulePush();render();if(unitChanged)refreshLoadsViews();
+  showToast(n?`${n} change${n===1?'':'s'} applied — forecast updated.`:'Nothing to apply.');
+}
+function sdDiscard(){setDraft=null;render();showToast('Changes discarded.');}
+// Leaving Settings with changes not applied: ask first
+function sdLeaving(){
+  if(!sdChanges().length){setDraft=null;return true;}
+  if(confirm('You have settings changes that aren\'t applied yet.\n\nOK = discard them and leave. Cancel = stay and Apply.')){setDraft=null;return true;}
+  return false;
+}
+// Runs before the app's own click handlers (capture), so Settings controls go to the draft
+document.addEventListener('click',e=>{
+  if(activeTab!=='farmsettings')return;
+  const t=e.target;
+  if(t.closest('[data-set-apply]')){e.stopPropagation();sdApply();return;}
+  if(t.closest('[data-set-discard]')){e.stopPropagation();sdDiscard();return;}
+  const inBody=t.closest('#setBody');
+  if(inBody){
+    const npd=t.closest('[data-npd]');
+    if(npd){e.stopPropagation();const x=Number(npd.dataset.npd);const cur=(setDraft&&setDraft.npd)||[...(predState.noPickupDays||[])];sdSet('npd',cur.includes(x)?cur.filter(y=>y!==x):[...cur,x]);return;}
+    const u=t.closest('[data-feed-unit]');
+    if(u){e.stopPropagation();sdSet('unit',u.dataset.feedUnit);return;}
+    return;
+  }
+  // anything that leaves the Settings page
+  const nav=t.closest('[data-tab],[data-pw-panel],[data-pwr-farm],[data-pwr-settings],.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],#sbFarm,.pwr-logo,[data-pw-goset]');
+  if(nav&&sdChanges().length&&!nav.closest('.set-tabs')){
+    // the Settings button, or the open panel's own button (that only closes the panel), don't leave
+    if(nav.matches('[data-pwr-settings]')||(nav.matches('[data-pw-panel]')&&nav.dataset.pwPanel===pwPanel))return;
+    if(!sdLeaving()){e.stopPropagation();e.preventDefault();}
+  }else if(nav)setDraft=null;
+},true);
+document.addEventListener('change',e=>{
+  if(activeTab!=='farmsettings'||!e.target.closest||!e.target.closest('#setBody'))return;
+  const id=e.target.id;
+  if(id==='notifShedPerf'||id==='notifFeedBalance'){e.stopPropagation();sdTouch().notif[id==='notifShedPerf'?'shedPerformance':'feedBalance']=e.target.checked;sdRefresh();}
+},true);
+window.addEventListener('beforeunload',e=>{if(activeTab==='farmsettings'&&sdChanges().length){e.preventDefault();e.returnValue='';}});

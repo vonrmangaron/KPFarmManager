@@ -160,7 +160,7 @@ async function saveFarmProfile(){if(!fpDraft)return;const d=fpDraft;
 // from = first silo number (the range is always 12: 3 per pair)
 function setSiloStart(v){const n=Number(v);predState.siloStart=(String(v??'').trim()===''||!Number.isInteger(n)||n<1||n>990)?null:n;savePredState();schedulePush();refreshFarmProfile();render();}
 function renderSettingsUnitsCard(){
-  const u=feedUnit();
+  const u=typeof sdUnit==='function'?sdUnit():feedUnit();
   const opt=(v,lbl)=>`<button type="button" class="settings-seg-opt${u===v?' active':''}" data-feed-unit="${v}" aria-pressed="${u===v}">${lbl}</button>`;
   return `<div class="settings-section">
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('scale')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Units</h4></div></div>
@@ -314,11 +314,11 @@ function renderSettingsNotificationsCard(){
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('bell')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Notifications</h4></div></div>
     <p class="settings-section-desc">Choose which alerts appear in the bell icon at the top of the app.</p>
     <label class="settings-toggle-row">
-      <input type="checkbox" id="notifShedPerf" ${notifPrefs.shedPerformance?'checked':''} />
+      <input type="checkbox" id="notifShedPerf" ${(typeof sdNotif==='function'?sdNotif('shedPerformance'):notifPrefs.shedPerformance)?'checked':''} />
       <span class="settings-toggle-text"><strong>Shed performance</strong><br><span class="settings-toggle-sub">Warns when a shed falls significantly behind the growth standard (Settings › Predictions: free range or Ross 308).</span></span>
     </label>
     <label class="settings-toggle-row">
-      <input type="checkbox" id="notifFeedBalance" ${notifPrefs.feedBalance?'checked':''} />
+      <input type="checkbox" id="notifFeedBalance" ${(typeof sdNotif==='function'?sdNotif('feedBalance'):notifPrefs.feedBalance)?'checked':''} />
       <span class="settings-toggle-text"><strong>Feed balance</strong><br><span class="settings-toggle-sub">Warns when a pair's silos will drop below the safety stock within the next 8 days (your ordering week), and when a silo reading is 3+ days old.</span></span>
     </label>
   </div>`;
