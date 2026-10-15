@@ -2753,6 +2753,7 @@ function refreshPickupsModal(){
     const canAdd=ps.length<MAX_PICKUPS_PER_SHED;
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
+        <button type="button" class="pk-go" data-pk-goto-shed="${shed.id}" title="Open Shed ${shed.id}'s pickup list on its shed page">Shed ${shed.id} list<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
       ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th class="num" title="Days vs the growth standard (Settings › Predictions) at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}
     </section>`;
@@ -2761,6 +2762,15 @@ function refreshPickupsModal(){
   body.scrollTop=keepScroll;
 }
 
+// Pickups tool → that shed's pickup list on its pair page (the Pickups tab, scrolled to the shed)
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-pk-goto-shed]');if(!b||!farmData)return;
+  const id=b.dataset.pkGotoShed,g=[1,2,3,4].find(x=>shedsForGroup(x).some(s=>String(s.id)===String(id)));if(!g)return;
+  if(typeof closeToolPages==='function')closeToolPages();else closePickupsModal();
+  gotoPair(g,'pickups',id);
+  // a short glow so it's clear which of the pair's two sheds you came for
+  requestAnimationFrame(()=>{const c=document.getElementById('pred-shed-card-'+id);if(c){c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}});
+});
 // Settings → Cloud sync: is this device signed in with the manager password?
 function farmKeyStatusRow(){
   if(!window.FarmKey||!syncFarmName)return '';
