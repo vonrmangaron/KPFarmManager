@@ -5002,10 +5002,14 @@ body.pw-two-batches .page-header-right .batch-input{display:none}
   .set-apply .set-btn{flex:1}
 }
 
-/* ── Golden hour page background (2026-10-15), same as CluckWise: on the page behind the content
-   and on the full-page tools. Each box paints the glow at its own size, so nothing scrolls it. ── */
-:root{--page-glow:radial-gradient(900px 600px at 100% 0%,rgba(240,162,26,.20),transparent 60%),radial-gradient(900px 650px at 0% 100%,rgba(110,85,211,.12),transparent 60%)}
-body.theme-dark{--page-glow:radial-gradient(900px 600px at 100% 0%,rgba(240,168,64,.18),transparent 60%),radial-gradient(900px 650px at 0% 100%,rgba(124,104,230,.16),transparent 60%)}
-.app-layout{background:var(--page-glow),var(--bg)}
+/* ── Page background, app-wide (2026-10-15): "Sky to pasture" like CluckWise — sky blue at the top
+   fading to pasture green at the bottom, behind every page and the full-page tools. The header is
+   see-through so the sky runs under it. ── */
+:root{--page-glow:linear-gradient(180deg,#D6E5FA 0%,#E9EFF6 30%,#F1F3EC 55%,#DCEFD3 100%);--bar-glass:rgba(255,255,255,.62)}
+body.theme-dark{--page-glow:linear-gradient(180deg,#1C2E52 0%,#141F36 35%,#111B2B 60%,#123530 100%);--bar-glass:rgba(17,26,43,.62)}
+.app-layout{background:var(--page-glow)}
 #app{background:transparent}
-.compare-modal.tool-page,.compare-modal.tool-page .compare-modal-panel{background:var(--page-glow),var(--bg)}
+.compare-modal.tool-page,.compare-modal.tool-page .compare-modal-panel{background:var(--page-glow)}
+@media (min-width:769px){.compare-modal.tool-page,.compare-modal.tool-page .compare-modal-panel{background-attachment:fixed}}
+.page-header,body.theme-dark .page-header{background:var(--bar-glass);-webkit-backdrop-filter:saturate(1.4) blur(10px);backdrop-filter:saturate(1.4) blur(10px)}
+.set-apply[hidden]{display:none!important}
