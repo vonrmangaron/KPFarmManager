@@ -3215,6 +3215,14 @@
   .co-seg{ position:absolute; top:0; bottom:0; border-radius:5px; font-size:10.5px; font-weight:800; display:flex; align-items:center; padding:0 6px; white-space:nowrap; overflow:hidden; box-sizing:border-box; }
   .co-today{ position:absolute; top:-2px; bottom:-2px; width:2px; background:#DC4A36; }
   body.theme-dark .co-legend i.empty, body.theme-dark .co-seg.empty{ background:repeating-linear-gradient(45deg,#26344F 0 5px,#1E2A42 5px 10px); color:#93A0BA; }
+
+  /* ── Golden hour page background (2026-10-15): amber glow top right, soft violet bottom left.
+     A fixed layer behind the page (works on iPhone, where background-attachment:fixed doesn't),
+     and the full-page Maintenance views paint the same glow. ── */
+  :root{ --page-glow:radial-gradient(900px 600px at 100% 0%,rgba(240,162,26,.20),transparent 60%),radial-gradient(900px 650px at 0% 100%,rgba(110,85,211,.12),transparent 60%); }
+  body.theme-dark{ --page-glow:radial-gradient(900px 600px at 100% 0%,rgba(240,168,64,.18),transparent 60%),radial-gradient(900px 650px at 0% 100%,rgba(124,104,230,.16),transparent 60%); }
+  body::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:var(--page-glow); }
+  .mlog-page, .reports-modal.mt-page{ background:var(--page-glow), var(--bg); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
