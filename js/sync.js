@@ -28,6 +28,7 @@ function buildCloudPayload(){
       targetHarvestWeightKg:predState.targetHarvestWeightKg,
       farmFeedOverride:predState.farmFeedOverride,
       farmLeftoverKg:predState.farmLeftoverKg,
+      pairLeftover:predState.pairLeftover||{},farmLeftoverFromPairs:!!predState.farmLeftoverFromPairs,prevLeftover:predState.prevLeftover||null,
       carryoverKg:predState.carryoverKg||{1:0,2:0,3:0,4:0},
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
       densityGlobal:predState.densityGlobal,
@@ -83,6 +84,9 @@ function applyCloudPayload(payload,options){
     if(p.carryoverKg&&typeof p.carryoverKg==='object'){const c={};[1,2,3,4].forEach(g=>{const v=Number(p.carryoverKg[g]);c[g]=Number.isFinite(v)&&v>0?v:0;});predState.carryoverKg=c;}
     if(p.farmLeftoverKg!=null&&Number.isFinite(Number(p.farmLeftoverKg))&&Number(p.farmLeftoverKg)>0)predState.farmLeftoverKg=Number(p.farmLeftoverKg);
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;
+    if('pairLeftover' in p)predState.pairLeftover=normPairLeftover(p.pairLeftover);
+    if('farmLeftoverFromPairs' in p)predState.farmLeftoverFromPairs=!!p.farmLeftoverFromPairs;
+    if('prevLeftover' in p)predState.prevLeftover=p.prevLeftover&&Number(p.prevLeftover.kg)>0?{batch:String(p.prevLeftover.batch||''),kg:Number(p.prevLeftover.kg)}:null;
     if(p.densityGlobal&&typeof p.densityGlobal==='object'){const dg=p.densityGlobal;let tp=DEFAULT_DENSITY_GLOBAL.targetPickups;if(Number.isFinite(Number(dg.targetPickups)))tp=Number(dg.targetPickups);else if(Number.isFinite(Number(dg.minPickupsBeforeCleanout)))tp=Number(dg.minPickupsBeforeCleanout);tp=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,Math.floor(tp)));predState.densityGlobal={maxDensity:Number.isFinite(Number(dg.maxDensity))?Number(dg.maxDensity):DEFAULT_DENSITY_GLOBAL.maxDensity,triggerDensity:Number.isFinite(Number(dg.triggerDensity))?Number(dg.triggerDensity):DEFAULT_DENSITY_GLOBAL.triggerDensity,targetDensity:Number.isFinite(Number(dg.targetDensity))?Number(dg.targetDensity):DEFAULT_DENSITY_GLOBAL.targetDensity,targetPickups:tp};}
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
     // The farm's history travels with every batch file. Merged, never replaced:

@@ -130,3 +130,6 @@ const NAV_ITEMS = [
   { section: 'APPS' },
   { id: 'cluckwise', label: 'CluckWise', icon: 'cluckwise', external: true },
 ];
+
+// Feed left in each pair's silos when the pair finished: {pair:{kg, silos:[3 ring choices], weighed, at}}
+function normPairLeftover(o){const out={};if(!o||typeof o!=='object')return out;[1,2,3,4].forEach(g=>{const r=o[g];if(!r||typeof r!=='object')return;const kg=Number(r.kg);if(!Number.isFinite(kg)||kg<0)return;out[g]={kg:Math.round(kg),silos:Array.isArray(r.silos)?r.silos.slice(0,3).map(x=>x==null?null:String(x)):[null,null,null],weighed:!!r.weighed,at:Number(r.at)||Date.now()};});return out;}

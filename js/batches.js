@@ -81,6 +81,7 @@ function pwFixPrematureHistory(){
 function pwFinishIfDone(){
   const key=currentBatchKey();if(!key||pwPending()[key]!=='pending')return;
   const s=pwCurrentSummary();if(!s||!s.finished)return;
+  if(typeof allPairsFinished==='function'&&!allPairsFinished())return;   // wait for every pair's leftover feed
   if(farmHistory().some(r=>String(r.batch)===key)){pwPending()[key]='done';savePredState();return;}
   let rec=null;try{rec=summarizeCurrentBatch();}catch(e){}
   if(!rec)return;

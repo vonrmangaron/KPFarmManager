@@ -37,6 +37,7 @@ function mgrSiloOutlook(){
 // Up to 4 things to do now; growth notes stay in the bell
 function mgrNeeds(silos){
   const out=typeof closeNeeds==='function'?closeNeeds():[],today=mgrToday(),hour=new Date().getHours();
+  if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));   // finished pairs: no silo reminders
   silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
   // Mortality not entered since before yesterday (sheds that still have birds)
   const late=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
@@ -373,7 +374,7 @@ function pairOverviewHtml(g){
   sheds.forEach(s=>(s.pickups||[]).concat(s.predictedPickups||[]).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date);if(d<today||d>end)return;day(d).parts.push(`Pickup Shed ${s.id} · ${(Number(p.birds)||0).toLocaleString('en-US')}`);}));
   const week=[...days.values()].sort((a,b)=>a.date-b.date);
   const weekHtml=`<section class="mgr-card mgr-week"><span class="mgr-k">This week · ${escapeHtml(pairLabel(g))}</span>${week.length?week.map(w=>`<div class="mgr-week-row">${mgrDayTile(w.date)}<span>${escapeHtml([...new Set(w.parts)].join(' · '))}</span></div>`).join(''):'<p class="mgr-none">No loads or pickups this week.</p>'}</section>`;
-  return `<div class="pair-overview">${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
+  return `<div class="pair-overview">${typeof pairLeftoverBannerHtml==='function'?pairLeftoverBannerHtml(g):''}${result}<div class="mgr-row2">${sheds.map(card).join('')}</div><div class="mgr-row2">${feed}${weekHtml}</div></div>`;
 }
 document.addEventListener('click',e=>{const f=e.target.closest('[data-mgr-feed]');if(f){const g=Number(f.dataset.mgrFeed);
   // Home's Test a delivery opens Compare feed with that pair selected (tablet and desktop); a phone gets the pair's feed plan

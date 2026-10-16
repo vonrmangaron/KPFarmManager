@@ -366,6 +366,23 @@ function autoFillPredictedPickups(shed,opts){
         }
         result.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
       }
+      // Evenly spaced slots can land too close to another pickup and get skipped; fill what's
+      // still missing from the free days that keep 3 days from every other pickup.
+      let short=regularNeeded-result.length,guard=0;
+      while(short>0&&guard++<20){
+        const taken2=[...used].map(x=>dateOnly(x));
+        const open=candidates.filter(d=>!used.has(iso(d))&&taken2.every(x=>Math.abs(daysBetween(x,d))>=3));
+        if(!open.length)break;
+        // the free day furthest from every other pickup keeps the plan evenly spread
+        const gap=d=>Math.min(...taken2.map(x=>Math.abs(daysBetween(x,d))),Math.abs(daysBetween(d,cleanout)));
+        const slot=open.reduce((best,d)=>gap(d)>gap(best)?d:best,open[0]);
+        used.add(iso(slot));
+        const rec=recommendPickupForDate(tempShed,iso(slot),{extraPredicted:result});
+        const remove=(rec&&rec.recommendedRemove>0)?rec.recommendedRemove:0;
+        result.push({id:uid('pp'),date:slot,birds:remove,isFinal:false});
+        result.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+        short--;
+      }
     }
   }
 

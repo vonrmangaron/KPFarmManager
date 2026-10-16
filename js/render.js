@@ -655,6 +655,7 @@ function computeFarmAlerts() {
     const todayD = dateOnly(today);
     [1,2,3,4].forEach(g => {
       if (!shedsForGroup(g).some(s => s.placementDate)) return;
+      if (typeof pairAllClosed === 'function' && pairAllClosed(g)) return;   // both sheds closed: the leftover step takes over
       const latest = latestReading(g);
       if (!latest) {
         alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — no silo reading yet, so the feed forecast can't warn you`, tab: 'g'+g, feedGroup: g });
@@ -715,7 +716,7 @@ function renderAlertsPopoverBody() {
   const alerts = computeFarmAlerts();
   if (!alerts.length) return `<p style="font-size:13px;color:var(--muted);margin:0;padding:14px 16px">All systems normal — no alerts.</p>`;
   return `<div class="dash-alerts" style="padding:10px">${alerts.map(a =>
-    `<button class="dash-alert dash-alert-${a.kind}" ${a.closeShed ? `data-alert-close="${a.closeShed}"` : a.shedId ? `data-alert-shed="${a.shedId}"` : a.feedGroup ? `data-alert-feed="${a.feedGroup}"` : `data-tab="${a.tab}"`} type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
+    `<button class="dash-alert dash-alert-${a.kind}" ${a.closeShed ? `data-alert-close="${a.closeShed}"` : a.pairLeftover ? `data-alert-leftover="${a.pairLeftover}"` : a.shedId ? `data-alert-shed="${a.shedId}"` : a.feedGroup ? `data-alert-feed="${a.feedGroup}"` : `data-tab="${a.tab}"`} type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
       <span class="dash-alert-dot dash-alert-dot-${a.kind}"></span><span>${a.msg}</span>
     </button>`
   ).join('')}</div>`;
@@ -1828,6 +1829,7 @@ function projectionLogHtml(){
 }
 // Leftover only comes off the docket total; say so where it's typed
 function leftoverNoteText(t){
+  if(predState.farmLeftoverFromPairs&&typeof pairLeftovers==='function'){const parts=activePairs().map(g=>`${pairLabel(g).replace('Sheds ','')} ${fmtFeed(Number((pairLeftovers()[g]||{}).kg)||0,1)}`);return `From the pairs' silos: ${parts.join(' · ')}. Total = delivery dockets + ${fmtFeed(t.carryKg||0)} carry-over − leftover${t.fromDockets||t.usingManualFeed?'':' (once every load has its docket weight)'}`;}
   if(t.usingManualFeed&&t.carryInDocket)return `Total = docket total (already holds the ${fmtFeed(t.carryKg||0)} carry-over) − leftover`;
   if(t.usingManualFeed)return `Total = docket total + ${fmtFeed(t.carryKg||0)} carry-over − leftover`;
   if(t.fromDockets)return `Total = delivery dockets + ${fmtFeed(t.carryKg||0)} carry-over − leftover`;

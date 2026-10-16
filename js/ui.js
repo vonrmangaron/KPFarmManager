@@ -636,7 +636,9 @@ async function startNewBatch(cleanBatchNumber,opts){
   const prevOuts=(farmData&&farmData.sheds||[]).map(s=>({id:s.id,out:s.cleanoutDate?dateOnly(new Date(s.cleanoutDate)):null}));
   if(opts.alongside){if(typeof pwMarkPending==='function')pwMarkPending(prevKey);}
   else{try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}}
+  const leftOver=predState.farmLeftoverFromPairs&&Number(predState.farmLeftoverKg)>0?{batch:prevKey||'',kg:Number(predState.farmLeftoverKg)}:null;
   saveSyncState();resetAllToDefaults(clean,{keepHistory:true});
+  if(leftOver)predState.prevLeftover=leftOver;   // Home offers it as this batch's carry-over
   // Alongside: each shed's placement = its clean-out in the old batch + the usual turnaround
   if(opts.alongside&&farmData)farmData.sheds.forEach(s=>{const p=prevOuts.find(x=>String(x.id)===String(s.id));if(p&&p.out){s.placementDate=addDays(p.out,PW_TURNAROUND_DAYS);s.cleanoutDate=addDays(s.placementDate,DEFAULT_CLEANOUT_DAYS);s.cleanoutAuto=true;}});
   if(opts.alongside){saveState();scheduleHistoryPush();}
@@ -1475,7 +1477,7 @@ function setPredDailyCycle(start,end){
   dailyRangeState={mode:'cycle',start:s,end:e};render();
 }
 function setFarmFeedOverride(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmFeedOverride=null;else{const n=feedOut(s);predState.farmFeedOverride=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
-function setFarmLeftover(rawVal){const s=String(rawVal??'').trim();if(s==='')predState.farmLeftoverKg=null;else{const n=feedOut(s);predState.farmLeftoverKg=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
+function setFarmLeftover(rawVal){predState.farmLeftoverFromPairs=false;const s=String(rawVal??'').trim();if(s==='')predState.farmLeftoverKg=null;else{const n=feedOut(s);predState.farmLeftoverKg=(Number.isFinite(n)&&n>0)?n:null;}savePredState();schedulePush();}
 function setBiasFactor(value){if(!farmData)return;const n=Number(value);if(!Number.isFinite(n)||n<=0)return;const v=Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,n));farmData.biasFactor=v;saveState();schedulePush();}
 function setShedMortRate(shedId,value){if(!farmData)return;const shed=farmData.sheds[shedId-1];if(!shed)return;const n=Number(value);if(!Number.isFinite(n)||n<0)return;shed.mortalityRatePercent=Math.max(0,Math.min(MAX_MORT_RATE_PCT,n));saveState();schedulePush();scheduleRender(30);}
 function liveUpdateShedMortality(shedIdx,rawValue){

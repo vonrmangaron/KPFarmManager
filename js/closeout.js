@@ -139,11 +139,13 @@ function closeBannerHtml(s){
 // Bell, Home and a once-a-day reminder
 function closeAlerts(){
   return shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
-    return {kind:'error',msg:`<strong>Shed ${s.id}</strong> — clean-out ${today?'today':'was '+fmtShortNoYear(d)} · the shed is done and needs closing`,closeShed:s.id};});
+    return {kind:'error',msg:`<strong>Shed ${s.id}</strong> — clean-out ${today?'today':'was '+fmtShortNoYear(d)} · the shed is done and needs closing`,closeShed:s.id};}).concat(leftoverAlerts());
 }
 function closeNeeds(){
-  return shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
-    return {tone:'bad',title:`Close Shed ${s.id}`,sub:`Clean-out ${today?'today':'was '+fmtShortNoYear(d)} — enter the birds taken out`,act:`data-close-go="${s.id}"`};});
+  // pairs waiting for their leftover first, then sheds to close, then the carry-over offer
+  const lo=leftoverNeeds(),pairs=lo.filter(n=>n.tone==='bad'),rest=lo.filter(n=>n.tone!=='bad');
+  return pairs.concat(shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
+    return {tone:'bad',title:`Close Shed ${s.id}`,sub:`Clean-out ${today?'today':'was '+fmtShortNoYear(d)} — enter the birds taken out`,act:`data-close-go="${s.id}"`};})).concat(rest);
 }
 function announceClose(){
   const list=shedsNeedingClose();if(!list.length)return;
@@ -175,3 +177,126 @@ document.addEventListener('change',e=>{
   if(e.target.id==='csChecked'){closeShedState.checked=e.target.checked;refreshCloseResult();}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&closeShedState)closeCloseShedModal();});
+
+// ── Finishing a pair: the feed left in its silos ──
+// When both sheds of a pair are closed, the bell, Home and the pair page ask for the feed left in
+// the pair's three silos. Once every pair with birds has its leftover, the total becomes the farm
+// leftover (Result detail), which comes off the delivered feed: feed = dockets + carry-over − leftover.
+// Kept apart from the silo readings, so the feed forecast and the intake calibration never see it.
+const LO_OPTS=[['e','Empty',0],['0','Cone only',ringsToKg(0)],['1','1 ring',ringsToKg(1)],['2','2 rings',ringsToKg(2)],['3','3 rings',ringsToKg(3)],['4','4 rings',ringsToKg(4)],['5','5 rings',ringsToKg(5)]];
+function loKg(v){const o=LO_OPTS.find(x=>x[0]===String(v));return o?o[2]:null;}
+function pairLeftovers(){if(!predState.pairLeftover||typeof predState.pairLeftover!=='object')predState.pairLeftover={};return predState.pairLeftover;}
+function pairPlaced(g){return shedsForGroup(g).filter(s=>s.placementDate);}
+function pairAllClosed(g){const p=pairPlaced(g);return p.length>0&&p.every(shedIsClosed);}
+function pairFinished(g){return !!pairLeftovers()[g];}
+function pairNeedsLeftover(g){return pairAllClosed(g)&&!pairFinished(g);}
+function activePairs(){return [1,2,3,4].filter(g=>pairPlaced(g).length);}
+function allPairsFinished(){const a=activePairs();return a.length>0&&a.every(pairFinished);}
+function pairMissingDockets(g){return (farmLoads||[]).filter(l=>Number(l.splitKg&&l.splitKg[g])>0&&l.actualKg==null);}
+function pairsLeftoverKg(){return activePairs().reduce((n,g)=>n+(Number((pairLeftovers()[g]||{}).kg)||0),0);}
+// The farm leftover follows the pairs: set when the last pair is in, cleared again if one is undone
+function applyFarmLeftoverFromPairs(){
+  if(allPairsFinished()){const kg=pairsLeftoverKg();predState.farmLeftoverKg=kg>0?kg:null;predState.farmLeftoverFromPairs=true;}
+  else if(predState.farmLeftoverFromPairs){predState.farmLeftoverKg=null;predState.farmLeftoverFromPairs=false;}
+}
+
+let leftoverState=null;
+function openLeftoverModal(g){
+  g=Number(g);if(!pairPlaced(g).length)return;
+  const prev=pairLeftovers()[g];
+  leftoverState={g,silos:prev?prev.silos.slice():[null,null,null],weighed:prev&&prev.weighed?prev.kg:''};
+  let m=document.getElementById('leftoverModal');
+  if(!m){m=document.createElement('div');m.className='sync-modal';m.id='leftoverModal';
+    m.innerHTML='<div class="sync-modal-head"><h3 id="leftoverTitle"></h3><button type="button" data-lo-cancel aria-label="Close">✕</button></div><div class="sync-modal-body" id="leftoverBody"></div>';
+    document.body.appendChild(m);}
+  document.getElementById('leftoverTitle').innerHTML=`<span>🧺</span> Leftover feed · ${escapeHtml(pairLabel(g))}`;
+  renderLeftoverBody();
+  m.classList.add('open');const sc=document.getElementById('syncScrim');if(sc)sc.classList.add('open');
+}
+function closeLeftoverModal(){const m=document.getElementById('leftoverModal');if(m)m.classList.remove('open');leftoverState=null;if(typeof updateScrimVisibility==='function')updateScrimVisibility();}
+function leftoverTotals(){
+  const st=leftoverState,done=st.silos.every(v=>v!=null&&v!=='');
+  const fromRings=st.silos.reduce((n,v)=>n+(loKg(v)||0),0);
+  const w=Number(st.weighed),weighed=String(st.weighed).trim()!==''&&Number.isFinite(w)&&w>=0;
+  return {done,fromRings,weighed,kg:weighed?Math.round(w):fromRings};
+}
+function renderLeftoverBody(){
+  const st=leftoverState,b=document.getElementById('leftoverBody');if(!st||!b)return;
+  const g=st.g,miss=pairMissingDockets(g);
+  const sel=(i)=>`<label class="lo-silo"><span>Silo ${siloNumber(g,i+1)}</span><select id="loSilo${i}" data-lo-silo="${i}"><option value="" ${st.silos[i]==null||st.silos[i]===''?'selected':''} disabled>Choose…</option>${LO_OPTS.map(o=>`<option value="${o[0]}" ${String(st.silos[i])===o[0]?'selected':''}>${o[1]}${o[2]?' · '+fmtFeed(o[2],0):''}</option>`).join('')}</select></label>`;
+  b.innerHTML=`<p class="lo-intro">Both sheds are closed. How much feed is still in the pair's silos? It comes off the delivered feed once every pair is done.</p>
+    <div class="lo-silos">${[0,1,2].map(sel).join('')}</div>
+    <div class="mp-field"><label for="loWeighed">Weighed total (${escapeHtml(feedUnit())}) — optional, e.g. the mill's withdrawal docket</label><input type="number" id="loWeighed" min="0" step="${feedStep()}" inputmode="decimal" value="${st.weighed!==''?escapeAttr(String(feedIn(Number(st.weighed)))):''}" placeholder="Uses the rings when empty"></div>
+    <div id="loResult"></div>
+    ${miss.length?`<div class="lo-warn"><b>${miss.length} load${miss.length===1?'':'s'} for ${escapeHtml(pairLabel(g))} still on the planned weight.</b> Enter the docket weights in Feed loads — the leftover only comes off the feed once every load has its docket weight.</div>`:''}
+    <div class="sync-actions"><button class="btn-sync-primary" id="loSave" data-lo-save disabled>Save leftover</button><button class="btn-sync-primary ghost" data-lo-cancel>Cancel</button></div>`;
+  refreshLeftoverResult();
+}
+function refreshLeftoverResult(){
+  const st=leftoverState;if(!st)return;const t=leftoverTotals();
+  const box=document.getElementById('loResult'),btn=document.getElementById('loSave');
+  if(box)box.innerHTML=t.done||t.weighed?`<div class="cs-result"><div class="cs-row cs-total"><span>Leftover in ${escapeHtml(pairLabel(st.g))}</span><b>${fmtFeed(t.kg,1)}</b></div>${t.weighed&&t.done&&Math.abs(t.kg-t.fromRings)>0?`<div class="cs-row"><span>From the rings</span><b>${fmtFeed(t.fromRings,1)}</b></div>`:''}${t.weighed?'<p class="cs-line">Using the weighed total.</p>':''}</div>`:'<div class="mp-hint">Choose each silo (or type a weighed total).</div>';
+  if(btn)btn.disabled=!(t.done||t.weighed);
+}
+function saveLeftover(){
+  const st=leftoverState;if(!st)return;const t=leftoverTotals();if(!(t.done||t.weighed))return;
+  const g=st.g;pairLeftovers()[g]={kg:t.kg,silos:st.silos.slice(),weighed:t.weighed,at:Date.now()};
+  applyFarmLeftoverFromPairs();
+  savePredState();schedulePush();closeLeftoverModal();render();
+  if(allPairsFinished()){
+    if(typeof pwFinishIfDone==='function')pwFinishIfDone();
+    showToast(`🧺 Every pair is done — ${fmtFeed(pairsLeftoverKg(),1)} leftover comes off the delivered feed.`);
+  }else showToast(`🧺 ${pairLabel(g)} finished — ${fmtFeed(t.kg,1)} left in the silos.`);
+}
+function undoPairFinish(g){
+  g=Number(g);if(!pairFinished(g))return;
+  if(!confirm(`Undo finishing ${pairLabel(g)}?\n\nIts leftover feed is removed${allPairsFinished()?' and the farm leftover is cleared until every pair is done again':''}.`))return;
+  delete pairLeftovers()[g];
+  applyFarmLeftoverFromPairs();
+  // A Farm history record saved automatically when the last pair finished is taken back
+  const key=typeof currentBatchKey==='function'?currentBatchKey():'';
+  if(key&&Array.isArray(predState.farmHistory)){const i=predState.farmHistory.findIndex(r=>String(r.batch).trim().toLowerCase()===String(key).toLowerCase()&&r.source==='auto');
+    if(i>=0){predState.farmHistory.splice(i,1);if(typeof pwPending==='function'&&pwPending()[key]==='done')pwPending()[key]='pending';if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();}}
+  savePredState();schedulePush();render();showToast(`${pairLabel(g)} is open again.`);
+}
+function pairLeftoverBannerHtml(g){
+  if(pairFinished(g)){const r=pairLeftovers()[g];
+    return `<div class="cs-banner closed lo-banner"><span class="cs-ic">✓</span><span class="cs-txt"><b>${escapeHtml(pairLabel(g))} finished</b><span>${fmtFeed(Number(r.kg)||0,1)} left in the silos${r.weighed?' (weighed)':''}${allPairsFinished()?' · counted in the farm leftover':' · comes off the feed when every pair is done'}</span></span><button type="button" class="cs-undo" data-lo-edit="${g}" title="Change the leftover for ${escapeAttr(pairLabel(g))}">Edit</button><button type="button" class="cs-undo" data-lo-undo="${g}" title="Open ${escapeAttr(pairLabel(g))} again and remove its leftover">Undo</button></div>`;}
+  if(pairNeedsLeftover(g)){const miss=pairMissingDockets(g).length;
+    return `<div class="cs-banner due lo-banner"><span class="cs-ic">🧺</span><span class="cs-txt"><b>Both sheds closed — enter the leftover feed</b><span>How much is still in the pair's 3 silos${miss?` · ${miss} load${miss===1?'':'s'} still need${miss===1?'s':''} a docket weight`:''}.</span></span><button type="button" class="cs-go" data-lo-open="${g}" title="Enter the feed left in the silos for ${escapeAttr(pairLabel(g))}">Enter leftover</button></div>`;}
+  return '';
+}
+function goToPairForLeftover(g){
+  if(typeof closeToolPages==='function')closeToolPages();
+  gotoPair(Number(g),'overview');
+  requestAnimationFrame(()=>{const c=document.querySelector('.lo-banner');if(c){c.scrollIntoView({block:'center'});c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}});
+}
+function leftoverAlerts(){return [1,2,3,4].filter(pairNeedsLeftover).map(g=>({kind:'error',msg:`<strong>${pairLabel(g)}</strong> — both sheds closed · enter the leftover feed in the silos`,pairLeftover:g}));}
+function leftoverNeeds(){
+  const out=[1,2,3,4].filter(pairNeedsLeftover).map(g=>({tone:'bad',title:`Enter leftover feed for ${pairLabel(g)}`,sub:'Both sheds are closed — what is still in the silos?',act:`data-lo-go="${g}"`}));
+  const pl=predState.prevLeftover;
+  if(pl&&Number(pl.kg)>0&&carryoverTotalKg()===0)out.push({tone:'warn',title:`Carry-over: ${fmtFeed(Number(pl.kg),1)} left from ${pl.batch||'the last batch'}`,sub:'Tap to use it as this batch\'s carried-over feed',act:'data-carry-use'});
+  return out;
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const al=t.closest('.alerts-popover [data-alert-leftover]');
+  if(al){const pop=document.getElementById('alertsPopover');if(pop)pop.classList.remove('open');goToPairForLeftover(al.dataset.alertLeftover);return;}
+  const go=t.closest('[data-lo-go]');if(go){goToPairForLeftover(go.dataset.loGo);return;}
+  const op=t.closest('[data-lo-open],[data-lo-edit]');if(op){openLeftoverModal(op.dataset.loOpen||op.dataset.loEdit);return;}
+  const un=t.closest('[data-lo-undo]');if(un){undoPairFinish(un.dataset.loUndo);return;}
+  if(t.closest('[data-lo-cancel]')){closeLeftoverModal();return;}
+  if(t.closest('[data-lo-save]')){saveLeftover();return;}
+  if(t.closest('[data-carry-use]')){const pl=predState.prevLeftover;if(!pl)return;
+    if(confirm(`Use the ${fmtFeed(Number(pl.kg),1)} left in the silos from ${pl.batch||'the last batch'} as this batch's carried-over feed?\n\nOK = use it. Cancel = don't ask again.`)){setCarryoverTotal(Number(pl.kg)/1000);showToast(`Carry-over set to ${fmtFeed(Number(pl.kg),1)}.`);}
+    predState.prevLeftover=null;savePredState();schedulePush();render();return;}
+});
+document.addEventListener('change',e=>{
+  if(!leftoverState)return;const s=e.target.closest&&e.target.closest('[data-lo-silo]');
+  if(s){leftoverState.silos[Number(s.dataset.loSilo)]=s.value;refreshLeftoverResult();}
+});
+document.addEventListener('input',e=>{
+  if(!leftoverState||e.target.id!=='loWeighed')return;
+  const v=e.target.value;leftoverState.weighed=String(v).trim()===''?'':feedOut(v);refreshLeftoverResult();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&leftoverState)closeLeftoverModal();});
