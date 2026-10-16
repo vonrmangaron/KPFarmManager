@@ -1555,7 +1555,7 @@ function renderSiloForecastTable(forecast,group,opts){
     let pickupIndicator='';
     if(r.pickupsBirds>0){const pickCls=r.hasPredicted?'fb-pickup-predicted':'fb-pickup-actual';pickupIndicator=` <span class="${pickCls}">−${r.pickupsBirds.toLocaleString()}</span>`;}
     let balanceCls='';let balanceText='—';
-    if(r.balance!==null){balanceText=fmtFeed(r.balance);if(r.isPast)balanceCls='fb-balance-past';else if(r.balance<=0)balanceCls='fb-balance-empty';else if(r.safety>0&&r.balance<r.safety*1.5)balanceCls='fb-balance-low';else balanceCls='fb-balance-ok';}
+    if(r.balance!==null){balanceText=fmtFeed(r.balance);balanceCls='fb-balance-'+(r.level||(r.isPast?'past':r.balance<=0?'empty':r.safety>0&&r.balance<r.safety*1.5?'low':'ok'));}
     const cells=[];
     if(c.date)cells.push(`<td class="${dateCls}">${fmtShort(r.date)}${readingBadge}</td>`);
     if(c.age)cells.push(`<td class="num">${agesStr}</td>`);

@@ -389,7 +389,18 @@ function computeSiloForecastInner(group,range,realOnly){
   }
   // "Runs out" = stock drops below the safety stock (Adjust: days of feed)
   const safeDays=siloSafetyDays();
-  rows.forEach((r,i)=>{const next=rows[i+1];r.safety=safeDays*(next?next.consumption:r.consumption);});
+  // The safety stock is the pair's normal use: the biggest day among this one and the next two, so a
+  // day before a pickup (or clean-out) isn't judged against a tiny next-day figure.
+  rows.forEach((r,i)=>{const use=Math.max(r.consumption||0,...rows.slice(i+1,i+3).map(x=>x.consumption||0));r.safety=safeDays*use;});
+  // Colour level for each day: between deliveries the silo only empties, so the level never gets
+  // better again until a load arrives (ok → low → empty).
+  const RANK={ok:0,low:1,empty:2};let carry=null;
+  rows.forEach(r=>{
+    if(r.isPast||r.balance===null){r.level=r.isPast?'past':null;return;}
+    let lv=r.balance<=0?'empty':(r.safety>0&&r.balance<r.safety*1.5)?'low':'ok';
+    if(carry&&!(r.delivery>0)&&RANK[carry]>RANK[lv])lv=carry;
+    r.level=lv;carry=lv;
+  });
   let depletedDate=null;
   for(const r of rows){if(r.balance!==null&&r.consumption>0&&!r.isPast&&r.balance<=r.safety){depletedDate=r.date;break;}}
   const endBalance=rows.length?rows[rows.length-1].balance:null;
