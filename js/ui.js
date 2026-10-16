@@ -784,7 +784,7 @@ function renderManualPickupModal(){
   if(titleEl)titleEl.innerHTML=s.mode==='add'?`<span>📝</span> Add Pickup — Shed ${s.shedId}`:`<span>✎</span> Edit Pickup — Shed ${s.shedId}`;
   const pickupCount=(shed.pickups||[]).length;
   const canSave=s.mode==='edit'||pickupCount<MAX_PICKUPS_PER_SHED;
-  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div><div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate?fmtShort(shed.placementDate):'—'}</span></div><div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div></div><div class="mp-field"><label>Date</label><input type="date" id="mpDate" value="${s.dateIso}" /></div><div class="mp-field"><label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched?'display:none;':''}">auto</span></label><input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" /></div><div class="mp-field"><label>No. of Birds</label><input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" /></div><div class="mp-field"><label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label><input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" /></div><div class="mp-field"><label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label><input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" /></div><div class="mp-est-row" id="mpEstRow"></div><div id="mpReplaceWrap"></div><label class="mp-checkbox-row"><input type="checkbox" id="mpFinal" ${s.isFinal?'checked':''} /><span>This is the final pickup (sets cleanout date &amp; mortality)</span></label><div class="mp-hint">Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.</div><div class="sync-actions"><button class="btn-sync-primary" id="mpSaveBtn" ${canSave?'':'disabled'}>${s.mode==='add'?'＋ Add Pickup':'✓ Save Changes'}</button><button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button></div>`;
+  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div><div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate?fmtShort(shed.placementDate):'—'}</span></div><div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div></div><div class="mp-field"><label>Date</label><input type="date" id="mpDate" value="${s.dateIso}" /></div><div class="mp-field"><label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched?'display:none;':''}">auto</span></label><input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" /></div><div class="mp-field"><label>No. of Birds</label><input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" /></div><div class="mp-field"><label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label><input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" /></div><div class="mp-field"><label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label><input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" /></div><div class="mp-est-row" id="mpEstRow"></div><div id="mpReplaceWrap"></div><label class="mp-checkbox-row"><input type="checkbox" id="mpFinal" ${s.isFinal?'checked':''} /><span>This is the final pickup (sets the clean-out date — you close the shed on the day)</span></label><div class="mp-hint" id="mpFinalHint"></div><div class="mp-hint">Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.</div><div class="sync-actions"><button class="btn-sync-primary" id="mpSaveBtn" ${canSave?'':'disabled'}>${s.mode==='add'?'＋ Add Pickup':'✓ Save Changes'}</button><button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button></div>`;
   const dateEl=document.getElementById('mpDate');const ageEl=document.getElementById('mpAge');const birdsEl=document.getElementById('mpBirds');const avgEl=document.getElementById('mpAvg');const totalEl=document.getElementById('mpTotal');const ageChipEl=document.getElementById('mpAgeChip');
   const onDateChange=()=>{s.dateIso=dateEl.value;if(s.ageTouched)return;const d=parseExcelDate(dateEl.value);if(!d)return;const a=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,d)):0;ageEl.value=a;s.ageValue=a;if(ageChipEl)ageChipEl.style.display='';};
   const onAgeChange=()=>{s.ageTouched=true;if(ageChipEl)ageChipEl.style.display='none';const a=Number(ageEl.value);if(Number.isFinite(a)&&a>=0)s.ageValue=Math.floor(a);};
@@ -819,6 +819,26 @@ function renderManualPickupModal(){
   // Typing a weight makes it a real (weighed) figure
   avgEl.addEventListener('input',()=>{s.lastEdited='avg';s.weightEst=false;refreshManualPickupCalc();refreshEst();});
   totalEl.addEventListener('input',()=>{s.lastEdited='total';s.weightEst=false;refreshManualPickupCalc();refreshEst();});
+  // Final pickup: fill in every bird still in the shed on that date (placed − mortality − earlier
+  // pickups, with the daily mortality rate run forward to a future date). Unticking puts back what was there.
+  const finalEl=document.getElementById('mpFinal'),finalHint=document.getElementById('mpFinalHint');
+  const birdsLeftOn=()=>{const d=parseExcelDate(s.dateIso);if(!d)return null;
+    const others={...shed,pickups:(shed.pickups||[]).filter(p=>!(s.mode==='edit'&&iso(p.date)===s.originalDateIso))};
+    return computeLiveBirdsBefore(others,dateOnly(d));};
+  const fillFinal=()=>{
+    if(!finalEl.checked){if(finalHint)finalHint.innerHTML='';return;}
+    const left=birdsLeftOn();if(left==null)return;
+    if(s.birdsBeforeFinal===undefined)s.birdsBeforeFinal=birdsEl.value;
+    birdsEl.value=left;s.finalAuto=true;refreshManualPickupCalc();
+    const d=dateOnly(parseExcelDate(s.dateIso)),future=d>dateOnly(new Date());
+    if(finalHint)finalHint.innerHTML=`Birds left in Shed ${s.shedId} on ${escapeHtml(fmtShort(d))}: <strong>${left.toLocaleString()}</strong>${future?` (estimate — today's mortality plus ${shedMortRate(shed).toFixed(2)}% a day)`:''}. Change it to the kill-sheet number if it differs.`;
+  };
+  finalEl.addEventListener('change',()=>{
+    if(finalEl.checked)fillFinal();
+    else{if(s.finalAuto&&s.birdsBeforeFinal!==undefined){birdsEl.value=s.birdsBeforeFinal;refreshManualPickupCalc();}s.birdsBeforeFinal=undefined;s.finalAuto=false;if(finalHint)finalHint.innerHTML='';}
+  });
+  birdsEl.addEventListener('input',()=>{s.finalAuto=false;});
+  dateEl.addEventListener('change',()=>{if(finalEl.checked&&s.finalAuto)fillFinal();});
   refreshManualPickupCalc();refreshEst();refreshReplace();
   document.getElementById('mpSaveBtn').addEventListener('click',saveManualPickup);
   document.getElementById('mpCancelBtn').addEventListener('click',closeManualPickupModal);
@@ -886,7 +906,8 @@ function reflowShedPickups(shed){
   let finalSeen=false;
   for(const p of shed.pickups){if(p.isFinal&&!finalSeen)finalSeen=true;else if(p.isFinal&&finalSeen)p.isFinal=false;}
   const fp=shed.pickups.find(p=>p.isFinal);
-  if(fp){shed.cleanoutDate=dateOnly(fp.date);const totalPicked=shed.pickups.reduce((sum,p)=>sum+(Number(p.birds)||0),0);shed.mortality=Math.max(0,(shed.initialPopulation||0)-totalPicked);shed.mortalityUpdatedAt=dateOnly(new Date());}
+  // The final pickup sets the clean-out date. Mortality is balanced when the shed is closed (js/closeout.js).
+  if(fp){shed.cleanoutDate=dateOnly(fp.date);shed.cleanoutAuto=false;}
 }
 function deleteManualPickup(shedId,dateIso){
   if(!farmData)return;
@@ -1279,7 +1300,7 @@ function finalizeImport(mode){
     const densitySettings=(cur&&cur.densitySettings)?{...cur.densitySettings}:{useGlobal:true,maxDensity:null,triggerDensity:null,targetDensity:null};
     let mortalityUpdatedAt=(cur&&cur.mortalityUpdatedAt)?cur.mortalityUpdatedAt:null;
     if(mortality>0)mortalityUpdatedAt=dateOnly(new Date());
-    return {...inc,pickups:finalPickups,predictedPickups:predicted,targetPickups:tp,densitySettings,targetCurve:tc,cleanoutDate,mortality,mortalityUpdatedAt,mortalityRatePercent:rate,chickWeightKg:cw,inYardSamples:samples};
+    return {...inc,closed:cur&&cur.closed?cur.closed:undefined,pickups:finalPickups,predictedPickups:predicted,targetPickups:tp,densitySettings,targetCurve:tc,cleanoutDate,mortality,mortalityUpdatedAt,mortalityRatePercent:rate,chickWeightKg:cw,inYardSamples:samples};
   });
   if(!predState.batchNumber&&result.batchNumber){predState.batchNumber=sanitizeBatchNumber(result.batchNumber);savePredState();}
   farmData={batchNumber:predState.batchNumber||result.batchNumber||'',importDate:new Date().toISOString(),fileName:file.name,biasFactor:(farmData&&farmData.biasFactor)?farmData.biasFactor:DEFAULT_BIAS_FACTOR,sheds:finalSheds};
@@ -2753,6 +2774,7 @@ function refreshPickupsModal(){
     const canAdd=ps.length<MAX_PICKUPS_PER_SHED;
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
+        ${shed.closed?'<span class="cs-chip">Closed</span>':typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}" title="Enter the birds taken out and the final mortality for Shed ${shed.id}">Close shed</button>`:''}
         <button type="button" class="pk-go" data-pk-goto-shed="${shed.id}" title="Open Shed ${shed.id}'s pickup list on its shed page">Shed ${shed.id} list<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
       ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th class="num" title="Days vs the growth standard (Settings › Predictions) at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}

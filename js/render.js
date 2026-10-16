@@ -648,7 +648,7 @@ function computeFarmAlerts() {
   if (!farmData) return [];
   const today = new Date();
   const allSheds = farmData.sheds || [];
-  const alerts = [];
+  const alerts = typeof closeAlerts === 'function' ? closeAlerts() : [];
   if (notifPrefs.feedBalance) {
     // Feed is ordered about a week ahead, so warn across that horizon.
     // "Runs out" = drops below the safety stock (Adjust → Silo readings).
@@ -687,7 +687,7 @@ function computeFarmAlerts() {
   });
   if (notifPrefs.shedPerformance) {
     allSheds.forEach(shed => {
-      if (!shed.placementDate) return;
+      if (!shed.placementDate || shed.closed) return;
       const age = daysBetween(shed.placementDate, today);
       if (age < 1) return;
       const est = currentShedWeightEstimate(shed, today);
@@ -715,7 +715,7 @@ function renderAlertsPopoverBody() {
   const alerts = computeFarmAlerts();
   if (!alerts.length) return `<p style="font-size:13px;color:var(--muted);margin:0;padding:14px 16px">All systems normal — no alerts.</p>`;
   return `<div class="dash-alerts" style="padding:10px">${alerts.map(a =>
-    `<button class="dash-alert dash-alert-${a.kind}" ${a.shedId ? `data-alert-shed="${a.shedId}"` : a.feedGroup ? `data-alert-feed="${a.feedGroup}"` : `data-tab="${a.tab}"`} type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
+    `<button class="dash-alert dash-alert-${a.kind}" ${a.closeShed ? `data-alert-close="${a.closeShed}"` : a.shedId ? `data-alert-shed="${a.shedId}"` : a.feedGroup ? `data-alert-feed="${a.feedGroup}"` : `data-tab="${a.tab}"`} type="button" style="width:100%;text-align:left;border:none;cursor:pointer;font-family:inherit">
       <span class="dash-alert-dot dash-alert-dot-${a.kind}"></span><span>${a.msg}</span>
     </button>`
   ).join('')}</div>`;

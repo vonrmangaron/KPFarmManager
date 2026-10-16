@@ -60,7 +60,7 @@ function renderMortBody(){
   const firstPlaced=(farmData.sheds||[]).map(s=>s.placementDate?dateOnly(s.placementDate):null).filter(Boolean).sort((a,b)=>a-b)[0];
   const cards=[1,2,3,4].flatMap(g=>shedsForGroup(g).map(shed=>{
     const st=mortShedState(shed),raw=mortDraft[shed.id],r=mortResult(st,raw);
-    const open=st.inBatch&&!st.later;
+    const open=st.inBatch&&!st.later&&!shed.closed;   // a closed shed's mortality is final (Undo the close to change it)
     return `<div class="mort-card${open?'':' off'}${r.bad?' is-bad':''}" style="--pc:var(--pair${g})" data-mort-row="${shed.id}">
         <div class="mort-card-head"><b>Shed ${shed.id}</b><span class="mort-card-pair" title="${escapeAttr(pairLabel(g))}">${escapeHtml(pairLabel(g))}</span></div>
         <span class="mort-card-sub">${st.age!=null&&st.inBatch?`Day ${st.age} · `:''}${st.placedN.toLocaleString('en-US')} placed</span>

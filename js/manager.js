@@ -36,10 +36,10 @@ function mgrSiloOutlook(){
 }
 // Up to 4 things to do now; growth notes stay in the bell
 function mgrNeeds(silos){
-  const out=[],today=mgrToday(),hour=new Date().getHours();
+  const out=typeof closeNeeds==='function'?closeNeeds():[],today=mgrToday(),hour=new Date().getHours();
   silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
   // Mortality not entered since before yesterday (sheds that still have birds)
-  const late=mgrPlaced().filter(s=>{const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
+  const late=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
   if(late.length)out.push({tone:'warn',title:`Enter mortality for ${late.length===mgrPlaced().length?'all sheds':late.length+' shed'+(late.length===1?'':'s')}`,sub:'Not updated for 2 days or more',act:'data-mgr-mort'});
   silos.filter(x=>!x.reading||(x.readAge>0&&hour>=9)).forEach(x=>out.push({tone:'warn',title:`Read the silos for ${pairLabel(x.g)}`,sub:x.reading?`Last reading ${mgrWhen(dateOnly(x.reading.date)).toLowerCase()==='today'?'today':fmtShortNoYear(x.reading.date)}`:'No reading yet this batch',act:'data-mgr-silo'}));
   const sum=farmLoadsSummary();if(sum.needsActual>0)out.push({tone:'warn',title:`Enter docket weights for ${sum.needsActual} load${sum.needsActual===1?'':'s'}`,sub:'Delivered loads still on their planned weight',act:'data-mgr-loads'});
@@ -333,15 +333,19 @@ function pairOverviewHtml(g){
     const done=(s.pickups||[]).filter(p=>p.date&&dateOnly(p.date)<=today&&!p.weightEstimated&&Number(p.birds)>0&&Number(p.totalWeightKg)>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
     const last=done[done.length-1];
     const coming=mgrComingPickups(s);
-    const finalP=coming.length?coming[coming.length-1]:null;
+    // the last coming pickup, or the final pickup already logged once it has happened
+    const loggedFinal=(s.pickups||[]).find(p=>p.isFinal&&p.date&&dateOnly(p.date)<=today);
+    const finalP=coming.length?coming[coming.length-1]:loggedFinal?{date:dateOnly(loggedFinal.date),birds:Number(loggedFinal.birds)||0,planned:false}:null;
     const next=coming.length>1?coming[0]:null;
     const row=(k,v)=>`<div class="pair-row"><span>${k}</span><b>${v}</b></div>`;
-    return `<section class="mgr-card pair-shed">
-      <div class="pair-shed-head"><span class="mgr-title">Shed ${s.id}</span>${pairGrowthChip(s,today)}</div>
+    const closed=!!s.closed;
+    return `<section class="mgr-card pair-shed${closed?' is-closed':''}" id="pair-shed-${s.id}">
+      <div class="pair-shed-head"><span class="mgr-title">Shed ${s.id}</span>${closed?'<span class="cs-chip">Closed</span>':pairGrowthChip(s,today)}</div>
+      ${typeof closeBannerHtml==='function'?closeBannerHtml(s):''}
       <div class="pair-trio">
         <div class="pair-tile"><span>Age</span><b>${age} d</b></div>
         <div class="pair-tile"><span>Birds now</span><b>${live.toLocaleString('en-US')}</b></div>
-        <label class="pair-tile" for="ovMort_${idx}"><span>Mortality</span><input id="ovMort_${idx}" type="number" min="0" inputmode="numeric" value="${Number(s.mortality)||0}" data-shed="${idx}" data-field="mortality" aria-label="Shed ${s.id} mortality"></label>
+        ${closed?`<div class="pair-tile" title="Final mortality from closing the shed — Undo to change it"><span>Mortality</span><b>${(Number(s.mortality)||0).toLocaleString('en-US')}</b></div>`:`<label class="pair-tile" for="ovMort_${idx}"><span>Mortality</span><input id="ovMort_${idx}" type="number" min="0" inputmode="numeric" value="${Number(s.mortality)||0}" data-shed="${idx}" data-field="mortality" aria-label="Shed ${s.id} mortality"></label>`}
       </div>
       <div class="pair-rows">
         ${row('Last kill sheet',last?`${(last.totalWeightKg/last.birds).toFixed(2)} kg · ${escapeHtml(fmtShortNoYear(last.date))}, day ${pickupAge(s,last)}`:'None yet')}
