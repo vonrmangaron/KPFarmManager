@@ -1215,7 +1215,7 @@ function groupViewHtml(g){
   else if(view==='pickups'||view==='growth'||view==='setup'){const both=sheds.length>1;contentHtml=`<div class="pred-grid${both?' compare':''} pair-part-${view}">${sheds.map(s=>renderPredictionsShedCard(s,g,view)).join('')}</div>`;}
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=pairSwitchHtml(g,'sheds');
-  return groupSwitch+`<div class="pred-layout"><div class="group-view-head gvh-p${g}" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="pills"><span>Live <strong>${live.toLocaleString()}</strong></span><span class="feed-pill">Feed today <strong>${fmtFeed(feedToday)}</strong></span><span>Mort <strong>${mort.toLocaleString()}</strong> (${mortRate.toFixed(2)}%)</span><span>Picked <strong>${picked.toLocaleString()}</strong></span></div></div>${pairTabsHtml(g,view)}${contentHtml}</div>`;
+  return groupSwitch+`<div class="pred-layout"><div class="group-view-head gvh-p${g}" style="background:${grad}"><h1>${pairStepHtml(g,'shed')}${pairLabel(g)}${pairStepHtml(g,'shed',1)}</h1><div class="gvh-sum" title="Live ${live.toLocaleString()} · feed today ${escapeAttr(fmtFeed(feedToday))} · mortality ${mort.toLocaleString()} (${mortRate.toFixed(2)}%) · picked ${picked.toLocaleString()}">${escapeHtml(typeof pairSummaryLine==='function'?pairSummaryLine(g):'')}</div></div>${pairTabsHtml(g,view)}${contentHtml}</div>`;
 }
 function shedTabsHtml(g,view,sheds){
   if(sheds.length<2)return '';
