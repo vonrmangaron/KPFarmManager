@@ -131,3 +131,78 @@ document.addEventListener('click',e=>{
   const s=e.target.closest('[data-gd-shed]');if(s){const [g,id]=s.dataset.gdShed.split('|');growthDaily[g]={open:true,shed:id};render();return;}
   const c=e.target.closest('[data-gd-close]');if(c){const g=c.dataset.gdClose;if(growthDaily[g])growthDaily[g].open=false;render();}
 });
+
+// ── Setup: both sheds in one table; changes wait for Apply (like Settings) ──
+const setupDraft={};   // per pair: {"shedId|field": value}
+function suVal(g,shed,field,cur){const d=setupDraft[g];const k=shed.id+'|'+field;return d&&k in d?d[k]:cur;}
+function suChanges(g){
+  const d=setupDraft[g];if(!d)return [];
+  const out=[];Object.keys(d).forEach(k=>{const [id,f]=k.split('|');const s=farmData.sheds.find(x=>String(x.id)===id);if(!s)return;
+    const cur=suCurrent(s,f);if(String(d[k])!==String(cur))out.push({id,f,v:d[k]});});
+  return out;
+}
+function suCurrent(s,f){
+  if(f==='placementDate')return s.placementDate?iso(s.placementDate):'';
+  if(f==='cleanoutDate')return s.cleanoutDate?iso(s.cleanoutDate):'';
+  if(f==='initialPopulation')return String(s.initialPopulation||0);
+  if(f==='chickWeightGrams')return String(Math.round(shedChickWeight(s)*1000));
+  if(f==='feedAdjustPct')return s.feedAdjustPct!=null?String(s.feedAdjustPct):'';
+  if(f==='mort')return shedMortRate(s).toFixed(2);
+  return '';
+}
+const SU_LABEL={placementDate:'placement',initialPopulation:'birds placed',cleanoutDate:'clean-out',mort:'daily morts',chickWeightGrams:'chick weight',feedAdjustPct:'feed intake'};
+function setupTabHtml(g,sheds){
+  if(!sheds.length)return '<div class="empty-card">No sheds in this pair.</div>';
+  const cell=(s,f,html)=>`<td>${html}</td>`;
+  const row=(label,hint,fn)=>`<tr><th scope="row">${label}${hint?`<small>${hint}</small>`:''}</th>${sheds.map(s=>`<td data-label="Shed ${s.id}">${fn(s)}</td>`).join('')}</tr>`;
+  const v=(s,f)=>escapeAttr(suVal(g,s,f,suCurrent(s,f)));
+  const rows=row('Placement date','',s=>`<input type="date" value="${v(s,'placementDate')}" data-su="${g}|${s.id}|placementDate" aria-label="Shed ${s.id} placement date">`)
+    +row('Birds placed','',s=>`<input type="number" min="0" step="1" inputmode="numeric" value="${v(s,'initialPopulation')}" data-su="${g}|${s.id}|initialPopulation" aria-label="Shed ${s.id} birds placed">`)
+    +row('Clean-out date','',s=>`<input type="date" value="${v(s,'cleanoutDate')}" data-su="${g}|${s.id}|cleanoutDate" aria-label="Shed ${s.id} clean-out date"${finalPickupOf(s)?' title="Set from the final pickup"':''}>`)
+    +row('Daily morts',`normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%`,s=>{const m=Number(suVal(g,s,'mort',suCurrent(s,'mort')));
+      return `<div class="su-mort"><input type="range" min="0" max="1" step="0.01" value="${Math.min(1,m)}" data-su="${g}|${s.id}|mort" data-su-range aria-label="Shed ${s.id} daily morts"><input type="number" min="0" max="${MAX_MORT_RATE_PCT}" step="0.01" value="${m.toFixed(2)}" data-su="${g}|${s.id}|mort" aria-label="Shed ${s.id} daily morts, % per day"><span>% / day</span></div>`;});
+  const more=row('Chick weight','grams',s=>`<input type="number" min="30" max="80" step="0.1" value="${v(s,'chickWeightGrams')}" data-su="${g}|${s.id}|chickWeightGrams" aria-label="Shed ${s.id} chick weight in grams">`)
+    +row('Feed intake','% of Ross · empty = 100',s=>`<input type="number" min="50" max="150" step="1" value="${v(s,'feedAdjustPct')}" placeholder="100" data-su="${g}|${s.id}|feedAdjustPct" aria-label="Shed ${s.id} feed intake, % of Ross">`);
+  const ch=suChanges(g);
+  return `<section class="planner-card su-card">
+    <div class="su-scroll"><table class="su-tbl"><thead><tr><th></th>${sheds.map(s=>`<th scope="col">Shed ${s.id}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    <details class="su-more"${ch.some(c=>c.f==='chickWeightGrams'||c.f==='feedAdjustPct')?' open':''}><summary>Chick weight and feed intake</summary><div class="su-scroll"><table class="su-tbl"><tbody>${more}</tbody></table></div></details>
+    <div class="su-apply"><span>${ch.length?`<b>${ch.length} change${ch.length===1?'':'s'} not applied</b> · ${escapeHtml(ch.map(c=>`Shed ${c.id} ${SU_LABEL[c.f]||c.f}`).join(', '))}`:'No changes'}</span><button type="button" class="mgr-btn" data-su-discard="${g}" ${ch.length?'':'disabled'}>Discard</button><button type="button" class="mgr-btn primary" data-su-apply="${g}" ${ch.length?'':'disabled'}>Apply</button></div>
+  </section>`;
+}
+function suRefreshBar(g){const card=document.querySelector('.su-card');if(!card)return;const ch=suChanges(g);const bar=card.querySelector('.su-apply');if(!bar)return;
+  bar.querySelector('span').innerHTML=ch.length?`<b>${ch.length} change${ch.length===1?'':'s'} not applied</b> · ${escapeHtml(ch.map(c=>`Shed ${c.id} ${SU_LABEL[c.f]||c.f}`).join(', '))}`:'No changes';
+  bar.querySelectorAll('button').forEach(b=>b.disabled=!ch.length);}
+function suApply(g){
+  const ch=suChanges(g);if(!ch.length)return;
+  // placement first (it moves an automatic clean-out), then the rest, then a typed clean-out
+  const order=['placementDate','initialPopulation','chickWeightGrams','feedAdjustPct','cleanoutDate','mort'];
+  ch.sort((a,b)=>order.indexOf(a.f)-order.indexOf(b.f)).forEach(c=>{
+    const idx=Number(c.id)-1;
+    if(c.f==='mort')setShedMortRate(Number(c.id),Math.min(MAX_MORT_RATE_PCT,Math.max(0,Number(c.v)||0)));
+    else updateShedField(idx,c.f,c.v);
+  });
+  delete setupDraft[g];saveState();schedulePush();render();
+  showToast(`${ch.length} change${ch.length===1?'':'s'} applied — forecast updated.`);
+}
+document.addEventListener('input',e=>{
+  const t=e.target.closest&&e.target.closest('[data-su]');if(!t)return;
+  const [g,id,f]=t.dataset.su.split('|');(setupDraft[g]||(setupDraft[g]={}))[id+'|'+f]=f==='mort'?Number(t.value).toFixed(2):t.value;
+  if(f==='mort'){document.querySelectorAll(`[data-su="${g}|${id}|mort"]`).forEach(x=>{if(x!==t)x.value=x.type==='range'?Math.min(1,Number(t.value)):Number(t.value).toFixed(2);});}
+  suRefreshBar(g);
+});
+document.addEventListener('change',e=>{const t=e.target.closest&&e.target.closest('[data-su]');if(t)e.stopPropagation();},true);
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-su-apply]');if(a){suApply(a.dataset.suApply);return;}
+  const d=e.target.closest('[data-su-discard]');if(d){delete setupDraft[d.dataset.suDiscard];render();showToast('Changes discarded.');return;}
+});
+// Leaving Setup with changes not applied: ask first
+document.addEventListener('click',e=>{
+  const open=Object.keys(setupDraft).filter(g=>suChanges(g).length);if(!open.length)return;
+  if(e.target.closest('.su-card'))return;
+  const nav=e.target.closest('[data-shedview],[data-tab],[data-pw-panel],[data-pwr-farm],[data-pwr-settings],.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],[data-predgroup]');
+  if(!nav)return;
+  if(confirm('You have Setup changes that aren\'t applied yet.\n\nOK = discard them and leave. Cancel = stay and Apply.')){open.forEach(g=>delete setupDraft[g]);}
+  else{e.stopPropagation();e.preventDefault();}
+},true);
+window.addEventListener('beforeunload',e=>{if(Object.keys(setupDraft).some(g=>suChanges(g).length)){e.preventDefault();e.returnValue='';}});
