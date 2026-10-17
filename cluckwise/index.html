@@ -3397,7 +3397,7 @@
         <img class="sr-logo" src="icons/icon-192.png?v=3" alt="ProdWise">
         <button type="button" class="sr-btn sr-expand" id="srExpandBtn" title="Show sidebar" aria-label="Show sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M13 10l2 2-2 2"/></svg></button>
         <div class="sr-sep"></div>
-        <button type="button" class="sr-btn sr-new" data-rail="newbatch" title="New batch" aria-label="New batch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button type="button" class="sr-btn sr-new" data-rail="newbatch" title="New batch (opens Production)" aria-label="New batch in Production"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         <button type="button" class="sr-btn" data-rail="newaudit" title="New audit" aria-label="New audit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg></button>
         <button type="button" class="sr-batch" id="srBatchBtn" hidden></button>
         <div class="sr-sep"></div>
@@ -3466,7 +3466,7 @@
       </section>
       <div class="sb-foot" id="sbFoot">
         <button type="button" class="sb-foot-btn primary sbf-tasks" id="sbfAddTask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add task</button>
-        <button type="button" class="sb-foot-btn primary sbf-batch" id="sbfNewBatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New batch</button>
+        <button type="button" class="sb-foot-btn primary sbf-batch" id="sbfNewBatch" title="Starts the batch in Production, then Set up sheds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New batch in Production</button>
         <button type="button" class="sb-foot-btn sbf-batch" id="sbfNewAudit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg>New audit</button>
       </div>
     </aside>
@@ -5276,6 +5276,8 @@
       + `<span class="bm-preview-change">${plan.changes ? 'Saving will: ' + escapeHtml(weighSummary(plan)) : 'Checked — nothing to add, remove or clean up.'}</span>`;
   }
   function openBatchModal(b){
+    // New batches start in Production (New batch, then Set up sheds) and arrive here by themselves
+    if(!b){ closeOverlays(); openProductionSetup('newbatch'); return; }
     closeOverlays();
     batchModalEditing = b ? b.number : null;
     $('#batchModalTitle').textContent = b ? `Edit batch #${b.number}` : 'Add batch';
@@ -11431,9 +11433,10 @@
     if(changed){ persist(); renderAll(); }
   }
   // "Set up in Production": inside ProdWise, switch to Production's Set up sheds page; on its own, open ProdWise there
-  function openProductionSetup(){
-    if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'shedsetup' }, location.origin);
-    else location.href = '../#shedsetup';
+  function openProductionSetup(what){
+    const tab = what === 'newbatch' ? 'newbatch' : 'shedsetup';
+    if(CW_EMBED) parent.postMessage({ pwSection:'production', tab }, location.origin);
+    else location.href = '../#' + tab;
   }
   // Workers' Viewer never reads the ProdWise file (feed data stays with the manager).
   // This app copies just the birds now per shed onto each running batch, for the Viewer's batch page.

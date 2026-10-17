@@ -61,10 +61,15 @@ function openProductionSection(opts){
     const y=el.scrollTop,prev=last.has(el)?last.get(el):0;last.set(el,y);
     if(y>prev+4&&y>80)d.classList.add('away');else if(y<prev-4)d.classList.remove('away');
     clearTimeout(t);t=setTimeout(()=>d.classList.remove('away'),2000);},true);})();
+// Tasks can ask for a Production page: Set up sheds, or the New batch window
+function pwOpenTab(t){
+  if(t==='shedsetup'&&farmData){activeTab='shedsetup';render();}
+  else if(t==='newbatch'&&typeof openNewBatchModal==='function')openNewBatchModal();
+}
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data)return;
-  if(e.data.pwSection==='production'){openProductionSection();if(e.data.tab==='shedsetup'&&farmData){activeTab='shedsetup';render();}}
+  if(e.data.pwSection==='production'){openProductionSection();pwOpenTab(e.data.tab);}
   if(e.data.pwSection==='tasks')openTasksSection();
 });
 document.addEventListener('click',e=>{
@@ -76,5 +81,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(pwPlaceSwitches,0);
   const hdr=document.getElementById('pageHeader');if(hdr)new MutationObserver(()=>{if(!hdr.querySelector('.ws-pill'))pwPlaceSwitches();}).observe(hdr,{childList:true,subtree:true});
   if(location.hash==='#tasks')setTimeout(()=>openTasksSection({push:false}),300);
-  if(location.hash==='#shedsetup'){history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>{if(farmData){activeTab='shedsetup';render();}},300);}
+  if(location.hash==='#shedsetup'||location.hash==='#newbatch'){const t=location.hash.slice(1);history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>pwOpenTab(t),300);}
 });
