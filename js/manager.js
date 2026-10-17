@@ -38,7 +38,7 @@ function mgrSiloOutlook(){
 function mgrNeeds(silos){
   const out=typeof closeNeeds==='function'?closeNeeds():[],today=mgrToday(),hour=new Date().getHours();
   if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));   // finished pairs: no silo reminders
-  silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
+  silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${/^(today|tomorrow)$/i.test(mgrWhen(x.dep))?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
   // Mortality not entered since before yesterday (sheds that still have birds)
   const late=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
   if(late.length)out.push({tone:'warn',title:`Enter mortality for ${late.length===mgrPlaced().length?'all sheds':late.length+' shed'+(late.length===1?'':'s')}`,sub:'Not updated for 2 days or more',act:'data-mgr-mort'});
@@ -92,7 +92,7 @@ function renderHomeView(){
   const rv=(r,dp)=>r.lo.toFixed(dp)===r.hi.toFixed(dp)?r.hi.toFixed(dp):`<span>${r.lo.toFixed(dp)}</span><span><span class="mgr-ft-to">to</span>${r.hi.toFixed(dp)}</span>`;
   const rc=rng(ec&&ec.cfcr,t.cfcr),rf=rng(ec&&ec.fcr,t.fcr);
   let verdict='';
-  if(lk&&Number.isFinite(lk.cfcr)){
+  if(lk&&Number.isFinite(lk.cfcr)&&lk.cfcr>0){
     const L=lk.cfcr,near=0.005;
     const [cls,txt]=rc.hi<L-near?['good','better than last batch']
       :rc.lo>L+near?['bad','higher than last batch']
@@ -101,29 +101,33 @@ function renderHomeView(){
       :['neutral','about the same'];
     verdict=`<span class="mgr-verdict ${cls}" title="cFCR: lower is better">${txt}</span>`;
   }
-  const finish=`<section class="mgr-card mgr-finish">
-      <span class="mgr-k">Where we'll finish</span>
-      <div class="mgr-ftiles">
-        <div class="mgr-ftile main" title="Projected Cfcr2.45 at clean-out (FCR corrected to 2.45 kg)"><span class="mgr-ft-k">Cfcr2.45</span><b class="mgr-ft-v">${rv(rc,3)}</b><span class="mgr-ft-s">FCR corrected to 2.45 kg</span></div>
-        <div class="mgr-ftile" title="Projected FCR at clean-out"><span class="mgr-ft-k">FCR</span><b class="mgr-ft-v">${rv(rf,3)}</b><span class="mgr-ft-s">feed ÷ live weight</span></div>
-      </div>
-      ${lk?`<div class="mgr-lastrow"><span class="mgr-lr-k">Last batch ${escapeHtml(String(lr.batch||''))}</span><b>${lk.cfcr.toFixed(3)}</b>${verdict}</div>`:''}
-      ${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span class="mgr-ft-note">Low end if the last birds go ${PROJ_EARLY_DAYS} days early.</span>`:''}
-      <button type="button" class="mgr-link" data-tab="dashboard">Result detail: PIF, ALW, dockets &amp; leftover ›</button>
-    </section>`;
-  const birds=`<section class="mgr-card mgr-birds">
-      <span class="mgr-k">Birds</span>
-      <div class="mgr-trio">
-        <div><span class="mgr-lbl">On hand</span><b>${live.toLocaleString('en-US')}</b></div>
-        <div><span class="mgr-lbl">Picked up</span><b>${picked.toLocaleString('en-US')}</b></div>
-        <div><span class="mgr-lbl">Mortality</span><b>${placed?(mort/placed*100).toFixed(1):'0.0'}%</b></div>
-      </div>
-      <span class="mgr-sub">${mort.toLocaleString('en-US')} birds recorded · ${placed.toLocaleString('en-US')} placed</span>
-      <div class="mgr-actions"><button type="button" class="mgr-btn primary" data-mgr-mort title="Enter the total morts for every shed on one page">Enter mortality</button></div>
-    </section>`;
-  const needsHtml=`<section class="mgr-card mgr-needs${needs.some(n=>n.tone==='bad')?' bad':needs.length?' warn':''}">
+  // Top row (2026-10-17): four equal KPI tiles, then the jobs and the flock side by side
+  const lkC=lk&&Number.isFinite(lk.cfcr)&&lk.cfcr>0?lk.cfcr:null;
+  const tv=r=>r.lo.toFixed(3)===r.hi.toFixed(3)?`${r.hi.toFixed(3)}`:`${r.lo.toFixed(3)} <small>– ${r.hi.toFixed(3)}</small>`;
+  // the Cfcr2.45 range drawn on a scale around last batch
+  let rangeBar='';
+  if(lkC!=null){const lo=Math.min(rc.lo,lkC)-0.03,hi=Math.max(rc.hi,lkC)+0.03,P=v=>((v-lo)/(hi-lo)*100).toFixed(1);
+    rangeBar=`<div class="mk-range" title="Projected range ${rc.lo.toFixed(3)}–${rc.hi.toFixed(3)} · last batch ${lkC.toFixed(3)} (lower is better)"><i style="left:${P(rc.lo)}%;width:${Math.max(1.5,P(rc.hi)-P(rc.lo))}%"></i><b style="left:${P(lkC)}%"></b></div>`;}
+  const mortPct=placed?mort/placed*100:0;
+  const kpis=`<div class="mk-strip">
+      <div class="mk-tile hero" title="Projected Cfcr2.45 at clean-out (FCR corrected to 2.45 kg)"><span class="mgr-k">Cfcr2.45 · finish</span><b class="mk-v">${tv(rc)}</b>${rangeBar}
+        <span class="mk-s">${lkC!=null?`last batch ${escapeHtml(String(lr.batch||''))} · ${lkC.toFixed(3)} ${verdict}`:'FCR corrected to 2.45 kg'}</span>${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span class="mk-s faint">Low end if the last birds go ${PROJ_EARLY_DAYS} days early</span>`:''}</div>
+      <div class="mk-tile" title="Projected FCR at clean-out"><span class="mgr-k">FCR · finish</span><b class="mk-v">${tv(rf)}</b><span class="mk-s">feed ÷ live weight</span></div>
+      <div class="mk-tile"><span class="mgr-k">Birds on hand</span><b class="mk-v">${live.toLocaleString('en-US')}</b><span class="mk-s">of ${placed.toLocaleString('en-US')} placed · ${picked.toLocaleString('en-US')} picked up</span></div>
+      <div class="mk-tile"><span class="mgr-k">Mortality</span><b class="mk-v">${mortPct.toFixed(1)}%</b><span class="mk-s">${mort.toLocaleString('en-US')} birds</span><span class="mgr-verdict ${mortPct>4?'bad':'good'}" title="Livability target ≥ 96%">${mortPct>4?'above 4% target':'within 4% target'}</span></div>
+    </div>`;
+  const ACT_LABEL=[['data-mgr-loads','Feed loads'],['data-mgr-mort','Enter mortality'],['data-mgr-silo','Record reading'],['data-mgr-pickups','Pickups'],['data-close-go','Close shed'],['data-lo-go','Enter leftover'],['data-carry-use','Use it'],['data-tab="g','Open']];
+  const actLabel=a=>{const f=ACT_LABEL.find(([k])=>String(a).includes(k));return f?f[1]:'Open';};
+  const needsHtml=`<section class="mgr-card mk-needs">
       <span class="mgr-k">Needs you</span>
-      ${needs.length?needs.map(n=>`<button type="button" class="mgr-need ${n.tone}" ${n.act}><span class="mgr-need-bar"></span><span class="mgr-need-text"><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.sub)}</span></span></button>`).join(''):`<p class="mgr-none">Nothing needs you right now.</p>`}
+      ${needs.length?`<div class="mk-need-list">${needs.map(n=>`<button type="button" class="mk-need ${n.tone}" ${n.act}><span class="mk-need-tx"><b>${escapeHtml(n.title)}</b><span>${escapeHtml(n.sub)}</span></span><span class="mk-need-go${n.tone==='bad'?' primary':''}">${actLabel(n.act)}</span></button>`).join('')}</div>`:`<p class="mgr-none">Nothing needs you right now.</p>`}
+    </section>`;
+  const deadPct=placed?mort/placed*100:0,pickPct=placed?picked/placed*100:0,livePct=Math.max(0,100-deadPct-pickPct);
+  const flock=`<section class="mgr-card mk-flock">
+      <span class="mgr-k">Flock</span>
+      <div class="mk-stack" role="img" aria-label="${live.toLocaleString('en-US')} on hand, ${picked.toLocaleString('en-US')} picked up, ${mort.toLocaleString('en-US')} dead of ${placed.toLocaleString('en-US')} placed"><i class="on" style="width:${livePct.toFixed(2)}%"></i><i class="pk" style="width:${pickPct.toFixed(2)}%"></i><i class="dd" style="width:${deadPct.toFixed(2)}%"></i></div>
+      <div class="mk-lg"><div><span><i class="on"></i>On hand</span><b>${live.toLocaleString('en-US')}</b></div><div><span><i class="pk"></i>Picked up</span><b>${picked.toLocaleString('en-US')}</b></div><div><span><i class="dd"></i>Dead</span><b>${mort.toLocaleString('en-US')}</b></div></div>
+      <button type="button" class="mgr-link" data-tab="dashboard">Result detail: PIF, ALW, dockets &amp; leftover ›</button>
     </section>`;
   const siloRows=silos.map(x=>`<div class="mgr-silo"><span class="mgr-dot ${x.dep&&x.days<=3?'bad':x.dep&&x.days<=10?'warn':'ok'}"></span><span class="mgr-silo-name">${pairLabel(x.g)}</span><span class="mgr-silo-stock">${x.stock!=null?mgrT(x.stock):'—'}</span><span class="mgr-silo-when${x.dep&&x.days<=10?' low':''}">${x.dep?`${mgrWhen(x.dep)}${x.days>1?` · ${x.days} days`:''}`:'Lasts to clean-out'}</span></div>`).join('');
   const feed=`<section class="mgr-card mgr-feed">
@@ -153,7 +157,8 @@ function renderHomeView(){
   return `<div class="mgr-home">
     <div class="mgr-head"><button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · ${first>today?'starts '+escapeHtml(fmtShortNoYear(first)):'Day '+day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
     ${typeof changeoverHtml==='function'?changeoverHtml():''}
-    <div class="mgr-row3">${finish}${birds}${needsHtml}</div>
+    ${kpis}
+    <div class="mk-row">${needsHtml}${flock}</div>
     ${feed}
     <div class="mgr-row2">${shedsHtml}${weekHtml}</div>
     ${offHtml}

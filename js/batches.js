@@ -161,13 +161,17 @@ function changeoverHtml(){
   const lanes=allOpen?laneHtml.join(''):laneHtml[firstIdx];
   const outDone=pairs.filter(x=>x.o.out&&x.o.out<today).length,placed=pairs.filter(x=>x.n.place).length,total=pairs.length;
   const complete=outDone===total&&placed===total;
+  if(complete)return '';   // temporary: gone once the old batch is out of every shed and every shed is placed
   const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];
   const onNew=currentBatchKey()===nu.key;
   const btn=onNew?`<button type="button" class="mgr-btn primary" data-pw-panel-go="setup">Set placements</button>`:`<button type="button" class="mgr-btn primary" data-switch-batch="${escapeAttr(nu.key)}" title="Opens ${escapeAttr(nu.key)} — set each shed's placement on its Setup tab">Set ${escapeHtml(nu.key)} placements</button>`;
   const tPct=pct(today);
-  return `<section class="mgr-card co2-card">
+  const steps=total*2,doneSteps=outDone+placed;
+  return `<section class="mgr-card co2-card co2-tmp">
+    <div class="co2-band"><span class="co2-clock" aria-hidden="true">⏳</span><span>Temporary · shows only while ${escapeHtml(old.key)} finishes and ${escapeHtml(nu.key)} is placed</span><span class="co2-gone">Goes away when ${total} of ${total} are out and ${total} of ${total} are placed</span></div>
     <div class="co2-head"><div><b>Batch Change Over <span class="co2-status${complete?' done':''}">${complete?'Complete':'In progress'}</span></b><span>${escapeHtml(old.key)} finishing → ${escapeHtml(nu.key)} starting</span></div>
       <div class="co2-legend"><span><i class="o"></i>${escapeHtml(old.key)}</span><span><i class="g"></i>Empty</span><span><i class="n"></i>${escapeHtml(nu.key)}</span></div></div>
+    <div class="co2-prog" title="${doneSteps} of ${steps} steps: ${outDone} of ${total} sheds out, ${placed} of ${total} placed"><span class="co2-pbar"><i class="o" style="width:${(outDone/steps*100).toFixed(2)}%"></i><i class="n" style="width:${(placed/steps*100).toFixed(2)}%"></i></span><span>${doneSteps} of ${steps} steps done</span></div>
     <div class="co2-sum"><div><b>${outDone} of ${total}</b><span>sheds cleaned out</span></div><div><b>${placed} of ${total}</b><span>placed for ${escapeHtml(nu.key)}</span></div><div><b>${nextOut?escapeHtml(fmt(nextOut)):'—'}</b><span>${nextOut?(daysBetween(today,nextOut)===0?'next clean-out · today':`next clean-out · in ${daysBetween(today,nextOut)} days`):'every shed is out'}</span></div><div class="co2-act">${btn}</div></div>
     <div class="co2-gantt"><div class="co2-inner">
       <div class="co2-axis"><div class="co2-axl"></div><div class="co2-axr">${ticks}<span class="co2-today" style="left:${tPct.toFixed(2)}%">Today</span></div></div>
