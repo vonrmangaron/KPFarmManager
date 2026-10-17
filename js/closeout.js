@@ -90,8 +90,15 @@ function renderCloseShedBody(){
 function closeShedNow(){
   const st=closeShedState;if(!st)return;
   const s=farmData.sheds.find(x=>x.id===st.id);if(!s)return;
-  const n=Math.floor(Number(st.birds)),mort=Math.floor(Number(st.mort));
-  const c=closeMath(s,n,mort);if(c.newMort<0||!st.final)return;
+  if(!st.final)return;
+  const c=closeShedCore(s,Math.floor(Number(st.birds)),Math.floor(Number(st.mort)));if(!c)return;
+  saveState();schedulePush();closeCloseShedModal();render();if(typeof refreshPickupsModal==='function')refreshPickupsModal();
+  const what=c.adjust===0?'birds balance exactly':c.adjust>0?`${c.adjust.toLocaleString('en-US')} unaccounted birds added to mortality`:`mortality lowered by ${(-c.adjust).toLocaleString('en-US')}`;
+  showToast(`🏁 Shed ${s.id} closed — ${what}.`);
+}
+// Balances one shed and marks it closed (no save, no render). Null when the count can't be right.
+function closeShedCore(s,n,mort){
+  const c=closeMath(s,n,mort);if(c.newMort<0)return null;
   const out=shedOutDate(s)||dateOnly(new Date());
   let fp=finalPickupOf(s);const created=!fp;
   const rec={date:iso(out),at:Date.now(),birdsOut:n,expected:c.expected,mortRecorded:mort,adjust:c.adjust,mortBefore:Number(s.mortality)||0,
@@ -103,9 +110,7 @@ function closeShedNow(){
   }else fp.birds=n;
   s.mortality=c.newMort;s.mortalityUpdatedAt=out;s.cleanoutDate=out;s.cleanoutAuto=false;s.closed=rec;
   if(typeof reconcilePredictedPickups==='function')reconcilePredictedPickups(s);
-  saveState();schedulePush();closeCloseShedModal();render();if(typeof refreshPickupsModal==='function')refreshPickupsModal();
-  const what=c.adjust===0?'birds balance exactly':c.adjust>0?`${c.adjust.toLocaleString('en-US')} unaccounted birds added to mortality`:`mortality lowered by ${(-c.adjust).toLocaleString('en-US')}`;
-  showToast(`🏁 Shed ${s.id} closed — ${what}.`);
+  return c;
 }
 function undoCloseShed(id){
   const s=farmData&&farmData.sheds.find(x=>String(x.id)===String(id));if(!s||!s.closed)return;
@@ -144,6 +149,8 @@ function closeAlerts(){
 function closeNeeds(){
   // pairs waiting for their leftover first, then sheds to close, then the carry-over offer
   const lo=leftoverNeeds(),pairs=lo.filter(n=>n.tone==='bad'),rest=lo.filter(n=>n.tone!=='bad');
+  const many=shedsNeedingClose();
+  if(many.length>=2)return pairs.concat([{tone:'bad',title:`Close ${many.length} sheds`,sub:`Clean-outs done (Shed ${many.map(s=>s.id).join(', ')}) — confirm the birds out and close them together`,act:'data-close-all'}]).concat(rest);
   return pairs.concat(shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
     return {tone:'bad',title:`Close Shed ${s.id}`,sub:`Clean-out ${today?'today':'was '+fmtShortNoYear(d)} — enter the birds taken out`,act:`data-close-go="${s.id}"`};})).concat(rest);
 }
@@ -189,7 +196,9 @@ function pairLeftovers(){if(!predState.pairLeftover||typeof predState.pairLeftov
 function pairPlaced(g){return shedsForGroup(g).filter(s=>s.placementDate);}
 function pairAllClosed(g){const p=pairPlaced(g);return p.length>0&&p.every(shedIsClosed);}
 function pairFinished(g){return !!pairLeftovers()[g];}
-function pairNeedsLeftover(g){return pairAllClosed(g)&&!pairFinished(g);}
+// not asked when the farm's leftover was already typed in Result detail (e.g. an older batch)
+function farmLeftoverTyped(){return Number(predState.farmLeftoverKg)>0&&!predState.farmLeftoverFromPairs;}
+function pairNeedsLeftover(g){return pairAllClosed(g)&&!pairFinished(g)&&!farmLeftoverTyped();}
 function activePairs(){return [1,2,3,4].filter(g=>pairPlaced(g).length);}
 function allPairsFinished(){const a=activePairs();return a.length>0&&a.every(pairFinished);}
 function pairMissingDockets(g){return (farmLoads||[]).filter(l=>Number(l.splitKg&&l.splitKg[g])>0&&l.actualKg==null);}
@@ -300,3 +309,64 @@ document.addEventListener('input',e=>{
   const v=e.target.value;leftoverState.weighed=String(v).trim()===''?'':feedOut(v);refreshLeftoverResult();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&leftoverState)closeLeftoverModal();});
+
+// ── Close several sheds at once (e.g. a finished batch opened from the cloud) ──
+let closeAllState=null;
+function openCloseAllModal(){
+  const list=shedsNeedingClose();if(!list.length)return;
+  closeAllState={final:false,checked:false,rows:list.map(s=>{const fp=finalPickupOf(s);return {id:s.id,birds:fp?String(Number(fp.birds)||''):'',mort:String(Number(s.mortality)||0)};})};
+  let m=document.getElementById('closeAllModal');
+  if(!m){m=document.createElement('div');m.className='sync-modal';m.id='closeAllModal';
+    m.innerHTML='<div class="sync-modal-head"><h3><span>🏁</span> Close sheds</h3><button type="button" data-ca-cancel aria-label="Close">✕</button></div><div class="sync-modal-body" id="closeAllBody"></div>';
+    document.body.appendChild(m);}
+  renderCloseAllBody();m.classList.add('open');const sc=document.getElementById('syncScrim');if(sc)sc.classList.add('open');
+}
+function closeCloseAllModal(){const m=document.getElementById('closeAllModal');if(m)m.classList.remove('open');closeAllState=null;if(typeof updateScrimVisibility==='function')updateScrimVisibility();}
+function caResult(){
+  const st=closeAllState,fmt=x=>Math.round(x).toLocaleString('en-US');let bad=0,big=0,ready=0;
+  const rows=st.rows.map(r=>{const s=farmData.sheds.find(x=>x.id===r.id);const n=Number(r.birds),mo=Number(r.mort);
+    if(!(n>0)||!Number.isFinite(mo)||mo<0)return {r,txt:'<span class="set-muted">enter birds out</span>'};
+    const c=closeMath(s,n,mo);if(c.newMort<0){bad++;return {r,txt:'<span class="ca-bad">more than placed — check</span>'};}
+    if(Math.abs(c.adjust)>c.placed*0.01)big++;ready++;
+    return {r,txt:c.adjust===0?`<b>${fmt(c.newMort)}</b> <span class="set-muted">balances</span>`:`<b>${fmt(c.newMort)}</b> <span class="${Math.abs(c.adjust)>c.placed*0.01?'ca-warn':'set-muted'}">(${c.adjust>0?'+':'−'}${fmt(Math.abs(c.adjust))})</span>`};});
+  return {rows,bad,big,ok:ready===st.rows.length&&!bad&&st.final&&(!big||st.checked)};
+}
+function renderCloseAllBody(){
+  const st=closeAllState,b=document.getElementById('closeAllBody');if(!st||!b)return;
+  b.innerHTML=`<p class="lo-intro">Each shed's birds out come from its final pickup and its mortality from the latest count. Change any that differ, then close them together.</p>
+    <div class="ca-scroll"><table class="ca-tbl"><thead><tr><th>Shed</th><th>Clean-out</th><th>Birds out</th><th>Mortality</th><th>Final mortality</th></tr></thead><tbody>${st.rows.map(r=>{const s=farmData.sheds.find(x=>x.id===r.id);const d=shedOutDate(s);
+      return `<tr><td><b>${r.id}</b></td><td>${d?escapeHtml(fmtShortNoYear(d)):'—'}</td><td><input type="number" min="0" step="1" inputmode="numeric" value="${escapeAttr(r.birds)}" data-ca="${r.id}|birds" aria-label="Shed ${r.id} birds out"></td><td><input type="number" min="0" step="1" inputmode="numeric" value="${escapeAttr(r.mort)}" data-ca="${r.id}|mort" aria-label="Shed ${r.id} mortality"></td><td class="ca-res" id="caRes${r.id}"></td></tr>`;}).join('')}</tbody></table></div>
+    <label class="mp-checkbox-row"><input type="checkbox" id="caFinal" ${st.final?'checked':''}><span>These mortality numbers are final.</span></label>
+    <div id="caExtra"></div>
+    <div class="sync-actions"><button class="btn-sync-primary" id="caGo" data-ca-go disabled>Close ${st.rows.length} sheds</button><button class="btn-sync-primary ghost" data-ca-cancel>Cancel</button></div>`;
+  refreshCloseAll();
+}
+function refreshCloseAll(){
+  const st=closeAllState;if(!st)return;const r=caResult();
+  r.rows.forEach(x=>{const el=document.getElementById('caRes'+x.r.id);if(el)el.innerHTML=x.txt;});
+  const ex=document.getElementById('caExtra');
+  if(ex)ex.innerHTML=r.big&&!r.bad?`<label class="mp-checkbox-row"><input type="checkbox" id="caChecked" ${st.checked?'checked':''}><span>${r.big} shed${r.big===1?'':'s'} differ by more than 1% of the birds placed. I've checked the kill sheets and the mortality.</span></label>`:'';
+  const go=document.getElementById('caGo');if(go)go.disabled=!r.ok;
+}
+function closeAllNow(){
+  const st=closeAllState;if(!st||!caResult().ok)return;let n=0,adj=0;
+  st.rows.forEach(r=>{const s=farmData.sheds.find(x=>x.id===r.id);const c=closeShedCore(s,Math.floor(Number(r.birds)),Math.floor(Number(r.mort)));if(c){n++;adj+=c.adjust;}});
+  saveState();schedulePush();closeCloseAllModal();render();if(typeof refreshPickupsModal==='function')refreshPickupsModal();
+  showToast(`🏁 ${n} sheds closed${adj?` — mortality ${adj>0?'+':'−'}${Math.abs(adj).toLocaleString('en-US')} in total`:' — every shed balances'}.`);
+}
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.closest('[data-close-all]')){openCloseAllModal();return;}
+  if(t.closest('[data-ca-cancel]')){closeCloseAllModal();return;}
+  if(t.closest('[data-ca-go]')){closeAllNow();return;}
+});
+document.addEventListener('input',e=>{
+  if(!closeAllState)return;const a=e.target.closest&&e.target.closest('[data-ca]');if(!a)return;
+  const [id,f]=a.dataset.ca.split('|');const r=closeAllState.rows.find(x=>String(x.id)===id);if(r){r[f]=a.value;closeAllState.checked=false;refreshCloseAll();}
+});
+document.addEventListener('change',e=>{
+  if(!closeAllState)return;
+  if(e.target.id==='caFinal'){closeAllState.final=e.target.checked;refreshCloseAll();}
+  if(e.target.id==='caChecked'){closeAllState.checked=e.target.checked;refreshCloseAll();}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&closeAllState)closeCloseAllModal();});
