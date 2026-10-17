@@ -128,23 +128,59 @@ function updateRunningUI(){
 }
 // Home: each shed's changeover between the two running batches
 function changeoverHtml(){
+  // Timeline lanes (2026-10-17): each shed is a lane across the calendar — its run in the batch
+  // that's finishing, the empty days, then the batch that's starting. Today is a red line.
   const list=pwRunningList();if(list.length<2)return '';
   const old=list[0],nu=list[list.length-1],today=dateOnly(new Date());
   const ids=[...new Set(old.rows.map(r=>r.id).concat(nu.rows.map(r=>r.id)))].sort((a,b)=>Number(a)-Number(b));
-  const rows=ids.map(id=>{
-    const o=old.rows.find(r=>r.id===id)||{},n=nu.rows.find(r=>r.id===id)||{};
-    const empty=o.out&&n.place?daysBetween(o.out,n.place):null;
-    let now;
-    if(n.place&&n.place<=today)now=`<span class="co-tag nu">${escapeHtml(nu.key)} · day ${daysBetween(n.place,today)}</span>`;
-    else if(o.out&&o.out<today)now=`<span class="co-tag empty">Empty${n.place?' · in '+daysBetween(today,n.place)+' d':''}</span>`;
-    else if(o.place&&o.place<=today)now=`<span class="co-tag old">${escapeHtml(old.key)} · day ${daysBetween(o.place,today)}</span>`;
-    else now='<span class="co-tag empty">—</span>';
-    return `<tr><td><b>Shed ${escapeHtml(String(id))}</b></td><td>${pwFmt(o.out)}</td><td class="num">${empty!=null?empty+' d':'—'}</td><td>${pwFmt(n.place)}</td><td>${now}</td></tr>`;}).join('');
-  return `<section class="mgr-card co-card"><div class="co-head"><b>Shed changeover</b><span>${escapeHtml(old.key)} finishing · ${escapeHtml(nu.key)} starting — each shed belongs to one batch at a time</span></div>
-    <div class="co-scroll"><table class="co-table"><thead><tr><th>Shed</th><th>${escapeHtml(old.key)} clean-out</th><th class="num">Empty</th><th>${escapeHtml(nu.key)} placement</th><th>Today</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  const pairs=ids.map(id=>({id,o:old.rows.find(r=>r.id===id)||{},n:nu.rows.find(r=>r.id===id)||{}}));
+  // the window: a few days back, to two weeks after the last date
+  const dates=pairs.flatMap(x=>[x.o.out,x.n.place]).filter(Boolean);
+  const start=addDays(today,-5);
+  let end=addDays(dates.length?new Date(Math.max(...dates.map(d=>+d))):today,14);if(end<addDays(today,21))end=addDays(today,21);
+  const span=Math.max(1,daysBetween(start,end));
+  const pct=d=>Math.max(0,Math.min(100,daysBetween(start,dateOnly(d))/span*100));
+  const fmt=d=>dateOnly(d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  let ticks='';for(let d=new Date(start);d<=end;d=addDays(d,1)){if(d.getDay()===1)ticks+=`<span class="co2-tk" style="left:${pct(d).toFixed(2)}%">${d.getDate()} ${d.toLocaleDateString('en-GB',{month:'short'})}</span>`;}
+  const laneHtml=pairs.map(({id,o,n})=>{
+    let seg='';
+    if(o.place){const a=pct(o.place),b=o.out?pct(o.out):100,age=daysBetween(o.place,o.out&&o.out<today?o.out:today);
+      seg+=`<div class="co2-seg old" style="left:${a.toFixed(2)}%;width:${Math.max(0,b-a).toFixed(2)}%" title="${escapeAttr(old.key)}: placed ${escapeAttr(fmt(o.place))}${o.out?', clean-out '+escapeAttr(fmt(o.out)):''}"><span>${escapeHtml(old.key)} · d${age}</span></div>`;}
+    if(o.out&&n.place){const a=pct(o.out),b=pct(n.place);seg+=`<div class="co2-seg gap" style="left:${a.toFixed(2)}%;width:${Math.max(0,b-a).toFixed(2)}%" title="${daysBetween(o.out,n.place)} days empty"><span>${daysBetween(o.out,n.place)} d empty</span></div>`;}
+    if(n.place){const a=pct(n.place);seg+=`<div class="co2-seg nu" style="left:${a.toFixed(2)}%;width:${(100-a).toFixed(2)}%" title="${escapeAttr(nu.key)}: placed ${escapeAttr(fmt(n.place))}"><span>${escapeHtml(nu.key)} from ${escapeHtml(fmt(n.place))}</span></div>`;}
+    else if(o.out){const a=pct(o.out);seg+=`<div class="co2-seg ghost" style="left:${a.toFixed(2)}%;width:${Math.min(100-a,14/span*100).toFixed(2)}%"><span>${escapeHtml(nu.key)} not set</span></div>`;}
+    if(o.out)seg+=`<i class="co2-pin" style="left:${pct(o.out).toFixed(2)}%"></i>`;
+    let st='';
+    if(n.place&&n.place<=today)st=`${escapeHtml(nu.key)} · day ${daysBetween(n.place,today)}`;
+    else if(o.out&&o.out<today)st=n.place?`empty · in ${daysBetween(today,n.place)} d`:'empty';
+    else if(o.out){const k=daysBetween(today,o.out);st=`${k===0?'out today':'out in '+k+' d'} · ${escapeHtml(fmt(o.out))}`;}
+    return `<div class="co2-lane"><div class="co2-ln"><b>Shed ${escapeHtml(String(id))}</b><span>${st}</span></div><div class="co2-track">${seg}</div></div>`;});
+  const firstIdx=(()=>{let i=pairs.findIndex(x=>x.o.out&&x.o.out>=today&&!(x.n.place&&x.n.place<=today));
+    if(i<0)i=pairs.findIndex(x=>!x.n.place||x.n.place>today);return i<0?0:i;})();
+  const allOpen=!!pwCoOpen;
+  const lanes=allOpen?laneHtml.join(''):laneHtml[firstIdx];
+  const outDone=pairs.filter(x=>x.o.out&&x.o.out<today).length,placed=pairs.filter(x=>x.n.place).length,total=pairs.length;
+  const complete=outDone===total&&placed===total;
+  const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];
+  const onNew=currentBatchKey()===nu.key;
+  const btn=onNew?`<button type="button" class="mgr-btn primary" data-pw-panel-go="setup">Set placements</button>`:`<button type="button" class="mgr-btn primary" data-switch-batch="${escapeAttr(nu.key)}" title="Opens ${escapeAttr(nu.key)} — set each shed's placement on its Setup tab">Set ${escapeHtml(nu.key)} placements</button>`;
+  const tPct=pct(today);
+  return `<section class="mgr-card co2-card">
+    <div class="co2-head"><div><b>Batch Change Over <span class="co2-status${complete?' done':''}">${complete?'Complete':'In progress'}</span></b><span>${escapeHtml(old.key)} finishing → ${escapeHtml(nu.key)} starting</span></div>
+      <div class="co2-legend"><span><i class="o"></i>${escapeHtml(old.key)}</span><span><i class="g"></i>Empty</span><span><i class="n"></i>${escapeHtml(nu.key)}</span></div></div>
+    <div class="co2-sum"><div><b>${outDone} of ${total}</b><span>sheds cleaned out</span></div><div><b>${placed} of ${total}</b><span>placed for ${escapeHtml(nu.key)}</span></div><div><b>${nextOut?escapeHtml(fmt(nextOut)):'—'}</b><span>${nextOut?(daysBetween(today,nextOut)===0?'next clean-out · today':`next clean-out · in ${daysBetween(today,nextOut)} days`):'every shed is out'}</span></div><div class="co2-act">${btn}</div></div>
+    <div class="co2-gantt"><div class="co2-inner">
+      <div class="co2-axis"><div class="co2-axl"></div><div class="co2-axr">${ticks}<span class="co2-today" style="left:${tPct.toFixed(2)}%">Today</span></div></div>
+      <div class="co2-lanes">${lanes}<div class="co2-tl"><i style="left:${tPct.toFixed(2)}%"></i></div></div>
+    </div></div>
+    ${total>1?`<button type="button" class="co2-more" data-co-more aria-expanded="${allOpen}">${allOpen?'Show less':`More · all ${total} sheds`}</button>`:''}
+  </section>`;
 }
 document.addEventListener('click',e=>{
   const sw=e.target.closest('[data-switch-batch]');if(sw){e.preventDefault();switchToBatch(sw.dataset.switchBatch);}
 });
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{updateRunningUI();refreshRunningBatches(false);},1500);});
 window.addEventListener('online',()=>refreshRunningBatches(false));
+
+let pwCoOpen=false;   // Batch Change Over: all sheds shown, or just the first one
+document.addEventListener('click',e=>{if(e.target.closest('[data-pw-panel-go="setup"]')){gotoPair(1,'setup');return;}if(e.target.closest('[data-co-more]')){pwCoOpen=!pwCoOpen;render();}});
