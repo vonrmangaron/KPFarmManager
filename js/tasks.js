@@ -60,7 +60,7 @@ function openProductionSection(opts){
   document.addEventListener('scroll',e=>{const el=e.target===document?document.scrollingElement:e.target;const d=document.getElementById('pwDock');if(!d||!el||typeof el.scrollTop!=='number')return;
     const y=el.scrollTop,prev=last.has(el)?last.get(el):0;last.set(el,y);
     if(y>prev+4&&y>80)d.classList.add('away');else if(y<prev-4)d.classList.remove('away');
-    clearTimeout(t);t=setTimeout(()=>d.classList.remove('away'),900);},true);})();
+    clearTimeout(t);t=setTimeout(()=>d.classList.remove('away'),2000);},true);})();
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data)return;
