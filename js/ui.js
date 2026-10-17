@@ -458,12 +458,15 @@ async function handleConnectFarm(farmName){
   try{
     const isSwitch=!!syncFarmName&&syncFarmName!==clean;
     if(isSwitch&&syncConnectedAt&&pushPending){try{await runScheduledPush();}catch(e){}}
+    pwConnectingFarm=clean;
     const listing=await listFarmBatches(clean);
+    pwConnectingFarm=null;
+    if(!listing.ok&&listing.reason==='http-401'){farmKeyConnectPrompt(clean);return;}
     if(!listing.ok){showToast(listing.reason==='timeout'?'⏱️ Cloud did not respond — check your connection and try again.':'Could not reach the cloud — check your connection.',true);return;}
     if(listing.files.length===0){showCreateFarmForm(clean);return;}
     if(listing.files.length===1){await loadFarmBatchFromCloud(clean,listing.files[0].batchKey);return;}
     syncFarmName=clean;closeSettingsDrawer();openFarmBatchPickerModal(clean,listing.files);
-  }finally{if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
+  }finally{pwConnectingFarm=null;if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
 }
 // A farm that isn't in the cloud yet: name its manager, then start the first batch
 function showCreateFarmForm(clean){

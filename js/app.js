@@ -429,11 +429,13 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
 
 // ── Passwords: ProdWise signs in once with the manager password (see js/farmkey.js, js/account.js) ──
 let pwFarmKeyInfo=null;
+// Set while Connect is reaching a farm this device isn't on yet, so its key goes with those requests
+let pwConnectingFarm=null;
 function installFarmKey(){
   if(!window.FarmKey)return;
-  FarmKey.install({server:SYNC_WORKER_URL,urls:()=>[SYNC_WORKER_URL],farm:()=>syncFarmName,role:'manager',
+  FarmKey.install({server:SYNC_WORKER_URL,urls:()=>[SYNC_WORKER_URL],farm:()=>pwConnectingFarm||syncFarmName,role:'manager',
     text:k=>({wrong:'Incorrect password.',left:'{n} attempts remaining.',left1:'1 attempt remaining.',wait:'Too many incorrect attempts. Please try again in {m} minutes.',wait1:'Too many incorrect attempts. Please try again in 1 minute.',noSetup:'Passwords are not enabled for this farm.',offline:'Unable to connect. Check your connection and try again.'})[k],
-    onRefused:j=>farmKeyPrompt(j)});
+    onRefused:j=>{if(!pwConnectingFarm)farmKeyPrompt(j);}});
 }
 function farmKeyPrompt(j){
   if(!syncFarmName||!window.FarmKey)return;
@@ -441,6 +443,13 @@ function farmKeyPrompt(j){
     text:j&&j.needKey?'This farm is locked. Enter the manager password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the manager password to sync again.':'This farm now uses passwords. Enter the manager password once on this device.',
     label:'Manager password',button:'Sign in',later:j?null:'Later',
     onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}if(activeTab==='account'&&typeof accLoad==='function')accLoad();pullFromCloud(true).catch(()=>{});return null;}});
+}
+// Connect on a new device to a locked farm: sign in with the manager password, then connect.
+function farmKeyConnectPrompt(farm){
+  if(!window.FarmKey)return;
+  FarmKey.prompt({title:`Sign in to ${farm}`,text:'This farm is locked. Enter the manager password to connect this device.',
+    label:'Manager password',button:'Sign in',later:'Cancel',
+    onSubmit:async pw=>{pwConnectingFarm=farm;let e;try{e=await FarmKey.signIn(farm,pw,'ProdWise');}finally{pwConnectingFarm=null;}if(e)return e;showToast('Signed in. Connecting…');setTimeout(()=>handleConnectFarm(farm),0);return null;}});
 }
 // Once a day: if the farm uses passwords and this device isn't signed in yet, ask (with "Later").
 async function farmKeyCheck(){
