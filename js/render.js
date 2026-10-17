@@ -1326,10 +1326,16 @@ function siloLevelCardHtml(g){
   // each day from today on. A new reading or open/closed change shows the reading.
   const rows=[{...plan.start,isReading:true,key:'r'+iso(plan.start.date)}];
   plan.days.forEach(r=>{if(dateOnly(r.date)>=today&&!(iso(r.date)===iso(plan.start.date)&&!readingIsMorning(plan.reading)))rows.push({...r,key:iso(r.date)});});
+  // The days before it: was a reading taken that day? (a read day shows the silos as read; a missed day is just marked)
+  const startD=dateOnly(plan.start.date),past=[];
+  for(let k=4;k>=1;k--){const d=addDays(startD,-k);const r=readingOnDate(g,iso(d));
+    if(r){const kg=[ringsToKg(r.silo1Rings),ringsToKg(r.silo2Rings),ringsToKg(r.silo3Rings)];past.push({date:d,kg,total:kg[0]+kg[1]+kg[2],isReading:true,isPast:true,reading:r,open:[],del:[],key:'p'+iso(d)});}
+    else past.push({date:d,missing:true,kg:[0,0,0],total:0,key:'m'+iso(d)});}
+  rows.unshift(...past);
   const readToday=iso(plan.start.date)===iso(today);
   const want=siloLevelSel[g]||(readToday?'r'+iso(today):iso(today));
   let sel=rows.findIndex(r=>r.key===want);
-  if(sel<0)sel=rows.findIndex(r=>r.key===iso(today));if(sel<0)sel=0;
+  if(sel<0||rows[sel].missing)sel=rows.findIndex(r=>r.key===iso(today));if(sel<0)sel=rows.findIndex(r=>!r.missing);if(sel<0)sel=0;
   const cur=rows[sel];
   const nextEat=d=>{const n=groupDailyFeedOn(shedsForGroup(g),addDays(d,1));return n>0?n:null;};
   const statusOf=r=>{const ne=nextEat(r.date);if(r.total<=0.5&&ne)return 'empty';if(ne&&r.total<ne*siloSafetyDays())return 'low';return 'ok';};
@@ -1358,11 +1364,14 @@ function siloLevelCardHtml(g){
     if(cur.short>0.5)info.push(['Short',fmtFeed(cur.short,0)]);
   }
   const warns=(cur.overflow||[]).map(o=>`<div class="sl-warn">Silo ${siloNumber(g,o.silo)} overflows by ${fmtFeed(o.kg,0)} — the rest goes into another silo. Pick a silo with room on that load.</div>`).join('');
-  const strip=rows.map((r,i)=>{const s=statusOf(r);const on=i===sel;
-    const tag=r.isReading?'Reading':s==='empty'?'Empty':(r.sw||[]).length?'Open S'+siloNumber(g,r.sw[r.sw.length-1]):(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>siloNumber(g,d.silo)))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
-    const tone=r.isReading?'muted':s!=='ok'?'bad':(r.sw||[]).length?'amber':(r.del||[]).length?'ok':'amber';
-    return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.key}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}${r.isReading&&plan.reading.at?' · '+fmtClock(plan.reading.at):''}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
-  return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?`your reading · ${fmtShortNoYear(cur.date)}${plan.reading.at?' '+fmtClock(plan.reading.at):''}`:'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
+  const rtime=r=>{const x=r.isPast?r.reading:plan.reading;return x&&x.time==='pm'?'PM':'AM';};
+  const strip=rows.map((r,i)=>{
+    if(r.missing)return `<div class="sl-day sl-miss" title="No silo reading on ${escapeAttr(fmtShortNoYear(r.date))} — the forecast filled the gap"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}</span><span class="sl-t">—</span><span class="sl-tag sl-tone-none">No reading</span></div>`;
+    const s=statusOf(r);const on=i===sel;
+    const tag=r.isReading?'Read '+rtime(r):s==='empty'?'Empty':(r.sw||[]).length?'Open S'+siloNumber(g,r.sw[r.sw.length-1]):(r.del||[]).length?'+'+fmtFeedCompact(r.del.reduce((a,d)=>a+d.kg,0))+' → S'+[...new Set(r.del.map(d=>siloNumber(g,d.silo)))].join('+'):s==='low'?'Low':iso(r.date)===iso(today)?'Today':'';
+    const tone=r.isReading?'read':s!=='ok'?'bad':(r.sw||[]).length?'amber':(r.del||[]).length?'ok':'amber';
+    return `<button type="button" class="sl-day${on?' on':''}${s!=='ok'&&!r.isReading?' bad':''}" data-sl-day="${g}|${r.key}" aria-pressed="${on}"><span class="sl-d">${dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'})}${r.isReading&&!r.isPast&&plan.reading.at?' · '+fmtClock(plan.reading.at):''}</span><span class="sl-t">${fmtFeedCompact(r.total)}</span><span class="sl-bar"><span style="width:${Math.min(100,Math.round(r.total/(SILO_CAP_KG*3)*100))}%"></span></span><span class="sl-tag sl-tone-${tone}">${tag||'&nbsp;'}</span></button>`;}).join('');
+  return `<div class="planner-card sl-card"><h3>Silo level <span class="count">${cur.isReading?`your reading · ${fmtShortNoYear(cur.date)}${!cur.isPast&&plan.reading.at?' '+fmtClock(plan.reading.at):''}`:'end of '+fmtShortNoYear(cur.date)} · tap a day</span></h3>
     <div class="sl-main"><div class="sl-silos">${silos}</div>
       <div class="sl-side"><div class="sl-total">${fmtFeed(cur.total,0)}</div><span class="sl-chip sl-chip-${chip[0]}">${chip[1]}</span>
         <dl class="sl-info">${info.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${warns}</div></div>
@@ -1458,20 +1467,47 @@ function renderFeedPlanner(group,sheds,today){
   const leftoverStr=leftoverOk?(leftover.balance>=0?`${fmtFeed(leftover.balance,1)} left at clean-out`:`short ${fmtFeed(leftover.short,1)} to clean-out`):'—';
   const tpCount=testPickupCountForGroup(group);
   const headerActionsHtml=`<span style="margin-left:auto; display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">${tpCount?`<button class="btn-clear-tests" data-tp-clear="${group}" type="button" title="Remove all test pickups for these sheds">🧹 Clear test pickup${tpCount===1?'':'s'} (${tpCount})</button>`:''}${hasTests?`<button class="btn-clear-tests" data-clear-tests="${group}" type="button" title="Remove all test deliveries for this group">🧹 Clear test deliver${testCount===1?'y':'ies'} (${testCount})</button>`:''}<span class="forecast-leftover-chip${leftoverOk?(leftover.balance<0?' short':''):' muted'}" title="${leftoverOk?`With expected pickups: ${leftover.balance>=0?fmtFeed(leftover.balance,1)+' left at clean-out':'short '+fmtFeed(leftover.short,1)} · if no more pickups: short ${fmtFeed(leftover.safeShort,1)}`:'No clean-out date'}">🧺 ${leftoverStr}</span></span>`;
-  return `<div class="planner-wrap">
-    ${siloSettingsBarHtml()}
-    <div class="planner-summary">
-      <div class="summary-card"><div class="sc-label">Projected Stock Today</div><div class="sc-value amber">${hasReading?fmtFeed(projected):'—'}</div><div class="sc-sub">${hasReading?`Expected at end of today${siloConfidence()<1?` · planning with ${Math.round(siloConfidence()*100)}% of your reading`:''}`:'Tap ring levels below to record stock'}</div></div>
-      <div class="summary-card"><div class="sc-label">${depletedWithinWindow?(siloSafetyDays()>0?'Below Safety Stock':'Depletes On'):'Feed Lasts'}</div><div class="sc-value ${statusTone}">${depletedWithinWindow?fmtShort(forecast.depletedDate):(hasReading?`> ${siloRange.end} days`:'—')}</div><div class="sc-sub">${depletedWithinWindow?`${daysUntilDepletion} day${daysUntilDepletion===1?'':'s'} from now${siloSafetyDays()>0?` · keeps ${siloSafetyDays()} day${siloSafetyDays()===1?'':'s'} of feed`:''}`:(hasReading?`Balance at end: ${fmtFeed(forecast.endBalance)}`:'')}</div></div>
-      <div class="summary-card"><div class="sc-label">Status</div><div class="sc-value ${statusTone}">${statusText}</div><div class="sc-sub">${statusSub}</div></div>
-      <div class="summary-card"><div class="sc-label">${forecast.shortfall>0?'Shortfall':'Coverage'}</div><div class="sc-value ${forecast.shortfall>0?'red':'green'}">${forecast.shortfall>0?fmtFeed(forecast.shortfall):'✅ Covered'}</div><div class="sc-sub">${forecast.shortfall>0?'Consumption exceeds supply over range':`Range consumption: ${fmtFeed(forecast.totalConsumption)}`}</div></div>
-    </div>
-    ${hasReading?`<div class="reading-info"><div class="ri-item"><span class="ri-label">Last reading:</span><span class="ri-value">${fmtShort(latestDate)}${latest&&latest.at?` ${fmtClock(latest.at)}`:''} · ${readingAgeBadge}</span></div><div class="ri-item"><span class="ri-label">Consumed since:</span><span class="ri-value red">−${fmtFeed(consumedSince)}</span></div>${deliveredSince>0?`<div class="ri-item"><span class="ri-label">Delivered since:</span><span class="ri-value">+${fmtFeed(deliveredSince)}</span></div>`:''}<div class="ri-item"><span class="ri-label">Projected today:</span><span class="ri-value amber">${fmtFeed(projected)}</span></div></div>`:''}
-    <div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span>${readTimeToggleHtml()}</h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?fmtFeed(readingTotalKg(latest)):'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div>
-    ${siloLevelCardHtml(group)}
-    <div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div>
-    ${rangeBarHtml(siloRange,'silo')}
-    <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div>
+  // Feed & silo (2026-10-17 redesign): the answer and the silos in one card, the next 7 days,
+  // the coming loads; the full table, every load, the ring entry and settings one tap away.
+  const fo=fsPanel[group]||{};
+  const eatToday=groupDailyFeedOn(sheds,today);
+  const nextLoad=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[group])>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date))[0];
+  const lateBy=nextLoad&&forecast.depletedDate&&dateOnly(nextLoad.date)>dateOnly(forecast.depletedDate)?daysBetween(dateOnly(forecast.depletedDate),dateOnly(nextLoad.date)):0;
+  const whenWord=d=>{const n=daysBetween(today,dateOnly(d));return n===0?'Today':n===1?'Tomorrow':fmtShortNoYear(d);};
+  let ansK='Feed',ansB='No silo reading yet',ansTone='amber';
+  if(hasReading&&depletedWithinWindow){ansK=siloSafetyDays()>0?'Feed runs low':'Feed runs out';ansB=`${whenWord(forecast.depletedDate)}${daysUntilDepletion>1?` · in ${daysUntilDepletion} days`:''}`;ansTone=daysUntilDepletion<=2?'red':daysUntilDepletion<=7?'amber':'ink';}
+  else if(hasReading){ansK='Feed lasts';ansB=leftoverOk&&leftover.balance>=0?`To clean-out · ${fmtFeed(leftover.balance,1)} left`:`Past ${fmtShortNoYear(addDays(today,siloRange.end))}`;ansTone='green';}
+  const subParts=[];
+  if(hasReading)subParts.push(`${fmtFeed(readingTotalKg(latest),0)} in the silos — read ${daysSinceReading===0?'today':daysSinceReading===1?'yesterday':fmtShortNoYear(latestDate)}${latest&&latest.at?' '+fmtClock(latest.at):''}`);
+  else subParts.push('Record the rings so the app can tell how long the feed lasts');
+  if(eatToday>0)subParts.push(`the pair eats about ${fmtFeed(eatToday,1)} a day`);
+  subParts.push(nextLoad?`next load ${fmtShortNoYear(nextLoad.date)}, ${fmtFeed(Number(nextLoad.splitKg[group])||0,1)}${lateBy>0?` — ${lateBy} day${lateBy===1?'':'s'} late`:''}`:'no load booked');
+  // the next 7 days, four columns
+  const wk=computeSiloForecast(group,{start:0,end:6});
+  const wkRows=wk.rows.map(r=>{const lv=r.level||'ok';const pct=r.balance!=null?Math.max(0,Math.min(100,Math.round(r.balance/(SILO_CAP_KG*3)*100))):0;
+    const pk=r.pickupsBirds>0?`<span class="fs2-pick">−${r.pickupsBirds.toLocaleString('en-US')}${shedsForGroup(group).some(s=>s.cleanoutDate&&iso(s.cleanoutDate)===iso(r.date))?' · clean-out':''}</span>`:'—';
+    return `<tr${r.isToday?' class="today"':''}><td>${r.isToday?'Today':escapeHtml(dateOnly(r.date).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit'}))}</td><td>${r.delivery>0?`<span class="fs2-in">+${fmtFeed(r.delivery,1)}</span>`:'—'}</td><td>${pk}</td><td class="r fb-balance-${lv}">${r.balance!=null?fmtFeed(r.balance,1):'—'}</td><td class="fs2-barc"><span class="fs2-bar"><i class="fs2-${lv}" style="width:${pct}%"></i></span></td></tr>`;}).join('');
+  const coming=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[group])>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+  const comingHtml=coming.slice(0,3).map(l=>`<div class="fs2-load"><span class="d">${escapeHtml(fmtShortNoYear(l.date))}</span><span class="t">${escapeHtml(l.feedType?feedTypeLabel(l.feedType):'Feed')}${l.actualKg!=null?' · delivered':''}</span><b>${fmtFeed(Number(l.splitKg[group])||0,1)}</b></div>`).join('')||'<p class="fs2-none">No loads booked for this pair.</p>';
+  const tog=(k,lbl,openLbl)=>`<button type="button" class="fs2-more${fo[k]?' open':''}" data-fs-toggle="${k}|${group}" aria-expanded="${!!fo[k]}">${fo[k]?openLbl:lbl}</button>`;
+  return `<div class="planner-wrap fs2">
+    <section class="planner-card fs2-main">
+      <div class="fs2-ans"><div class="fs2-ans-tx"><span class="fs2-k">${ansK}</span><b class="fs2-big fs2-${ansTone}">${escapeHtml(ansB)}</b><span class="fs2-sub">${escapeHtml(subParts.join(' · '))}</span></div>
+        <div class="fs2-acts"><button type="button" class="mgr-btn primary" data-fs-toggle="record|${group}" aria-expanded="${!!fo.record}">${fo.record?'Done recording':'Record reading'}</button><button type="button" class="mgr-btn" data-mgr-loads>Add a load</button><button type="button" class="mgr-link" data-fs-test="${group}">Test a delivery</button></div></div>
+      ${fo.record?`<div class="fs2-record"><div class="planner-card"><h3>📦 Current Silo Stock <span class="count">Tap a ring to record today's reading. Tap the same ring again to turn silo off.</span>${readTimeToggleHtml()}</h3><div class="silo-inputs">${[1,2,3].map(n=>renderSiloInput(group,n,latest?latest[`silo${n}Rings`]:null)).join('')}</div><div class="silo-grand-total"><span class="lbl">Reading Total</span><span class="val">${hasReading?fmtFeed(readingTotalKg(latest)):'—'}<span style="font-size:13px;color:var(--muted);font-weight:600;">${hasReading?`(on ${fmtShortNoYear(latestDate)})`:''}</span></span></div>${renderReadingHistory(group)}</div></div>`:''}
+      <div class="fs2-silos">${siloLevelCardHtml(group)}</div>
+    </section>
+    <section class="planner-card fs2-week"><h3>Next 7 days</h3>
+      <table class="fs2-tbl"><thead><tr><th>Day</th><th>Feed in</th><th>Pickup</th><th class="r">Feed left</th><th></th></tr></thead><tbody>${wkRows}</tbody></table>
+      ${tog('table','Show 14 or 21 days, every column ›','Hide the full table')}
+      ${fo.table?`<div class="fs2-full" id="fsFull-${group}">${rangeBarHtml(siloRange,'silo')}
+    <div class="planner-card" id="feedForecast-${group}"><h3>📈 Feed Balance Forecast <span class="count">${rangeLabel(siloRange)} · weekends shaded</span>${headerActionsHtml}</h3>${renderSiloForecastTable(forecast,group)}<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">💡 Click any future weekday row to plan a load — <strong>🚜 Test</strong> (hypothetical, session only) or <strong>✅ Order</strong> (creates an official order). Rows with a load already scheduled show a small <strong>✎</strong> button to edit it. Rows with a silo reading show a <strong>📖 Reading</strong> badge — click it to delete that reading.</div></div></div>`:''}
+    </section>
+    <section class="planner-card fs2-loads"><h3>Coming loads for ${escapeHtml(pairLabel(group))}</h3><div class="fs2-loadlist">${comingHtml}</div>
+      ${tog('loads','All loads this batch and the feed summary ›','Hide all loads')}
+      ${fo.loads?`<div class="fs2-allloads"><div class="planner-card"><button type="button" class="planner-card-toggle ${deliveriesOpen?'open':''}" data-toggle-deliveries="${group}" aria-expanded="${deliveriesOpen?'true':'false'}"><h3>🚛 Loads affecting ${pairLabel(group)} ${renderDeliveriesSummary(group)}</h3><span class="collapse-caret">▾</span></button><div class="planner-card-body ${deliveriesOpen?'':'collapsed'}">${renderGroupLoadsCard(group)}${renderFeedSummary(group)}</div></div></div>`:''}
+    </section>
+    <details class="fs2-settings"><summary>Forecast settings</summary>${siloSettingsBarHtml()}</details>
   </div>`;
 }
 // The forecast table can be wider than its (scrolling) wrapper — e.g. the
@@ -2353,3 +2389,14 @@ function viewDockHtml(rail){
     <button type="button" class="vdock-toggle" id="vdockToggle" aria-expanded="${viewDockOpen}" aria-label="Views and adjustments — now: ${escapeAttr(actLbl)}" title="Views and adjustments"><svg class="vd-open" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg><svg class="vd-close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>`;
 }
+
+// Feed & silo: which folded parts are open, per pair
+const fsPanel={};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-fs-toggle]');
+  if(t){const [k,g]=t.dataset.fsToggle.split('|');const o=fsPanel[g]||(fsPanel[g]={});o[k]=!o[k];render();
+    if(o[k]&&k==='table')requestAnimationFrame(()=>document.getElementById('fsFull-'+g)?.scrollIntoView({block:'start',behavior:'smooth'}));return;}
+  const tt=e.target.closest('[data-fs-test]');
+  if(tt){const g=tt.dataset.fsTest;const o=fsPanel[g]||(fsPanel[g]={});o.table=true;render();showToast('Tap a future weekday in the table to plan a test delivery.');
+    requestAnimationFrame(()=>document.getElementById('fsFull-'+g)?.scrollIntoView({block:'start',behavior:'smooth'}));}
+});
