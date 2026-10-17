@@ -3277,6 +3277,8 @@
   .ws-sw button.on{ background:#F0A21A; color:#16191B; }
   .ws-sw button:focus-visible, .ws-pill button:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
   .ws-pill{ display:none; }
+  .cw-embed-only{ display:none !important; }
+  body.cw-embed .cw-embed-only{ display:inline-flex !important; }
   @media (max-width:760px){
     .topbar .brand{ display:none !important; }
     .ws-pill{ display:inline-flex; background:rgba(22,25,27,.07); border-radius:999px; padding:3px; gap:2px; flex-shrink:0; }
@@ -3314,6 +3316,7 @@
     <button class="btn-app" id="retryLoadBtn" style="width:auto;padding:10px 20px;">Retry</button>
     <button class="btn-app" id="openSettingsFromErrorBtn" style="width:auto;padding:10px 20px;background:var(--surface-soft);color:var(--ink);border:1px solid var(--line);">Open Settings</button>
   </div>
+  <button type="button" class="btn-app cw-embed-only" data-ws="production" style="width:auto;padding:10px 20px;background:none;color:var(--ink);border:1px solid var(--line);">← Back to Production</button>
 </div>
 
 <div class="shell">
@@ -12849,7 +12852,10 @@
   if(CW_EMBED) document.body.classList.add('cw-embed');
   // Inside ProdWise on a device where Tasks was never connected: use ProdWise's farm (same farm
   // folder in the cloud), so Tasks opens on the farm you're already in.
-  if(CW_EMBED){ try{ const pf = parent.syncFarmName; if(pf && !localStorage.getItem('prodplan-gh-farmname')) localStorage.setItem('prodplan-gh-farmname', pf); }catch(e){} }
+  if(CW_EMBED){ try{
+    const pf = new URLSearchParams(location.search).get('farm'), cur = localStorage.getItem('prodplan-gh-farmname');
+    if(pf && (!cur || sanitizeFarmFileName(cur) !== sanitizeFarmFileName(pf))) localStorage.setItem('prodplan-gh-farmname', pf);
+  }catch(e){} }
   document.addEventListener('click', e=>{
     const b = e.target.closest('[data-ws]'); if(!b) return;
     e.preventDefault();

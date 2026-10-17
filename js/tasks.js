@@ -3,6 +3,7 @@
 // instant and Tasks opens where you left it. A Production / Tasks switch sits under the logo on the
 // rail (computer) and at the top of the page (phone); CluckWise shows the same switch on its side and
 // asks for Production through postMessage. Same site, so both share the manager sign-in key.
+// Tasks always opens on ProdWise's farm (?farm= in the frame's address).
 // The phone's back button returns to Production. The old CluckWise link still works on its own.
 let pwSection='production',cwFrame=null,pwTasksPushed=false;
 const PW_SW_ICON={production:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>',
@@ -22,11 +23,13 @@ function pwPlaceSwitches(){
 }
 function openTasksSection(opts){
   opts=opts||{};
+  // Tasks opens on ProdWise's farm (sent in the address); connecting or changing farm here reloads it
+  const farm=syncFarmName||'';
   if(!cwFrame){
     cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';
-    cwFrame.src=CLUCKWISE_URL+'index.html?embed=1';
     document.body.appendChild(cwFrame);
   }
+  if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
   pwSection='tasks';document.body.classList.add('pw-in-tasks');
   if(opts.push!==false&&location.hash!=='#tasks'){history.pushState({pwSection:'tasks'},'','#tasks');pwTasksPushed=true;}
   pwSyncSwitch();
