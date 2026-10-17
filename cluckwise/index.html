@@ -3269,7 +3269,15 @@
   .kanban-canvas.show-fade-left .kanban-board{ -webkit-mask-image:linear-gradient(90deg,transparent,#000 44px); mask-image:linear-gradient(90deg,transparent,#000 44px); }
   .kanban-canvas.show-fade-left.show-fade-right .kanban-board{ -webkit-mask-image:linear-gradient(90deg,transparent,#000 44px,#000 calc(100% - 44px),transparent); mask-image:linear-gradient(90deg,transparent,#000 44px,#000 calc(100% - 44px),transparent); }
 
-  /* One app: Production / Tasks switch (same look as ProdWise's) */
+  /* One app: Production / Tasks switch (same look as ProdWise's). Computer: floating pill bottom-right, left of the round menu button */
+  .ws-dock{position:fixed;right:96px;bottom:29px;z-index:44;display:none;gap:4px;padding:5px;border-radius:999px;background:rgba(22,25,27,.84);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 12px 32px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .25s ease,opacity .25s ease}
+  .ws-dock.away{transform:translateY(90px);opacity:0;pointer-events:none}
+  .ws-dock button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;font:700 13.5px Inter,system-ui,sans-serif;color:#C9CED2;transition:background .15s ease,color .15s ease}
+  .ws-dock button svg{width:17px;height:17px}
+  .ws-dock button:hover{color:#fff;background:rgba(255,255,255,.08)}
+  .ws-dock button.on{background:#fff;color:#16191B}
+  .ws-dock button:focus-visible{outline:2px solid #F0A21A;outline-offset:2px}
+  @media (min-width:761px){.ws-dock{display:flex}}
   .ws-sw{ display:flex; flex-direction:column; gap:4px; width:74px; margin:0 auto 12px; padding:4px; border-radius:12px; background:rgba(255,255,255,.08); box-sizing:border-box; flex-shrink:0; }
   .ws-sw button{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0 6px; border-radius:9px; font:700 10px Inter,system-ui,sans-serif; letter-spacing:-.1px; color:#9AA3AB; text-align:center; }
   .ws-sw button svg{ width:20px; height:20px; }
@@ -3322,7 +3330,6 @@
 <div class="shell">
   <nav class="app-rail" id="appRail" aria-label="Main">
     <img class="ar-logo" src="icons/icon-192.png?v=3" alt="ProdWise">
-    <div class="ws-sw" role="group" aria-label="Section"><button type="button" data-ws="production" aria-pressed="false" title="Production: sheds, feed and pickups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Production</span></button><button type="button" data-ws="tasks" class="on" aria-pressed="true" title="Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Tasks</span></button></div>
     <button type="button" class="ar-btn active" data-ar="tasks" title="Planner: calendar, list and board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg><span>Planner</span></button>
     <button type="button" class="ar-btn" data-ar="batch" title="Batches and audits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><span>Batch</span></button>
     <button type="button" class="ar-btn" data-ar="maint" title="Maintenance: problems reported on the farm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Maintenance</span><b class="ar-badge" id="arMaintBadge" hidden></b></button>
@@ -3479,6 +3486,7 @@
   <button id="navMoreBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Menu</button>
 </nav>
 
+<div class="ws-dock" id="cwDock" role="group" aria-label="Section"><button type="button" data-ws="production" aria-pressed="false" title="Production: sheds, feed and pickups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Production</span></button><button type="button" data-ws="tasks" class="on" aria-pressed="true" title="Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Tasks</span></button></div>
 <div class="fab-dock" id="fabDock">
   <div class="fab-items" id="fabItems">
     <button class="fab-add" data-label="Add tasks" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
@@ -12863,6 +12871,12 @@
     if(CW_EMBED) parent.postMessage({ pwSection:'production' }, location.origin);
     else location.href = '../';
   });
+  // the floating pill slides away while a page scrolls down, back on the way up or when it stops
+  (function(){ const last = new WeakMap(); let t = null;
+    document.addEventListener('scroll', e=>{ const el = e.target === document ? document.scrollingElement : e.target; const d = document.getElementById('cwDock'); if(!d || !el || typeof el.scrollTop !== 'number') return;
+      const y = el.scrollTop, prev = last.has(el) ? last.get(el) : 0; last.set(el, y);
+      if(y > prev + 4 && y > 80) d.classList.add('away'); else if(y < prev - 4) d.classList.remove('away');
+      clearTimeout(t); t = setTimeout(()=> d.classList.remove('away'), 900); }, true); })();
   load();
 })();
 </script>

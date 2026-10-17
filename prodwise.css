@@ -5372,6 +5372,16 @@ body.theme-dark .co2-pin{border-left-color:#FFC56B}
 #closeAllModal .ca-tbl td:nth-child(2){white-space:nowrap}
 
 /* ── One app: Production / Tasks switch, and Tasks (CluckWise) in a frame over the page (2026-10-17) ── */
+/* Computer: a floating pill bottom-right (mockup 8tyvGmGFrLEjPNDNqkotjx, H1), level with Tasks' round menu button */
+.ws-dock{position:fixed;right:96px;bottom:29px;z-index:4000;display:none;gap:4px;padding:5px;border-radius:999px;background:rgba(22,25,27,.84);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 12px 32px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .25s ease,opacity .25s ease}
+.ws-dock.away{transform:translateY(90px);opacity:0;pointer-events:none}
+.ws-dock button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;font:700 13.5px Inter,system-ui,sans-serif;color:#C9CED2;transition:background .15s ease,color .15s ease}
+.ws-dock button svg{width:17px;height:17px}
+.ws-dock button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.ws-dock button.on{background:#fff;color:#16191B}
+.ws-dock button:focus-visible{outline:2px solid #F0A21A;outline-offset:2px}
+@media (min-width:769px){.ws-dock{display:flex}}
+
 /* A page in a frame isn't told about the phone's status bar and home-indicator strip (env() is 0 there),
    so the frame sits inside them and the two strips are painted to match Tasks' header and bottom bar */
 #cwFrame{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);width:100%;height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border:0;z-index:5000;display:none;background:#16191B}
