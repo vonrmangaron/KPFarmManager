@@ -63,7 +63,7 @@ function renderShedSetupPage(){
     </section>
     <div class="ss-tw"><table class="ss-tbl"><thead><tr><th>Shed</th><th>Placement</th><th>Birds placed</th><th>DOC weight</th><th>Clean-out</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody><tfoot><tr class="ss-foot">${ssFootHtml(t)}</tr></tfoot></table></div>
-    <div class="su-apply ss-apply"><span>${ssApplyText(ch)}</span><button type="button" class="mgr-btn" data-su-discard="${SS_G}"${ch.length?'':' disabled'}>Discard</button><button type="button" class="mgr-btn primary" data-su-apply="${SS_G}"${ch.length?'':' disabled'}>Apply</button></div>
+    <div class="su-apply ss-apply"${ch.length?'':' hidden'}><span>${ssApplyText(ch)}</span><button type="button" class="mgr-btn" data-su-discard="${SS_G}"${ch.length?'':' disabled'}>Discard</button><button type="button" class="mgr-btn primary" data-su-apply="${SS_G}"${ch.length?'':' disabled'}>Apply</button></div>
     <p class="ss-note">Daily morts and feed intake are on each pair's Setup tab.</p>
   </div></div>`;
 }
@@ -79,7 +79,8 @@ function ssRefreshRow(id){
   tr.querySelectorAll('[data-su]').forEach(inp=>{const f=inp.dataset.su.split('|')[2];inp.classList.toggle('changed',ssDraftHas(s,f)&&String(setupDraft[SS_G][s.id+'|'+f])!==String(suCurrent(s,f)));});
   const t=ssTotals();const ft=document.querySelector('.ss-page .ss-foot');if(ft)ft.innerHTML=ssFootHtml(t);
   const cp=document.querySelector('.ss-page .ss-chips');if(cp)cp.innerHTML=ssChipsHtml(t);
-  const ab=document.querySelector('.ss-page .ss-apply span');if(ab)ab.innerHTML=ssApplyText(suChanges(SS_G));
+  // the Apply bar only shows while there's something to apply (it would cover the last sheds)
+  const bar=document.querySelector('.ss-page .ss-apply');if(bar){const ch=suChanges(SS_G);bar.hidden=!ch.length;bar.querySelector('span').innerHTML=ssApplyText(ch);}
 }
 document.addEventListener('input',e=>{
   const t=e.target.closest&&e.target.closest('.ss-page [data-su]');if(t){ssRefreshRow(t.dataset.su.split('|')[1]);return;}
