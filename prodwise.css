@@ -5417,3 +5417,75 @@ body.theme-dark .ws-pill button.on{background:#F0A21A;color:#16191B}
   /* a tool page (Feed loads, Pickups…) has its own header on a phone: the page header stays hidden */
   body.tool-open #pageHeader{display:none}
 }
+
+/* ── Set up sheds: every shed on one page (2026-10-18) ── */
+.ss-page{display:flex;flex-direction:column;gap:14px;max-width:1100px}
+.ss-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ss-chips{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
+.ss-chip{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;font:700 12px Inter,system-ui,sans-serif;background:var(--surface);border:1px solid var(--line);color:var(--ink-2,var(--muted))}
+.ss-chip.ok{background:#DFF4EF;border-color:#BFE5DC;color:#0F7A67}
+.ss-chip.wait{background:#FFF3DC;border-color:#EFC77C;color:#8A5300}
+.ss-page .su-card{display:flex;flex-direction:column;gap:14px;background:none;border:0;padding:0;box-shadow:none}
+.ss-fill{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ss-k{width:100%;font:800 10.5px Inter,system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.ss-f{display:flex;flex-direction:column;gap:4px;font:600 12px Inter,system-ui,sans-serif;color:var(--muted)}
+.ss-f input,.ss-f select{height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:0 10px;font:600 14px Inter,system-ui,sans-serif;min-width:130px}
+.ss-fbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.ss-tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.ss-tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;min-width:820px}
+.ss-tbl th{font:800 10.5px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-soft);white-space:nowrap}
+.ss-tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ss-tbl tbody tr:last-child td{border-bottom:0}
+.ss-tbl tfoot td{background:var(--surface-soft);font-weight:800;border-top:1px solid var(--line);border-bottom:0}
+.ss-sh b{font:800 14px Sora,sans-serif;color:var(--ink)}.ss-sh small{display:block;font-size:11.5px;color:var(--muted)}
+.ss-tbl input{height:36px;width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);padding:0 10px;font:600 14px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;box-sizing:border-box}
+.ss-tbl input.changed{border-color:var(--primary);background:#FFF3DC}
+body.theme-dark .ss-tbl input.changed{background:rgba(240,162,26,.16)}
+.ss-unit{display:flex;align-items:center;gap:6px}.ss-unit span{color:var(--muted);font-weight:700}
+.ss-co{display:flex;align-items:center;gap:8px}
+.ss-co.auto input{border-style:dashed;background:var(--surface-soft)}
+.ss-co.typed input{border-color:var(--primary);}
+.ss-tag{flex-shrink:0;font:800 10px Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:999px;white-space:nowrap}
+.ss-tag.auto{background:#DFF4EF;color:#0F7A67}
+.ss-tag.fin{background:var(--surface-soft);color:var(--muted)}
+button.ss-tag.typed{border:1px solid var(--line);background:var(--surface);color:#2F6BD8;cursor:pointer}
+.ss-st{font:700 12.5px Inter,system-ui,sans-serif;white-space:nowrap}.ss-st.ok{color:#0F7A67}.ss-st.miss{color:#C2410C}
+.ss-apply{position:sticky;bottom:12px;z-index:5;background:#16191B;color:#fff;border-radius:10px;padding:10px 12px;border-top:0;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.ss-apply span{flex:1;font-size:13.5px;min-width:200px}.ss-apply span b{color:#FFC812}
+.ss-note{margin:0;font-size:12.5px;color:var(--muted)}
+@media (max-width:768px){
+  .ss-fbtns{margin-left:0;width:100%}.ss-fbtns .mgr-btn{flex:1}
+  .ss-f{flex:1 1 140px}.ss-f input,.ss-f select{min-width:0;width:100%}
+  .ss-tw{background:none;border:0;overflow:visible}
+  .ss-tbl{min-width:0;display:block}
+  .ss-tbl thead{display:none}
+  .ss-tbl tbody,.ss-tbl tfoot{display:flex;flex-direction:column;gap:10px}
+  .ss-tbl tr{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .ss-tbl td{padding:0;border:0!important;background:none!important}
+  .ss-tbl td[data-label]::before{content:attr(data-label);display:block;font:600 11px Inter,system-ui,sans-serif;color:var(--muted);margin-bottom:3px}
+  .ss-tbl .ss-sh{grid-column:1;display:flex;align-items:baseline;gap:8px}.ss-tbl .ss-sh small{display:inline}
+  .ss-tbl .ss-stc{grid-column:2;grid-row:1;justify-self:end;align-self:center}
+  .ss-tbl tfoot tr{background:var(--surface-soft);font-weight:800}
+  .ss-co{flex-wrap:wrap;gap:4px}
+  .ss-apply{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+}
+.ss-sh{white-space:nowrap;min-width:110px}
+.ss-apply em{font-style:normal;color:#C9CED2}
+.ss-apply .mgr-btn{min-height:36px;height:36px;padding:0 16px}
+.ss-apply .mgr-btn:not(.primary){background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.ss-apply .mgr-btn.primary{background:#F0A21A;color:#16191B;border-color:#F0A21A}
+.ss-apply .mgr-btn:disabled{opacity:.45}
+@media (max-width:768px){
+  .ss-apply{flex-wrap:nowrap;gap:8px;padding:8px 10px}
+  .ss-apply span{min-width:0;font-size:13px;line-height:1.3}
+  .ss-apply em{display:none}
+  .ss-apply .mgr-btn{flex:0 0 auto;padding:0 12px}
+}
+/* Computer: the floating Production | Tasks pill and the gear sit bottom-right — Apply bars stop above them,
+   and tool pages (their own buttons along the bottom) hide the pill while open */
+@media (min-width:769px){
+  .set-apply,.ss-apply{bottom:88px}
+  body.tool-open #pwDock{display:none}
+}
+.ss-page .ss-apply .mgr-btn.primary{background:#F0A21A;color:#16191B;border-color:#F0A21A}
+.ss-page .ss-apply .mgr-btn.primary:disabled{background:transparent;color:#9AA3AB;border-color:rgba(255,255,255,.25)}

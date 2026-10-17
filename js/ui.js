@@ -652,7 +652,7 @@ async function startNewBatch(cleanBatchNumber,opts){
     await pushToCloud();
   }else{closeNewBatchModal();renderSettingsDrawerBody();render();}
   if(opts.openFilePicker){showToast(`✅ Batch "${clean}" started — pick the Excel file now.`);setTimeout(()=>triggerImport(),220);}
-  else showToast(`✅ Batch "${clean}" started with default sheds.`);
+  else{showToast(`✅ Batch "${clean}" started — set up its sheds.`);activeTab='shedsetup';render();}
   if(archived){scheduleHistoryPush();}
   if(archived)setTimeout(()=>showToast(`📚 Last batch saved to Farm history — FCR ${historyKpis(archived).fcr.toFixed(3)}, ${archived.avgAge.toFixed(1)} d.`),2600);
   if(opts.alongside)setTimeout(()=>showToast(`Batch ${prevKey} keeps running alongside ${clean} — switch from Batch Details.`),2600);

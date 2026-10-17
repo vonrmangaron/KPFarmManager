@@ -38,6 +38,9 @@ function mgrSiloOutlook(){
 function mgrNeeds(silos){
   const out=typeof closeNeeds==='function'?closeNeeds():[],today=mgrToday(),hour=new Date().getHours();
   if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));   // finished pairs: no silo reminders
+  // Sheds with no placement date or no birds yet: one row to the Set up sheds page
+  const unset=farmData?farmData.sheds.filter(s=>!s.placementDate||!(Number(s.initialPopulation)>0)):[];
+  if(unset.length)out.push({tone:'warn',title:`Set up ${unset.length===farmData.sheds.length?'the sheds':unset.length+' shed'+(unset.length===1?'':'s')}`,sub:'Placement date and birds placed still missing',act:'data-tab="shedsetup"'});
   silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${/^(today|tomorrow)$/i.test(mgrWhen(x.dep))?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
   // Mortality not entered since before yesterday (sheds that still have birds)
   const late=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
@@ -116,7 +119,7 @@ function renderHomeView(){
       <div class="mk-tile"><span class="mgr-k">Birds on hand</span><b class="mk-v">${live.toLocaleString('en-US')}</b><span class="mk-s">of ${placed.toLocaleString('en-US')} placed · ${picked.toLocaleString('en-US')} picked up</span></div>
       <div class="mk-tile"><span class="mgr-k">Mortality</span><b class="mk-v">${mortPct.toFixed(1)}%</b><span class="mk-s">${mort.toLocaleString('en-US')} birds</span><span class="mgr-verdict ${mortPct>4?'bad':'good'}" title="Livability target ≥ 96%">${mortPct>4?'above 4% target':'within 4% target'}</span></div>
     </div>`;
-  const ACT_LABEL=[['data-mgr-loads','Feed loads'],['data-mgr-mort','Enter mortality'],['data-mgr-silo','Record reading'],['data-mgr-pickups','Pickups'],['data-close-go','Close shed'],['data-lo-go','Enter leftover'],['data-carry-use','Use it'],['data-tab="g','Open']];
+  const ACT_LABEL=[['data-mgr-loads','Feed loads'],['data-mgr-mort','Enter mortality'],['data-mgr-silo','Record reading'],['data-mgr-pickups','Pickups'],['data-close-go','Close shed'],['data-lo-go','Enter leftover'],['data-carry-use','Use it'],['data-tab="shedsetup"','Set up'],['data-tab="g','Open']];
   const actLabel=a=>{const f=ACT_LABEL.find(([k])=>String(a).includes(k));return f?f[1]:'Open';};
   const needsHtml=`<section class="mgr-card mk-needs">
       <span class="mgr-k">Needs you</span>
@@ -482,7 +485,8 @@ function renderPwBatchPanel(){
   const onHome=activeTab==='home'&&!toolPageOpen;
   el.innerHTML=card+`<div class="pwb-links">
     <button type="button" class="sb-link${onHome?' active':''}" data-tab="home">${navIcon('home')}<span class="sb-link-label">Home</span></button>
-    <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button></div>
+    <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button>
+    <button type="button" class="sb-link${activeTab==='shedsetup'?' active':''}" data-tab="shedsetup">${navIcon('shed')}<span class="sb-link-label">Set up sheds</span></button></div>
     <button type="button" class="pwb-new" data-pwb-newbatch>${navIcon('refresh')}<span>New batch</span></button>`;
 }
 function buildPwRail(){

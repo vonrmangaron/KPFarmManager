@@ -415,6 +415,7 @@ function renderMoreSheet() {
         ${row('moreMort', 'mortality', 'Mortality', 'Total morts for every shed, one page')}
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
+        ${row('moreShedSetup', 'shed', 'Set up sheds', 'Placement, birds and DOC weight')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
         ${row('moreCluckwise', 'cluckwise', 'Tasks', 'Planner, maintenance, routine and guide')}
       </div>
@@ -469,7 +470,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { home:'Home', history:'History', farmsettings:'Settings', account:'Account', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', shedsetup:'Set up sheds', history:'History', farmsettings:'Settings', account:'Account', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   // Desktop tool pages use this same header (their own window title bar is hidden)
   const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;
@@ -1147,6 +1148,7 @@ function render(){
       if(feedCompareState.modalOpen){feedCompareState.modalOpen=false;const cm=document.getElementById('compareFeedModal');if(cm)cm.classList.remove('open');}
     }
     else if(activeTab==='home'){app.innerHTML=renderHomeView();}
+    else if(activeTab==='shedsetup'){app.innerHTML=renderShedSetupPage();}
     else if(activeTab==='farmsettings'){app.innerHTML=renderSettingsPage();afterSettingsRender();}
     else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
     else if(activeTab==='predictions'){activeTab='g'+(predState.predGroup||1);app.innerHTML=groupViewHtml(predState.predGroup||1);}

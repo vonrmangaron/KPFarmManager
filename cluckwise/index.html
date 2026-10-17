@@ -3296,6 +3296,13 @@
     body.theme-dark .ws-pill{ background:rgba(255,255,255,.08); }
     body.theme-dark .ws-pill button.on{ background:#F0A21A; color:#16191B; }
   }
+  /* Batch window: dates from Production are locked */
+  .bm-prod-note{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; margin:4px 0 8px; border-radius:10px; background:var(--primary-soft); border:1px solid var(--line); font-size:13px; color:var(--ink); }
+  .bm-prod-note[hidden]{ display:none; }
+  .bm-prod-note span{ flex:1; min-width:200px; }
+  .bm-prod-note .btn-app{ width:auto; padding:8px 14px; font-size:13px; }
+  .bm-locked #shedInputsContainer input, .bm-locked #batchStartInput, .bm-locked #batchEndInput{ opacity:.65; }
+  .bm-locked .bm-stepper button, .bm-locked .bm-stepper input, .bm-locked .bm-copy-cleanout{ opacity:.4; pointer-events:none; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4788,7 +4795,7 @@
       // Local edits survived the merge -> push them back up.
       if(weighFix.changes || stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
       saveLocalCache(pushPending);
-      setTimeout(()=>{ runArchive(); loadArchives(); refreshWorkerBirdCounts(); }, 1500);
+      setTimeout(()=>{ runArchive(); loadArchives(); refreshWorkerBirdCounts(); syncBatchesFromProduction(); }, 1500);
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
       migrateMaintV2();
@@ -5290,6 +5297,16 @@
     $('#shedCountInput').value = sheds.length || '';
     $('#batchLegacyNote').hidden = !legacy;
     renderShedInputs(sheds.length, sheds);
+    // Dates of a batch from Production are set up there (one place to type them)
+    const locked = !!(b && b.fromProd);
+    let note = $('#batchProdNote');
+    if(!note){ note = document.createElement('div'); note.id = 'batchProdNote'; note.className = 'bm-prod-note';
+      note.innerHTML = '<span>🔒 Placement and clean-out come from <b>Production</b>. Set them up there; this batch updates by itself.</span><button type="button" class="btn-app bm-prod-go">Set up in Production ›</button>';
+      $('#shedInputsContainer').before(note); note.querySelector('.bm-prod-go').addEventListener('click', ()=>{ closeOverlays(); openProductionSetup(); }); }
+    note.hidden = !locked;
+    ['#batchStartInput','#batchEndInput','#shedCountInput','#shedMinusBtn','#shedPlusBtn'].forEach(sel=>{ const el = $(sel); if(el) el.disabled = locked; });
+    document.querySelectorAll('#shedInputsContainer input, #shedInputsContainer button').forEach(el=> el.disabled = locked);
+    $('#batchModal').classList.toggle('bm-locked', locked);
     openDrawer('#batchModal');
   }
   function addTask(name, icon, dateVal, meta){
@@ -11369,6 +11386,54 @@
   async function biLoadBirds(no){
     const d = await biLoadFeedData(no);
     return d ? biBirdStats(d.farmData.sheds, dateKey(new Date())) : null;
+  }
+  // ---------- Batches come from Production (2026-10-18, mockup W6Mc6gUctANk3MGnAg1taF) ----------
+  // Sheds are set up in ProdWise (Set up sheds). This copies each shed's placement and clean-out onto
+  // the batch here, and adds a batch started in ProdWise. Production wins for the sheds it has set up;
+  // a shed only typed here stays. Weigh-ins are re-checked like a saved batch. Audits, colour and the
+  // checklist are still edited here. The batch window locks the dates of a batch marked fromProd.
+  let prodSyncAt = 0;
+  async function syncBatchesFromProduction(force){
+    if(!ghPath || !navigator.onLine) return;
+    if(!force && Date.now() - prodSyncAt < 5 * 60 * 1000) return;
+    prodSyncAt = Date.now();
+    const slug = sanitizeFarmFileName(ghFarmName || '').replace(/\.json$/, '');
+    if(!slug || slug === 'farm') return;
+    let keys = [];
+    try{
+      const res = await fetch(`${WORKER_URL}/?repo=${encodeURIComponent(HARDCODED_REPO)}&prefix=${encodeURIComponent(slug + '-feed')}`, { cache:'no-store' });
+      if(res.ok){ const j = await res.json(); const re = new RegExp('^' + slug + '-feed-(.+)\\.json$');
+        keys = (j.files || []).map(f=> { const m = re.exec(f.name || ''); return m && !/-file$/.test(m[1]) ? m[1] : null; }).filter(Boolean); }
+    }catch(e){ return; }
+    const num = k=> parseFloat(String(k).replace(/[^0-9.]/g, ''));
+    keys.sort((a,b)=> (num(b) - num(a)) || String(b).localeCompare(String(a)));
+    const today = dateKey(new Date());
+    let changed = 0;
+    for(const key of keys.slice(0, 4)){
+      biFeedCache.delete(String(key));
+      const d = await biLoadFeedData(key); if(!d || !d.farmData) continue;
+      const prod = (d.farmData.sheds || []).filter(s=> s.placementDate).map(s=>{
+        const placement = dateKey(new Date(s.placementDate));
+        return { shed: String(s.id), placement, cleanout: s.cleanoutDate ? dateKey(new Date(s.cleanoutDate)) : addDaysStr(placement, 52) };
+      });
+      if(!prod.length) continue;
+      const existing = batches.find(b=> String(b.number).toLowerCase() === String(key).toLowerCase());
+      const oldSheds = existing ? (existing.sheds || []).map(sh=> ({ ...sh })) : null;
+      const keep = (existing && existing.sheds || []).filter(sh=> !prod.some(p=> p.shed === String(sh.shed)));
+      const sheds = prod.concat(keep).sort((a,b)=> String(a.shed).localeCompare(String(b.shed), undefined, { numeric:true }));
+      const start = sheds.map(s=> s.placement).sort()[0], end = sheds.map(s=> s.cleanout || s.placement).sort().pop();
+      if(existing && existing.fromProd && existing.start === start && existing.end === end && stableStr(existing.sheds || []) === stableStr(sheds)) continue;
+      const b = upsertBatch(existing ? existing.number : String(key), start, end, existing ? existing.color : undefined);
+      b.sheds = sheds; b.fromProd = true;
+      recheckWeighIns({ full:true, batchNumber: b.number, oldSheds, fromDate: today }, `Batch #${b.number} from Production`);
+      changed++;
+    }
+    if(changed){ persist(); renderAll(); }
+  }
+  // "Set up in Production": inside ProdWise, switch to Production's Set up sheds page; on its own, open ProdWise there
+  function openProductionSetup(){
+    if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'shedsetup' }, location.origin);
+    else location.href = '../#shedsetup';
   }
   // Workers' Viewer never reads the ProdWise file (feed data stays with the manager).
   // This app copies just the birds now per shed onto each running batch, for the Viewer's batch page.

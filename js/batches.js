@@ -164,7 +164,7 @@ function changeoverHtml(){
   if(complete)return '';   // temporary: gone once the old batch is out of every shed and every shed is placed
   const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];
   const onNew=currentBatchKey()===nu.key;
-  const btn=onNew?`<button type="button" class="mgr-btn primary" data-pw-panel-go="setup">Set placements</button>`:`<button type="button" class="mgr-btn primary" data-switch-batch="${escapeAttr(nu.key)}" title="Opens ${escapeAttr(nu.key)} — set each shed's placement on its Setup tab">Set ${escapeHtml(nu.key)} placements</button>`;
+  const btn=onNew?`<button type="button" class="mgr-btn primary" data-tab="shedsetup">Set up sheds</button>`:`<button type="button" class="mgr-btn primary" data-switch-batch="${escapeAttr(nu.key)}" data-then-tab="shedsetup" title="Opens ${escapeAttr(nu.key)} and its Set up sheds page">Set up ${escapeHtml(nu.key)} sheds</button>`;
   const tPct=pct(today);
   const steps=total*2,doneSteps=outDone+placed;
   return `<section class="mgr-card co2-card co2-tmp">
@@ -181,7 +181,7 @@ function changeoverHtml(){
   </section>`;
 }
 document.addEventListener('click',e=>{
-  const sw=e.target.closest('[data-switch-batch]');if(sw){e.preventDefault();switchToBatch(sw.dataset.switchBatch);}
+  const sw=e.target.closest('[data-switch-batch]');if(sw){e.preventDefault();const then=sw.dataset.thenTab;Promise.resolve(switchToBatch(sw.dataset.switchBatch)).then(()=>{if(then){activeTab=then;render();}});}
 });
 document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{updateRunningUI();refreshRunningBatches(false);},1500);});
 window.addEventListener('online',()=>refreshRunningBatches(false));

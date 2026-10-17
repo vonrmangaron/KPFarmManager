@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>openTasksSection(),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
+      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreShedSetup:()=>{activeTab='shedsetup';render();},moreCluckwise:()=>openTasksSection(),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}

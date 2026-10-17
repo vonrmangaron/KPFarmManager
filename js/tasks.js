@@ -64,7 +64,7 @@ function openProductionSection(opts){
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data)return;
-  if(e.data.pwSection==='production')openProductionSection();
+  if(e.data.pwSection==='production'){openProductionSection();if(e.data.tab==='shedsetup'&&farmData){activeTab='shedsetup';render();}}
   if(e.data.pwSection==='tasks')openTasksSection();
 });
 document.addEventListener('click',e=>{
@@ -76,4 +76,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(pwPlaceSwitches,0);
   const hdr=document.getElementById('pageHeader');if(hdr)new MutationObserver(()=>{if(!hdr.querySelector('.ws-pill'))pwPlaceSwitches();}).observe(hdr,{childList:true,subtree:true});
   if(location.hash==='#tasks')setTimeout(()=>openTasksSection({push:false}),300);
+  if(location.hash==='#shedsetup'){history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>{if(farmData){activeTab='shedsetup';render();}},300);}
 });

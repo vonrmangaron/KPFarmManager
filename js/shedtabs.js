@@ -145,7 +145,7 @@ function suCurrent(s,f){
   if(f==='placementDate')return s.placementDate?iso(s.placementDate):'';
   if(f==='cleanoutDate')return s.cleanoutDate?iso(s.cleanoutDate):'';
   if(f==='initialPopulation')return String(s.initialPopulation||0);
-  if(f==='chickWeightGrams')return String(Math.round(shedChickWeight(s)*1000));
+  if(f==='chickWeightGrams')return String(Math.round(shedChickWeight(s)*10000)/10);
   if(f==='feedAdjustPct')return s.feedAdjustPct!=null?String(s.feedAdjustPct):'';
   if(f==='mort')return shedMortRate(s).toFixed(2);
   return '';
