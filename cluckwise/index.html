@@ -2370,6 +2370,31 @@
   .g-check p{ margin:0 0 10px; font-size:14px; line-height:1.5; color:var(--ink); }
   .g-check p b{ color:var(--muted); font-weight:800; }
   @media (max-width:420px){ .g-grid{ grid-template-columns:1fr 1fr; gap:8px; } .g-card{ padding:10px; } .g-card-b{ font-size:13px; } .g-big{ font-size:26px; } }
+  /* Guide drawings + Ross 308 standards (2026-10-17) */
+  .g-grid .g-drink, .g-grid .g-feed{ grid-column:1 / -1; }
+  .g-drink .g-svg, .g-feed .g-svg{ max-width:440px; margin-inline:auto; }
+  .g-svg{ max-height:none; }
+  .g-spread{ max-height:120px; }
+  .g-stat{ display:flex; align-items:center; gap:12px; }
+  .g-mini{ width:44px; height:auto; flex-shrink:0; }
+  .g-light .g-mini{ width:58px; }
+  .g-wa .g-mini{ width:40px; }
+  .g-sub{ font-size:12.5px; line-height:1.4; color:var(--muted); }
+  .g-sub b{ color:var(--ink); font-weight:700; }
+  .g-std{ display:flex; flex-direction:column; gap:10px; }
+  .g-chart{ width:100%; height:auto; display:block; color:var(--ink); }
+  .g-ax{ font:600 10px Inter, system-ui, sans-serif; fill:var(--muted); }
+  .g-ax-b{ fill:var(--ink); font-weight:800; }
+  .g-cap{ font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .g-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .g-chips span{ font-size:12.5px; font-weight:700; padding:5px 10px; border-radius:999px; background:var(--surface-soft); border:1px solid var(--line); color:var(--ink); }
+  .g-tbl{ width:100%; border-collapse:collapse; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  .g-tbl th{ text-align:right; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); padding:4px 6px; border-bottom:1px solid var(--line); }
+  .g-tbl td{ text-align:right; padding:7px 6px; border-bottom:1px solid var(--line); color:var(--ink); }
+  .g-tbl th:first-child, .g-tbl td:first-child{ text-align:left; }
+  .g-tbl td:last-child{ font-weight:800; color:#2F7FD0; }
+  .g-tbl tfoot td{ border-bottom:none; font-weight:800; }
+  .g-hint-in{ margin:0; }
 
   #guideModal{ width:640px; }
   #guideModal .form-modal-body{ gap:0; }
@@ -11466,6 +11491,23 @@
       g_signs:'Tanda', g_do:'Yang dilakukan', g_note:'Target ditetapkan oleh manajer kandang.'
     }
   };
+  // Ross 308 standards cards (2026-10-17)
+  Object.assign(GUIDE_TEXT.en, { g_std:'Ross 308 standard · day {n}', g_wt_t:'Target weight', g_wt_u:'per bird', g_wt_gain:'+{g} g a day', g_wt_at:'Day {d}: {kg} kg',
+    g_fd_t:'Feed per bird', g_fd_u:'per bird a day', g_fd_sofar:'Eaten so far: {kg} kg', g_fd_next:'Next 7 days · grams per bird',
+    g_wa_t:'Water per bird', g_wa_u:'per bird a day', g_wa_r:'About {r}× the feed — up to double on hot days.', g_wa_sh:'Shed', g_wa_b:'Birds', g_wa_l:'Litres a day', g_wa_all:'All sheds',
+    g_wa_none:'Litres per shed show here once bird numbers come through from ProdWise.', g_std_note:'Ross 308 as-hatched standard. Your flock can sit a little above or below it.' });
+  Object.assign(GUIDE_TEXT.es, { g_std:'Estándar Ross 308 · día {n}', g_wt_t:'Peso objetivo', g_wt_u:'por ave', g_wt_gain:'+{g} g al día', g_wt_at:'Día {d}: {kg} kg',
+    g_fd_t:'Alimento por ave', g_fd_u:'por ave al día', g_fd_sofar:'Comido hasta hoy: {kg} kg', g_fd_next:'Próximos 7 días · gramos por ave',
+    g_wa_t:'Agua por ave', g_wa_u:'por ave al día', g_wa_r:'Unas {r} veces el alimento — hasta el doble en días calurosos.', g_wa_sh:'Galpón', g_wa_b:'Aves', g_wa_l:'Litros al día', g_wa_all:'Todos',
+    g_wa_none:'Los litros por galpón aparecen cuando llegan las cifras de aves desde ProdWise.', g_std_note:'Estándar Ross 308 mixto. Tu lote puede estar un poco por encima o por debajo.' });
+  Object.assign(GUIDE_TEXT.tl, { g_std:'Pamantayan ng Ross 308 · araw {n}', g_wt_t:'Target na timbang', g_wt_u:'bawat ibon', g_wt_gain:'+{g} g bawat araw', g_wt_at:'Araw {d}: {kg} kg',
+    g_fd_t:'Pakain bawat ibon', g_fd_u:'bawat ibon bawat araw', g_fd_sofar:'Nakain na: {kg} kg', g_fd_next:'Susunod na 7 araw · gramo bawat ibon',
+    g_wa_t:'Tubig bawat ibon', g_wa_u:'bawat ibon bawat araw', g_wa_r:'Mga {r} beses ng pakain — hanggang doble kapag mainit.', g_wa_sh:'Kulungan', g_wa_b:'Ibon', g_wa_l:'Litro bawat araw', g_wa_all:'Lahat',
+    g_wa_none:'Lalabas dito ang litro bawat kulungan kapag dumating ang bilang ng ibon mula sa ProdWise.', g_std_note:'Pamantayan ng Ross 308 (halo). Puwedeng bahagyang mas mataas o mababa ang inyong ibon.' });
+  Object.assign(GUIDE_TEXT.id, { g_std:'Standar Ross 308 · hari {n}', g_wt_t:'Target bobot', g_wt_u:'per ekor', g_wt_gain:'+{g} g per hari', g_wt_at:'Hari {d}: {kg} kg',
+    g_fd_t:'Pakan per ekor', g_fd_u:'per ekor per hari', g_fd_sofar:'Sudah dimakan: {kg} kg', g_fd_next:'7 hari ke depan · gram per ekor',
+    g_wa_t:'Air per ekor', g_wa_u:'per ekor per hari', g_wa_r:'Sekitar {r}× pakan — bisa dua kali lipat saat panas.', g_wa_sh:'Kandang', g_wa_b:'Ayam', g_wa_l:'Liter per hari', g_wa_all:'Semua',
+    g_wa_none:'Liter per kandang muncul di sini setelah jumlah ayam masuk dari ProdWise.', g_std_note:'Standar Ross 308 campuran. Ayam Anda bisa sedikit di atas atau di bawahnya.' });
   function guideT(lang, key, vars){
     const s = (GUIDE_TEXT[lang] && GUIDE_TEXT[lang][key]) || GUIDE_TEXT.en[key] || key;
     return Object.keys(vars || {}).reduce((str, k)=> str.split('{' + k + '}').join(vars[k]), s);
@@ -11483,43 +11525,166 @@
     return v;
   }
   function guideEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
-  // Simple drawings: drinker line at the right height for the age, and a feeder pan at back height
+  // Ross 308 standards (as-hatched) — the same tables ProdWise uses: weekly weights (kg,
+  // straight line between weeks) and daily feed per bird (g). Water ≈ 1.8 × feed at 21 °C.
+  const GUIDE_ROSS_KG = {0:0.044,7:0.2135,14:0.533,21:1.012,28:1.6165,35:2.2955,42:2.998,49:3.6815,56:4.318};
+  const GUIDE_ROSS_FEED = [0,11,15,19,24,28,33,37,42,47,51,56,60,65,69,74,78,83,88,92,97,101,106,110,115,119,124,129,133,138,142,147,151,156,160,165,170,174,179,183,188,192,197,201,206,211,215,220,223,225,227,229,230,231,233,233,234,234,234,234,234];
+  const GUIDE_WATER_RATIO = 1.8;
+  function guideRossKg(age){
+    const a = Math.max(0, Math.min(56, age)), w0 = Math.floor(a / 7) * 7, w1 = Math.min(56, w0 + 7);
+    return w1 === w0 ? GUIDE_ROSS_KG[w0] : GUIDE_ROSS_KG[w0] + (a - w0) / 7 * (GUIDE_ROSS_KG[w1] - GUIDE_ROSS_KG[w0]);
+  }
+  function guideFeedG(age){ return age <= 0 ? 0 : GUIDE_ROSS_FEED[Math.min(60, Math.floor(age))]; }
+  function guideWaterMl(age){ return Math.round(guideFeedG(age) * GUIDE_WATER_RATIO); }
+  function guideFeedSoFarKg(age){ let s = 0; for(let d = 1; d <= Math.min(60, age); d++) s += GUIDE_ROSS_FEED[d]; return s / 1000; }
+
+  // ---- Drawings: a little shed scene for each card (fixed colours, readable in both themes) ----
+  const G_DEFS = `<defs><linearGradient id="gg-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4EFE4"/><stop offset="1" stop-color="#E9E0CD"/></linearGradient>
+    <linearGradient id="gg-pipe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C3CDD8"/><stop offset=".45" stop-color="#8E9DAE"/><stop offset="1" stop-color="#5F6E80"/></linearGradient>
+    <radialGradient id="gg-chick" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#F2BC2A"/></radialGradient>
+    <radialGradient id="gg-hen" cx=".45" cy=".3" r=".75"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EDE4D1"/></radialGradient>
+    <linearGradient id="gg-pan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E05A3A"/><stop offset="1" stop-color="#A93A22"/></linearGradient></defs>`;
+  const gRnd = (i, m)=> ((Math.sin(i * 12.9898 + m * 78.233) * 43758.5453) % 1 + 1) % 1;
+  function gScene(w, h, ground, inner){
+    let lit = '';
+    for(let i = 0; i < 26; i++) lit += `<circle cx="${(gRnd(i, 1) * w).toFixed(1)}" cy="${(ground + 3 + gRnd(i, 2) * (h - ground - 5)).toFixed(1)}" r="${(0.8 + gRnd(i, 3) * 1.1).toFixed(1)}" fill="#A8834F" opacity=".55"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" class="g-svg" aria-hidden="true">${G_DEFS}<rect width="${w}" height="${h}" fill="url(#gg-wall)"/><rect y="${ground}" width="${w}" height="${h - ground}" fill="#D7B988"/><rect y="${ground}" width="${w}" height="2" fill="#BE9A62"/>${lit}${inner}</svg>`;
+  }
+  // A chick (side view, facing right). x,y = feet on the ground; s = size.
+  function gChick(x, y, s){
+    return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-4 -7v7M4 -7v7M-8 0h7M1 0h7" stroke="#E07B22" stroke-width="1.8" stroke-linecap="round"/>
+      <ellipse cx="0" cy="-16" rx="14" ry="11.5" fill="url(#gg-chick)"/><path d="M-9 -18q7-6 14 1q-7 6-14-1z" fill="#E8B21F"/>
+      <circle cx="10" cy="-29" r="9" fill="url(#gg-chick)"/><circle cx="13.5" cy="-31" r="1.7" fill="#1E1A14"/><circle cx="14" cy="-31.6" r=".5" fill="#fff"/><path d="M18 -30.5l6.5 1.8-6.5 2.2z" fill="#E07B22"/></g>`;
+  }
+  // A grown broiler (side view, facing right). hy = head height above the feet (66 normal, 86 stretched up).
+  function gBird(x, y, s, hy){
+    hy = hy || 66; const hx = hy > 70 ? 28 : 26;
+    return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-7 -22v19M6 -22v19" stroke="#E07B22" stroke-width="3.6" stroke-linecap="round"/><path d="M-14 -2h11M-1 -2h12" stroke="#E07B22" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M12 -46L${hx - 2} ${-hy + 4}" stroke="#CDBB97" stroke-width="17" stroke-linecap="round"/><path d="M12 -46L${hx - 2} ${-hy + 4}" stroke="#F8F3E8" stroke-width="14.6" stroke-linecap="round"/>
+      <path d="M-27 -44q-14-12-8-28q10 6 16 20z" fill="#F7F2E6" stroke="#CDBB97" stroke-width="1.2"/>
+      <ellipse cx="-2" cy="-40" rx="30" ry="21" fill="url(#gg-hen)" stroke="#CDBB97" stroke-width="1.2"/>
+      <path d="M-20 -43q15-11 31 0q-11 14-31 0z" fill="#EAE0CA" stroke="#CDBB97" stroke-width="1"/>
+      <circle cx="${hx}" cy="${-hy}" r="9.5" fill="#FBF8F1" stroke="#CDBB97" stroke-width="1.2"/>
+      <path d="M${hx - 7} ${-hy - 6}q1-8 5-3q2-8 5-2q4-6 5 3z" fill="#D9442B"/><ellipse cx="${hx + 6}" cy="${-hy + 10}" rx="2.6" ry="4.2" fill="#D9442B"/>
+      <circle cx="${hx + 3.5}" cy="${-hy - 1}" r="1.9" fill="#1E1A14"/><circle cx="${hx + 4.1}" cy="${-hy - 1.7}" r=".6" fill="#fff"/><path d="M${hx + 8.5} ${-hy - 2.5}l8 2.4-8 3z" fill="#E8A13A"/></g>`;
+  }
+  // Nipple drinker hanging from the line: tip at (x, tipY); cup under it from 4 days on.
+  function gNipple(x, pipeY, tipY, cup){
+    return `<rect x="${x - 2.5}" y="${pipeY + 4}" width="5" height="${tipY - pipeY - 8}" fill="#6F7E90"/><path d="M${x - 5} ${tipY - 6}h10l-2 6h-6z" fill="#4C5B6C"/>
+      <path d="M${x} ${tipY + 1}q-3 4 0 6q3-2 0-6z" fill="#3A8DDE"/>${cup ? `<path d="M${x - 9} ${tipY + 2}h18l-4 6h-10z" fill="#C9D3DE" stroke="#8E9DAE" stroke-width=".8"/>` : ''}`;
+  }
+  function gPipe(w, y){ return `<path d="M30 0V${y}M${w - 30} 0V${y}" stroke="#9AA6B3" stroke-width="1.2"/><rect x="0" y="${y - 5}" width="${w}" height="10" rx="5" fill="url(#gg-pipe)"/>`; }
+  function gLevel(x1, x2, y){ return `<path d="M${x1} ${y}H${x2}" stroke="#2F7FD0" stroke-width="1.4" stroke-dasharray="4 3"/><path d="M${x2 - 5} ${y - 4}l5 4-5 4" fill="none" stroke="#2F7FD0" stroke-width="1.4"/>`; }
   function guideDrinkerSvg(stage){
-    const bird = stage === 0
-      ? '<ellipse cx="60" cy="98" rx="16" ry="12" fill="#F5C842"/><circle cx="72" cy="80" r="9" fill="#F5C842"/><circle cx="75" cy="78" r="1.6" fill="#16191B"/><path d="M80 80l6 2-6 2z" fill="#E07B22"/>'
-      : stage === 1
-      ? '<ellipse cx="58" cy="92" rx="24" ry="17" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="76" cy="64" r="9" fill="#F4F1EA" stroke="#C9B89A"/><path d="M70 72l-6 10" stroke="#C9B89A" stroke-width="6" stroke-linecap="round"/><circle cx="79" cy="62" r="1.6" fill="#16191B"/><path d="M84 63l6-3-1 6z" fill="#E07B22"/>'
-      : '<ellipse cx="56" cy="86" rx="30" ry="22" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="80" cy="44" r="10" fill="#F4F1EA" stroke="#C9B89A"/><path d="M74 54l-8 18" stroke="#C9B89A" stroke-width="8" stroke-linecap="round"/><circle cx="83" cy="42" r="1.8" fill="#16191B"/><path d="M88 42l7-4-1 7z" fill="#E07B22"/><path d="M80 34l3-5 3 5z" fill="#D9442B"/>';
-    const nippleY = stage === 0 ? 74 : stage === 1 ? 52 : 30;
-    const lineY = nippleY - 10;
-    const legs = stage === 0 ? '' : `<path d="M50 ${stage === 1 ? 106 : 104}v10M62 ${stage === 1 ? 106 : 104}v10" stroke="#E07B22" stroke-width="3"/>`;
-    return `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/>
-      <rect x="0" y="${lineY - 4}" width="160" height="8" rx="4" fill="#8A9BB0"/><rect x="86" y="${lineY + 3}" width="6" height="${nippleY - lineY - 3}" fill="#5F6E80"/><circle cx="89" cy="${nippleY}" r="3" fill="#3A8DDE"/>
-      ${legs}${bird}<path d="M100 ${nippleY}h40" stroke="#3A8DDE" stroke-dasharray="3 3"/></svg>`;
+    const W = 200, H = 130, G = 118;
+    if(stage === 0){ const tip = 79; return gScene(W, H, G, gPipe(W, tip - 22) + gNipple(122, tip - 22, tip, false) + gChick(92, G, 1.25) + gChick(40, G, 1.05) + gLevel(130, 196, tip)); }
+    if(stage === 1){ const tip = 52; return gScene(W, H, G, gPipe(W, tip - 24) + gNipple(130, tip - 24, tip, true) + gBird(100, G, 0.82) + gChick(34, G, 0.95) + gLevel(142, 196, tip)); }
+    const tip = 24; return gScene(W, H, G, gPipe(W, tip - 14) + gNipple(137, tip - 14, tip, true) + gBird(94, G, 1.02, 86) + gLevel(149, 196, tip));
   }
+  function gPellets(cx, y, w, n){ let p = ''; for(let i = 0; i < n; i++) p += `<circle cx="${(cx - w / 2 + gRnd(i, 9) * w).toFixed(1)}" cy="${(y - gRnd(i, 4) * 4).toFixed(1)}" r="1.6" fill="${i % 3 ? '#B9863A' : '#9C6C28'}"/>`; return p; }
   function guideFeederSvg(stage){
-    return stage === 0
-      ? `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/><path d="M40 116l8-14h64l8 14z" fill="#B0B7C2"/><path d="M50 104q30-10 60 0" fill="#D9A441"/><ellipse cx="128" cy="106" rx="10" ry="8" fill="#F5C842"/><circle cx="136" cy="96" r="6" fill="#F5C842"/></svg>`
-      : `<svg viewBox="0 0 160 124" class="g-svg" aria-hidden="true"><rect x="0" y="116" width="160" height="8" rx="2" fill="#C9A26B"/><rect x="78" y="0" width="6" height="60" fill="#8A9BB0"/><path d="M58 76l6-16h34l6 16z" fill="#B0B7C2"/><path d="M64 70q17-6 34 0" fill="#D9A441"/>
-        <ellipse cx="34" cy="86" rx="28" ry="20" fill="#F4F1EA" stroke="#C9B89A"/><circle cx="52" cy="58" r="9" fill="#F4F1EA" stroke="#C9B89A"/><path d="M46 66l-4 8" stroke="#C9B89A" stroke-width="7" stroke-linecap="round"/><path d="M30 104v12M40 104v12" stroke="#E07B22" stroke-width="3"/>
-        <path d="M6 66h150" stroke="#3A8DDE" stroke-dasharray="3 3"/></svg>`;
-  }
-  function guideSpreadSvg(kind){
-    const W = 150, H = 80; let dots = '';
-    const rnd = (i, m)=> ((Math.sin(i * 12.9898 + m) * 43758.5453) % 1 + 1) % 1;
-    for(let i = 0; i < 46; i++){
-      let x, y;
-      if(kind === 'good'){ x = 10 + rnd(i, 1) * (W - 20); y = 10 + rnd(i, 2) * (H - 20); }
-      else if(kind === 'cold'){ const g = i % 3, cx = [45, 95, 75][g], cy = [30, 38, 58][g]; x = cx + (rnd(i, 3) - .5) * 26; y = cy + (rnd(i, 4) - .5) * 18; }
-      else { const side = i % 4; x = side === 0 ? 9 + rnd(i,5)*8 : side === 1 ? W - 9 - rnd(i,5)*8 : 10 + rnd(i,6) * (W - 20); y = side >= 2 ? (side === 2 ? 9 + rnd(i,7)*8 : H - 9 - rnd(i,7)*8) : 10 + rnd(i,8) * (H - 20); }
-      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="#F5C842" stroke="#B8901F" stroke-width=".6"/>`;
+    const W = 200, H = 130, G = 118;
+    if(stage === 0){
+      return gScene(W, H, G, `<path d="M8 ${G + 1}l14-9h64l-10 9z" fill="#FBFBF7" stroke="#D8D2C2"/>${gPellets(44, G - 2, 50, 22)}
+        <path d="M112 ${G}l6-13h56l6 13z" fill="url(#gg-pan)"/><path d="M118 ${G - 13}q28-7 56 0" fill="#C9933F"/>${gPellets(146, G - 14, 46, 14)}
+        ${gChick(66, G, 0.9)}${gChick(100, G, 1)}${gChick(30, G - 1, 0.8)}`);
     }
-    return `<svg viewBox="0 0 ${W} ${H}" class="g-svg g-spread" aria-hidden="true"><rect x="2" y="2" width="${W-4}" height="${H-4}" rx="8" fill="#E9DCC3" stroke="#B9A27C" stroke-width="2"/>${dots}</svg>`;
+    const lip = 57;   // pan lip level with the bird's back
+    return gScene(W, H, G, `<path d="M140 0V${lip - 26}" stroke="#9AA6B3" stroke-width="1.4"/><rect x="132" y="${lip - 26}" width="16" height="24" rx="3" fill="#B7C1CC" stroke="#8E9DAE"/>
+      <path d="M112 ${lip + 12}l7-12h42l7 12z" fill="url(#gg-pan)"/><path d="M119 ${lip}q21-6 42 0" fill="#C9933F"/>${gPellets(140, lip, 38, 12)}<path d="M124 ${lip}v12M140 ${lip}v12M156 ${lip}v12" stroke="#7E2A18" stroke-width="1.2"/>
+      ${gBird(70, G, 1)}${gLevel(4, 110, lip)}`);
+  }
+  // Thermometer filled to the target (scale 15–35 °C) and a 24-hour clock with the dark block.
+  function guideThermoSvg(t){
+    const f = Math.max(0, Math.min(1, (Number(t) - 15) / 20)), top = 10, bot = 74, y = bot - f * (bot - top);
+    let ticks = ''; for(let i = 0; i <= 4; i++){ const ty = bot - i * (bot - top) / 4; ticks += `<path d="M32 ${ty.toFixed(1)}h6" stroke="#9AA6B3" stroke-width="1.2"/>`; }
+    return `<svg viewBox="0 0 44 100" class="g-mini" aria-hidden="true"><rect x="12" y="4" width="16" height="78" rx="8" fill="#F4F1EA" stroke="#C9C2B2"/>${ticks}
+      <rect x="16.5" y="${y.toFixed(1)}" width="7" height="${(86 - y).toFixed(1)}" rx="3.5" fill="#E2552F"/><circle cx="20" cy="86" r="11" fill="#E2552F" stroke="#C9C2B2"/><circle cx="17" cy="83" r="3" fill="#F08A6C"/></svg>`;
+  }
+  function guideClockSvg(dark){
+    const d = Math.max(0, Math.min(24, Number(dark) || 0)), r = 30, C = 2 * Math.PI * r, dl = C * d / 24;
+    return `<svg viewBox="0 0 80 80" class="g-mini" aria-hidden="true"><circle cx="40" cy="40" r="${r}" fill="none" stroke="#F5C842" stroke-width="11"/>
+      <circle cx="40" cy="40" r="${r}" fill="none" stroke="#4A5AA8" stroke-width="11" stroke-dasharray="${dl.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/>
+      <path d="M46 31a10 10 0 1 0 0 18a8 8 0 1 1 0-18z" fill="#4A5AA8"/>${[0, 6, 12, 18].map(hr=>{ const a = hr / 24 * 2 * Math.PI; return `<circle cx="${(40 + 20.5 * Math.sin(a)).toFixed(1)}" cy="${(40 - 20.5 * Math.cos(a)).toFixed(1)}" r="1.2" fill="#9AA6B3"/>`; }).join('')}</svg>`;
+  }
+  // Floor plan seen from above: birds spread out / huddled / along the walls.
+  function guideSpreadSvg(kind){
+    const W = 220, H = 96; let birds = '', extra = '';
+    const bird = (x, y, a)=> `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a.toFixed(0)})"><ellipse rx="5.4" ry="4" fill="#FBF8F1" stroke="#BFAF8E" stroke-width=".7"/><circle cx="5" cy="0" r="2.1" fill="#FBF8F1" stroke="#BFAF8E" stroke-width=".6"/><path d="M4.4 -1.4h1.6" stroke="#D9442B" stroke-width="1.1" stroke-linecap="round"/></g>`;
+    for(let i = 0; i < 44; i++){
+      let x, y;
+      if(kind === 'good'){ x = 14 + gRnd(i, 1) * (W - 28); y = 12 + gRnd(i, 2) * (H - 24); }
+      else if(kind === 'cold'){ const g = i % 3, cx = [62, 128, 172][g], cy = [40, 58, 32][g]; const a = gRnd(i, 3) * 6.28, rr = Math.sqrt(gRnd(i, 4)) * 15; x = cx + Math.cos(a) * rr; y = cy + Math.sin(a) * rr * .8; }
+      else { const side = i % 4; x = side === 0 ? 12 + gRnd(i, 5) * 8 : side === 1 ? W - 12 - gRnd(i, 5) * 8 : 14 + gRnd(i, 6) * (W - 28); y = side >= 2 ? (side === 2 ? 30 + gRnd(i, 7) * 6 : 62 + gRnd(i, 7) * 6) : 12 + gRnd(i, 8) * (H - 24); }
+      birds += bird(x, y, gRnd(i, 11) * 360);
+    }
+    if(kind === 'hot') extra = [60, 110, 160].map(x=> `<path d="M${x} 82q4-5 0-10t0-10" fill="none" stroke="#E2552F" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>`).join('');
+    if(kind === 'cold') extra = `<path d="M196 72l6-3-4 5 6-2" fill="none" stroke="#2F7FD0" stroke-width="1.5"/><path d="M18 20l3 3m0-3l-3 3M24 74l3 3m0-3l-3 3" stroke="#2F7FD0" stroke-width="1.3"/>`;
+    return `<svg viewBox="0 0 ${W} ${H}" class="g-svg g-spread" aria-hidden="true"><rect x="2" y="2" width="${W - 4}" height="${H - 4}" rx="8" fill="#E5D3AE" stroke="#A88B5C" stroke-width="2"/>
+      <path d="M10 33H${W - 10}M10 65H${W - 10}" stroke="#7FA6CF" stroke-width="2.2" stroke-dasharray="1 7" stroke-linecap="round"/><path d="M10 49H${W - 10}" stroke="#C0563A" stroke-width="2.2" stroke-dasharray="1 11" stroke-linecap="round"/>${birds}${extra}</svg>`;
+  }
+  // Ross weight curve 0–56 days with today's point.
+  function guideWeightSvg(age){
+    const W = 320, H = 150, x0 = 34, x1 = W - 10, y0 = H - 22, y1 = 10, X = d=> x0 + d / 56 * (x1 - x0), Y = kg=> y0 - kg / 4.5 * (y0 - y1);
+    let path = '', area = '';
+    for(let d = 0; d <= 56; d++){ path += (d ? 'L' : 'M') + X(d).toFixed(1) + ' ' + Y(guideRossKg(d)).toFixed(1); }
+    area = path + `L${X(56).toFixed(1)} ${y0}L${X(0).toFixed(1)} ${y0}z`;
+    const a = Math.min(56, age), ax = X(a), ay = Y(guideRossKg(a));
+    let grid = '';
+    [1, 2, 3, 4].forEach(k=> grid += `<path d="M${x0} ${Y(k).toFixed(1)}H${x1}" stroke="currentColor" opacity=".12"/><text x="${x0 - 6}" y="${(Y(k) + 3.5).toFixed(1)}" text-anchor="end" class="g-ax">${k}</text>`);
+    [0, 7, 14, 21, 28, 35, 42, 49, 56].forEach(d=> grid += `<text x="${X(d).toFixed(1)}" y="${H - 6}" text-anchor="middle" class="g-ax">${d}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" class="g-chart" aria-hidden="true"><text x="${x0 - 6}" y="9" text-anchor="end" class="g-ax">kg</text>${grid}
+      <path d="${area}" fill="#F0A21A" opacity=".14"/><path d="${path}" fill="none" stroke="#E08A12" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M${ax.toFixed(1)} ${y0}V${ay.toFixed(1)}" stroke="currentColor" opacity=".45" stroke-dasharray="3 3"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="5.5" fill="#E08A12" stroke="#fff" stroke-width="2"/></svg>`;
+  }
+  // Feed per bird: the next 7 days as bars, today first.
+  function guideFeedBarsSvg(age){
+    const W = 320, H = 110, n = 7, gap = 8, bw = (W - gap * (n - 1)) / n, top = 18, base = H - 20;
+    const vals = Array.from({ length: n }, (_, i)=> guideFeedG(age + i)), mx = Math.max(...vals) * 1.08;
+    return `<svg viewBox="0 0 ${W} ${H}" class="g-chart" aria-hidden="true">${vals.map((v, i)=>{
+      const x = i * (bw + gap), h = Math.max(2, v / mx * (base - top)), y = base - h;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${i ? '#D8B26A' : '#E08A12'}" opacity="${i ? .55 : 1}"/>
+        <text x="${(x + bw / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" class="g-ax${i ? '' : ' g-ax-b'}">${v}</text><text x="${(x + bw / 2).toFixed(1)}" y="${H - 5}" text-anchor="middle" class="g-ax${i ? '' : ' g-ax-b'}">${age + i}</text>`;
+    }).join('')}</svg>`;
+  }
+  function guideDropSvg(ml){
+    const f = Math.max(.12, Math.min(1, ml / 430)), top = 8, bot = 88, y = bot - f * (bot - top);
+    return `<svg viewBox="0 0 64 96" class="g-mini" aria-hidden="true"><defs><clipPath id="gg-drop"><path d="M32 6C22 26 10 40 10 60a22 22 0 0 0 44 0C54 40 42 26 32 6z"/></clipPath></defs>
+      <path d="M32 6C22 26 10 40 10 60a22 22 0 0 0 44 0C54 40 42 26 32 6z" fill="#E6F0FB" stroke="#9CC0E8" stroke-width="1.5"/>
+      <rect x="0" y="${y.toFixed(1)}" width="64" height="96" fill="#3A8DDE" clip-path="url(#gg-drop)"/><path d="M20 58q0-10 6-18" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6" fill="none"/></svg>`;
   }
   // The whole guide for one age. lang picks the language; cfg = settings.guide (or defaults).
   // Text the manager typed (cfg.text) is shown as typed; otherwise the built-in, translated text.
   // opts.edit = the manager's edit mode in CluckWise (text boxes, show/hide, own cards).
+  // opts.sheds = [{ name, birds, age }] for the water totals (age = that shed's age on this guide day).
   const GUIDE_CHECKS = [['good','✅','good'],['hot','🥵','hot'],['cold','🥶','cold'],['litter','🤲'],['ratio','💧'],['sick','🤒'],['bio','🧼']];
+  function guideStdHtml(age, T, sheds){
+    const n = v=> Math.round(v).toLocaleString();
+    const kg = guideRossKg(age), gain = Math.round((guideRossKg(age + 1) - kg) * 1000);
+    const next = [Math.floor(age / 7) * 7 + 7, Math.floor(age / 7) * 7 + 14].filter(d=> d <= 56);
+    const feed = guideFeedG(age), ml = guideWaterMl(age);
+    const rows = (sheds || []).filter(s=> s && s.birds > 0);
+    let tot = 0;
+    const tr = rows.map(s=>{ const l = s.age > 0 ? s.birds * guideWaterMl(s.age) / 1000 : 0; tot += l;
+      return `<tr><td>${guideEsc(s.name)}</td><td>${n(s.birds)}</td><td>${l ? n(l) : '—'}</td></tr>`; }).join('');
+    const table = rows.length
+      ? `<table class="g-tbl"><thead><tr><th>${guideEsc(T('g_wa_sh'))}</th><th>${guideEsc(T('g_wa_b'))}</th><th>${guideEsc(T('g_wa_l'))}</th></tr></thead><tbody>${tr}</tbody>${rows.length > 1 ? `<tfoot><tr><td>${guideEsc(T('g_wa_all'))}</td><td>${n(rows.reduce((a, s)=> a + s.birds, 0))}</td><td>${n(tot)}</td></tr></tfoot>` : ''}</table>`
+      : `<p class="g-hint g-hint-in">${guideEsc(T('g_wa_none'))}</p>`;
+    return `<div class="g-sec">${guideEsc(T('g_std', { n: age }))}</div>
+    <div class="g-std">
+      <div class="g-card g-wide g-wt"><div class="g-card-h">${guideEsc(T('g_wt_t'))}</div>
+        <div class="g-stat"><div class="g-big">${kg.toFixed(2)}<small>kg</small></div><div class="g-sub">${guideEsc(T('g_wt_u'))}<br><b>${guideEsc(T('g_wt_gain', { g: gain }))}</b></div></div>
+        ${guideWeightSvg(age)}
+        ${next.length ? `<div class="g-chips">${next.map(d=> `<span>${guideEsc(T('g_wt_at', { d, kg: guideRossKg(d).toFixed(2) }))}</span>`).join('')}</div>` : ''}</div>
+      <div class="g-card g-wide g-fd"><div class="g-card-h">${guideEsc(T('g_fd_t'))}</div>
+        <div class="g-stat"><div class="g-big">${feed}<small>g</small></div><div class="g-sub">${guideEsc(T('g_fd_u'))}<br><b>${guideEsc(T('g_fd_sofar', { kg: guideFeedSoFarKg(age).toFixed(2) }))}</b></div></div>
+        <div class="g-cap">${guideEsc(T('g_fd_next'))}</div>${guideFeedBarsSvg(age)}</div>
+      <div class="g-card g-wide g-wa"><div class="g-card-h">${guideEsc(T('g_wa_t'))}</div>
+        <div class="g-stat">${guideDropSvg(ml)}<div class="g-big">${ml}<small>ml</small></div><div class="g-sub">${guideEsc(T('g_wa_u'))}<br><b>${guideEsc(T('g_wa_r', { r: GUIDE_WATER_RATIO }))}</b></div></div>
+        ${table}</div>
+    </div>
+    <p class="g-note">${guideEsc(T('g_std_note'))}</p>`;
+  }
   function guideHtml(age, cfg, lang, opts){
     opts = opts || {};
     const c = guideCfg(cfg), E = !!opts.edit;
@@ -11547,14 +11712,25 @@
     h += `<div class="g-grid">
       ${card('g-drink', guideEsc(T('g_drink_t')), guideDrinkerSvg(stage), say('g_drink_' + stage))}
       ${card('g-feed', guideEsc(T('g_feed_t')), guideFeederSvg(stage === 0 ? 0 : 1), say(stage === 0 ? 'g_feed_0' : 'g_feed_1'))}
-      ${card('g-temp', guideEsc(T('g_temp_t')), `<div class="g-big">🌡️ ${guideEsc(String(temp))}<small>°C</small></div>`, guideEsc(T('g_rh', { rh })))}
-      ${card('g-light', guideEsc(T('g_light_t')), `<div class="g-big">🌙 ${guideEsc(String(dark))}<small>h</small></div>`, guideEsc(T('g_light_v', { d: dark })) + '<br>' + say('g_light_n', 2))}
+      ${card('g-temp', guideEsc(T('g_temp_t')), `<div class="g-stat">${guideThermoSvg(temp)}<div class="g-big">${guideEsc(String(temp))}<small>°C</small></div></div>`, guideEsc(T('g_rh', { rh })))}
+      ${card('g-light', guideEsc(T('g_light_t')), `<div class="g-stat">${guideClockSvg(dark)}<div class="g-big">${guideEsc(String(dark))}<small>h</small></div></div>`, guideEsc(T('g_light_v', { d: dark })) + '<br>' + say('g_light_n', 2))}
     </div>
     <p class="g-note">${guideEsc(T('g_note'))}</p>
+    ${guideStdHtml(age, T, opts.sheds)}
     <div class="g-sec">${guideEsc(T('g_checks'))}</div>
     <div class="g-checks">${GUIDE_CHECKS.map(check).join('')}${c.custom.map(own).join('')}</div>`;
     if(E) h += `<button type="button" class="g-add-card" data-gc-add>＋ Add your own card</button>`;
     return h;
+  }
+  // Sheds of a running batch for the water table: birds now (copied from ProdWise) and each
+  // shed's age on the guide day (sheds placed on different days keep their own age).
+  function guideSheds(b, gAge){
+    if(!b || !b.birdsNow || !b.birdsNow.perShed) return [];
+    const td = dateKey(new Date()), days = (a, z)=> Math.round((toDateObj(z) - toDateObj(a)) / 86400000), bAge = days(b.start, td);
+    return (b.sheds || []).filter(sh=> sh.placement && td <= (sh.cleanout || b.end)).map(sh=>{
+      const m = String(sh.shed).match(/\d+/), n = m ? b.birdsNow.perShed[String(Number(m[0]))] : null;
+      return { name: String(sh.shed), birds: Number(n) || 0, age: gAge + days(sh.placement, td) - bAge };
+    }).filter(s=> s.birds > 0).sort((x, y)=> x.name.localeCompare(y.name, undefined, { numeric:true }));
   }
 
   let mainGuideAge = null, mainGuideEdit = false;
@@ -11571,7 +11747,7 @@
   }
   function renderMainGuide(){
     const cb = currentOrNextBatch(), td = dateKey(new Date());
-    $('#guideModalBody').innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit });
+    $('#guideModalBody').innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit, sheds: cb && td >= cb.start ? guideSheds(cb, mainGuideAge) : [] });
     const eb = $('#guideEditBtn'); eb.textContent = mainGuideEdit ? '✓ Done' : '✎ Edit guide'; eb.classList.toggle('on', mainGuideEdit);
     $('#guideModal').classList.toggle('editing', mainGuideEdit);
   }
