@@ -499,7 +499,6 @@ function buildPwRail(){
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
     +'<span class="pwr-gap"></span>'
-    +`<button type="button" class="pwr-btn" data-tab="cluckwise" title="Open CluckWise in a new tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span>CluckWise</span></button>`
     +b('data-pwr-theme','moon','Theme')
     +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
     +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`

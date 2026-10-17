@@ -416,7 +416,7 @@ function renderMoreSheet() {
         ${row('moreLoads', 'loads', 'Feed loads', 'Plan and log deliveries', summary.needsActual > 0 ? `<span class="more-count">${summary.needsActual}</span>` : '')}
         ${row('moreSilo', 'silo', 'Silo readings', 'Record today’s ring levels')}
         ${row('moreHistory', 'history', 'History', 'Checkpoints and restore')}
-        ${row('moreCluckwise', 'cluckwise', 'CluckWise', 'Opens in a new tab')}
+        ${row('moreCluckwise', 'cluckwise', 'Tasks', 'Planner, maintenance, routine and guide')}
       </div>
       <div class="more-group">
         ${(()=>{const l=typeof pwRunningList==='function'?pwRunningList():[];const o=l.length>1?l.find(x=>x.key!==currentBatchKey()):null;return o?`<button type="button" class="more-row" data-switch-batch="${escapeAttr(o.key)}"><span class="more-row-ic">${navIcon('refresh')}</span><span class="more-row-text"><span class="more-row-label">Switch to batch ${escapeHtml(o.key)}</span><span class="more-row-sub">You are in ${escapeHtml(currentBatchKey())} — it is saved first</span></span></button>`:'';})()}
@@ -1196,7 +1196,7 @@ function emptyStateHtml(){
 function tabsHtml(){
   const tabs=[{id:'g1',label:pairLabel(1)},{id:'g2',label:pairLabel(2)},{id:'g3',label:pairLabel(3)},{id:'g4',label:pairLabel(4)},{id:'predictions',label:'📊 Predictions',cls:'tab-predictions'}];
   const mainTabs=tabs.map(t=>`<button class="tab-btn ${t.id===activeTab?'active':''} ${t.cls||''}" data-tab="${t.id}">${t.label}</button>`).join('');
-  const cluckwiseTab=`<button class="tab-btn tab-cluckwise" id="cluckwiseBtn" type="button" title="Open CluckWise">🐔 CluckWise</button>`;
+  const cluckwiseTab=`<button class="tab-btn tab-cluckwise" id="cluckwiseBtn" type="button" title="Open Tasks">Tasks</button>`;
   return mainTabs+cluckwiseTab;
 }
 function groupViewHtml(g){

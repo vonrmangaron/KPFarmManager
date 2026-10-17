@@ -128,7 +128,7 @@ const NAV_ITEMS = [
   { id: 'history', label: 'History', icon: 'history' },
   { id: 'farmsettings', label: 'Settings', icon: 'gear' },
   { section: 'APPS' },
-  { id: 'cluckwise', label: 'CluckWise', icon: 'cluckwise', external: true },
+  { id: 'cluckwise', label: 'Tasks', icon: 'cluckwise', external: true },
 ];
 
 // Feed left in each pair's silos when the pair finished: {pair:{kg, silos:[3 ring choices], weighed, at}}

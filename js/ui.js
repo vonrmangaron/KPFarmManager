@@ -120,7 +120,7 @@ function farmProfileBodyHtml(){
   const st=d.start;
   const preview=[1,2,3,4].map(g=>`<div class="fp-pair"><span>${pairLabel(g)}</span><b>${[1,2,3].map(n=>'Silo '+fpSiloNo(st,g,n)).join(' · ')}</b></div>`).join('');
   const mgr=syncFarmName?`<input type="text" class="settings-input" id="fpManager" value="${escapeAttr(d.manager||'')}" placeholder="e.g. Von" autocomplete="name" maxlength="40" />
-      <p class="fp-note">One name for the whole farm. CluckWise and the Viewer use it: tasks assigned to the manager stay off workers' phones.</p>`:`<p class="fp-note">Connect this device to a farm to set the manager.</p>`;
+      <p class="fp-note">One name for the whole farm. Tasks and the Crew app use it: tasks assigned to the manager stay off workers' phones.</p>`:`<p class="fp-note">Connect this device to a farm to set the manager.</p>`;
   return `<div class="fp-sec">
       <label class="fp-lbl" for="fpManager">Manager</label>
       ${mgr}
@@ -471,7 +471,7 @@ async function handleConnectFarm(farmName){
 // A farm that isn't in the cloud yet: name its manager, then start the first batch
 function showCreateFarmForm(clean){
   const body=document.getElementById('syncModalBody');if(!body)return;
-  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">New farm</span><span class="val ok">${escapeHtml(clean)}</span></div></div><div class="sync-hint">This farm isn't in the cloud yet. Who manages it? CluckWise and the Viewer use this name; you can change it later in Account › Farm profile.</div><label for="syncManagerInput">Manager</label><input id="syncManagerInput" type="text" placeholder="e.g. Von" autocomplete="name" maxlength="40" /><button class="btn-sync-primary" id="syncCreateBtn">Create farm</button><button class="btn-sync-primary ghost" id="syncCreateBack">Back</button>`;
+  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">New farm</span><span class="val ok">${escapeHtml(clean)}</span></div></div><div class="sync-hint">This farm isn't in the cloud yet. Who manages it? Tasks and the Crew app use this name; you can change it later in Account › Farm profile.</div><label for="syncManagerInput">Manager</label><input id="syncManagerInput" type="text" placeholder="e.g. Von" autocomplete="name" maxlength="40" /><button class="btn-sync-primary" id="syncCreateBtn">Create farm</button><button class="btn-sync-primary ghost" id="syncCreateBack">Back</button>`;
   const input=document.getElementById('syncManagerInput');setTimeout(()=>input&&input.focus(),100);
   const go=async()=>{
     const mgr=input.value.trim();if(!mgr){showToast('Enter the manager’s name.',true);input.focus();return;}
@@ -2586,7 +2586,7 @@ function batchInfoHtml(x){
   }
   h += `<div class="bi-sec">Audits &amp; events</div>`;
   if(x.events === 'loading') h += `<div class="bi-note">Loading audits…</div>`;
-  else if(!x.events) h += `<div class="bi-note">Audits and events show here from CluckWise.</div>`;
+  else if(!x.events) h += `<div class="bi-note">Audits and events show here from Tasks.</div>`;
   else {
     const up = x.events.filter(e=> e.date >= x.today).sort((a,b)=> a.date.localeCompare(b.date)).slice(0, 8);
     if(!up.length) h += `<div class="bi-note">No audits or events coming up.</div>`;

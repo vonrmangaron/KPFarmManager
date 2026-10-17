@@ -85,13 +85,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>window.open(CLUCKWISE_URL,'_blank','noopener'),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
+      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreCluckwise:()=>openTasksSection(),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
     // CluckWise — can come from sidebar data-tab="cluckwise"
-    if(e.target.closest('[data-tab="cluckwise"]')){window.open(CLUCKWISE_URL,'_blank','noopener');return;}
-    if(e.target.closest('#cluckwiseBtn')){window.open(CLUCKWISE_URL,'_blank','noopener');return;}
+    if(e.target.closest('[data-tab="cluckwise"]')||e.target.closest('#cluckwiseBtn')){openTasksSection();return;}
     const themeOpt=e.target.closest('.sb-theme-opt');
     if(themeOpt){setTheme(themeOpt.dataset.themeValue);return;}
     if(e.target.closest('#themeToggle')){toggleTheme();return;}

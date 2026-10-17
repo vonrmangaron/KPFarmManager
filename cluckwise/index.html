@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<title>CluckWise.vm</title>
+<link rel="icon" type="image/png" href="icons/icon-192.png?v=3">
+<title>ProdWise.vm · Tasks</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FFFFFF">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="CluckWise.vm">
+<meta name="apple-mobile-web-app-title" content="ProdWise Tasks">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -3268,6 +3268,24 @@
   .kanban-canvas.show-fade-right .kanban-board{ -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent); }
   .kanban-canvas.show-fade-left .kanban-board{ -webkit-mask-image:linear-gradient(90deg,transparent,#000 44px); mask-image:linear-gradient(90deg,transparent,#000 44px); }
   .kanban-canvas.show-fade-left.show-fade-right .kanban-board{ -webkit-mask-image:linear-gradient(90deg,transparent,#000 44px,#000 calc(100% - 44px),transparent); mask-image:linear-gradient(90deg,transparent,#000 44px,#000 calc(100% - 44px),transparent); }
+
+  /* One app: Production / Tasks switch (same look as ProdWise's) */
+  .ws-sw{ display:flex; flex-direction:column; gap:4px; width:74px; margin:0 auto 12px; padding:4px; border-radius:12px; background:rgba(255,255,255,.08); box-sizing:border-box; flex-shrink:0; }
+  .ws-sw button{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0 6px; border-radius:9px; font:700 10px Inter,system-ui,sans-serif; letter-spacing:-.1px; color:#9AA3AB; text-align:center; }
+  .ws-sw button svg{ width:20px; height:20px; }
+  .ws-sw button:hover{ color:#fff; background:rgba(255,255,255,.06); }
+  .ws-sw button.on{ background:#F0A21A; color:#16191B; }
+  .ws-sw button:focus-visible, .ws-pill button:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .ws-pill{ display:none; }
+  @media (max-width:760px){
+    .topbar .brand{ display:none !important; }
+    .ws-pill{ display:inline-flex; background:rgba(22,25,27,.07); border-radius:999px; padding:3px; gap:2px; flex-shrink:0; }
+    .ws-pill button{ all:unset; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:0 12px; border-radius:999px; font:700 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+    .ws-pill button svg{ width:16px; height:16px; }
+    .ws-pill button.on{ background:#16191B; color:#fff; }
+    body.theme-dark .ws-pill{ background:rgba(255,255,255,.08); }
+    body.theme-dark .ws-pill button.on{ background:#F0A21A; color:#16191B; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3300,8 +3318,9 @@
 
 <div class="shell">
   <nav class="app-rail" id="appRail" aria-label="Main">
-    <img class="ar-logo" src="icons/icon-192.png" alt="CluckWise">
-    <button type="button" class="ar-btn active" data-ar="tasks" title="Tasks: calendar, list and board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg><span>Tasks</span></button>
+    <img class="ar-logo" src="icons/icon-192.png?v=3" alt="ProdWise">
+    <div class="ws-sw" role="group" aria-label="Section"><button type="button" data-ws="production" aria-pressed="false" title="Production: sheds, feed and pickups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Production</span></button><button type="button" data-ws="tasks" class="on" aria-pressed="true" title="Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Tasks</span></button></div>
+    <button type="button" class="ar-btn active" data-ar="tasks" title="Planner: calendar, list and board"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg><span>Planner</span></button>
     <button type="button" class="ar-btn" data-ar="batch" title="Batches and audits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><span>Batch</span></button>
     <button type="button" class="ar-btn" data-ar="maint" title="Maintenance: problems reported on the farm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Maintenance</span><b class="ar-badge" id="arMaintBadge" hidden></b></button>
     <button type="button" class="ar-btn" data-ar="routine" title="Routine Tracker: recurring farm jobs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>Routine</span></button>
@@ -3315,7 +3334,8 @@
     <div class="topbar-left">
       <button class="sidebar-toggle" id="sidebarToggleBtn" aria-label="Open menu">☰</button>
       <button type="button" class="sb-expand" id="sbExpandBtn" title="Show sidebar" aria-label="Show sidebar"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
-      <div class="brand"><img class="brand-icon" src="icons/icon-192.png" alt="CluckWise">CluckWise<span class="accent">.vm</span></div>
+      <div class="brand"><img class="brand-icon" src="icons/icon-192.png?v=3" alt="ProdWise">ProdWise<span class="accent">.vm</span></div>
+      <div class="ws-pill" role="group" aria-label="Section"><button type="button" data-ws="production" aria-pressed="false" title="Production: sheds, feed and pickups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Production</span></button><button type="button" data-ws="tasks" class="on" aria-pressed="true" title="Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Tasks</span></button></div>
       <div class="nav-group" id="navGroup">
         <button class="icon-btn" id="prevBtn" aria-label="Previous">‹</button>
         <span class="toolbar-label" id="periodLabel"></span>
@@ -3357,7 +3377,7 @@
     <aside class="sidebar">
       <div class="sb-mobile-head"><h2>Manage farm</h2><button type="button" class="sb-mobile-close" id="sbMobileClose" aria-label="Close"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <nav class="sb-rail" id="sbRail" aria-label="Sidebar">
-        <img class="sr-logo" src="icons/icon-192.png" alt="CluckWise">
+        <img class="sr-logo" src="icons/icon-192.png?v=3" alt="ProdWise">
         <button type="button" class="sr-btn sr-expand" id="srExpandBtn" title="Show sidebar" aria-label="Show sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M13 10l2 2-2 2"/></svg></button>
         <div class="sr-sep"></div>
         <button type="button" class="sr-btn sr-new" data-rail="newbatch" title="New batch" aria-label="New batch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -3371,7 +3391,7 @@
       </nav>
       <div class="sb-brand">
         <img class="brand-icon" src="icons/icon-192.png" alt="">
-        <span class="sb-brand-name">CluckWise<span class="accent">.vm</span></span>
+        <span class="sb-brand-name">ProdWise<span class="accent">.vm</span></span>
         <span class="sb-panel-head" aria-live="polite"></span>
         <button type="button" class="sb-collapse" id="sbCollapseBtn" title="Hide sidebar" aria-label="Hide sidebar"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
       </div>
@@ -3507,7 +3527,7 @@
 <div class="sheet-overlay hidden" id="quickAddSheet">
   <div class="sheet-panel">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Add to CluckWise.vm</div>
+    <div class="sheet-title">Add to ProdWise</div>
     <button class="sheet-option" id="quickAddTaskBtn"><span class="s-ic" style="background:var(--primary);">✓</span>New task</button>
     <button class="sheet-option" id="quickAddBatchBtn"><span class="s-ic" style="background:var(--secondary);">🐣</span>New batch</button>
     <button class="sheet-option" id="quickAddEventBtn"><span class="s-ic" style="background:var(--danger);">📝</span>New audit</button>
@@ -3609,7 +3629,7 @@
   <div class="st-head">
     <div class="st-head-text">
       <h2>Settings</h2>
-      <div class="st-sub" id="settingsSubtitle">CluckWise.vm</div>
+      <div class="st-sub" id="settingsSubtitle">ProdWise.vm · Tasks</div>
     </div>
     <button id="closeSettings" class="st-close" aria-label="Close">✕</button>
   </div>
@@ -5681,7 +5701,7 @@
     showReportAlert((urgent ? '🔴 ' : '🚩 ') + msg, one ? one.id : null, urgent);
     if(document.hidden && 'Notification' in window && Notification.permission === 'granted'){
       try{
-        const n = new Notification('CluckWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-report' });
+        const n = new Notification('ProdWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-report' });
         n.onclick = ()=>{ window.focus(); openReportsDrawer(one ? one.id : null); n.close(); };
       }catch(e){}
     }
@@ -5708,7 +5728,7 @@
     showReportAlert('✅ ' + msg, one ? one.id : null, false, 'fixed');
     if('Notification' in window && Notification.permission === 'granted' && document.hidden){
       try{
-        const n = new Notification('CluckWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-fixed' });
+        const n = new Notification('ProdWise', { body: msg, icon: 'icons/icon-192.png', tag: 'cluckwise-fixed' });
         n.onclick = ()=>{ window.focus(); openReportsDrawer(one ? one.id : null); n.close(); };
       }catch(e){}
     }
@@ -5830,7 +5850,7 @@
       { key:'fixed', title: showArchived ? 'Fixed' : `Fixed · last ${RP_ARCHIVE_DAYS} days`, list: filtered.filter(r => r.status === 'Resolved' && (showArchived || !rpArchived(r))).sort((a, b) => String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || ''))) }
     ].filter(g => g.list.length);
     if(!groups.length){
-      list.innerHTML = `<div class="rp-empty-list">${reports.length ? 'No reports match these filters.' : 'No reports yet. Workers send them from the CluckWise Viewer.'}</div>`;
+      list.innerHTML = `<div class="rp-empty-list">${reports.length ? 'No reports match these filters.' : 'No reports yet. Workers send them from the Crew app.'}</div>`;
       return;
     }
     groups.forEach(g => {
@@ -5914,7 +5934,7 @@
     const r = reports.find(x => x.id === currentReportId);
     $('#reportsDrawer').classList.toggle('show-detail', !!r);
     if(!r){
-      pane.innerHTML = `<div class="rpd-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg><div>${reports.length ? 'Select a problem to see its photo, note, task and history' : 'No problems reported yet. Workers report them from the CluckWise Viewer.'}</div></div>`;
+      pane.innerHTML = `<div class="rpd-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg><div>${reports.length ? 'Select a problem to see its photo, note, task and history' : 'No problems reported yet. Workers report them from the Crew app.'}</div></div>`;
       return;
     }
     const sc = rpStatusClass(r);
@@ -6294,17 +6314,17 @@
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...hexToRgbArr('#B97A1D'));
         doc.text(text, marginX, y); y += 15;
       }
-      let scopedBatch = null, rangeStart = null, rangeEnd = null, titleText = 'CluckWise.vm — Production Report', subtitleText = null;
+      let scopedBatch = null, rangeStart = null, rangeEnd = null, titleText = 'ProdWise.vm — Production Report', subtitleText = null;
       if(opts.type==='batch' && opts.batchNumber){
         scopedBatch = batches.find(b=>b.number===opts.batchNumber) || null;
         if(scopedBatch){
           rangeStart = scopedBatch.start; rangeEnd = scopedBatch.end;
-          titleText = `CluckWise.vm — Batch #${scopedBatch.number} Report`;
+          titleText = `ProdWise.vm — Batch #${scopedBatch.number} Report`;
           subtitleText = `Batch window: ${formatFull(scopedBatch.start)} – ${formatFull(scopedBatch.end)}`;
         }
       } else if(opts.type==='range' && opts.start && opts.end){
         rangeStart = opts.start; rangeEnd = opts.end;
-        titleText = 'CluckWise.vm — Task Report';
+        titleText = 'ProdWise.vm — Task Report';
         subtitleText = `Date range: ${formatFull(rangeStart)} – ${formatFull(rangeEnd)}`;
       }
       const inScope = (t)=>{
@@ -6385,7 +6405,7 @@
           doc.text(`Page ${i} of ${pageCountCk}`, pageWidth-marginX-60, pageHeight-24);
         }
         const suffixCk = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
-        doc.save(`CluckWise-Checklist${suffixCk}-${dateKey(new Date())}.pdf`);
+        doc.save(`ProdWise-Checklist${suffixCk}-${dateKey(new Date())}.pdf`);
         showToast('Checklist downloaded.');
         return;
       }
@@ -6457,7 +6477,7 @@
         doc.text(`Page ${i} of ${pageCount}`, pageWidth-marginX-60, pageHeight-24);
       }
       const suffix = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
-      doc.save(`CluckWise-Report${suffix}-${dateKey(new Date())}.pdf`);
+      doc.save(`ProdWise-Report${suffix}-${dateKey(new Date())}.pdf`);
       showToast('Report downloaded.');
     }catch(e){
       console.error(e);
@@ -6502,7 +6522,7 @@
     const a = document.createElement('a');
     const suffix = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
     a.href = url;
-    a.download = `CluckWise-Tasks${suffix}-${dateKey(new Date())}.csv`;
+    a.download = `ProdWise-Tasks${suffix}-${dateKey(new Date())}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -10896,7 +10916,7 @@
       text: j && j.needKey ? 'This farm is locked. Enter the manager password once on this device to keep syncing.' : j && j.signedOut ? 'This device was signed out of the farm. Enter the manager password to sync again.' : 'This farm now uses passwords. Enter the manager password once on this device.',
       label:'Manager password', button:'Sign in', later: j ? null : 'Later',
       onSubmit: async pw=>{
-        const e = await FarmKey.signIn(ghFarmName, pw, (settings.manager || 'Manager') + ' · CluckWise');
+        const e = await FarmKey.signIn(ghFarmName, pw, (settings.manager || 'Manager') + ' · Tasks');
         if(e) return e;
         showToast('Signed in. Syncing…');
         fkRefresh(); pullFromGithub(true);
@@ -11221,7 +11241,7 @@
     }
     h += `<div class="bi-sec">Audits &amp; events</div>`;
     if(x.events === 'loading') h += `<div class="bi-note">Loading audits…</div>`;
-    else if(!x.events) h += `<div class="bi-note">Audits and events show here from CluckWise.</div>`;
+    else if(!x.events) h += `<div class="bi-note">Audits and events show here from Tasks.</div>`;
     else {
       const up = x.events.filter(e=> e.date >= x.today).sort((a,b)=> a.date.localeCompare(b.date)).slice(0, 8);
       if(!up.length) h += `<div class="bi-note">No audits or events coming up.</div>`;
@@ -12284,7 +12304,7 @@
       sbMode = m === 'batch' ? 'batch' : 'tasks';
       document.body.classList.toggle('sbm-batch', sbMode === 'batch');
       document.body.classList.toggle('sbm-tasks', sbMode === 'tasks');
-      const t = $('#sbPanelTitle'); if(t) t.textContent = sbMode === 'batch' ? 'Batches & audits' : 'Tasks';
+      const t = $('#sbPanelTitle'); if(t) t.textContent = sbMode === 'batch' ? 'Batches & audits' : 'Planner';
       const hb = document.querySelector('.sb-brand .sb-panel-head'); if(hb) hb.textContent = t ? t.textContent : '';
       try{ localStorage.setItem('cluckwise-sb-mode', sbMode); }catch(e){}
     }
@@ -12455,7 +12475,7 @@
   $('#weatherSearchBtn').addEventListener('click', searchWeatherLocation);
   $('#closeWxModal').addEventListener('click', closeOverlays);
   $('#weatherRefreshBtn').addEventListener('click', ()=>{ weatherLastError = null; refreshWeather(true); });
-  $('#appVersion').textContent = 'CluckWise.vm manager · version ' + APP_VERSION;
+  $('#appVersion').textContent = 'ProdWise.vm Tasks · version ' + APP_VERSION;
   $('#weatherSearchInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); searchWeatherLocation(); } });
   $('#weatherUseMyLocationBtn').addEventListener('click', ()=>{
     if(!navigator.geolocation){ showToast('This device cannot share its location.', true); return; }
@@ -12608,7 +12628,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CluckWise-backup-${dateKey(new Date())}.json`;
+    a.download = `ProdWise-Tasks-backup-${dateKey(new Date())}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -12639,7 +12659,7 @@
         renderAll();
         showToast('Data imported successfully.');
       }catch(err){
-        showToast('Could not read that file — make sure it is a CluckWise export.', true);
+        showToast('Could not read that file — make sure it is a ProdWise Tasks export.', true);
       }
     };
     reader.readAsText(file);
@@ -12823,6 +12843,20 @@
   });
 
   if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
+  // One app (2026-10-17): this is the Tasks section of ProdWise. Inside ProdWise (?embed=1) the
+  // Production switch hands back to ProdWise's page; opened on its own it goes to ProdWise.
+  const CW_EMBED = window.parent !== window && /[?&]embed=1\b/.test(location.search);
+  if(CW_EMBED) document.body.classList.add('cw-embed');
+  // Inside ProdWise on a device where Tasks was never connected: use ProdWise's farm (same farm
+  // folder in the cloud), so Tasks opens on the farm you're already in.
+  if(CW_EMBED){ try{ const pf = parent.syncFarmName; if(pf && !localStorage.getItem('prodplan-gh-farmname')) localStorage.setItem('prodplan-gh-farmname', pf); }catch(e){} }
+  document.addEventListener('click', e=>{
+    const b = e.target.closest('[data-ws]'); if(!b) return;
+    e.preventDefault();
+    if(b.dataset.ws !== 'production') return;
+    if(CW_EMBED) parent.postMessage({ pwSection:'production' }, location.origin);
+    else location.href = '../';
+  });
   load();
 })();
 </script>

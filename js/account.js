@@ -86,7 +86,7 @@ function accProfileHtml(){
 function accSecurityHtml(){
   if(!syncFarmName)return `<div class="set-cards">${accCard('shield','Farm password','Connect this device to a farm first. The password protects that farm’s cloud files.',`<div class="set-actions"><button type="button" class="set-btn primary" data-pw-goset="farm">Go to Farm &amp; sync</button></div>`)}</div>`;
   if(!accLoaded||accBusy&&!accInfo&&!accAccess)return `<div class="set-cards">${accCard('shield','Farm password','',`<p class="set-muted">Checking the sync server…</p>`)}</div>`;
-  const how=`<ul class="acc-how"><li><b>Manager password</b> — only you. ProdWise and CluckWise: every file of this farm, and this page.</li><li><b>Farm password</b> — your workers, once in the Viewer: tasks and reports only. It doesn’t open ProdWise or CluckWise.</li></ul>`;
+  const how=`<ul class="acc-how"><li><b>Manager password</b> — only you. Production and Tasks: every file of this farm, and this page.</li><li><b>Farm password</b> — your workers, once in the Viewer: tasks and reports only. It doesn’t open ProdWise or CluckWise.</li></ul>`;
   // The server has no password storage yet (or no signal): the password only guards joining the Viewer
   if(!accInfo){
     if(!navigator.onLine)return `<div class="set-cards">${accCard('shield','Farm password','You are offline. Connect to manage the farm password.','')}</div>`;
@@ -102,7 +102,7 @@ function accSecurityHtml(){
   if(!accInfo.setup){
     return `<div class="set-cards">${accCard('shield','Turn on passwords','The sync server checks them on every read and write, so nobody can open your farm’s files with its name alone.',
       `${how}<div class="acc-form">
-        ${accInfo.oldPassword?`<label class="acc-lbl" for="accCur">Current Viewer password</label>${accPwInput('accCur','The one workers use now','current-password')}<span class="set-muted">Set earlier in CluckWise › Workers. It proves you’re the manager.</span>`:''}
+        ${accInfo.oldPassword?`<label class="acc-lbl" for="accCur">Current Viewer password</label>${accPwInput('accCur','The one workers use now','current-password')}<span class="set-muted">Set earlier in Tasks › Workers. It proves you’re the manager.</span>`:''}
         <label class="acc-lbl" for="accNew">Manager password</label>${accPwInput('accNew','At least 6 characters — only you')}
         <label class="acc-lbl" for="accNew2">Type it again</label>${accPwInput('accNew2','Same password')}
         <label class="acc-lbl" for="accFarm">Farm password (workers)</label>${accPwInput('accFarm',accInfo.oldPassword?'Can be the same as the Viewer password now':'At least 4 characters')}
@@ -124,7 +124,7 @@ function accSecurityHtml(){
     return `<div class="acc-dev"><span class="acc-av">${escapeHtml(nm.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><span class="acc-dev-t"><b>${escapeHtml(nm)} <span class="acc-role${d.role==='manager'?' m':''}">${d.role==='manager'?'Manager':'Worker'}</span></b><small>${escapeHtml(sub)}</small></span>${d.deviceId===me?'':`<button type="button" class="set-btn acc-mini" data-acc-revoke="${escapeAttr(d.deviceId)}">Sign out</button>`}</div>`;}).join('');
   // Turned on with one shared password (both set at the same moment): workers could open the main apps
   const shared=!!(st&&accInfo.single&&st.mgrPwAt===st.farmPwAt);
-  const mgrCard=accCard('key','Manager password',shared?'<b>Workers and managers share one password right now</b>, so a worker who knows it could open ProdWise or CluckWise. Set a manager password only you know: your other manager devices sign in again with it, workers stay connected with the password they have.':'Only you. ProdWise and CluckWise, every file of this farm. Your other manager devices sign in again with the new one.',
+  const mgrCard=accCard('key','Manager password',shared?'<b>Workers and managers share one password right now</b>, so a worker who knows it could open ProdWise. Set a manager password only you know: your other manager devices sign in again with it, workers stay connected with the password they have.':'Only you. Production and Tasks, every file of this farm. Your other manager devices sign in again with the new one.',
     `<div class="acc-form">${accPwInput('accChg','New manager password')}${accPwInput('accChg2','Type it again')}<div class="set-actions"><button type="button" class="set-btn primary" data-acc-change>${shared?'Set manager password':'Change manager password'}</button>${st&&st.mgrPwAt&&!shared?`<span class="set-muted">Changed ${escapeHtml(fmtRelativeTime(st.mgrPwAt))}</span>`:''}</div></div>`,shared?' acc-warn':'');
   const farmCard=accCard('key','Farm password (workers)','Workers type it once in the Viewer: tasks and reports only. Workers already signed in stay connected when it changes.',
     `<div class="acc-fields">${accPwInput('accFarmChg','New farm password')}<button type="button" class="set-btn primary" data-acc-farmchange>Change</button></div>${st&&st.farmPwAt&&!shared?`<span class="set-muted">Changed ${escapeHtml(fmtRelativeTime(st.farmPwAt))}</span>`:''}`);
@@ -167,7 +167,7 @@ async function accSetup(btn){
   btn.disabled=false;
   if(!(r.j&&r.j.key)){showToast((r.j&&r.j.error)||'Could not turn on the farm password. Check your connection.',true);return;}
   FarmKey.set(syncFarmName,'manager',{key:r.j.key,deviceId:r.j.deviceId,role:'manager',at:Date.now()});
-  showToast('Passwords on. Sign in once in CluckWise with the manager password.');
+  showToast('Passwords on. Your other manager devices sign in once with the manager password.');
   accLoad();
 }
 async function accChange(){

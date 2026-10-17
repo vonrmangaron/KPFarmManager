@@ -5370,3 +5370,24 @@ body.theme-dark .co2-pin{border-left-color:#FFC56B}
 #closeAllModal .lo-intro{margin:0 0 10px;font-size:13.5px;line-height:1.45;color:var(--ink-2,var(--muted))}
 #closeAllModal{width:min(680px,calc(100vw - 24px));max-width:680px}
 #closeAllModal .ca-tbl td:nth-child(2){white-space:nowrap}
+
+/* ── One app: Production / Tasks switch, and Tasks (CluckWise) in a frame over the page (2026-10-17) ── */
+#cwFrame{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:5000;display:none;background:#16191B}
+body.pw-in-tasks #cwFrame{display:block}
+body.pw-in-tasks{overflow:hidden}
+.ws-sw{display:flex;flex-direction:column;gap:4px;width:74px;margin:2px auto 10px;padding:4px;border-radius:12px;background:rgba(255,255,255,.08);box-sizing:border-box;flex-shrink:0}
+.ws-sw button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;border-radius:9px;font:700 10px Inter,system-ui,sans-serif;letter-spacing:-.1px;color:#9AA3AB;text-align:center}
+.ws-sw button svg{width:20px;height:20px}
+.ws-sw button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.ws-sw button.on{background:#F0A21A;color:#16191B}
+.ws-sw button:focus-visible,.ws-pill button:focus-visible{outline:2px solid #F0A21A;outline-offset:2px}
+.ws-pill{display:none}
+@media (max-width:768px){
+  .ws-pill{display:inline-flex;align-self:flex-start;background:rgba(22,25,27,.07);border-radius:999px;padding:3px;gap:2px;margin-bottom:2px}
+  .ws-pill button{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 13px;border-radius:999px;font:700 13.5px Inter,system-ui,sans-serif;color:var(--ink)}
+  .ws-pill button svg{width:16px;height:16px}
+  .ws-pill button.on{background:#16191B;color:#fff}
+  #pageHeader .page-header-left:has(.ws-pill) .page-title{display:none}
+}
+body.theme-dark .ws-pill{background:rgba(255,255,255,.08)}
+body.theme-dark .ws-pill button.on{background:#F0A21A;color:#16191B}
