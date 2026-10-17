@@ -30,8 +30,17 @@ function openTasksSection(opts){
   pwSection='tasks';document.body.classList.add('pw-in-tasks');
   if(opts.push!==false&&location.hash!=='#tasks'){history.pushState({pwSection:'tasks'},'','#tasks');pwTasksPushed=true;}
   pwSyncSwitch();
+  pwTasksTopColour();cwFrame.addEventListener('load',pwTasksTopColour,{once:true});
   try{cwFrame.focus();}catch(e){}
 }
+// The status-bar strip above the frame takes the colour of Tasks' header (light or dark theme)
+function pwTasksTopColour(){
+  try{const d=cwFrame&&cwFrame.contentDocument;const tb=d&&d.querySelector('.topbar');if(!tb)return;
+    let c=getComputedStyle(tb).backgroundColor;const a=c.match(/rgba\([^)]*,\s*([\d.]+)\)/);
+    if(!c||c==='transparent'||(a&&+a[1]<0.5))c=d.body.classList.contains('theme-dark')?'#111827':'#FFF8EC';
+    document.documentElement.style.setProperty('--cw-top',c);}catch(e){}
+}
+setInterval(()=>{if(pwSection==='tasks')pwTasksTopColour();},2000);   // follows a theme change made inside Tasks
 function openProductionSection(opts){
   opts=opts||{};
   if(pwSection!=='tasks')return;
