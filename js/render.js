@@ -1212,6 +1212,7 @@ function groupViewHtml(g){
   let view=shedViewByGroup[g]||'overview';if(!['overview','planner','pickups','growth','setup'].includes(view))view='overview';let contentHtml='';
   if(view==='planner')contentHtml=renderFeedPlanner(g,sheds,today);
   else if(view==='overview')contentHtml=pairOverviewHtml(g);
+  else if(view==='pickups'&&typeof pickupsTabCardHtml==='function'){const both=sheds.length>1;contentHtml=`<div class="pred-grid${both?' compare':''} pair-part-pickups pk2-grid">${sheds.map(s=>pickupsTabCardHtml(s,g)).join('')}</div>`;}
   else if(view==='pickups'||view==='growth'||view==='setup'){const both=sheds.length>1;contentHtml=`<div class="pred-grid${both?' compare':''} pair-part-${view}">${sheds.map(s=>renderPredictionsShedCard(s,g,view)).join('')}</div>`;}
   else{const visibleSheds=view==='shed1'?[sheds[0]]:view==='shed2'?[sheds[1]||sheds[0]]:sheds;const gridClass=view==='both'&&sheds.length>1?'sheds-grid compare':'sheds-grid';contentHtml=`<div class="${gridClass}">${visibleSheds.map(s=>shedCardHtml(s,today)).join('')}</div>`;}
   const groupSwitch=pairSwitchHtml(g,'sheds');
