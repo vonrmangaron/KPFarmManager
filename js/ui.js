@@ -517,6 +517,7 @@ async function loadFarmBatchFromCloud(farmName,batchKey){
   else showToast('No data found — starting with default sheds.');
   saveSyncState();syncState='idle';renderSettingsDrawerBody();render();
   historySha=null;pullFarmHistory();
+  if(typeof refreshRunningBatches==='function')refreshRunningBatches(true);   // the other running batch (Batch Change Over)
 }
 function openFarmBatchPickerModal(farmName,files){
   const modal=document.getElementById('farmBatchPickerModal');const scrim=document.getElementById('syncScrim');

@@ -442,7 +442,7 @@ function farmKeyPrompt(j){
   FarmKey.prompt({title:`Sign in to ${syncFarmName}`,
     text:j&&j.needKey?'This farm is locked. Enter the manager password once on this device to keep syncing.':j&&j.signedOut?'This device was signed out of the farm. Enter the manager password to sync again.':'This farm now uses passwords. Enter the manager password once on this device.',
     label:'Manager password',button:'Sign in',later:j?null:'Later',
-    onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}if(activeTab==='account'&&typeof accLoad==='function')accLoad();pullFromCloud(true).catch(()=>{});return null;}});
+    onSubmit:async pw=>{const e=await FarmKey.signIn(syncFarmName,pw,'ProdWise');if(e)return e;showToast('Signed in. Syncing…');try{renderSettingsDrawerBody();}catch(x){}if(activeTab==='account'&&typeof accLoad==='function')accLoad();pullFromCloud(true).catch(()=>{});if(typeof refreshRunningBatches==='function')refreshRunningBatches(true);return null;}});
 }
 // Connect on a new device to a locked farm: sign in with the manager password, then connect.
 function farmKeyConnectPrompt(farm){

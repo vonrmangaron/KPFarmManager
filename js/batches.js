@@ -30,7 +30,7 @@ function pwCurrentSummary(){return farmData?pwBatchSummary(currentBatchKey()||''
 // All running batches, oldest first: the current one plus the others found in the cloud
 function pwRunningList(){
   const cur=pwCurrentSummary();const key=currentBatchKey();
-  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>o.key!==key).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
+  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>String(o.key).toLowerCase()!==String(key||'').toLowerCase()).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
   if(!others.length)return cur?[cur]:[];
   const list=others.concat(cur?[cur]:[]);
   list.sort((a,b)=>compareBatchKeys(b.key,a.key));   // compareBatchKeys sorts newest first; flip for oldest first
@@ -50,7 +50,7 @@ async function refreshRunningBatches(force){
     const keys=res.files.filter(f=>!f.isLegacy).map(f=>f.batchKey);
     const newest=keys[0],cur=currentBatchKey();
     const others=[];
-    for(const k of keys.filter(k=>k!==cur).slice(0,3)){
+    for(const k of keys.filter(k=>String(k).toLowerCase()!==String(cur||'').toLowerCase()).slice(0,3)){
       try{
         const r=await fetch(buildBatchUrl(syncFarmName,k),{cache:'no-store'});if(!r.ok)continue;
         const j=await r.json();const p=j&&j.data;if(!p||!p.farmData||!Array.isArray(p.farmData.sheds))continue;
