@@ -1152,7 +1152,8 @@ function render(){
     // Main content
     const app=document.getElementById('app');
     if(activeTab==='history'){app.innerHTML=renderHistoryView();}
-    else if(activeTab==='account'){app.innerHTML=renderAccountPage();}
+    else if(activeTab==='account'){activeTab='farmsettings';setTab=accTab==='security'?'security':'profile';app.innerHTML=renderSettingsPage();afterSettingsRender();}
+    else if(activeTab==='farmsettings'&&!farmData){app.innerHTML=renderSettingsPage();afterSettingsRender();}   // Account, Sync and App pages work without a batch
     else if(!farmData){
       if(activeTab!=='dashboard'&&activeTab!=='home')activeTab='home';
       app.innerHTML=renderDashboardView();

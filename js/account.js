@@ -6,10 +6,10 @@
 // (kept in <farm>-access, the same way the old CluckWise Workers screen did).
 let accTab='profile',accInfo=null,accStatus=null,accAccess=null,accLoaded=false,accBusy=false;
 const ACC_TABS=[['profile','Farm profile'],['security','Security']];
+// Account lives in Settings (2026-10-18): Settings › Account › Profile / Security
 function goAccount(tab){
   if(tab)accTab=tab;
-  if(typeof toolPageOpen!=='undefined'&&toolPageOpen)closeToolPages();
-  activeTab='account';render();window.scrollTo(0,0);
+  goSettings(accTab==='security'?'security':'profile');
   accLoad();
 }
 // ── Manager name: one per farm, kept in CluckWise's farm file (settings.manager) so both apps
@@ -63,7 +63,7 @@ async function accLoad(){
   }finally{accBusy=false;accLoaded=true;}
   accRefresh();
 }
-function accRefresh(){const b=document.getElementById('accBody');if(b&&activeTab==='account')b.innerHTML=accSectionHtml(accTab);}
+function accRefresh(){const b=document.getElementById('accBody');if(!b)return;if(activeTab==='farmsettings'&&(setTab==='profile'||setTab==='security'))b.innerHTML=setTab==='security'?accSecurityHtml():accProfileHtml();else if(activeTab==='account')b.innerHTML=accSectionHtml(accTab);}
 function accIcon(n){return settingsIcon(n);}
 function accCard(icon,title,desc,body,extra=''){
   return `<div class="settings-section acc-card${extra}"><div class="settings-section-head"><span class="settings-icon">${accIcon(icon)}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${title}</h4></div></div>${desc?`<p class="settings-section-desc">${desc}</p>`:''}${body}</div>`;

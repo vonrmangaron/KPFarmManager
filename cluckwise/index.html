@@ -3303,6 +3303,53 @@
   .bm-prod-note .btn-app{ width:auto; padding:8px 14px; font-size:13px; }
   .bm-locked #shedInputsContainer input, .bm-locked #batchStartInput, .bm-locked #batchEndInput{ opacity:.65; }
   .bm-locked .bm-stepper button, .bm-locked .bm-stepper input, .bm-locked .bm-copy-cleanout{ opacity:.4; pointer-events:none; }
+
+  /* ===== Settings: one page with a grouped side menu (2026-10-18), same look as Production Settings ===== */
+  .settings-drawer.cs2{ }
+  #settingsDrawer .st-head .st-sub{ display:none; }
+  .cs2-nav{ display:flex; flex-direction:column; gap:12px; padding:14px 12px; border:0; overflow-y:auto; }
+  .cs2-nav button[data-page]{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border-radius:9px; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .cs2-nav button[data-page]:hover{ background:rgba(22,25,27,.05); }
+  .cs2-nav button[data-page].active{ background:#16191B; color:#fff; }
+  body.theme-dark .cs2-nav button[data-page].active{ background:#F0A21A; color:#16191B; }
+  .cs2-nav button[data-page]:focus-visible{ outline:2px solid #F0A21A; outline-offset:1px; }
+  .cs2-nav [hidden]{ display:none !important; }
+  .cs2-grp{ display:flex; flex-direction:column; gap:2px; }
+  .cs2-k{ font:800 10.5px Inter,system-ui,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:2px 12px 4px; }
+  .cs2-bd{ margin-left:auto; font:800 10.5px Inter,system-ui,sans-serif; background:var(--primary-soft); color:var(--ink); border-radius:999px; padding:1px 7px; }
+  .cs2-search{ display:flex; align-items:center; gap:8px; height:38px; border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:0 10px; color:var(--muted); }
+  .cs2-search input{ border:0; outline:0; background:none; flex:1; min-width:0; font:500 13.5px Inter,system-ui,sans-serif; color:var(--ink); height:100%; }
+  .cs2-search:focus-within{ border-color:#F0A21A; }
+  .cs2-who{ display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; background:var(--surface); border:1px solid var(--line); }
+  .cs2-av{ width:34px; height:34px; border-radius:50%; background:#16191B; color:#FFC812; font:800 12.5px Inter,system-ui,sans-serif; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cs2-who b{ display:block; font:800 13.5px Sora,sans-serif; color:var(--ink); }
+  .cs2-who span{ font-size:12px; color:var(--muted); }
+  .cs2-back{ display:none; }
+  .cs2-head{ padding:2px 2px 10px; }
+  .cs2-crumb{ font:700 12px Inter,system-ui,sans-serif; color:var(--muted); }
+  .cs2-title{ margin:2px 0; font:800 22px Sora,sans-serif; color:var(--ink); }
+  .cs2-sub{ margin:0; color:var(--muted); font-size:13.5px; }
+  #settingsBody > .st-section[hidden]{ display:none !important; }
+  #settingsBody .st-section-head{ display:none; }
+  #settingsBody .st-section.st-collapsed .st-card{ display:block; }
+  #settingsBody .st-card + .st-card{ margin-top:12px; }
+  @media (min-width:761px){
+    #settingsDrawer.open{ width:min(920px, calc(100vw - 48px)); display:grid; grid-template-columns:240px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); }
+    #settingsDrawer .st-head{ grid-column:1 / -1; }
+    #settingsDrawer .cs2-nav{ grid-column:1; grid-row:2; border-right:1px solid var(--line); background:var(--surface-soft); }
+    #settingsDrawer #settingsBody{ grid-column:2; grid-row:2; overflow-y:auto; padding:18px 22px 28px; }
+  }
+  @media (max-width:760px){
+    #settingsDrawer .cs2-nav{ display:none; }
+    #settingsDrawer.cs2-list .cs2-nav{ display:flex; flex:1; }
+    #settingsDrawer.cs2-list #settingsBody{ display:none; }
+    #settingsDrawer .cs2-grp{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:4px 0 6px; gap:0; }
+    #settingsDrawer .cs2-k{ padding:10px 14px 4px; }
+    #settingsDrawer .cs2-nav button[data-page]{ border-radius:0; padding:12px 14px; border-top:1px solid var(--line); }
+    #settingsDrawer .cs2-nav button[data-page]::after{ content:'›'; margin-left:auto; color:var(--muted); font-size:18px; }
+    #settingsDrawer .cs2-nav button[data-page].active{ background:none; color:var(--ink); }
+    #settingsDrawer .cs2-back{ display:inline-flex; all:unset; cursor:pointer; font:700 14px Inter,system-ui,sans-serif; color:#2F6BD8; margin:4px 2px 8px; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3651,21 +3698,37 @@
     </div>
     <button id="closeSettings" class="st-close" aria-label="Close">✕</button>
   </div>
-  <nav class="st-tabs" id="settingsTabs" aria-label="Settings sections">
-    <button type="button" data-target="stAppearance" class="active">Appearance</button>
-    <button type="button" data-target="stWeather">Weather</button>
-    <button type="button" data-target="stSync">Sync</button>
-    <button type="button" data-target="stWorkers">Workers</button>
-    <button type="button" data-target="stData">Data</button>
+  <nav class="st-tabs cs2-nav" id="settingsTabs" aria-label="Settings menu">
+    <label class="cs2-search"><span aria-hidden="true">⌕</span><input type="search" id="csSearch" placeholder="Search settings" aria-label="Search settings"></label>
+    <div class="cs2-who"><span class="cs2-av" id="csAv">?</span><div><b id="csWhoName">Manager</b><span id="csWhoFarm">Not connected</span></div></div>
+    <div class="cs2-grp" data-g="Account"><span class="cs2-k">Account</span><button type="button" data-page="farm">Farm &amp; manager</button></div>
+    <div class="cs2-grp" data-g="Planner"><span class="cs2-k">Planner</span><button type="button" data-page="appearance">Appearance</button><button type="button" data-page="calendar">Calendar</button><button type="button" data-page="weather">Weather</button></div>
+    <div class="cs2-grp" data-g="Crew"><span class="cs2-k">Crew</span><button type="button" data-page="workers">Workers<span class="cs2-bd" id="csWorkersBd" hidden></span></button><button type="button" data-page="notifications">Notifications</button></div>
+    <div class="cs2-grp" data-g="Data"><span class="cs2-k">Data</span><button type="button" data-page="data">Backup &amp; restore</button><button type="button" data-page="about">About</button></div>
   </nav>
   <div class="settings-body st-body" id="settingsBody">
+    <button type="button" class="cs2-back" id="csBack">‹ Settings</button>
+    <div class="cs2-head"><span class="cs2-crumb" id="csCrumb"></span><h3 class="cs2-title" id="csTitle"></h3><p class="cs2-sub" id="csSub"></p></div>
+
+    <section class="st-section" id="stFarm">
+      <div class="st-card">
+        <div class="st-row"><div class="st-row-text"><span class="st-label">Farm</span><span class="st-hint" id="csFarmHint">Tasks follows the farm open in Production</span></div><span class="st-badge" id="csFarmBadge">Not connected</span></div>
+        <div class="st-row"><div class="st-row-text"><span class="st-label">Farm name</span><span class="st-hint" id="csFarmName">—</span></div></div>
+        <div class="st-row"><div class="st-row-text"><span class="st-label">Manager</span><span class="st-hint" id="csManager">—</span></div></div>
+      </div>
+      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Edit farm, manager or passwords</span><span class="st-hint">Production › Settings › Account</span></div><button type="button" class="st-btn st-btn-primary" id="csOpenAccount">Open in Production ›</button></div></div>
+    </section>
+
+    <section class="st-section" id="stNotif">
+      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Past-due tasks and reports</span><span class="st-hint">The list of overdue tasks, new problem reports and fixes</span></div><button type="button" class="st-btn" id="csOpenNotif">Open notifications</button></div></div>
+    </section>
 
     <section class="st-section" id="stAppearance">
-      <div class="st-section-head"><span class="st-ic">🎨</span><div><h3>Appearance</h3></div></div>
+      <div class="st-section-head"><div><h3>Appearance</h3></div></div>
       <div class="st-card">
         <div class="st-row">
           <div class="st-row-text"><span class="st-label">Theme</span></div>
-          <select id="setTheme" data-seg><option value="light">☀️ Light</option><option value="dark">🌙 Dark</option></select>
+          <select id="setTheme" data-seg><option value="light">Light</option><option value="dark">Dark</option></select>
         </div>
         <div class="st-row">
           <div class="st-row-text"><span class="st-label">Task text size</span></div>
@@ -3683,7 +3746,7 @@
     </section>
 
     <section class="st-section" id="stCalendar">
-      <div class="st-section-head"><span class="st-ic">📅</span><div><h3>Calendar</h3></div></div>
+      <div class="st-section-head"><div><h3>Calendar</h3></div></div>
       <div class="st-card">
         <div class="st-row st-row-stack">
           <label class="st-label" for="setDefaultView">Opening view</label>
@@ -3701,17 +3764,17 @@
 
 
     <section class="st-section" id="stWeather">
-      <div class="st-section-head"><span class="st-ic">🌤️</span><div><h3>Weather</h3></div></div>
+      <div class="st-section-head"><div><h3>Weather</h3></div></div>
       <div class="st-card">
         <div class="st-row st-row-stack">
           <span class="st-label">Farm location</span>
           <div class="st-status" id="weatherLocStatus">No farm location set yet.</div>
           <div class="st-input-row">
             <input type="text" id="weatherSearchInput" class="st-input" placeholder="Nearest town, e.g. Gingin" autocomplete="off">
-            <button class="st-btn st-btn-icon" id="weatherSearchBtn" type="button" title="Search">🔍</button>
+            <button class="st-btn st-btn-icon" id="weatherSearchBtn" type="button" title="Search">Search</button>
           </div>
           <div class="restore-list" id="weatherSearchResults"></div>
-          <button class="st-btn st-btn-ghost" id="weatherUseMyLocationBtn" type="button">📍 Use this device's location</button>
+          <button class="st-btn st-btn-ghost" id="weatherUseMyLocationBtn" type="button">Use this device's location</button>
         </div>
         <div class="st-row">
           <div class="st-row-text"><span class="st-label">Units</span><span class="st-hint">Wind follows: km/h or mph</span></div>
@@ -3723,13 +3786,13 @@
         </label>
         <div class="st-row st-row-foot">
           <div class="wx-diag" id="weatherDiag"></div>
-          <button class="st-btn st-btn-ghost st-btn-sm" id="weatherRefreshBtn" type="button">🔄 Refresh</button>
+          <button class="st-btn st-btn-ghost st-btn-sm" id="weatherRefreshBtn" type="button">Refresh</button>
         </div>
       </div>
     </section>
 
     <section class="st-section" id="stSync">
-      <div class="st-section-head"><span class="st-ic">☁️</span><div><h3>Farm sync</h3><p>Keep every device on the same farm data.</p></div></div>
+      <div class="st-section-head"><div><h3>Farm sync</h3><p>Keep every device on the same farm data.</p></div></div>
       <div class="st-card">
         <div class="st-row st-row-stack">
           <div class="st-sync-status"><span class="st-badge" id="syncBadge">Not connected</span><span class="st-status" id="githubStatus">Not connected</span></div>
@@ -3738,19 +3801,19 @@
           <p class="st-hint">Use exactly the same farm name on every device — it's how they find the same data. New farms are created in ProdWise.</p>
           <div class="st-btn-pair">
             <button class="st-btn st-btn-primary" id="connectGithubBtn" type="button">Connect</button>
-            <button class="st-btn st-btn-ghost" id="syncGithubBtn" type="button">🔄 Sync now</button>
+            <button class="st-btn st-btn-ghost" id="syncGithubBtn" type="button">Sync now</button>
           </div>
         </div>
       </div>
     </section>
 
     <section class="st-section" id="stWorkers">
-      <div class="st-section-head"><span class="st-ic">👥</span><div><h3>Workers</h3></div></div>
+      <div class="st-section-head"><div><h3>Workers</h3></div></div>
       <div class="st-card">
         <div class="st-row st-row-stack">
-          <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>ProdWise › Account › Farm profile</b>. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
+          <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>Production › Settings › Account</b>. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
         </div>
-        <div class="st-row st-row-stack fk-panel" id="fkPanel"><div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint">Connect to a farm first (Sync tab).</span></div></div>
+        <div class="st-row st-row-stack fk-panel" id="fkPanel"><div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint">Connect to a farm first (Settings › Farm &amp; manager).</span></div></div>
         <div class="st-row st-row-stack">
           <div class="access-head"><span class="st-label">Joined workers</span><span class="sb-count" id="accessCount"></span><button class="st-btn st-btn-ghost st-btn-sm" id="accessRefreshBtn" type="button" aria-label="Refresh worker list">↻ Refresh</button></div>
           <div class="access-list" id="accessMembers"><p class="st-hint">No workers have joined yet.</p></div>
@@ -3759,33 +3822,29 @@
     </section>
 
     <section class="st-section" id="stData">
-      <div class="st-section-head"><span class="st-ic">🗂️</span><div><h3>Data &amp; backup</h3><p>Export, back up or roll back your farm data.</p></div></div>
+      <div class="st-section-head"><div><h3>Data &amp; backup</h3><p>Export, back up or roll back your farm data.</p></div></div>
       <div class="st-card">
         <button class="st-action st-action-primary" id="settingsExportBtn" type="button">
-          <span class="st-action-ic">📄</span>
           <span class="st-action-text"><span class="st-action-title">Export</span><span class="st-action-sub">PDF report, printable checklist or CSV — all data, a batch or a date range</span></span>
           <span class="st-action-chev">›</span>
         </button>
         <button class="st-action" id="exportDataBtn" type="button">
-          <span class="st-action-ic">💾</span>
           <span class="st-action-text"><span class="st-action-title">Download backup</span><span class="st-action-sub">Full copy of the farm data (.json)</span></span>
           <span class="st-action-chev">›</span>
         </button>
         <label class="st-action" for="importDataInput">
-          <span class="st-action-ic">📥</span>
           <span class="st-action-text"><span class="st-action-title">Restore from backup file</span><span class="st-action-sub">Replaces current data with a .json backup</span></span>
           <span class="st-action-chev">›</span>
         </label>
         <input type="file" id="importDataInput" accept="application/json" style="display:none;">
         <button class="st-action" id="openRestoreBtn" type="button">
-          <span class="st-action-ic">🕓</span>
           <span class="st-action-text"><span class="st-action-title">Restore from a date</span><span class="st-action-sub">Daily restore points, kept for 7 days</span></span>
           <span class="st-action-chev">›</span>
         </button>
       </div>
     </section>
 
-    <section class="st-section st-section-last">
+    <section class="st-section st-section-last" id="stAbout">
       <button class="st-btn st-btn-danger" id="resetSettingsBtn" type="button">Reset settings to defaults</button>
       <p class="st-note st-center">Resets display settings only — your farm data and weather location are kept.</p>
       <div class="app-version" id="appVersion"></div>
@@ -6962,6 +7021,7 @@
   function wxNeedsSetup(){ return settings.showWeather !== false && !(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
   function openWeatherSettings(){
     openDrawer('#settingsDrawer');
+    if(window.__csOnOpen){ window.__csOnOpen(); window.__csShow('weather', true); }
     setStSection(document.getElementById('stWeather'), true);
     setTimeout(()=>{
       const inp = $('#weatherSearchInput');
@@ -10972,7 +11032,7 @@
     if(!panel) return;
     const where = '<b>ProdWise › Account › Security</b>';
     let chips = '', hint, btn = '';
-    if(!ghPath) hint = 'Connect to a farm first (Sync tab).';
+    if(!ghPath) hint = 'Connect to a farm first (Settings › Farm &amp; manager).';
     else if(fkInfo && fkInfo.setup){
       const mine = !!FarmKey.get(ghFarmName, 'manager');
       chips = `<span class="fk-chip on">On</span>${fkInfo.locked ? '<span class="fk-chip lock">Locked</span>' : '<span class="fk-chip">Not locked</span>'}`;
@@ -11943,7 +12003,7 @@
   $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
   $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
-  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
+  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
   $('#moreThemeToggleBtn').addEventListener('click', ()=>{ closeOverlays(); settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
@@ -12020,7 +12080,7 @@
     this.dataset.pending = ''; this.textContent = 'Restore the original list';
     delete settings.problemTypes; persist(); renderPtypes(); showToast('Original list restored.');
   });
-  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); });
+  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){
@@ -12503,25 +12563,58 @@
     h.addEventListener('click', flip);
     h.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); flip(); } });
   });
-  $('#settingsTabs').addEventListener('click', (e)=>{
-    const b = e.target.closest('button[data-target]');
-    if(!b) return;
-    const sec = document.getElementById(b.dataset.target);
-    const body = $('#settingsBody');
-    if(sec) setStSection(sec, true);
-    if(sec && body) body.scrollTo({ top: sec.offsetTop - body.offsetTop - 6, behavior:'smooth' });
-    document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x === b));
-    stTabPinnedUntil = Date.now() + 900;
+  // ---------- Settings: one page at a time, grouped side menu (2026-10-18, mockup DqjbS1Z7vh4M4U68BuxLaC) ----------
+  const CS_PAGES = {
+    farm:{ g:'Account', t:'Farm & manager', d:'Shared with Production. Change them there, in Settings › Account.', ids:['stFarm','stSync'], k:'farm name manager sync connect password' },
+    appearance:{ g:'Planner', t:'Appearance', d:'How the calendar, list and board look on this device.', ids:['stAppearance'], k:'theme dark light text size batch labels icons' },
+    calendar:{ g:'Planner', t:'Calendar', d:'What opens first.', ids:['stCalendar'], k:'opening view month day agenda board' },
+    weather:{ g:'Planner', t:'Weather', d:'The forecast on the calendar, board and list.', ids:['stWeather'], k:'weather location units celsius fahrenheit' },
+    workers:{ g:'Crew', t:'Workers', d:'Who uses the Crew app on your farm.', ids:['stWorkers'], k:'workers crew farm password joined remove invite manager' },
+    notifications:{ g:'Crew', t:'Notifications', d:'Past-due tasks, problem reports and fixes.', ids:['stNotif'], k:'notifications overdue alerts reports' },
+    data:{ g:'Data', t:'Backup & restore', d:'Copies of your tasks, kept in the cloud and on your device.', ids:['stData'], k:'export backup restore pdf csv checklist report download' },
+    about:{ g:'Data', t:'About', d:'Version and credits.', ids:['stAbout'], k:'version about reset defaults' }
+  };
+  const CS_KEY = 'cw-settings-page';
+  let csPage = (()=>{ try{ return localStorage.getItem(CS_KEY) || 'appearance'; }catch(e){ return 'appearance'; } })();
+  if(!CS_PAGES[csPage]) csPage = 'appearance';
+  function csShow(page, fromList){
+    if(!CS_PAGES[page]) page = 'appearance';
+    csPage = page; try{ localStorage.setItem(CS_KEY, page); }catch(e){}
+    const p = CS_PAGES[page], drawer = $('#settingsDrawer');
+    document.querySelectorAll('#settingsBody > .st-section').forEach(sec=>{
+      const show = p.ids.includes(sec.id) && !(sec.id === 'stSync' && CW_EMBED);   // inside ProdWise, Tasks follows Production's farm
+      sec.hidden = !show; if(show) sec.classList.remove('st-collapsed');
+    });
+    $('#csCrumb').textContent = p.g; $('#csTitle').textContent = p.t; $('#csSub').textContent = p.d;
+    document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const on = b.dataset.page === page; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+    if(fromList) drawer.classList.remove('cs2-list');
+    if(page === 'farm') csRenderFarm();
+    $('#settingsBody').scrollTop = 0;
+  }
+  function csRenderFarm(){
+    const m = managerName(), f = ghFarmName || '';
+    $('#csFarmBadge').textContent = ghPath ? 'Connected' : 'Not connected'; $('#csFarmBadge').classList.toggle('on', !!ghPath);
+    $('#csFarmName').textContent = f || '—'; $('#csManager').textContent = m ? m + ' · tasks assigned to the manager stay off workers’ phones' : 'Not set';
+    $('#csFarmHint').textContent = CW_EMBED ? 'Tasks follows the farm open in Production' : 'This device · connect below';
+  }
+  function csRenderWho(){
+    const m = managerName(), f = ghFarmName || '';
+    $('#csWhoName').textContent = m || 'Manager'; $('#csWhoFarm').textContent = f || 'Not connected';
+    $('#csAv').textContent = ((m || f || '?').split(/\s+/).map(w=> w[0]).join('').slice(0,2) || '?').toUpperCase();
+  }
+  // opening Settings: the last page on a computer, the list of pages on a phone
+  window.__csOnOpen = ()=>{ csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
+  $('#settingsTabs').addEventListener('click', (e)=>{ const b = e.target.closest('button[data-page]'); if(b) csShow(b.dataset.page, true); });
+  window.__csShow = csShow;
+  $('#csBack').addEventListener('click', ()=> $('#settingsDrawer').classList.add('cs2-list'));
+  $('#csSearch').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const p = CS_PAGES[b.dataset.page]; b.hidden = !!q && !(p.t + ' ' + p.g + ' ' + p.k).toLowerCase().includes(q); });
+    document.querySelectorAll('#settingsTabs .cs2-grp').forEach(g=> g.hidden = ![...g.querySelectorAll('[data-page]')].some(b=> !b.hidden));
   });
-  $('#settingsBody').addEventListener('scroll', ()=>{
-    const body = $('#settingsBody');
-    const ids = ['stAppearance','stWeather','stSync','stWorkers','stData'];
-    let current = ids[0];
-    ids.forEach(id=>{ const el = document.getElementById(id); if(el && el.offsetTop - body.offsetTop - 40 <= body.scrollTop) current = id; });
-    if(Date.now() < stTabPinnedUntil) return;   // a tab was just tapped: keep it highlighted
-    if(body.scrollHeight - body.clientHeight > 40 && body.scrollTop + body.clientHeight >= body.scrollHeight - 4) current = 'stData';
-    document.querySelectorAll('#settingsTabs button').forEach(x=> x.classList.toggle('active', x.dataset.target === current));
-  }, { passive:true });
+  $('#csSearch').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ const b = [...document.querySelectorAll('#settingsTabs [data-page]')].find(x=> !x.hidden); if(b) b.click(); } });
+  $('#csOpenAccount').addEventListener('click', ()=>{ closeOverlays(); if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'account' }, location.origin); else location.href = '../#account'; });
+  $('#csOpenNotif').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
   $('#themeToggleBtn').addEventListener('click', ()=>{ settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#setShowIcons').addEventListener('change', (e)=>{ settings.showIcons = e.target.checked; applySettings(); persist(); });
   $('#setBatchStyle').addEventListener('change', (e)=>{ settings.batchBadgeStyle = e.target.value; applySettings(); persist(); renderAll(); });
@@ -12699,6 +12792,7 @@
   $('#openSettingsFromErrorBtn').addEventListener('click', ()=>{
     hideLoadErrorOverlay();
     openDrawer('#settingsDrawer');
+    if(window.__csOnOpen){ window.__csOnOpen(); window.__csShow('farm', true); }
   });
   $('#syncGithubBtn').addEventListener('click', async ()=>{
     if(!ghPath){ showToast('Connect first.', true); return; }

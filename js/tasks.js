@@ -65,6 +65,7 @@ function openProductionSection(opts){
 function pwOpenTab(t){
   if(t==='shedsetup'&&farmData){activeTab='shedsetup';render();}
   else if(t==='newbatch'&&typeof openNewBatchModal==='function')openNewBatchModal();
+  else if(t==='account'&&typeof goAccount==='function')goAccount('profile');
 }
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{
@@ -81,5 +82,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(pwPlaceSwitches,0);
   const hdr=document.getElementById('pageHeader');if(hdr)new MutationObserver(()=>{if(!hdr.querySelector('.ws-pill'))pwPlaceSwitches();}).observe(hdr,{childList:true,subtree:true});
   if(location.hash==='#tasks')setTimeout(()=>openTasksSection({push:false}),300);
-  if(location.hash==='#shedsetup'||location.hash==='#newbatch'){const t=location.hash.slice(1);history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>pwOpenTab(t),300);}
+  if(location.hash==='#shedsetup'||location.hash==='#newbatch'||location.hash==='#account'){const t=location.hash.slice(1);history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>pwOpenTab(t),300);}
 });
