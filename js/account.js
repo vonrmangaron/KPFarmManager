@@ -75,28 +75,34 @@ function stRow(title,hint,ctl,cls){return `<div class="st2-row${cls?' '+cls:''}"
 function accProfileHtml(){
   const st=siloStart(),con=!!syncFarmName,mgr=managerNameShown()||'';
   const from=st!=null?st:1;
-  return stSec('Farm',
+  return `<div class="set-apply" id="pfSave" role="region" aria-label="Unapplied changes" hidden><div class="set-apply-txt"><b>Changes not applied</b><span id="pfSaveWhat"></span></div><button type="button" class="set-btn" data-pf-cancel>Discard</button><button type="button" class="set-btn primary" data-pf-save>Apply</button></div>`
+   +stSec('Farm',
       stRow('Farm name',`Shown at the top of every page.${con?' Cloud ID: <b>'+escapeHtml(syncFarmName)+'</b>':''}`,`<input type="text" class="st2-in" id="pfName" maxlength="40" value="${escapeAttr(farmDisplayName||'')}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" data-pf>`)
      +stRow('Manager','Tasks assigned to the manager stay off workers’ phones.',con?`<input type="text" class="st2-in" id="pfMgr" maxlength="40" value="${escapeAttr(mgr)}" placeholder="e.g. Von" autocomplete="name" data-pf>`:'<span class="st2-muted">Connect to a farm first</span>')
      +stRow('Silo numbers','The numbers painted on your silos, 3 per pair.',`<input type="number" class="st2-in st2-in-sm" id="pfSilo" min="1" max="990" step="1" inputmode="numeric" value="${from}" data-pf><span class="st2-unit">to <b id="pfSiloTo">${from+11}</b></span>`)
-     +`<div class="st2-row st2-save" id="pfSave" hidden><div class="st2-rt"><span>Changes not saved yet</span></div><div class="st2-ctl"><button type="button" class="set-btn" data-pf-cancel>Cancel</button><button type="button" class="set-btn primary" data-pf-save>Save</button></div></div>`)
+     )
    +stSec('This device',
       stRow('Connected farm',con?(syncLastSyncAt?'Synced '+escapeHtml(fmtRelativeTime(syncLastSyncAt)):'Connected'):'Not connected to a farm',`${con?`<span class="st2-chip ok">● ${escapeHtml(syncFarmName)}</span>`:''}<button type="button" class="set-btn" data-pf-switch>${con?'Switch farm':'Connect farm'}</button>`));
 }
-function pfDirty(){const n=document.getElementById('pfName'),m=document.getElementById('pfMgr'),s=document.getElementById('pfSilo');if(!n)return false;
-  const st=siloStart()!=null?siloStart():1;return n.value.trim()!==String(farmDisplayName||'')||(m&&m.value.trim().replace(/\s+/g,' ')!==String(managerNameShown()||''))||(s&&Number(s.value)!==st);}
-document.addEventListener('input',e=>{if(!e.target.closest||!e.target.closest('[data-pf]'))return;const s=document.getElementById('pfSilo'),to=document.getElementById('pfSiloTo');if(s&&to)to.textContent=(Math.max(1,Math.floor(Number(s.value))||1)+11);const b=document.getElementById('pfSave');if(b)b.hidden=!pfDirty();});
+// which profile fields differ from what's saved
+function pfChanges(){const n=document.getElementById('pfName'),m=document.getElementById('pfMgr'),s=document.getElementById('pfSilo');if(!n)return [];
+  const st=siloStart()!=null?siloStart():1,out=[];
+  if(n.value.trim()!==String(farmDisplayName||''))out.push('Farm name');
+  if(m&&m.value.trim().replace(/\s+/g,' ')!==String(managerNameShown()||''))out.push('Manager');
+  if(s&&Number(s.value)!==st)out.push('Silo numbers');
+  return out;}
+document.addEventListener('input',e=>{if(!e.target.closest||!e.target.closest('[data-pf]'))return;const s=document.getElementById('pfSilo'),to=document.getElementById('pfSiloTo');if(s&&to)to.textContent=(Math.max(1,Math.floor(Number(s.value))||1)+11);const b=document.getElementById('pfSave'),ch=pfChanges();if(b){b.hidden=!ch.length;const w=document.getElementById('pfSaveWhat');if(w)w.textContent=ch.join(' · ');}});
 document.addEventListener('click',async e=>{
   if(e.target.closest('[data-pf-cancel]')){accRefresh();return;}
   if(e.target.closest('[data-pf-switch]')){openSyncModal();if(syncFarmName)showConnectForm('Enter the farm name to switch to.');return;}
   const sv=e.target.closest('[data-pf-save]');if(!sv)return;
   const n=document.getElementById('pfName').value.trim(),mEl=document.getElementById('pfMgr'),m=mEl?mEl.value.trim().replace(/\s+/g,' '):null,sl=Math.floor(Number(document.getElementById('pfSilo').value));
   if(mEl&&m!==String(managerNameShown()||'')){if(!m){showToast('Enter the manager’s name.',true);mEl.focus();return;}
-    sv.disabled=true;sv.textContent='Saving…';const ok=await saveManagerName(m);sv.disabled=false;sv.textContent='Save';
+    sv.disabled=true;sv.textContent='Applying…';const ok=await saveManagerName(m);sv.disabled=false;sv.textContent='Apply';
     if(!ok){showToast('Could not save the manager name. Check your connection.',true);return;}}
   if(n!==String(farmDisplayName||''))setFarmDisplayName(n);
   const want=sl>1&&sl<=990?sl:'';if((want||null)!==(siloStart()||null))setSiloStart(want);
-  showToast('Profile saved.');accRefresh();
+  showToast('Profile applied.');accRefresh();
 });
 
 function accSecurityHtml(){

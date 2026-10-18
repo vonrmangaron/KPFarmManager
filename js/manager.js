@@ -710,7 +710,7 @@ function renderSettingsPage(){
       <h2 class="st2-title">${escapeHtml(p.label)}${off?`<span class="st2-nn">${off} not at normal</span>`:''}</h2>
       <p class="st2-sub">${escapeHtml(p.sub)}</p></div>
       <label class="st2-search st2-search-top"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label></div>
-      <div class="set-body st2-body set-${setTab}" id="setBody">${setPageBody(setTab)}</div>${setApplyBarHtml()}
+      ${setApplyBarHtml()}<div class="set-body st2-body set-${setTab}" id="setBody">${setPageBody(setTab)}</div>
     </section></div>`;
 }
 // The old drawer re-render calls (sync state, farm history, units…) refresh this page's tab instead
