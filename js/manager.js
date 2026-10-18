@@ -543,7 +543,7 @@ function syncPwRail(){
 document.addEventListener('click',e=>{
   const pb=e.target.closest('[data-pw-panel]');
   if(pb){const k=pb.dataset.pwPanel;
-    if(pwPanel===k){setPwPanel('none',true);return;}
+    if(pwPanel===k&&!document.body.classList.contains('pw-on-settings')){setPwPanel('none',true);return;}
     setPwPanel(k,true);
     // and goes to the first page of that section: Batch → Home, Sheds → Sheds 1–2, Tools → Feed loads
     if(k==='tools'){if(toolPageOpen!=='loadsModal'&&typeof openLoadsModal==='function')openLoadsModal();return;}
@@ -557,7 +557,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
   if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}
   if(e.target.closest('[data-pwr-farm]')){goAccount('profile');return;}
-  const st=e.target.closest('[data-set-tab]');if(st){setTab=st.dataset.setTab;setListOpen=false;render();window.scrollTo(0,0);if((setTab==='profile'||setTab==='security')&&typeof accLoad==='function')accLoad();return;}
+  const st=e.target.closest('[data-set-tab]');if(st&&SET_TASKS_PAGES.includes(st.dataset.setTab)&&st.closest('.st2')){setOpenInTasks(st.dataset.setTab);return;}
+  if(st){setTab=st.dataset.setTab;setListOpen=false;render();window.scrollTo(0,0);if((setTab==='profile'||setTab==='security')&&typeof accLoad==='function')accLoad();return;}
   if(e.target.closest('[data-set-back]')){setListOpen=true;render();window.scrollTo(0,0);return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
   const sd=e.target.closest('[data-set-std]');if(sd){sdSet('std',sd.dataset.setStd);return;}
@@ -574,6 +575,8 @@ document.addEventListener('click',e=>{
 let setTab='predictions',setPair=1;
 const SET_TABS=[['predictions','Predictions'],['pairs','Per pair & shed'],['farm','Farm & sync'],['alerts','Alerts'],['app','App & data']];
 function goSettings(tab){
+  if(tab&&SET_ALIAS[tab])tab=SET_ALIAS[tab];
+  if(tab&&SET_TASKS_PAGES.includes(tab)){setOpenInTasks(tab);return;}
   if(tab)setTab=tab;
   // phone: a named page opens straight away; plain Settings opens on the list of pages
   setListOpen=!tab&&window.matchMedia('(max-width:768px)').matches;
@@ -662,10 +665,28 @@ async function organiseCloudFiles(btn){
 const SET_GROUPS=[
   ['Account',[['profile','Profile','Your farm’s name, its manager and the silo numbers. Shared by Production, Tasks and the Crew app.'],['security','Security','Passwords keep your farm’s data to you and your crew.']]],
   ['Production',[['feed','Feed & silos','How the feed forecast plans deliveries. Changes wait for Apply.'],['weights','Weights & result','Target weights and how shed weights turn into plant weights.'],['pickups','Pickup planning','When sheds are thinned and how many pickups to plan.'],['pairs','Per pair & shed','Scale corrections and normal daily mortality, shed by shed.']]],
+  ['Tasks',[['appearance','Appearance','How the calendar, list and board look on this device.'],['calendar','Calendar','What opens first.'],['weather','Weather','The forecast on the calendar, board and list.']]],
+  ['Crew',[['workers','Workers','Who uses the Crew app on your farm.']]],
   ['Farm',[['sync','Sync & cloud','Where this farm’s files live and how this device syncs.'],['batches','Batches & history','Past batches and the farm’s results over time.']]],
-  ['App',[['alerts','Alerts','Which reminders ProdWise shows.'],['display','Display & units','Units and how numbers are shown on this device.'],['data','Data & reports','Backups, imports and reports.'],['about','About','Version and credits.']]]
+  ['App',[['alerts','Alerts','What ProdWise tells you about, in Production and in Tasks.'],['backup','Backup & reports','Copies and reports for both sections in one place.'],['display','Display & units','Units and how numbers are shown on this device.'],['about','About','Version and credits.']]]
 ];
-const SET_ALIAS={predictions:'feed',farm:'sync',app:'display'};
+// One Settings for Production and Tasks (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): Tasks has the same menu.
+// These pages belong to Tasks: picking one opens the Tasks section on that page.
+const SET_TASKS_PAGES=['appearance','calendar','weather','workers','alerts','backup'];
+const SET_ALIAS={predictions:'feed',farm:'sync',app:'display',data:'backup'};
+function setOpenInTasks(k){
+  if(typeof openTasksSection!=='function')return;
+  openTasksSection();
+  const send=()=>{try{cwFrame.contentWindow.postMessage({cwOpenSettings:k},location.origin);}catch(e){}};
+  // the first time, Tasks is still loading: send once it has started
+  if(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__csShow)send();
+  else if(cwFrame)cwFrame.addEventListener('load',()=>setTimeout(send,300),{once:true});
+}
+// For Tasks' copy of the menu and its Alerts / Backup pages
+function pwSettingsBadges(){return {feed:setOffCount('feed'),security:!!(typeof accInfo!=='undefined'&&accInfo&&accInfo.setup)};}
+function pwGetNotif(k){return !!notifPrefs[k];}
+function pwSetNotif(k,v){notifPrefs[k]=!!v;saveNotifPrefs();if(typeof updateAlertsBell==='function')updateAlertsBell();}
+function pwBatchLabel(){if(!farmData)return '';const b=predState.batchNumber||farmData.batchNumber;return b?'Batch '+b:'This batch';}
 const SET_SEC={feed:'Silos and feed',weights:'Weights and result',pickups:'Pickup planning'};
 const SET_NEEDS_BATCH=['feed','weights','pickups','pairs','batches'];
 let setSearch='',setListOpen=false;
@@ -673,7 +694,7 @@ function setPageInfo(k){for(const [g,items] of SET_GROUPS){const it=items.find(x
 function setOffCount(k){if(!farmData||!SET_SEC[k])return 0;const keys=new Set(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.key));return farmSettingsNotNormal().filter(o=>keys.has(o.key)).length;}
 // words each page answers to in the search box (its name, its group and the settings on it)
 function setKeywords(k){const p=setPageInfo(k);let w=[p.label,p.group,p.sub];if(SET_SEC[k])w=w.concat(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.label+' '+(i.hint||'')));
-  const extra={profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders',display:'units theme',data:'backup import export reports excel restore',about:'version credits'}[k]||'';
+  const extra={appearance:'theme dark light text size batch labels icons',calendar:'opening view month day agenda board',weather:'weather location units forecast',workers:'crew farm password joined invite',backup:'backup restore export import excel pdf csv checklist report download',profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders overdue reports silos shed performance',display:'units tonnes kg',about:'version credits'}[k]||'';
   return (w.join(' ')+' '+extra).toLowerCase();}
 function setPageBody(k){
   if(!farmData&&SET_NEEDS_BATCH.includes(k))return `<div class="st2-empty">Load or start a batch to see these settings.</div>`;
@@ -692,24 +713,26 @@ function setNavHtml(){
   const q=setSearch.trim().toLowerCase();
   const mgr=(typeof fpManagerNow==='function'&&fpManagerNow())||'';
   const ini=(mgr||displayFarmName()||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  let wn=0;try{wn=(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwWorkersCount)||0;}catch(e){}
   const groups=SET_GROUPS.map(([g,items])=>{const vis=items.filter(([k])=>!q||setKeywords(k).includes(q));if(!vis.length)return '';
-    return `<div class="st2-grp"><span class="st2-k">${escapeHtml(g)}</span>${vis.map(([k,l])=>{const off=setOffCount(k),sec=k==='security'&&typeof accInfo!=='undefined'&&accInfo&&accInfo.setup;
-      return `<button type="button" class="st2-it${k===setTab?' on':''}" data-set-tab="${k}"${k===setTab?' aria-current="page"':''}><span>${escapeHtml(l)}</span>${off?`<span class="st2-bd" title="${off} not at normal">${off}</span>`:sec?'<span class="st2-dot" title="Passwords on"></span>':''}</button>`;}).join('')}</div>`;}).join('');
-  return `<div class="st2-who"><span class="st2-av">${escapeHtml(ini)}</span><div><b>${escapeHtml(mgr||'Manager')}</b><span>${escapeHtml(syncFarmName||'Not connected')}</span></div></div>
+    return `<div class="st2-grp"><span class="st2-k">${escapeHtml(g)}</span>${vis.map(([k,l])=>{const off=setOffCount(k),sec=k==='security'&&typeof accInfo!=='undefined'&&accInfo&&accInfo.setup,bd=off||(k==='workers'?wn:0);
+      return `<button type="button" class="st2-it${k===setTab?' on':''}" data-set-tab="${k}"${k===setTab?' aria-current="page"':''}><span>${escapeHtml(l)}</span>${bd?`<span class="st2-bd"${off?` title="${off} not at normal"`:''}>${bd}</span>`:sec?'<span class="st2-dot" title="Passwords on"></span>':''}</button>`;}).join('')}</div>`;}).join('');
+  return `<div class="st2-who"><span class="st2-av">${escapeHtml(ini)}</span><div><b>${escapeHtml(mgr||'Manager')}</b><span>${escapeHtml(syncFarmName?'Manager · '+syncFarmName:'Not connected')}</span></div></div>
     ${groups||`<p class="st2-none">No setting matches “${escapeHtml(setSearch)}”.</p>`}`;
 }
 function renderSettingsPage(){
   if(SET_ALIAS[setTab])setTab=SET_ALIAS[setTab];
-  if(!setPageInfo(setTab))setTab='profile';
+  if(!setPageInfo(setTab)||SET_TASKS_PAGES.includes(setTab))setTab='profile';
   const p=setPageInfo(setTab),off=setOffCount(setTab);
+  const search=cls=>`<label class="st2-search ${cls}"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label>`;
   return `<div class="st2${setListOpen?' st2-list':''}">
-    <aside class="st2-nav" aria-label="Settings menu"><label class="st2-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label><div class="st2-navlist">${setNavHtml()}</div></aside>
+    <div class="st2-hdr"><b>Settings</b>${search('st2-search-top')}</div>
+    <aside class="st2-nav" aria-label="Settings menu">${search('st2-search-m')}<div class="st2-navlist">${setNavHtml()}</div></aside>
     <section class="st2-main">
       <button type="button" class="st2-back" data-set-back>‹ Settings</button>
       <div class="st2-top"><div class="st2-topt"><span class="st2-crumb">${escapeHtml(p.group)}</span>
       <h2 class="st2-title">${escapeHtml(p.label)}${off?`<span class="st2-nn">${off} not at normal</span>`:''}</h2>
-      <p class="st2-sub">${escapeHtml(p.sub)}</p></div>
-      <label class="st2-search st2-search-top"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label></div>
+      <p class="st2-sub">${escapeHtml(p.sub)}</p></div></div>
       ${setApplyBarHtml()}<div class="set-body st2-body set-${setTab}" id="setBody">${setPageBody(setTab)}</div>
     </section></div>`;
 }

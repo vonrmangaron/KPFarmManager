@@ -70,7 +70,7 @@ function pwOpenTab(t){
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{
   if(e.origin!==location.origin||!e.data)return;
-  if(e.data.pwSection==='production'){openProductionSection();pwOpenTab(e.data.tab);}
+  if(e.data.pwSection==='production'){openProductionSection();if(e.data.settingsPage&&typeof goSettings==='function')goSettings(e.data.settingsPage);else pwOpenTab(e.data.tab);}
   if(e.data.pwSection==='tasks')openTasksSection();
 });
 document.addEventListener('click',e=>{
@@ -82,5 +82,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(pwPlaceSwitches,0);
   const hdr=document.getElementById('pageHeader');if(hdr)new MutationObserver(()=>{if(!hdr.querySelector('.ws-pill'))pwPlaceSwitches();}).observe(hdr,{childList:true,subtree:true});
   if(location.hash==='#tasks')setTimeout(()=>openTasksSection({push:false}),300);
+  // Tasks on its own links here for Production's Settings pages: #settings-feed, #settings-profile…
+  const sm=/^#settings-([a-z]+)$/.exec(location.hash);if(sm){history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>goSettings(sm[1]),300);}
   if(location.hash==='#shedsetup'||location.hash==='#newbatch'||location.hash==='#account'||location.hash==='#security'){const t=location.hash.slice(1);history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>pwOpenTab(t),300);}
 });

@@ -1149,6 +1149,7 @@ function render(){
     if(adjRoot){const show=adjModalOpen&&farmData&&shedsForGroup(predState.predGroup).length;if(!show){adjModalOpen=false;adjDraft=null;adjRoot.innerHTML='';adjRoot.dataset.g='';}else if(!adjRoot.querySelector('.adj-modal')||adjRoot.dataset.g!==String(predState.predGroup)){adjRoot.innerHTML=renderAdjustmentModal(predState.predGroup);adjRoot.dataset.g=String(predState.predGroup);}else if(!adjIsDirty()){const fresh=adjDraftFromState(predState.predGroup);const fs=JSON.stringify(fresh);if(fs!==adjDraftBase){adjDraft=fresh;adjDraftBase=fs;}refreshAdjModal(true);}}
     updatePageHeader();
     updateAlertsBell();
+    document.body.classList.toggle('pw-on-settings',activeTab==='farmsettings'||activeTab==='account');   // Settings is a full page: no side panel or page header
     // Main content
     const app=document.getElementById('app');
     if(activeTab==='history'){app.innerHTML=renderHistoryView();}
