@@ -41,7 +41,7 @@ function nfBody(){
     <div class="nf-note" data-nf-sum>${escapeHtml(nfSummary())}</div>`,
     f:`<button type="button" class="nf-btn lk" data-nf-act="back">Back</button><span class="nf-sp"></span><button type="button" class="nf-btn" data-nf-act="skip">Skip, set up later</button><button type="button" class="nf-btn pri" data-nf-act="next">${nf.busy?'Starting…':'Start batch'}</button>`};
   if(st===4)return {k:'Step 4 of 5',h:'Protect your farm',p:'Two passwords: one for you, one to share with your workers.',b:`
-    <div class="nf-two nf-pw"><div class="nf-pwc"><b>Manager password</b><span>Only you. Production and Tasks, on every device.</span><input type="password" data-nf="mgrPw" autocomplete="new-password" placeholder="At least 6 characters" value="${nfVal('mgrPw')}"><input type="password" data-nf="mgrPw2" autocomplete="new-password" placeholder="Type it again" value="${nfVal('mgrPw2')}"></div>
+    <div class="nf-pwrow"><div class="nf-pwc"><b>Manager password</b><span>Only you. Production and Tasks, on every device.</span><input type="password" data-nf="mgrPw" autocomplete="new-password" placeholder="At least 6 characters" value="${nfVal('mgrPw')}"><input type="password" data-nf="mgrPw2" autocomplete="new-password" placeholder="Type it again" value="${nfVal('mgrPw2')}"></div>
     <div class="nf-pwc"><b>Farm password</b><span>For workers, once, in the Crew app. Tasks and reports only.</span><input type="text" data-nf="farmPw" autocomplete="off" placeholder="At least 4 characters" value="${nfVal('farmPw')}"></div></div>
     <p class="nf-small">After 5 wrong tries a phone waits 10 minutes. Change them any time in Account › Security.</p>`,
     f:`<button type="button" class="nf-btn lk" data-nf-act="back">Back</button><span class="nf-sp"></span><button type="button" class="nf-btn" data-nf-act="skip">Skip for now</button><button type="button" class="nf-btn pri" data-nf-act="next">${nf.busy?'Turning on…':'Turn on passwords'}</button>`};
@@ -79,7 +79,8 @@ async function nfNext(){
     if(nf.display.trim())setFarmDisplayName(nf.display.trim());
     createNewFarm(nf.farm,{quiet:true});nf.created=true;nf.step=2;nfRender();return;
   }
-  if(st===2){const n=Math.floor(Number(nf.siloFrom));setSiloStart(n>1?n:'');nf.step=3;nfRender();return;}
+  // stored on the device only: it reaches the cloud with the first batch (no file before the batch exists)
+  if(st===2){const n=Math.floor(Number(nf.siloFrom));predState.siloStart=n>1&&n<=990?n:null;savePredState();nf.step=3;nfRender();return;}
   if(st===3){
     const batch=sanitizeBatchNumber(nf.batch),birds=Math.floor(Number(nf.birds)),doc=String(nf.doc||'').trim();
     if(!batch){showToast('Enter a batch number.',true);return;}

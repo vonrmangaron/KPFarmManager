@@ -471,9 +471,14 @@ async function handleConnectFarm(farmName){
 // A farm that isn't in the cloud yet: the guided new-farm setup (js/newfarm.js)
 function showCreateFarmForm(clean){openNewFarmWizard(clean);}
 function createNewFarm(clean,opts){
+  // A brand-new farm starts empty: no loads, silo readings or settings carried over from the farm this
+  // device had open (they used to be copied into the new farm's first cloud file)
+  resetAllToDefaults('',{keepHistory:false});
+  predState=JSON.parse(PRED_STATE_DEFAULTS);predState.batchNumber='';
+  pwRunOthers=[];pwRunFarm=null;pwRunAt=0;
   syncFarmName=clean;
   syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
-  predState.batchNumber='';predState.farmHistory=[];predState.farmHistoryDeleted=[];savePredState();farmData=null;saveState();saveSyncState();
+  savePredState();farmData=null;saveState();saveSyncState();
   closeSyncModal();closeSettingsDrawer();
   if(!(opts&&opts.quiet))openNewBatchModal('batchNumber');   // the new-farm setup starts its own batch
 }

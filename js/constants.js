@@ -34,6 +34,8 @@ const DEFAULT_FINAL_UPLIFT_PCT=8;
 // split between pairs; 'simple' = 60 · 30/30 · 15/15/15/15.
 const DEFAULT_FEED_QUOTA={starter:0.3,grower:1.0,finisher:2.0},TRUCK_KG=60000,SPLIT_STEP_KG=15000;
 let predState={feedQuota:{...DEFAULT_FEED_QUOTA},truckSplitMode:'simple',finalUpliftPct:DEFAULT_FINAL_UPLIFT_PCT,projectionLog:[],siloConfidencePct:100,safetyDays:1,deliveryTiming:'early',starterSilo:{1:null,2:null,3:null,4:null},starterBufferDays:21,siloStart:null,farmHistory:[],carryoverFarmKg:0,carryoverKg:{1:0,2:0,3:0,4:0},beta:0.27,targetHarvestWeightKg:{1:2.65,2:2.65,3:2.65,4:2.65},predGroup:1,predView:'both',farmFeedOverride:null,farmLeftoverKg:null,deliveriesOpen:true,batchNumber:'',adjOpen:false,densityGlobal:{...DEFAULT_DENSITY_GLOBAL},noPickupDays:[]};
+// predState as it is before this device loads anything: what a brand-new farm starts from
+const PRED_STATE_DEFAULTS=JSON.stringify(predState);
 const DEFAULT_DAILY_RANGE={mode:'today',start:0,end:7};
 let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
