@@ -468,28 +468,14 @@ async function handleConnectFarm(farmName){
     syncFarmName=clean;closeSettingsDrawer();openFarmBatchPickerModal(clean,listing.files);
   }finally{pwConnectingFarm=null;if(btn&&oldBtnHTML!==null){btn.disabled=false;btn.innerHTML=oldBtnHTML;}}
 }
-// A farm that isn't in the cloud yet: name its manager, then start the first batch
-function showCreateFarmForm(clean){
-  const body=document.getElementById('syncModalBody');if(!body)return;
-  body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">New farm</span><span class="val ok">${escapeHtml(clean)}</span></div></div><div class="sync-hint">This farm isn't in the cloud yet. Who manages it? Tasks and the Crew app use this name; you can change it later in Account › Farm profile.</div><label for="syncManagerInput">Manager</label><input id="syncManagerInput" type="text" placeholder="e.g. Von" autocomplete="name" maxlength="40" /><button class="btn-sync-primary" id="syncCreateBtn">Create farm</button><button class="btn-sync-primary ghost" id="syncCreateBack">Back</button>`;
-  const input=document.getElementById('syncManagerInput');setTimeout(()=>input&&input.focus(),100);
-  const go=async()=>{
-    const mgr=input.value.trim();if(!mgr){showToast('Enter the manager’s name.',true);input.focus();return;}
-    const b=document.getElementById('syncCreateBtn');b.disabled=true;b.textContent='Creating…';
-    const ok=await saveManagerName(mgr,clean);
-    b.disabled=false;b.textContent='Create farm';
-    if(!ok){showToast('Could not reach the cloud — check your connection.',true);return;}
-    createNewFarm(clean);
-  };
-  document.getElementById('syncCreateBtn').addEventListener('click',go);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
-  document.getElementById('syncCreateBack').addEventListener('click',()=>showConnectForm());
-}
-function createNewFarm(clean){
+// A farm that isn't in the cloud yet: the guided new-farm setup (js/newfarm.js)
+function showCreateFarmForm(clean){openNewFarmWizard(clean);}
+function createNewFarm(clean,opts){
   syncFarmName=clean;
   syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
   predState.batchNumber='';predState.farmHistory=[];predState.farmHistoryDeleted=[];savePredState();farmData=null;saveState();saveSyncState();
-  closeSyncModal();closeSettingsDrawer();openNewBatchModal('batchNumber');
+  closeSyncModal();closeSettingsDrawer();
+  if(!(opts&&opts.quiet))openNewBatchModal('batchNumber');   // the new-farm setup starts its own batch
 }
 // Send any edits still waiting to go to the cloud before this batch is closed. False = couldn't (no signal).
 async function flushBeforeLeavingBatch(){
@@ -652,7 +638,7 @@ async function startNewBatch(cleanBatchNumber,opts){
     await pushToCloud();
   }else{closeNewBatchModal();renderSettingsDrawerBody();render();}
   if(opts.openFilePicker){showToast(`✅ Batch "${clean}" started — pick the Excel file now.`);setTimeout(()=>triggerImport(),220);}
-  else{showToast(`✅ Batch "${clean}" started — set up its sheds.`);activeTab='shedsetup';render();}
+  else if(!opts.quiet){showToast(`✅ Batch "${clean}" started — set up its sheds.`);activeTab='shedsetup';render();}
   if(archived){scheduleHistoryPush();}
   if(archived)setTimeout(()=>showToast(`📚 Last batch saved to Farm history — FCR ${historyKpis(archived).fcr.toFixed(3)}, ${archived.avgAge.toFixed(1)} d.`),2600);
   if(opts.alongside)setTimeout(()=>showToast(`Batch ${prevKey} keeps running alongside ${clean} — switch from Batch Details.`),2600);
