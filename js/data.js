@@ -35,6 +35,7 @@ try{const mq=window.matchMedia('(display-mode: window-controls-overlay) and (min
 function loadTheme(){try{const t=localStorage.getItem(THEME_KEY);return (t==='dark'||t==='light')?t:'light';}catch(e){return 'light';}}
 function saveTheme(t){try{localStorage.setItem(THEME_KEY,t);}catch(e){}}
 function setTheme(theme){if(theme!=='dark'&&theme!=='light')return;applyTheme(theme);saveTheme(theme);schedulePush();}
+window.addEventListener('storage',e=>{if(e.key===THEME_KEY&&(e.newValue==='dark'||e.newValue==='light')){applyTheme(e.newValue);if(typeof syncPwRail==='function')syncPwRail();}});
 function toggleTheme(){const cur=document.body.classList.contains('theme-dark')?'dark':'light';setTheme(cur==='dark'?'light':'dark');}
 
 function loadNotifPrefs(){

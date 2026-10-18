@@ -505,10 +505,8 @@ function buildPwRail(){
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
     +'<span class="pwr-gap"></span>'
-    +b('data-pwr-theme','moon','Theme')
-    +b('data-pwr-settings data-tab="farmsettings"','gear','Settings','<span class="pwr-badge" id="pwrFarmBadge" hidden></span>')
     +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
-    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm data-tab="account" title="Account"><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Account</span></button>`;
+    +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Account" aria-haspopup="menu" aria-expanded="false"><span class="pwr-badge" id="pwrFarmBadge" hidden></span><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Account</span></button>`;
   lay.insertBefore(nav,lay.firstChild);
   const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
 }
@@ -517,6 +515,7 @@ function syncPwRail(){
   // One lit button: the section of the page you are on (the open panel shows itself)
   const sec=toolPageOpen?'tools':PW_SHED_PAGES.includes(activeTab)?'sheds':(activeTab==='dashboard'||activeTab==='home')?'batch':activeTab;
   r.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===sec));
+  const fbtn=r.querySelector('[data-pwr-farm]');if(fbtn)fbtn.classList.toggle('on',sec==='farmsettings'||sec==='account');
   // Like CluckWise: the button of the open panel is lit; with the panel shut, the section you are in gets a softer mark
   r.querySelectorAll('[data-pw-panel]').forEach(x=>{const k=x.dataset.pwPanel;x.classList.toggle('on',k===pwPanel);x.classList.toggle('cur',k===sec&&k!==pwPanel);});
   // Sync and farm stay on the rail when the panel is hidden
@@ -535,7 +534,6 @@ function syncPwRail(){
     fl.textContent='Account';
     const fb=r.querySelector('[data-pwr-farm]');if(fb)fb.title='Account · '+(shown||'This device')+(syncFarmName?' · cloud sync on':' · not synced');
   }
-  const th=r.querySelector('[data-pwr-theme]');if(th){const dark=document.body.classList.contains('theme-dark');th.innerHTML=navIcon(dark?'sun':'moon')+'<span>Theme</span>';th.title=dark?'Switch to light':'Switch to dark';}
   let n=0;document.querySelectorAll('#sidebarNav .sb-link[data-tab^="g"] .sb-count').forEach(c=>n+=Number(c.textContent)||0);
   const sb=document.getElementById('pwrShedBadge');if(sb){sb.hidden=!n;sb.textContent=n>99?'99+':String(n);sb.title=n+' open alert'+(n===1?'':'s');}
   const fc=document.querySelector('#sidebarNav .sb-link[data-tab="farmsettings"] .sb-count');const fb=document.getElementById('pwrFarmBadge');if(fb){fb.hidden=!fc;fb.textContent=fc?fc.textContent:'';}
@@ -553,10 +551,8 @@ document.addEventListener('click',e=>{
     return;}
   const gs=e.target.closest('[data-pw-goset]');if(gs){goSettings(gs.dataset.pwGoset);return;}
   if(e.target.closest('[data-pwb-newbatch]')){if(typeof openNewBatchModal==='function')openNewBatchModal();return;}
-  if(e.target.closest('[data-pwr-theme]')){if(typeof toggleTheme==='function')toggleTheme();setTimeout(syncPwRail,0);return;}
-  if(e.target.closest('[data-pwr-settings]')){goSettings('predictions');return;}
   if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}
-  if(e.target.closest('[data-pwr-farm]')){goAccount('profile');return;}
+  if(e.target.closest('[data-pwr-farm]')){pwMenuToggle();return;}
   const st=e.target.closest('[data-set-tab]');if(st&&SET_TASKS_PAGES.includes(st.dataset.setTab)&&st.closest('.st2')){setOpenInTasks(st.dataset.setTab);return;}
   if(st){setTab=st.dataset.setTab;setListOpen=false;render();window.scrollTo(0,0);if((setTab==='profile'||setTab==='security')&&typeof accLoad==='function')accLoad();return;}
   if(e.target.closest('[data-set-back]')){setListOpen=true;render();window.scrollTo(0,0);return;}
@@ -862,10 +858,10 @@ document.addEventListener('click',e=>{
     return;
   }
   // anything that leaves the Settings page
-  const nav=t.closest('[data-tab],[data-pw-panel],[data-pwr-farm],[data-pwr-settings],.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],#sbFarm,.pwr-logo,[data-pw-goset]');
+  const nav=t.closest('[data-tab],[data-pw-panel],[data-pwm]:not([data-pwm="theme"]),.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],#sbFarm,.pwr-logo,[data-pw-goset]');
   if(nav&&sdChanges().length&&!nav.closest('.set-tabs')){
     // the Settings button, or the open panel's own button (that only closes the panel), don't leave
-    if(nav.matches('[data-pwr-settings]')||(nav.matches('[data-pw-panel]')&&nav.dataset.pwPanel===pwPanel))return;
+    if(nav.matches('[data-pwm="settings"]')||(nav.matches('[data-pw-panel]')&&nav.dataset.pwPanel===pwPanel))return;
     if(!sdLeaving()){e.stopPropagation();e.preventDefault();}
   }else if(nav)setDraft=null;
 },true);
@@ -875,3 +871,45 @@ document.addEventListener('change',e=>{
   if(id==='notifShedPerf'||id==='notifFeedBalance'){e.stopPropagation();sdTouch().notif[id==='notifShedPerf'?'shedPerformance':'feedBalance']=e.target.checked;sdRefresh();}
 },true);
 window.addEventListener('beforeunload',e=>{if(activeTab==='farmsettings'&&sdChanges().length){e.preventDefault();e.returnValue='';}});
+
+// ── Account menu (2026-10-18): the avatar at the bottom of the rail opens a short menu, like Claude's —
+// Profile, Settings, Theme (one theme for Production and Tasks), Batch, then Switch farm.
+function pwMenuHtml(){
+  const mgr=(typeof fpManagerNow==='function'&&fpManagerNow())||'';
+  const name=String(displayFarmName()||'').trim()||'This device';
+  const ini=(name.split(/\s+/).map(w=>w[0]).join('').slice(0,2)||'F').toUpperCase();
+  const dark=document.body.classList.contains('theme-dark');
+  const off=typeof farmSettingsNotNormal==='function'&&farmData?farmSettingsNotNormal().length:0;
+  return `<div class="pwm-head"><span class="pwm-av">${escapeHtml(ini)}</span><div><b>${escapeHtml(name)}</b><span>${escapeHtml(syncFarmName?(mgr?mgr+' · ':'')+syncFarmName:'Not connected')}</span></div></div>
+    <button type="button" role="menuitem" data-pwm="profile">Profile</button>
+    <button type="button" role="menuitem" data-pwm="settings">Settings${off?`<span class="pwm-bd" title="${off} not at normal">${off}</span>`:''}</button>
+    <div class="pwm-theme" data-pwm="theme"><span>Theme</span><span class="pwm-seg" role="group" aria-label="Theme"><button type="button" data-pwm-th="light" aria-pressed="${!dark}" class="${dark?'':'on'}">Light</button><button type="button" data-pwm-th="dark" aria-pressed="${dark}" class="${dark?'on':''}">Dark</button></span></div>
+    <button type="button" role="menuitem" data-pwm="batch">Batch</button>
+    <hr>
+    <button type="button" role="menuitem" data-pwm="switch">${syncFarmName?'Switch farm':'Connect farm'}</button>`;
+}
+function pwMenuToggle(force){
+  let m=document.getElementById('pwMenu');
+  const open=force!=null?force:!(m&&!m.hidden);
+  if(!m){m=document.createElement('div');m.id='pwMenu';m.className='pwm';m.setAttribute('role','menu');m.hidden=true;document.body.appendChild(m);}
+  if(open)m.innerHTML=pwMenuHtml();
+  m.hidden=!open;
+  const b=document.querySelector('[data-pwr-farm]');if(b)b.setAttribute('aria-expanded',String(open));
+  if(open){const f=m.querySelector('[data-pwm]');if(f&&f.focus)f.focus({preventScroll:true});}
+}
+document.addEventListener('click',e=>{
+  const m=document.getElementById('pwMenu');if(!m||m.hidden)return;
+  const th=e.target.closest('[data-pwm-th]');
+  if(th){setTheme(th.dataset.pwmTh);m.innerHTML=pwMenuHtml();syncPwRail();return;}
+  const it=e.target.closest('[data-pwm]');
+  if(it&&it.dataset.pwm!=='theme'){
+    pwMenuToggle(false);const k=it.dataset.pwm;
+    if(typeof openProductionSection==='function')openProductionSection();
+    if(k==='profile')goAccount('profile');
+    else if(k==='settings')goSettings(setTab&&setTab!=='profile'&&setTab!=='security'?setTab:'feed');
+    else if(k==='batch')goSettings('batches');
+    else if(k==='switch'){openSyncModal();if(syncFarmName)showConnectForm('Enter the farm name to switch to.');}
+    return;}
+  if(!e.target.closest('#pwMenu')&&!e.target.closest('[data-pwr-farm]'))pwMenuToggle(false);
+});
+document.addEventListener('keydown',e=>{const m=document.getElementById('pwMenu');if(e.key==='Escape'&&m&&!m.hidden){pwMenuToggle(false);const b=document.querySelector('[data-pwr-farm]');if(b)b.focus();}});

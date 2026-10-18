@@ -200,7 +200,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('click',e=>{
   const open=Object.keys(setupDraft).filter(g=>suChanges(g).length);if(!open.length)return;
   if(e.target.closest('.su-card'))return;
-  const nav=e.target.closest('[data-shedview],[data-tab],[data-pw-panel],[data-pwr-farm],[data-pwr-settings],.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],[data-predgroup]');
+  const nav=e.target.closest('[data-shedview],[data-tab],[data-pw-panel],[data-pwm]:not([data-pwm="theme"]),.mob-nav-btn,.sb-link,.more-row,[data-goto-shedgroup],[data-predgroup]');
   if(!nav)return;
   if(confirm('You have Setup changes that aren\'t applied yet.\n\nOK = discard them and leave. Cancel = stay and Apply.')){open.forEach(g=>delete setupDraft[g]);}
   else{e.stopPropagation();e.preventDefault();}

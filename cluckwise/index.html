@@ -3417,6 +3417,9 @@
   #settingsBody .st-row:first-child{ border-top:0; }
   #settingsBody .st-row-text{ flex:1 1 240px; min-width:0; margin-right:8px; }
   #settingsBody .st-row-stack{ flex-direction:column; align-items:stretch; }
+  #settingsBody .st-row-stack > .st-row-text{ flex:none; margin-right:0; }
+  #settingsBody .fk-panel{ flex-direction:row; align-items:center; }
+  #settingsBody .fk-panel .fk-state{ display:flex; gap:6px; margin:4px 0; }
   #settingsBody .st-row .st-label{ font-size:14px !important; }
   #settingsBody .st-hint, #settingsBody .st-status{ font-size:12.5px !important; color:var(--muted) !important; margin:0; }
   #settingsBody .st-btn{ height:36px; padding:0 14px; border-radius:9px; border:1px solid #D2D6CF; background:#fff; color:#16191B; font:700 13px Inter,system-ui,sans-serif; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; width:auto; min-width:0; box-shadow:none; }
@@ -4369,6 +4372,10 @@
   const BATCH_PALETTE = ['#0F8A75','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
+  const PW_THEME_KEY = 'prodwise_vm_theme_v1';
+  window.addEventListener('storage', (e)=>{ if(e.key === PW_THEME_KEY && (e.newValue === 'dark' || e.newValue === 'light') && settings.theme !== e.newValue){ settings.theme = e.newValue; applySettings(); persist(); } });
+  // the theme lives in one place for both sections: ProdWise's key wins over the copy in the farm data
+  function adoptPwTheme(){ try{ const t = localStorage.getItem(PW_THEME_KEY); if(t === 'dark' || t === 'light') settings.theme = t; }catch(e){} }
   const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month', showWeather:true, weatherUnit:'celsius', weatherLocation:null };
   const DEFAULT_EVENT_COLOR = '#6E55D3';   // audits: one purple (no custom colours)
   const ICON_RULES = [
@@ -4452,6 +4459,7 @@
   let events = [];
   let reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
+  adoptPwTheme();
   let frequentTemplates = [];
   let maintenance = [];   // Routine Tracker: tracked recurring tasks {id, name, shed, category, every}
   let currentDate = new Date();
@@ -4611,6 +4619,8 @@
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
     const themeChanging = document.body.classList.contains('theme-dark') !== (settings.theme === 'dark');
+    // one theme for Production and Tasks: ProdWise reads the same key (and hears the change)
+    try{ const t = settings.theme === 'dark' ? 'dark' : 'light'; if(localStorage.getItem(PW_THEME_KEY) !== t) localStorage.setItem(PW_THEME_KEY, t); }catch(e){}
     if(themeChanging && document.body.dataset.themeReady){
       document.body.classList.add('theme-anim');
       clearTimeout(applySettings._themeT);
@@ -4724,7 +4734,7 @@
   }
   function applyMergedState(d){
     tasks = d.tasks; history = d.history; batches = d.batches; events = d.events;
-    settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {});
+    settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {}); adoptPwTheme();
     frequentTemplates = d.frequentTemplates;
     maintenance = d.maintenance || [];
     migrateTaskOrder();
@@ -5170,7 +5180,7 @@
           }
         });
       }
-      settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
+      settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {}); adoptPwTheme();
       settings.calendarDensity = normalizeDensity(settings.calendarDensity);
       frequentTemplates = parsed.frequentTemplates || [];
       maintenance = Array.isArray(parsed.maintenance) ? parsed.maintenance : [];
@@ -13001,7 +13011,7 @@
         batches = parsed.batches || [];
         events = parsed.events || [];
         reports = parsed.reports || [];
-        settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {});
+        settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {}); adoptPwTheme();
         frequentTemplates = parsed.frequentTemplates || [];
         maintenance = parsed.maintenance || [];
         applySettings();
