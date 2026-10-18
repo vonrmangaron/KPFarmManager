@@ -917,10 +917,14 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{const m=document.getElementById('pwMenu');if(e.key==='Escape'&&m&&!m.hidden){pwMenuToggle(false);const b=document.querySelector('[data-pwr-farm]');if(b)b.focus();}});
 // Side panels act like menus (2026-10-19): picking a page in Batch, Sheds or Tools opens it and folds
-// the panel back to the icon rail. Rows that only expand a list (Predictions) keep it open.
+// the panel back to the icon rail, and so does a click anywhere on the page. Rows that only expand a
+// list (Predictions), the panel's own empty space and the icon rail keep it open.
 document.addEventListener('click',e=>{
-  if(pwPanel==='none'||!window.matchMedia('(min-width:769px)').matches)return;
-  const it=e.target.closest&&e.target.closest('#sidebar button,#sidebar a[href],#sidebar [role="button"]');
-  if(!it||it.matches('[data-sb-pred]')||it.closest('.sb-foot'))return;
+  if(pwPanel==='none'||!window.matchMedia('(min-width:769px)').matches||!e.target.closest)return;
+  if(e.target.closest('#pwRail'))return;
+  if(e.target.closest('#sidebar')){
+    const it=e.target.closest('#sidebar button,#sidebar a[href],#sidebar [role="button"]');
+    if(!it||it.matches('[data-sb-pred]')||it.closest('.sb-foot'))return;
+  }
   setTimeout(()=>{if(pwPanel!=='none')setPwPanel('none',true);},0);
 });
