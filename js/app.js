@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('[data-more-close]')){closeMoreSheet();return;}
     if(e.target.closest('#moreSheet')){
       const id=e.target.closest('button')?.id;
-      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreShedSetup:()=>{activeTab='shedsetup';render();},moreCluckwise:()=>openTasksSection(),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
+      const actions={morePickups:openPickupsModal,moreMort:openMortModal,moreHome:()=>{activeTab='dashboard';render();},moreBatch:openBatchInfoModal,moreLoads:openLoadsModal,moreSilo:openSiloModal,moreHistory:()=>{activeTab='history';render();},moreShedSetup:()=>{activeTab='shedsetup';render();},moreCluckwise:()=>openTasksSection(),moreNewBatch:openNewBatchModal,moreSettings:openSettingsDrawer,moreSync:()=>{syncFarmName&&farmData?pullFromCloud(false):openSyncModal();},moreSettings:openSettingsDrawer,moreProfile:()=>goAccount('profile'),morePredict:()=>{activeTab='predictions';render();},moreFarmSettings:()=>{activeTab='farmsettings';render();}};
       if(actions[id]){closeMoreSheet();actions[id]();return;}
     }
     if(e.target.closest('[data-sb-pred]')){toggleSidebarPredictions();return;}
@@ -111,6 +111,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(e.target.closest('#importReviewClose')){closeImportReviewModal();return;}
     if(e.target.closest('#importBtn')||e.target.closest('#emptyImportBtn')||e.target.closest('#settingsImportBtn')){triggerImport();return;}
     if(e.target.closest('#emptyConnectBtn')){openSyncModal();return;}
+    if(e.target.closest('#emptyNewBatchBtn')){openNewBatchModal();return;}
+    if(e.target.closest('#emptySwitchBtn')){openSyncModal();showConnectForm('Enter the farm name to switch to, e.g. kiripark1.');return;}
+    if(e.target.closest('#emptyDisconnectBtn')){disconnectSync();return;}
 
     if(e.target.closest('#settingsConnectBtn')){const inp=document.getElementById('settingsFarmInput');const v=inp?inp.value.trim():'';if(!v){showToast('Enter a farm name.',true);return;}handleConnectFarm(v);return;}
     if(e.target.closest('#settingsSyncNowBtn')){pullFromCloud(false);return;}

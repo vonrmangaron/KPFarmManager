@@ -856,13 +856,25 @@ function renderCleanoutDashCard(){
 function renderDashboardView() {
   if (!farmData) {
     const isConnected = !!(syncFarmName && syncConnectedAt);
+    // Connected, but no batch loaded (a new farm, or a farm removed from the cloud): never a dead end —
+    // start a batch here, or switch to another farm, or disconnect
+    if (isConnected) return `<div class="dash-empty">
+      <div class="dash-empty-icon">🐔</div>
+      <h2>${escapeHtml(displayFarmName() || syncFarmName)}</h2>
+      <p>Connected to <b>${escapeHtml(syncFarmName)}</b>, but no batch is loaded on this device. Start a batch, or switch to another farm.</p>
+      <div class="dash-empty-actions">
+        <button class="btn-primary" id="emptyNewBatchBtn" type="button">Start a batch</button>
+        <button class="btn-secondary" id="emptySwitchBtn" type="button">Switch farm</button>
+        <button class="btn-secondary" id="emptyDisconnectBtn" type="button">Disconnect</button>
+      </div>
+    </div>`;
     return `<div class="dash-empty">
       <div class="dash-empty-icon">🐔</div>
       <h2>Welcome to ProdWise<span class="accent">.VM</span></h2>
       <p>Import your sheds Excel file to get started, or connect to cloud sync to load your data from another device.</p>
       <div class="dash-empty-actions">
         <button class="btn-primary" id="emptyImportBtn" type="button">Import Excel</button>
-        ${isConnected ? '' : '<button class="btn-secondary" id="emptyConnectBtn" type="button">Connect farm</button>'}
+        <button class="btn-secondary" id="emptyConnectBtn" type="button">Connect farm</button>
       </div>
     </div>`;
   }

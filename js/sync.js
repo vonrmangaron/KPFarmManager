@@ -202,7 +202,9 @@ async function pullFromCloud(silent){
   syncState='pulling';renderSettingsDrawerBody();
   const r=await fetchFromCloud();
   if(!r.ok){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Could not sync — check your connection.',true);return false;}
-  if(r.notFound){syncState='idle';renderSettingsDrawerBody();await pushToCloud();if(!silent)showToast('Connected — created a new file for this farm.');return true;}
+  // No file in the cloud: upload this device's batch if it has one. With nothing loaded (e.g. the farm was
+  // removed from the cloud) don't recreate it — Home offers Start a batch / Switch farm / Disconnect.
+  if(r.notFound){syncState='idle';renderSettingsDrawerBody();if(!farmData){if(!silent)showToast('Nothing for this farm in the cloud yet — start a batch or switch farm.');render();return true;}await pushToCloud();if(!silent)showToast('Connected — created a new file for this farm.');return true;}
   syncSha=r.sha||null;
   if(r.data&&r.data.app&&r.data.app!==SYNC_APP_TAG){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
   // Local changes not yet in the cloud? Merge them in rather than lose them.
@@ -226,6 +228,8 @@ async function pullFromCloud(silent){
 }
 async function pushToCloud(){
   if(!syncFarmName)return false;
+  // No batch loaded on this device: nothing to upload (and never recreate a farm removed from the cloud)
+  if(!farmData)return false;
   syncState='pushing';renderSettingsDrawerBody();
   try{
     const put=(sha,data)=>fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:{...data,lastUpdated:new Date().toISOString()}})});
