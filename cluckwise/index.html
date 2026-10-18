@@ -3350,6 +3350,35 @@
     #settingsDrawer .cs2-nav button[data-page].active{ background:none; color:var(--ink); }
     #settingsDrawer .cs2-back{ display:inline-flex; all:unset; cursor:pointer; font:700 14px Inter,system-ui,sans-serif; color:#2F6BD8; margin:4px 2px 8px; }
   }
+
+  /* Settings is a page next to the rail (2026-10-18), like Guide: no backdrop, no floating window */
+  @media (min-width:761px){
+    body.settings-open #scrim{ display:none !important; }
+    #settingsDrawer.open{ position:fixed; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; width:auto !important; max-width:none !important; height:auto !important; border-radius:0; transform:none !important; box-shadow:none; z-index:44; background:var(--bg); }
+    #settingsDrawer .st-head{ background:var(--surface); min-height:60px; box-sizing:border-box; padding:0 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; }
+    #settingsDrawer .st-head h2{ font-family:'Sora',sans-serif; font-size:20px; }
+    #settingsDrawer #settingsBody{ padding:22px 32px 40px !important; }
+    #settingsDrawer #settingsBody > *{ max-width:820px; }
+  }
+  @media (min-width:1025px){ #settingsDrawer.open{ left:84px !important; } }
+
+  /* Settings rows like the mockup: small labels over boxes, search top-right in the header */
+  .cs2-seck{ display:block; font:800 11px Inter,system-ui,sans-serif; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:16px 2px 8px; }
+  #settingsBody > .st-section > .cs2-seck:first-child{ margin-top:0; }
+  .cs2-seck-row .access-head{ display:flex; align-items:center; gap:8px; }
+  .cs2-seck-row .access-head > span:first-child{ flex:1; }
+  #settingsBody .access-list{ padding:0; }
+  #settingsBody .access-row{ padding:12px 16px; border-bottom:1px solid var(--line); margin:0; border-radius:0; background:none; }
+  #settingsBody .access-row:last-child{ border-bottom:0; }
+  #settingsBody .access-list > .st-hint{ padding:14px 16px; margin:0; }
+  #settingsDrawer .st-head{ gap:12px; }
+  #settingsDrawer .st-head .st-head-text{ flex:1; }
+  .cs2-search-d{ width:280px; }
+  .cs2-search-m{ display:none; }
+  @media (max-width:760px){
+    .cs2-search-d{ display:none; }
+    #settingsDrawer.cs2-list .cs2-search-m{ display:flex; }
+  }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3696,10 +3725,11 @@
       <h2>Settings</h2>
       <div class="st-sub" id="settingsSubtitle">ProdWise.vm · Tasks</div>
     </div>
+    <label class="cs2-search cs2-search-d"><span aria-hidden="true">⌕</span><input type="search" class="cs-search-in" id="csSearch" placeholder="Search settings" aria-label="Search settings"></label>
     <button id="closeSettings" class="st-close" aria-label="Close">✕</button>
   </div>
   <nav class="st-tabs cs2-nav" id="settingsTabs" aria-label="Settings menu">
-    <label class="cs2-search"><span aria-hidden="true">⌕</span><input type="search" id="csSearch" placeholder="Search settings" aria-label="Search settings"></label>
+    <label class="cs2-search cs2-search-m"><span aria-hidden="true">⌕</span><input type="search" class="cs-search-in" placeholder="Search settings" aria-label="Search settings"></label>
     <div class="cs2-who"><span class="cs2-av" id="csAv">?</span><div><b id="csWhoName">Manager</b><span id="csWhoFarm">Not connected</span></div></div>
     <div class="cs2-grp" data-g="Account"><span class="cs2-k">Account</span><button type="button" data-page="farm">Farm &amp; manager</button></div>
     <div class="cs2-grp" data-g="Planner"><span class="cs2-k">Planner</span><button type="button" data-page="appearance">Appearance</button><button type="button" data-page="calendar">Calendar</button><button type="button" data-page="weather">Weather</button></div>
@@ -3808,17 +3838,17 @@
     </section>
 
     <section class="st-section" id="stWorkers">
-      <div class="st-section-head"><div><h3>Workers</h3></div></div>
+      <span class="cs2-seck">Access</span>
       <div class="st-card">
-        <div class="st-row st-row-stack">
+        <div class="st-row st-row-stack fk-panel" id="fkPanel"><div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint">Connect to a farm first (Settings › Farm &amp; manager).</span></div></div>
+        <div class="st-row"><div class="st-row-text"><span class="st-label">Invite a worker</span><span class="st-hint">The Crew app link and the farm name, ready to paste in a message</span></div><button type="button" class="st-btn st-btn-primary" id="csInvite">Copy invite</button></div>
+      </div>
+      <div class="cs2-seck cs2-seck-row"><div class="access-head"><span>Joined workers</span><span class="sb-count" id="accessCount"></span><button class="st-btn st-btn-ghost st-btn-sm" id="accessRefreshBtn" type="button" aria-label="Refresh worker list">↻ Refresh</button></div></div>
+      <div class="st-card"><div class="access-list" id="accessMembers"><p class="st-hint">No workers have joined yet.</p></div></div>
+      <div hidden><div class="st-row st-row-stack">
           <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>Production › Settings › Account</b>. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
         </div>
-        <div class="st-row st-row-stack fk-panel" id="fkPanel"><div class="st-row-text"><span class="st-label">Farm password</span><span class="st-hint">Connect to a farm first (Settings › Farm &amp; manager).</span></div></div>
-        <div class="st-row st-row-stack">
-          <div class="access-head"><span class="st-label">Joined workers</span><span class="sb-count" id="accessCount"></span><button class="st-btn st-btn-ghost st-btn-sm" id="accessRefreshBtn" type="button" aria-label="Refresh worker list">↻ Refresh</button></div>
-          <div class="access-list" id="accessMembers"><p class="st-hint">No workers have joined yet.</p></div>
         </div>
-      </div>
     </section>
 
     <section class="st-section" id="stData">
@@ -11030,14 +11060,14 @@
   function renderFkPanel(){
     const panel = $('#fkPanel');
     if(!panel) return;
-    const where = '<b>ProdWise › Account › Security</b>';
+    const where = '<b>Production › Settings › Security</b>';
     let chips = '', hint, btn = '';
     if(!ghPath) hint = 'Connect to a farm first (Settings › Farm &amp; manager).';
     else if(fkInfo && fkInfo.setup){
       const mine = !!FarmKey.get(ghFarmName, 'manager');
       chips = `<span class="fk-chip on">On</span>${fkInfo.locked ? '<span class="fk-chip lock">Locked</span>' : '<span class="fk-chip">Not locked</span>'}`;
       hint = mine ? `This device is signed in. Change passwords, lock the farm or sign out devices in ${where}.` : 'This farm uses passwords. Sign in once on this device with the manager password.';
-      if(!mine) btn = '<button class="st-btn st-btn-primary" id="fkSignInBtn" type="button">Sign in</button>';
+      btn = mine ? '<button class="st-btn" id="fkOpenSec" type="button">Change in Production ›</button>' : '<button class="st-btn st-btn-primary" id="fkSignInBtn" type="button">Sign in</button>';
     } else {
       const has = !!(accessData && accessData.password);
       chips = `<span class="fk-chip${has ? ' on' : ''}">${has ? 'Set' : 'Not set'}</span>`;
@@ -11045,6 +11075,7 @@
     }
     panel.innerHTML = `<div class="st-row-text"><span class="st-label">${fkInfo && fkInfo.setup ? 'Passwords' : 'Farm password'}</span>${chips ? `<span class="fk-state">${chips}</span>` : ''}<span class="st-hint">${hint}</span></div>${btn}`;
     const sb = $('#fkSignInBtn'); if(sb) sb.addEventListener('click', ()=> fkPromptSignIn(null));
+    const os = $('#fkOpenSec'); if(os) os.addEventListener('click', ()=>{ closeOverlays(); if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'security' }, location.origin); else location.href = '../#security'; });
   }
 
   async function removeAccessMember(id){
@@ -11096,6 +11127,7 @@
     $('#addTasksSheet').classList.remove('open');
     $('#batchInfoModal').classList.remove('open');
     $('#guideModal').classList.remove('open'); document.body.classList.remove('guide-open');
+    document.body.classList.remove('settings-open');
     $('#startRepairModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
@@ -12469,10 +12501,11 @@
     $('#sbfNewBatch').addEventListener('click', ()=> $('#openBatchModalBtn').click());
     $('#sbfNewAudit').addEventListener('click', ()=> $('#openEventModalBtn').click());
     function arSync(){
-      const which = isOpen('#mlogPage') ? 'routine' : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
-      rail.querySelectorAll('.ar-btn[data-ar="tasks"],.ar-btn[data-ar="batch"],.ar-btn[data-ar="maint"],.ar-btn[data-ar="routine"],.ar-btn[data-ar="guide"]').forEach(b=> b.classList.toggle('active', b.dataset.ar === which));
-      // Maintenance, Routine and Guide are full pages: the side panel steps aside while one is open
-      document.body.classList.toggle('rail-page', which === 'routine' || which === 'maint' || which === 'guide');
+      const which = isOpen('#settingsDrawer') ? 'settings' : isOpen('#mlogPage') ? 'routine' : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
+      rail.querySelectorAll('.ar-btn[data-ar="tasks"],.ar-btn[data-ar="batch"],.ar-btn[data-ar="maint"],.ar-btn[data-ar="routine"],.ar-btn[data-ar="guide"],.ar-btn[data-ar="settings"]').forEach(b=> b.classList.toggle('active', b.dataset.ar === which));
+      // Maintenance, Routine, Guide and Settings are full pages: the side panel steps aside while one is open
+      document.body.classList.toggle('rail-page', which === 'routine' || which === 'maint' || which === 'guide' || which === 'settings');
+      document.body.classList.toggle('settings-open', which === 'settings');
       const src = $('#reportsBadge'), dst = $('#arMaintBadge');
       if(src && dst){ const n = src.classList.contains('hidden') ? '' : src.textContent.trim(); dst.hidden = !n || n === '0'; dst.textContent = n; }
     }
@@ -12496,7 +12529,7 @@
       setTimeout(arSync, 30);
     });
     const mo = new MutationObserver(arSync);
-    ['#mlogPage','#reportsDrawer','#reportsBadge','#guideModal'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
+    ['#mlogPage','#reportsDrawer','#reportsBadge','#guideModal','#settingsDrawer'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
     arSync();
     // Calendar / List / Board: tabs under the header on a computer, the floating switcher elsewhere
     const dock = $('#modeDock'), left = document.querySelector('.topbar .topbar-left'), home = dock ? dock.parentNode : null, next = dock ? dock.nextSibling : null;
@@ -12603,16 +12636,22 @@
     $('#csAv').textContent = ((m || f || '?').split(/\s+/).map(w=> w[0]).join('').slice(0,2) || '?').toUpperCase();
   }
   // opening Settings: the last page on a computer, the list of pages on a phone
-  window.__csOnOpen = ()=>{ csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
+  window.__csOnOpen = ()=>{ document.body.classList.add('settings-open'); try{ arSync(); }catch(e){} csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
   $('#settingsTabs').addEventListener('click', (e)=>{ const b = e.target.closest('button[data-page]'); if(b) csShow(b.dataset.page, true); });
   window.__csShow = csShow;
   $('#csBack').addEventListener('click', ()=> $('#settingsDrawer').classList.add('cs2-list'));
-  $('#csSearch').addEventListener('input', (e)=>{
+  document.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('input', (e)=>{
     const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.cs-search-in').forEach(o=>{ if(o !== e.target) o.value = e.target.value; });
     document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const p = CS_PAGES[b.dataset.page]; b.hidden = !!q && !(p.t + ' ' + p.g + ' ' + p.k).toLowerCase().includes(q); });
     document.querySelectorAll('#settingsTabs .cs2-grp').forEach(g=> g.hidden = ![...g.querySelectorAll('[data-page]')].some(b=> !b.hidden));
+  }));
+  document.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ const b = [...document.querySelectorAll('#settingsTabs [data-page]')].find(x=> !x.hidden); if(b) b.click(); } }));
+  $('#csInvite').addEventListener('click', async ()=>{
+    if(!ghFarmName){ showToast('Connect to a farm first.', true); return; }
+    const txt = `Join ${ghFarmName} on ProdWise Crew:\n${new URL('viewer.html', location.href.replace(/[?#].*$/, '')).href}\nFarm name: ${ghFarmName}\nAsk the manager for the farm password.`;
+    try{ await navigator.clipboard.writeText(txt); showToast('Invite copied — paste it in a message to your worker.'); }catch(err){ prompt('Copy this invite:', txt); }
   });
-  $('#csSearch').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ const b = [...document.querySelectorAll('#settingsTabs [data-page]')].find(x=> !x.hidden); if(b) b.click(); } });
   $('#csOpenAccount').addEventListener('click', ()=>{ closeOverlays(); if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'account' }, location.origin); else location.href = '../#account'; });
   $('#csOpenNotif').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
   $('#themeToggleBtn').addEventListener('click', ()=>{ settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });

@@ -706,9 +706,10 @@ function renderSettingsPage(){
     <aside class="st2-nav" aria-label="Settings menu"><label class="st2-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label><div class="st2-navlist">${setNavHtml()}</div></aside>
     <section class="st2-main">
       <button type="button" class="st2-back" data-set-back>‹ Settings</button>
-      <span class="st2-crumb">${escapeHtml(p.group)}</span>
+      <div class="st2-top"><div class="st2-topt"><span class="st2-crumb">${escapeHtml(p.group)}</span>
       <h2 class="st2-title">${escapeHtml(p.label)}${off?`<span class="st2-nn">${off} not at normal</span>`:''}</h2>
-      <p class="st2-sub">${escapeHtml(p.sub)}</p>
+      <p class="st2-sub">${escapeHtml(p.sub)}</p></div>
+      <label class="st2-search st2-search-top"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label></div>
       <div class="set-body st2-body set-${setTab}" id="setBody">${setPageBody(setTab)}</div>${setApplyBarHtml()}
     </section></div>`;
 }
@@ -744,7 +745,7 @@ document.addEventListener('input',e=>{const t=e.target.closest&&e.target.closest
 document.addEventListener('keydown',e=>{
   if(activeTab!=='farmsettings')return;
   const t=e.target;
-  if(e.key==='/'&&!/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)){const s=document.querySelector('[data-set-search]');if(s){e.preventDefault();s.focus();}return;}
+  if(e.key==='/'&&!/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)){const s=[...document.querySelectorAll('[data-set-search]')].find(x=>x.offsetParent);if(s){e.preventDefault();s.focus();}return;}
   if(e.key==='Enter'&&t.matches&&t.matches('[data-set-search]')){const first=document.querySelector('.st2-navlist [data-set-tab]');if(first)first.click();}
 });
 renderSettingsDrawerBody=function(){renderSettingsTabBody(false);};

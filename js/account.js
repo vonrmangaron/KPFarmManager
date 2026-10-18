@@ -69,20 +69,36 @@ function accCard(icon,title,desc,body,extra=''){
   return `<div class="settings-section acc-card${extra}"><div class="settings-section-head"><span class="settings-icon">${accIcon(icon)}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">${title}</h4></div></div>${desc?`<p class="settings-section-desc">${desc}</p>`:''}${body}</div>`;
 }
 function accPwInput(id,ph,auto='new-password'){return `<input type="password" class="settings-input acc-pw" id="${id}" placeholder="${escapeAttr(ph)}" autocomplete="${auto}" />`;}
+// Settings rows (2026-10-18, mockup LnK1BcQbq1kWjDnzbab8s4): a labelled box of "what it is · control" rows
+function stSec(label,rows){return `<div class="st2-sec">${label?`<span class="st2-seck">${label}</span>`:''}<div class="st2-box">${rows}</div></div>`;}
+function stRow(title,hint,ctl,cls){return `<div class="st2-row${cls?' '+cls:''}"><div class="st2-rt"><b>${title}</b>${hint?`<span>${hint}</span>`:''}</div><div class="st2-ctl">${ctl||''}</div></div>`;}
 function accProfileHtml(){
-  const st=siloStart(),name=displayFarmName()||'This farm';
-  const silos=st!=null?`Silo ${st} to ${st+11}`:'Silo 1 · 2 · 3 per pair';
-  const sec=!syncFarmName?'Connect to a farm to set a password':!accLoaded?'Open Security to check':accInfo&&accInfo.setup?(accInfo.locked?'Passwords on · locked':'Passwords on · not locked'):accInfo?'Passwords off':accAccess&&accAccess.password?'Farm password set (Viewer only)':'Farm password off';
-  return `<div class="set-cards">
-    ${accCard('farm',escapeHtml(name),'',`<dl class="acc-dl">
-        <div><dt>Manager</dt><dd>${syncFarmName?(managerNameShown()?escapeHtml(managerNameShown()):'<span class="set-muted">Not set</span>'):'<span class="set-muted">Connect to a farm</span>'}</dd></div>
-        <div><dt>Farm name</dt><dd>${escapeHtml(farmDisplayName||'—')}${farmDisplayName?'':' <span class="set-muted">uses the cloud farm ID</span>'}</dd></div>
-        <div><dt>Cloud farm ID</dt><dd>${syncFarmName?escapeHtml(syncFarmName):'<span class="set-muted">Not connected</span>'}</dd></div>
-        <div><dt>Silo numbers</dt><dd>${escapeHtml(silos)}</dd></div>
-      </dl><div class="set-actions"><button type="button" class="set-btn" data-set-profile>Edit farm profile</button></div>`)}
-    ${accCard('shield','Security',escapeHtml(sec)+'.',`<div class="set-actions"><button type="button" class="set-btn" data-acc-tab="security">Open Security</button></div>`)}
-  </div>`;
+  const st=siloStart(),con=!!syncFarmName,mgr=managerNameShown()||'';
+  const from=st!=null?st:1;
+  return stSec('Farm',
+      stRow('Farm name',`Shown at the top of every page.${con?' Cloud ID: <b>'+escapeHtml(syncFarmName)+'</b>':''}`,`<input type="text" class="st2-in" id="pfName" maxlength="40" value="${escapeAttr(farmDisplayName||'')}" placeholder="${escapeAttr(syncFarmName||'e.g. Kiripark Farm')}" data-pf>`)
+     +stRow('Manager','Tasks assigned to the manager stay off workers’ phones.',con?`<input type="text" class="st2-in" id="pfMgr" maxlength="40" value="${escapeAttr(mgr)}" placeholder="e.g. Von" autocomplete="name" data-pf>`:'<span class="st2-muted">Connect to a farm first</span>')
+     +stRow('Silo numbers','The numbers painted on your silos, 3 per pair.',`<input type="number" class="st2-in st2-in-sm" id="pfSilo" min="1" max="990" step="1" inputmode="numeric" value="${from}" data-pf><span class="st2-unit">to <b id="pfSiloTo">${from+11}</b></span>`)
+     +`<div class="st2-row st2-save" id="pfSave" hidden><div class="st2-rt"><span>Changes not saved yet</span></div><div class="st2-ctl"><button type="button" class="set-btn" data-pf-cancel>Cancel</button><button type="button" class="set-btn primary" data-pf-save>Save</button></div></div>`)
+   +stSec('This device',
+      stRow('Connected farm',con?(syncLastSyncAt?'Synced '+escapeHtml(fmtRelativeTime(syncLastSyncAt)):'Connected'):'Not connected to a farm',`${con?`<span class="st2-chip ok">● ${escapeHtml(syncFarmName)}</span>`:''}<button type="button" class="set-btn" data-pf-switch>${con?'Switch farm':'Connect farm'}</button>`));
 }
+function pfDirty(){const n=document.getElementById('pfName'),m=document.getElementById('pfMgr'),s=document.getElementById('pfSilo');if(!n)return false;
+  const st=siloStart()!=null?siloStart():1;return n.value.trim()!==String(farmDisplayName||'')||(m&&m.value.trim().replace(/\s+/g,' ')!==String(managerNameShown()||''))||(s&&Number(s.value)!==st);}
+document.addEventListener('input',e=>{if(!e.target.closest||!e.target.closest('[data-pf]'))return;const s=document.getElementById('pfSilo'),to=document.getElementById('pfSiloTo');if(s&&to)to.textContent=(Math.max(1,Math.floor(Number(s.value))||1)+11);const b=document.getElementById('pfSave');if(b)b.hidden=!pfDirty();});
+document.addEventListener('click',async e=>{
+  if(e.target.closest('[data-pf-cancel]')){accRefresh();return;}
+  if(e.target.closest('[data-pf-switch]')){openSyncModal();if(syncFarmName)showConnectForm('Enter the farm name to switch to.');return;}
+  const sv=e.target.closest('[data-pf-save]');if(!sv)return;
+  const n=document.getElementById('pfName').value.trim(),mEl=document.getElementById('pfMgr'),m=mEl?mEl.value.trim().replace(/\s+/g,' '):null,sl=Math.floor(Number(document.getElementById('pfSilo').value));
+  if(mEl&&m!==String(managerNameShown()||'')){if(!m){showToast('Enter the manager’s name.',true);mEl.focus();return;}
+    sv.disabled=true;sv.textContent='Saving…';const ok=await saveManagerName(m);sv.disabled=false;sv.textContent='Save';
+    if(!ok){showToast('Could not save the manager name. Check your connection.',true);return;}}
+  if(n!==String(farmDisplayName||''))setFarmDisplayName(n);
+  const want=sl>1&&sl<=990?sl:'';if((want||null)!==(siloStart()||null))setSiloStart(want);
+  showToast('Profile saved.');accRefresh();
+});
+
 function accSecurityHtml(){
   if(!syncFarmName)return `<div class="set-cards">${accCard('shield','Farm password','Connect this device to a farm first. The password protects that farm’s cloud files.',`<div class="set-actions"><button type="button" class="set-btn primary" data-pw-goset="farm">Go to Farm &amp; sync</button></div>`)}</div>`;
   if(!accLoaded||accBusy&&!accInfo&&!accAccess)return `<div class="set-cards">${accCard('shield','Farm password','',`<p class="set-muted">Checking the sync server…</p>`)}</div>`;
@@ -118,26 +134,22 @@ function accSecurityHtml(){
   const st=accStatus,locked=!!(st?st.locked:accInfo.locked);
   const me=(FarmKey.get(syncFarmName,'manager')||{}).deviceId;
   const devs=st?st.devices.filter(d=>d.current).sort((a,b)=>(a.deviceId===me?-1:b.deviceId===me?1:0)||(a.role===b.role?0:a.role==='manager'?-1:1)||(b.seen||0)-(a.seen||0)):[];
-  const rows=devs.map(d=>{
-    const nm=d.name||(d.role==='manager'?'Manager':'Worker');
-    const sub=[d.device,d.deviceId===me?'This device':d.seen?'Last used '+fmtRelativeTime(d.seen):''].filter(Boolean).join(' · ');
-    return `<div class="acc-dev"><span class="acc-av">${escapeHtml(nm.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><span class="acc-dev-t"><b>${escapeHtml(nm)} <span class="acc-role${d.role==='manager'?' m':''}">${d.role==='manager'?'Manager':'Worker'}</span></b><small>${escapeHtml(sub)}</small></span>${d.deviceId===me?'':`<button type="button" class="set-btn acc-mini" data-acc-revoke="${escapeAttr(d.deviceId)}">Sign out</button>`}</div>`;}).join('');
-  // Turned on with one shared password (both set at the same moment): workers could open the main apps
+  // Passwords on and this device signed in: the everyday Security page, as rows
   const shared=!!(st&&accInfo.single&&st.mgrPwAt===st.farmPwAt);
-  const mgrCard=accCard('key','Manager password',shared?'<b>Workers and managers share one password right now</b>, so a worker who knows it could open ProdWise. Set a manager password only you know: your other manager devices sign in again with it, workers stay connected with the password they have.':'Only you. Production and Tasks, every file of this farm. Your other manager devices sign in again with the new one.',
-    `<div class="acc-form">${accPwInput('accChg','New manager password')}${accPwInput('accChg2','Type it again')}<div class="set-actions"><button type="button" class="set-btn primary" data-acc-change>${shared?'Set manager password':'Change manager password'}</button>${st&&st.mgrPwAt&&!shared?`<span class="set-muted">Changed ${escapeHtml(fmtRelativeTime(st.mgrPwAt))}</span>`:''}</div></div>`,shared?' acc-warn':'');
-  const farmCard=accCard('key','Farm password (workers)','Workers type it once in the Viewer: tasks and reports only. Workers already signed in stay connected when it changes.',
-    `<div class="acc-fields">${accPwInput('accFarmChg','New farm password')}<button type="button" class="set-btn primary" data-acc-farmchange>Change</button></div>${st&&st.farmPwAt&&!shared?`<span class="set-muted">Changed ${escapeHtml(fmtRelativeTime(st.farmPwAt))}</span>`:''}`);
-  return `<div class="set-cards">
-    ${shared?mgrCard:''}
-    ${accCard('shield','Passwords',locked?'Only signed-in devices can sync.':'Devices that haven’t signed in can still sync. Lock the farm once every device below has signed in.',
-      `<div class="acc-state"><span class="acc-chip on">On</span>${locked?'<span class="acc-chip lock">Locked</span>':'<span class="acc-chip">Not locked</span>'}</div>
-      <div class="set-actions"><button type="button" class="set-btn ${locked?'':'primary'}" data-acc-lock="${locked?'0':'1'}">${locked?'Unlock farm':'Lock farm'}</button></div>`)}
-    ${accCard('user',`Signed-in devices <span class="acc-count">${devs.length||''}</span>`,'Sign out a lost phone or someone who left. They need a password to come back. A Manager device you don’t know? Sign it out and change the manager password.',
-      `<div class="acc-devs">${rows||'<p class="set-muted">Loading…</p>'}</div>${devs.length>1?'<div class="set-actions"><button type="button" class="set-btn" data-acc-signoutall>Sign out all other devices</button></div>':''}`)}
-    ${shared?'':mgrCard}
-    ${farmCard}
-  </div>`;
+  const devRows=devs.map(d=>{
+    const nm=d.name||(d.role==='manager'?'Manager':'Worker');
+    const sub=[d.role==='manager'?'Manager':'Crew',d.device,d.deviceId===me?'this device':d.seen?'last used '+fmtRelativeTime(d.seen):''].filter(Boolean).join(' · ');
+    return stRow(escapeHtml(nm),escapeHtml(sub),d.deviceId===me?'':`<button type="button" class="set-btn acc-danger" data-acc-revoke="${escapeAttr(d.deviceId)}">Sign out</button>`);}).join('');
+  const changed=at=>at?' · changed '+escapeHtml(fmtRelativeTime(at)):'';
+  const pwRow=(title,hint,form)=>`<details class="st2-row st2-det"><summary><div class="st2-rt"><b>${title}</b><span>${hint}</span></div><div class="st2-ctl"><span class="set-btn">Change</span></div></summary><div class="st2-form">${form}</div></details>`;
+  return (shared?`<div class="st2-warn"><b>Workers and managers share one password right now.</b> A worker who knows it could open Production. Set a manager password only you know below: your other manager devices sign in again with it; workers stay connected.</div>`:'')
+   +stSec('Status',stRow('Passwords',locked?'Only signed-in devices can open this farm.':'Devices that haven’t signed in can still sync. Lock the farm once every device below has signed in.',
+      `<span class="st2-chip ok">On</span>${locked?'<span class="st2-chip lock">Locked</span>':'<span class="st2-chip">Not locked</span>'}<button type="button" class="set-btn ${locked?'':'primary'}" data-acc-lock="${locked?'0':'1'}">${locked?'Unlock farm':'Lock farm'}</button>`))
+   +stSec('Passwords',
+      pwRow('Manager password','Only you. Production and Tasks, on every device'+(shared?'':changed(st&&st.mgrPwAt)),`${accPwInput('accChg','New manager password')}${accPwInput('accChg2','Type it again')}<button type="button" class="set-btn primary" data-acc-change>${shared?'Set manager password':'Save'}</button>`)
+     +pwRow('Farm password','Workers, once, in the Crew app. Tasks and reports only'+(shared?'':changed(st&&st.farmPwAt)),`${accPwInput('accFarmChg','New farm password')}<button type="button" class="set-btn primary" data-acc-farmchange>Save</button>`))
+   +stSec(`Signed-in devices${devs.length?' · '+devs.length:''}`,(devRows||stRow('Loading…','',''))
+     +(devs.length>1?stRow('','Sign out a lost phone or someone who left; they need a password to come back.','<button type="button" class="set-btn" data-acc-signoutall>Sign out all other devices</button>'):''));
 }
 function accSectionHtml(t){return t==='security'?accSecurityHtml():accProfileHtml();}
 function renderAccountPage(){
