@@ -9056,6 +9056,7 @@
         onUnchoose: endDragNoSelect,
         // Picking up a task while the Batches & audits panel is open flips it to Tasks, so the backlog is there to drop on
         onStart: ()=>{ if(typeof window.__cwTasksPanelForDrag === 'function') window.__cwTasksPanelForDrag(); },
+        onEnd: ()=>{ if(typeof window.__cwTasksPanelAfterDrag === 'function') window.__cwTasksPanelAfterDrag(); },
         onUpdate:(evt)=>{
           // The sidebar may show only the first few; keep the hidden ones after them in their old order.
           const ids = Array.from(evt.to.children).map(el=> el.dataset && el.dataset.id).filter(Boolean);
@@ -9131,6 +9132,7 @@
         onEnd:()=>{
           endDragNoSelect();
           document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
+          if(typeof window.__cwTasksPanelAfterDrag === 'function') window.__cwTasksPanelAfterDrag();
         }
       });
       sortables.push(s);
@@ -12388,11 +12390,19 @@
       try{ localStorage.setItem('cluckwise-sb-mode', sbMode); }catch(e){}
     }
     setSbMode(sbMode);
+    // Dragging a task: the side panel shows Planner (with Backlog) so the task can be dropped there —
+    // opened for the drag if it was closed, and closed again after the drop
+    let panelOpenedForDrag = false;
     window.__cwTasksPanelForDrag = ()=>{
       const bd = document.body;
-      if(sbMode !== 'batch' || bd.classList.contains('sb-collapsed') || bd.classList.contains('rail-page') || !window.matchMedia('(min-width:1025px)').matches) return;
-      setSbMode('tasks');
-      try{ arSync(); }catch(e){}
+      if(bd.classList.contains('rail-page') || !window.matchMedia('(min-width:1025px)').matches) return;
+      if(bd.classList.contains('sb-collapsed')){ setSidebarCollapsed(false); panelOpenedForDrag = true; }
+      if(sbMode !== 'tasks'){ setSbMode('tasks'); try{ arSync(); }catch(e){} }
+    };
+    window.__cwTasksPanelAfterDrag = ()=>{
+      if(!panelOpenedForDrag) return;
+      panelOpenedForDrag = false;
+      setTimeout(()=> setSidebarCollapsed(true), 350);
     };
     const openPanel = ()=>{ if(document.body.classList.contains('sb-collapsed')) setSidebarCollapsed(false); };
     $('#sbfAddTask').addEventListener('click', ()=> openCreateTaskModal(null));
