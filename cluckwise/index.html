@@ -3449,6 +3449,17 @@
   body.theme-dark #settingsDrawer .st-head{ background:var(--surface) !important; }
   #weatherSearchBtn{ width:auto !important; padding:0 16px !important; white-space:nowrap; }
   .ws-dock{ z-index:60 !important; }
+  /* Production | Tasks switch v2 (2026-10-18): two equal halves; an amber highlight slides to the section you pick */
+  .ws-dock{gap:0;padding:4px;isolation:isolate;background:rgba(22,25,27,.9);box-shadow:0 14px 36px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.18),inset 0 0 0 1px rgba(255,255,255,.1)}
+  .ws-dock::before{content:'';position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:linear-gradient(180deg,#FFD452 0%,#F0A21A 100%);box-shadow:0 3px 10px rgba(240,162,26,.4),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .34s cubic-bezier(.2,.85,.25,1);z-index:-1}
+  .ws-dock:has(button[data-ws="tasks"].on)::before{transform:translateX(100%)}
+  .ws-dock.ws-from-production::before{transform:translateX(0)!important;transition:none}
+  .ws-dock.ws-from-tasks::before{transform:translateX(100%)!important;transition:none}
+  .ws-dock button{flex:1 1 0;min-width:122px;justify-content:center;height:40px;padding:0 16px;color:#C9CED2;letter-spacing:-.1px}
+  .ws-dock button:hover{background:rgba(255,255,255,.07);color:#fff}
+  .ws-dock button.on,.ws-dock button.on:hover{background:none;color:#16191B;transition:color .2s ease .08s}
+  .ws-dock button.on svg{stroke-width:2.4}
+  @media (prefers-reduced-motion:reduce){.ws-dock::before{transition:none}}
 
   /* Board: fold finished past days in one tap */
   .kb-tools{ display:flex; justify-content:flex-end; margin:0 0 8px; }
@@ -12681,6 +12692,8 @@
     h.addEventListener('click', flip);
     h.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); flip(); } });
   });
+  // the switch slides its highlight across when this section comes up
+  window.__wsSlide = to=>{ const d = document.getElementById('cwDock'); if(!d) return; d.classList.add(to === 'tasks' ? 'ws-from-production' : 'ws-from-tasks'); void d.offsetWidth; requestAnimationFrame(()=> d.classList.remove('ws-from-production', 'ws-from-tasks')); };
   // ---------- Settings: one page at a time, grouped side menu (2026-10-18, mockup DqjbS1Z7vh4M4U68BuxLaC) ----------
   // One Settings for Production and Tasks (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): the same menu in both
   // sections. Tasks shows its own pages here; Production's pages (data-owner="pw") open in Production.
@@ -12852,7 +12865,8 @@
   });
   setInterval(()=> refreshWeather(false), 10 * 60 * 1000);
   window.addEventListener('online', ()=> refreshWeather(false));
-  $('#resetSettingsBtn').addEventListener('click', ()=>{ const keepLoc = settings.weatherLocation, keepPt = settings.problemTypes; settings = Object.assign({}, DEFAULT_SETTINGS, { weatherLocation: keepLoc }); if(keepPt) settings.problemTypes = keepPt; applySettings(); persist(); renderAll(); showToast('Settings reset to defaults.'); });
+  // Reset puts back only the display settings: the manager's name, problem types, weather place and the rest are kept
+  $('#resetSettingsBtn').addEventListener('click', ()=>{ ['theme','fontSize','showIcons','batchBadgeStyle'].forEach(k=> settings[k] = DEFAULT_SETTINGS[k]); applySettings(); persist(); renderAll(); showToast('Display settings reset.'); });
 
   // ---------- Bulk delete modal (mode tabs: range / name) ----------
   let bulkDeleteMode = 'range';

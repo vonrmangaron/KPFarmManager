@@ -63,6 +63,7 @@ const TIP_RULES=[
   ['.dash-status-dot',e=>{const c=e.style.background||'';return c.includes('danger')?'Red: well behind the Ross weight':c.includes('primary')?'Orange: a little behind the Ross weight':c.includes('success')?'Green: on or ahead of the Ross weight':'Grey: no weight yet';}],
   ['.loads-dot,.sb-link-meta .badge,.sb-badge','Things that need your attention here'],
   ['#historySaveBtn','Save a copy of the app as it is now, to go back to later'],
+  ['.fs-row[data-fs-edit]',e=>{const b=e.querySelector('b');return b?'Change '+b.textContent.trim():'';}],
 ];
 // Coloured markers that are not buttons: tap shows the tip as a toast
 const TIP_MARK_SEL='.sb-sync-dot,.mgr-dot,.dash-status-dot,.off-badge,.silo-starter-tag,.delivery-pill,.feed-tag,.weekend-pill,.tag,.pp-count-badge,.pp-badge,.w-pill,.pill,.ptc-status,.sms-status,.feed-pill,.group-view-head .pills > span,.loads-dot,.sb-badge';
@@ -75,7 +76,10 @@ function tipLabelFor(el){
     const t=lab?lab.textContent:(el.placeholder||'');
     return t.trim().replace(/\s+/g,' ').slice(0,80);
   }
-  const t=(el.textContent||'').trim().replace(/\s+/g,' ');
+  // a button made of several pieces (title, note, value) reads "Title · note · value", not "Titlenotevalue"
+  const parts=[];const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  for(let n=w.nextNode();n;n=w.nextNode()){const s=n.nodeValue.trim().replace(/\s+/g,' ');if(s)parts.push(s);}
+  const t=parts.reduce((a,s)=>!a?s:/^[·.,:;%)]/.test(s)||/[(·]$/.test(a)?a+' '+s:a+' · '+s,'').replace(/ (?=[%.,:;)])/g,'');
   return t.length>80?t.slice(0,77)+'…':t;
 }
 function applyTips(root){

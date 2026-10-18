@@ -884,7 +884,7 @@ function pwMenuHtml(){
     <button type="button" role="menuitem" data-pwm="profile">Profile</button>
     <button type="button" role="menuitem" data-pwm="settings">Settings${off?`<span class="pwm-bd" title="${off} not at normal">${off}</span>`:''}</button>
     <div class="pwm-theme" data-pwm="theme"><span>Theme</span><span class="pwm-seg" role="group" aria-label="Theme"><button type="button" data-pwm-th="light" aria-pressed="${!dark}" class="${dark?'':'on'}">Light</button><button type="button" data-pwm-th="dark" aria-pressed="${dark}" class="${dark?'on':''}">Dark</button></span></div>
-    <button type="button" role="menuitem" data-pwm="batch">Batch</button>
+    <button type="button" role="menuitem" data-pwm="batch">Batch list</button>
     <hr>
     <button type="button" role="menuitem" data-pwm="switch">${syncFarmName?'Switch farm':'Connect farm'}</button>`;
 }
@@ -894,6 +894,9 @@ function pwMenuToggle(force){
   if(!m){m=document.createElement('div');m.id='pwMenu';m.className='pwm';m.setAttribute('role','menu');m.hidden=true;document.body.appendChild(m);}
   if(open)m.innerHTML=pwMenuHtml();
   m.hidden=!open;
+  // like Claude: the menu opens just above the account button, lined up with the rail's edge
+  const ab=document.querySelector('[data-pwr-farm]');
+  if(open&&ab){const r=ab.getBoundingClientRect();m.style.left=Math.max(8,r.left)+'px';m.style.bottom=Math.max(8,window.innerHeight-r.top+6)+'px';}
   const b=document.querySelector('[data-pwr-farm]');if(b)b.setAttribute('aria-expanded',String(open));
   if(open){const f=m.querySelector('[data-pwm]');if(f&&f.focus)f.focus({preventScroll:true});}
 }

@@ -33,6 +33,7 @@ function openTasksSection(opts){
   pwSection='tasks';document.body.classList.add('pw-in-tasks');
   if(opts.push!==false&&location.hash!=='#tasks'){history.pushState({pwSection:'tasks'},'','#tasks');pwTasksPushed=true;}
   pwSyncSwitch();
+  try{cwFrame.contentWindow.__wsSlide&&cwFrame.contentWindow.__wsSlide('tasks');}catch(e){}
   pwTasksTopColour();cwFrame.addEventListener('load',pwTasksTopColour,{once:true});
   try{cwFrame.focus();}catch(e){}
 }
@@ -52,9 +53,11 @@ function openProductionSection(opts){
     if(pwTasksPushed){pwTasksPushed=false;history.back();}           // the entry we added: step back over it
     else history.replaceState(null,'',location.pathname+location.search);   // opened straight at #tasks
   }
-  pwSyncSwitch();
+  pwSyncSwitch();pwSlide('production');
   if(typeof render==='function')render();
 }
+// the switch slides its highlight across to the section that just opened
+function pwSlide(to){const d=document.getElementById('pwDock');if(!d)return;d.classList.add(to==='tasks'?'ws-from-production':'ws-from-tasks');void d.offsetWidth;requestAnimationFrame(()=>d.classList.remove('ws-from-production','ws-from-tasks'));}
 // The floating pill slides out of the way while a page scrolls down, and comes back on the way up or when it stops
 (function(){const last=new WeakMap();let t=null;
   document.addEventListener('scroll',e=>{const el=e.target===document?document.scrollingElement:e.target;const d=document.getElementById('pwDock');if(!d||!el||typeof el.scrollTop!=='number')return;

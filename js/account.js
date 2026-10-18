@@ -22,7 +22,11 @@ async function loadManagerName(){
   if(!syncFarmName||!navigator.onLine)return;
   try{const r=await fetch(farmFileUrl(accSlug()));
     if(r.status===404)cacheManager(accSlug(),'');
-    else if(r.ok){const j=await r.json();cacheManager(accSlug(),String((j.data&&j.data.settings&&j.data.settings.manager)||'').trim());}
+    else if(r.ok){const j=await r.json(),inFile=String((j.data&&j.data.settings&&j.data.settings.manager)||'').trim(),had=cachedManager();
+      // The name is never cleared on purpose (Profile won't save it empty): if the file lost it, put it back,
+      // or workers start seeing the manager's own tasks again
+      if(!inFile&&had){saveManagerName(had);return;}
+      cacheManager(accSlug(),inFile);}
   }catch(e){}
 }
 // Writes the name into the farm file (creating it for a new farm). True when saved.
