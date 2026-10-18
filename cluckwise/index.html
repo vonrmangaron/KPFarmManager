@@ -3389,6 +3389,12 @@
   body.theme-dark #settingsDrawer .st-head{ background:var(--surface) !important; }
   #weatherSearchBtn{ width:auto !important; padding:0 16px !important; white-space:nowrap; }
   .ws-dock{ z-index:60 !important; }
+
+  /* Board: fold finished past days in one tap */
+  .kb-tools{ display:flex; justify-content:flex-end; margin:0 0 8px; }
+  .kb-fold-btn{ border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,system-ui,sans-serif; height:32px; padding:0 12px; border-radius:999px; cursor:pointer; }
+  .kb-fold-btn:hover{ border-color:var(--primary); }
+  .kb-fold-btn:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -8968,6 +8974,26 @@
       });
       canvas.appendChild(btn);
     });
+    // Fold every past day with nothing left open (done, or no tasks), or unfold them all (computer only)
+    if(!kbPhone){
+      const finished = [];
+      for(let i=0;i<7;i++){ const d = new Date(monday); d.setDate(monday.getDate()+i); const key = dateKey(d);
+        if(key < todayKey && !tasks.some(t=> t.date === key && t.status !== 'done')) finished.push(key); }
+      const toFold = finished.filter(k=> !collapsedKanbanCols.has(k));
+      const weekKeys = Array.from({ length:7 }, (_, i)=>{ const d = new Date(monday); d.setDate(monday.getDate()+i); return dateKey(d); });
+      const anyFolded = weekKeys.some(k=> collapsedKanbanCols.has(k));
+      if(toFold.length || anyFolded){
+        const tools = document.createElement('div'); tools.className = 'kb-tools';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'kb-fold-btn';
+        b.textContent = toFold.length ? `Collapse finished days (${toFold.length})` : 'Expand all days';
+        b.title = toFold.length ? 'Fold past days that have no open tasks' : 'Unfold every day this week';
+        b.addEventListener('click', ()=>{
+          if(toFold.length) toFold.forEach(k=> collapsedKanbanCols.add(k)); else weekKeys.forEach(k=> collapsedKanbanCols.delete(k));
+          saveCollapsedKanbanCols(); renderKanban(); initSortables();
+        });
+        tools.appendChild(b); wrap.appendChild(tools);
+      }
+    }
     wrap.appendChild(canvas);
     const wrapStyle = getComputedStyle(wrap);
     const wrapPadding = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
