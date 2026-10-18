@@ -3560,7 +3560,6 @@
         <img class="sr-logo" src="icons/icon-192.png?v=3" alt="ProdWise">
         <button type="button" class="sr-btn sr-expand" id="srExpandBtn" title="Show sidebar" aria-label="Show sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M13 10l2 2-2 2"/></svg></button>
         <div class="sr-sep"></div>
-        <button type="button" class="sr-btn sr-new" data-rail="newbatch" title="New batch (opens Production)" aria-label="New batch in Production"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         <button type="button" class="sr-btn" data-rail="newaudit" title="New audit" aria-label="New audit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg></button>
         <button type="button" class="sr-batch" id="srBatchBtn" hidden></button>
         <div class="sr-sep"></div>
@@ -3629,7 +3628,6 @@
       </section>
       <div class="sb-foot" id="sbFoot">
         <button type="button" class="sb-foot-btn primary sbf-tasks" id="sbfAddTask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add task</button>
-        <button type="button" class="sb-foot-btn primary sbf-batch" id="sbfNewBatch" title="Starts the batch in Production, then Set up sheds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New batch in Production</button>
         <button type="button" class="sb-foot-btn sbf-batch" id="sbfNewAudit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4"/></svg>New audit</button>
       </div>
     </aside>
@@ -12592,9 +12590,22 @@
       panelOpenedForDrag = false;
       setTimeout(()=> setSidebarCollapsed(true), 350);
     };
+    // Click outside the side panel folds it back to the icons (2026-10-19), like Production. Only clicks on the
+    // page itself count: pop-up windows sit outside it, and a press that moved (dragging a task to or from
+    // Backlog, selecting text) is not a click, so dragging several Backlog tasks keeps the panel open.
+    let downAt = null;
+    document.addEventListener('pointerdown', e=>{ downAt = { x:e.clientX, y:e.clientY, t:e.target }; }, true);
+    document.addEventListener('click', e=>{
+      const bd = document.body, d = downAt; downAt = null;
+      if(bd.classList.contains('sb-collapsed') || bd.classList.contains('rail-page') || !desk.matches) return;
+      if(d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
+      // where the press started (a click that redraws the page can leave e.target detached)
+      const t = (d && d.t) || e.target; if(!t || !t.closest) return;
+      if(!t.closest('.shell') || t.closest('.sidebar') || t.closest('#appRail')) return;
+      setSidebarCollapsed(true);
+    }, true);   // capture: calendar days and cards stop their clicks from bubbling
     const openPanel = ()=>{ if(document.body.classList.contains('sb-collapsed')) setSidebarCollapsed(false); };
     $('#sbfAddTask').addEventListener('click', ()=> openCreateTaskModal(null));
-    $('#sbfNewBatch').addEventListener('click', ()=> $('#openBatchModalBtn').click());
     $('#sbfNewAudit').addEventListener('click', ()=> $('#openEventModalBtn').click());
     function arSync(){
       const which = isOpen('#settingsDrawer') ? 'settings' : isOpen('#mlogPage') ? 'routine' : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
