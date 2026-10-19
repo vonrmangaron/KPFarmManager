@@ -175,56 +175,57 @@ function navIcon(type) {
 // ─────────────────────────────────────────────────────────────
 // VERSION HISTORY VIEW
 // ─────────────────────────────────────────────────────────────
+// ── One History (2026-10-19, mockup DFfbVq9eALAobZyoTSYiK2): Production's saved copies, Production's settings
+// changes and Tasks' change log (tasks, reports, settings) on one timeline, grouped by day
+let hxFilter='all',hxQuery='',hxLimit=150;
 function renderHistoryView() {
-  const available = typeof historyIsAvailable === 'function' && historyIsAvailable();
-  const head = `<div class="predictions-head" style="background:linear-gradient(135deg,#6A4FA3,#4A3F6B);"><h1>📜 Version History</h1><span class="head-note">Automatic safety net · manual checkpoints</span></div>`;
-  if (!available) {
-    return head + `<div class="dash-empty">
-      <div class="dash-empty-icon">📜</div>
-      <h2>History unavailable</h2>
-      <p>Your browser doesn't support IndexedDB, or it's disabled. Version history is turned off.</p>
-    </div>`;
-  }
-  setTimeout(() => { if (typeof historyPopulatePage === 'function') historyPopulatePage(); }, 0);
-  return head + `<div class="history-toolbar">
-      <button class="btn-primary" id="historySaveBtn" type="button">💾 Save current version</button>
-      <span class="history-toolbar-note">Auto-snapshots fire before New Batch, Excel imports, and restores. Latest ${HISTORY_MAX_AUTO} kept — pinned versions never expire.</span>
+  const chip=(k,l)=>`<button type="button" class="hx-chip${hxFilter===k?' on':''}" data-hx-filter="${k}" aria-pressed="${hxFilter===k}">${l}<b data-hx-count="${k}"></b></button>`;
+  setTimeout(()=>{historyPopulatePage();if(typeof pwEnsureTasksFrame==='function')pwEnsureTasksFrame(()=>{if(activeTab==='history')historyPopulatePage();});},0);
+  return `<div class="hx">
+    <div class="hx-head"><h2>History</h2>
+      <label class="hx-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search history" value="${escapeAttr(hxQuery)}" data-hx-search aria-label="Search history"></label>
+      <button type="button" class="hx-btn ink" id="historySaveBtn" title="Save a copy of Production as it is now, to go back to later">Save a copy now</button>
+      <div class="hx-more"><button type="button" class="hx-btn hx-ic" data-hx-more aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More">⋯</button>
+        <div class="hx-menu" role="menu" hidden><button type="button" role="menuitem" data-hx-clear>Clear task changes…</button></div></div>
     </div>
-    <div id="historyList"><div class="history-loading">Loading…</div></div>`;
+    <div class="hx-chips" role="group" aria-label="Show">${chip('all','Everything')}${chip('copies','Saved copies')}${chip('tasks','Tasks')}${chip('reports','Reports')}${chip('settings','Settings')}</div>
+    <p class="hx-note">Saved copies are made automatically before a new batch, an import or a restore, and whenever you press Save a copy now. They live on this device; the newest ${HISTORY_MAX_AUTO} automatic ones are kept, pinned ones never expire.</p>
+    <div id="historyList" class="hx-list"><div class="history-loading">Loading…</div></div>
+  </div>`;
 }
-
+function hxKindOfTask(a){a=String(a||'');return /^report/i.test(a)||/fixed$/i.test(a)&&/report/i.test(a)?'reports':/^settings/i.test(a)?'settings':'tasks';}
 async function historyPopulatePage() {
   const listEl = document.getElementById('historyList');
   if (!listEl) return;
-  const snaps = await historyListAll();
-  if (!snaps.length) {
-    listEl.innerHTML = `<div class="history-empty">
-      <div class="history-empty-icon">📜</div>
-      <div class="history-empty-title">No versions saved yet</div>
-      <div class="history-empty-sub">The app auto-saves before risky operations like New Batch and Excel imports. You can also press <strong>Save current version</strong> above any time.</div>
-    </div>`;
-    return;
-  }
-  const groups = {};
-  snaps.forEach(s => {
-    const d = new Date(s.timestamp);
-    const key = iso(d);
-    if (!groups[key]) groups[key] = { date: d, items: [] };
-    groups[key].items.push(s);
-  });
-  const order = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-  const todayIso = iso(new Date());
-  const yesterdayIso = iso(addDays(new Date(), -1));
-  const html = order.map(k => {
-    const g = groups[k];
-    let label;
-    if (k === todayIso) label = 'Today';
-    else if (k === yesterdayIso) label = 'Yesterday';
-    else label = fmtShort(g.date);
-    const rows = g.items.map(s => historyRowHtml(s)).join('');
-    return `<div class="history-group"><div class="history-group-head">${escapeHtml(label)}</div><div class="history-rows">${rows}</div></div>`;
-  }).join('');
-  listEl.innerHTML = html;
+  const snaps = (typeof historyIsAvailable==='function'&&historyIsAvailable()) ? await historyListAll() : [];
+  let tlog=[];try{if(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwHistory)tlog=cwFrame.contentWindow.__cwHistory()||[];}catch(e){}
+  const items=[];
+  snaps.forEach(sn=>items.push({kind:'copies',ts:sn.timestamp,snap:sn}));
+  (typeof pwActivityList==='function'?pwActivityList():[]).forEach(a=>items.push({kind:a.kind==='settings'?'settings':'tasks',ts:a.ts,title:'Settings · '+a.text,sub:'Production'}));
+  tlog.forEach(h=>{const k=hxKindOfTask(h.action);items.push({kind:k,ts:h.ts,title:`${h.action}${h.detail?' · '+h.detail:''}`,sub:k==='reports'?'Maintenance':'Tasks',act:h.action});});
+  const counts={all:items.length};items.forEach(x=>counts[x.kind]=(counts[x.kind]||0)+1);
+  document.querySelectorAll('[data-hx-count]').forEach(b=>{const n=counts[b.dataset.hxCount]||0;b.textContent=n?' '+n:'';});
+  const q=hxQuery.trim().toLowerCase();
+  const SRC={'manual':'Saved by you','auto-newbatch':'Before a new batch','auto-sync':'Before a sync merge','auto-import':'Before an import','auto-restore':'Before a restore'};
+  const shown=items.filter(x=>(hxFilter==='all'||x.kind===hxFilter)&&(!q||(x.snap?((SRC[x.snap.source]||x.snap.source)+' '+(x.snap.label||'')+' '+((x.snap.summary||{}).batch||'')):(x.title+' '+x.sub)).toLowerCase().includes(q)))
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!shown.length){listEl.innerHTML=`<div class="hx-empty">${items.length?'Nothing matches.':'Nothing yet. Saved copies, task changes, reports and settings changes show up here.'}</div>`;return;}
+  const todayIso=iso(new Date()),yIso=iso(addDays(new Date(),-1));
+  const groups=[];let cur=null;
+  shown.slice(0,hxLimit).forEach(x=>{const d=new Date(x.ts),k=iso(d);if(!cur||cur.k!==k){cur={k,d,items:[]};groups.push(cur);}cur.items.push(x);});
+  const t2=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const DOT={copies:['v','⟲'],tasks:['t','✓'],reports:['r','!'],settings:['s','⚙']};
+  const row=x=>{
+    const tm=t2(new Date(x.ts));
+    if(x.snap){const sn=x.snap,sum=sn.summary||{};
+      const meta=[sn.pinned?'pinned':'',sum.batch?'Batch '+sum.batch:'',`${sum.sheds||0} shed${sum.sheds===1?'':'s'}`,`${sum.pickups||0} pickup${sum.pickups===1?'':'s'}`,`${sum.loads||0} load${sum.loads===1?'':'s'}`].filter(Boolean).join(' · ');
+      return `<div class="hx-row snap${sn.pinned?' pinned':''}"><span class="hx-dot v">⟲</span><div class="hx-tx"><b>Saved copy · ${escapeHtml(SRC[sn.source]||sn.source)}${sn.label&&sn.source==='manual'?' — '+escapeHtml(sn.label):''}</b><span>Production · ${escapeHtml(meta)}</span></div><span class="hx-tm">${tm}</span>
+        <div class="hx-acts"><button type="button" class="hx-btn" data-history-restore="${escapeAttr(sn.id)}" title="Put Production back to this copy (the current state is saved first)">Restore</button><button type="button" class="hx-btn hx-ic${sn.pinned?' on':''}" data-history-pin="${escapeAttr(sn.id)}" title="${sn.pinned?'Unpin — it can expire again':'Pin — never expires'}" aria-pressed="${!!sn.pinned}">${HR_ICONS.pin}</button><button type="button" class="hx-btn hx-ic" data-history-download="${escapeAttr(sn.id)}" title="Download this copy">${HR_ICONS.download}</button><button type="button" class="hx-btn hx-ic" data-history-delete="${escapeAttr(sn.id)}" title="Delete this copy">${HR_ICONS.trash}</button></div></div>`;}
+    const [c,ic]=DOT[x.kind]||DOT.tasks;
+    return `<div class="hx-row"><span class="hx-dot ${c}">${ic}</span><div class="hx-tx"><b>${escapeHtml(x.title)}</b><span>${escapeHtml(x.sub)}</span></div><span class="hx-tm">${tm}</span></div>`;
+  };
+  listEl.innerHTML=groups.map(g=>`<div class="hx-day">${g.k===todayIso?'Today · ':g.k===yIso?'Yesterday · ':''}${escapeHtml(g.d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}))}</div>${g.items.map(row).join('')}`).join('')
+    +(shown.length>hxLimit?`<button type="button" class="hx-btn hx-moreitems" data-hx-moreitems>Show more (${shown.length-hxLimit} older)</button>`:'');
   listEl.querySelectorAll('[data-history-restore]').forEach(b => b.addEventListener('click', () => historyRestoreFromUi(b.dataset.historyRestore)));
   listEl.querySelectorAll('[data-history-download]').forEach(b => b.addEventListener('click', async () => {
     const snap = await historyGet(b.dataset.historyDownload);
@@ -233,6 +234,19 @@ async function historyPopulatePage() {
   listEl.querySelectorAll('[data-history-pin]').forEach(b => b.addEventListener('click', () => historyTogglePin(b.dataset.historyPin)));
   listEl.querySelectorAll('[data-history-delete]').forEach(b => b.addEventListener('click', () => historyDeleteFromUi(b.dataset.historyDelete)));
 }
+document.addEventListener('click',e=>{
+  if(activeTab!=='history'||!e.target.closest)return;
+  const f=e.target.closest('[data-hx-filter]');if(f){hxFilter=f.dataset.hxFilter;hxLimit=150;document.querySelectorAll('[data-hx-filter]').forEach(b=>{const on=b===f;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});historyPopulatePage();return;}
+  if(e.target.closest('[data-hx-moreitems]')){hxLimit+=150;historyPopulatePage();return;}
+  const mb=e.target.closest('[data-hx-more]');const menu=document.querySelector('.hx-menu');
+  if(mb&&menu){menu.hidden=!menu.hidden;mb.setAttribute('aria-expanded',String(!menu.hidden));return;}
+  if(e.target.closest('[data-hx-clear]')){if(menu)menu.hidden=true;
+    if(!confirm('Clear all task changes from History?\n\nSaved copies of Production are kept.'))return;
+    try{cwFrame.contentWindow.__cwClearHistory();showToast('Task changes cleared.');}catch(err){showToast('Open Tasks once, then try again.',true);}
+    historyPopulatePage();return;}
+  if(menu&&!menu.hidden&&!e.target.closest('.hx-more'))menu.hidden=true;
+});
+document.addEventListener('input',e=>{const t=e.target.closest&&e.target.closest('[data-hx-search]');if(!t)return;hxQuery=t.value;hxLimit=150;historyPopulatePage();});
 
 const HR_SVG=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const HR_ICONS={

@@ -21,6 +21,14 @@ function pwPlaceSwitches(){
   if(hl&&!hl.querySelector('.ws-pill'))hl.insertAdjacentHTML('afterbegin',pwSwitchHtml('pill'));
   pwSyncSwitch();
 }
+// Tasks loaded in the background (History reads its change log) without switching to it
+function pwEnsureTasksFrame(onReady){
+  const farm=syncFarmName||'';
+  if(!cwFrame){cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';document.body.appendChild(cwFrame);}
+  if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
+  let ready=false;try{ready=!!(cwFrame.contentWindow&&cwFrame.contentWindow.__cwHistory);}catch(e){}
+  if(ready){if(onReady)onReady();}else if(onReady)cwFrame.addEventListener('load',()=>setTimeout(onReady,400),{once:true});
+}
 function openTasksSection(opts){
   opts=opts||{};
   // Tasks opens on ProdWise's farm (sent in the address); connecting or changing farm here reloads it
@@ -69,6 +77,7 @@ function pwOpenTab(t){
   if(t==='shedsetup'&&farmData){activeTab='shedsetup';render();}
   else if(t==='newbatch'&&typeof openNewBatchModal==='function')openNewBatchModal();
   else if((t==='account'||t==='security')&&typeof goAccount==='function')goAccount(t==='security'?'security':'profile');
+  else if(t==='history'){if(typeof closeToolPages==='function')closeToolPages();activeTab='history';render();}
 }
 window.addEventListener('popstate',()=>{if(location.hash==='#tasks')openTasksSection({push:false});else{pwTasksPushed=false;openProductionSection({fromPop:true});}});
 window.addEventListener('message',e=>{

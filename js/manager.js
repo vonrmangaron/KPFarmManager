@@ -208,7 +208,7 @@ function farmSettingsNotNormal(){
   return out;
 }
 function fsMostCommon(arr){const c=new Map();arr.forEach(v=>{const k=v.toFixed(2);c.set(k,(c.get(k)||0)+1);});return Number([...c.entries()].sort((a,b)=>b[1]-a[1])[0][0]);}
-function fsAfterChange(label){savePredState();if(farmData)saveState();schedulePush();autoPlanCache=new Map();farmRangeCache=null;
+function fsAfterChange(label){pwActivity('settings',String(label||'').replace(/\.$/,''));savePredState();if(farmData)saveState();schedulePush();autoPlanCache=new Map();farmRangeCache=null;
   if(document.getElementById('siloModal')?.classList.contains('open'))renderSiloModalBody();
   if(feedCompareState.modalOpen)renderCompareModalBody();
   render();if(label)showToast(label);}
@@ -701,7 +701,7 @@ function setOpenInTasks(k){
 // For Tasks' copy of the menu and its Alerts / Backup pages
 function pwSettingsBadges(){return {feed:setOffCount('feed'),security:!!(typeof accInfo!=='undefined'&&accInfo&&accInfo.setup)};}
 function pwGetNotif(k){return !!notifPrefs[k];}
-function pwSetNotif(k,v){notifPrefs[k]=!!v;saveNotifPrefs();if(typeof updateAlertsBell==='function')updateAlertsBell();if(typeof render==='function'&&pwSection==='production')render();}
+function pwSetNotif(k,v){pwActivity('settings',`${k==='feedBalance'?'Silos running low':k==='emptyShed'?'Empty shed':'Shed behind the standard'} alerts ${v?'on':'off'}`);notifPrefs[k]=!!v;saveNotifPrefs();if(typeof updateAlertsBell==='function')updateAlertsBell();if(typeof render==='function'&&pwSection==='production')render();}
 function pwBatchLabel(){if(!farmData)return '';const b=predState.batchNumber||farmData.batchNumber;return b?'Batch '+b:'This batch';}
 const SET_SEC={feed:'Silos and feed',weights:'Weights and result',pickups:'Pickup planning'};
 const SET_NEEDS_BATCH=['feed','weights','pickups','pairs','batches'];
@@ -842,7 +842,7 @@ function sdRefresh(){renderSettingsTabBody(true);const bar=document.getElementBy
 function sdSet(k,v){sdTouch()[k]=v;sdRefresh();}
 function sdSetShed(kind,id,v){sdTouch()[kind][String(id)]=v;sdRefresh();}
 function sdApply(){
-  const d=setDraft;if(!d)return;const n=sdChanges().length;
+  const d=setDraft;if(!d)return;const chList=sdChanges(),n=chList.length;
   if(d.std!=null)predState.growthStd=d.std;
   if(d.frCage!=null)predState.frCage=d.frCage;
   if(d.npd)predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
@@ -852,6 +852,7 @@ function sdApply(){
   }
   Object.keys(d.notif||{}).forEach(k=>setNotifPref(k,d.notif[k]));
   const unitChanged=d.unit&&d.unit!==feedUnit();if(unitChanged)setFeedUnit(d.unit);
+  if(n)pwActivity('settings',chList.join(' · '));
   setDraft=null;gompertzCache=new Map();
   savePredState();saveState();schedulePush();render();if(unitChanged)refreshLoadsViews();
   showToast(n?`${n} change${n===1?'':'s'} applied — forecast updated.`:'Nothing to apply.');
@@ -978,10 +979,12 @@ function setBatchListHtml(){
   setBatchListPage=Math.max(0,Math.min(pages-1,setBatchListPage));
   if(!all.length)return head+`<div class="st2-box"><div class="st2-row"><div class="st2-rt"><b>No batches yet</b><span>Batches appear here once they are saved to the cloud.</span></div></div></div></div>`;
   const cur=currentBatchKey();
+  const isOpenB=p=>p.batchKey===cur||(p.isLegacy&&!cur);
+  all.sort((a,b)=>(isOpenB(b)?1:0)-(isOpenB(a)?1:0));
   const rows=all.slice(setBatchListPage*per,setBatchListPage*per+per).map(p=>{
     const isCur=p.batchKey===cur||(p.isLegacy&&!cur);
     const meta=[p.isLegacy?'Original file':'',typeof fmtBytes==='function'?fmtBytes(p.size):''].filter(Boolean).join(' · ');
-    return `<div class="st2-row${isCur?' st2-bl-cur':''}"><div class="st2-rt"><b>${escapeHtml(p.label)}${isCur?' <span class="st2-chip ok">Open now</span>':''}</b><span>${escapeHtml(meta||'Saved in the cloud')}</span></div><div class="st2-ctl">${isCur?'':`<button type="button" class="set-btn" data-bl-open="${escapeAttr(p.batchKey)}" title="Saves your current work first, then opens this batch">Open</button>`}</div></div>`;}).join('');
+    return `<div class="st2-row${isCur?' st2-bl-cur':''}"><div class="st2-rt"><b>${escapeHtml(p.label)}${isCur?' <span class="st2-chip ok st2-active">Active</span>':''}</b><span>${escapeHtml(meta||'Saved in the cloud')}</span></div><div class="st2-ctl">${isCur?'':`<button type="button" class="set-btn" data-bl-open="${escapeAttr(p.batchKey)}" title="Saves your current work first, then opens this batch">Open</button>`}</div></div>`;}).join('');
   const nums=[];for(let i=0;i<pages;i++)nums.push(`<button type="button" class="st2-pg${i===setBatchListPage?' on':''}" data-bl-page="${i}"${i===setBatchListPage?' aria-current="page"':''} aria-label="Page ${i+1}">${i+1}</button>`);
   const pager=pages>1?`<nav class="st2-pager" aria-label="Batch pages"><button type="button" class="st2-pg" data-bl-page="${setBatchListPage-1}" ${setBatchListPage===0?'disabled':''} aria-label="Previous page">‹</button>${nums.join('')}<button type="button" class="st2-pg" data-bl-page="${setBatchListPage+1}" ${setBatchListPage>=pages-1?'disabled':''} aria-label="Next page">›</button></nav>`:'';
   return head+`<div class="st2-box">${rows}</div>${pager}<p class="st2-muted">Opening a batch saves your current work first. <button type="button" class="set-link" data-bl-reload>Refresh the list</button></p></div>`;
@@ -1007,4 +1010,8 @@ async function pwRestorePayload(payload,name){
   saveState();saveSiloData();saveFarmLoads();savePredState();saveShedViews();schedulePush();render();
   return true;
 }
+// Production's own changes for History (settings applied here), kept on this device per farm
+function pwActivityKey(){return 'pw-activity-'+(syncFarmName?sanitizeUserFarmName(syncFarmName):'local');}
+function pwActivityList(){try{const v=JSON.parse(localStorage.getItem(pwActivityKey())||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
+function pwActivity(kind,text){if(!text)return;try{const l=pwActivityList();l.unshift({ts:Date.now(),kind,text});localStorage.setItem(pwActivityKey(),JSON.stringify(l.slice(0,300)));}catch(e){}}
 

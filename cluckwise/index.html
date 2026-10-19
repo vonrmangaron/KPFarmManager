@@ -3396,6 +3396,102 @@
     #settingsDrawer #settingsBody{ padding:22px 28px 90px !important; }
     #settingsDrawer #settingsBody > *{ max-width:900px; }
   }
+  /* ===== Maintenance v3 (2026-10-19, mockup DFfbVq9eALAobZyoTSYiK2): one header row, filters, docked report, tabs on tablet/phone ===== */
+  #reportsDrawer .rp-sub{ display:none; }
+  #reportsDrawer .rp-head{ flex-wrap:nowrap; gap:10px; min-height:68px; }
+  #reportsDrawer .rp-head h2{ font:800 21px Sora,sans-serif; }
+  #reportsDrawer .rp-ic{ width:40px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:18px; line-height:1; }
+  #reportsDrawer .rp-ic svg{ width:18px; height:18px; }
+  #reportsDrawer #rpSearchToggle{ display:none; }
+  .rpd-actrow{ width:100%; }
+  .rp-more{ position:relative; }
+  .rp-more-menu, .rpd-more-menu{ position:absolute; right:0; top:calc(100% + 6px); z-index:30; min-width:210px; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:0 14px 36px rgba(0,0,0,.18); padding:6px; display:flex; flex-direction:column; gap:1px; }
+  .rp-more-menu[hidden], .rpd-more-menu[hidden]{ display:none; }
+  .rp-more-menu button, .rpd-more-menu button{ all:unset; box-sizing:border-box; cursor:pointer; padding:9px 10px; border-radius:8px; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .rp-more-menu button:hover, .rpd-more-menu button:hover, .rp-more-menu button:focus-visible, .rpd-more-menu button:focus-visible{ background:var(--surface-soft); }
+  .rpd-more-menu button.danger{ color:var(--danger); }
+  .rpd-more-menu{ top:auto; bottom:calc(100% + 6px); }
+  #reportsDrawer .rp-alert-btn{ all:unset; box-sizing:border-box; cursor:pointer; padding:9px 10px; border-radius:8px; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  #reportsDrawer .rp-alert-btn[hidden]{ display:none; }
+  .rp-filters{ display:flex; align-items:center; gap:8px; padding:12px 28px 4px; flex-wrap:wrap; flex-shrink:0; }
+  .rp-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .rp-chip{ all:unset; box-sizing:border-box; cursor:pointer; height:32px; padding:0 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface); display:inline-flex; align-items:center; gap:5px; font:700 12.5px Inter,system-ui,sans-serif; color:var(--ink); white-space:nowrap; }
+  .rp-chip b{ font-variant-numeric:tabular-nums; }
+  .rp-chip.urg b{ color:var(--danger); }
+  .rp-chip.on{ background:#16191B; color:#fff; border-color:#16191B; }
+  .rp-chip.on.urg b{ color:#FF9A85; }
+  body.theme-dark .rp-chip.on{ background:#F0A21A; color:#16191B; border-color:#F0A21A; }
+  body.theme-dark .rp-chip.on.urg b{ color:#8A2A10; }
+  .rp-chip:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .rp-place{ height:32px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,system-ui,sans-serif; padding:0 10px; }
+  .rp-fsp{ flex:1; }
+  #reportsDrawer .rp-filters .rp-view-seg{ margin:0; }
+  .rp-stages{ display:none; }
+  .rp-fab{ display:none; }
+  #rpDetail .rpd-backlink{ display:none; }
+  #rpDetail .rpd-sp{ flex:1; }
+  #rpDetail .rpd-actions{ display:flex; flex-direction:column; gap:8px; padding:12px 16px; border-top:1px solid var(--line); background:var(--surface); }
+  .rpd-actrow{ display:flex; gap:8px; align-items:center; }
+  .rpd-actrow[hidden]{ display:none; }
+  .rpd-act{ flex:1; height:42px; padding:0 14px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 13.5px Inter,system-ui,sans-serif; cursor:pointer; white-space:nowrap; }
+  .rpd-act.pri{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .rpd-act:hover{ border-color:var(--ink); }
+  .rpd-act.pri:hover{ border-color:var(--primary); filter:brightness(1.04); }
+  .rpd-more{ position:relative; flex:0 0 auto; }
+  .rpd-more-btn{ flex:0 0 auto; width:44px; padding:0; font-size:18px; }
+  @media (min-width:1025px){
+    #reportsDrawer .rp-close{ display:none; }
+    /* the chosen report docks on the right of the board, no window over it */
+    #reportsDrawer.view-board:not(.rp-nosel) .rpd-backdrop{ display:none !important; }
+    #reportsDrawer.view-board:not(.rp-nosel) .rp-detail-pane{ position:static !important; transform:none !important; animation:none !important; width:380px !important; max-width:none !important; max-height:none !important; height:auto !important; align-self:stretch; box-shadow:none !important; z-index:auto !important; }
+    #reportsDrawer.view-board .mt-board{ align-self:start; }
+    #reportsDrawer.view-board:not(.rp-nosel) .mtb-hint, #reportsDrawer.view-board:not(.rp-nosel) .mtb-arch{ display:none; }
+    #reportsDrawer.view-board:not(.rp-nosel) .mt-board{ gap:16px; }
+  }
+  /* inside ProdWise the Production | Tasks switch floats bottom-right: keep the report's buttons above it */
+  @media (min-width:761px){ #reportsDrawer.mt-page .rp-body{ padding-bottom:92px !important; } }
+  /* tablet and phone: the stages become tabs; one column of full-width cards */
+  @media (max-width:1024px){
+    #reportsDrawer .rp-search{ display:none; }
+    #reportsDrawer.rp-search-open .rp-search{ display:flex; order:10; flex:1 1 100%; }
+    #reportsDrawer .rp-head{ flex-wrap:wrap; }
+    #reportsDrawer #rpSearchToggle{ display:inline-flex; }
+    #reportsDrawer .rp-filters .rp-view-seg{ display:none; }
+    .rp-stages{ display:grid; grid-template-columns:repeat(3,1fr); gap:3px; margin:8px 16px 0; padding:3px; background:var(--surface-soft); border:1px solid var(--line); border-radius:12px; flex-shrink:0; max-width:520px; }
+    .rp-stages button{ all:unset; box-sizing:border-box; cursor:pointer; text-align:center; padding:8px 4px; border-radius:9px; font:700 13px Inter,system-ui,sans-serif; color:var(--muted); }
+    .rp-stages button b{ font-variant-numeric:tabular-nums; }
+    .rp-stages button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+    .rp-stages button:focus-visible{ outline:2px solid #F0A21A; }
+    .rp-filters{ padding:10px 16px 2px; }
+    #reportsDrawer.view-board .mt-board{ display:block !important; overflow:auto; }
+    #reportsDrawer .mtb-col{ max-height:none !important; }
+    #reportsDrawer .mtb-col .mtb-head{ display:none; }
+    #reportsDrawer .mtb-list{ overflow:visible !important; max-height:none !important; }
+    #reportsDrawer.view-board:not(.rp-nosel) .rpd-backdrop{ display:none !important; }
+  }
+  @media (min-width:761px) and (max-width:1024px){
+    /* list on the left, the chosen report on the right */
+    #reportsDrawer.view-board:not(.rp-nosel) .mt-board{ flex:0 0 340px; }
+    #reportsDrawer.view-board:not(.rp-nosel) .rp-detail-pane{ position:static !important; transform:none !important; animation:none !important; flex:1; width:auto !important; max-width:none !important; max-height:none !important; height:auto !important; box-shadow:none !important; z-index:auto !important; }
+  }
+  @media (max-width:760px){
+    #reportsDrawer .rp-head{ gap:8px; min-height:0; }
+    #reportsDrawer .rp-head-text{ flex:1 1 auto !important; order:0 !important; }
+    #reportsDrawer #rpNewBtn{ display:none; }
+    #reportsDrawer .rp-head > *{ order:0 !important; }
+    .rp-stages{ margin:8px 12px 0; max-width:none; }
+    .rp-filters{ padding:8px 12px 0; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+    .rp-filters::-webkit-scrollbar{ display:none; }
+    #reportsDrawer .mt-page .rp-body, #reportsDrawer .rp-body{ padding:8px 12px 96px !important; }
+    .rp-fab{ display:inline-flex; position:fixed; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); z-index:40; height:50px; padding:0 20px; align-items:center; gap:6px; border:0; border-radius:999px; background:#F0A21A; color:#16191B; font:800 14px Inter,system-ui,sans-serif; box-shadow:0 10px 24px rgba(240,162,26,.4); cursor:pointer; }
+    #reportsDrawer.show-detail .rp-fab{ display:none; }
+    /* a report is its own screen: back link at the top, next step at the bottom */
+    #reportsDrawer.view-board:not(.rp-nosel) .rp-detail-pane{ position:fixed !important; inset:0 !important; transform:none !important; width:auto !important; max-width:none !important; max-height:none !important; height:auto !important; border-radius:0 !important; border:0 !important; z-index:1300 !important; animation:none !important; padding-top:env(safe-area-inset-top, 0px); }
+    #rpDetail .rpd-backlink{ display:inline-flex; all:unset; cursor:pointer; font:700 15px Inter,system-ui,sans-serif; color:#2F6BD8; padding:4px 0 8px; }
+    #rpDetail .rpd-x{ display:none; }
+    #rpDetail .rpd-actions{ padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
+    .rpd-act{ height:46px; }
+  }
   .cs-seg{ display:inline-flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:9px; padding:3px; gap:2px; }
   .cs-seg button{ all:unset; cursor:pointer; padding:6px 12px; border-radius:7px; font:700 12.5px Inter,system-ui,sans-serif; color:var(--muted); }
   .cs-seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.08); }
@@ -3418,7 +3514,7 @@
   #settingsBody .cs2-seck{ margin:0 2px 8px; }
   #settingsBody .st-card + .cs2-seck, #settingsBody .cs-pw-only:not([hidden]) + .cs2-seck, #settingsBody .st-card + .cs2-seck-row{ margin-top:18px; }
   #settingsBody .cs-pw-only[hidden]{ display:none !important; }
-  #settingsBody .cs-pw-only{ display:flex; flex-direction:column; }
+  #settingsBody div.cs-pw-only:not(.st-row){ display:flex; flex-direction:column; }
   #settingsBody .st-card{ background:#fff; border:1px solid #E4E6E1; border-radius:12px; overflow:hidden; padding:0; box-shadow:none; }
   #settingsBody .st-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:14px 16px; border-top:1px solid #E4E6E1; }
   #settingsBody .st-row:first-child{ border-top:0; }
@@ -3767,13 +3863,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
-    <div class="rp-view-seg" id="rpViewSeg" role="group" aria-label="View"><button type="button" data-rpv="board" class="active">Board</button><button type="button" data-rpv="list">List</button></div>
-    <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">+ New report</button>
-    <button type="button" class="rp-head-btn" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button>
-    <button type="button" class="rp-alert-btn" id="rpAlertBtn" hidden>Alerts on this device</button>
+    <button type="button" class="rp-head-btn rp-ic" id="rpSearchToggle" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+    <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">＋ New report</button>
+    <div class="rp-more"><button type="button" class="rp-head-btn rp-ic" id="rpMoreBtn" aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More">⋯</button>
+      <div class="rp-more-menu" id="rpMoreMenu" role="menu" hidden><button type="button" role="menuitem" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button><button type="button" role="menuitem" class="rp-alert-btn" id="rpAlertBtn" hidden>Turn on alerts</button></div></div>
     <button type="button" class="rp-close" id="closeReports" aria-label="Close" title="Close">✕</button>
   </div>
-  <div class="rp-kpis" id="rpSummary"></div>
+  <div class="rp-filters" id="rpFilters"><div class="rp-chips" id="rpChips" role="group" aria-label="Show"></div><select id="rpPlaceSel" class="rp-place" aria-label="Place" title="Show one place"><option value="">All places</option></select><span class="rp-fsp"></span><div class="rp-view-seg" id="rpViewSeg" role="group" aria-label="View"><button type="button" data-rpv="board" class="active">Board</button><button type="button" data-rpv="list">List</button></div></div>
+  <div class="rp-stages" id="rpStages" role="tablist" aria-label="Stage"></div>
+  <div class="rp-kpis" id="rpSummary" hidden></div>
   <div class="rp-body">
     <section class="mt-board" id="mtBoard" aria-label="Maintenance board"></section>
     <section class="rp-list-pane" aria-label="Report list">
@@ -3799,6 +3897,7 @@
     <div class="rpd-backdrop" id="rpdBackdrop" aria-hidden="true"></div>
     <section class="rp-detail-pane" id="rpDetail" aria-label="Report details"></section>
   </div>
+  <button type="button" class="rp-fab" id="rpFab" aria-label="New report">＋ Report</button>
 </div>
 
 <div class="form-modal pt-modal" id="ptypesModal" role="dialog" aria-modal="true" aria-labelledby="ptypesTitle">
@@ -3838,7 +3937,7 @@
 
     <section class="st-section" id="stAppearance">
       <span class="cs2-seck">Look</span>
-      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Theme</span><span class="st-hint">Light or dark, for Production and Tasks</span></div><select id="setTheme" data-seg><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="st-row"><div class="st-row-text"><span class="st-label">Text size</span><span class="st-hint">Production and Tasks, on this device</span></div><select id="setFontSize" data-seg><option value="small">S</option><option value="medium">M</option><option value="large">L</option></select></div><div class="st-row cs-pw-only" id="csUnitRow"><div class="st-row-text"><span class="st-label">Feed amounts</span><span class="st-hint">Loads, dockets, silo stock and forecasts. Bird weights stay in kg.</span></div><div class="cs-seg" role="group" aria-label="Feed unit"><button type="button" data-cs-unit="kg">kg</button><button type="button" data-cs-unit="t">Tonnes</button></div></div></div>
+      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Theme</span><span class="st-hint">Light or dark, for Production and Tasks</span></div><select id="setTheme" data-seg><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="st-row"><div class="st-row-text"><span class="st-label">Text size</span><span class="st-hint">Production pages get smaller or bigger; in Tasks, the task text. On this device.</span></div><select id="setFontSize" data-seg><option value="small">S</option><option value="medium">M</option><option value="large">L</option></select></div><div class="st-row cs-pw-only" id="csUnitRow"><div class="st-row-text"><span class="st-label">Feed amounts</span><span class="st-hint">Loads, dockets, silo stock and forecasts. Bird weights stay in kg.</span></div><div class="cs-seg" role="group" aria-label="Feed unit"><button type="button" data-cs-unit="kg">kg</button><button type="button" data-cs-unit="t">Tonnes</button></div></div></div>
       <span class="cs2-seck">Tasks</span>
       <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Batch labels</span><span class="st-hint">On calendar days</span></div><select id="setBatchStyle" data-seg><option value="pill">Pill</option><option value="watermark">Watermark</option></select></div><label class="st-row st-row-switch" for="setShowIcons"><div class="st-row-text"><span class="st-label">Task icons</span><span class="st-hint">Icon next to each task</span></div><span class="st-switch"><input type="checkbox" id="setShowIcons"><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Reset display settings</span><span class="st-hint">Theme, text size, labels and icons back to normal. Your tasks are kept.</span></div><button type="button" class="st-btn" id="csResetDisplay">Reset</button></div></div>
     </section>
@@ -5972,7 +6071,37 @@
     const ms = $('#moreReportsSub'); if(ms) ms.textContent = count ? `${count} open${urgentN ? ` · ${urgentN} urgent` : ''}` : 'Problems sent in by workers';
     if(typeof updateOverdueBadge === 'function') updateOverdueBadge();
   }
+  // Maintenance v3 (2026-10-19, mockup DFfbVq9eALAobZyoTSYiK2): filters for Board and List, stage tabs on tablet and phone
+  let mtFilter = (()=>{ try{ const v = localStorage.getItem('cw-mt-filter'); return v === 'urgent' || v === 'mine' ? v : 'all'; }catch(e){ return 'all'; } })();
+  let mtStage = (()=>{ try{ const v = localStorage.getItem('cw-mt-stage'); return v === 'prog' || v === 'fixed' ? v : 'open'; }catch(e){ return 'open'; } })();
+  const mtWide = ()=> window.matchMedia('(min-width:1025px)').matches;
+  function mtIsMine(r){
+    const m = (managerName() || '').trim().toLowerCase(); if(!m) return false;
+    const t = r.linkedTaskId && tasks.find(x=> x.id === r.linkedTaskId);
+    return String(r.assignee || '').trim().toLowerCase() === m || !!(t && (t.assignees || []).some(a=> String(a).trim().toLowerCase() === m));
+  }
+  function mtPass(r){
+    if(mtFilter === 'urgent' && !(r.urgent && r.status !== 'Resolved')) return false;
+    if(mtFilter === 'mine' && !mtIsMine(r)) return false;
+    if(reportsShedFilter && !(reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter))) return false;
+    return true;
+  }
+  function renderMtFilters(){
+    const box = $('#rpChips'); if(!box) return;
+    const live = reports.filter(r=> r.status !== 'Resolved' && !rpArchived(r));
+    const urg = live.filter(r=> r.urgent).length, mine = managerName() ? reports.filter(r=> r.status !== 'Resolved' && mtIsMine(r)).length : 0;
+    if(mtFilter === 'mine' && !managerName()) mtFilter = 'all';
+    const chip = (k, label, n, cls)=> `<button type="button" class="rp-chip${cls ? ' ' + cls : ''}${mtFilter === k ? ' on' : ''}" data-mtf="${k}" aria-pressed="${mtFilter === k}">${label}${n != null ? ` <b>${n}</b>` : ''}</button>`;
+    box.innerHTML = chip('all', 'All', reports.filter(r=> !rpArchived(r)).length) + chip('urgent', 'Urgent', urg, 'urg') + (managerName() ? chip('mine', 'Mine', mine) : '');
+    const sel = $('#rpPlaceSel');
+    if(sel){
+      const sheds = [...new Set(reports.map(r=> r.shed).filter(Boolean))].sort((a,b)=> String(a).localeCompare(String(b), undefined, { numeric:true }));
+      sel.innerHTML = '<option value="">All places</option>' + sheds.map(x=> `<option value="${escapeHtmlAttr(x)}">Shed ${escapeHtml(String(x))}</option>`).join('') + (reports.some(r=> !r.shed) ? '<option value="__farm">Around the farm</option>' : '');
+      sel.value = reportsShedFilter || '';
+    }
+  }
   function renderReportsSummary(){
+    renderMtFilters();
     const el = $('#rpSummary'); if(!el) return;
     const now = Date.now(), today = dateKey(new Date());
     const live = reports.filter(r => r.status !== 'Resolved');
@@ -6028,6 +6157,7 @@
     document.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
     let filtered = reports.slice();
     if(reportsFilterStatus !== 'all' && reportsFilterStatus !== 'active') filtered = filtered.filter(r => r.status === reportsFilterStatus);
+    filtered = filtered.filter(r => mtFilter === 'all' || (mtFilter === 'urgent' ? r.urgent && r.status !== 'Resolved' : mtIsMine(r)));
     if(reportsShedFilter){
       filtered = filtered.filter(r => reportsShedFilter === '__farm' ? !r.shed : String(r.shed) === String(reportsShedFilter));
     }
@@ -6133,6 +6263,18 @@
     el.addEventListener('keydown', (e) => { if((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); openReportDetailModal(r.id); } });
     return el;
   }
+  // The next step for a report, in the bar at the bottom: one main button, one more, the rest under ⋯
+  function rpdActionsHtml(r, sc, task){
+    const B = (attr, label, cls)=> `<button type="button" class="rpd-act${cls ? ' ' + cls : ''}" ${attr}>${label}</button>`;
+    const M = (attr, label, cls)=> `<button type="button" role="menuitem" class="${cls || ''}" ${attr}>${label}</button>`;
+    let main = '', more = [];
+    if(sc === 'resolved'){ main = B('data-rp-status="Open"', 'Reopen'); }
+    else if(task){ main = B('data-rp-viewtask', 'Open task', 'pri'); more.push(M('data-rp-fix', 'Mark fixed')); }
+    else if(isRepairInProgress(r)){ main = B('data-rp-fix', 'Mark fixed', 'pri') + B('data-rp-start', 'Change who'); more.push(M('data-rp-status="Open"', 'Back to Open')); }
+    else { const tk = typeRoute(r.problemType) === 'task'; main = tk ? B('data-rp-assign', 'Make a task', 'pri') + B('data-rp-start', 'Start repair') : B('data-rp-start', 'Start repair', 'pri') + B('data-rp-assign', 'Make a task'); more.push(M('data-rp-fix', 'Mark fixed')); }
+    more.push(M('data-rp-delete', 'Delete report', 'danger'));
+    return `<div class="rpd-actrow">${main}<div class="rpd-more"><button type="button" class="rpd-act rpd-more-btn" data-rp-more aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More">⋯</button><div class="rpd-more-menu" role="menu" hidden>${more.join('')}</div></div></div>`;
+  }
   function renderReportDetail(){
     const pane = $('#rpDetail'); if(!pane) return;
     const r = reports.find(x => x.id === currentReportId);
@@ -6147,23 +6289,21 @@
     const st = (v, label) => `<button type="button" class="rpd-seg-btn${r.status === v ? ' active' : ''}" data-rp-status="${v}" title="Set to ${label}">${label}</button>`;
     pane.innerHTML = `
       <div class="rpd-head">
-        <div class="rpd-head-row"><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
+        <button type="button" class="rpd-backlink" data-rp-back>‹ Maintenance</button>
+        <div class="rpd-head-row"><span class="rp-st st-${sc}"></span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}<span class="rpd-sp"></span><button type="button" class="rpd-x" data-rp-back aria-label="Close details" title="Close details">✕</button></div>
         <h3 class="rpd-type"></h3>
         <div class="rpd-sub"></div>
       </div>
       <div class="rpd-scroll">
         ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
         ${r.notes ? `<div class="rpd-block"><span class="rpd-lbl">Worker's note</span><div class="rpd-note" data-rp-text="notes"></div></div>` : ''}
-        <div class="rpd-block">
-          <span class="rpd-lbl">Task</span>
-          ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div><button type="button" class="rpd-btn" data-rp-viewtask title="Open the task">Open task</button></div>`
-                 : sc === 'resolved' ? `<div class="rpd-hint">No task.</div>`
-                 : isRepairInProgress(r) ? `<div class="rpd-task"><div class="rpd-task-text"><b>Repair job · ${escapeHtml(r.assignee || 'anyone')}</b><span class="rpd-task-meta">On the Maintenance board — workers fix it from “Check maintenance”</span></div><button type="button" class="rpd-btn" data-rp-start title="Change who">Change who</button></div>`
-                 : `<div class="rpd-task rpd-task-next"><div class="rpd-task-text"><span class="rpd-hint">What happens next? A <b>task</b> for a one-off job (it carries the photo), or a <b>repair</b> on the Maintenance board.</span></div><div class="rpd-next"><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'repair' ? ' primary' : ''}" data-rp-start title="Move to In progress on the Maintenance board">Start repair</button><button type="button" class="rpd-btn${typeRoute(r.problemType) === 'task' ? ' primary' : ''}" data-rp-assign title="Open the New task form, filled in from this report">Make a task</button></div></div>`}
-        </div>
+        ${task || isRepairInProgress(r) ? `<div class="rpd-block">
+          <span class="rpd-lbl">${task ? 'Task' : 'Repair'}</span>
+          ${task ? `<div class="rpd-task"><div class="rpd-task-text"><b class="rpd-task-name"></b><span class="rpd-task-meta"></span></div></div>`
+                 : `<div class="rpd-task"><div class="rpd-task-text"><b>Repair job · ${escapeHtml(r.assignee || 'anyone')}</b><span class="rpd-task-meta">On the board — workers fix it from “Check maintenance”</span></div></div>`}
+        </div>` : ''}
         <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist"></div></div>
         <div class="rpd-controls">
-          <div class="rpd-field"><span class="rpd-lbl">Status</span><div class="rpd-seg">${st('Open', 'Open')}${st('In Progress', 'In progress')}${st('Resolved', 'Fixed')}</div></div>
           <div class="rpd-field"><span class="rpd-lbl">Priority</span><div class="rpd-seg"><button type="button" class="rpd-seg-btn${!r.urgent ? ' active' : ''}" data-rp-urgent="0">Normal</button><button type="button" class="rpd-seg-btn${r.urgent ? ' active' : ''}" data-rp-urgent="1">Urgent</button></div></div>
         </div>
         ${sc === 'resolved' ? `<div class="rpd-field"><label class="rpd-lbl" for="rpdResolutionNotes">What fixed it? <span>(the worker sees this)</span></label><textarea class="rpd-textarea" id="rpdResolutionNotes" rows="2" maxlength="500" placeholder="e.g. Replaced the valve"></textarea></div>` : ''}
@@ -6173,8 +6313,7 @@
         </div>
         <div class="rpd-saved" id="rpdSaved" aria-live="polite"></div>
       </div>
-      <div class="rpd-foot">
-        <button type="button" class="rpd-delete" data-rp-delete title="Delete this report">Delete report</button>
+      <div class="rpd-foot rpd-actions">${rpdActionsHtml(r, sc, task)}
         <div class="rpd-confirm" hidden><span>${sc !== 'resolved' ? "This problem isn't fixed yet. " : ''}Delete it for good?</span><button type="button" class="rpd-btn" data-rp-delcancel>Cancel</button><button type="button" class="rpd-btn danger" data-rp-delyes>Delete</button></div>
       </div>`;
     pane.querySelector('.rp-st').textContent = sc === 'resolved' ? 'Fixed' : (RP_STATUS_LABEL[r.status] || 'Open');
@@ -6229,21 +6368,28 @@
   }
   function renderMtBoard(){
     const box = $('#mtBoard'); if(!box) return;
-    $('#reportsDrawer').classList.toggle('view-board', rpView === 'board');
+    $('#reportsDrawer').classList.toggle('view-board', rpView === 'board' || !mtWide());
     $('#reportsDrawer').classList.toggle('rp-nosel', !reports.some(r=> r.id === currentReportId));
     document.querySelectorAll('#rpViewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.rpv === rpView));
-    if(rpView !== 'board'){ box.innerHTML = ''; return; }
+    const wide = mtWide();
+    $('#reportsDrawer').classList.toggle('mt-narrow', !wide);
+    if(rpView !== 'board' && wide){ box.innerHTML = ''; $('#rpStages').innerHTML = ''; return; }
     const q = (reportsSearchQuery || '').trim().toLowerCase();
-    const match = r=> !q || [rpTypeName(r), reportPlace(r), r.notes, r.createdBy, r.assignee].join(' ').toLowerCase().includes(q);
+    const match = r=> mtPass(r) && (!q || [rpTypeName(r), reportPlace(r), r.notes, r.createdBy, r.assignee].join(' ').toLowerCase().includes(q));
     const byNew = (a,b)=> String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
     const open = reports.filter(r=> r.status === 'Open' && match(r)).sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
     const prog = reports.filter(r=> r.status === 'In Progress' && match(r)).sort((a,b)=> (rpHasTask(a)?1:0)-(rpHasTask(b)?1:0) || (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
     const fixed = reports.filter(r=> r.status === 'Resolved' && !rpArchived(r) && match(r)).sort((a,b)=> String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || '')));
     const archived = reports.filter(rpArchived).length;
     const col = (key, title, list, hint, extra)=> `<div class="mtb-col mtb-${key}"><div class="mtb-head"><b>${title}</b><span class="mtb-count">${list.length}</span>${hint ? `<span class="mtb-hint">${hint}</span>` : ''}${extra || ''}</div><div class="mtb-list" data-col="${key}">${list.map(r=> mtCardHtml(r, key)).join('') || '<div class="mtb-empty">Nothing here</div>'}</div></div>`;
-    box.innerHTML = col('open', 'Open', open, 'drag right to start')
-      + col('prog', 'In progress', prog, 'shown in “Check maintenance”')
-      + col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">${RP_ARCHIVE_DAYS}-day archive${archived ? ' · ' + archived : ''}</span>`);
+    const stages = [['open','Open',open],['prog','In progress',prog],['fixed','Fixed',fixed]];
+    $('#rpStages').innerHTML = wide ? '' : stages.map(([k,l,list])=> `<button type="button" role="tab" data-mts="${k}" aria-selected="${mtStage === k}" class="${mtStage === k ? 'on' : ''}"><span class="mts-l">${k === 'prog' && window.innerWidth <= 760 ? 'Working' : l}</span> <b>${list.length}</b></button>`).join('');
+    const colHtml = {
+      open: ()=> col('open', 'Open', open, wide ? 'drag right to start' : ''),
+      prog: ()=> col('prog', 'In progress', prog, wide ? 'shown in “Check maintenance”' : ''),
+      fixed: ()=> col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">${RP_ARCHIVE_DAYS}-day archive${archived ? ' · ' + archived : ''}</span>`)
+    };
+    box.innerHTML = wide ? colHtml.open() + colHtml.prog() + colHtml.fixed() : colHtml[mtStage]();
     box.querySelectorAll('.mtb-th img').forEach(im=> im.addEventListener('error', ()=>{ const p = im.parentElement; p.classList.add('none'); p.innerHTML = RP_WRENCH; }));
     mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
     if(typeof Sortable !== 'undefined'){
@@ -12140,7 +12286,11 @@
   $('#moreManageBtn').addEventListener('click', ()=>{ closeOverlays(); toggleSidebar(); });
   $('#moreYearBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='year'; syncViewButtons(); renderAll(); });
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
-  $('#moreHistoryBtn').addEventListener('click', ()=>{ closeOverlays(); openDrawer('#historyDrawer'); });
+  // One History (2026-10-19): inside ProdWise, History is Production's page (saved copies + this log on one timeline)
+  window.__cwHistory = ()=> history.slice();
+  window.__cwClearHistory = ()=>{ history = []; persist(); renderAll(); };
+  const openHistoryPage = ()=>{ if(CW_EMBED){ closeOverlays(); parent.postMessage({ pwSection:'production', tab:'history' }, location.origin); return true; } return false; };
+  $('#moreHistoryBtn').addEventListener('click', ()=>{ if(openHistoryPage()) return; closeOverlays(); openDrawer('#historyDrawer'); });
   $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
   $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
@@ -12148,7 +12298,7 @@
   $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
 
-  $('#historyBtn').addEventListener('click', ()=> openDrawer('#historyDrawer'));
+  $('#historyBtn').addEventListener('click', ()=>{ if(openHistoryPage()) return; openDrawer('#historyDrawer'); });
   $('#reportsBtn').addEventListener('click', ()=> openReportsDrawer());
   $('#closeReports').addEventListener('click', closeOverlays);
   // ---- Problem types (what workers pick under "What's the problem?") ----
@@ -12191,7 +12341,19 @@
     });
   }
   function openPtypes(){ ptConfirm = null; renderPtypes(); $('#ptypesNewInput').value = ''; $('#ptypesModal').classList.add('open'); }
-  $('#rpTypesBtn').addEventListener('click', openPtypes);
+  $('#rpTypesBtn').addEventListener('click', ()=>{ mtMenu(false); openPtypes(); });
+  function mtMenu(open){ const m = $('#rpMoreMenu'), b = $('#rpMoreBtn'); if(!m) return; m.hidden = !open; b.setAttribute('aria-expanded', String(!!open)); }
+  $('#rpMoreBtn').addEventListener('click', (e)=>{ e.stopPropagation(); mtMenu($('#rpMoreMenu').hidden); });
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('.rp-more')) mtMenu(false);
+    if(!e.target.closest('.rpd-more')) document.querySelectorAll('.rpd-more-menu').forEach(m=>{ m.hidden = true; });
+  });
+  $('#rpChips').addEventListener('click', (e)=>{ const b = e.target.closest('[data-mtf]'); if(!b) return; mtFilter = b.dataset.mtf; try{ localStorage.setItem('cw-mt-filter', mtFilter); }catch(err){} renderReportsView(); });
+  $('#rpPlaceSel').addEventListener('change', (e)=>{ reportsShedFilter = e.target.value; const s2 = $('#reportsShedFilter'); if(s2) s2.value = reportsShedFilter; renderReportsView(); });
+  $('#rpStages').addEventListener('click', (e)=>{ const b = e.target.closest('[data-mts]'); if(!b) return; mtStage = b.dataset.mts; try{ localStorage.setItem('cw-mt-stage', mtStage); }catch(err){} renderMtBoard(); });
+  $('#rpSearchToggle').addEventListener('click', ()=>{ const d = $('#reportsDrawer'); d.classList.toggle('rp-search-open'); if(d.classList.contains('rp-search-open')) setTimeout(()=> $('#reportsSearchInput').focus(), 30); });
+  $('#rpFab').addEventListener('click', openNewReport);
+  { let wasWide = mtWide(); window.addEventListener('resize', ()=>{ const w = mtWide(); if(w !== wasWide){ wasWide = w; if($('#reportsDrawer').classList.contains('open')) renderReportsView(); } }); }
   $('#closePtypes').addEventListener('click', () => $('#ptypesModal').classList.remove('open'));
   $('#ptypesList').addEventListener('click', e => {
     const b = e.target.closest('button'); if(!b) return;
@@ -12420,6 +12582,8 @@
     if(t.dataset.rpStatus){ setReportStatus(id, t.dataset.rpStatus); return; }
     if(t.dataset.rpUrgent){ setReportUrgent(id, t.dataset.rpUrgent === '1'); return; }
     if(t.hasAttribute('data-rp-assign')){ openAssignTaskFromReport(id); return; }
+    if(t.hasAttribute('data-rp-more')){ const m = t.nextElementSibling; const open = m.hidden; m.hidden = !open; t.setAttribute('aria-expanded', String(open)); return; }
+    if(t.hasAttribute('data-rp-fix')){ mtMove(id, 'fixed'); return; }
     if(t.hasAttribute('data-rp-start')){ askStartRepair(id); return; }
     if(t.hasAttribute('data-rp-viewtask')){
       const r = reports.find(x => x.id === id);
@@ -12432,8 +12596,8 @@
       return;
     }
     const confirmRow = $('#rpDetail .rpd-confirm'), delBtn = $('#rpDetail .rpd-delete');
-    if(t.hasAttribute('data-rp-delete')){ confirmRow.hidden = false; delBtn.hidden = true; return; }
-    if(t.hasAttribute('data-rp-delcancel')){ confirmRow.hidden = true; delBtn.hidden = false; return; }
+    if(t.hasAttribute('data-rp-delete')){ confirmRow.hidden = false; const row = $('#rpDetail .rpd-actrow'); if(row) row.hidden = true; return; }
+    if(t.hasAttribute('data-rp-delcancel')){ confirmRow.hidden = true; const row = $('#rpDetail .rpd-actrow'); if(row) row.hidden = false; return; }
     if(t.hasAttribute('data-rp-delyes')){ deleteReportConfirmed(id); return; }
   });
 
