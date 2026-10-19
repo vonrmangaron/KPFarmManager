@@ -101,7 +101,8 @@ function readTimeToggleHtml(){
 // Silo number as painted on the farm (Farm profile): set a range like 1–12 and
 // pair 1 shows 1·2·3, pair 2 shows 4·5·6… Not set: every pair shows 1–3.
 function siloStart(){const v=Number(predState.siloStart);return Number.isInteger(v)&&v>=1&&v<=990?v:null;}
-function siloNumber(g,n){const s=siloStart();return s!=null?s+(g-1)*3+n-1:n;}
+// Silos are numbered across the farm, 3 per pair: Sheds 1–2 = 1, 2, 3 … Sheds 7–8 = 10, 11, 12 (Profile can start them at another number)
+function siloNumber(g,n){const s=siloStart();return (s!=null?s:1)+(g-1)*3+n-1;}
 // Silo reading log: every reading session with its time (stored, synced)
 function readingAtField(r){const a=r&&r.at;return (typeof a==='string'&&!isNaN(Date.parse(a)))?{at:a}:{};}
 function normReadingLog(list){if(!Array.isArray(list))return [];return list.map(e=>{if(!e||!/^\d{4}-\d{2}-\d{2}$/.test(String(e.date))||isNaN(Date.parse(e.at)))return null;const ring=v=>(v===null||v===undefined||v==='')?null:Math.max(0,Math.min(MAX_RINGS,Math.floor(Number(v))||0));return {id:String(e.id||('rd'+Date.parse(e.at))),at:String(e.at),date:String(e.date),time:e.time==='am'?'am':'pm',silo1Rings:ring(e.silo1Rings),silo2Rings:ring(e.silo2Rings),silo3Rings:ring(e.silo3Rings)};}).filter(Boolean).sort((a,b)=>a.at.localeCompare(b.at)).slice(-400);}

@@ -235,7 +235,7 @@ const fpn=run('silo numbers',`(()=>{
   predState.siloStart=null;
   return {a:a.join('|'),b:b.join('|'),lbl,c};
 })()`);
-if(fpn){ok(fpn.a==='123|123|123|123','not set: every pair 1–3');ok(fpn.b==='1,2,3|4,5,6|7,8,9|10,11,12','1–12: pairs get 1-3, 4-6, 7-9, 10-12');
+if(fpn){ok(fpn.a==='123|456|789|101112','not set: farm-wide 1–12 (fixed 12-silo layout)');ok(fpn.b==='1,2,3|4,5,6|7,8,9|10,11,12','1–12: pairs get 1-3, 4-6, 7-9, 10-12');
   ok(fpn.lbl==='Silo 6+4','split label uses farm numbers');ok(fpn.c===24,'13–24 range');}
 
 console.log('16. Estimated-weight reminder and kill-sheet weight in the daily table');

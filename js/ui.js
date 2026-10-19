@@ -1685,7 +1685,7 @@ function renderLoadsModalBody(){
   };
   const rows=filtered.map(l=>{
     const r=rowBase(l);
-    const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''}</td>`;};
+    const splitCell=g=>{const v=Number(l.splitKg[g])||0;if(v<=0)return `<td class="split-cell zero">—</td>`;const sl=loadSilosFor(l,g);return `<td class="split-cell on">${fmtFeedNum(v,1)}${sl.length?`<span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+S')}</span>`:''}</td>`;};
     const actualStr=(l.actualKg!=null&&Number.isFinite(Number(l.actualKg)))?feedIn(l.actualKg):'';
     const needCls=r.due?'needs':'';
     return `<tr class="${r.rowCls}" data-load-row="${escapeAttr(l.id)}" title="${r.tip}">
@@ -2163,7 +2163,7 @@ function buildBatchReportHTML(){
         <th class="num">Sheds ${pairShort(1)}</th><th class="num">Sheds ${pairShort(2)}</th><th class="num">Sheds ${pairShort(3)}</th><th class="num">Sheds ${pairShort(4)}</th>
         <th class="num">Actual Delivery</th><th>Docket</th></tr></thead><tbody>`;
     sortedLoads.forEach((l,i)=>{
-      const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sl=loadSilosFor(l,g);return v>0?fmtFeedNum(v,1)+(sl.length?` <span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+')}</span>`:''):'—';};
+      const splitCell=g=>{const v=Number(l.splitKg[g])||0;const sl=loadSilosFor(l,g);return v>0?fmtFeedNum(v,1)+(sl.length?` <span class="split-silo">S${sl.map(n=>siloNumber(g,n)).join('+S')}</span>`:''):'—';};
       const actualStr=l.actualKg!=null?fmtFeed(l.actualKg):`${fmtFeed(l.plannedKg)} (est)`;
       html+=`<tr>
         <td class="num">#${i+1}</td>
