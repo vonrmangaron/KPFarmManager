@@ -44,6 +44,7 @@ function loadNotifPrefs(){
     const v=JSON.parse(raw);if(!v||typeof v!=='object')return;
     if(typeof v.shedPerformance==='boolean')notifPrefs.shedPerformance=v.shedPerformance;
     if(typeof v.feedBalance==='boolean')notifPrefs.feedBalance=v.feedBalance;
+    if(typeof v.emptyShed==='boolean')notifPrefs.emptyShed=v.emptyShed;
   }catch(e){}
 }
 function saveNotifPrefs(){try{localStorage.setItem(NOTIF_PREFS_KEY,JSON.stringify(notifPrefs));}catch(e){}}

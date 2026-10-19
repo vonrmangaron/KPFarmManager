@@ -763,7 +763,7 @@ function openManualPickupModal(shedId,editDateIso,presetDateIso){
     const avg=(p.totalWeightKg&&p.birds)?(p.totalWeightKg/p.birds):null;
     manualPickupState={shedId,mode:'edit',originalDateIso:editDateIso,dateIso:iso(p.date),ageValue:pickupAge(shed,p),ageTouched:(p.ageOverride!=null),birds:p.birds||'',avgWeight:avg!=null?Number(avg.toFixed(3)):'',totalWeight:p.totalWeightKg!=null?Number(p.totalWeightKg.toFixed(2)):'',lastEdited:'avg',isFinal:!!p.isFinal,weightEst:!!p.weightEstimated,replaceId:null,replaceOn:false};
   }else{
-    if(pickups.length>=MAX_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups (maximum).`,true);return;}
+    if(pickups.length>=MAX_LOGGED_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_LOGGED_PICKUPS_PER_SHED} pickups (maximum).`,true);return;}
     const today=presetDateIso||todayIso();
     const computedAge=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,dateOnly(today))):0;
     const est=estimatedPickupWeight(shed,dateOnly(today));const near=nearbyPlannedPickup(shed,today);
@@ -780,7 +780,7 @@ function renderManualPickupModal(){
   const shed=farmData.sheds[s.shedId-1];
   if(titleEl)titleEl.innerHTML=s.mode==='add'?`<span>📝</span> Add Pickup — Shed ${s.shedId}`:`<span>✎</span> Edit Pickup — Shed ${s.shedId}`;
   const pickupCount=(shed.pickups||[]).length;
-  const canSave=s.mode==='edit'||pickupCount<MAX_PICKUPS_PER_SHED;
+  const canSave=s.mode==='edit'||pickupCount<MAX_LOGGED_PICKUPS_PER_SHED;
   body.innerHTML=`<div class="sync-status-card"><div class="sync-status-row"><span class="lbl">Shed</span><span class="val">Shed ${s.shedId}</span></div><div class="sync-status-row"><span class="lbl">Placement</span><span class="val">${shed.placementDate?fmtShort(shed.placementDate):'—'}</span></div><div class="sync-status-row"><span class="lbl">Pickups</span><span class="val">${pickupCount} of ${MAX_PICKUPS_PER_SHED}</span></div></div><div class="mp-field"><label>Date</label><input type="date" id="mpDate" value="${s.dateIso}" /></div><div class="mp-field"><label>Age (days) <span class="auto-chip" id="mpAgeChip" style="${s.ageTouched?'display:none;':''}">auto</span></label><input type="number" id="mpAge" min="0" step="1" value="${s.ageValue}" /></div><div class="mp-field"><label>No. of Birds</label><input type="number" id="mpBirds" min="1" step="1" value="${s.birds}" placeholder="e.g. 5000" /></div><div class="mp-field"><label>Average Weight (kg/bird) <span class="auto-chip" id="mpAvgChip" style="display:none;">auto</span></label><input type="number" id="mpAvg" step="0.001" min="0" value="${s.avgWeight}" placeholder="kg per bird" /></div><div class="mp-field"><label>Total Weight (kg) <span class="auto-chip" id="mpTotalChip" style="display:none;">auto</span></label><input type="number" id="mpTotal" step="1" min="0" value="${s.totalWeight}" placeholder="kg total" /></div><div class="mp-est-row" id="mpEstRow"></div><div id="mpReplaceWrap"></div><label class="mp-checkbox-row"><input type="checkbox" id="mpFinal" ${s.isFinal?'checked':''} /><span>This is the final pickup (sets the clean-out date — you close the shed on the day)</span></label><div class="mp-hint" id="mpFinalHint"></div><div class="mp-hint">Enter <strong>Birds + Average</strong> to auto-calc Total, or <strong>Birds + Total</strong> to auto-calc Average.</div><div class="sync-actions"><button class="btn-sync-primary" id="mpSaveBtn" ${canSave?'':'disabled'}>${s.mode==='add'?'＋ Add Pickup':'✓ Save Changes'}</button><button class="btn-sync-primary ghost" id="mpCancelBtn">Cancel</button></div>`;
   const dateEl=document.getElementById('mpDate');const ageEl=document.getElementById('mpAge');const birdsEl=document.getElementById('mpBirds');const avgEl=document.getElementById('mpAvg');const totalEl=document.getElementById('mpTotal');const ageChipEl=document.getElementById('mpAgeChip');
   const onDateChange=()=>{s.dateIso=dateEl.value;if(s.ageTouched)return;const d=parseExcelDate(dateEl.value);if(!d)return;const a=shed.placementDate?Math.max(0,daysBetween(shed.placementDate,d)):0;ageEl.value=a;s.ageValue=a;if(ageChipEl)ageChipEl.style.display='';};
@@ -875,7 +875,7 @@ function saveManualPickup(){
   const newPickup={date:dateObj,birds:Math.floor(birdsVal),isFinal,variance:null,totalWeightKg:total,totalWeightKgFromExcel:null,totalWeightKgManual:true,source:'manual',ageOverride,weightEstimated:!!s.weightEst};
   if(!shed.pickups)shed.pickups=[];
   if(s.mode==='add'){
-    if(shed.pickups.length>=MAX_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_PICKUPS_PER_SHED} pickups.`,true);return;}
+    if(shed.pickups.length>=MAX_LOGGED_PICKUPS_PER_SHED){showToast(`This shed already has ${MAX_LOGGED_PICKUPS_PER_SHED} pickups.`,true);return;}
     const dup=shed.pickups.find(p=>iso(p.date)===iso(dateObj));
     if(dup&&!confirm('A pickup already exists for this date. Add another anyway?'))return;
     shed.pickups.push(newPickup);
@@ -2768,7 +2768,7 @@ function refreshPickupsModal(){
       </tr>`;}).join('');
     farmBirds+=birds;farmKg+=kg;farmWeighed+=wBirds;
     const avgAll=wBirds>0?kg/wBirds:null;
-    const canAdd=ps.length<MAX_PICKUPS_PER_SHED;
+    const canAdd=ps.length<MAX_LOGGED_PICKUPS_PER_SHED;
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
         ${shed.closed?'<span class="cs-chip">Closed</span>':typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}" title="Enter the birds taken out and the final mortality for Shed ${shed.id}">Close shed</button>`:''}

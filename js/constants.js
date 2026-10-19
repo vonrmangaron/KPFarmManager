@@ -1,5 +1,5 @@
 const STORAGE_KEY='prodwise_vm_phase2_v1',VIEW_KEY='prodwise_vm_shedview_v1',THEME_KEY='prodwise_vm_theme_v1',SILO_KEY_V2='prodwise_vm_silo_v2',SILO_KEY='prodwise_vm_silo_v3',SESSION_KEY='prodwise_session_init_v1',SYNC_FARMNAME_KEY='prodwise_sync_farmname_v1',PRED_KEY='prodwise_predictions_v1',LOADS_KEY='prodwise_loads_v1',LOADS_VIEW_KEY='prodwise_loads_view_v1',NOTIF_PREFS_KEY='prodwise_notif_prefs_v1';
-const SHED_COUNT=8,FEED_BLOCK_T=60,FIXED_FLOOR_AREA_M2=3162,MAX_PICKUPS_PER_SHED=8,MIN_PICKUPS_PER_SHED=4,MAX_PREDICTED_PICKUPS=8,DEFAULT_MORT_RATE_PCT=0.1,MAX_MORT_RATE_PCT=5;
+const SHED_COUNT=8,FEED_BLOCK_T=60,FIXED_FLOOR_AREA_M2=3162,MAX_PICKUPS_PER_SHED=5,MIN_PICKUPS_PER_SHED=1,MAX_LOGGED_PICKUPS_PER_SHED=8,MAX_PREDICTED_PICKUPS=8,DEFAULT_MORT_RATE_PCT=0.1,MAX_MORT_RATE_PCT=5;
 const DEFAULT_CHICK_WEIGHT_KG=0.044,MIN_CHICK_WEIGHT_KG=0.030,MAX_CHICK_WEIGHT_KG=0.080,DEFAULT_BIAS_FACTOR=0.90,MIN_BIAS_FACTOR=0.70,MAX_BIAS_FACTOR=1.10;
 const DEFAULT_CLEANOUT_DAYS=52;   // clean-out is placement + 52 days unless the manager sets it
 const GOMPERTZ_K_MIN=0.02,GOMPERTZ_K_MAX=0.12,GOMPERTZ_A_MAX=30,MAX_UNCERTAINTY=0.35,DEFAULT_SHED_POPULATION=52000;
@@ -41,13 +41,13 @@ let dailyRangeState={...DEFAULT_DAILY_RANGE};
 let feedCompareState={modalOpen:false,selectedGroups:[],layoutMode:'auto',visibleColumns:{date:true,age:true,liveBirds:true,dailyFeed:true,delivery:true,endBalance:true}};
 let loadsModalState={open:false,filter:'all',view:'table'},loadModalState=null,newBatchModalPhase='choice',batchHistoryCache=null,batchHistoryPage=0;
 let siloModalOpenGroups={1:true,2:false,3:false,4:false};
-const BATCHES_PER_PAGE=4;
+const BATCHES_PER_PAGE=5;
 let renderTimer=null,syncFarmName=null,syncSha=null,syncExcelSha=null,syncExcelMeta=null,syncConnectedAt=null,syncLastSyncAt=null,syncState='idle';
 let pushDebounceTimer=null,pushMaxWaitTimer=null,pushPending=false,pushInFlight=false;
 let manualPickupState=null,sampleState=null,predictedPickupState=null,pendingImport=null,reviewChoices={};
 let gompertzCache=new Map(),settingsDrawerOpen=false,pendingNewBatchClean='',pendingNewBatchDownload=true;
 let siloLevelSel={};
-let notifPrefs={shedPerformance:true,feedBalance:true};
+let notifPrefs={shedPerformance:true,feedBalance:true,emptyShed:true};
 
 // Farm name shown in the app. A view-only label: the cloud farm ID
 // (syncFarmName) used for sync/storage never changes. Per device.

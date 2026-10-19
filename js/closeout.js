@@ -16,6 +16,9 @@ function shedNeedsClosing(s,today){
   const d=shedOutDate(s);return !!d&&d<=dateOnly(today||new Date());
 }
 function shedsNeedingClose(){return farmData?(farmData.sheds||[]).filter(s=>shedNeedsClosing(s)):[];}
+// Settings › Alerts › Empty shed: off = no bell, Home or pop-up alerts about sheds still to close
+function emptyShedAlertsOn(){return notifPrefs.emptyShed!==false;}
+function shedsToAlertClose(){return emptyShedAlertsOn()?shedsNeedingClose():[];}
 function earlierPickupBirds(s){return (s.pickups||[]).filter(p=>!p.isFinal).reduce((n,p)=>n+(Number(p.birds)||0),0);}
 // The balance for a count: what mortality becomes
 function closeMath(s,birdsOut,mort){
@@ -143,19 +146,19 @@ function closeBannerHtml(s){
 
 // Bell, Home and a once-a-day reminder
 function closeAlerts(){
-  return shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
+  return shedsToAlertClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
     return {kind:'error',msg:`<strong>Shed ${s.id}</strong> — clean-out ${today?'today':'was '+fmtShortNoYear(d)} · the shed is done and needs closing`,closeShed:s.id};}).concat(leftoverAlerts());
 }
 function closeNeeds(){
   // pairs waiting for their leftover first, then sheds to close, then the carry-over offer
   const lo=leftoverNeeds(),pairs=lo.filter(n=>n.tone==='bad'),rest=lo.filter(n=>n.tone!=='bad');
-  const many=shedsNeedingClose();
+  const many=shedsToAlertClose();
   if(many.length>=2)return pairs.concat([{tone:'bad',title:`Close ${many.length} sheds`,sub:`Clean-outs done (Shed ${many.map(s=>s.id).join(', ')}) — confirm the birds out and close them together`,act:'data-close-all'}]).concat(rest);
-  return pairs.concat(shedsNeedingClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
+  return pairs.concat(shedsToAlertClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
     return {tone:'bad',title:`Close Shed ${s.id}`,sub:`Clean-out ${today?'today':'was '+fmtShortNoYear(d)} — enter the birds taken out`,act:`data-close-go="${s.id}"`};})).concat(rest);
 }
 function announceClose(){
-  const list=shedsNeedingClose();if(!list.length)return;
+  const list=shedsToAlertClose();if(!list.length)return;
   const k='pw-close-told-'+iso(new Date());let told=[];
   try{told=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}
   const fresh=list.filter(s=>!told.includes(s.id));if(!fresh.length)return;

@@ -1274,7 +1274,7 @@ function shedCardHtml(shed,today){
   const picked=totalPicked(shed);
   const mRate=mortalityRate(shed);
   const fp=finalPickupOf(shed);
-  const canAddPickup=(shed.pickups||[]).length<MAX_PICKUPS_PER_SHED;
+  const canAddPickup=(shed.pickups||[]).length<MAX_LOGGED_PICKUPS_PER_SHED;
   const chickW=shedChickWeight(shed);
   const fit=getShedGompertzFit(shed);
   const predictedCount=(shed.predictedPickups||[]).length;
@@ -2274,7 +2274,9 @@ function shedCleanoutInfoInner(shed,today){
   if(remaining>0||!lastDet){
     endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):(lastDet?dateOnly(lastDet.date):null);
     endSrc=shed.cleanoutDate?'clean-out date':'last pickup';
-    finalBirds=remaining;finalKg=pred.estFinalALW||0;
+    // the birds left at the end are the final pickup: heavier than the thinning curve (Settings › Weights › Last pickup heavier),
+    // the same uplift the batch result uses
+    finalBirds=remaining;finalKg=(pred.estFinalALW||0)*finalUpliftFactor();
   }else{
     endDate=shed.cleanoutDate?dateOnly(shed.cleanoutDate):dateOnly(lastDet.date);
     endSrc=shed.cleanoutDate?'clean-out date':(lastDet.isAuto?'last auto-planned pickup':lastDet.isPredicted?'last planned pickup':'last logged pickup');
@@ -2350,7 +2352,7 @@ function renderPredictionsShedCard(shed,group,part){
   }).join('');
   const realPickupCount=(shed.pickups||[]).length;
   const pickupTableHtml=realPickupCount===0?`<div class="forecast-empty">No pickups yet — estimates unlock after the first pickup.</div>`:`<div class="pickups-scroll"><table class="pickups-table" style="font-size:12.5px;min-width:560px;"><thead><tr>${bulkActive('pk:'+shed.id)?'<th class="bulk-cell"></th>':''}<th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total wt (kg)</th><th class="num">Avg wt (kg/bird)</th><th style="width:44px;text-align:right;">Actions</th></tr></thead><tbody>${pickupRows}</tbody></table></div>`;
-  const canAdd=realPickupCount<MAX_PICKUPS_PER_SHED;
+  const canAdd=realPickupCount<MAX_LOGGED_PICKUPS_PER_SHED;
   const pill=pickupPlanPillHtml(shed);
   const pickupHeaderHtml=`<h4 class="pickup-header"><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span>Pickup History — edit birds, total or avg inline</span>${pill}</span><span style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center;">${bulkToolbar('pk:'+shed.id,(shed.pickups||[]).map(x=>iso(x.date)),'logged')}<button class="btn-pickup-add" data-pickup-add="${shed.id}" type="button" ${canAdd?'':'disabled'} title="${canAdd?'Add a pickup manually':'Maximum 5 pickups reached'}">＋ Add Actual Pickup</button></span></h4>`;
   const groupLabel=grp&&grp.hasData?`${pairLabel(group)} combined result`:`${pairLabel(group)} result`;

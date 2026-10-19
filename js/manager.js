@@ -373,6 +373,25 @@ function pairInYardLine(s){
   const chip=dv==null?'':`<span class="pair-chip ${daysBehindSeverity(dv)}" title="Day ${last} reading (×${Math.round(shedBiasFactor(s)*100)}% to plant weight) vs ${escapeAttr(stdName())}">${Math.abs(dv)<0.5?'on std':(dv>0?'+':'−')+Math.abs(dv).toFixed(1)+' d'} at d${last}</span>`;
   return `<div class="pov-iy">In-yard: ${vals} kg ${chip}</div>`;
 }
+// Density now (kg/m²): birds in the shed × today's weight ÷ floor area, against the shed's thin trigger
+function shedDensityNow(s,today,live){
+  if(!s.placementDate||s.closed)return null;
+  const w=(forecastWeightModeAware(s,today).kg)||0;if(!(w>0)||!(live>0))return null;
+  const ds=getShedDensitySettings(s);
+  return {d:live*w/FIXED_FLOOR_AREA_M2,trig:Number(ds.triggerDensity),max:Number(ds.maxDensity),w};
+}
+function shedDensityTone(x){return x.d>=x.max?'bad':x.d>=x.trig?'warn':'';}
+function shedDensityTileHtml(s,today,live){
+  const x=shedDensityNow(s,today,live);
+  if(!x)return `<div><span>Density now</span><b>—</b><em>no weight yet</em></div>`;
+  const t=shedDensityTone(x);
+  return `<div class="pov-dens${t?' '+t:''}" title="${live.toLocaleString('en-US')} birds × ${x.w.toFixed(2)} kg ÷ ${FIXED_FLOOR_AREA_M2.toLocaleString('en-US')} m² · thin at ${x.trig} · never above ${x.max} kg/m²"><span>Density now</span><b>${x.d.toFixed(1)}</b><em>kg/m² · thin at ${x.trig}</em></div>`;
+}
+function shedDensityNowHtml(s,today,live,cls){
+  const x=shedDensityNow(s,today,live);if(!x)return '';
+  const t=shedDensityTone(x);
+  return `<span class="${cls}${t?' '+t:''}" title="${live.toLocaleString('en-US')} birds × ${x.w.toFixed(2)} kg ÷ ${FIXED_FLOOR_AREA_M2.toLocaleString('en-US')} m²">Density now <b>${x.d.toFixed(1)} kg/m²</b> · thin at ${x.trig}</span>`;
+}
 function pairOverviewHtml(g){
   const today=mgrToday(),sheds=shedsForGroup(g).filter(s=>s.placementDate);
   if(!sheds.length)return `<div class="empty-card">${pairLabel(g)} has no birds yet.</div>`;
@@ -393,6 +412,7 @@ function pairOverviewHtml(g){
       <div class="pov-big3">
         <div><span>Birds now</span><b>${live.toLocaleString('en-US')}</b><em>day ${age}</em></div>
         <div title="${mort.toLocaleString('en-US')} of ${placed.toLocaleString('en-US')} placed"><span>Mortality</span><b>${placed>0?(mort/placed*100).toFixed(1):'0.0'}%</b><em>${mort.toLocaleString('en-US')} birds</em></div>
+        ${shedDensityTileHtml(s,today,live)}
         <div><span>${finalP&&finalP.planned?'Last pickup (plan)':'Last pickup'}</span><b>${finalP?escapeHtml(fmtShortNoYear(finalP.date).replace(/ \w+$/,'')):'—'}</b><em>${finalP?finalP.birds.toLocaleString('en-US')+' birds':'not planned yet'}</em></div>
       </div>
       ${pairInYardLine(s)}
@@ -661,15 +681,15 @@ async function organiseCloudFiles(btn){
 const SET_GROUPS=[
   ['Account',[['profile','Profile','Your farm’s name, its manager and the silo numbers. Shared by Production, Tasks and the Crew app.'],['security','Security','Passwords keep your farm’s data to you and your crew.']]],
   ['Production',[['feed','Feed & silos','How the feed forecast plans deliveries. Changes wait for Apply.'],['weights','Weights & result','Target weights and how shed weights turn into plant weights.'],['pickups','Pickup planning','When sheds are thinned and how many pickups to plan.'],['pairs','Per pair & shed','Scale corrections and normal daily mortality, shed by shed.']]],
-  ['Tasks',[['appearance','Appearance','How the calendar, list and board look on this device.'],['calendar','Calendar','What opens first.'],['weather','Weather','The forecast on the calendar, board and list.']]],
+  ['Tasks',[['calendar','Calendar','What opens first.'],['weather','Weather','The forecast on the calendar, board and list.']]],
   ['Crew',[['workers','Workers','Who uses the Crew app on your farm.']]],
   ['Farm',[['sync','Sync & cloud','Where this farm’s files live and how this device syncs.'],['batches','Batches & history','Past batches and the farm’s results over time.']]],
-  ['App',[['alerts','Alerts','What ProdWise tells you about, in Production and in Tasks.'],['backup','Backup & reports','Copies and reports for both sections in one place.'],['display','Display & units','Units and how numbers are shown on this device.'],['about','About','Version and credits.']]]
+  ['App',[['alerts','Alerts','What ProdWise tells you about, in Production and in Tasks.'],['backup','Backup & reports','Copies and reports for both sections in one place.'],['appearance','Display','Theme, text size and units on this device. Production and Tasks use the same.'],['about','About','Version and credits.']]]
 ];
 // One Settings for Production and Tasks (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): Tasks has the same menu.
 // These pages belong to Tasks: picking one opens the Tasks section on that page.
 const SET_TASKS_PAGES=['appearance','calendar','weather','workers','alerts','backup'];
-const SET_ALIAS={predictions:'feed',farm:'sync',app:'display',data:'backup'};
+const SET_ALIAS={predictions:'feed',farm:'sync',app:'appearance',data:'backup',display:'appearance'};
 function setOpenInTasks(k){
   if(typeof openTasksSection!=='function')return;
   openTasksSection();
@@ -681,7 +701,7 @@ function setOpenInTasks(k){
 // For Tasks' copy of the menu and its Alerts / Backup pages
 function pwSettingsBadges(){return {feed:setOffCount('feed'),security:!!(typeof accInfo!=='undefined'&&accInfo&&accInfo.setup)};}
 function pwGetNotif(k){return !!notifPrefs[k];}
-function pwSetNotif(k,v){notifPrefs[k]=!!v;saveNotifPrefs();if(typeof updateAlertsBell==='function')updateAlertsBell();}
+function pwSetNotif(k,v){notifPrefs[k]=!!v;saveNotifPrefs();if(typeof updateAlertsBell==='function')updateAlertsBell();if(typeof render==='function'&&pwSection==='production')render();}
 function pwBatchLabel(){if(!farmData)return '';const b=predState.batchNumber||farmData.batchNumber;return b?'Batch '+b:'This batch';}
 const SET_SEC={feed:'Silos and feed',weights:'Weights and result',pickups:'Pickup planning'};
 const SET_NEEDS_BATCH=['feed','weights','pickups','pairs','batches'];
@@ -690,7 +710,7 @@ function setPageInfo(k){for(const [g,items] of SET_GROUPS){const it=items.find(x
 function setOffCount(k){if(!farmData||!SET_SEC[k])return 0;const keys=new Set(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.key));return farmSettingsNotNormal().filter(o=>keys.has(o.key)).length;}
 // words each page answers to in the search box (its name, its group and the settings on it)
 function setKeywords(k){const p=setPageInfo(k);let w=[p.label,p.group,p.sub];if(SET_SEC[k])w=w.concat(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.label+' '+(i.hint||'')));
-  const extra={appearance:'theme dark light text size batch labels icons',calendar:'opening view month day agenda board',weather:'weather location units forecast',workers:'crew farm password joined invite',backup:'backup restore export import excel pdf csv checklist report download',profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders overdue reports silos shed performance',display:'units tonnes kg',about:'version credits'}[k]||'';
+  const extra={appearance:'display theme dark light text size font units kg tonnes feed batch labels icons',calendar:'opening view month day agenda board',weather:'weather location units forecast',workers:'crew farm password joined invite',backup:'backup restore export import excel pdf csv checklist report download',profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders overdue reports silos shed performance empty shed close',about:'version credits'}[k]||'';
   return (w.join(' ')+' '+extra).toLowerCase();}
 function setPageBody(k){
   if(!farmData&&SET_NEEDS_BATCH.includes(k))return `<div class="st2-empty">Load or start a batch to see these settings.</div>`;
@@ -699,7 +719,7 @@ function setPageBody(k){
   if(SET_SEC[k])return renderFarmSettingsView(true,SET_SEC[k])+(k==='weights'?settingsGrowthStdHtml():'')+(k==='pickups'?settingsPickupExtrasHtml():'');
   if(k==='pairs')return settingsPairsHtml();
   if(k==='sync')return `<div class="set-cards">${settingsCloudFolderHtml()}${renderSettingsSyncCard()}</div>`;
-  if(k==='batches')return `<div class="set-cards">${renderSettingsBatchHistoryCard()}${renderSettingsFarmHistoryCard()}</div>`;
+  if(k==='batches')return `<div class="set-cards">${setBatchListHtml()}${renderSettingsFarmHistoryCard()}</div>`;
   if(k==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
   if(k==='display')return `<div class="set-cards">${renderSettingsUnitsCard()}</div>`;
   if(k==='data')return `<div class="set-cards">${renderSettingsDataCard()}${renderSettingsReportsCard()}</div>`;
@@ -810,7 +830,7 @@ function sdChanges(){
     Object.keys(d.scale||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh&&d.scale[id]!==sdScaleNow(sh))out.push(`Shed ${id} scale ${d.scale[id]==null?'farm-wide':d.scale[id]+'%'}`);});
     Object.keys(d.mort||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh&&Math.abs(d.mort[id]-shedMortRate(sh))>1e-9)out.push(`Shed ${id} daily morts ${d.mort[id].toFixed(2)}%`);});
   }
-  Object.keys(d.notif||{}).forEach(k=>{if(d.notif[k]!==!!notifPrefs[k])out.push(`${k==='feedBalance'?'Feed balance':'Shed performance'} alerts ${d.notif[k]?'on':'off'}`);});
+  Object.keys(d.notif||{}).forEach(k=>{if(d.notif[k]!==!!notifPrefs[k])out.push(`${k==='feedBalance'?'Feed balance':k==='emptyShed'?'Empty shed':'Shed performance'} alerts ${d.notif[k]?'on':'off'}`);});
   if(d.unit&&d.unit!==feedUnit())out.push(`Feed in ${d.unit==='t'?'tonnes':'kg'}`);
   return out;
 }
@@ -928,3 +948,63 @@ document.addEventListener('click',e=>{
   }
   setTimeout(()=>{if(pwPanel!=='none')setPwPanel('none',true);},0);
 });
+
+// ── Batches & history: every batch of this farm as a list, 5 a page (2026-10-19) ──
+let setBatchList=null,setBatchListFarm='',setBatchListPage=0,setBatchListErr='',setBatchListBusy=false;
+async function loadSetBatchList(force){
+  if(!syncFarmName||setBatchListBusy)return;
+  if(!force&&setBatchList&&setBatchListFarm===syncFarmName)return;
+  setBatchListBusy=true;setBatchListErr='';
+  try{
+    const res=await fetch(buildListingUrl(syncFarmName));
+    if(!res.ok)throw new Error('The server said '+res.status+'.');
+    const j=await res.json();const out=[];
+    for(const f of (j&&Array.isArray(j.files)?j.files:[])){const info=parseBatchFileInfo(syncFarmName,f.name);if(info)out.push({...info,size:f.size});}
+    // newest first; the original (unnumbered) file last
+    out.sort((a,b)=>a.isLegacy!==b.isLegacy?(a.isLegacy?1:-1):compareBatchKeys(a.batchKey,b.batchKey));
+    setBatchList=out;setBatchListFarm=syncFarmName;setBatchListPage=0;
+  }catch(e){setBatchListErr=navigator.onLine?'Could not load the batches. '+(e.message||''):'You are offline — the list loads when you are back online.';}
+  setBatchListBusy=false;
+  const el=document.getElementById('stBatchList');if(el)el.outerHTML=setBatchListHtml();
+}
+function setBatchListHtml(){
+  const head=`<div class="st2-sec" id="stBatchList"><span class="st2-seck">Batches${setBatchList&&setBatchListFarm===syncFarmName?` · ${setBatchList.length}`:''}</span>`;
+  if(!syncFarmName)return head+`<div class="st2-box"><div class="st2-row"><div class="st2-rt"><b>Not connected</b><span>Connect to a farm to see its batches.</span></div><div class="st2-ctl"><button type="button" class="set-btn" data-pf-switch>Connect farm</button></div></div></div></div>`;
+  if(!setBatchList||setBatchListFarm!==syncFarmName){
+    if(!setBatchListBusy&&!setBatchListErr)setTimeout(()=>loadSetBatchList(false),0);
+    return head+`<div class="st2-box"><div class="st2-row"><div class="st2-rt"><b>${setBatchListErr?'Batches not loaded':'Loading batches…'}</b><span>${escapeHtml(setBatchListErr||'From the cloud for '+syncFarmName)}</span></div>${setBatchListErr?'<div class="st2-ctl"><button type="button" class="set-btn" data-bl-reload>Try again</button></div>':''}</div></div></div>`;
+  }
+  const all=setBatchList,per=BATCHES_PER_PAGE,pages=Math.max(1,Math.ceil(all.length/per));
+  setBatchListPage=Math.max(0,Math.min(pages-1,setBatchListPage));
+  if(!all.length)return head+`<div class="st2-box"><div class="st2-row"><div class="st2-rt"><b>No batches yet</b><span>Batches appear here once they are saved to the cloud.</span></div></div></div></div>`;
+  const cur=currentBatchKey();
+  const rows=all.slice(setBatchListPage*per,setBatchListPage*per+per).map(p=>{
+    const isCur=p.batchKey===cur||(p.isLegacy&&!cur);
+    const meta=[p.isLegacy?'Original file':'',typeof fmtBytes==='function'?fmtBytes(p.size):''].filter(Boolean).join(' · ');
+    return `<div class="st2-row${isCur?' st2-bl-cur':''}"><div class="st2-rt"><b>${escapeHtml(p.label)}${isCur?' <span class="st2-chip ok">Open now</span>':''}</b><span>${escapeHtml(meta||'Saved in the cloud')}</span></div><div class="st2-ctl">${isCur?'':`<button type="button" class="set-btn" data-bl-open="${escapeAttr(p.batchKey)}" title="Saves your current work first, then opens this batch">Open</button>`}</div></div>`;}).join('');
+  const nums=[];for(let i=0;i<pages;i++)nums.push(`<button type="button" class="st2-pg${i===setBatchListPage?' on':''}" data-bl-page="${i}"${i===setBatchListPage?' aria-current="page"':''} aria-label="Page ${i+1}">${i+1}</button>`);
+  const pager=pages>1?`<nav class="st2-pager" aria-label="Batch pages"><button type="button" class="st2-pg" data-bl-page="${setBatchListPage-1}" ${setBatchListPage===0?'disabled':''} aria-label="Previous page">‹</button>${nums.join('')}<button type="button" class="st2-pg" data-bl-page="${setBatchListPage+1}" ${setBatchListPage>=pages-1?'disabled':''} aria-label="Next page">›</button></nav>`:'';
+  return head+`<div class="st2-box">${rows}</div>${pager}<p class="st2-muted">Opening a batch saves your current work first. <button type="button" class="set-link" data-bl-reload>Refresh the list</button></p></div>`;
+}
+document.addEventListener('click',e=>{
+  const pg=e.target.closest('[data-bl-page]');if(pg&&!pg.disabled){setBatchListPage=Number(pg.dataset.blPage)||0;const el=document.getElementById('stBatchList');if(el)el.outerHTML=setBatchListHtml();return;}
+  const op=e.target.closest('[data-bl-open]');if(op){openPastBatch(op.dataset.blOpen);return;}
+  if(e.target.closest('[data-bl-reload]')){setBatchListErr='';loadSetBatchList(true);const el=document.getElementById('stBatchList');if(el)el.outerHTML=setBatchListHtml();}
+});
+
+// Text size (2026-10-19): one setting for Production and Tasks (Settings › Display), saved on this device
+const PW_TEXT_KEY='prodwise_text_size_v1';
+function pwApplyTextSize(v){if(!/^(small|medium|large)$/.test(v||''))v='medium';['small','large'].forEach(k=>document.body.classList.toggle('pw-text-'+k,v===k));}
+document.addEventListener('DOMContentLoaded',()=>{try{pwApplyTextSize(localStorage.getItem(PW_TEXT_KEY));}catch(e){}});
+window.addEventListener('storage',e=>{if(e.key===PW_TEXT_KEY)pwApplyTextSize(e.newValue);});
+// One backup with Tasks (2026-10-19): Tasks' Backup & reports page asks for Production's half and restores it here
+function pwBackupPayload(){if(!farmData)return null;const p=buildCloudPayload();p.exportedAt=new Date().toISOString();p.exportedBy='ProdWise.VM';return p;}
+async function pwRestorePayload(payload,name){
+  if(!payload||typeof payload!=='object'||!payload.farmData||!Array.isArray(payload.farmData.sheds))return false;
+  if(payload.app&&payload.app!==SYNC_APP_TAG)return false;
+  try{await historyAutoSnapshot('auto-import','Before restoring '+(name||'a backup'));}catch(e){}
+  if(!applyCloudPayload(payload,{isFirstPull:true}))return false;
+  saveState();saveSiloData();saveFarmLoads();savePredState();saveShedViews();schedulePush();render();
+  return true;
+}
+

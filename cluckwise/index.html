@@ -3396,6 +3396,10 @@
     #settingsDrawer #settingsBody{ padding:22px 28px 90px !important; }
     #settingsDrawer #settingsBody > *{ max-width:900px; }
   }
+  .cs-seg{ display:inline-flex; background:var(--surface-soft); border:1px solid var(--line); border-radius:9px; padding:3px; gap:2px; }
+  .cs-seg button{ all:unset; cursor:pointer; padding:6px 12px; border-radius:7px; font:700 12.5px Inter,system-ui,sans-serif; color:var(--muted); }
+  .cs-seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .cs-seg button:focus-visible{ outline:2px solid #F0A21A; }
   .cs2-search kbd{ margin-left:auto; font:600 11px Inter,system-ui,sans-serif; border:1px solid var(--line); border-radius:6px; padding:1px 6px; color:var(--muted); background:transparent; box-shadow:none; }
   .cs2-search:focus-within kbd{ display:none; }
   .cs2-nav button[data-page]{ color:var(--ink-soft, #3A4044); }
@@ -3821,10 +3825,10 @@
     <div class="cs2-who"><span class="cs2-av" id="csAv">?</span><div><b id="csWhoName">Manager</b><span id="csWhoFarm">Not connected</span></div></div>
     <div class="cs2-grp" data-g="Account"><span class="cs2-k">Account</span><button type="button" data-page="profile" data-owner="pw">Profile</button><button type="button" data-page="security" data-owner="pw">Security<span class="cs2-dot" id="csSecDot" hidden></span></button></div>
     <div class="cs2-grp" data-g="Production"><span class="cs2-k">Production</span><button type="button" data-page="feed" data-owner="pw">Feed &amp; silos<span class="cs2-bd" id="csFeedBd" hidden></span></button><button type="button" data-page="weights" data-owner="pw">Weights &amp; result</button><button type="button" data-page="pickups" data-owner="pw">Pickup planning</button><button type="button" data-page="pairs" data-owner="pw">Per pair &amp; shed</button></div>
-    <div class="cs2-grp" data-g="Tasks"><span class="cs2-k">Tasks</span><button type="button" data-page="appearance">Appearance</button><button type="button" data-page="calendar">Calendar</button><button type="button" data-page="weather">Weather</button></div>
+    <div class="cs2-grp" data-g="Tasks"><span class="cs2-k">Tasks</span><button type="button" data-page="calendar">Calendar</button><button type="button" data-page="weather">Weather</button></div>
     <div class="cs2-grp" data-g="Crew"><span class="cs2-k">Crew</span><button type="button" data-page="workers">Workers<span class="cs2-bd" id="csWorkersBd" hidden></span></button></div>
     <div class="cs2-grp" data-g="Farm"><span class="cs2-k">Farm</span><button type="button" data-page="sync" data-owner="pw">Sync &amp; cloud</button><button type="button" data-page="batches" data-owner="pw">Batches &amp; history</button></div>
-    <div class="cs2-grp" data-g="App"><span class="cs2-k">App</span><button type="button" data-page="alerts">Alerts</button><button type="button" data-page="backup">Backup &amp; reports</button><button type="button" data-page="display" data-owner="pw">Display &amp; units</button><button type="button" data-page="about" data-owner="pw">About</button></div>
+    <div class="cs2-grp" data-g="App"><span class="cs2-k">App</span><button type="button" data-page="alerts">Alerts</button><button type="button" data-page="backup">Backup &amp; reports</button><button type="button" data-page="appearance">Display</button><button type="button" data-page="about" data-owner="pw">About</button></div>
   </nav>
   <div class="settings-body st-body" id="settingsBody">
     <button type="button" class="cs2-back" id="csBack">‹ Settings</button>
@@ -3834,7 +3838,7 @@
 
     <section class="st-section" id="stAppearance">
       <span class="cs2-seck">Look</span>
-      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Theme</span><span class="st-hint">Light or dark, on this device</span></div><select id="setTheme" data-seg><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="st-row"><div class="st-row-text"><span class="st-label">Task text size</span><span class="st-hint">Bigger is easier to read in the shed</span></div><select id="setFontSize" data-seg><option value="small">S</option><option value="medium">M</option><option value="large">L</option></select></div></div>
+      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Theme</span><span class="st-hint">Light or dark, for Production and Tasks</span></div><select id="setTheme" data-seg><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="st-row"><div class="st-row-text"><span class="st-label">Text size</span><span class="st-hint">Production and Tasks, on this device</span></div><select id="setFontSize" data-seg><option value="small">S</option><option value="medium">M</option><option value="large">L</option></select></div><div class="st-row cs-pw-only" id="csUnitRow"><div class="st-row-text"><span class="st-label">Feed amounts</span><span class="st-hint">Loads, dockets, silo stock and forecasts. Bird weights stay in kg.</span></div><div class="cs-seg" role="group" aria-label="Feed unit"><button type="button" data-cs-unit="kg">kg</button><button type="button" data-cs-unit="t">Tonnes</button></div></div></div>
       <span class="cs2-seck">Tasks</span>
       <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Batch labels</span><span class="st-hint">On calendar days</span></div><select id="setBatchStyle" data-seg><option value="pill">Pill</option><option value="watermark">Watermark</option></select></div><label class="st-row st-row-switch" for="setShowIcons"><div class="st-row-text"><span class="st-label">Task icons</span><span class="st-hint">Icon next to each task</span></div><span class="st-switch"><input type="checkbox" id="setShowIcons"><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Reset display settings</span><span class="st-hint">Theme, text size, labels and icons back to normal. Your tasks are kept.</span></div><button type="button" class="st-btn" id="csResetDisplay">Reset</button></div></div>
     </section>
@@ -3880,15 +3884,16 @@
 
     <section class="st-section" id="stAlerts">
       <div class="cs-pw-only"><span class="cs2-seck">Production</span>
-      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair's silos will drop below the safety stock within 8 days, and when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label></div></div>
+      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair's silos will drop below the safety stock within 8 days, and when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifEmpty"><div class="st-row-text"><span class="st-label">Empty shed</span><span class="st-hint">When a shed's clean-out is done but the shed isn't closed yet</span></div><span class="st-switch"><input type="checkbox" id="csNotifEmpty" checked><span class="st-slider"></span></span></label></div></div>
       <span class="cs2-seck">Tasks</span>
       <div class="st-card"><label class="st-row st-row-switch" for="csNotifOverdue"><div class="st-row-text"><span class="st-label">Past-due tasks</span><span class="st-hint">Tasks still open after their day, counted on the bell</span></div><span class="st-switch"><input type="checkbox" id="csNotifOverdue" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifReports"><div class="st-row-text"><span class="st-label">New problem reports</span><span class="st-hint">A pop-up when a worker reports a problem in the Crew app</span></div><span class="st-switch"><input type="checkbox" id="csNotifReports" checked><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Open the notifications list</span><span class="st-hint">Everything overdue, reported and fixed</span></div><button type="button" class="st-btn" id="csOpenNotif2">Open</button></div></div>
     </section>
     <section class="st-section" id="stBackup">
-      <div class="cs-pw-only"><span class="cs2-seck">Production</span>
-      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Download this batch</span><span class="st-hint"><span id="csBatchName">The open batch</span> as a file</span></div><button type="button" class="st-btn" data-pwact="download">Download</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Import sheds Excel</span><span class="st-hint">Placements and birds from a spreadsheet</span></div><button type="button" class="st-btn" data-pwact="import">Import</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Batch report</span><span class="st-hint">Feed, weights and the result, as a PDF</span></div><button type="button" class="st-btn" data-pwact="report">Create</button></div></div></div>
-      <span class="cs2-seck">Tasks</span>
-      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Daily restore points</span><span class="st-hint">Taken automatically · kept for 7 days</span></div><span class="st-badge on">On</span><button type="button" class="st-btn" data-cwact="openRestoreBtn">Restore from a date</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Download backup</span><span class="st-hint">All tasks, reports and workers as one file</span></div><button type="button" class="st-btn" data-cwact="exportDataBtn">Download</button><button type="button" class="st-btn" data-cwact="importDataInput">Restore from file</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Export</span><span class="st-hint">PDF report, printable checklist or CSV</span></div><button type="button" class="st-btn" data-cwact="settingsExportBtn">Export</button></div></div>
+      <span class="cs2-seck">Backup</span>
+      <div class="st-card"><div class="st-row"><div class="st-row-text"><span class="st-label">Download backup</span><span class="st-hint"><span class="cs-pw-only">This batch in Production and </span>all tasks, reports and workers, as one file</span></div><button type="button" class="st-btn st-btn-primary" id="csBackupDl">Download</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Restore from file</span><span class="st-hint">A backup file from here. Older Production or Tasks backups work too.</span></div><button type="button" class="st-btn" id="csBackupRestore">Restore</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Daily restore points</span><span class="st-hint">Taken automatically · kept for 7 days</span></div><span class="st-badge on">On</span><button type="button" class="st-btn" data-cwact="openRestoreBtn">Restore from a date</button></div><div class="st-row cs-pw-only"><div class="st-row-text"><span class="st-label">Import sheds Excel</span><span class="st-hint">Placements and birds from a spreadsheet</span></div><button type="button" class="st-btn" data-pwact="import">Import</button></div></div>
+      <span class="cs2-seck">Reports</span>
+      <div class="st-card"><div class="st-row cs-pw-only"><div class="st-row-text"><span class="st-label">Batch report</span><span class="st-hint"><span id="csBatchName">The open batch</span>: feed, weights and the result, as a PDF</span></div><button type="button" class="st-btn" data-pwact="report">Create</button></div><div class="st-row"><div class="st-row-text"><span class="st-label">Tasks report</span><span class="st-hint">PDF report, printable checklist or CSV</span></div><button type="button" class="st-btn" data-cwact="settingsExportBtn">Export</button></div></div>
+      <input type="file" id="csBackupFile" accept="application/json,.json" hidden>
     </section>
     <section class="st-section" id="stWorkers">
       <span class="cs2-seck">Access</span>
@@ -4385,9 +4390,11 @@
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
   const FONT_SIZE_MAP = { small:'12.5px', medium:'13.5px', large:'15.5px' };
   const PW_THEME_KEY = 'prodwise_vm_theme_v1';
+  window.addEventListener('storage', (e)=>{ if(e.key === 'prodwise_text_size_v1' && /^(small|medium|large)$/.test(e.newValue || '') && settings.fontSize !== e.newValue){ settings.fontSize = e.newValue; applySettings(); persist(); } });
   window.addEventListener('storage', (e)=>{ if(e.key === PW_THEME_KEY && (e.newValue === 'dark' || e.newValue === 'light') && settings.theme !== e.newValue){ settings.theme = e.newValue; applySettings(); persist(); } });
   // the theme lives in one place for both sections: ProdWise's key wins over the copy in the farm data
-  function adoptPwTheme(){ try{ const t = localStorage.getItem(PW_THEME_KEY); if(t === 'dark' || t === 'light') settings.theme = t; }catch(e){} }
+  const PW_TEXT_KEY = 'prodwise_text_size_v1';
+  function adoptPwTheme(){ try{ const t = localStorage.getItem(PW_THEME_KEY); if(t === 'dark' || t === 'light') settings.theme = t; const z = localStorage.getItem(PW_TEXT_KEY); if(z === 'small' || z === 'medium' || z === 'large') settings.fontSize = z; }catch(e){} }
   const DEFAULT_SETTINGS = { fontSize:'medium', theme:'light', showIcons:true, batchBadgeStyle:'pill', defaultView:'auto', calendarDensity:'month', showWeather:true, weatherUnit:'celsius', weatherLocation:null };
   const DEFAULT_EVENT_COLOR = '#6E55D3';   // audits: one purple (no custom colours)
   const ICON_RULES = [
@@ -4631,6 +4638,8 @@
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
     const themeChanging = document.body.classList.contains('theme-dark') !== (settings.theme === 'dark');
+    // one text size for Production and Tasks, the same way
+    try{ const fz = FONT_SIZE_MAP[settings.fontSize] ? settings.fontSize : 'medium'; if(localStorage.getItem(PW_TEXT_KEY) !== fz) localStorage.setItem(PW_TEXT_KEY, fz); }catch(e){}
     // one theme for Production and Tasks: ProdWise reads the same key (and hears the change)
     try{ const t = settings.theme === 'dark' ? 'dark' : 'light'; if(localStorage.getItem(PW_THEME_KEY) !== t) localStorage.setItem(PW_THEME_KEY, t); }catch(e){}
     if(themeChanging && document.body.dataset.themeReady){
@@ -4850,6 +4859,8 @@
     if(cache){
       try{
         applyMergedState(normalizeSnapshot(cache.data));
+        // Opening view from the copy on this device too (offline, or before the cloud answers)
+        if(!openingViewApplied){ viewMode = openingViewMode(); openingViewApplied = true; syncViewButtons(); }
         lastSyncedSnapshot = cache.base ? normalizeSnapshot(cache.base) : null;
         if(cache.pending) pushPending = true;
         renderAll();
@@ -12712,7 +12723,7 @@
   // One Settings for Production and Tasks (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): the same menu in both
   // sections. Tasks shows its own pages here; Production's pages (data-owner="pw") open in Production.
   const CS_PAGES = {
-    appearance:{ g:'Tasks', t:'Appearance', d:'How the calendar, list and board look on this device.', ids:['stAppearance'], k:'theme dark light text size batch labels icons reset' },
+    appearance:{ g:'App', t:'Display', d:'Theme, text size and units on this device. Production and Tasks use the same.', ids:['stAppearance'], k:'display appearance theme dark light text size font units kg tonnes feed batch labels icons reset' },
     calendar:{ g:'Tasks', t:'Calendar', d:'What opens first.', ids:['stCalendar'], k:'opening view month day agenda board' },
     weather:{ g:'Tasks', t:'Weather', d:'The forecast on the calendar, board and list.', ids:['stWeather'], k:'weather location units celsius fahrenheit forecast' },
     workers:{ g:'Crew', t:'Workers', d:'Who uses the Crew app on your farm.', ids:['stWorkers'], k:'workers crew farm password joined remove invite manager' },
@@ -12726,7 +12737,7 @@
     feed:{ g:'Production', t:'Feed & silos', k:'feed silos deliveries safety stock' }, weights:{ g:'Production', t:'Weights & result', k:'target weight plant growth standard ross free range' },
     pickups:{ g:'Production', t:'Pickup planning', k:'pickups thinning density no-pickup days' }, pairs:{ g:'Production', t:'Per pair & shed', k:'scale correction mortality morts shed' },
     sync:{ g:'Farm', t:'Sync & cloud', k:'sync cloud folder disconnect switch farm' }, batches:{ g:'Farm', t:'Batches & history', k:'farm history past batch results' },
-    display:{ g:'App', t:'Display & units', k:'units tonnes kg' }, about:{ g:'App', t:'About', k:'version credits' }
+    about:{ g:'App', t:'About', k:'version credits' }
   };
   const csIsPw = page => !!CS_PW_PAGES[page] && (CW_EMBED || !CS_PAGES[page]);
   function csOpenPw(page){
@@ -12748,6 +12759,7 @@
     $('#csCrumb').textContent = p.g; $('#csTitle').textContent = p.t; $('#csSub').textContent = p.d;
     document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const on = b.dataset.page === page; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
     if(fromList) drawer.classList.remove('cs2-list');
+    if(page === 'appearance' && CW_EMBED) csRenderUnit();
     if(page === 'alerts') csRenderAlerts();
     if(page === 'backup') csRenderBackup();
     $('#settingsBody').scrollTop = 0;
@@ -12772,7 +12784,7 @@
   }
   // Alerts: Production's two (saved in Production) and Tasks' own two
   function csRenderAlerts(){
-    try{ if(CW_EMBED && parent.pwGetNotif){ $('#csNotifFeed').checked = parent.pwGetNotif('feedBalance'); $('#csNotifShed').checked = parent.pwGetNotif('shedPerformance'); } }catch(e){}
+    try{ if(CW_EMBED && parent.pwGetNotif){ $('#csNotifFeed').checked = parent.pwGetNotif('feedBalance'); $('#csNotifShed').checked = parent.pwGetNotif('shedPerformance'); $('#csNotifEmpty').checked = parent.pwGetNotif('emptyShed'); } }catch(e){}
     $('#csNotifOverdue').checked = settings.notifOverdue !== false;
     $('#csNotifReports').checked = settings.notifReports !== false;
   }
@@ -12784,12 +12796,52 @@
   // opening Settings: the last page on a computer, the list of pages on a phone
   window.__csOnOpen = ()=>{ document.body.classList.add('settings-open'); try{ arSync(); }catch(e){} csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
   $('#settingsTabs').addEventListener('click', (e)=>{ const b = e.target.closest('button[data-page]'); if(b) csShow(b.dataset.page, true); });
-  [['csNotifFeed','feedBalance'],['csNotifShed','shedPerformance']].forEach(([id,k])=> $('#'+id).addEventListener('change', (e)=>{ try{ parent.pwSetNotif(k, e.target.checked); }catch(err){} }));
+  [['csNotifFeed','feedBalance'],['csNotifShed','shedPerformance'],['csNotifEmpty','emptyShed']].forEach(([id,k])=> $('#'+id).addEventListener('change', (e)=>{ try{ parent.pwSetNotif(k, e.target.checked); }catch(err){} }));
   $('#csNotifOverdue').addEventListener('change', (e)=>{ settings.notifOverdue = e.target.checked; persist(); updateOverdueBadge(); });
   $('#csNotifReports').addEventListener('change', (e)=>{ settings.notifReports = e.target.checked; persist(); });
   $('#csOpenNotif2').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
   $('#csResetDisplay').addEventListener('click', ()=> $('#resetSettingsBtn').click());
+  function csRenderUnit(){ let u = 'kg'; try{ u = parent.feedUnit ? parent.feedUnit() : 'kg'; }catch(e){} document.querySelectorAll('[data-cs-unit]').forEach(b=>{ const on = b.dataset.csUnit === u; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); }
+  document.querySelectorAll('[data-cs-unit]').forEach(b=> b.addEventListener('click', ()=>{ try{ parent.setFeedUnit(b.dataset.csUnit); if(parent.pwSection === 'production' && parent.render) parent.render(); }catch(e){} csRenderUnit(); showToast('Feed amounts in ' + (b.dataset.csUnit === 't' ? 'tonnes' : 'kg') + '.'); }));
   // Backup & reports: the rows press the Tasks buttons that were already there, or Production's
+  // One backup (2026-10-19): Production's open batch + everything in Tasks, in one file
+  function csTasksBackupData(){ return { tasks, history, batches, events, settings, frequentTemplates, maintenance, reports }; }
+  $('#csBackupDl').addEventListener('click', ()=>{
+    let prod = null; try{ prod = CW_EMBED && parent.pwBackupPayload ? parent.pwBackupPayload() : null; }catch(e){}
+    const file = { app:'ProdWise backup', version:1, farm: ghFarmName || '', exportedAt: new Date().toISOString(), production: prod, tasks: csTasksBackupData() };
+    const blob = new Blob([JSON.stringify(file, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = `${(ghFarmName || 'farm').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-backup-${dateKey(new Date())}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    showToast(prod ? 'Backup downloaded — Production and Tasks in one file.' : 'Backup downloaded.');
+  });
+  $('#csBackupRestore').addEventListener('click', ()=> $('#csBackupFile').click());
+  function csApplyTasksData(parsed){
+    tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || [];
+    reports = parsed.reports || []; settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {}); adoptPwTheme();
+    frequentTemplates = parsed.frequentTemplates || []; maintenance = parsed.maintenance || [];
+    applySettings(); updateBatchColorDefault(); updateEventColorDefault(); persist(); scheduleReportsPush(); renderAll();
+  }
+  $('#csBackupFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; e.target.value = ''; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev)=>{
+      let j; try{ j = JSON.parse(ev.target.result); }catch(err){ showToast('That file is not a backup.', true); return; }
+      const prod = j && j.app === 'ProdWise backup' ? j.production : (j && j.farmData && Array.isArray(j.farmData.sheds) ? j : null);
+      const tk = j && j.app === 'ProdWise backup' ? j.tasks : (j && Array.isArray(j.tasks) ? j : null);
+      if(!prod && !tk){ showToast('That file is not a ProdWise backup.', true); return; }
+      const what = [prod ? 'the open batch in Production' : '', tk ? 'everything in Tasks' : ''].filter(Boolean).join(' and ');
+      if(!confirm(`Restore ${what} from ${file.name}?\n\nThis replaces what is there now. Production keeps a copy in History first.`)) return;
+      let done = [];
+      if(prod){
+        let ok = false; try{ ok = CW_EMBED && parent.pwRestorePayload ? await parent.pwRestorePayload(prod, file.name) : false; }catch(err){}
+        if(ok) done.push('Production'); else if(!CW_EMBED) showToast('Open Tasks inside ProdWise to restore the Production part.', true);
+      }
+      if(tk){ try{ csApplyTasksData(tk); done.push('Tasks'); }catch(err){ showToast('Could not restore the Tasks part.', true); } }
+      if(done.length) showToast('Restored: ' + done.join(' and ') + '.');
+    };
+    reader.readAsText(file);
+  });
   document.querySelectorAll('#stBackup [data-cwact]').forEach(b=> b.addEventListener('click', ()=> document.getElementById(b.dataset.cwact).click()));
   document.querySelectorAll('#stBackup [data-pwact]').forEach(b=> b.addEventListener('click', ()=>{
     try{

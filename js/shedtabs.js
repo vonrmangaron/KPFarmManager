@@ -37,7 +37,7 @@ function pickupsTabCardHtml(shed,g){
     return `<div class="pk2-row plan">${cb}${mk}<span class="pk2-w" data-pp-edit="${id}" title="Edit this planned pickup"><b>${when}</b><span>${pp.isFinal?'Final · clean-out (planned)':'Planned'}</span></span><span class="pk2-n">${(Number(pp.birds)||0).toLocaleString('en-US')}${pp.isFinal?'<small>all left</small>':''}</span><span class="pk2-acts"><button type="button" class="pk2-ic" data-pp-edit="${id}" title="Edit this planned pickup" aria-label="Edit planned pickup">✎</button><button type="button" class="pk2-ic del" data-pp-delete="${id}" title="Remove this planned pickup" aria-label="Remove planned pickup">✕</button></span></div>`;
   }).join('');
   const hasFinal=real.some(p=>p.isFinal);
-  const canAdd=real.length<MAX_PICKUPS_PER_SHED;
+  const canAdd=real.length<MAX_LOGGED_PICKUPS_PER_SHED;
   const ds=getShedDensitySettings(shed),useGlobal=ds.useGlobal!==false,targetN=ds.targetPickups;
   const targetInputHtml=`<div class="pp-target-row"><span class="pp-target-label">Target pickups for this shed</span><input type="number" class="pp-target-input" min="${MIN_PICKUPS_PER_SHED}" max="${MAX_PICKUPS_PER_SHED}" step="1" value="${targetN}" data-shed-target-pickups="${shed.id}" title="Total pickups including the final cleanout" /><span class="pp-target-hint">${MIN_PICKUPS_PER_SHED} to ${MAX_PICKUPS_PER_SHED}, including the final clean-out</span></div>`;
   const densityHtml=`<div class="shed-density-override"><label><input type="checkbox" data-density-use-global="${shed.id}" ${useGlobal?'checked':''} /> Use the farm's density rules</label>${!useGlobal?`<span class="ovr-inputs"><span>Trigger</span><input type="number" min="20" max="45" step="0.5" value="${ds.triggerDensity}" data-density-override="${shed.id}|triggerDensity" /><span>Target</span><input type="number" min="15" max="35" step="0.5" value="${ds.targetDensity}" data-density-override="${shed.id}|targetDensity" /><span>Max</span><input type="number" min="28" max="45" step="0.5" value="${ds.maxDensity}" data-density-override="${shed.id}|maxDensity" /></span>`:''}</div>`;
@@ -47,9 +47,9 @@ function pickupsTabCardHtml(shed,g){
     <div class="pk2-head"><b>Shed ${shed.id}</b>${pk2Chip(shed)}</div>
     ${bulkBar?`<div class="pk2-bulk">${bulkBar}</div>`:''}
     ${items.length?`<div class="pk2-tl">${rows}</div>`:`<p class="pk2-empty">No pickups yet.${hasFinal?'':' Auto-fill plans them from your density rules.'}</p>`}
-    <div class="pk2-foot"><span class="pk2-live">${live.toLocaleString('en-US')} birds in the shed now</span></div>
+    <div class="pk2-foot"><span class="pk2-live">${live.toLocaleString('en-US')} birds in the shed now</span>${shedDensityNowHtml(shed,today,live,'pk2-dens')}</div>
     <div class="pk2-btns">
-      <button type="button" class="mgr-btn primary" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'} title="${canAdd?'Log a pickup from the kill sheet':`Maximum ${MAX_PICKUPS_PER_SHED} pickups reached`}">Log a pickup</button>
+      <button type="button" class="mgr-btn primary" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'} title="${canAdd?'Log a pickup from the kill sheet':`Maximum ${MAX_LOGGED_PICKUPS_PER_SHED} pickups reached`}">Log a pickup</button>
       ${hasFinal?'':`<details class="pk2-menu"><summary class="mgr-btn">Re-plan ▾</summary><div class="pk2-menu-list">
         <button type="button" data-pp-autofill="${shed.id}" title="Plan the rest of the pickups from the density rules">Auto-fill the plan</button>
         <button type="button" data-pp-add="${shed.id}">Add a planned pickup</button>
@@ -96,7 +96,8 @@ function growthTabCardHtml(shed,g){
   if(!shed.placementDate)return `<article class="pred-shed-card gr2-card" id="pred-shed-card-${shed.id}">${head}<p class="pk2-empty">Not placed yet.</p></article>`;
   const age=ageInDays(shed,today);
   let now=null;try{const f=forecastWeightModeAware(shed,today);now=f&&f.kg!=null?f.kg:null;}catch(e){}
-  let out=null;if(shed.cleanoutDate){try{const f=forecastWeightModeAware(shed,dateOnly(shed.cleanoutDate));out=f&&f.kg!=null?f.kg:null;}catch(e){}}
+  // clean-out weight: the same last-pickup weight as the Clean-out card (includes Last pickup heavier)
+  let out=null;if(shed.cleanoutDate){try{const co=shedCleanoutInfo(shed,today);out=co&&co.finalKg>0?co.finalKg:null;}catch(e){}}
   const status=`<div class="gr2-stat"><b>${now!=null?now.toFixed(2)+' kg':'—'}</b><span>at day ${age} · standard ${stdWeightKg(age).toFixed(2)} kg${out!=null?`<br>Clean-out weight about <strong>${out.toFixed(2)} kg</strong> on ${escapeHtml(fmtShortNoYear(shed.cleanoutDate))}`:''}</span></div>`;
   const tc=shed.targetCurve||{},bias=shedBiasFactor(shed);
   const boxes=TARGET_DAYS.map(d=>{
