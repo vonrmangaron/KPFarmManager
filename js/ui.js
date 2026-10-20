@@ -2710,7 +2710,7 @@ function pkVsStdHtml(age,avg){
 }
 let pkView=(()=>{try{return localStorage.getItem('pw-pk-view')==='cal'?'cal':'list';}catch(e){return 'list';}})(),pkMonth=null,pkAddDate=null;
 function pkViewBarHtml(){
-  return `<div class="pk-viewbar"><span class="pk-seg" role="group" aria-label="View"><button type="button" class="${pkView==='list'?'on':''}" data-pk-view="list" aria-pressed="${pkView==='list'}">List</button><button type="button" class="${pkView==='cal'?'on':''}" data-pk-view="cal" aria-pressed="${pkView==='cal'}">Calendar</button></span></div>`;
+  return `<div class="pk-viewbar"><span class="pk-seg" role="group" aria-label="View"><button type="button" class="${pkView==='list'?'on':''}" data-pk-view="list" aria-pressed="${pkView==='list'}">List</button><button type="button" class="${pkView==='cal'?'on':''}" data-pk-view="cal" aria-pressed="${pkView==='cal'}">Calendar</button></span><button type="button" class="btn-load-sum pk-sum-btn" data-pk-summary title="Average live weight and total weight per shed and for the farm, from the plant's kill sheets — ready to copy">Generate summary</button></div>`;
 }
 function pkCalendarHtml(){
   const today=dateOnly(new Date());
@@ -2798,3 +2798,65 @@ function farmKeyStatusRow(){
   return `<div class="settings-status-row"><span class="lbl">Manager sign-in</span><span class="val">${signed?'Signed in':'<button type="button" class="settings-btn settings-btn-sm settings-btn-primary" data-farmkey-signin>Sign in</button>'}</span></div>`;
 }
 document.addEventListener('click',e=>{if(e.target.closest('[data-farmkey-signin]'))farmKeyPrompt(null);});
+
+/* ---------- Pickup summary (2026-10-20, mockup CyYZtqjDRdTKHhN8EdNqvP): plant weights only ----------
+   Only pickups with the plant's kill-sheet weight count (no estimates, no "weight to come"):
+   per shed the latest weighed pickup and everything weighed so far; the farm adds all 8 sheds.
+   Averages are total weight ÷ birds, never an average of averages. */
+function pkWeighed(p){return p&&p.date&&!p.weightEstimated&&Number(p.birds)>0&&Number(p.totalWeightKg)>0;}
+function pickupSummaryData(){
+  const today=dateOnly(new Date());
+  const rows=(farmData&&farmData.sheds||[]).map(sh=>{
+    const all=(sh.pickups||[]).filter(p=>p.date).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    const w=all.filter(pkWeighed),last=w[w.length-1]||null;
+    const birds=w.reduce((s,p)=>s+Number(p.birds),0),kg=w.reduce((s,p)=>s+Number(p.totalWeightKg),0);
+    const waiting=all.filter(p=>!pkWeighed(p)&&dateOnly(p.date)<=today).length;
+    return {id:sh.id,last,lastAge:last?pickupAge(sh,last):null,lastBirds:last?Number(last.birds):0,lastKg:last?Number(last.totalWeightKg):0,n:w.length,birds,kg,waiting};
+  });
+  const sum=(k)=>rows.reduce((s,r)=>s+r[k],0);
+  return {rows,latest:{birds:sum('lastBirds'),kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length},todate:{birds:sum('birds'),kg:sum('kg'),n:sum('n')},waiting:sum('waiting')};
+}
+function pkSumAvg(kg,b){return b>0?kg/b:null;}
+function pkSumFmtKg(v){return Math.round(v).toLocaleString('en-US')+' kg';}
+function pkSumFmtAvg(v){return v!=null?v.toFixed(3)+' kg':'—';}
+function pickupSummaryText(){
+  const d=pickupSummaryData(),batch=(farmData&&farmData.batchNumber)?`Batch ${farmData.batchNumber} · `:'';
+  const L=[`Pickup summary · ${batch}${fmtShort(new Date())}`,'Plant weights (kill sheets) only',''];
+  d.rows.forEach(r=>{L.push(r.last?`Shed ${r.id}: latest ${fmtShortNoYear(r.last.date)} · ${r.lastBirds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))} · ${pkSumFmtKg(r.lastKg)} | to date ${r.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))} · ${pkSumFmtKg(r.kg)}`:`Shed ${r.id}: no kill-sheet weights yet`);});
+  L.push('');
+  L.push(`Farm latest pickups (${d.latest.sheds} sheds): ${d.latest.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))} · ${pkSumFmtKg(d.latest.kg)}`);
+  L.push(`Farm batch to date (8 sheds): ${d.todate.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))} · ${pkSumFmtKg(d.todate.kg)}`);
+  if(d.waiting)L.push(`${d.waiting} pickup${d.waiting===1?'':'s'} still waiting for the plant's weights (not included)`);
+  return L.join('\n');
+}
+function openPickupSummary(){
+  const m=document.getElementById('pkSumModal'),body=document.getElementById('pkSumBody');if(!m||!body||!farmData)return;
+  const d=pickupSummaryData(),batch=(farmData.batchNumber)?`Batch ${escapeHtml(String(farmData.batchNumber))} · `:'';
+  const n=v=>v.toLocaleString('en-US');
+  const rows=d.rows.map(r=>r.last
+    ?`<tr><td><b>Shed ${r.id}</b></td><td class="pks-when">${escapeHtml(fmtShortNoYear(r.last.date))}${r.lastAge!=null?` · day ${r.lastAge}`:''}${r.last.isFinal?' · final':''}<span class="pks-sub">${n(r.lastBirds)} birds</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</td><td class="num">${pkSumFmtKg(r.lastKg)}</td><td class="num">${n(r.birds)}<span class="pks-sub">${r.n} pickup${r.n===1?'':'s'}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))}</td><td class="num">${pkSumFmtKg(r.kg)}</td></tr>`
+    :`<tr class="pks-none"><td><b>Shed ${r.id}</b></td><td colspan="6">No kill-sheet weights yet${r.waiting?` · ${r.waiting} waiting`:''}</td></tr>`).join('');
+  const cards=d.rows.map(r=>r.last
+    ?`<div class="pks-card"><b>Shed ${r.id} · ${escapeHtml(fmtShortNoYear(r.last.date))}</b><span class="r"><b>${pkSumFmtKg(r.lastKg)}</b></span><span class="m">${n(r.lastBirds)} birds · to date ${pkSumFmtKg(r.kg)}</span><span class="r">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</span></div>`
+    :`<div class="pks-card none"><b>Shed ${r.id}</b><span class="r m">no weights yet</span></div>`).join('');
+  body.innerHTML=`<div class="ls-sub">${batch}as of ${fmtShort(new Date())} · plant weights (kill sheets) only</div>
+    <section class="ls-sec pks-sec"><div class="ls-h"><span class="ls-dot"></span><b>Pickups</b><span class="ls-n">latest + batch to date</span></div>
+      <div class="pks-tw"><table class="ls-table pks-table"><thead><tr><th>Shed</th><th>Latest pickup</th><th class="num">Avg live weight</th><th class="num">Total weight</th><th class="num">To date · birds</th><th class="num">To date · avg</th><th class="num">To date · total</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td>Farm · 8 sheds</td><td class="pks-when">latest pickups<span class="pks-sub">${n(d.latest.birds)} birds · ${d.latest.sheds} shed${d.latest.sheds===1?'':'s'}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</td><td class="num">${pkSumFmtKg(d.latest.kg)}</td><td class="num">${n(d.todate.birds)}<span class="pks-sub">${d.todate.n} pickups</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</td><td class="num">${pkSumFmtKg(d.todate.kg)}</td></tr></tfoot></table></div>
+      <div class="pks-cards">${cards}<div class="pks-card tot"><b>Farm · latest</b><span class="r"><b>${pkSumFmtKg(d.latest.kg)}</b></span><span class="m">${n(d.latest.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</span></div><div class="pks-card tot"><b>Farm · batch to date</b><span class="r"><b>${pkSumFmtKg(d.todate.kg)}</b></span><span class="m">${n(d.todate.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</span></div></div>
+      <p class="pks-note">Only pickups with the plant's kill-sheet weight are counted.${d.waiting?` <b>${d.waiting} pickup${d.waiting===1?' is':'s are'} still waiting for weights</b> and not included.`:''} Averages are total weight ÷ birds.</p>
+    </section>
+    <div class="ls-actions"><button type="button" class="ls-copy" id="pkSumCopy">Copy summary</button><button type="button" class="ls-close" id="pkSumDone">Close</button></div>`;
+  document.getElementById('pkSumCopy').addEventListener('click',()=>{const txt=pickupSummaryText();const done=()=>showToast('Summary copied — paste it into a message.');
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));else fallbackCopy(txt,done);});
+  document.getElementById('pkSumDone').addEventListener('click',closePickupSummary);
+  m.classList.add('open');m.setAttribute('aria-hidden','false');
+}
+function closePickupSummary(){const m=document.getElementById('pkSumModal');if(m){m.classList.remove('open');m.setAttribute('aria-hidden','true');}}
+document.addEventListener('click',e=>{
+  if(!e.target.closest)return;
+  if(e.target.closest('[data-pk-summary]')){openPickupSummary();return;}
+  if(e.target.closest('#pkSumClose')||e.target.id==='pkSumModal')closePickupSummary();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('pkSumModal')?.classList.contains('open')){e.stopImmediatePropagation();closePickupSummary();}},true);
