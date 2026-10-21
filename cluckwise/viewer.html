@@ -961,6 +961,8 @@
   body.theme-dark{ --page-glow:linear-gradient(180deg,#2A2416 0%,#1A1C22 40%,#121A26 65%,#16241C 100%); }
   body::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background:var(--page-glow); }
   .join-overlay{ background:var(--page-glow); }
+  .prep-lab{ display:inline-flex; align-items:center; gap:4px; font:800 10.5px Inter,system-ui,sans-serif; padding:2px 8px; border-radius:999px; background:#F0A21A; color:#16191B; white-space:nowrap; margin:3px 0 0; }
+  .task-body .prep-lab{ align-self:flex-start; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -3121,7 +3123,7 @@
     const isHighPriority = tk.priority === 'high' && tk.status!=='done';
     card.className='task-card'+(tk.status==='done'?' done':'')+(isHighPriority?' high-priority':'')+(tk.notes?' has-note':'')+(tk.notes&&openNotes.has(tk.id)?' note-open':'');
     card.dataset.id = tk.id;
-    card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${tk.notes ? `<span class="note-tag"><span aria-hidden="true">📝</span>${escapeHtml(t('noteLbl'))}<span class="nt-car" aria-hidden="true">▾</span></span>` : ''}${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
+    card.innerHTML = `<div class="task-card-row">${isHighPriority ? `<span class="priority-flag" title="${escapeHtml(t('highPriority'))}">🔥</span>` : ''}<span class="task-icon"></span><span class="task-body"><span class="task-name"></span>${tk.prep ? `<span class="prep-lab" title="Part of the Shed ${escapeHtml(String(tk.prep.shed))} preparation checklist">🧹 Shed ${escapeHtml(String(tk.prep.shed))} · Preparation</span>` : ''}${tk.notes ? `<span class="note-tag"><span aria-hidden="true">📝</span>${escapeHtml(t('noteLbl'))}<span class="nt-car" aria-hidden="true">▾</span></span>` : ''}${buildAssigneeNamesHtml(tk.assignees)}</span><button class="task-status-btn ${tk.status==='done'?'done':'open'}" type="button" title="${tk.status==='done'?'Reopen':'Mark done'}" aria-label="${tk.status==='done'?'Reopen task':'Mark task done'}">${tk.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</button></div>${tk.notes ? `<div class="task-note-callout"><span class="tnc-icon">📝</span><span class="tnc-text"></span></div>` : ''}`;
     renderTaskIcon(card.querySelector('.task-icon'), tk.name, tk.icon);
     // A task made from a report carries its photo (tap to see it full size)
     const tRep = reportForTask(tk), tPh = tRep ? reportPhotos(tRep) : [];
