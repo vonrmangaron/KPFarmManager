@@ -3565,6 +3565,55 @@
   .ar-badge.prep-badge{ background:#F0A21A; color:#16191B; }
   .notif-issue.prep{ border-color:#EFC77C; background:#FFF4DE; }
   body.theme-dark .notif-issue.prep{ background:rgba(240,162,26,.12); }
+  /* Shed preparation banner at the top of the Planner (2026-10-21: the bottom pill was easy to miss) */
+  .prep-banner{ display:flex; align-items:center; gap:14px; margin:12px 16px 4px; padding:12px 14px 12px 16px; border-radius:14px; background:linear-gradient(100deg,#FFE3A6 0%,#FFF1D2 60%,#FFF7E6 100%); border:1.5px solid #F0A21A; box-shadow:0 6px 18px rgba(240,162,26,.22); cursor:pointer; flex-shrink:0; position:relative; overflow:hidden; }
+  .prep-banner[hidden]{ display:none !important; }
+  .prep-banner::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:#F0A21A; }
+  .pb-ic{ width:44px; height:44px; border-radius:12px; background:#16191B; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; animation:pbPulse 2.4s ease-in-out infinite; }
+  @keyframes pbPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(240,162,26,.55); } 50%{ box-shadow:0 0 0 8px rgba(240,162,26,0); } }
+  @media (prefers-reduced-motion:reduce){ .pb-ic{ animation:none; } }
+  .pb-tx{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .pb-tx b{ font:800 16px Sora,sans-serif; color:#16191B; }
+  .pb-tx span{ font:600 13px Inter,system-ui,sans-serif; color:#5A3A00; }
+  .pb-big{ flex:1; min-width:120px; max-width:360px; height:10px; border-radius:99px; background:rgba(22,25,27,.12); overflow:hidden; margin-left:auto; }
+  .pb-big i{ display:block; height:100%; background:#16191B; border-radius:99px; }
+  .pb-sheds{ display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; }
+  .pb-shed{ all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:10px; background:rgba(255,255,255,.7); border:1px solid #EFC77C; font:600 12.5px Inter,system-ui,sans-serif; color:#16191B; }
+  .pb-shed b{ font-weight:800; } .pb-shed em{ font-style:normal; font-weight:800; color:#8A5300; }
+  .pb-mini{ width:46px; height:6px; border-radius:99px; background:rgba(22,25,27,.12); overflow:hidden; } .pb-mini i{ display:block; height:100%; background:#F0A21A; }
+  .pb-go{ all:unset; cursor:pointer; flex-shrink:0; height:40px; padding:0 16px; border-radius:10px; background:#16191B; color:#fff; font:800 13.5px Inter,system-ui,sans-serif; display:inline-flex; align-items:center; white-space:nowrap; }
+  .pb-go:hover{ background:#2B3236; } .pb-go:focus-visible, .pb-shed:focus-visible{ outline:2px solid #16191B; outline-offset:2px; }
+  body.theme-dark .prep-banner{ background:linear-gradient(100deg,rgba(240,162,26,.32),rgba(240,162,26,.14)); }
+  body.theme-dark .pb-tx b{ color:#FFF4DE; } body.theme-dark .pb-tx span{ color:#F2C063; }
+  body.theme-dark .pb-ic, body.theme-dark .pb-go{ background:#F0A21A; color:#16191B; }
+  body.theme-dark .pb-big{ background:rgba(255,255,255,.15); } body.theme-dark .pb-big i{ background:#F0A21A; }
+  body.theme-dark .pb-shed{ background:rgba(0,0,0,.25); color:#FFF4DE; border-color:rgba(240,162,26,.5); } body.theme-dark .pb-shed em{ color:#F2C063; }
+  @media (max-width:760px){
+    .prep-banner{ margin:8px 10px 2px; padding:10px 10px 10px 14px; gap:10px; flex-wrap:wrap; }
+    .pb-ic{ width:36px; height:36px; font-size:18px; border-radius:10px; }
+    .pb-tx{ flex:1; } .pb-tx b{ font-size:14.5px; }
+    .pb-big{ order:5; flex:1 1 100%; max-width:none; margin:0; height:8px; }
+    .pb-sheds{ order:5; flex:1 1 100%; margin:0; }
+    .pb-go{ height:36px; padding:0 12px; font-size:12.5px; }
+  }
+  .prep-secname{ cursor:text; border-radius:5px; padding:1px 3px; margin:-1px -3px; }
+  .prep-secname:hover, .prep-secname:focus-visible{ background:rgba(0,0,0,.06); outline:none; text-decoration:underline dotted; }
+  .prep-rename{ flex:1; min-width:0; font:800 11px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--ink); background:var(--surface); border:1.5px solid #F0A21A; border-radius:6px; padding:3px 6px; outline:none; }
+  .prep-itname{ cursor:text; border-radius:5px; padding:0 3px; margin:0 -3px; }
+  .prep-itname:hover, .prep-itname:focus-visible{ background:rgba(0,0,0,.05); outline:none; }
+  .prep-rename.item{ font:600 13.5px Inter,system-ui,sans-serif; letter-spacing:0; text-transform:none; width:100%; box-sizing:border-box; }
+  .prep-adding{ border-color:#F0A21A; border-style:dashed; }
+  .prep-adding .prep-cb{ border-style:dashed; }
+  .prep-addin{ flex:1; min-width:0; border:0; outline:0; background:transparent; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); padding:1px 0; }
+  .prep-in{ width:100%; box-sizing:border-box; height:42px; }
+  .prep-opt{ text-transform:none; letter-spacing:0; font-weight:600; }
+  .prep-sec-items{ display:flex; flex-direction:column; gap:6px; }
+  .prep-sec-row{ display:flex; align-items:center; gap:8px; }
+  .prep-sec-row .prep-in{ flex:1; }
+  .prep-rowx{ all:unset; cursor:pointer; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--muted); flex-shrink:0; }
+  .prep-rowx:hover{ background:var(--surface-soft); color:var(--danger); }
+  .prep-addrow{ all:unset; cursor:pointer; align-self:flex-start; font:700 13px Inter,system-ui,sans-serif; color:#2F6BD8; padding:4px 0; }
+  #prepSecModal .prep-lab{ cursor:default; align-self:flex-start; }
   /* the daily-task window and the standard list */
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
@@ -3931,6 +3980,19 @@
     <label class="prep-tm-k">Repeat</label>
     <div class="prep-chips" id="prepTaskRepeat"><button type="button" data-prep-rep="0" class="on">Once</button><button type="button" data-prep-rep="1">Every day until done</button></div>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
+  </div>
+</div>
+<div class="form-modal prep-modal" id="prepSecModal" role="dialog" aria-modal="true" aria-labelledby="prepSecTitle">
+  <div class="form-modal-head"><h2 id="prepSecTitle">Add a section</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <span class="prep-lab" id="prepSecLab"></span>
+    <label class="prep-tm-k" for="prepSecName">Section name</label>
+    <input type="text" id="prepSecName" class="st-input prep-in" maxlength="80" placeholder="e.g. Final checks" autocomplete="off">
+    <label class="prep-tm-k">Items <span class="prep-opt">(optional)</span></label>
+    <div class="prep-sec-items" id="prepSecItems"></div>
+    <button type="button" class="prep-addrow" id="prepSecAddRow">＋ Add another item</button>
+    <p class="prep-tm-hint">Press Enter in an item to add the next one. Leave the items empty and the section is ticked on its own.</p>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepSecSave">Add section</button></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepStdModal" role="dialog" aria-modal="true" aria-labelledby="prepStdTitle">
@@ -10917,7 +10979,7 @@
     const link = tk ? `<button type="button" class="prep-link" data-prep-open-task="${escapeHtmlAttr(tk.id)}" title="Open the task">📅 ${tk.status === 'done' ? 'Task done' : 'Task'} · ${escapeHtml(prepFmt(tk.date))}${(tk.assignees || []).length ? ' · ' + escapeHtml(tk.assignees.join(', ')) : ''}</button>` : '';
     const mk = !u.done && !tk && c.status !== 'ready' ? `<button type="button" class="prep-mk" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Make it a daily task for a worker">📅</button>` : '';
     const del = u.added && c.status !== 'ready' ? `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove">✕</button>` : '';
-    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}"><button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b>${escapeHtml(u.t)}</b>${u.added ? '<span class="prep-added">added</span>' : ''}${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
+    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}"><button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${u.added ? '<span class="prep-added">added</span>' : ''}${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
   }
   function prepColHtml(shed){
     const c = prepActiveFor(shed), run = prepShedRun(shed), today = dateKey(new Date());
@@ -10942,11 +11004,76 @@
       body = (c.sections || []).map(sec=>{
         const units = (sec.items || []).length ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
-        return `<div class="prep-sec${d === units.length ? ' all' : ''}"><div class="prep-sh"><span>${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}<button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
+        return `<div class="prep-sec${d === units.length ? ' all' : ''}"><div class="prep-sh"><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}<button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `<button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>
         <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
     }
     return `<section class="prep-col ${state}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b><span class="prep-st ${state}">${state === 'ready' ? 'Ready' : 'Preparing'}</span></div><span class="prep-cm">${escapeHtml(meta)}</span><div class="prep-bar"><i style="width:${pct}%"></i></div></div>${body}</section>`;
+  }
+  // Click a section name to rename it right there (Enter or click away saves, Esc cancels)
+  function prepStartRename(el){
+    const isItem = !!el.dataset.prepEdit;
+    const [cid, sid] = (el.dataset.prepRename || el.dataset.prepEdit).split('|'); const c = prepFind(cid); const sec = c && prepUnit(c, sid); if(!sec) return;
+    const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'prep-rename' + (isItem ? ' item' : ''); inp.value = sec.t; inp.maxLength = 100; inp.setAttribute('aria-label', isItem ? 'Item name' : 'Section name');
+    el.replaceWith(inp); inp.focus(); inp.select();
+    let done = false;
+    const finish = (save)=>{ if(done) return; done = true;
+      const v = inp.value.trim().replace(/\s+/g, ' ');
+      if(save && v && v !== sec.t){ addHistory('Shed preparation', `Shed ${c.shed}: "${sec.t}" renamed to "${v}"`); sec.t = v;
+        // a task made from this item carries the new name too
+        if(sec.taskId){ const tk = tasks.find(t=> t.id === sec.taskId); if(tk) tk.name = v; }
+        persist(); }
+      renderAll(); };
+    inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); finish(true); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); } });
+    inp.addEventListener('blur', ()=> finish(true));
+  }
+  // ＋ Add an item: type right there like ＋ Add task; Enter adds it and keeps the box open for the next one
+  let prepAddAgain = null;
+  function prepStartAdd(btn){
+    const [cid, sid] = btn.dataset.prepAdd.split('|'); const c = prepFind(cid); const sec = c && (c.sections || []).find(x=> x.id === sid); if(!sec) return;
+    const row = document.createElement('div'); row.className = 'prep-u prep-adding';
+    row.innerHTML = '<span class="prep-cb" aria-hidden="true"></span><input type="text" class="prep-addin" maxlength="100" placeholder="Type the item and press Enter" aria-label="New item">';
+    btn.replaceWith(row);
+    const inp = row.querySelector('input'); inp.focus();
+    let done = false;
+    const add = ()=>{ const v = inp.value.trim().replace(/\s+/g, ' '); if(!v) return false;
+      (sec.items = sec.items || []).push({ id: uid(), t: v, added: true }); delete sec.done; delete sec.taskId;
+      addHistory('Shed preparation', `Shed ${c.shed}: added "${v}" to ${sec.t}`); persist(); return true; };
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); if(add()){ done = true; prepAddAgain = cid + '|' + sid; renderAll(); } }
+      else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; renderAll(); }
+    });
+    inp.addEventListener('blur', ()=>{ if(done) return; done = true; add(); renderAll(); });
+  }
+  // the Add a section window: name and its items in one go
+  let prepSecFor = null;
+  function prepSecRow(val){
+    const row = document.createElement('div'); row.className = 'prep-sec-row';
+    row.innerHTML = '<span class="prep-cb" aria-hidden="true"></span><input type="text" class="st-input prep-in" maxlength="100" placeholder="Item"><button type="button" class="prep-rowx" aria-label="Remove this item" title="Remove">✕</button>';
+    row.querySelector('input').value = val || '';
+    row.querySelector('input').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const nx = row.nextElementSibling; if(nx) nx.querySelector('input').focus(); else { const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); } } });
+    row.querySelector('.prep-rowx').addEventListener('click', ()=>{ const list = $('#prepSecItems'); row.remove(); if(!list.children.length) list.appendChild(prepSecRow('')); });
+    return row;
+  }
+  function openPrepSecModal(cid){
+    const c = prepFind(cid); if(!c) return;
+    prepSecFor = cid;
+    $('#prepSecLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
+    $('#prepSecName').value = '';
+    const list = $('#prepSecItems'); list.innerHTML = ''; list.appendChild(prepSecRow('')); list.appendChild(prepSecRow(''));
+    $('#prepSecModal').classList.add('open');
+    setTimeout(()=> $('#prepSecName').focus(), 60);
+  }
+  function savePrepSec(){
+    const c = prepFind(prepSecFor); if(!c) return;
+    const name = $('#prepSecName').value.trim().replace(/\s+/g, ' ');
+    if(!name){ showToast('Give the section a name.', true); $('#prepSecName').focus(); return; }
+    const items = [...document.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
+    c.sections.push({ id: uid(), t: name, items: items.map(t=> ({ id: uid(), t, added: true })), added: true });
+    addHistory('Shed preparation', `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`);
+    $('#prepSecModal').classList.remove('open'); prepSecFor = null;
+    persist(); renderAll();
+    showToast(`Section "${name}" added${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}.`);
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
@@ -10960,6 +11087,7 @@
     box.innerHTML = `<div class="prep-legend"><span><i class="prep"></i>Preparing</span><span><i class="ready"></i>Ready for placement</span><span><i class="run"></i>Still running the current batch</span></div>
       <div class="prep-tabs">${tabs}</div>
       <div class="prep-board" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}">${sheds.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = box.querySelector(`[data-prep-add="${CSS.escape(k)}"]`); if(btn) prepStartAdd(btn); }
   }
   function prepToggleUnit(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
@@ -10995,18 +11123,23 @@
     showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
   }
   function renderPrepPill(){
-    let pill = $('#prepPill');
+    let bar = $('#prepBanner');
     const open = prepOpenList();
-    if(!pill){
-      pill = document.createElement('button'); pill.type = 'button'; pill.id = 'prepPill'; pill.className = 'prep-pill';
-      document.body.appendChild(pill);
-      pill.addEventListener('click', ()=>{ const o = prepOpenList(); openPrepBoard(o.length ? o[0].shed : null); });
+    if(!bar){
+      const wrap = $('#calendarWrap'); if(!wrap || !wrap.parentNode) return;
+      bar = document.createElement('div'); bar.id = 'prepBanner'; bar.className = 'prep-banner'; bar.setAttribute('role', 'status');
+      wrap.parentNode.insertBefore(bar, wrap);
+      bar.addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-go]'); const o = prepOpenList(); openPrepBoard(b ? b.dataset.prepGo : (o.length ? o[0].shed : null)); });
     }
-    pill.hidden = !open.length;
+    bar.hidden = !open.length;
     if(open.length){
-      const parts = open.map(c=>{ const p = prepProgress(c); return `Shed ${c.shed} ${p.done}/${p.total}`; });
-      pill.innerHTML = `<span class="pp-dot"></span><span class="pp-t">Shed prep · ${open.length === 1 ? 'Shed ' + escapeHtml(open[0].shed) : open.length + ' sheds'}</span><em>${escapeHtml(open.length === 1 ? parts[0].replace(/^Shed \S+ /, '') : parts.join(' · '))}</em>`;
-      pill.title = 'Shed Preparation Checklist: ' + parts.join(', ') + ' — open';
+      const one = open.length === 1, c0 = open[0], p0 = prepProgress(c0);
+      const pct = c=>{ const p = prepProgress(c); return p.total ? Math.round(p.done / p.total * 100) : 0; };
+      const chips = open.map(c=>{ const p = prepProgress(c); return `<button type="button" class="pb-shed" data-prep-go="${escapeHtmlAttr(c.shed)}"><b>Shed ${escapeHtml(c.shed)}</b><span class="pb-mini"><i style="width:${pct(c)}%"></i></span><em>${p.done}/${p.total}</em></button>`; }).join('');
+      bar.innerHTML = `<span class="pb-ic" aria-hidden="true">🧹</span>
+        <span class="pb-tx"><b>${one ? `Shed ${escapeHtml(c0.shed)} is being prepared` : `${open.length} sheds are being prepared`}</b><span>${one ? `${p0.done} of ${p0.total} done${c0.nextPlacement ? ' · next chicks ' + escapeHtml(prepFmt(c0.nextPlacement)) : ''}` : 'Shed Preparation Checklists'}</span></span>
+        ${one ? `<span class="pb-big"><i style="width:${pct(c0)}%"></i></span>` : `<span class="pb-sheds">${chips}</span>`}
+        <button type="button" class="pb-go" data-prep-go="${escapeHtmlAttr(c0.shed)}">Open checklist ›</button>`;
     }
     const rb = document.querySelector('.ar-btn[data-ar="routine"]');
     if(rb){ let bd = $('#arRoutineBadge'); if(!bd){ rb.insertAdjacentHTML('beforeend', '<span class="ar-badge prep-badge" id="arRoutineBadge" hidden></span>'); bd = $('#arRoutineBadge'); } bd.hidden = !open.length; bd.textContent = open.length; }
@@ -12750,22 +12883,20 @@
   function openPtypes(){ ptConfirm = null; renderPtypes(); $('#ptypesNewInput').value = ''; $('#ptypesModal').classList.add('open'); }
 
   // Shed preparation: page switch, board actions, the daily-task window, the standard list
+  $('#prepMain').addEventListener('keydown', (e)=>{ const b = e.target.closest && e.target.closest('[data-prep-rename],[data-prep-edit]'); if(b && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); prepStartRename(b); } });
   $('#prepSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-mlogmode]'); if(!b) return; mlogMode = b.dataset.mlogmode; renderMlog(); });
   $('#prepMain').addEventListener('click', (e)=>{
     const g = (sel)=> e.target.closest(sel);
     let b;
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
+    if((b = g('[data-prep-rename]'))){ prepStartRename(b); return; }
+    function c_ok(el){ const [cid] = el.dataset.prepEdit.split('|'); const c = prepFind(cid); return !!c && c.status !== 'ready'; }
     if((b = g('[data-prep-tick]'))){ const [cid, id] = b.dataset.prepTick.split('|'); prepToggleUnit(cid, id); return; }
     if((b = g('[data-prep-task]'))){ const [cid, id] = b.dataset.prepTask.split('|'); openPrepTaskModal(cid, id); return; }
     if((b = g('[data-prep-open-task]'))){ closeOverlays(); openTaskDetailModal(b.dataset.prepOpenTask); return; }
-    if((b = g('[data-prep-add]'))){ const [cid, sid] = b.dataset.prepAdd.split('|'); const c = prepFind(cid); const sec = c && (c.sections || []).find(x=> x.id === sid); if(!sec) return;
-      const name = (prompt(`New item for "${sec.t}" (Shed ${c.shed}):`) || '').trim(); if(!name) return;
-      if(!(sec.items || []).length && sec.done){ /* a ticked section gets items: keep its tick on the first item */ }
-      (sec.items = sec.items || []).push({ id: uid(), t: name, added: true }); delete sec.done; delete sec.taskId;
-      addHistory('Shed preparation', `Shed ${c.shed}: added "${name}"`); persist(); renderAll(); return; }
-    if((b = g('[data-prep-addsec]'))){ const c = prepFind(b.dataset.prepAddsec); if(!c) return;
-      const name = (prompt(`New section for Shed ${c.shed} (it can have items, or be ticked on its own):`) || '').trim(); if(!name) return;
-      c.sections.push({ id: uid(), t: name, items: [], added: true }); persist(); renderAll(); return; }
+    if((b = g('[data-prep-add]'))){ prepStartAdd(b); return; }
+    if((b = g('[data-prep-edit]')) && c_ok(b)){ prepStartRename(b); return; }
+    if((b = g('[data-prep-addsec]'))){ openPrepSecModal(b.dataset.prepAddsec); return; }
     if((b = g('[data-prep-del]'))){ const [cid, id] = b.dataset.prepDel.split('|'); const c = prepFind(cid); if(!c) return;
       c.sections = c.sections.filter(sec=> sec.id !== id); c.sections.forEach(sec=> sec.items = (sec.items || []).filter(it=> it.id !== id)); persist(); renderAll(); return; }
     if((b = g('[data-prep-start]'))){ const sh = b.dataset.prepStart; if(prepActiveFor(sh)) return;
@@ -12789,6 +12920,9 @@
   $('#prepTaskDate').addEventListener('change', prepSyncTaskModal);
   $('#prepTaskRepeat').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-rep]'); if(!b) return; prepTaskRep = b.dataset.prepRep === '1'; prepSyncTaskModal(); });
   $('#prepTaskSave').addEventListener('click', savePrepTask);
+  $('#prepSecSave').addEventListener('click', savePrepSec);
+  $('#prepSecAddRow').addEventListener('click', ()=>{ const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); });
+  $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = document.querySelector('#prepSecItems input'); if(f) f.focus(); } });
   $('#prepStdBtn').addEventListener('click', ()=>{ $('#prepStdText').value = prepTemplateText(); $('#prepStdModal').classList.add('open'); setTimeout(()=> $('#prepStdText').focus(), 60); });
   $('#prepStdReset').addEventListener('click', ()=>{ $('#prepStdText').value = PREP_DEFAULT_TEXT; });
   $('#prepStdSave').addEventListener('click', ()=>{
