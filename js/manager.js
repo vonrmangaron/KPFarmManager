@@ -111,11 +111,13 @@ function renderHomeView(){
   let rangeBar='';
   if(lkC!=null){const lo=Math.min(rc.lo,lkC)-0.03,hi=Math.max(rc.hi,lkC)+0.03,P=v=>((v-lo)/(hi-lo)*100).toFixed(1);
     rangeBar=`<div class="mk-range" title="Projected range ${rc.lo.toFixed(3)}–${rc.hi.toFixed(3)} · last batch ${lkC.toFixed(3)} (lower is better)"><i style="left:${P(rc.lo)}%;width:${Math.max(1.5,P(rc.hi)-P(rc.lo))}%"></i><b style="left:${P(lkC)}%"></b></div>`;}
+  let rt=null;try{rt=recordsToday();}catch(e){}
+  const rtLine=k=>rt&&rt.ok?`<button type="button" class="mk-today" data-tab="dashboard" data-rec-today title="From records only: dockets, silo readings and plant weights — tap for the workings"><span>Today</span><b>${rt[k].toFixed(3)}</b><span>from records</span></button>`:'';
   const mortPct=placed?mort/placed*100:0;
   const kpis=`<div class="mk-strip">
       <div class="mk-tile hero" title="Projected Cfcr2.45 at clean-out (FCR corrected to 2.45 kg)"><span class="mgr-k">Cfcr2.45 · finish</span><b class="mk-v">${tv(rc)}</b>${rangeBar}
-        <span class="mk-s">${lkC!=null?`last batch ${escapeHtml(String(lr.batch||''))} · ${lkC.toFixed(3)} ${verdict}`:'FCR corrected to 2.45 kg'}</span>${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span class="mk-s faint">Low end if the last birds go ${PROJ_EARLY_DAYS} days early</span>`:''}</div>
-      <div class="mk-tile" title="Projected FCR at clean-out"><span class="mgr-k">FCR · finish</span><b class="mk-v">${tv(rf)}</b><span class="mk-s">feed ÷ live weight</span></div>
+        <span class="mk-s">${lkC!=null?`last batch ${escapeHtml(String(lr.batch||''))} · ${lkC.toFixed(3)} ${verdict}`:'FCR corrected to 2.45 kg'}</span>${ec&&Math.abs(ec.cfcr-t.cfcr)>=0.0005?`<span class="mk-s faint">Low end if the last birds go ${PROJ_EARLY_DAYS} days early</span>`:''}${rtLine('cfcr')}</div>
+      <div class="mk-tile" title="Projected FCR at clean-out"><span class="mgr-k">FCR · finish</span><b class="mk-v">${tv(rf)}</b><span class="mk-s">feed ÷ live weight</span>${rtLine('fcr')}</div>
       <div class="mk-tile"><span class="mgr-k">Birds on hand</span><b class="mk-v">${live.toLocaleString('en-US')}</b><span class="mk-s">of ${placed.toLocaleString('en-US')} placed · ${picked.toLocaleString('en-US')} picked up</span></div>
       <div class="mk-tile"><span class="mgr-k">Mortality</span><b class="mk-v">${mortPct.toFixed(1)}%</b><span class="mk-s">${mort.toLocaleString('en-US')} birds</span><span class="mgr-verdict ${mortPct>4?'bad':'good'}" title="Livability target ≥ 96%">${mortPct>4?'above 4% target':'within 4% target'}</span></div>
     </div>`;

@@ -1064,6 +1064,7 @@ function renderDashboardView() {
 
   <!-- Featured: whole-batch projection -->
   ${renderFarmKpiCard()}
+  ${recordsTodayCardHtml()}
 
   <!-- Per shed pair: status tiles beside feed (on hand + deliveries) -->
   <div class="dash-split dash-split-half">
@@ -1837,6 +1838,40 @@ function farmResultTitle(){
   return farm?`${farm} <span class="farm-kpi-title-sep">·</span> Projected batch result`:'Projected batch result';
 }
 let fkHowOpen=false,fkFeedOpen=false;
+// FCR today from records only (recordsToday in data.js)
+function recordsTodayCardHtml(){
+  let r=null;try{r=recordsToday();}catch(e){console.warn('FCR today failed',e);}
+  if(!r)return '';
+  const T=kg=>fmtFeed(kg,2),W=T;
+  const asOf=r.asOf?fmtShortNoYear(r.asOf):fmtShortNoYear(new Date());
+  if(!r.ok)return `<section class="rt-card" id="recTodayCard"><div class="rt-head"><h3>Today, from records</h3></div><p class="rt-foot">${r.missing&&r.missing.length?`Needs a silo reading for ${r.missing.map(pairLabel).map(escapeHtml).join(', ')} first.`:'Not enough records yet.'}</p></section>`;
+  const read=r.pairs.filter(p=>!p.done),done=r.pairs.filter(p=>p.done);
+  const readKg=read.reduce((n,p)=>n+p.stock,0);
+  const readDates=[...new Set(read.map(p=>iso(p.date)))];
+  const chip=(c,t,tip)=>`<span class="rt-chip ${c}" title="${escapeAttr(tip)}">${t}</span>`;
+  return `<section class="rt-card" id="recTodayCard">
+    <div class="rt-head"><h3>Today, from records · ${escapeHtml(asOf)}</h3><span>${r.official?'100% official — every bird is out':'average age '+r.avgAge.toFixed(1)+' d'}</span></div>
+    <div class="rt-big"><div class="hl" title="FCR corrected to 2.45 kg: FCR − (avg weight − 2.45) × 0.27"><span>Cfcr2.45 today</span><b>${r.cfcr.toFixed(3)}</b></div><div title="Feed eaten so far ÷ live weight so far"><span>FCR today</span><b>${r.fcr.toFixed(3)}</b></div><div><span>Avg live weight</span><b>${r.alw.toFixed(2)} kg</b></div><div><span>Livability</span><b>${r.livability.toFixed(1)}%</b></div></div>
+    <div class="rt-how">
+      <div><span class="rt-k">Feed eaten so far</span>
+        <div class="rt-row"><span>Loads delivered (dockets)</span><b>${T(r.dockets)}</b></div>
+        ${r.carry>0?`<div class="rt-row"><span>Carried over</span><b>+ ${T(r.carry)}</b></div>`:''}
+        ${done.length?`<div class="rt-row"><span>Leftover · ${done.map(p=>escapeHtml(pairLabel(p.g))).join(', ')}</span><b>− ${T(r.stockLeft)}</b></div>`:''}
+        ${read.length?`<div class="rt-row"><span>In silos · ${read.map(p=>escapeHtml(pairLabel(p.g).replace(/^Sheds?\s*/,''))).join(', ')} (${readDates.length===1?escapeHtml(fmtShortNoYear(read[0].date))+' reading':'latest readings'})</span><b>− ${T(readKg)}</b></div>`:''}
+        <div class="rt-row tot"><span>Eaten</span><b>${T(r.eaten)}</b></div>
+      </div>
+      <div><span class="rt-k">Live weight so far</span>
+        <div class="rt-row"><span>Picked up · ${r.offB.toLocaleString('en-US')} birds ${chip('off','plant','Plant weights from the kill sheets')}</span><b>${W(r.offW)}</b></div>
+        ${r.estB>0?`<div class="rt-row"><span>Picked up, no plant weight yet · ${r.estB.toLocaleString('en-US')} ${chip('est','curve','No kill-sheet weight yet — growth curve at the pickup age')}</span><b>${W(r.estW)}</b></div>`:''}
+        ${r.onB>0?`<div class="rt-row"><span>Still in · ${r.onB.toLocaleString('en-US')} × ${(r.onW/r.onB).toFixed(2)} kg ${chip('est','curve','Today\'s weight on the growth curve fitted to these sheds\' own plant weights')}</span><b>${W(r.onW)}</b></div>`:''}
+        <div class="rt-row tot"><span>Live weight</span><b>${W(r.lw)}</b></div>
+      </div>
+    </div>
+    <p class="rt-foot">FCR = ${escapeHtml(fmtFeedNum(r.eaten,2))} ÷ ${escapeHtml(fmtFeed(r.lw,2))}. Cfcr2.45 = FCR − (${r.alw.toFixed(2)} − 2.45) × 0.27. Only records: dockets, silo readings, leftovers and plant weights${r.onB>0?'; the birds still in use the growth curve fitted to their own plant weights, until they go out':''}.${r.missing.length?` Not counted yet: ${r.missing.map(pairLabel).map(escapeHtml).join(', ')} (no silo reading).`:''}</p>
+  </section>`;
+}
+document.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('[data-rec-today]')))return;
+  setTimeout(()=>{const c=document.getElementById('recTodayCard');if(c){c.scrollIntoView({block:'start',behavior:'smooth'});c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}},80);});
 function renderFarmKpiCard(){
   const t=computeFarmTotals();
   if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
