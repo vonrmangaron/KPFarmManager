@@ -2929,6 +2929,25 @@
   }
 
   /* Report a problem: in the header on tablets and computers (phones keep the quick-actions button) */
+  .btn-prep-top{ display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 12px; border-radius:10px; border:1.5px solid #F0A21A; background:linear-gradient(100deg,#FFE3A6,#FFF4DC); color:#5A3A00; font:700 13px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; box-shadow:0 3px 10px rgba(240,162,26,.25); }
+  .btn-prep-top[hidden]{ display:none !important; }
+  .btn-prep-top svg{ width:17px; height:17px; flex:none; }
+  .btn-prep-top b{ font-weight:800; }
+  .btn-prep-top .bp-bar{ width:42px; height:5px; border-radius:9px; background:rgba(90,58,0,.15); overflow:hidden; flex:none; }
+  .btn-prep-top .bp-bar i{ display:block; height:100%; border-radius:9px; background:#C77A00; }
+  .btn-prep-top:hover{ background:#F0A21A; color:#241A08; }
+  body.theme-dark .btn-prep-top{ background:rgba(240,162,26,.18); color:#FFD58A; border-color:#F0A840; box-shadow:none; }
+  body.theme-dark .btn-prep-top .bp-bar{ background:rgba(255,213,138,.2); }
+  body.theme-dark .btn-prep-top .bp-bar i{ background:#F0A840; }
+  @media (max-width: 1600px){ .btn-prep-top .bp-bar{ display:none; } }
+  @media (max-width: 1440px){ .btn-prep-top .bp-word, .btn-prep-top .bp-n{ display:none; } .btn-prep-top{ padding:0 10px; gap:6px; } }
+  @media (max-width: 760px){ .btn-prep-top{ height:34px; padding:0 9px; } .btn-prep-top .bp-tx{ font-size:12px; } }
+  .prep-chip-m{ display:none; }
+  @media (max-width: 760px){ .agenda-filter.has-prep{ gap:4px; } .agenda-filter.has-prep button:not(.prep-chip-m){ padding:8px 8px; font-size:11.5px; }
+    .agenda-filter .prep-chip-m{ display:inline-flex; align-items:center; gap:2px; padding:0 7px; border-radius:99px; border:1.5px solid #F0A21A !important; background:linear-gradient(100deg,#FFE3A6,#FFF4DC) !important; color:#5A3A00 !important; font:800 12.5px 'Inter',sans-serif; white-space:nowrap; flex-shrink:0; }
+    .agenda-filter .prep-chip-m svg{ width:15px; height:15px; }
+    body.theme-dark .agenda-filter .prep-chip-m{ background:rgba(240,162,26,.18) !important; color:#FFD58A !important; }
+    .toolbar #topPrepBtn{ display:none !important; } }
   .btn-report-top{ display:none; }
   @media (min-width: 761px){
     .btn-report-top{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:10px; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font:800 13.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; }
@@ -2936,7 +2955,7 @@
     .btn-report-top:hover{ background:var(--primary); color:#241A08; }
     .fab-items .fab-report{ display:none !important; }
   }
-  @media (min-width: 761px) and (max-width: 1180px){ .btn-report-top span{ display:none; } .btn-report-top{ padding:0 11px; } }
+  @media (min-width: 761px) and (max-width: 1440px){ .btn-report-top span{ display:none; } .btn-report-top{ padding:0 11px; } }
 
   /* ===== Guide as a page (2026-10-10): its targets moved here from Settings ===== */
   .g-page-wrap{ display:flex; flex-direction:column; min-height:0; flex:1; overflow:auto; }
@@ -3568,36 +3587,6 @@
   .notif-issue.prep{ border-color:#EFC77C; background:#FFF4DE; }
   body.theme-dark .notif-issue.prep{ background:rgba(240,162,26,.12); }
   /* Shed preparation banner at the top of the Planner (2026-10-21: the bottom pill was easy to miss) */
-  .prep-banner{ display:flex; align-items:center; gap:14px; margin:12px 16px 4px; padding:12px 14px 12px 16px; border-radius:14px; background:linear-gradient(100deg,#FFE3A6 0%,#FFF1D2 60%,#FFF7E6 100%); border:1.5px solid #F0A21A; box-shadow:0 6px 18px rgba(240,162,26,.22); cursor:pointer; flex-shrink:0; position:relative; overflow:hidden; }
-  .prep-banner[hidden]{ display:none !important; }
-  .prep-banner::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:#F0A21A; }
-  .pb-ic{ width:44px; height:44px; border-radius:12px; background:#16191B; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; animation:pbPulse 2.4s ease-in-out infinite; }
-  @keyframes pbPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(240,162,26,.55); } 50%{ box-shadow:0 0 0 8px rgba(240,162,26,0); } }
-  @media (prefers-reduced-motion:reduce){ .pb-ic{ animation:none; } }
-  .pb-tx{ display:flex; flex-direction:column; gap:1px; min-width:0; }
-  .pb-tx b{ font:800 16px Sora,sans-serif; color:#16191B; }
-  .pb-tx span{ font:600 13px Inter,system-ui,sans-serif; color:#5A3A00; }
-  .pb-big{ flex:1; min-width:120px; max-width:360px; height:10px; border-radius:99px; background:rgba(22,25,27,.12); overflow:hidden; margin-left:auto; }
-  .pb-big i{ display:block; height:100%; background:#16191B; border-radius:99px; }
-  .pb-sheds{ display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; }
-  .pb-shed{ all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:10px; background:rgba(255,255,255,.7); border:1px solid #EFC77C; font:600 12.5px Inter,system-ui,sans-serif; color:#16191B; }
-  .pb-shed b{ font-weight:800; } .pb-shed em{ font-style:normal; font-weight:800; color:#8A5300; }
-  .pb-mini{ width:46px; height:6px; border-radius:99px; background:rgba(22,25,27,.12); overflow:hidden; } .pb-mini i{ display:block; height:100%; background:#F0A21A; }
-  .pb-go{ all:unset; cursor:pointer; flex-shrink:0; height:40px; padding:0 16px; border-radius:10px; background:#16191B; color:#fff; font:800 13.5px Inter,system-ui,sans-serif; display:inline-flex; align-items:center; white-space:nowrap; }
-  .pb-go:hover{ background:#2B3236; } .pb-go:focus-visible, .pb-shed:focus-visible{ outline:2px solid #16191B; outline-offset:2px; }
-  body.theme-dark .prep-banner{ background:linear-gradient(100deg,rgba(240,162,26,.32),rgba(240,162,26,.14)); }
-  body.theme-dark .pb-tx b{ color:#FFF4DE; } body.theme-dark .pb-tx span{ color:#F2C063; }
-  body.theme-dark .pb-ic, body.theme-dark .pb-go{ background:#F0A21A; color:#16191B; }
-  body.theme-dark .pb-big{ background:rgba(255,255,255,.15); } body.theme-dark .pb-big i{ background:#F0A21A; }
-  body.theme-dark .pb-shed{ background:rgba(0,0,0,.25); color:#FFF4DE; border-color:rgba(240,162,26,.5); } body.theme-dark .pb-shed em{ color:#F2C063; }
-  @media (max-width:760px){
-    .prep-banner{ margin:8px 10px 2px; padding:10px 10px 10px 14px; gap:10px; flex-wrap:wrap; }
-    .pb-ic{ width:36px; height:36px; font-size:18px; border-radius:10px; }
-    .pb-tx{ flex:1; } .pb-tx b{ font-size:14.5px; }
-    .pb-big{ order:5; flex:1 1 100%; max-width:none; margin:0; height:8px; }
-    .pb-sheds{ order:5; flex:1 1 100%; margin:0; }
-    .pb-go{ height:36px; padding:0 12px; font-size:12.5px; }
-  }
   .prep-secname{ cursor:text; border-radius:5px; padding:1px 3px; margin:-1px -3px; }
   .prep-secname:hover, .prep-secname:focus-visible{ background:rgba(0,0,0,.06); outline:none; text-decoration:underline dotted; }
   .prep-rename{ flex:1; min-width:0; font:800 11px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--ink); background:var(--surface); border:1.5px solid #F0A21A; border-radius:6px; padding:3px 6px; outline:none; }
@@ -3889,6 +3878,7 @@
     </div>
 
     <div class="toolbar">
+      <button type="button" class="btn-prep-top" id="topPrepBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3 11.5 10.5"/><path d="M9.5 9.5 14.5 14.5"/><path d="M9.5 9.5 5 14c-1.2 1.2-1.6 3.3-1 5l.4 1 1-.4c1.7-.6 3.8-.2 5-1.4l4.1-3.7"/><path d="M7.5 16.5 6 18"/></svg><span class="bp-tx"></span><span class="bp-bar"><i></i></span></button>
       <button type="button" class="btn-report-top" id="topReportBtn" title="Report a problem on the farm (a photo is optional)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg><span>Report a problem</span></button>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
@@ -9046,6 +9036,18 @@
       });
       bar.appendChild(btn);
     });
+    // Phones: the top bar has no room, so the Shed preparation shortcut sits in this row
+    const po = typeof prepOpenList === 'function' ? prepOpenList() : [];
+    if(po.length){
+      const tot = po.reduce((n, c)=>{ const p = prepProgress(c); n.d += p.done; n.t += p.total; return n; }, { d:0, t:0 });
+      const pc = document.createElement('button'); pc.type = 'button'; pc.className = 'prep-chip-m';
+      pc.title = 'Shed preparation — ' + po.map(c=>{ const p = prepProgress(c); return `Shed ${c.shed}: ${p.done}/${p.total}`; }).join(' · ');
+      pc.setAttribute('aria-label', pc.title);
+      pc.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3 11.5 10.5"/><path d="M9.5 9.5 14.5 14.5"/><path d="M9.5 9.5 5 14c-1.2 1.2-1.6 3.3-1 5l.4 1 1-.4c1.7-.6 3.8-.2 5-1.4l4.1-3.7"/><path d="M7.5 16.5 6 18"/></svg>' + `<span>${tot.t ? Math.round(tot.d / tot.t * 100) : 0}%</span>`;
+      bar.classList.add('has-prep');
+      pc.addEventListener('click', ()=> openPrepBoard(po[0].shed));
+      bar.appendChild(pc);
+    }
     return bar;
   }
   function buildUpcomingEventsSection(){
@@ -11477,24 +11479,22 @@
     persist(); renderAll();
     showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
   }
+  // Shed preparation: a compact button in the top bar (2026-10-22: the banner pushed the board down)
   function renderPrepPill(){
-    let bar = $('#prepBanner');
-    const open = prepOpenList();
-    if(!bar){
-      const wrap = $('#calendarWrap'); if(!wrap || !wrap.parentNode) return;
-      bar = document.createElement('div'); bar.id = 'prepBanner'; bar.className = 'prep-banner'; bar.setAttribute('role', 'status');
-      wrap.parentNode.insertBefore(bar, wrap);
-      bar.addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-go]'); const o = prepOpenList(); openPrepBoard(b ? b.dataset.prepGo : (o.length ? o[0].shed : null)); });
-    }
-    bar.hidden = !open.length;
-    if(open.length){
-      const one = open.length === 1, c0 = open[0], p0 = prepProgress(c0);
-      const pct = c=>{ const p = prepProgress(c); return p.total ? Math.round(p.done / p.total * 100) : 0; };
-      const chips = open.map(c=>{ const p = prepProgress(c); return `<button type="button" class="pb-shed" data-prep-go="${escapeHtmlAttr(c.shed)}"><b>Shed ${escapeHtml(c.shed)}</b><span class="pb-mini"><i style="width:${pct(c)}%"></i></span><em>${p.done}/${p.total}</em></button>`; }).join('');
-      bar.innerHTML = `<span class="pb-ic" aria-hidden="true">🧹</span>
-        <span class="pb-tx"><b>${one ? `Shed ${escapeHtml(c0.shed)} is being prepared` : `${open.length} sheds are being prepared`}</b><span>${one ? `${p0.done} of ${p0.total} done${c0.nextPlacement ? ' · next chicks ' + escapeHtml(prepFmt(c0.nextPlacement)) : ''}` : 'Shed Preparation Checklists'}</span></span>
-        ${one ? `<span class="pb-big"><i style="width:${pct(c0)}%"></i></span>` : `<span class="pb-sheds">${chips}</span>`}
-        <button type="button" class="pb-go" data-prep-go="${escapeHtmlAttr(c0.shed)}">Open checklist ›</button>`;
+    const open = prepOpenList(), btn = $('#topPrepBtn');
+    const old = $('#prepBanner'); if(old) old.remove();
+    if(btn){
+      btn.hidden = !open.length;
+      if(open.length){
+        if(!btn.dataset.wired){ btn.dataset.wired = '1'; btn.addEventListener('click', ()=>{ const o = prepOpenList(); openPrepBoard(o.length ? o[0].shed : null); }); }
+        const tot = open.reduce((n, c)=>{ const p = prepProgress(c); n.d += p.done; n.t += p.total; return n; }, { d:0, t:0 });
+        const one = open.length === 1, p0 = prepProgress(open[0]);
+        const pct = tot.t ? Math.round(tot.d / tot.t * 100) : 0;
+        btn.querySelector('.bp-tx').innerHTML = `<span class="bp-word">Prep </span><b class="bp-n">${one ? 'Shed ' + escapeHtml(open[0].shed) : open.length + ' sheds'}</b><span class="bp-n"> · </span>${one ? `${p0.done}/${p0.total}` : `${pct}%`}`;
+        btn.querySelector('.bp-bar i').style.width = pct + '%';
+        btn.title = 'Shed preparation checklists — ' + open.map(c=>{ const p = prepProgress(c); return `Shed ${c.shed}: ${p.done}/${p.total}`; }).join(' · ') + '. Click to open.';
+        btn.setAttribute('aria-label', btn.title);
+      }
     }
     const rb = document.querySelector('.ar-btn[data-ar="routine"]');
     if(rb){ let bd = $('#arRoutineBadge'); if(!bd){ rb.insertAdjacentHTML('beforeend', '<span class="ar-badge prep-badge" id="arRoutineBadge" hidden></span>'); bd = $('#arRoutineBadge'); } bd.hidden = !open.length; bd.textContent = open.length; }
