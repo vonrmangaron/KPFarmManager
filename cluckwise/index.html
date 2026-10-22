@@ -3669,6 +3669,33 @@
   .ptp-sec ul{ margin:4px 0 0; padding-left:20px; font-size:13px; color:var(--ink); display:flex; flex-direction:column; gap:2px; }
   .ptp-none{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
   .prep-tpl-from{ color:#0F7A67 !important; font-weight:700; }
+  .prep-icons{ display:inline-flex; gap:6px; margin-left:auto; }
+  .prep-ib{ all:unset; box-sizing:border-box; cursor:pointer; width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; }
+  .prep-ib svg{ width:17px; height:17px; }
+  .prep-ib:hover{ border-color:var(--ink); }
+  .prep-ib.danger{ color:var(--danger); } .prep-ib.danger:hover{ border-color:var(--danger); background:var(--danger-soft, #FDECE4); }
+  .prep-ib:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .prep-tpls{ display:flex; flex-direction:column; gap:8px; }
+  .prep-tplrow{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); flex-wrap:wrap; }
+  .prep-tplrow.def{ border-color:#F0A21A; background:#FFF8EC; }
+  body.theme-dark .prep-tplrow.def{ background:rgba(240,162,26,.1); }
+  .prep-tpltx{ flex:1; min-width:180px; display:flex; flex-direction:column; gap:2px; }
+  .prep-tpltx b{ font:800 14px Inter,system-ui,sans-serif; color:var(--ink); } .prep-tpltx > span{ font-size:12px; color:var(--muted); }
+  .prep-defb{ display:inline-flex; margin-left:6px; font:800 10px Inter,system-ui,sans-serif; letter-spacing:.03em; text-transform:uppercase; padding:2px 7px; border-radius:999px; background:#F0A21A; color:#16191B; vertical-align:2px; }
+  .prep-tplacts{ display:flex; gap:6px; align-items:center; }
+  .prep-tplbtn{ all:unset; cursor:pointer; height:34px; padding:0 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface); font:700 12.5px Inter,system-ui,sans-serif; color:var(--ink); display:inline-flex; align-items:center; white-space:nowrap; }
+  .prep-tplbtn:hover{ border-color:var(--ink); } .prep-tplbtn:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .prep-ib.wide{ width:auto; padding:0 12px; font:700 12.5px Inter,system-ui,sans-serif; }
+  .prep-tplq{ font:700 12.5px Inter,system-ui,sans-serif; color:var(--danger); }
+  .prep-chk{ display:flex; gap:8px; align-items:center; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); cursor:pointer; margin-top:4px; }
+  .prep-chk input{ width:18px; height:18px; accent-color:#F0A21A; }
+  .prep-pick{ display:flex; flex-direction:column; gap:8px; }
+  .prep-pk{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); }
+  .prep-pk.on{ border-color:#F0A21A; background:#FFF4DE; } body.theme-dark .prep-pk.on{ background:rgba(240,162,26,.14); }
+  .prep-pk-r{ width:18px; height:18px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
+  .prep-pk.on .prep-pk-r{ border:6px solid #F0A21A; }
+  .prep-pk-tx{ display:flex; flex-direction:column; gap:1px; } .prep-pk-tx b{ font:800 14px Inter,system-ui,sans-serif; color:var(--ink); } .prep-pk-tx > span{ font-size:12px; color:var(--muted); }
+  .prep-pk:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
   /* the daily-task window and the standard list */
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
@@ -3685,7 +3712,7 @@
   .prep-modal .btn-ghost:hover{ border-color:var(--ink); }
   .prep-modal .btn-ghost:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
   .prep-modal .prep-tm-btns .btn-app{ width:auto; height:44px; padding:0 18px; }
-  #prepStdText{ width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:500 13.5px/1.6 ui-monospace,Menlo,monospace; background:var(--surface); color:var(--ink); resize:vertical; }
+  #prepTplEdText{ width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:500 13.5px/1.6 ui-monospace,Menlo,monospace; background:var(--surface); color:var(--ink); resize:vertical; }
   /* Routine: a reset job (shed closed) — nothing due until placement, which is highlighted */
   .mlog-box.off{ background:transparent !important; border:1.5px dashed var(--line) !important; }
   .mlog-box.resume{ outline:2px dashed #0F8A75; outline-offset:2px; }
@@ -3993,7 +4020,7 @@
       <div class="mlog-sub" id="mlogSub"></div>
     </div>
     <div class="prep-seg" id="prepSeg" role="tablist" aria-label="Routine or Shed preparation"><button type="button" role="tab" data-mlogmode="routine" class="on" aria-selected="true">Routine</button><button type="button" role="tab" data-mlogmode="prep" aria-selected="false">Shed preparation<em class="prep-ct" id="prepSegCt" hidden></em></button></div>
-    <button type="button" class="btn-app prep-std-btn" id="prepStdBtn" hidden title="The items every new Shed Preparation Checklist starts with">⋯ Standard list</button>
+    <button type="button" class="btn-app prep-std-btn" id="prepStdBtn" hidden title="The lists new Shed Preparation Checklists start from">Templates</button>
     <button type="button" class="btn-app mlog-add" id="mlogAddBtn">+ Track task</button>
   </header>
   <div class="mlog-toolbar">
@@ -4050,6 +4077,44 @@
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepSecSave">Add section</button></div>
   </div>
 </div>
+<div class="form-modal prep-modal" id="prepTplsModal" role="dialog" aria-modal="true" aria-labelledby="prepTplsTitle">
+  <div class="form-modal-head"><h2 id="prepTplsTitle">Templates</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint">New Shed Preparation Checklists start from the <b>default</b> template. When you start a checklist yourself you can pick any of them.</p>
+    <div class="prep-tpls" id="prepTplsList"></div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Close</button><button type="button" class="btn-app" id="prepTplsNew">＋ New template</button></div>
+  </div>
+</div>
+<div class="form-modal prep-modal" id="prepTplEdModal" role="dialog" aria-modal="true" aria-labelledby="prepTplEdTitle">
+  <div class="form-modal-head"><h2 id="prepTplEdTitle">Edit template</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <label class="prep-tm-k" for="prepTplEdName">Template name</label>
+    <input type="text" id="prepTplEdName" class="st-input prep-in" maxlength="60" placeholder="e.g. Full clean-out" autocomplete="off">
+    <label class="prep-tm-k" for="prepTplEdText">Sections and items</label>
+    <p class="prep-tm-hint">A line like <b>1. Litter removal</b> starts a section; lines starting with <b>-</b> are its items. A section without items is ticked on its own. Checklists already started don't change.</p>
+    <textarea id="prepTplEdText" rows="14" spellcheck="false"></textarea>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" id="prepTplEdOrig" title="Fill in the farm's original list">Use the original list</button><span style="flex:1"></span><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTplEdSave">Save template</button></div>
+  </div>
+</div>
+<div class="form-modal prep-modal" id="prepTplModal" role="dialog" aria-modal="true" aria-labelledby="prepTplTitle">
+  <div class="form-modal-head"><h2 id="prepTplTitle">Save as a template</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint" id="prepTplSub"></p>
+    <label class="prep-tm-k" for="prepTplName">Template name</label>
+    <input type="text" id="prepTplName" class="st-input prep-in" maxlength="60" autocomplete="off">
+    <div class="prep-tpl-prev" id="prepTplPrev"></div>
+    <label class="prep-chk"><input type="checkbox" id="prepTplDefault" checked> Make it the default for new checklists</label>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTplSave">Save template</button></div>
+  </div>
+</div>
+<div class="form-modal prep-modal" id="prepPickModal" role="dialog" aria-modal="true" aria-labelledby="prepPickTitle">
+  <div class="form-modal-head"><h2 id="prepPickTitle">Start a checklist</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint" id="prepPickSub">Which template should it start from?</p>
+    <div class="prep-pick" id="prepPickList"></div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepPickStart">Start checklist</button></div>
+  </div>
+</div>
 <div class="form-modal prep-modal" id="prepCopyModal" role="dialog" aria-modal="true" aria-labelledby="prepCopyTitle">
   <div class="form-modal-head"><h2 id="prepCopyTitle">Copy the checklist</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
@@ -4064,24 +4129,6 @@
       </div>
     </div>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepCopySave" disabled>Copy</button></div>
-  </div>
-</div>
-<div class="form-modal prep-modal" id="prepTplModal" role="dialog" aria-modal="true" aria-labelledby="prepTplTitle">
-  <div class="form-modal-head"><h2 id="prepTplTitle">Make this the default</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
-  <div class="form-modal-body prep-tm">
-    <p class="prep-tm-hint" id="prepTplSub"></p>
-    <div class="prep-tpl-prev" id="prepTplPrev"></div>
-    <p class="prep-tm-hint">Checklists already started keep their own list. You can still change the default later in <b>⋯ Standard list</b>.</p>
-    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTplSave">Make it the default</button></div>
-  </div>
-</div>
-<div class="form-modal prep-modal" id="prepStdModal" role="dialog" aria-modal="true" aria-labelledby="prepStdTitle">
-  <div class="form-modal-head"><h2 id="prepStdTitle">Standard checklist</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
-  <div class="form-modal-body prep-tm">
-    <p class="prep-tm-hint prep-tpl-from" id="prepStdFrom" hidden></p>
-    <p class="prep-tm-hint">Every new Shed Preparation Checklist starts with this. A line like <b>1. Litter removal</b> starts a section; lines starting with <b>-</b> are its items. A section without items is ticked on its own. Checklists already started don't change.</p>
-    <textarea id="prepStdText" rows="16" spellcheck="false"></textarea>
-    <div class="prep-tm-btns"><button type="button" class="btn-ghost" id="prepStdReset">Back to the default</button><span style="flex:1"></span><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepStdSave">Save</button></div>
   </div>
 </div>
 
@@ -10942,11 +10989,26 @@
     });
     return out.filter(x=> x.t);
   }
-  function prepTemplateText(){ return (settings.prepTemplateText && String(settings.prepTemplateText).trim()) || PREP_DEFAULT_TEXT; }
-  function prepNewChecklist(shed, batch, closedAt, auto){
+  // Templates (2026-10-22): named lists; new checklists start from the default one. The old single "standard list"
+  // becomes the first template, "Default list".
+  function prepTemplates(){
+    if(Array.isArray(settings.prepTemplates) && settings.prepTemplates.length) return settings.prepTemplates;
+    const old = settings.prepTemplateText && String(settings.prepTemplateText).trim();
+    return [{ id:'tpl-default', name:'Default list', text: old || PREP_DEFAULT_TEXT, fromShed: settings.prepTemplateFrom ? settings.prepTemplateFrom.shed : undefined, at: settings.prepTemplateFrom ? settings.prepTemplateFrom.at : undefined }];
+  }
+  function prepTplDefault(){ const l = prepTemplates(); return l.find(t=> t.id === settings.prepTemplateDefault) || l[0]; }
+  function prepSaveTemplates(list, defId){
+    settings.prepTemplates = list;
+    if(defId) settings.prepTemplateDefault = defId;
+    if(!list.some(t=> t.id === settings.prepTemplateDefault)) settings.prepTemplateDefault = list[0] && list[0].id;
+    delete settings.prepTemplateText; delete settings.prepTemplateFrom;
+  }
+  function prepTemplateText(id){ const t = id ? prepTemplates().find(x=> x.id === id) : null; return (t || prepTplDefault()).text; }
+  function prepNewChecklist(shed, batch, closedAt, auto, tplId){
     return { id: uid(), shed: String(shed), batch: batch ? String(batch) : '', closedAt: closedAt || null, nextPlacement: null, status:'preparing',
       createdAt: Date.now(), auto: !!auto, seen: !auto,
-      sections: prepParse(prepTemplateText()).map(x=> ({ id: uid(), t: x.t, items: x.items.map(t=> ({ id: uid(), t })) })) };
+      tpl: (tplId ? (prepTemplates().find(x=> x.id === tplId) || prepTplDefault()) : prepTplDefault()).name,
+      sections: prepParse(prepTemplateText(tplId)).map(x=> ({ id: uid(), t: x.t, items: x.items.map(t=> ({ id: uid(), t })) })) };
   }
   function prepUnits(cl){ const out = []; (cl.sections || []).forEach(sec=>{ if((sec.items || []).length) sec.items.forEach(it=> out.push({ sec, u: it })); else out.push({ sec, u: sec }); }); return out; }
   function prepProgress(cl){ const u = prepUnits(cl); return { done: u.filter(x=> x.u.done).length, total: u.length }; }
@@ -11077,19 +11139,19 @@
         <div class="prep-runb"><span>No batch and no checklist.</span><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start a checklist</button></div></section>`;
     }
     const pr = prepProgress(c), pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
-    const meta = [`${pr.done}/${pr.total}`, c.closedAt ? 'closed ' + prepFmt(c.closedAt) : 'started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : ''].filter(Boolean).join(' · ');
+    const meta = [`${pr.done}/${pr.total}`, c.closedAt ? 'closed ' + prepFmt(c.closedAt) : 'started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : '', c.tpl && prepTemplates().length > 1 ? c.tpl : ''].filter(Boolean).join(' · ');
     let body = '';
     if(c.status === 'ready'){
       body = `<div class="prep-ready"><b>All ${pr.total} done</b><span>${c.readyBy ? 'Signed off by ' + escapeHtml(c.readyBy) : 'Marked ready'}${c.readyAt ? ' · ' + escapeHtml(prepFmt(dateKey(new Date(c.readyAt)))) : ''}</span></div>
         <details class="prep-fold"><summary>Show the checklist</summary>${(c.sections || []).map(sec=> `<div class="prep-sh">${escapeHtml(sec.t)}</div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}`).join('')}</details>
-        <div class="prep-cf"><button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button><span style="flex:1"></span><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-copy" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Every new checklist starts with this list">Set as default</button></div>`;
+        <div class="prep-cf"><button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button><span style="flex:1"></span><span class="prep-icons"><button type="button" class="prep-ib" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds" aria-label="Copy to other sheds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button type="button" class="prep-ib" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Save as a template (and make it the default)" aria-label="Save as a template"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button></span></div>`;
     } else {
       body = `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
         const has = (sec.items || []).length, units = has ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
         return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `</div>` + `<button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>
-        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-copy" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Every new checklist starts with this list">Set as default</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
+        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><span class="prep-icons"><button type="button" class="prep-ib" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds" aria-label="Copy to other sheds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button type="button" class="prep-ib" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Save as a template (and make it the default)" aria-label="Save as a template"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="prep-ib danger" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist" aria-label="Delete this checklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></span></div>`;
     }
     return `<section class="prep-col ${state}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b><span class="prep-st ${state}">${state === 'ready' ? 'Ready' : 'Preparing'}</span></div><span class="prep-cm">${escapeHtml(meta)}</span><div class="prep-bar"><i style="width:${pct}%"></i></div></div>${body}</section>`;
   }
@@ -11254,24 +11316,87 @@
   // A shed's checklist as the standard list (the same "1. Section / - item" text the Standard list window edits)
   let prepTplFrom = null;
   function prepToText(c){ return (c.sections || []).map((sec, i)=> [`${i + 1}. ${sec.t}`].concat((sec.items || []).map(it=> `- ${it.t}`)).join('\n')).join('\n'); }
+  function prepTplCounts(text){ const p = prepParse(text); const n = p.reduce((a, x)=> a + (x.items.length || 1), 0); return `${p.length} section${p.length === 1 ? '' : 's'} · ${n} item${n === 1 ? '' : 's'}`; }
   function openPrepTpl(cid){
     const c = prepFind(cid); if(!c) return;
     prepTplFrom = cid;
-    const n = prepUnits(c).length;
-    $('#prepTplTitle').textContent = `Make Shed ${c.shed}'s list the default`;
-    $('#prepTplSub').textContent = `${c.sections.length} section${c.sections.length === 1 ? '' : 's'} and ${n} item${n === 1 ? '' : 's'}. New Shed Preparation Checklists will start with this list.`;
+    $('#prepTplTitle').textContent = `Save Shed ${c.shed}'s list as a template`;
+    $('#prepTplSub').textContent = prepTplCounts(prepToText(c)) + ' — saved without the ticks.';
+    $('#prepTplName').value = `Shed ${c.shed} list`;
+    $('#prepTplDefault').checked = true;
     $('#prepTplPrev').innerHTML = c.sections.map((sec, i)=> `<div class="ptp-sec"><b>${i + 1}. ${escapeHtml(sec.t)}</b>${(sec.items || []).length ? '<ul>' + sec.items.map(it=> `<li>${escapeHtml(it.t)}</li>`).join('') + '</ul>' : '<span class="ptp-none">ticked on its own</span>'}</div>`).join('');
     $('#prepTplModal').classList.add('open');
+    setTimeout(()=>{ const n = $('#prepTplName'); n.focus(); n.select(); }, 60);
   }
   function savePrepTpl(){
     const c = prepFind(prepTplFrom); if(!c) return;
-    const txt = prepToText(c);
-    if(!prepParse(txt).length){ showToast('This checklist is empty.', true); return; }
-    if(txt === PREP_DEFAULT_TEXT) delete settings.prepTemplateText; else settings.prepTemplateText = txt;
-    settings.prepTemplateFrom = { shed: c.shed, at: dateKey(new Date()) };
-    addHistory('Settings', `Standard shed preparation checklist set from Shed ${c.shed}`);
+    const name = $('#prepTplName').value.trim().replace(/\s+/g, ' ');
+    if(!name){ showToast('Give the template a name.', true); $('#prepTplName').focus(); return; }
+    const txt = prepToText(c); if(!prepParse(txt).length){ showToast('This checklist is empty.', true); return; }
+    const list = prepTemplates().slice(); const same = list.find(t=> t.name.toLowerCase() === name.toLowerCase());
+    const t = same || { id: uid(), name };
+    Object.assign(t, { name, text: txt, fromShed: c.shed, at: dateKey(new Date()) });
+    if(!same) list.push(t);
+    const makeDef = $('#prepTplDefault').checked;
+    prepSaveTemplates(list, makeDef ? t.id : null);
+    addHistory('Settings', `Shed preparation template "${name}" saved from Shed ${c.shed}${makeDef ? ' (default)' : ''}`);
     $('#prepTplModal').classList.remove('open'); prepTplFrom = null;
-    persist(); renderAll(); showToast(`Shed ${c.shed}'s list is now the default for new checklists.`);
+    persist(); renderAll(); showToast(`Template "${name}" saved${makeDef ? ' — new checklists start from it' : ''}.`);
+  }
+  // ---------- the Templates window ----------
+  let prepTplEdId = null, prepTplDel = null;
+  function renderPrepTpls(){
+    const list = prepTemplates(), def = prepTplDefault();
+    $('#prepTplsList').innerHTML = list.map(t=>{
+      const isDef = t.id === def.id;
+      const meta = [prepTplCounts(t.text), t.fromShed ? 'from Shed ' + t.fromShed : '', t.at ? prepFmt(t.at) : ''].filter(Boolean).join(' · ');
+      const confirmDel = prepTplDel === t.id;
+      return `<div class="prep-tplrow${isDef ? ' def' : ''}"><div class="prep-tpltx"><b>${escapeHtml(t.name)}${isDef ? ' <span class="prep-defb">Default</span>' : ''}</b><span>${escapeHtml(meta)}</span></div>
+        <div class="prep-tplacts">${confirmDel ? `<span class="prep-tplq">Delete it?</span><button type="button" class="prep-ib" data-tpl-delno>No</button><button type="button" class="prep-ib danger wide" data-tpl-delyes="${escapeHtmlAttr(t.id)}">Delete</button>`
+          : `${isDef ? '' : `<button type="button" class="prep-tplbtn" data-tpl-def="${escapeHtmlAttr(t.id)}">Make default</button>`}<button type="button" class="prep-tplbtn" data-tpl-edit="${escapeHtmlAttr(t.id)}">Edit</button>${list.length > 1 ? `<button type="button" class="prep-ib danger" data-tpl-del="${escapeHtmlAttr(t.id)}" title="Delete this template" aria-label="Delete ${escapeHtmlAttr(t.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}`}</div></div>`;
+    }).join('');
+  }
+  function openPrepTpls(){ prepTplDel = null; renderPrepTpls(); $('#prepTplsModal').classList.add('open'); }
+  function openPrepTplEditor(id){
+    const t = id ? prepTemplates().find(x=> x.id === id) : null;
+    prepTplEdId = t ? t.id : null;
+    $('#prepTplEdTitle').textContent = t ? 'Edit template' : 'New template';
+    $('#prepTplEdName').value = t ? t.name : '';
+    $('#prepTplEdText').value = t ? t.text : '';
+    $('#prepTplEdModal').classList.add('open');
+    setTimeout(()=> (t ? $('#prepTplEdText') : $('#prepTplEdName')).focus(), 60);
+  }
+  function savePrepTplEditor(){
+    const name = $('#prepTplEdName').value.trim().replace(/\s+/g, ' '), txt = $('#prepTplEdText').value.trim();
+    if(!name){ showToast('Give the template a name.', true); $('#prepTplEdName').focus(); return; }
+    const parsed = prepParse(txt); if(!parsed.length){ showToast('Add at least one section.', true); $('#prepTplEdText').focus(); return; }
+    const list = prepTemplates().slice();
+    let t = prepTplEdId ? list.find(x=> x.id === prepTplEdId) : null;
+    if(t){ if(t.text !== txt){ delete t.fromShed; } Object.assign(t, { name, text: txt, at: dateKey(new Date()) }); }
+    else { t = { id: uid(), name, text: txt, at: dateKey(new Date()) }; list.push(t); }
+    prepSaveTemplates(list);
+    addHistory('Settings', `Shed preparation template "${name}" saved (${parsed.length} sections)`);
+    $('#prepTplEdModal').classList.remove('open'); prepTplEdId = null;
+    persist(); renderAll(); if($('#prepTplsModal').classList.contains('open')) renderPrepTpls();
+    showToast(`Template "${name}" saved.`);
+  }
+  // ---------- starting a checklist yourself: pick the template ----------
+  let prepPickShed = null, prepPickTpl = null;
+  function startPrepChecklist(sh, tplId){
+    if(prepActiveFor(sh)) return;
+    const run = prepShedRun(sh); const c = prepNewChecklist(sh, '', null, false, tplId); shedPrep.push(c);
+    addHistory('Shed preparation', `Shed Preparation Checklist (Shed ${sh}) started${run ? ' early' : ''} from "${c.tpl}"`); prepPhoneShed = sh; persist(); renderAll();
+  }
+  function openPrepPick(sh){
+    const list = prepTemplates();
+    if(list.length < 2){ startPrepChecklist(sh, null); return; }
+    prepPickShed = sh; prepPickTpl = prepTplDefault().id;
+    $('#prepPickTitle').textContent = `Start Shed ${sh}'s checklist`;
+    renderPrepPick(); $('#prepPickModal').classList.add('open');
+  }
+  function renderPrepPick(){
+    const def = prepTplDefault();
+    $('#prepPickList').innerHTML = prepTemplates().map(t=> `<button type="button" class="prep-pk${t.id === prepPickTpl ? ' on' : ''}" data-pick-tpl="${escapeHtmlAttr(t.id)}" aria-pressed="${t.id === prepPickTpl}"><span class="prep-pk-r"></span><span class="prep-pk-tx"><b>${escapeHtml(t.name)}${t.id === def.id ? ' <span class="prep-defb">Default</span>' : ''}</b><span>${escapeHtml(prepTplCounts(t.text))}</span></span></button>`).join('');
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
@@ -13104,9 +13229,7 @@
       if(tk) delete tk.prep;
       c.sections.forEach(sec=> sec.items = (sec.items || []).filter(it=> it.id !== id));
       addHistory('Shed preparation', `Shed ${c.shed}: removed "${u.t}"`); persist(); renderAll(); return; }
-    if((b = g('[data-prep-start]'))){ const sh = b.dataset.prepStart; if(prepActiveFor(sh)) return;
-      const run = prepShedRun(sh); const c = prepNewChecklist(sh, '', null, false); shedPrep.push(c);
-      addHistory('Shed preparation', `Shed Preparation Checklist (Shed ${sh}) started${run ? ' early' : ''}`); prepPhoneShed = sh; persist(); renderAll(); return; }
+    if((b = g('[data-prep-start]'))){ openPrepPick(b.dataset.prepStart); return; }
     if((b = g('[data-prep-ready]'))){ const c = prepFind(b.dataset.prepReady); if(!c) return;
       c.status = 'ready'; c.readyAt = new Date().toISOString(); c.readyBy = managerName() || 'Manager'; c.seen = true;
       const open = tasks.filter(t=> t.prep && t.prep.cid === c.id && t.status !== 'done');
@@ -13134,16 +13257,22 @@
   $('#prepSecAddRow').addEventListener('click', ()=>{ const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); });
   $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = document.querySelector('#prepSecItems input'); if(f) f.focus(); } });
   $('#prepTplSave').addEventListener('click', savePrepTpl);
-  $('#prepStdBtn').addEventListener('click', ()=>{ const f = settings.prepTemplateFrom, fe = $('#prepStdFrom'); fe.hidden = !(f && settings.prepTemplateText); if(f) fe.textContent = `Made from Shed ${f.shed}'s checklist on ${prepFmt(f.at)}.`; $('#prepStdText').value = prepTemplateText(); $('#prepStdModal').classList.add('open'); setTimeout(()=> $('#prepStdText').focus(), 60); });
-  $('#prepStdReset').addEventListener('click', ()=>{ $('#prepStdText').value = PREP_DEFAULT_TEXT; });
-  $('#prepStdSave').addEventListener('click', ()=>{
-    const txt = $('#prepStdText').value.trim(); const parsed = prepParse(txt);
-    if(!parsed.length){ showToast('Add at least one section.', true); return; }
-    if(txt !== prepTemplateText()) delete settings.prepTemplateFrom;   // edited by hand: no longer "made from Shed #"
-    if(txt === PREP_DEFAULT_TEXT) delete settings.prepTemplateText; else settings.prepTemplateText = txt;
-    addHistory('Settings', `Standard shed preparation checklist saved (${parsed.length} sections)`);
-    $('#prepStdModal').classList.remove('open'); persist(); renderAll(); showToast('Saved — new checklists start with this list.');
+  $('#prepStdBtn').addEventListener('click', openPrepTpls);
+  $('#prepTplsNew').addEventListener('click', ()=> openPrepTplEditor(null));
+  $('#prepTplsList').addEventListener('click', (e)=>{
+    let b;
+    if((b = e.target.closest('[data-tpl-def]'))){ const t = prepTemplates().find(x=> x.id === b.dataset.tplDef); prepSaveTemplates(prepTemplates().slice(), b.dataset.tplDef); addHistory('Settings', `Shed preparation template "${t ? t.name : ''}" made the default`); persist(); renderPrepTpls(); showToast(`"${t ? t.name : ''}" is now the default.`); return; }
+    if((b = e.target.closest('[data-tpl-edit]'))){ openPrepTplEditor(b.dataset.tplEdit); return; }
+    if((b = e.target.closest('[data-tpl-del]'))){ prepTplDel = b.dataset.tplDel; renderPrepTpls(); return; }
+    if(e.target.closest('[data-tpl-delno]')){ prepTplDel = null; renderPrepTpls(); return; }
+    if((b = e.target.closest('[data-tpl-delyes]'))){ const list = prepTemplates().filter(x=> x.id !== b.dataset.tplDelyes); const gone = prepTemplates().find(x=> x.id === b.dataset.tplDelyes);
+      prepSaveTemplates(list); prepTplDel = null; addHistory('Settings', `Shed preparation template "${gone ? gone.name : ''}" deleted`); persist(); renderPrepTpls(); return; }
   });
+  $('#prepTplEdOrig').addEventListener('click', ()=>{ $('#prepTplEdText').value = PREP_DEFAULT_TEXT; });
+  $('#prepTplEdSave').addEventListener('click', savePrepTplEditor);
+  $('#prepTplName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); savePrepTpl(); } });
+  $('#prepPickList').addEventListener('click', (e)=>{ const b = e.target.closest('[data-pick-tpl]'); if(!b) return; prepPickTpl = b.dataset.pickTpl; renderPrepPick(); });
+  $('#prepPickStart').addEventListener('click', ()=>{ const sh = prepPickShed; $('#prepPickModal').classList.remove('open'); prepPickShed = null; if(sh) startPrepChecklist(sh, prepPickTpl); });
   $('#rpTypesBtn').addEventListener('click', ()=>{ mtMenu(false); openPtypes(); });
   function mtMenu(open){ const m = $('#rpMoreMenu'), b = $('#rpMoreBtn'); if(!m) return; m.hidden = !open; b.setAttribute('aria-expanded', String(!!open)); }
   $('#rpMoreBtn').addEventListener('click', (e)=>{ e.stopPropagation(); mtMenu($('#rpMoreMenu').hidden); });
