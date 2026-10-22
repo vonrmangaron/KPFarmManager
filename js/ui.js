@@ -633,7 +633,9 @@ async function startNewBatch(cleanBatchNumber,opts){
   else{try{archived=summarizeCurrentBatch();if(archived)predState.farmHistory=farmHistory().concat([archived]);}catch(e){console.warn('Batch summary failed',e);}}
   const leftOver=predState.farmLeftoverFromPairs&&Number(predState.farmLeftoverKg)>0?{batch:prevKey||'',kg:Number(predState.farmLeftoverKg)}:null;
   saveSyncState();resetAllToDefaults(clean,{keepHistory:true});
-  if(leftOver)predState.prevLeftover=leftOver;   // Home offers it as this batch's carry-over
+  if(leftOver)predState.prevLeftover=leftOver;   // fallback if the Farm history record is missing
+  predState.prevBatch=prevKey||null;   // its leftover becomes this batch's carry-over (applyAutoCarry)
+  if(typeof applyAutoCarry==='function')applyAutoCarry();
   // Alongside: each shed's placement = its clean-out in the old batch + the usual turnaround
   if(opts.alongside&&farmData)farmData.sheds.forEach(s=>{const p=prevOuts.find(x=>String(x.id)===String(s.id));if(p&&p.out){s.placementDate=addDays(p.out,PW_TURNAROUND_DAYS);s.cleanoutDate=addDays(s.placementDate,DEFAULT_CLEANOUT_DAYS);s.cleanoutAuto=true;}});
   if(opts.alongside){saveState();scheduleHistoryPush();}
@@ -1628,8 +1630,8 @@ function renderLoadsModalBody(){
       ${currentLoadHtml(loadNumberMap)}
       <div class="lt-tile"><div class="lbl">Received</div><div class="val ok">${tot.rec.length} load${tot.rec.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.recKg+coTotal)}${coTotal>0?` incl. ${fmtFeed(coTotal)} carried over`:tot.recEst?` · ${tot.recEst} without a docket weight`:' on dockets'}</div></div>
       <div class="lt-tile"><div class="lbl">Upcoming</div><div class="val">${tot.up.length} load${tot.up.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.upKg)} planned${nextUp?` · next ${fmtShortNoYear(nextUp.date)}`:''}</div></div>
-      <div class="lt-tile"><label class="lbl" for="loadsCarryInput">Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">from last batch · withdrawal</div></div>
-    </div>`;
+      <div class="lt-tile"><label class="lbl" for="loadsCarryInput">Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">${typeof carryNoteHtml==='function'?carryNoteHtml():'from last batch · withdrawal'}</div></div>
+    </div>${typeof leftoverCardHtml==='function'?leftoverCardHtml():''}`;
   const planHtml=feedPlanHtml();
   const chipsHtml=`<div class="loads-filter-chips">
     <button type="button" class="loads-chip ${filter==='all'?'active':''}" data-loads-filter="all">All <span class="count">${summary.total}</span></button>

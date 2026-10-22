@@ -59,6 +59,7 @@ function loadPredState(){
     if(v.farmLeftoverKg!=null&&Number.isFinite(Number(v.farmLeftoverKg))&&Number(v.farmLeftoverKg)>0)predState.farmLeftoverKg=Number(v.farmLeftoverKg);
     if(typeof v.deliveriesOpen==='boolean')predState.deliveriesOpen=v.deliveriesOpen;
     predState.pairLeftover=normPairLeftover(v.pairLeftover);predState.farmLeftoverFromPairs=!!v.farmLeftoverFromPairs;
+    predState.prevBatch=v.prevBatch?String(v.prevBatch):null;predState.carryoverMode=v.carryoverMode==='manual'||v.carryoverMode==='auto'?v.carryoverMode:null;predState.carryoverAuto=normCarryAuto(v.carryoverAuto);
     predState.prevLeftover=v.prevLeftover&&Number(v.prevLeftover.kg)>0?{batch:String(v.prevLeftover.batch||''),kg:Number(v.prevLeftover.kg)}:null;
     if(typeof v.batchNumber==='string')predState.batchNumber=v.batchNumber.trim();
     if(typeof v.adjOpen==='boolean')predState.adjOpen=v.adjOpen;

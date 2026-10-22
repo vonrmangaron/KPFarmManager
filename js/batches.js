@@ -62,7 +62,7 @@ async function refreshRunningBatches(force){
   }finally{pwRunBusy=false;}
   pwAfterRunning();
 }
-function pwAfterRunning(){pwFixPrematureHistory();pwFinishIfDone();updateRunningUI();if(typeof renderPwBatchPanel==='function')renderPwBatchPanel();if(typeof render==='function')render();}
+function pwAfterRunning(){pwFixPrematureHistory();pwFinishIfDone();if(typeof refreshFiledBatch==='function')refreshFiledBatch();if(typeof applyAutoCarry==='function')applyAutoCarry();updateRunningUI();if(typeof renderPwBatchPanel==='function')renderPwBatchPanel();if(typeof render==='function')render();}
 
 // ── Farm history stays honest ──
 // predState.farmHistoryPending: {batch:'pending'|'done'} — batches to file once they are finished
@@ -82,7 +82,7 @@ function pwFinishIfDone(){
   const key=currentBatchKey();if(!key||pwPending()[key]!=='pending')return;
   const s=pwCurrentSummary();if(!s||!s.finished)return;
   if(typeof allPairsFinished==='function'&&!allPairsFinished())return;   // wait for every pair's leftover feed
-  if(farmHistory().some(r=>String(r.batch)===key)){pwPending()[key]='done';savePredState();return;}
+  if(farmHistory().some(r=>String(r.batch)===key)){pwPending()[key]='done';if(typeof refreshFiledBatch==='function')refreshFiledBatch();savePredState();return;}
   let rec=null;try{rec=summarizeCurrentBatch();}catch(e){}
   if(!rec)return;
   rec.source='auto';predState.farmHistory=farmHistory().concat([rec]);pwPending()[key]='done';

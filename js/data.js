@@ -5,7 +5,7 @@ function resetAllToDefaults(batchNumber,opts){
   // Farm history stays only for a new batch on the same farm
   if(!(opts&&opts.keepHistory)){predState.farmHistory=[];predState.farmHistoryDeleted=[];}
   predState.projectionLog=[];
-  predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.pairLeftover={};predState.farmLeftoverFromPairs=false;predState.prevLeftover=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
+  predState.batchNumber=batchNumber||'';predState.carryoverFarmKg=0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.farmFeedOverride=null;predState.farmLeftoverKg=null;predState.pairLeftover={};predState.farmLeftoverFromPairs=false;predState.prevLeftover=null;predState.prevBatch=null;predState.carryoverMode=null;predState.carryoverAuto=null;predState.predGroup=1;predState.predView='both';predState.beta=0.27;predState.targetHarvestWeightKg={1:2.65,2:2.65,3:2.65,4:2.65};predState.densityGlobal={...DEFAULT_DENSITY_GLOBAL};predState.deliveriesOpen=true;predState.adjOpen=false;
   siloData={1:{readings:[],deliveries:[]},2:{readings:[],deliveries:[]},3:{readings:[],deliveries:[]},4:{readings:[],deliveries:[]}};
   testDeliveries={1:[],2:[],3:[],4:[]};testPickups={};inlinePickupState=null;farmLoads=[];
   shedViewByGroup={...DEFAULT_VIEWS};shedRange={start:0,end:0};siloRange={start:0,end:14};inlineDeliveryState=null;activeTab='home';dailyRangeState={...DEFAULT_DAILY_RANGE};
@@ -156,7 +156,7 @@ function normalizeHistoryRec(r){
   if(!r||typeof r!=='object')return null;
   const rec={id:String(r.id||uid('bh')),batch:String(r.batch||'').slice(0,32),endDate:r.endDate?String(r.endDate).slice(0,10):'',source:r.source==='auto'?'auto':'manual',
     placed:Math.round(num0(r.placed)),picked:Math.round(num0(r.picked)),liveWeightKg:num0(r.liveWeightKg),feedKg:num0(r.feedKg),avgAge:num0(r.avgAge),
-    firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),finalAge:numOrNull(r.finalAge),finalAvgKg:numOrNull(r.finalAvgKg),densTrigger:numOrNull(r.densTrigger),densTarget:numOrNull(r.densTarget),densMax:numOrNull(r.densMax),pickupsPerShed:numOrNull(r.pickupsPerShed),intakePct:numOrNull(r.intakePct),savedAt:num0(r.savedAt)||Date.now()};
+    firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),finalAge:numOrNull(r.finalAge),finalAvgKg:numOrNull(r.finalAvgKg),densTrigger:numOrNull(r.densTrigger),densTarget:numOrNull(r.densTarget),densMax:numOrNull(r.densMax),pickupsPerShed:numOrNull(r.pickupsPerShed),intakePct:numOrNull(r.intakePct),leftoverKg:numOrNull(r.leftoverKg),savedAt:num0(r.savedAt)||Date.now()};
   return rec.placed>0&&rec.picked>0&&rec.picked<=rec.placed?rec:null;
 }
 // Combine Farm history from the cloud with this device's: union by id,
@@ -306,7 +306,7 @@ function summarizeBatchData(o){
   if(picked<=0||lwBirds<=0||picked<placed*0.5)return null;
   return normalizeHistoryRec({batch:o.batch||'',endDate:last?iso(last):'',source:'auto',placed,picked,
     liveWeightKg:lw*picked/lwBirds,feedKg:Math.max(0,num0(o.docketKg)+num0(o.carryKg)-num0(o.leftoverKg)),avgAge:ageBirds/picked,
-    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:o.intakePct,
+    firstThinAge:medianOf(fa),firstThinShare:medianOf(fs),finalShare:medianOf(fin),finalAge:medianOf(finAge),finalAvgKg:medianOf(finKg),intakePct:o.intakePct,leftoverKg:num0(o.leftoverKg)>0?Math.round(num0(o.leftoverKg)):null,
     densTrigger:dBefore.length?medianOf(dBefore):null,densTarget:dAfter.length?medianOf(dAfter):null,densMax:dAll.length?Math.max(...dAll):null,pickupsPerShed:perShed.length?medianOf(perShed):null});
 }
 // Feed eaten so far, smoothed over every date all pairs were read: fit

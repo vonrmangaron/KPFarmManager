@@ -75,8 +75,9 @@ function carryoverTotalKg(){
   const v=Number(predState.carryoverFarmKg);if(Number.isFinite(v)&&v>0)return v;
   const c=predState.carryoverKg||{};return [1,2,3,4].reduce((s,g)=>{const x=Number(c[g]);return s+(Number.isFinite(x)&&x>0?x:0);},0);
 }
+function normCarryAuto(a){return a&&Number(a.kg)>0?{batch:String(a.batch||''),kg:Math.round(Number(a.kg))}:null;}
 function carryoverKg(){return 0;} // per-pair carry-over retired (one farm-wide field)
-function setCarryoverTotal(tonnes){const n=Number(tonnes);predState.carryoverFarmKg=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;predState.carryoverKg={1:0,2:0,3:0,4:0};savePredState();schedulePush();}
+function setCarryoverTotal(tonnes){const n=Number(tonnes);predState.carryoverFarmKg=(Number.isFinite(n)&&n>0)?Math.round(n*1000):0;predState.carryoverKg={1:0,2:0,3:0,4:0};predState.carryoverMode='manual';predState.carryoverAuto=null;savePredState();schedulePush();}
 // Silo reading time of day: 'am' = morning (start-of-day stock) or 'pm' =
 // evening (end-of-day stock), stamped on each reading. Auto from the clock
 // (before noon = morning); tapping Morning/Evening overrides it for today only.
@@ -135,4 +136,4 @@ const NAV_ITEMS = [
 ];
 
 // Feed left in each pair's silos when the pair finished: {pair:{kg, silos:[3 ring choices], weighed, at}}
-function normPairLeftover(o){const out={};if(!o||typeof o!=='object')return out;[1,2,3,4].forEach(g=>{const r=o[g];if(!r||typeof r!=='object')return;const kg=Number(r.kg);if(!Number.isFinite(kg)||kg<0)return;out[g]={kg:Math.round(kg),silos:Array.isArray(r.silos)?r.silos.slice(0,3).map(x=>x==null?null:String(x)):[null,null,null],weighed:!!r.weighed,at:Number(r.at)||Date.now()};});return out;}
+function normPairLeftover(o){const out={};if(!o||typeof o!=='object')return out;[1,2,3,4].forEach(g=>{const r=o[g];if(!r||typeof r!=='object')return;const kg=Number(r.kg);if(!Number.isFinite(kg)||kg<0)return;out[g]={kg:Math.round(kg),silos:Array.isArray(r.silos)?r.silos.slice(0,3).map(x=>x==null?null:String(x)):[null,null,null],parts:Array.isArray(r.parts)?[0,1,2].map(i=>{const p=Number(r.parts[i]);return Number.isFinite(p)&&p>0?Math.round(p):0;}):[0,0,0],weighed:!!r.weighed,at:Number(r.at)||Date.now()};});return out;}
