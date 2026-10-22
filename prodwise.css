@@ -5769,6 +5769,13 @@ body.theme-dark .st2-body .fs-off .fs-off-row+.fs-off-row{border-top-color:var(-
 .ws-dock button.on,.ws-dock button.on:hover{background:none;color:#16191B;transition:color .2s ease .08s}
 .ws-dock button.on svg{stroke-width:2.4}
 @media (prefers-reduced-motion:reduce){.ws-dock::before{transition:none}}
+/* 2026-10-23: highlight and hover round on the outer side only, almost square where the two meet */
+.ws-dock::before{border-radius:999px 7px 7px 999px;transition:transform .34s cubic-bezier(.2,.85,.25,1),border-radius .34s cubic-bezier(.2,.85,.25,1)}
+.ws-dock:has(button[data-ws="tasks"].on)::before,.ws-dock.ws-from-tasks::before{border-radius:7px 999px 999px 7px}
+.ws-dock.ws-from-production::before{border-radius:999px 7px 7px 999px}
+.ws-dock button[data-ws="production"]{border-radius:999px 7px 7px 999px}
+.ws-dock button[data-ws="tasks"]{border-radius:7px 999px 999px 7px}
+@media (prefers-reduced-motion:reduce){.ws-dock::before{transition:none}}
 @keyframes pwmIn{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.pwm{animation:none}}
 /* Tool pages keep the Production | Tasks switch (2026-10-19); room at the bottom so the last row scrolls clear of it */

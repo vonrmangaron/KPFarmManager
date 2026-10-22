@@ -2929,25 +2929,25 @@
   }
 
   /* Report a problem: in the header on tablets and computers (phones keep the quick-actions button) */
-  .btn-prep-top{ display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 12px; border-radius:10px; border:1.5px solid #F0A21A; background:linear-gradient(100deg,#FFE3A6,#FFF4DC); color:#5A3A00; font:700 13px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; box-shadow:0 3px 10px rgba(240,162,26,.25); }
-  .btn-prep-top[hidden]{ display:none !important; }
-  .btn-prep-top svg{ width:17px; height:17px; flex:none; }
-  .btn-prep-top b{ font-weight:800; }
-  .btn-prep-top .bp-bar{ width:42px; height:5px; border-radius:9px; background:rgba(90,58,0,.15); overflow:hidden; flex:none; }
-  .btn-prep-top .bp-bar i{ display:block; height:100%; border-radius:9px; background:#C77A00; }
-  .btn-prep-top:hover{ background:#F0A21A; color:#241A08; }
-  body.theme-dark .btn-prep-top{ background:rgba(240,162,26,.18); color:#FFD58A; border-color:#F0A840; box-shadow:none; }
-  body.theme-dark .btn-prep-top .bp-bar{ background:rgba(255,213,138,.2); }
-  body.theme-dark .btn-prep-top .bp-bar i{ background:#F0A840; }
-  @media (max-width: 1600px){ .btn-prep-top .bp-bar{ display:none; } }
-  @media (max-width: 1440px){ .btn-prep-top .bp-word, .btn-prep-top .bp-n{ display:none; } .btn-prep-top{ padding:0 10px; gap:6px; } }
-  @media (max-width: 760px){ .btn-prep-top{ height:34px; padding:0 9px; } .btn-prep-top .bp-tx{ font-size:12px; } }
+  .prep-float{ position:fixed; bottom:29px; right:366px; z-index:60; display:none; align-items:center; gap:9px; height:48px; padding:0 16px 0 14px; border-radius:999px; border:0; background:linear-gradient(180deg,#FFE7A8 0%,#FFD164 100%); color:#3F2800; font:700 13.5px 'Inter',sans-serif; white-space:nowrap; cursor:pointer; box-shadow:0 12px 30px rgba(240,162,26,.35),0 2px 6px rgba(0,0,0,.12),inset 0 0 0 1px rgba(160,100,0,.25); transition:transform .25s ease,opacity .25s ease,background .15s ease; }
+  .prep-float[hidden], .prep-float.nodock{ display:none !important; }
+  .prep-float.away{ transform:translateY(90px); opacity:0; pointer-events:none; }
+  .prep-float svg{ width:18px; height:18px; flex:none; }
+  .prep-float b{ font-weight:800; }
+  .prep-float .bp-bar{ width:40px; height:5px; border-radius:9px; background:rgba(63,40,0,.16); overflow:hidden; flex:none; }
+  .prep-float .bp-bar i{ display:block; height:100%; border-radius:9px; background:#9A5F00; }
+  .prep-float:hover{ background:linear-gradient(180deg,#FFD452 0%,#F0A21A 100%); }
+  .prep-float:focus-visible{ outline:2px solid #16191B; outline-offset:2px; }
+  body.theme-dark .prep-float{ background:rgba(36,30,18,.92); color:#FFD58A; box-shadow:0 12px 30px rgba(0,0,0,.4),inset 0 0 0 1.5px rgba(240,168,64,.7); }
+  body.theme-dark .prep-float .bp-bar{ background:rgba(255,213,138,.2); } body.theme-dark .prep-float .bp-bar i{ background:#F0A840; }
+  @media (min-width: 761px){ .prep-float{ display:inline-flex; } }
+  @media (max-width: 1100px){ .prep-float .bp-bar, .prep-float .bp-word{ display:none; } }
   .prep-chip-m{ display:none; }
   @media (max-width: 760px){ .agenda-filter.has-prep{ gap:4px; } .agenda-filter.has-prep button:not(.prep-chip-m){ padding:8px 8px; font-size:11.5px; }
     .agenda-filter .prep-chip-m{ display:inline-flex; align-items:center; gap:2px; padding:0 7px; border-radius:99px; border:1.5px solid #F0A21A !important; background:linear-gradient(100deg,#FFE3A6,#FFF4DC) !important; color:#5A3A00 !important; font:800 12.5px 'Inter',sans-serif; white-space:nowrap; flex-shrink:0; }
     .agenda-filter .prep-chip-m svg{ width:15px; height:15px; }
     body.theme-dark .agenda-filter .prep-chip-m{ background:rgba(240,162,26,.18) !important; color:#FFD58A !important; }
-    .toolbar #topPrepBtn{ display:none !important; } }
+ }
   .btn-report-top{ display:none; }
   @media (min-width: 761px){
     .btn-report-top{ display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:10px; border:1px solid var(--primary); background:var(--primary-soft); color:var(--primary-dark); font:800 13.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; }
@@ -3803,6 +3803,13 @@
   .ws-dock button.on,.ws-dock button.on:hover{background:none;color:#16191B;transition:color .2s ease .08s}
   .ws-dock button.on svg{stroke-width:2.4}
   @media (prefers-reduced-motion:reduce){.ws-dock::before{transition:none}}
+  /* 2026-10-23: highlight and hover round on the outer side only, almost square where the two meet */
+  .ws-dock::before{border-radius:999px 7px 7px 999px;transition:transform .34s cubic-bezier(.2,.85,.25,1),border-radius .34s cubic-bezier(.2,.85,.25,1)}
+  .ws-dock:has(button[data-ws="tasks"].on)::before,.ws-dock.ws-from-tasks::before{border-radius:7px 999px 999px 7px}
+  .ws-dock.ws-from-production::before{border-radius:999px 7px 7px 999px}
+  .ws-dock button[data-ws="production"]{border-radius:999px 7px 7px 999px}
+  .ws-dock button[data-ws="tasks"]{border-radius:7px 999px 999px 7px}
+  @media (prefers-reduced-motion:reduce){.ws-dock::before{transition:none}}
 
   /* Board: fold finished past days in one tap */
   .kb-tools{ display:flex; justify-content:flex-end; margin:0 0 8px; }
@@ -3878,7 +3885,6 @@
     </div>
 
     <div class="toolbar">
-      <button type="button" class="btn-prep-top" id="topPrepBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3 11.5 10.5"/><path d="M9.5 9.5 14.5 14.5"/><path d="M9.5 9.5 5 14c-1.2 1.2-1.6 3.3-1 5l.4 1 1-.4c1.7-.6 3.8-.2 5-1.4l4.1-3.7"/><path d="M7.5 16.5 6 18"/></svg><span class="bp-tx"></span><span class="bp-bar"><i></i></span></button>
       <button type="button" class="btn-report-top" id="topReportBtn" title="Report a problem on the farm (a photo is optional)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg><span>Report a problem</span></button>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
@@ -3998,6 +4004,7 @@
   <button id="navMoreBtn"><span class="bn-icon"><svg class="bn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Menu</button>
 </nav>
 
+<button type="button" class="prep-float" id="topPrepBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3 11.5 10.5"/><path d="M9.5 9.5 14.5 14.5"/><path d="M9.5 9.5 5 14c-1.2 1.2-1.6 3.3-1 5l.4 1 1-.4c1.7-.6 3.8-.2 5-1.4l4.1-3.7"/><path d="M7.5 16.5 6 18"/></svg><span class="bp-tx"></span><span class="bp-bar"><i></i></span></button>
 <div class="ws-dock" id="cwDock" role="group" aria-label="Section"><button type="button" data-ws="production" aria-pressed="false" title="Production: sheds, feed and pickups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Production</span></button><button type="button" data-ws="tasks" class="on" aria-pressed="true" title="Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Tasks</span></button></div>
 <div class="fab-dock" id="fabDock">
   <div class="fab-items" id="fabItems">
@@ -11479,7 +11486,18 @@
     persist(); renderAll();
     showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
   }
-  // Shed preparation: a compact button in the top bar (2026-10-22: the banner pushed the board down)
+  // Shed preparation: a button floating beside the Production | Tasks switcher (2026-10-23)
+  function placePrepFloat(){
+    const b = $('#topPrepBtn'), d = $('#cwDock'); if(!b || !d) return;
+    const r = d.getBoundingClientRect();
+    if(!r.width){ b.classList.add('nodock'); return; }
+    b.classList.remove('nodock');
+    b.style.right = Math.round(window.innerWidth - r.left + 10) + 'px';
+    b.classList.toggle('away', d.classList.contains('away'));
+  }
+  (function(){ const d = document.getElementById('cwDock'); if(!d) return;
+    new MutationObserver(placePrepFloat).observe(d, { attributes:true, attributeFilter:['class','style'] });
+    window.addEventListener('resize', placePrepFloat); })();
   function renderPrepPill(){
     const open = prepOpenList(), btn = $('#topPrepBtn');
     const old = $('#prepBanner'); if(old) old.remove();
@@ -11494,6 +11512,7 @@
         btn.querySelector('.bp-bar i').style.width = pct + '%';
         btn.title = 'Shed preparation checklists — ' + open.map(c=>{ const p = prepProgress(c); return `Shed ${c.shed}: ${p.done}/${p.total}`; }).join(' · ') + '. Click to open.';
         btn.setAttribute('aria-label', btn.title);
+        requestAnimationFrame(placePrepFloat);
       }
     }
     const rb = document.querySelector('.ar-btn[data-ar="routine"]');
