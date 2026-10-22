@@ -146,39 +146,6 @@ function feedEatenMeasured(){
   });
   return {eaten,carry,pairs,missing};
 }
-// ── FCR today, from records only (2026-10-22) ──
-// Feed eaten = dockets + carry-over − feed in the silos (each pair's latest reading, or its entered
-// leftover once both sheds are closed). Live weight = plant weights of every pickup so far + the birds
-// still in × today's weight on the curve fitted to their own pickups. No intake model, no projection.
-function recordsToday(){
-  if(!farmData)return null;
-  const pl=predState.pairLeftover||{},carry=carryoverTotalKg(),missing=[],pairs=[];
-  let dockets=0,stock=0,offW=0,offB=0,estW=0,estB=0,onB=0,onW=0,ageSum=0,asOf=null;
-  [1,2,3,4].forEach(g=>{
-    const sheds=shedsForGroup(g).filter(s=>s.placementDate&&num0(s.initialPopulation)>0);if(!sheds.length)return;
-    const lo=pl[g],done=!!lo&&sheds.every(s=>s.closed);
-    const r=done?null:latestReading(g);if(!done&&!r){missing.push(g);return;}
-    const D=done?null:dateOnly(r.date);
-    let del=0;farmLoads.forEach(l=>{if(!l.date)return;if(D&&!loadBeforeReading(r,dateOnly(l.date)))return;del+=loadKgToPairBefore(l,g);});
-    const st=done?num0(lo.kg):readingTotalKg(r);
-    dockets+=del;stock+=st;if(D&&(!asOf||D<asOf))asOf=D;
-    pairs.push({g,done,date:D,delivered:del,stock:st});
-    sheds.forEach(s=>{
-      // pickups on the reading day count with their plant weight (those birds ate a morning at most)
-      (s.pickups||[]).filter(p=>p.date&&num0(p.birds)>0&&(!D||dateOnly(p.date)<=D)).forEach(p=>{const b=num0(p.birds);ageSum+=pickupAge(s,p)*b;
-        if(num0(p.totalWeightKg)>0&&!p.weightEstimated){offW+=num0(p.totalWeightKg);offB+=b;}
-        else{const f=forecastWeightModeAware(s,dateOnly(p.date));estW+=b*(f&&f.kg>0?f.kg:rossWeightKg(pickupAge(s,p)));estB+=b;}});
-      if(!s.closed&&D){const live=Math.max(0,liveAtStartOfDay(s,addDays(D,1)));if(live>0){const f=forecastWeightModeAware(s,D);onW+=live*(f&&f.kg>0?f.kg:rossWeightKg(ageInDays(s,D)));onB+=live;ageSum+=ageInDays(s,D)*live;}}
-    });
-  });
-  if(!pairs.length)return {ok:false,missing};
-  const eaten=carry+dockets-stock,lw=offW+estW+onW,birds=offB+estB+onB;
-  if(!(eaten>0)||!(lw>0)||!(birds>0))return {ok:false,missing};
-  const placed=farmData.sheds.reduce((n,s)=>n+(s.placementDate?num0(s.initialPopulation):0),0),mort=farmData.sheds.reduce((n,s)=>n+(s.placementDate?num0(s.mortality):0),0);
-  const k=batchKpis({feedKg:eaten,liveWeightKg:lw,birds,ageBirdSum:ageSum,placed,mortality:mort,targetKg:CFCR_REF_KG});
-  return {ok:true,missing,pairs,asOf,carry,dockets,stock,stockLeft:pairs.filter(p=>p.done).reduce((n,p)=>n+p.stock,0),eaten,offW,offB,estW,estB,onW,onB,lw,birds,
-    fcr:k.fcr,cfcr:k.cfcr,alw:k.alw,avgAge:k.avgAge,livability:k.livability,official:onB===0&&estB===0&&!missing.length};
-}
 // ── Farm history: each finished batch's results, kept with the farm
 // across batches (saved at New batch, or entered by hand). The app learns
 // from it: first-thin timing and intake % when the current batch has no

@@ -583,6 +583,19 @@ function batchSoFar(sheds, today) {
 function batchMeasured(today) {
   const t = dateOnly(today);
   const m = feedEatenMeasured();
+  // A finished pair (both sheds closed, leftover entered) counts every load it got minus its leftover,
+  // and every bird as shipped — instead of its last silo reading (closeout.js)
+  const pl = predState.pairLeftover || {};
+  [1,2,3,4].forEach(g => {
+    const lo = pl[g], sheds = shedsForGroup(g).filter(s => s.placementDate);
+    if (!lo || !sheds.length || !sheds.every(s => s.closed)) return;
+    const all = farmLoads.reduce((n, l) => n + (l.date ? loadKgToPairBefore(l, g) : 0), 0);
+    const i = m.pairs.findIndex(p => p.g === g);
+    if (i >= 0) { m.eaten -= m.pairs[i].delivered - m.pairs[i].stock; m.pairs.splice(i, 1); }
+    m.missing = m.missing.filter(x => x !== g);
+    m.eaten += all - (Number(lo.kg) || 0);
+    m.pairs.push({ g, date: t, morning: true, delivered: all, stock: Number(lo.kg) || 0, sheds, finished: true });
+  });
   const acc = { feedKg: m.eaten, liveWeightKg: 0, birds: 0, ageBirdSum: 0, placed: 0, mortality: 0, targetBirdSum: 0,
     anyEstimated: false, onFarmKg: 0, shippedKg: 0, ordered: feedOrderedKg(), eaten: m.eaten, carry: m.carry, pairs: m.pairs, missing: m.missing.slice(), noWeight: [] };
   (farmData.sheds || []).forEach(shed => {
@@ -761,6 +774,79 @@ window.addEventListener('resize',()=>{const pop=document.getElementById('alertsP
 // Per-group status grid — quick Age/Live/Weight/FCR/Feed summary
 // for each of the 4 groups, one click away from that group's page.
 // ─────────────────────────────────────────────────────────────
+// ── Result detail (v234): one card per pair — status, birds, weight, silo, next load ──
+function dashPairInfo(g, today){
+  const sheds = shedsForGroup(g).filter(x => x.placementDate);
+  if (!sheds.length) return null;
+  const open = sheds.filter(x => !x.closed), closed = sheds.length - open.length;
+  const lo = (predState.pairLeftover || {})[g];
+  let live = 0, wSum = 0, wBirds = 0;
+  open.forEach(x => { const l = Math.max(0, liveAtStartOfDay(x, today)); live += l; const e = currentShedWeightEstimate(x, today); if (e && l > 0) { wSum += e.kg * l; wBirds += l; } });
+  const ages = open.map(x => ageInDays(x, today)), outs = open.map(shedOutDate).filter(Boolean).sort((x,y) => x - y);
+  const allOuts = sheds.map(shedOutDate).filter(Boolean).sort((x,y) => x - y);
+  const stock = open.length ? balanceOnEndOfDay(g, today, true) : null;
+  const pl = open.length && typeof projectedLeftoverForGroup === 'function' ? projectedLeftoverForGroup(g) : null;
+  let runsOut = null;
+  // runs out = the first day the silos hit zero before the pair's last clean-out (booked loads counted)
+  if (open.length && pl && pl.date && stock != null) { for (let dd = addDays(today, 1); dd <= dateOnly(pl.date); dd = addDays(dd, 1)) { const b = balanceOnEndOfDay(g, dd, true); if (b != null && b <= 0) { runsOut = dd; break; } } }
+  const next = (farmLoads || []).filter(l => l.date && dateOnly(l.date) >= today && Number(l.splitKg && l.splitKg[g]) > 0).sort((x,y) => dateOnly(x.date) - dateOnly(y.date))[0] || null;
+  return { g, sheds, open, closed, lo, live, avgW: wBirds ? wSum / wBirds : null, ages, outs, allOuts, stock, leftover: pl ? pl.balance : null, end: pl ? pl.date : null, runsOut, next,
+    cap: 3 * (CONE_KG + MAX_RINGS * RING_KG) };   // each pair has 3 silos
+}
+function dashPairCardsHtml(){
+  const today = dateOnly(new Date());
+  const d = x => escapeHtml(fmtShortNoYear(x));
+  // dates as "29 Oct" or "29–30 Oct" / "31 Oct – 2 Nov"
+  const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const range = a => { if (!a.length) return '—'; const lo = dateOnly(a[0]), hi = dateOnly(a[a.length - 1]);
+    if (lo.getTime() === hi.getTime()) return `${lo.getDate()} ${MO[lo.getMonth()]}`;
+    return lo.getMonth() === hi.getMonth() ? `${lo.getDate()}–${hi.getDate()} ${MO[hi.getMonth()]}` : `${lo.getDate()} ${MO[lo.getMonth()]} – ${hi.getDate()} ${MO[hi.getMonth()]}`; };
+  const cards = [1,2,3,4].map(g => dashPairInfo(g, today)).filter(Boolean).map(p => {
+    const done = !p.open.length;
+    const st = done ? (p.lo ? '<span class="rd-st done">Done</span>' : '<span class="rd-st bad">Enter leftover</span>')
+      : p.closed ? `<span class="rd-st half">${p.closed} of ${p.sheds.length} out</span>` : '<span class="rd-st in">Birds in</span>';
+    let mid, foot;
+    if (done) {
+      mid = `<div class="rd-kv"><div><span>Birds in</span><b>0</b></div><div><span>Out</span><b>${range(p.allOuts)}</b></div></div>
+        <div class="rd-silo"><div class="rd-sl"><span>Leftover in silos</span><b>${p.lo ? fmtTonnesAlways(Number(p.lo.kg) || 0) : '—'}</b></div></div>`;
+      foot = p.lo ? '<span>Carries over to the next batch</span>' : `<button type="button" class="rd-link" data-lo-open="${p.g}">Enter the leftover feed ›</button>`;
+    } else {
+      const pct = p.stock != null && p.cap > 0 ? Math.max(2, Math.min(100, p.stock / p.cap * 100)) : 0;
+      const bad = !!p.runsOut || (p.leftover != null && p.leftover < 0);
+      const ages = p.ages.slice().sort((x,y) => x - y);
+      mid = `<div class="rd-kv"><div><span>Birds in</span><b>${p.live.toLocaleString()}</b></div><div><span>Avg weight</span><b>${p.avgW ? p.avgW.toFixed(2) + ' kg' : '—'}</b></div>
+        <div><span>Age</span><b>${ages.length ? (ages[0] === ages[ages.length-1] ? 'D' + ages[0] : `D${ages[0]}–${ages[ages.length-1]}`) : '—'}</b></div><div><span>Clean-out</span><b>${range(p.outs)}</b></div></div>
+        <div class="rd-silo"><div class="rd-sl"><span>In silos ${p.stock != null ? fmtTonnesAlways(Math.max(0, p.stock)) : '—'}</span><b class="${bad ? 'warn' : ''}">${p.stock == null ? 'no reading' : p.runsOut ? 'runs out ' + d(p.runsOut) : 'lasts to clean-out'}</b></div>
+          <div class="rd-sb"><i class="${bad ? 'bad' : ''}" style="width:${pct.toFixed(0)}%"></i></div>
+          <div class="rd-sl"><span>Expected leftover</span><b class="${p.leftover != null && p.leftover < 0 ? 'warn' : ''}">${p.leftover == null ? '—' : p.leftover < 0 ? 'short ' + fmtTonnesAlways(-p.leftover) : '≈ ' + fmtTonnesAlways(p.leftover)}</b></div></div>`;
+      foot = p.next ? `<span>Next load</span><b>${d(dateOnly(p.next.date))} · ${fmtTonnesAlways(Number(p.next.splitKg[p.g]) || 0)}</b>` : `<span>No loads booked</span>${p.closed ? `<b>${p.sheds.filter(x => x.closed).map(x => 'Shed ' + x.id).join(', ')} closed</b>` : ''}`;
+    }
+    return `<div class="rd-pc"><div class="rd-pc-top" style="background:var(--pair${p.g})"></div><div class="rd-pc-in">
+      <div class="rd-pc-h"><button type="button" class="rd-pc-name" data-tab="g${p.g}" title="Open ${escapeAttr(pairLabel(p.g))}">${escapeHtml(pairLabel(p.g))}</button>${st}</div>${mid}</div>
+      <div class="rd-pc-ft">${foot}</div></div>`;
+  }).join('');
+  if (!cards) return '';
+  return `<section class="rd-sec"><div class="rd-sec-h"><h2>Pairs</h2><span>birds, weight and feed per pair</span></div><div class="rd-pairs">${cards}</div></section>`;
+}
+function dashFeedStripHtml(){
+  const today = dateOnly(new Date());
+  const fo = farmFeedToOrder();
+  const infos = [1,2,3,4].map(g => dashPairInfo(g, today)).filter(Boolean);
+  if (!infos.length) return '';
+  const inSilos = infos.reduce((n, p) => n + (p.open.length ? Math.max(0, Number(p.stock) || 0) : (p.lo ? Number(p.lo.kg) || 0 : 0)), 0);
+  const left = infos.reduce((n, p) => n + (p.open.length ? Math.max(0, Number(p.leftover) || 0) : (p.lo ? Number(p.lo.kg) || 0 : 0)), 0);
+  const short = infos.filter(p => p.runsOut || (p.leftover != null && p.leftover < 0));
+  const next = (farmLoads || []).filter(l => l.date && dateOnly(l.date) >= today).sort((x,y) => dateOnly(x.date) - dateOnly(y.date))[0];
+  const WD = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const nextHtml = next ? (() => { const dd = dateOnly(next.date), gs = [1,2,3,4].filter(g => Number(next.splitKg && next.splitKg[g]) > 0);
+    return `<div class="rd-dl"><div class="rd-date"><span>${WD[dd.getDay()]}</span><b>${dd.getDate()}</b></div><div><b>${fmtTonnesAlways(next.actualKg != null ? next.actualKg : next.plannedKg)} ${escapeHtml(feedTypeLabel(next.feedType).toLowerCase())}</b><span class="rd-s">${gs.map(g => `${pairShort(g)}: ${fmtTonnesAlways(Number(next.splitKg[g]))}`).join(' · ')}</span></div></div>`; })() : '<span class="rd-s">No loads booked</span>';
+  return `<section class="rd-card rd-feed">
+    <div><span class="rd-k">Still to order</span><div class="rd-big">${fo ? fmtTonnesAlways(fo.expected) : '0 t'}</div><span class="rd-s">${short.length ? `<b class="warn">${escapeHtml(short.map(p => pairShort(p.g)).join(', '))} tight</b>` : fo && fo.expected > 0 ? `${fmtTonnesAlways(fo.safe)} if no more pickups` : 'booked loads cover it'}</span></div>
+    <div><span class="rd-k">In silos now</span><div class="rd-big">${fmtTonnesAlways(inSilos)}</div><span class="rd-s">latest readings${infos.some(p => !p.open.length && p.lo) ? ' + leftovers' : ''}</span></div>
+    <div><span class="rd-k">Expected leftover</span><div class="rd-big">≈ ${fmtTonnesAlways(left)}</div><span class="rd-s">carries over to the next batch</span></div>
+    <div><span class="rd-k">Next load</span>${nextHtml}<span class="rd-feed-acts"><button class="rd-link" id="siloFromDash" type="button">Silos</button><button class="rd-link" data-open-loads-modal type="button">All loads</button></span></div>
+  </section>`;
+}
 function renderGroupStatusGrid() {
   const today = new Date();
   const tiles = [1,2,3,4].map(g => {
@@ -1030,61 +1116,26 @@ function renderDashboardView() {
     ? `Ends <strong>${fmtShort(batchEnd)}</strong> · ${daysLeft > 0 ? `${daysLeft} day${daysLeft!==1?'s':''} left` : daysLeft === 0 ? 'today' : 'ended'}<br><span class="dash-kpi-src">${batchEndSrc}</span>`
     : 'No end date yet — plan pickups in Predictions';
 
-  return `<div class="dash-wrap">
-  <div class="dash-grid dash-row-kpi">
-    <div class="dash-kpi dash-kpi-neutral">
-      <span class="dash-kpi-label">Batch progress</span>
-      <span class="dash-kpi-value">${ageStr}</span>
-      <span class="dash-kpi-sub">${endStr}</span>
-      <div class="dash-kpi-progress" title="${batchPct}% of the batch complete"><div class="dash-kpi-progress-fill" style="width:${batchPct}%"></div></div>
-    </div>
-    <div class="dash-kpi dash-kpi-amber">
-      <span class="dash-kpi-icon">${dashKpiIcon('birds')}</span>
-      <span class="dash-kpi-label">Birds on hand</span>
-      <span class="dash-kpi-value">${totalLive > 0 ? totalLive.toLocaleString() : '—'}</span>
-      <span class="dash-kpi-sub">of ${totalInit.toLocaleString()} placed · ${totalPick.toLocaleString()} picked up</span>
-    </div>
-    <div class="dash-kpi dash-kpi-green">
-      <span class="dash-kpi-icon">${dashKpiIcon('fcr')}</span>
-      <span class="dash-kpi-label">FCR today${estChip}</span>
-      <span class="dash-kpi-value" title="FCR = feed eaten ÷ live weight (on farm + shipped) at the latest silo readings. Cfcr2.45 = FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}. ALW = live weight ÷ birds (${avgAlw ? avgAlw.toFixed(3) : '—'} kg).">${fcrDisplay} <span>/ Cfcr2.45 ${cFcrDisplay}</span></span>
-      ${fcrWhy ? `<span class="dash-kpi-sub">${escapeHtml(fcrWhy)}</span>` : `<span class="dash-kpi-sub" title="cFCR (Industry) = FCR − (ALW − ${so.targetKg.toFixed(2)} target) ÷ 3.2. PIF = livability × ALW ÷ (avg age ${k.avgAge ? k.avgAge.toFixed(1) : '—'} d × FCR) × 100. Higher PIF is better.">cFCR Ind. ${cFcrIndVal > 0 ? cFcrIndVal.toFixed(2) : '—'} · PIF today ${epefDisplay}</span>`}
-      ${fcrRows}
-    </div>
-    <div class="dash-kpi dash-kpi-red">
-      <div class="dash-kpi-top">
-        <span class="dash-kpi-icon">${dashKpiIcon('mortality')}</span>
-        ${livRing}
-      </div>
-      <span class="dash-kpi-label">Mortality</span>
-      <span class="dash-kpi-value">${mortPct.toFixed(1)}<span>%</span></span>
-      <span class="dash-kpi-sub">${totalMort.toLocaleString()} birds · livability ${livability != null ? livability.toFixed(1) + '%' : '—'} <span class="dash-kpi-src">(target ≥ 96%)</span></span>
-    </div>
-  </div>
+  // ── Layout (v234, 2026-10-22): glance → result (today vs finish) → pairs → feed → shed table → chart ──
+  const tlStart = batchStart, tlEnd = batchEnd;
+  const tlPct = d => (tlStart && tlEnd && tlEnd > tlStart) ? Math.max(0, Math.min(100, daysBetween(tlStart, dateOnly(d)) / daysBetween(tlStart, tlEnd) * 100)) : 0;
+  const tlMarks = [1,2,3,4].map(g => { const outs = shedsForGroup(g).filter(x => x.placementDate).map(shedOutDate).filter(Boolean).sort((x,y)=>y-x); return outs.length ? { g, d: outs[0] } : null; }).filter(Boolean)
+    .map(m => `<span class="rd-tl-m" style="left:${tlPct(m.d).toFixed(1)}%;background:var(--pair${m.g})" title="${escapeAttr(pairLabel(m.g))} last clean-out ${escapeAttr(fmtShortNoYear(m.d))}"></span>`).join('');
+  const closedN = allSheds.filter(x => x.closed).length;
+  const glance = `<section class="rd-card rd-glance">
+    <div class="rd-g-main"><span class="rd-k">Batch ${escapeHtml(String(predState.batchNumber || farmData.batchNumber || ''))}</span>
+      <h2>${ageStr}${batchAge != null ? ' <span>· oldest shed</span>' : ''}</h2>
+      ${tlStart && tlEnd ? `<div class="rd-tl" title="${batchPct}% of the batch done"><div class="rd-tl-bar"><i style="width:${tlPct(todayD).toFixed(1)}%"></i></div>${tlMarks}<span class="rd-tl-now" style="left:${tlPct(todayD).toFixed(1)}%"></span></div>` : ''}
+      <span class="rd-s">${tlStart ? `Placed ${escapeHtml(fmtShortNoYear(tlStart))}` : ''}${tlEnd ? ` → ${batchEndSrc === 'clean-out' ? 'last clean-out' : escapeHtml(batchEndSrc || 'end')} <b>${escapeHtml(fmtShort(tlEnd))}</b> · ${daysLeft > 0 ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} to go` : daysLeft === 0 ? 'today' : 'ended'}` : 'No end date yet'}</span></div>
+    <div><span class="rd-k">Birds on hand</span><div class="rd-big">${totalLive > 0 ? totalLive.toLocaleString() : '0'}</div><span class="rd-s">of ${totalInit.toLocaleString()} placed · ${totalPick.toLocaleString()} picked up${closedN ? ` · ${closedN} shed${closedN !== 1 ? 's' : ''} closed` : ''}</span></div>
+    <div><span class="rd-k">Mortality</span><div class="rd-big">${mortPct.toFixed(1)}<small>%</small></div><span class="rd-s">${totalMort.toLocaleString()} birds · livability ${livability != null ? livability.toFixed(1) + '%' : '—'} <span class="rd-chip ${livability != null && livability >= 96 ? 'ok' : 'bad'}" title="Livability target ≥ 96%">${livability != null && livability >= 96 ? 'on target' : 'target ≥ 96%'}</span></span></div>
+  </section>`;
 
-  <!-- Featured: whole-batch projection -->
-  ${renderFarmKpiCard()}
-  ${recordsTodayCardHtml()}
-
-  <!-- Per shed pair: status tiles beside feed (on hand + deliveries) -->
-  <div class="dash-split dash-split-half">
-    ${renderGroupStatusGrid()}
-    <div class="dash-card dash-feed">
-      <div class="dash-card-head">
-        <h2 class="dash-card-title">Feed</h2>
-        <span class="dash-feed-actions"><button class="dash-card-action" id="siloFromDash" type="button">Silos</button><button class="dash-card-action" data-open-loads-modal type="button">All loads</button></span>
-      </div>
-      <div class="dash-feed-sec">
-        <div class="dash-feed-sub">On hand</div>
-        <div class="dash-silo-list">${siloBars}</div>
-        ${feedToOrderLineHtml(farmFeedToOrder())}
-      </div>
-      <div class="dash-feed-sec">
-        <div class="dash-feed-sub">Upcoming deliveries</div>
-        ${deliveryRows || '<p class="dash-feed-empty">No feed deliveries scheduled. Open All loads to plan one.</p>'}
-      </div>
-    </div>
-  </div>
+  return `<div class="dash-wrap rd-wrap">
+  ${glance}
+  ${renderFarmKpiCard(so, fcrWhy)}
+  ${dashPairCardsHtml()}
+  ${dashFeedStripHtml()}
 
   <!-- Per shed: today and the outlook to clean-out -->
   ${renderCleanoutDashCard()}
@@ -1838,43 +1889,11 @@ function farmResultTitle(){
   return farm?`${farm} <span class="farm-kpi-title-sep">·</span> Projected batch result`:'Projected batch result';
 }
 let fkHowOpen=false,fkFeedOpen=false;
-// FCR today from records only (recordsToday in data.js)
-function recordsTodayCardHtml(){
-  let r=null;try{r=recordsToday();}catch(e){console.warn('FCR today failed',e);}
-  if(!r)return '';
-  const T=kg=>fmtFeed(kg,2),W=T;
-  const asOf=r.asOf?fmtShortNoYear(r.asOf):fmtShortNoYear(new Date());
-  if(!r.ok)return `<section class="rt-card" id="recTodayCard"><div class="rt-head"><h3>Today, from records</h3></div><p class="rt-foot">${r.missing&&r.missing.length?`Needs a silo reading for ${r.missing.map(pairLabel).map(escapeHtml).join(', ')} first.`:'Not enough records yet.'}</p></section>`;
-  const read=r.pairs.filter(p=>!p.done),done=r.pairs.filter(p=>p.done);
-  const readKg=read.reduce((n,p)=>n+p.stock,0);
-  const readDates=[...new Set(read.map(p=>iso(p.date)))];
-  const chip=(c,t,tip)=>`<span class="rt-chip ${c}" title="${escapeAttr(tip)}">${t}</span>`;
-  return `<section class="rt-card" id="recTodayCard">
-    <div class="rt-head"><h3>Today, from records · ${escapeHtml(asOf)}</h3><span>${r.official?'100% official — every bird is out':'average age '+r.avgAge.toFixed(1)+' d'}</span></div>
-    <div class="rt-big"><div class="hl" title="FCR corrected to 2.45 kg: FCR − (avg weight − 2.45) × 0.27"><span>Cfcr2.45 today</span><b>${r.cfcr.toFixed(3)}</b></div><div title="Feed eaten so far ÷ live weight so far"><span>FCR today</span><b>${r.fcr.toFixed(3)}</b></div><div><span>Avg live weight</span><b>${r.alw.toFixed(2)} kg</b></div><div><span>Livability</span><b>${r.livability.toFixed(1)}%</b></div></div>
-    <div class="rt-how">
-      <div><span class="rt-k">Feed eaten so far</span>
-        <div class="rt-row"><span>Loads delivered (dockets)</span><b>${T(r.dockets)}</b></div>
-        ${r.carry>0?`<div class="rt-row"><span>Carried over</span><b>+ ${T(r.carry)}</b></div>`:''}
-        ${done.length?`<div class="rt-row"><span>Leftover · ${done.map(p=>escapeHtml(pairLabel(p.g))).join(', ')}</span><b>− ${T(r.stockLeft)}</b></div>`:''}
-        ${read.length?`<div class="rt-row"><span>In silos · ${read.map(p=>escapeHtml(pairLabel(p.g).replace(/^Sheds?\s*/,''))).join(', ')} (${readDates.length===1?escapeHtml(fmtShortNoYear(read[0].date))+' reading':'latest readings'})</span><b>− ${T(readKg)}</b></div>`:''}
-        <div class="rt-row tot"><span>Eaten</span><b>${T(r.eaten)}</b></div>
-      </div>
-      <div><span class="rt-k">Live weight so far</span>
-        <div class="rt-row"><span>Picked up · ${r.offB.toLocaleString('en-US')} birds ${chip('off','plant','Plant weights from the kill sheets')}</span><b>${W(r.offW)}</b></div>
-        ${r.estB>0?`<div class="rt-row"><span>Picked up, no plant weight yet · ${r.estB.toLocaleString('en-US')} ${chip('est','curve','No kill-sheet weight yet — growth curve at the pickup age')}</span><b>${W(r.estW)}</b></div>`:''}
-        ${r.onB>0?`<div class="rt-row"><span>Still in · ${r.onB.toLocaleString('en-US')} × ${(r.onW/r.onB).toFixed(2)} kg ${chip('est','curve','Today\'s weight on the growth curve fitted to these sheds\' own plant weights')}</span><b>${W(r.onW)}</b></div>`:''}
-        <div class="rt-row tot"><span>Live weight</span><b>${W(r.lw)}</b></div>
-      </div>
-    </div>
-    <p class="rt-foot">FCR = ${escapeHtml(fmtFeedNum(r.eaten,2))} ÷ ${escapeHtml(fmtFeed(r.lw,2))}. Cfcr2.45 = FCR − (${r.alw.toFixed(2)} − 2.45) × 0.27. Only records: dockets, silo readings, leftovers and plant weights${r.onB>0?'; the birds still in use the growth curve fitted to their own plant weights, until they go out':''}.${r.missing.length?` Not counted yet: ${r.missing.map(pairLabel).map(escapeHtml).join(', ')} (no silo reading).`:''}</p>
-  </section>`;
-}
 document.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('[data-rec-today]')))return;
-  setTimeout(()=>{const c=document.getElementById('recTodayCard');if(c){c.scrollIntoView({block:'start',behavior:'smooth'});c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}},80);});
-function renderFarmKpiCard(){
+  setTimeout(()=>{const c=document.getElementById('fcrTodayTile');if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}},80);});
+function renderFarmKpiCard(so,fcrWhy){
   const t=computeFarmTotals();
-  if(!t.hasData)return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
+  if(!t.hasData)return `<div class="farm-kpi-card" id="fcrTodayTile"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">Projected end-of-batch totals across all 8 sheds</span></div><div class="farm-kpi-empty">No sheds placed yet — import Excel or add a placement date to see farm estimates.</div></div>`;
   const rg=kpiRanges(t);
   try{recordProjectionSnapshot(t);}catch(e){console.warn('Projection snapshot failed',e);}
   const overrideVal=feedIn(predState.farmFeedOverride);
@@ -1892,18 +1911,46 @@ function renderFarmKpiCard(){
   const fpb=t.birdsAtHarvest>0?t.totalFeed/t.birdsAtHarvest:0;
   const feedPanelOpen=fkFeedOpen||t.usingManualFeed||t.leftoverApplied;
   const feedPanel=feedPanelOpen?`<div class="fkt-panel"><div class="fkt-sub" id="kpiFeedSub">${feedSub}</div><label class="farm-leftover-label" for="farmFeedOverride">🧾 Docket total (${feedUnit()}) <span class="fkt-hint">this batch's deliveries only, without carry-over</span></label><input id="farmFeedOverride" class="farm-feed-override ${overrideCls}" type="number" step="${feedStep(true)}" min="0" placeholder="all dockets for the batch" value="${overrideVal}" /><div id="kpiDocketWarn">${docketCarryWarningHtml()}</div><label class="farm-leftover-label" for="farmLeftoverInput">🧺 Leftover at clean-out (${feedUnit()})</label><input id="farmLeftoverInput" class="farm-leftover-input ${leftoverCls}" type="number" step="${feedStep()}" min="0" placeholder="0" value="${leftoverVal}" /><div class="fkt-note" id="kpiLeftoverNote">${leftoverNoteText(t)}</div><div class="fkt-proj" id="kpiProjLeftover">${projLeftoverText(t)}</div>${feedToOrderLineHtml(farmFeedToOrder())}</div>`:'';
-  return `<div class="farm-kpi-card"><div class="farm-kpi-head"><h2 id="farmResultTitle">${farmResultTitle()}</h2><span class="sub">${t.shedsWithData} of ${SHED_COUNT} sheds</span><button type="button" class="fk-how-toggle" data-fk-toggle="how" aria-expanded="${fkHowOpen}">How it's calculated ${fkHowOpen?'▴':'▾'}</button>${howHtml}</div><div class="farm-kpi-grid">
-    <div class="farm-kpi-tile amber"><div class="fkt-lbl">Est. Total Live Weight</div><div class="fkt-val" id="kpiLiveWeight">${fmtKgAlways(t.totalLiveWeight)}</div><div class="fkt-sub">${t.birdsAtHarvest.toLocaleString()} birds at harvest</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Total Feed Consumption</div><div class="fkt-val" id="kpiFeed">${fmtTonnesAlways(t.totalFeed)}</div><span id="kpiFeedRange">${rg.feed}</span><div class="fkt-sub">${fpb.toFixed(2)} kg per bird</div>${lr?vs(fpb,lr.feedKg/lr.picked,2,' kg/bird',true):''}<button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button>${feedPanel}</div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. FCR</div><div class="fkt-val" id="kpiFCR">${t.fcr.toFixed(3)}</div><span id="kpiFCRRange">${rg.fcr}</span>${lk?vs(t.fcr,lk.fcr,3,'',true):''}</div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl fkt-exact">Cfcr2.45</div><div class="fkt-val" id="kpiCFCR">${t.cfcr.toFixed(3)}</div><span id="kpiCFCRRange">${rg.cfcr}</span>${lk?vs(t.cfcr,lk.cfcr,3,'',true):''}<div class="fkt-sub" id="kpiCFCRSub" title="FCR − (ALW − 2.45) × ${CFCR_BAIADA_BETA}">${cfcrSubText(t)}</div></div>
-    <div class="farm-kpi-tile green"><div class="fkt-lbl">Est. cFCR (Industry)</div><div class="fkt-val" id="kpiCFCRInd">${t.cfcrInd.toFixed(3)}</div><div class="fkt-sub" id="kpiCFCRIndSub" title="FCR − (ALW − target) ÷ 3.2">${cfcrIndSubText(t)}</div></div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl">Est. PIF</div><div class="fkt-val" id="kpiPIF">${t.pif.toFixed(0)}</div><span id="kpiPIFRange">${rg.pif}</span>${lk?vs(t.pif,lk.pif,0,'',false):''}</div>
-    <div class="farm-kpi-tile blue"><div class="fkt-lbl fkt-exact">Cage2.45</div><div class="fkt-val" id="kpiCAge">${cageText(t.cage)}</div><div class="fkt-sub" title="Corrected age (Baiada Cage2.45): the age your birds reach 2.45 kg on each shed's growth curve, weighted by birds placed. Lower is better — they got there sooner.">${t.cage&&growthStd()==='freerange'?`Target ${frCageTarget()} d · ${t.cage-frCageTarget()<=0?'on target':'+'+(t.cage-frCageTarget()).toFixed(1)+' d'} · lower is better`:'Age at 2.45 kg · lower is better'}</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Average Weight</div><div class="fkt-val" id="kpiAvgWeight">${t.avgWeight.toFixed(3)} <span style="font-size:12px;font-weight:600;color:var(--muted);">kg</span></div><div class="fkt-sub" id="kpiPIFSub">avg age ${t.weightedAge.toFixed(1)} d</div>${lk?vs(t.avgWeight,lk.alw,2,' kg',false):''}<div class="fkt-pairs">${[1,2,3,4].map(g=>{const gp=computeGroupPredictions(g);return gp.hasData?`<span title="${pairLabel(g)} average">${pairShort(g)}: <b>${gp.avgWeight.toFixed(2)}</b></span>`:'';}).join('')}</div></div>
-    <div class="farm-kpi-tile"><div class="fkt-lbl">Est. Livability</div><div class="fkt-val" id="kpiLivability">${t.livability.toFixed(2)}%</div><div class="fkt-sub">${t.placed.toLocaleString()} placed</div>${lk?vs(t.livability,lk.livability,1,'%',false):''}</div>
-    <div class="farm-kpi-tile red"><div class="fkt-lbl">Est. Total Mortality</div><div class="fkt-val" id="kpiMortality">${t.mortality.toLocaleString()}</div><div class="fkt-sub" id="kpiMortalitySub">${t.totalCurrentMortality.toLocaleString()} recorded now · est. ${t.estMortRate.toFixed(2)}% of placed</div></div>
-  </div></div>`;
+  // Today (records: batchMeasured) beside Finish (projection) — one table, each figure once
+  const k=so&&so.kpi;const d3=v=>v>0?v.toFixed(3):'—';
+  const tdy=(v,f)=>k?f(v):'—';
+  const est=so&&so.anyEstimated?'<span class="rd-chip est" title="The birds still in use their estimated weight — from their last pickup weighing or the growth curve fitted to their own weighings">est</span>':'';
+  const asOf=so&&so.pairs&&so.pairs.length?so.pairs.filter(p=>!p.finished).map(p=>dateOnly(p.date)).sort((x,y)=>x-y)[0]:null;
+  const lastCell=(now,last,dp,lowerBetter)=>{if(last==null||!(now>0))return '';const d=now-last,same=Math.abs(d)<Math.pow(10,-dp)/2,good=lowerBetter?d<0:d>0;return `<span class="rd-last${same?'':good?' good':' bad'}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">${last.toFixed(dp)}</span>`;};
+  const row=(lbl,tv,fv,fid,last,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${lbl}</td><td class="rd-today">${tv}</td><td class="rd-fin"${fid?` id="${fid}"`:''}>${fv}</td>${lk?`<td class="rd-lastc">${last||''}</td>`:''}</tr>`;
+  const kgU=v=>`${v} <small>kg</small>`;
+  const tbl=`<table class="rd-cmp"><thead><tr><th></th><th>Today<em>${asOf?escapeHtml(fmtShortNoYear(asOf))+' · ':''}records ${est}</em></th><th>Finish<em>forecast</em></th>${lk?`<th>Last batch<em>${escapeHtml(String(lr.batch||''))}</em></th>`:''}</tr></thead><tbody>
+    ${row('Cfcr2.45',tdy(k&&k.cfcr,d3),t.cfcr.toFixed(3),'kpiCFCR',lk&&lastCell(t.cfcr,lk.cfcr,3,true),'hero')}
+    ${row('FCR',tdy(k&&k.fcr,d3),t.fcr.toFixed(3),'kpiFCR',lk&&lastCell(t.fcr,lk.fcr,3,true))}
+    ${row(`cFCR (Industry) <span class="rd-hint" title="FCR − (ALW − target) ÷ 3.2">vs ${t.targetKg.toFixed(2)} kg</span>`,tdy(k&&k.cfcrInd,d3),t.cfcrInd.toFixed(3),'kpiCFCRInd','')}
+    ${row('Average weight',tdy(k&&k.alw,v=>kgU(v.toFixed(2))),kgU(t.avgWeight.toFixed(2)),'',lk&&lastCell(t.avgWeight,lk.alw,2,false))}
+    ${row('Average age',tdy(k&&k.avgAge,v=>v.toFixed(1)+' <small>d</small>'),t.weightedAge.toFixed(1)+' <small>d</small>','','')}
+    ${row('Livability',tdy(k&&k.livability,v=>v.toFixed(1)+'%'),t.livability.toFixed(1)+'%','kpiLivability',lk&&lastCell(t.livability,lk.livability,1,false))}
+    ${row('PIF',tdy(k&&k.pif,v=>Math.round(v)),Math.round(t.pif),'kpiPIF',lk&&lastCell(t.pif,lk.pif,0,false))}
+    ${row('Feed eaten',so&&so.eaten>0&&!so.missing.length?fmtTonnesAlways(so.eaten):'—',fmtTonnesAlways(t.totalFeed),'kpiFeed','')}
+    ${row('Live weight',k?fmtTonnesAlways(so.liveWeightKg):'—',fmtTonnesAlways(t.totalLiveWeight),'kpiLiveWeight','')}
+  </tbody></table>${fcrWhy?`<p class="rd-why">Today: ${escapeHtml(fcrWhy)}</p>`:''}`;
+  // How "today" is worked out
+  let howToday='';
+  if(so&&so.pairs&&so.pairs.length&&!so.missing.length){
+    const del=so.pairs.reduce((n,p)=>n+(Number(p.delivered)||0),0),stk=so.pairs.reduce((n,p)=>n+(Number(p.stock)||0),0);
+    const fin=so.pairs.filter(p=>p.finished),rd=so.pairs.filter(p=>!p.finished);
+    const shipped=so.shippedKg||0,stillIn=Math.max(0,(so.liveWeightKg||0)-shipped);
+    howToday=`<div class="rd-box"><span class="rd-k">How "today" is worked out</span>
+      <div class="rd-row"><span>Loads delivered${so.carry>0?` + ${fmtTonnesAlways(so.carry)} carried over`:''}</span><b>${fmtTonnesAlways(del+(so.carry||0))}</b></div>
+      <div class="rd-row"><span>− In silos${rd.length?` (${escapeHtml(rd.map(p=>fmtShortNoYear(p.date)).filter((v,i,a)=>a.indexOf(v)===i).join(', '))} reading${rd.length>1?'s':''})`:''}${fin.length?` · leftover ${escapeHtml(fin.map(p=>pairShort(p.g)).join(', '))}`:''}</span><b>− ${fmtTonnesAlways(stk)}</b></div>
+      <div class="rd-row tot"><span>Feed eaten</span><b>${fmtTonnesAlways(so.eaten)}</b></div>
+      <div class="rd-row"><span>Shipped <span class="rd-chip ok" title="Plant weights from the kill sheets">plant</span></span><b>${fmtTonnesAlways(shipped)}</b></div>
+      ${stillIn>0?`<div class="rd-row"><span>Still in ${est}</span><b>${fmtTonnesAlways(stillIn)}</b></div>`:''}
+      <div class="rd-row tot"><span>Live weight</span><b>${fmtTonnesAlways(so.liveWeightKg||0)}</b></div></div>`;
+  }
+  const pills=`<div class="rd-pills"><span class="rd-pill" title="Corrected age: the age your birds reach 2.45 kg on each shed's growth curve. Lower is better.">Cage2.45 <b id="kpiCAge">${cageText(t.cage)}</b></span><span class="rd-pill">Total mortality at finish <b id="kpiMortality">${t.mortality.toLocaleString()}</b></span><span class="rd-pill">Feed per bird <b>${fpb.toFixed(2)} kg</b></span><span class="rd-pill">Birds at harvest <b>${t.birdsAtHarvest.toLocaleString()}</b></span></div>`;
+  return `<section class="rd-card rd-result" id="fcrTodayTile">
+    <div class="rd-res-l"><div class="rd-res-head"><h2 id="farmResultTitle">Batch result</h2><span>today from your records · finish = forecast${t.shedsWithData<SHED_COUNT?` · ${t.shedsWithData} of ${SHED_COUNT} sheds`:''}</span></div>${tbl}<div class="rd-range" id="kpiCFCRRange" title="Cfcr2.45 at the finish">${rg.cfcr}</div></div>
+    <div class="rd-res-r">${howToday}${pills}
+      <div class="rd-toggles"><button type="button" class="fkt-more" data-fk-toggle="feed" aria-expanded="${feedPanelOpen}">Dockets &amp; leftover ${feedPanelOpen?'▴':'▾'}</button><button type="button" class="fk-how-toggle" data-fk-toggle="how" aria-expanded="${fkHowOpen}">How the forecast is calculated ${fkHowOpen?'▴':'▾'}</button></div>
+      ${feedPanel}${howHtml}</div>
+  </section>`;
 }
 // Range: the same projection with every last pickup PROJ_EARLY_DAYS before
 // the plant's clean-out date (plants usually take the last birds early)

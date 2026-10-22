@@ -111,8 +111,8 @@ function renderHomeView(){
   let rangeBar='';
   if(lkC!=null){const lo=Math.min(rc.lo,lkC)-0.03,hi=Math.max(rc.hi,lkC)+0.03,P=v=>((v-lo)/(hi-lo)*100).toFixed(1);
     rangeBar=`<div class="mk-range" title="Projected range ${rc.lo.toFixed(3)}–${rc.hi.toFixed(3)} · last batch ${lkC.toFixed(3)} (lower is better)"><i style="left:${P(rc.lo)}%;width:${Math.max(1.5,P(rc.hi)-P(rc.lo))}%"></i><b style="left:${P(lkC)}%"></b></div>`;}
-  let rt=null;try{rt=recordsToday();}catch(e){}
-  const rtLine=k=>rt&&rt.ok?`<button type="button" class="mk-today" data-tab="dashboard" data-rec-today title="From records only: dockets, silo readings and plant weights — tap for the workings"><span>Today</span><b>${rt[k].toFixed(3)}</b><span>from records</span></button>`:'';
+  let rt=null;try{const bm=batchMeasured(new Date());rt=bm&&bm.kpi;}catch(e){}
+  const rtLine=k=>rt&&rt[k]>0?`<button type="button" class="mk-today" data-tab="dashboard" data-rec-today title="From records only: dockets, silo readings and plant weights — tap for the workings"><span>Today</span><b>${rt[k].toFixed(3)}</b><span>from records</span></button>`:'';
   const mortPct=placed?mort/placed*100:0;
   const kpis=`<div class="mk-strip">
       <div class="mk-tile hero" title="Projected Cfcr2.45 at clean-out (FCR corrected to 2.45 kg)"><span class="mgr-k">Cfcr2.45 · finish</span><b class="mk-v">${tv(rc)}</b>${rangeBar}
