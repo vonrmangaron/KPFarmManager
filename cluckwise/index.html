@@ -3526,7 +3526,7 @@
   .prep-early{ all:unset; cursor:pointer; font:700 12.5px Inter,system-ui,sans-serif; color:#2F6BD8; align-self:flex-start; }
   .prep-sec{ display:flex; flex-direction:column; gap:5px; }
   .prep-sh{ display:flex; align-items:center; gap:6px; font:800 10.5px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:4px 2px 0; }
-  .prep-sh span{ flex:1; } .prep-sh em{ font-style:normal; }
+  .prep-sh .prep-secname, .prep-sh > span:not(.prep-grip){ flex:1; } .prep-sh .prep-grip{ flex:0 0 auto; } .prep-sh em{ font-style:normal; }
   .prep-sec.all .prep-sh{ color:#0F7A67; }
   .prep-u{ display:flex; gap:8px; align-items:flex-start; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 9px; }
   .prep-u.done{ opacity:.75; } .prep-u.done .prep-ut b{ text-decoration:line-through; color:var(--muted); }
@@ -3543,7 +3543,9 @@
   .prep-add{ all:unset; cursor:pointer; font:700 12px Inter,system-ui,sans-serif; color:var(--muted); padding:4px 4px 2px; }
   .prep-add.sec{ border:1.5px dashed var(--line); border-radius:10px; text-align:center; padding:8px; }
   .prep-add:hover{ color:var(--ink); }
-  .prep-cf{ display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); padding-top:8px; }
+  .prep-cf{ display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); padding-top:8px; flex-wrap:wrap; }
+  .prep-cf .prep-readybtn{ flex:1 1 100%; }
+  .prep-cf .prep-x{ margin-left:auto; }
   .prep-readybtn{ flex:1; } .prep-readybtn:disabled{ opacity:.5; cursor:default; }
   .prep-x{ all:unset; cursor:pointer; font:700 12px Inter,system-ui,sans-serif; color:var(--danger); padding:6px; }
   .prep-ready{ background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:2px; font-size:12.5px; color:var(--muted); }
@@ -3614,6 +3616,36 @@
   .prep-rowx:hover{ background:var(--surface-soft); color:var(--danger); }
   .prep-addrow{ all:unset; cursor:pointer; align-self:flex-start; font:700 13px Inter,system-ui,sans-serif; color:#2F6BD8; padding:4px 0; }
   #prepSecModal .prep-lab{ cursor:default; align-self:flex-start; }
+  .prep-copy{ all:unset; cursor:pointer; font:700 12.5px Inter,system-ui,sans-serif; color:var(--ink); padding:7px 10px; border-radius:9px; border:1px solid var(--line); background:var(--surface); white-space:nowrap; }
+  .prep-copy:hover{ border-color:var(--ink); }
+  .prep-copy-sheds{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .prep-cs{ all:unset; box-sizing:border-box; cursor:pointer; display:grid; grid-template-columns:auto 1fr; column-gap:10px; align-items:center; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line); background:var(--surface); }
+  .prep-cs b{ font:800 14px Sora,sans-serif; color:var(--ink); } .prep-cs > span:last-child{ grid-column:2; font-size:11.5px; color:var(--muted); }
+  .prep-cs-box{ grid-row:span 2; width:22px; height:22px; border-radius:6px; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font:900 13px Inter,system-ui,sans-serif; color:#fff; }
+  .prep-cs.on{ border-color:#F0A21A; background:#FFF4DE; } .prep-cs.on .prep-cs-box{ background:#F0A21A; border-color:#F0A21A; color:#16191B; }
+  body.theme-dark .prep-cs.on{ background:rgba(240,162,26,.14); }
+  .prep-cs:focus-visible, .prep-cs-all:focus-visible, .prep-copy-modes button:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .prep-cs-all{ all:unset; cursor:pointer; grid-column:1/-1; justify-self:start; font:700 13px Inter,system-ui,sans-serif; color:#2F6BD8; padding:2px 0; }
+  .prep-copy-modes{ display:flex; flex-direction:column; gap:8px; }
+  .prep-copy-modes button{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line); background:var(--surface); }
+  .prep-copy-modes button b{ font:800 13.5px Inter,system-ui,sans-serif; color:var(--ink); } .prep-copy-modes button span{ font-size:12px; color:var(--muted); }
+  .prep-copy-modes button.on{ border-color:#16191B; box-shadow:inset 0 0 0 1px #16191B; }
+  body.theme-dark .prep-copy-modes button.on{ border-color:#F0A21A; box-shadow:inset 0 0 0 1px #F0A21A; }
+  #prepCopySave:disabled{ opacity:.5; cursor:default; }
+  .prep-modal.open{ max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); display:flex; flex-direction:column; }
+  .prep-modal .form-modal-body{ overflow-y:auto; min-height:0; }
+
+  @media (max-width:520px){ .prep-copy-sheds{ grid-template-columns:1fr; } }
+  .prep-grip{ cursor:grab; color:var(--muted); font:800 12px/1 Inter,system-ui,sans-serif; letter-spacing:-2px; padding:4px 2px; margin:-2px 0 0 -4px; opacity:.45; user-select:none; touch-action:none; flex-shrink:0; }
+  .prep-u:hover .prep-grip, .prep-sh:hover .prep-grip{ opacity:1; }
+  .prep-grip.sec{ margin:0 2px 0 -4px; }
+  .prep-grip:active{ cursor:grabbing; }
+  .prep-items{ display:flex; flex-direction:column; gap:5px; }
+  .prep-items.empty{ min-height:0; }
+  .prep-dragging .prep-items.empty{ min-height:34px; border:1.5px dashed #F0A21A; border-radius:10px; }
+  .prep-ghost{ opacity:.35; }
+  .prep-chosen{ box-shadow:0 10px 24px rgba(0,0,0,.18); border-color:#F0A21A !important; }
+  @media (hover:none){ .prep-grip{ opacity:.8; padding:6px 4px; } }
   /* the daily-task window and the standard list */
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
@@ -3993,6 +4025,22 @@
     <button type="button" class="prep-addrow" id="prepSecAddRow">＋ Add another item</button>
     <p class="prep-tm-hint">Press Enter in an item to add the next one. Leave the items empty and the section is ticked on its own.</p>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepSecSave">Add section</button></div>
+  </div>
+</div>
+<div class="form-modal prep-modal" id="prepCopyModal" role="dialog" aria-modal="true" aria-labelledby="prepCopyTitle">
+  <div class="form-modal-head"><h2 id="prepCopyTitle">Copy the checklist</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint" id="prepCopySub"></p>
+    <label class="prep-tm-k">Copy to</label>
+    <div class="prep-copy-sheds" id="prepCopySheds"></div>
+    <div id="prepCopyModeWrap" hidden>
+      <label class="prep-tm-k">Sheds that already have a checklist</label>
+      <div class="prep-copy-modes" id="prepCopyModes">
+        <button type="button" class="on" data-copy-mode="merge"><b>Add what's missing</b><span>New sections and items are added. Everything already there, and its ticks, stays.</span></button>
+        <button type="button" data-copy-mode="replace"><b>Replace the list</b><span>Their list becomes this one. Items with the same name keep their tick and task.</span></button>
+      </div>
+    </div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepCopySave" disabled>Copy</button></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepStdModal" role="dialog" aria-modal="true" aria-labelledby="prepStdTitle">
@@ -10979,7 +11027,8 @@
     const link = tk ? `<button type="button" class="prep-link" data-prep-open-task="${escapeHtmlAttr(tk.id)}" title="Open the task">📅 ${tk.status === 'done' ? 'Task done' : 'Task'} · ${escapeHtml(prepFmt(tk.date))}${(tk.assignees || []).length ? ' · ' + escapeHtml(tk.assignees.join(', ')) : ''}</button>` : '';
     const mk = !u.done && !tk && c.status !== 'ready' ? `<button type="button" class="prep-mk" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Make it a daily task for a worker">📅</button>` : '';
     const del = u.added && c.status !== 'ready' ? `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove">✕</button>` : '';
-    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}"><button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${u.added ? '<span class="prep-added">added</span>' : ''}${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
+    const grip = !isSection && c.status !== 'ready' ? '<span class="prep-grip" title="Drag to reorder" aria-hidden="true">⋮⋮</span>' : '';
+    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${u.added ? '<span class="prep-added">added</span>' : ''}${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
   }
   function prepColHtml(shed){
     const c = prepActiveFor(shed), run = prepShedRun(shed), today = dateKey(new Date());
@@ -10999,14 +11048,14 @@
     if(c.status === 'ready'){
       body = `<div class="prep-ready"><b>All ${pr.total} done</b><span>${c.readyBy ? 'Signed off by ' + escapeHtml(c.readyBy) : 'Marked ready'}${c.readyAt ? ' · ' + escapeHtml(prepFmt(dateKey(new Date(c.readyAt)))) : ''}</span></div>
         <details class="prep-fold"><summary>Show the checklist</summary>${(c.sections || []).map(sec=> `<div class="prep-sh">${escapeHtml(sec.t)}</div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}`).join('')}</details>
-        <button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button>`;
+        <div class="prep-cf"><button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button><span style="flex:1"></span><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button></div>`;
     } else {
-      body = (c.sections || []).map(sec=>{
-        const units = (sec.items || []).length ? sec.items : [sec];
+      body = `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
+        const has = (sec.items || []).length, units = has ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
-        return `<div class="prep-sec${d === units.length ? ' all' : ''}"><div class="prep-sh"><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}<button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
-      }).join('') + `<button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>
-        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
+        return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
+      }).join('') + `</div>` + `<button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>
+        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
     }
     return `<section class="prep-col ${state}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b><span class="prep-st ${state}">${state === 'ready' ? 'Ready' : 'Preparing'}</span></div><span class="prep-cm">${escapeHtml(meta)}</span><div class="prep-bar"><i style="width:${pct}%"></i></div></div>${body}</section>`;
   }
@@ -11075,6 +11124,97 @@
     persist(); renderAll();
     showToast(`Section "${name}" added${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}.`);
   }
+  // Copy one shed's checklist (sections and items, not the ticks) to other sheds
+  let prepCopyFrom = null, prepCopyTo = new Set(), prepCopyMode = 'merge';
+  const prepNorm = t=> String(t || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  function openPrepCopy(cid){
+    const c = prepFind(cid); if(!c) return;
+    prepCopyFrom = cid; prepCopyTo = new Set(); prepCopyMode = 'merge';
+    const n = prepUnits(c).length;
+    $('#prepCopyTitle').textContent = `Copy Shed ${c.shed}'s checklist`;
+    $('#prepCopySub').textContent = `${c.sections.length} section${c.sections.length === 1 ? '' : 's'}, ${n} item${n === 1 ? '' : 's'} — copied without the ticks.`;
+    renderPrepCopy();
+    $('#prepCopyModal').classList.add('open');
+  }
+  function renderPrepCopy(){
+    const c = prepFind(prepCopyFrom); if(!c) return;
+    $('#prepCopySheds').innerHTML = prepShedList().filter(sh=> sh !== c.shed).map(sh=>{
+      const t = prepActiveFor(sh), run = prepShedRun(sh);
+      const note = t ? (t.status === 'ready' ? 'Ready' : 'Has a checklist · ' + prepProgress(t).done + '/' + prepProgress(t).total) : run ? 'Running · new checklist' : 'Empty · new checklist';
+      const on = prepCopyTo.has(sh);
+      return `<button type="button" class="prep-cs${on ? ' on' : ''}${t ? ' has' : ''}" data-copy-shed="${escapeHtmlAttr(sh)}" aria-pressed="${on}"><span class="prep-cs-box">${on ? '✓' : ''}</span><b>Shed ${escapeHtml(sh)}</b><span>${escapeHtml(note)}</span></button>`;
+    }).join('') + `<button type="button" class="prep-cs-all" data-copy-all>Select all</button>`;
+    const anyHas = [...prepCopyTo].some(sh=> prepActiveFor(sh));
+    $('#prepCopyModeWrap').hidden = !anyHas;
+    document.querySelectorAll('#prepCopyModes [data-copy-mode]').forEach(b=> b.classList.toggle('on', b.dataset.copyMode === prepCopyMode));
+    const btn = $('#prepCopySave'); btn.disabled = !prepCopyTo.size;
+    btn.textContent = prepCopyTo.size ? `Copy to ${prepCopyTo.size} shed${prepCopyTo.size === 1 ? '' : 's'}` : 'Copy';
+  }
+  function prepCloneStructure(src){ return (src.sections || []).map(sec=> ({ id: uid(), t: sec.t, items: (sec.items || []).map(it=> ({ id: uid(), t: it.t })) })); }
+  function savePrepCopy(){
+    const src = prepFind(prepCopyFrom); if(!src || !prepCopyTo.size) return;
+    let made = 0, merged = 0, replaced = 0;
+    prepCopyTo.forEach(sh=>{
+      const t = prepActiveFor(sh);
+      if(!t){ const c = prepNewChecklist(sh, '', null, false); c.sections = prepCloneStructure(src); c.copiedFrom = src.shed; shedPrep.push(c); made++; return; }
+      if(prepCopyMode === 'replace'){
+        // keep the tick and task of items with the same name
+        const old = new Map(); prepUnits(t).forEach(({ u })=> old.set(prepNorm(u.t), u));
+        t.sections = prepCloneStructure(src).map(sec=>{
+          const keep = u=>{ const o = old.get(prepNorm(u.t)); if(o){ ['done','doneBy','doneAt','taskId','taskDate','taskWho'].forEach(k=>{ if(o[k] !== undefined) u[k] = o[k]; }); if(o.taskId){ const tk = tasks.find(x=> x.id === o.taskId); if(tk && tk.prep) tk.prep.uid = u.id; } } };
+          if(sec.items.length) sec.items.forEach(keep); else keep(sec);
+          return sec;
+        });
+        replaced++;
+      } else {
+        // add the sections and items it doesn't have yet (matched by name)
+        src.sections.forEach(ss=>{
+          let ts = t.sections.find(x=> prepNorm(x.t) === prepNorm(ss.t));
+          if(!ts){ t.sections.push({ id: uid(), t: ss.t, items: (ss.items || []).map(it=> ({ id: uid(), t: it.t, added: true })), added: true }); return; }
+          (ss.items || []).forEach(it=>{ if(!(ts.items || []).some(x=> prepNorm(x.t) === prepNorm(it.t))){ (ts.items = ts.items || []).push({ id: uid(), t: it.t, added: true }); delete ts.done; delete ts.taskId; } });
+        });
+        merged++;
+      }
+    });
+    const list = [...prepCopyTo].sort((a,b)=> a.localeCompare(b, undefined, { numeric:true })).map(x=> 'Shed ' + x).join(', ');
+    addHistory('Shed preparation', `Shed ${src.shed}'s checklist copied to ${list}${prepCopyMode === 'replace' && replaced ? ' (replaced)' : ''}`);
+    $('#prepCopyModal').classList.remove('open');
+    persist(); renderAll();
+    showToast(`Copied to ${list}.`);
+  }
+  // Drag to reorder: sections within a shed's checklist, items within or between its sections
+  let prepSortables = [];
+  function prepSetupSort(box){
+    prepSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); prepSortables = [];
+    if(typeof Sortable === 'undefined') return;
+    box.querySelectorAll('.prep-secs').forEach(list=>{
+      prepSortables.push(Sortable.create(list, { handle:'.prep-grip.sec', draggable:'.prep-sec', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost', chosenClass:'prep-chosen',
+        onEnd: ()=> prepApplyOrder(list.dataset.cid) }));
+    });
+    box.querySelectorAll('.prep-items').forEach(list=>{
+      prepSortables.push(Sortable.create(list, { group:'prep-' + list.dataset.cid, handle:'.prep-grip:not(.sec)', draggable:'.prep-u[data-uid]', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost', chosenClass:'prep-chosen', emptyInsertThreshold:20,
+        onStart: ()=> box.classList.add('prep-dragging'), onEnd: ()=>{ box.classList.remove('prep-dragging'); prepApplyOrder(list.dataset.cid); } }));
+    });
+  }
+  // Read the new order back from the board
+  function prepApplyOrder(cid){
+    const c = prepFind(cid); if(!c) return;
+    const col = document.querySelector(`#prepMain .prep-secs[data-cid="${CSS.escape(cid)}"]`); if(!col) return;
+    const secById = new Map(c.sections.map(x=> [x.id, x]));
+    const itemById = new Map(); c.sections.forEach(x=> (x.items || []).forEach(it=> itemById.set(it.id, it)));
+    const before = JSON.stringify(c.sections.map(x=> [x.id, (x.items || []).map(i=> i.id)]));
+    const order = [...col.querySelectorAll(':scope > .prep-sec')].map(el=> secById.get(el.dataset.sid)).filter(Boolean);
+    order.forEach(sec=>{
+      const list = col.querySelector(`.prep-items[data-sid="${CSS.escape(sec.id)}"]`);
+      const items = list ? [...list.querySelectorAll('.prep-u[data-uid]')].map(el=> itemById.get(el.dataset.uid)).filter(Boolean) : [];
+      // a section that was ticked on its own and now gets items is ticked by its items instead
+      if(items.length && !(sec.items || []).length){ delete sec.done; delete sec.doneBy; delete sec.doneAt; delete sec.taskId; }
+      sec.items = items;
+    });
+    c.sections = order.concat(c.sections.filter(x=> !order.includes(x)));
+    if(JSON.stringify(c.sections.map(x=> [x.id, (x.items || []).map(i=> i.id)])) !== before){ addHistory('Shed preparation', `Shed ${c.shed}: checklist reordered`); persist(); }
+    renderAll();
+  }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
@@ -11087,6 +11227,7 @@
     box.innerHTML = `<div class="prep-legend"><span><i class="prep"></i>Preparing</span><span><i class="ready"></i>Ready for placement</span><span><i class="run"></i>Still running the current batch</span></div>
       <div class="prep-tabs">${tabs}</div>
       <div class="prep-board" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}">${sheds.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    prepSetupSort(box);
     if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = box.querySelector(`[data-prep-add="${CSS.escape(k)}"]`); if(btn) prepStartAdd(btn); }
   }
   function prepToggleUnit(cid, id){
@@ -12896,6 +13037,7 @@
     if((b = g('[data-prep-open-task]'))){ closeOverlays(); openTaskDetailModal(b.dataset.prepOpenTask); return; }
     if((b = g('[data-prep-add]'))){ prepStartAdd(b); return; }
     if((b = g('[data-prep-edit]')) && c_ok(b)){ prepStartRename(b); return; }
+    if((b = g('[data-prep-copy]'))){ openPrepCopy(b.dataset.prepCopy); return; }
     if((b = g('[data-prep-addsec]'))){ openPrepSecModal(b.dataset.prepAddsec); return; }
     if((b = g('[data-prep-del]'))){ const [cid, id] = b.dataset.prepDel.split('|'); const c = prepFind(cid); if(!c) return;
       c.sections = c.sections.filter(sec=> sec.id !== id); c.sections.forEach(sec=> sec.items = (sec.items || []).filter(it=> it.id !== id)); persist(); renderAll(); return; }
@@ -12921,6 +13063,11 @@
   $('#prepTaskRepeat').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-rep]'); if(!b) return; prepTaskRep = b.dataset.prepRep === '1'; prepSyncTaskModal(); });
   $('#prepTaskSave').addEventListener('click', savePrepTask);
   $('#prepSecSave').addEventListener('click', savePrepSec);
+  $('#prepCopySheds').addEventListener('click', (e)=>{
+    if(e.target.closest('[data-copy-all]')){ const c = prepFind(prepCopyFrom); const all = prepShedList().filter(sh=> c && sh !== c.shed); prepCopyTo = prepCopyTo.size === all.length ? new Set() : new Set(all); renderPrepCopy(); return; }
+    const b = e.target.closest('[data-copy-shed]'); if(!b) return; const sh = b.dataset.copyShed; if(prepCopyTo.has(sh)) prepCopyTo.delete(sh); else prepCopyTo.add(sh); renderPrepCopy(); });
+  $('#prepCopyModes').addEventListener('click', (e)=>{ const b = e.target.closest('[data-copy-mode]'); if(!b) return; prepCopyMode = b.dataset.copyMode; renderPrepCopy(); });
+  $('#prepCopySave').addEventListener('click', savePrepCopy);
   $('#prepSecAddRow').addEventListener('click', ()=>{ const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); });
   $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = document.querySelector('#prepSecItems input'); if(f) f.focus(); } });
   $('#prepStdBtn').addEventListener('click', ()=>{ $('#prepStdText').value = prepTemplateText(); $('#prepStdModal').classList.add('open'); setTimeout(()=> $('#prepStdText').focus(), 60); });
