@@ -408,6 +408,18 @@ function leftoverCardHtml(){
     <p class="lo-card-carry"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>${carry}</span></p></section>`;
 }
 
+// Feed loads: the same, as one compact line — a chip per pair and the total
+function leftoverStripHtml(){
+  if(!leftoverCardShown())return '';
+  const pairs=activePairs(),all=allPairsFinished(),tot=pairsLeftoverKg();
+  const chips=pairs.map(g=>{const n=escapeHtml(pairShort(g));
+    if(pairFinished(g)){const r=pairLeftovers()[g];return `<button type="button" class="lo-chip ok" data-lo-edit="${g}" title="${escapeAttr(pairLabel(g))}: ${escapeAttr(pairSiloLine(g,r))} — tap to change"><span>${n}</span><b>${fmtFeed(Number(r.kg)||0,1)}</b></button>`;}
+    if(pairNeedsLeftover(g))return `<button type="button" class="lo-chip bad" data-lo-open="${g}" title="Both sheds closed — enter the feed left in ${escapeAttr(pairLabel(g))}'s silos"><span>${n}</span><b>Enter</b></button>`;
+    return `<span class="lo-chip" title="${escapeAttr(pairLabel(g))}: birds still in"><span>${n}</span><b>—</b></span>`;}).join('');
+  const nxt=nextBatchKey();
+  return `<div class="lo-strip"><span class="lo-strip-k" title="${all?'Carries over to '+(nxt?'Batch '+escapeAttr(nxt):'the next batch')+' automatically':'Carries over to the next batch once every pair is done'}">Leftover feed</span><span class="lo-strip-chips">${chips}</span><span class="lo-strip-tot">${all?'Total':'So far'} <b>${fmtFeed(tot,1)}</b></span></div>`;
+}
+
 // ── Carry-over follows the last batch's leftover ──
 // Once a batch is filed in Farm history with its leftover, the next batch takes it as its carried-over
 // feed. A carry-over the manager typed is never replaced (carryoverMode 'manual').

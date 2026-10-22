@@ -1631,7 +1631,7 @@ function renderLoadsModalBody(){
       <div class="lt-tile"><div class="lbl">Received</div><div class="val ok">${tot.rec.length} load${tot.rec.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.recKg+coTotal)}${coTotal>0?` incl. ${fmtFeed(coTotal)} carried over`:tot.recEst?` · ${tot.recEst} without a docket weight`:' on dockets'}</div></div>
       <div class="lt-tile"><div class="lbl">Upcoming</div><div class="val">${tot.up.length} load${tot.up.length===1?'':'s'}</div><div class="sub">${fmtFeed(tot.upKg)} planned${nextUp?` · next ${fmtShortNoYear(nextUp.date)}`:''}</div></div>
       <div class="lt-tile"><label class="lbl" for="loadsCarryInput">Carried over</label><div class="lc-in"><input id="loadsCarryInput" type="number" min="0" step="${feedStep(true)}" class="lc-input" data-carryover-total="1" value="${coTotal?feedIn(coTotal):''}" placeholder="0" aria-label="Feed carried over from last batch, ${feedUnitWord()}" /> ${feedUnit()}</div><div class="sub">${typeof carryNoteHtml==='function'?carryNoteHtml():'from last batch · withdrawal'}</div></div>
-    </div>${typeof leftoverCardHtml==='function'?leftoverCardHtml():''}`;
+    </div>${typeof leftoverStripHtml==='function'?leftoverStripHtml():''}`;
   const planHtml=feedPlanHtml();
   const chipsHtml=`<div class="loads-filter-chips">
     <button type="button" class="loads-chip ${filter==='all'?'active':''}" data-loads-filter="all">All <span class="count">${summary.total}</span></button>
