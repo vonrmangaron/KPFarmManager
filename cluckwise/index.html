@@ -3646,6 +3646,24 @@
   .prep-ghost{ opacity:.35; }
   .prep-chosen{ box-shadow:0 10px 24px rgba(0,0,0,.18); border-color:#F0A21A !important; }
   @media (hover:none){ .prep-grip{ opacity:.8; padding:6px 4px; } }
+  /* alternate shades so neighbouring sheds stand apart (state colours stay) */
+  .prep-board .prep-col.prep:nth-child(even){ background:#FFE9BD; }
+  .prep-board .prep-col.ready:nth-child(even){ background:#CDEDE3; }
+  .prep-board .prep-col.run:nth-child(even){ background:#E6E8E3; }
+  body.theme-dark .prep-board .prep-col.prep:nth-child(even){ background:rgba(240,162,26,.2); }
+  body.theme-dark .prep-board .prep-col.ready:nth-child(even){ background:rgba(15,138,117,.24); }
+  body.theme-dark .prep-board .prep-col.run:nth-child(even){ background:rgba(255,255,255,.06); }
+  /* bin: only on hover (faint on touch screens) */
+  .prep-u{ position:relative; }
+  .prep-del{ opacity:0; transition:opacity .15s; position:absolute !important; top:-9px; right:-7px; width:26px !important; height:26px !important; border-radius:50% !important; background:var(--surface) !important; border:1px solid var(--line) !important; box-shadow:0 3px 8px rgba(0,0,0,.14); z-index:2; }
+  .prep-del svg{ width:14px; height:14px; }
+  .prep-u:hover .prep-del, .prep-del:focus-visible{ opacity:1; }
+  .prep-del:hover{ color:var(--danger); background:var(--danger-soft, #FDECE4); }
+  @media (hover:none){ .prep-del{ opacity:.55; } }
+  /* a new item glows for a few seconds, then looks like the rest */
+  .prep-u.just-added{ animation:prepNew 4s ease-out both; }
+  @keyframes prepNew{ 0%,35%{ background:#FFE3A6; border-color:#F0A21A; box-shadow:0 0 0 3px rgba(240,162,26,.25); } 100%{ background:var(--surface); border-color:var(--line); box-shadow:none; } }
+  @media (prefers-reduced-motion:reduce){ .prep-u.just-added{ animation:none; } }
   /* the daily-task window and the standard list */
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
@@ -11026,9 +11044,10 @@
     const who = u.done ? [u.doneBy, u.doneAt ? prepFmt(dateKey(new Date(u.doneAt))) : ''].filter(Boolean).join(' · ') : '';
     const link = tk ? `<button type="button" class="prep-link" data-prep-open-task="${escapeHtmlAttr(tk.id)}" title="Open the task">📅 ${tk.status === 'done' ? 'Task done' : 'Task'} · ${escapeHtml(prepFmt(tk.date))}${(tk.assignees || []).length ? ' · ' + escapeHtml(tk.assignees.join(', ')) : ''}</button>` : '';
     const mk = !u.done && !tk && c.status !== 'ready' ? `<button type="button" class="prep-mk" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Make it a daily task for a worker">📅</button>` : '';
-    const del = u.added && c.status !== 'ready' ? `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove">✕</button>` : '';
+    const del = !isSection && c.status !== 'ready' ? `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove ${escapeHtmlAttr(u.t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : '';
+    const isNew = prepJustAdded.has(u.id) && Date.now() - prepJustAdded.get(u.id) < 4000;
     const grip = !isSection && c.status !== 'ready' ? '<span class="prep-grip" title="Drag to reorder" aria-hidden="true">⋮⋮</span>' : '';
-    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${u.added ? '<span class="prep-added">added</span>' : ''}${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
+    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
   }
   function prepColHtml(shed){
     const c = prepActiveFor(shed), run = prepShedRun(shed), today = dateKey(new Date());
@@ -11078,6 +11097,8 @@
   }
   // ＋ Add an item: type right there like ＋ Add task; Enter adds it and keeps the box open for the next one
   let prepAddAgain = null;
+  const prepJustAdded = new Map();   // item id → when it was added (it glows for a few seconds)
+  function prepMarkNew(it){ prepJustAdded.set(it.id, Date.now()); setTimeout(()=> prepJustAdded.delete(it.id), 4500); return it; }
   function prepStartAdd(btn){
     const [cid, sid] = btn.dataset.prepAdd.split('|'); const c = prepFind(cid); const sec = c && (c.sections || []).find(x=> x.id === sid); if(!sec) return;
     const row = document.createElement('div'); row.className = 'prep-u prep-adding';
@@ -11086,7 +11107,7 @@
     const inp = row.querySelector('input'); inp.focus();
     let done = false;
     const add = ()=>{ const v = inp.value.trim().replace(/\s+/g, ' '); if(!v) return false;
-      (sec.items = sec.items || []).push({ id: uid(), t: v, added: true }); delete sec.done; delete sec.taskId;
+      (sec.items = sec.items || []).push(prepMarkNew({ id: uid(), t: v, added: true })); delete sec.done; delete sec.taskId;
       addHistory('Shed preparation', `Shed ${c.shed}: added "${v}" to ${sec.t}`); persist(); return true; };
     inp.addEventListener('keydown', (e)=>{
       if(e.key === 'Enter'){ e.preventDefault(); if(add()){ done = true; prepAddAgain = cid + '|' + sid; renderAll(); } }
@@ -11118,7 +11139,7 @@
     const name = $('#prepSecName').value.trim().replace(/\s+/g, ' ');
     if(!name){ showToast('Give the section a name.', true); $('#prepSecName').focus(); return; }
     const items = [...document.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
-    c.sections.push({ id: uid(), t: name, items: items.map(t=> ({ id: uid(), t, added: true })), added: true });
+    c.sections.push({ id: uid(), t: name, items: items.map(t=> prepMarkNew({ id: uid(), t, added: true })), added: true });
     addHistory('Shed preparation', `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`);
     $('#prepSecModal').classList.remove('open'); prepSecFor = null;
     persist(); renderAll();
@@ -11170,8 +11191,8 @@
         // add the sections and items it doesn't have yet (matched by name)
         src.sections.forEach(ss=>{
           let ts = t.sections.find(x=> prepNorm(x.t) === prepNorm(ss.t));
-          if(!ts){ t.sections.push({ id: uid(), t: ss.t, items: (ss.items || []).map(it=> ({ id: uid(), t: it.t, added: true })), added: true }); return; }
-          (ss.items || []).forEach(it=>{ if(!(ts.items || []).some(x=> prepNorm(x.t) === prepNorm(it.t))){ (ts.items = ts.items || []).push({ id: uid(), t: it.t, added: true }); delete ts.done; delete ts.taskId; } });
+          if(!ts){ t.sections.push({ id: uid(), t: ss.t, items: (ss.items || []).map(it=> prepMarkNew({ id: uid(), t: it.t, added: true })), added: true }); return; }
+          (ss.items || []).forEach(it=>{ if(!(ts.items || []).some(x=> prepNorm(x.t) === prepNorm(it.t))){ (ts.items = ts.items || []).push(prepMarkNew({ id: uid(), t: it.t, added: true })); delete ts.done; delete ts.taskId; } });
         });
         merged++;
       }
@@ -13039,8 +13060,12 @@
     if((b = g('[data-prep-edit]')) && c_ok(b)){ prepStartRename(b); return; }
     if((b = g('[data-prep-copy]'))){ openPrepCopy(b.dataset.prepCopy); return; }
     if((b = g('[data-prep-addsec]'))){ openPrepSecModal(b.dataset.prepAddsec); return; }
-    if((b = g('[data-prep-del]'))){ const [cid, id] = b.dataset.prepDel.split('|'); const c = prepFind(cid); if(!c) return;
-      c.sections = c.sections.filter(sec=> sec.id !== id); c.sections.forEach(sec=> sec.items = (sec.items || []).filter(it=> it.id !== id)); persist(); renderAll(); return; }
+    if((b = g('[data-prep-del]'))){ const [cid, id] = b.dataset.prepDel.split('|'); const c = prepFind(cid); const u = c && prepUnit(c, id); if(!u) return;
+      const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
+      if(tk && !confirm(`Remove "${u.t}"? Its daily task stays on the calendar without the preparation label.`)) return;
+      if(tk) delete tk.prep;
+      c.sections.forEach(sec=> sec.items = (sec.items || []).filter(it=> it.id !== id));
+      addHistory('Shed preparation', `Shed ${c.shed}: removed "${u.t}"`); persist(); renderAll(); return; }
     if((b = g('[data-prep-start]'))){ const sh = b.dataset.prepStart; if(prepActiveFor(sh)) return;
       const run = prepShedRun(sh); const c = prepNewChecklist(sh, '', null, false); shedPrep.push(c);
       addHistory('Shed preparation', `Shed Preparation Checklist (Shed ${sh}) started${run ? ' early' : ''}`); prepPhoneShed = sh; persist(); renderAll(); return; }
