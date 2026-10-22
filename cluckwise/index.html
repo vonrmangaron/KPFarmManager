@@ -3664,6 +3664,11 @@
   .prep-u.just-added{ animation:prepNew 4s ease-out both; }
   @keyframes prepNew{ 0%,35%{ background:#FFE3A6; border-color:#F0A21A; box-shadow:0 0 0 3px rgba(240,162,26,.25); } 100%{ background:var(--surface); border-color:var(--line); box-shadow:none; } }
   @media (prefers-reduced-motion:reduce){ .prep-u.just-added{ animation:none; } }
+  .prep-tpl-prev{ border:1px solid var(--line); border-radius:12px; padding:10px 14px; max-height:280px; overflow:auto; background:var(--surface-soft); display:flex; flex-direction:column; gap:8px; }
+  .ptp-sec b{ font:800 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .ptp-sec ul{ margin:4px 0 0; padding-left:20px; font-size:13px; color:var(--ink); display:flex; flex-direction:column; gap:2px; }
+  .ptp-none{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .prep-tpl-from{ color:#0F7A67 !important; font-weight:700; }
   /* the daily-task window and the standard list */
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
@@ -4061,9 +4066,19 @@
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepCopySave" disabled>Copy</button></div>
   </div>
 </div>
+<div class="form-modal prep-modal" id="prepTplModal" role="dialog" aria-modal="true" aria-labelledby="prepTplTitle">
+  <div class="form-modal-head"><h2 id="prepTplTitle">Make this the default</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint" id="prepTplSub"></p>
+    <div class="prep-tpl-prev" id="prepTplPrev"></div>
+    <p class="prep-tm-hint">Checklists already started keep their own list. You can still change the default later in <b>⋯ Standard list</b>.</p>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTplSave">Make it the default</button></div>
+  </div>
+</div>
 <div class="form-modal prep-modal" id="prepStdModal" role="dialog" aria-modal="true" aria-labelledby="prepStdTitle">
   <div class="form-modal-head"><h2 id="prepStdTitle">Standard checklist</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
+    <p class="prep-tm-hint prep-tpl-from" id="prepStdFrom" hidden></p>
     <p class="prep-tm-hint">Every new Shed Preparation Checklist starts with this. A line like <b>1. Litter removal</b> starts a section; lines starting with <b>-</b> are its items. A section without items is ticked on its own. Checklists already started don't change.</p>
     <textarea id="prepStdText" rows="16" spellcheck="false"></textarea>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" id="prepStdReset">Back to the default</button><span style="flex:1"></span><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepStdSave">Save</button></div>
@@ -11067,14 +11082,14 @@
     if(c.status === 'ready'){
       body = `<div class="prep-ready"><b>All ${pr.total} done</b><span>${c.readyBy ? 'Signed off by ' + escapeHtml(c.readyBy) : 'Marked ready'}${c.readyAt ? ' · ' + escapeHtml(prepFmt(dateKey(new Date(c.readyAt)))) : ''}</span></div>
         <details class="prep-fold"><summary>Show the checklist</summary>${(c.sections || []).map(sec=> `<div class="prep-sh">${escapeHtml(sec.t)}</div>${(sec.items || []).length ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : prepUnitHtml(c, sec, sec, true)}`).join('')}</details>
-        <div class="prep-cf"><button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button><span style="flex:1"></span><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button></div>`;
+        <div class="prep-cf"><button type="button" class="prep-early" data-prep-unready="${escapeHtmlAttr(c.id)}">Reopen</button><span style="flex:1"></span><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-copy" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Every new checklist starts with this list">Set as default</button></div>`;
     } else {
       body = `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
         const has = (sec.items || []).length, units = has ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
         return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${d}/${units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `</div>` + `<button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>
-        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
+        <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><button type="button" class="prep-copy" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds">Copy to…</button><button type="button" class="prep-copy" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Every new checklist starts with this list">Set as default</button><button type="button" class="prep-x" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist">Delete</button></div>`;
     }
     return `<section class="prep-col ${state}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b><span class="prep-st ${state}">${state === 'ready' ? 'Ready' : 'Preparing'}</span></div><span class="prep-cm">${escapeHtml(meta)}</span><div class="prep-bar"><i style="width:${pct}%"></i></div></div>${body}</section>`;
   }
@@ -11235,6 +11250,28 @@
     c.sections = order.concat(c.sections.filter(x=> !order.includes(x)));
     if(JSON.stringify(c.sections.map(x=> [x.id, (x.items || []).map(i=> i.id)])) !== before){ addHistory('Shed preparation', `Shed ${c.shed}: checklist reordered`); persist(); }
     renderAll();
+  }
+  // A shed's checklist as the standard list (the same "1. Section / - item" text the Standard list window edits)
+  let prepTplFrom = null;
+  function prepToText(c){ return (c.sections || []).map((sec, i)=> [`${i + 1}. ${sec.t}`].concat((sec.items || []).map(it=> `- ${it.t}`)).join('\n')).join('\n'); }
+  function openPrepTpl(cid){
+    const c = prepFind(cid); if(!c) return;
+    prepTplFrom = cid;
+    const n = prepUnits(c).length;
+    $('#prepTplTitle').textContent = `Make Shed ${c.shed}'s list the default`;
+    $('#prepTplSub').textContent = `${c.sections.length} section${c.sections.length === 1 ? '' : 's'} and ${n} item${n === 1 ? '' : 's'}. New Shed Preparation Checklists will start with this list.`;
+    $('#prepTplPrev').innerHTML = c.sections.map((sec, i)=> `<div class="ptp-sec"><b>${i + 1}. ${escapeHtml(sec.t)}</b>${(sec.items || []).length ? '<ul>' + sec.items.map(it=> `<li>${escapeHtml(it.t)}</li>`).join('') + '</ul>' : '<span class="ptp-none">ticked on its own</span>'}</div>`).join('');
+    $('#prepTplModal').classList.add('open');
+  }
+  function savePrepTpl(){
+    const c = prepFind(prepTplFrom); if(!c) return;
+    const txt = prepToText(c);
+    if(!prepParse(txt).length){ showToast('This checklist is empty.', true); return; }
+    if(txt === PREP_DEFAULT_TEXT) delete settings.prepTemplateText; else settings.prepTemplateText = txt;
+    settings.prepTemplateFrom = { shed: c.shed, at: dateKey(new Date()) };
+    addHistory('Settings', `Standard shed preparation checklist set from Shed ${c.shed}`);
+    $('#prepTplModal').classList.remove('open'); prepTplFrom = null;
+    persist(); renderAll(); showToast(`Shed ${c.shed}'s list is now the default for new checklists.`);
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
@@ -13059,6 +13096,7 @@
     if((b = g('[data-prep-add]'))){ prepStartAdd(b); return; }
     if((b = g('[data-prep-edit]')) && c_ok(b)){ prepStartRename(b); return; }
     if((b = g('[data-prep-copy]'))){ openPrepCopy(b.dataset.prepCopy); return; }
+    if((b = g('[data-prep-tpl]'))){ openPrepTpl(b.dataset.prepTpl); return; }
     if((b = g('[data-prep-addsec]'))){ openPrepSecModal(b.dataset.prepAddsec); return; }
     if((b = g('[data-prep-del]'))){ const [cid, id] = b.dataset.prepDel.split('|'); const c = prepFind(cid); const u = c && prepUnit(c, id); if(!u) return;
       const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
@@ -13095,11 +13133,13 @@
   $('#prepCopySave').addEventListener('click', savePrepCopy);
   $('#prepSecAddRow').addEventListener('click', ()=>{ const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); });
   $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = document.querySelector('#prepSecItems input'); if(f) f.focus(); } });
-  $('#prepStdBtn').addEventListener('click', ()=>{ $('#prepStdText').value = prepTemplateText(); $('#prepStdModal').classList.add('open'); setTimeout(()=> $('#prepStdText').focus(), 60); });
+  $('#prepTplSave').addEventListener('click', savePrepTpl);
+  $('#prepStdBtn').addEventListener('click', ()=>{ const f = settings.prepTemplateFrom, fe = $('#prepStdFrom'); fe.hidden = !(f && settings.prepTemplateText); if(f) fe.textContent = `Made from Shed ${f.shed}'s checklist on ${prepFmt(f.at)}.`; $('#prepStdText').value = prepTemplateText(); $('#prepStdModal').classList.add('open'); setTimeout(()=> $('#prepStdText').focus(), 60); });
   $('#prepStdReset').addEventListener('click', ()=>{ $('#prepStdText').value = PREP_DEFAULT_TEXT; });
   $('#prepStdSave').addEventListener('click', ()=>{
     const txt = $('#prepStdText').value.trim(); const parsed = prepParse(txt);
     if(!parsed.length){ showToast('Add at least one section.', true); return; }
+    if(txt !== prepTemplateText()) delete settings.prepTemplateFrom;   // edited by hand: no longer "made from Shed #"
     if(txt === PREP_DEFAULT_TEXT) delete settings.prepTemplateText; else settings.prepTemplateText = txt;
     addHistory('Settings', `Standard shed preparation checklist saved (${parsed.length} sections)`);
     $('#prepStdModal').classList.remove('open'); persist(); renderAll(); showToast('Saved — new checklists start with this list.');
