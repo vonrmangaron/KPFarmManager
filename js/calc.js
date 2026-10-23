@@ -596,6 +596,18 @@ function learnedFinalUplift(){
   const v=each.length?{pct:Math.max(0,Math.min(20,each.reduce((n,x)=>n+x.pct,0)/each.length)),n:each.length,each}:null;
   learnedUpliftCache={sig,v};return v;
 }
+// One shed's last pickup: what the app projected (its curve fitted without that final pickup, plus the
+// Last pickup heavier setting) vs the plant's weight. null until the final kill-sheet weight is in.
+function finalPickupCheck(s){
+  if(!s||!s.placementDate)return null;
+  const fin=(s.pickups||[]).find(p=>p.isFinal&&!p.weightEstimated&&pickupAvgKg(p)>0);if(!fin)return null;
+  const thin=(s.pickups||[]).filter(p=>p!==fin);
+  if(thin.filter(p=>!p.weightEstimated&&pickupAvgKg(p)>0).length<2)return null;
+  const fit=computeShedGompertzFit({...s,pickups:thin});if(!fit)return null;
+  const cur=gompertzWeightAt(fit,pickupAge(s,fin));if(!(cur>0))return null;
+  const proj=cur*finalUpliftFactor(),actual=pickupAvgKg(fin);
+  return {proj,actual,gap:(actual/proj-1)*100,birds:Number(fin.birds)||0,curve:cur};
+}
 function finalUpliftFactor(){const v=Number(predState.finalUpliftPct);return 1+(Number.isFinite(v)&&v>=0&&v<=20?v:DEFAULT_FINAL_UPLIFT_PCT)/100;}
 function pairTargetKg(g){return Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;}
 // CAge2.45 (Baiada "corrected age"): the age the flock reaches 2.45 kg — read off each shed's own

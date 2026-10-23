@@ -931,8 +931,9 @@ function renderCleanoutDashCard(){
   const sheds=(farmData.sheds||[]).filter(s=>s.placementDate);
   if(!sheds.length)return '';
   let totBirds=0,totKg=0,finBirds=0,finKg=0,anyFallback=false,liveNow=0;
+  let chkP=0,chkA=0,chkB=0;
   const rows=(farmData.sheds||[]).map(shed=>{
-    if(!shed.placementDate)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="6" class="dco-none">No placement date</td></tr>`;
+    if(!shed.placementDate)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td><td colspan="7" class="dco-none">No placement date</td></tr>`;
     // today
     const age=daysBetween(shed.placementDate,today);const live=liveAtStartOfDay(shed,today);liveNow+=live;
     const est=currentShedWeightEstimate(shed,today);const alw=est?est.kg:null;
@@ -945,7 +946,7 @@ function renderCleanoutDashCard(){
       <td class="num">${alw?alw.toFixed(3):'—'} <span class="dco-sub">kg</span>${alwChip}<div class="dco-birds"><span class="dash-status-dot" style="background:${dotColor}"></span>${behind}</div></td>`;
     // to clean-out
     const co=shedCleanoutInfo(shed,today);
-    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td>${nowCells}<td colspan="4" class="dco-none">Not enough data yet</td></tr>`;
+    if(!co)return `<tr><td class="shed-name-cell">Shed ${shed.id}</td>${nowCells}<td colspan="5" class="dco-none">Not enough data yet</td></tr>`;
     totBirds+=co.birdsAll;totKg+=co.totalKgAll;finBirds+=co.finalBirds;finKg+=co.finalBirds*co.finalKg;
     const fb=co.endSrc!=='clean-out date';if(fb)anyFallback=true;
     const when=co.daysToEnd>0?`${co.daysToEnd}d left`:co.daysToEnd===0?'today':'done';
@@ -953,22 +954,25 @@ function renderCleanoutDashCard(){
       ${nowCells}
       <td class="dco-co">${dcoDateCell(shed,co,fb)}<div class="dco-birds">D${co.cleanAge} · ${when}</div></td>
       <td class="num">${co.finalKg?co.finalKg.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.finalBirds.toLocaleString()} birds</div></td>
+      ${(()=>{const fc=finalPickupCheck(shed);if(fc){chkP+=fc.proj*fc.birds;chkA+=fc.actual*fc.birds;chkB+=fc.birds;}
+        return fc?`<td class="num dco-chk" title="Projected ${fc.proj.toFixed(3)} kg = curve without the final pickup ${fc.curve.toFixed(3)} kg + ${Math.round((finalUpliftFactor()-1)*100)}% (Last pickup heavier). Actual = the plant's kill sheet.">${fc.actual.toFixed(3)} <span class="dco-sub">vs ${fc.proj.toFixed(3)}</span><div class="dco-gap ${fc.gap>=0?'up':'down'}">${fc.gap>=0?'+':''}${fc.gap.toFixed(1)}%</div></td>`
+          :`<td class="num dco-chk none" title="Shows once the final pickup's kill-sheet weight is in">—<div class="dco-birds">${co.daysToEnd<0?'no kill sheet':'not out yet'}</div></td>`;})()}
       <td class="num">${co.avgAll?co.avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span><div class="dco-birds">${co.pickupCount} pickups</div></td>
       <td class="num dco-total">${Math.round(co.totalKgAll).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${co.birdsAll.toLocaleString()} birds</div></td></tr>`;
   }).join('');
   const avgAll=totBirds>0?totKg/totBirds:0,avgFin=finBirds>0?finKg/finBirds:0;
   const open=sheds.filter(s=>!finalPickupOf(s));
-  const setAll=open.length>1?`<tbody class="dco-setall"><tr><td class="shed-name-cell">All</td><td colspan="2"></td><td colspan="4"><div class="dco-setall-row"><input type="date" class="dco-date" id="dcoSetAllDate" aria-label="Clean-out date for all sheds"><button type="button" class="btn-secondary dco-setall-btn" id="dcoSetAllBtn">Set all ${open.length} sheds</button></div></td></tr></tbody>`:'';
+  const setAll=open.length>1?`<tbody class="dco-setall"><tr><td class="shed-name-cell">All</td><td colspan="2"></td><td colspan="5"><div class="dco-setall-row"><input type="date" class="dco-date" id="dcoSetAllDate" aria-label="Clean-out date for all sheds"><button type="button" class="btn-secondary dco-setall-btn" id="dcoSetAllBtn">Set all ${open.length} sheds</button></div></td></tr></tbody>`:'';
   return `<div class="dash-card dash-cleanout">
     <div class="dash-card-head"><h2 class="dash-card-title">Shed forecast until clean-out</h2><span class="dco-head-sub">Today, then the outlook to each shed's clean-out</span><button class="dash-card-action" data-tab="g1" type="button">All sheds</button></div>
     <div class="dco-scroll"><table class="dash-shed-table dco-table">
       <thead>
-        <tr class="dco-group"><th></th><th colspan="2">Today</th><th colspan="4">To clean-out</th></tr>
-        <tr><th>Shed</th><th class="num">Age · birds</th><th class="num" title="Days ahead or behind the growth standard (Settings › Predictions)">Weight · vs ${growthStd()==='ross'?'Ross':'std'}</th><th>Clean-out</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr>
+        <tr class="dco-group"><th></th><th colspan="2">Today</th><th colspan="5">To clean-out</th></tr>
+        <tr><th>Shed</th><th class="num">Age · birds</th><th class="num" title="Days ahead or behind the growth standard (Settings › Predictions)">Weight · vs ${growthStd()==='ross'?'Ross':'std'}</th><th>Clean-out</th><th class="num" title="Predicted average weight of the last (clean-out) pickup">Last pickup</th><th class="num" title="Once a shed's final pickup is weighed: the plant's weight vs what the app projected for it, and the gap">Actual vs projected</th><th class="num" title="Average weight across ALL pickups (logged, planned and auto)">Avg all pickups</th><th class="num" title="Sum of all pickups' live weight">Total live wt</th></tr>
       </thead>
       <tbody>${rows}</tbody>
       ${setAll}
-      <tfoot><tr><td>Farm</td><td class="num"><div class="dco-birds">${liveNow.toLocaleString()} birds</div></td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
+      <tfoot><tr><td>Farm</td><td class="num"><div class="dco-birds">${liveNow.toLocaleString()} birds</div></td><td></td><td></td><td class="num">${avgFin?avgFin.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-chk">${chkB?`${(chkA/chkB).toFixed(3)} <span class="dco-sub">vs ${(chkP/chkB).toFixed(3)}</span><div class="dco-gap ${chkA>=chkP?'up':'down'}">${chkA>=chkP?'+':''}${((chkA/chkP-1)*100).toFixed(1)}%</div>`:'—'}</td><td class="num">${avgAll?avgAll.toFixed(3):'—'} <span class="dco-sub">kg</span></td><td class="num dco-total">${Math.round(totKg).toLocaleString()} <span class="dco-sub">kg</span><div class="dco-birds">${totBirds.toLocaleString()} birds</div></td></tr></tfoot>
     </table></div>
     <p class="dco-note">Clean-out weights use the same projection as the Projected batch result: logged + your planned + auto-planned pickups.${anyFallback?' Empty date = not set yet, using the shed\'s last pickup.':''} Tap a date to change it.</p>
   </div>`;
