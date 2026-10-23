@@ -699,17 +699,34 @@ function siloLevelPlan(g,opts){
 function siloPlanOn(plan,D){if(!plan)return null;const t=iso(D);for(let i=plan.days.length-1;i>=0;i--)if(iso(plan.days[i].date)<=t)return plan.days[i];return iso(plan.start.date)<=t?plan.start:null;}
 // Is the starter silo empty in time for the next batch?
 // state: none | pick | ready | ontrack | action ; plus loads of other feed planned into it
+// Next batch's Starter for this pair, from the next batch's own file (refreshRunningBatches): [{date,kg}]
+function nextBatchStarterLoads(g,n){
+  const cur=String(typeof currentBatchKey==='function'?currentBatchKey():'').toLowerCase();
+  const nb=(typeof pwRunOthers!=='undefined'&&Array.isArray(pwRunOthers)?pwRunOthers:[]).find(o=>o&&o.newest&&String(o.key).toLowerCase()!==cur);
+  if(!nb||!Array.isArray(nb.starter))return [];
+  return nb.starter.filter(l=>Number(l.splitKg&&l.splitKg[g])>0).filter(l=>{const s=loadSilosFor(l,g);return !s.length||s.includes(n);}).map(l=>({date:dateOnly(l.date),kg:Number(l.splitKg[g])||0,batch:nb.key}));
+}
 function starterSiloStatus(g){
   if(!shedsForGroup(g).some(s=>s.placementDate))return null;
   const co=pairCleanoutDate(g);if(!co)return null;
-  const today=dateOnly(new Date());const win=starterWindowStart(g);const inWin=!!win&&today>=win;
+  const today=dateOnly(new Date());
+  // a finished pair's starter silo belongs to the next batch now: nothing to check (2026-10-23)
+  if(co<today||(typeof pairAllClosed==='function'&&pairAllClosed(g)))return null;
+  const win=starterWindowStart(g);const inWin=!!win&&today>=win;
   const n=starterSiloOf(g);
   const base={g,co,win,inWin,silo:n,daysToCo:daysBetween(today,co)};
   if(!n)return {...base,state:'pick'};
   const plan=siloLevelPlan(g,{until:addDays(co,1)});
-  const wrong=farmLoads.filter(l=>l.date&&loadSilosFor(l,g).includes(n)&&Number(l.splitKg[g])>0&&win&&dateOnly(l.date)>=win&&!isNextBatchStarter(l,g,win)&&dateOnly(l.date)<=co);
+  // other feed booked into the starter silo — only loads still to come after the latest reading count;
+  // anything delivered before it is already in (or out of) the silo the reading shows
+  const rd=latestReading(g),afterRd=d=>!rd||!loadBeforeReading(rd,d);
+  const wrong=farmLoads.filter(l=>l.date&&loadSilosFor(l,g).includes(n)&&Number(l.splitKg[g])>0&&win&&dateOnly(l.date)>=win&&!isNextBatchStarter(l,g,win)&&dateOnly(l.date)<=co&&afterRd(dateOnly(l.date)));
   if(!plan)return {...base,state:'noreading',wrong};
   const nowRow=siloPlanOn(plan,today)||plan.start;const nowKg=nowRow.kg[n-1];
+  // the next batch's Starter already went in (booked in the next batch): what the silo holds is that Starter
+  const nbs=nextBatchStarterLoads(g,n),nbIn=nbs.filter(l=>rd&&loadBeforeReading(rd,l.date));
+  if(nbIn.length&&!wrong.length)return {...base,state:'ready',kg:nowKg,nextStarter:nbIn,wrong};
+  if(nowKg<=0.5&&!wrong.length)return {...base,state:'ready',kg:0,emptyOn:today,wrong,isOpen:(nowRow.open||[]).includes(n)};
   // first day it is empty and stays empty until clean-out (ignoring next batch's starter)
   let emptyOn=null;
   const rows=[plan.start,...plan.days].filter(r=>r.date<=co);

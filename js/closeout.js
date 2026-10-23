@@ -147,7 +147,7 @@ function closeBannerHtml(s){
 // Bell, Home and a once-a-day reminder
 function closeAlerts(){
   return shedsToAlertClose().map(s=>{const d=shedOutDate(s);const today=dateOnly(d).getTime()===dateOnly(new Date()).getTime();
-    return {kind:'error',msg:`<strong>Shed ${s.id}</strong> — clean-out ${today?'today':'was '+fmtShortNoYear(d)} · the shed is done and needs closing`,closeShed:s.id};}).concat(leftoverAlerts());
+    return {kind:'error',msg:`<strong>Shed ${s.id}</strong> — Close the shed. Clean-out ${today?'is today':'was '+fmtShortNoYear(d)}.`,closeShed:s.id};}).concat(leftoverAlerts());
 }
 function closeNeeds(){
   // pairs waiting for their leftover first, then sheds to close, then the carry-over offer
@@ -284,7 +284,7 @@ function goToPairForLeftover(g){
   gotoPair(Number(g),'overview');
   requestAnimationFrame(()=>{const c=document.querySelector('.lo-banner');if(c){c.scrollIntoView({block:'center'});c.classList.add('pk-flash');setTimeout(()=>c.classList.remove('pk-flash'),1800);}});
 }
-function leftoverAlerts(){return [1,2,3,4].filter(pairNeedsLeftover).map(g=>({kind:'error',msg:`<strong>${pairLabel(g)}</strong> — both sheds closed · enter the leftover feed in the silos`,pairLeftover:g}));}
+function leftoverAlerts(){return [1,2,3,4].filter(pairNeedsLeftover).map(g=>({kind:'error',msg:`<strong>${pairLabel(g)}</strong> — Enter the leftover feed. Both sheds are closed.`,pairLeftover:g}));}
 function leftoverNeeds(){
   const out=[1,2,3,4].filter(pairNeedsLeftover).map(g=>({tone:'bad',title:`Enter leftover feed for ${pairLabel(g)}`,sub:'Both sheds are closed — what is still in the silos?',act:`data-lo-go="${g}"`}));
   return out;

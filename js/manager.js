@@ -370,7 +370,7 @@ function siloSettingsLineHtml(){
 // card's own pieces, so every edit works exactly as before.
 const PAIR_TABS=[['overview','Overview'],['planner','Feed & silo'],['pickups','Pickups'],['growth','Growth'],['setup','Setup']];
 function pairTabsHtml(g,view){
-  let feedDot=false;try{feedDot=computeFarmAlerts().some(x=>x.feedGroup===g&&!/starter/i.test(x.msg));}catch(e){}
+  let feedDot=false;try{feedDot=computeFarmAlerts().some(x=>x.feedGroup===g&&!x.starter);}catch(e){}
   return `<nav class="pair-tabs" aria-label="${escapeAttr(pairLabel(g))} sections">${PAIR_TABS.map(([v,l])=>`<button type="button" class="pair-tab${v===view?' active':''}" data-shedview="${v}" data-group="${g}" aria-pressed="${v===view}">${escapeHtml(l)}${v==='planner'&&feedDot?'<i class="pair-tab-dot" title="Feed needs a look"></i>':''}</button>`).join('')}</nav>`;
 }
 // Shed inputs, rarely changed (from the old Sheds page card)

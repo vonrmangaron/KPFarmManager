@@ -704,7 +704,7 @@ function computeFarmAlerts() {
       if (typeof pairAllClosed === 'function' && pairAllClosed(g)) return;   // both sheds closed: the leftover step takes over
       const latest = latestReading(g);
       if (!latest) {
-        alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — no silo reading yet, so the feed forecast can't warn you`, tab: 'g'+g, feedGroup: g });
+        alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)}</strong> — Read the silos. No reading yet this batch.`, tab: 'g'+g, feedGroup: g });
         return;
       }
       const forecast = computeSiloForecast(g, { start: 0, end: FEED_ALERT_DAYS }, { realOnly: true });
@@ -713,13 +713,12 @@ function computeFarmAlerts() {
         const days = Math.max(0, daysBetween(todayD, forecast.depletedDate));
         const row = forecast.rows.find(r => iso(r.date) === iso(forecast.depletedDate));
         const left = row && row.balance != null ? Math.max(0, row.balance) : null;
-        const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `${fmtShortNoYear(forecast.depletedDate)} (${days} days)`;
-        const safe = siloSafetyDays() > 0 ? 'below safety stock' : 'runs out';
-        const leftTxt = left != null ? `, ${fmtFeed(left, 0)} left` : '';
-        if (days <= 2) alerts.push({ kind: 'error', msg: `<strong>${pairLabel(g)} silos</strong> — ${safe} ${when}${leftTxt} · order now or check the next delivery`, tab: 'g'+g, feedGroup: g });
-        else alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — ${safe} ${when}${leftTxt} · add a load to this week's order`, tab: 'g'+g, feedGroup: g });
+        const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `${fmtShortNoYear(forecast.depletedDate)} (in ${days} days)`;
+        const leftTxt = left != null ? ` — ${fmtFeed(left, 0)} left` : '';
+        if (days <= 2) alerts.push({ kind: 'error', msg: `<strong>${pairLabel(g)}</strong> — Order feed now. Silos run low ${when}${leftTxt}.`, tab: 'g'+g, feedGroup: g });
+        else alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)}</strong> — Book a feed load. Silos run low ${when}${leftTxt}.`, tab: 'g'+g, feedGroup: g });
       }
-      if (age >= FEED_READING_STALE_DAYS) alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)} silos</strong> — last reading ${age} days ago · the forecast may be off`, tab: 'g'+g, feedGroup: g });
+      if (age >= FEED_READING_STALE_DAYS) alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)}</strong> — Read the silos. Last reading was ${age} days ago.`, tab: 'g'+g, feedGroup: g });
     });
     // Starter silo for the next batch must be empty by clean-out
     [1,2,3,4].forEach(g => { starterAlerts(g).forEach(a => alerts.push(a)); });
@@ -729,7 +728,7 @@ function computeFarmAlerts() {
     (shed.pickups || []).forEach(p => {
       if (!p.weightEstimated || !p.date || dateOnly(p.date) >= dateOnly(today)) return;
       const g = Math.ceil(shed.id / 2);
-      alerts.push({ kind: 'warn', msg: `<strong>Shed ${shed.id}</strong> · ${fmtShortNoYear(p.date)} pickup still has an estimated weight — enter the kill-sheet weight`, tab: 'g'+g, shedId: shed.id });
+      alerts.push({ kind: 'warn', msg: `<strong>Shed ${shed.id}</strong> — Enter the kill-sheet weight for the ${fmtShortNoYear(p.date)} pickup.`, tab: 'g'+g, shedId: shed.id });
     });
   });
   if (notifPrefs.shedPerformance) {
@@ -742,7 +741,7 @@ function computeFarmAlerts() {
       const daysVar = daysVsTarget(age, est.kg);
       if (daysBehindSeverity(daysVar) === 'bad') {
         const g = Math.ceil(shed.id / 2);
-        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — ${Math.abs(daysVar).toFixed(1)} days behind ${stdName()}`, tab: 'g'+g, shedId: shed.id });
+        alerts.push({ kind: 'error', msg: `<strong>Shed ${shed.id}</strong> — Growing slowly: ${Math.abs(daysVar).toFixed(1)} days behind ${stdName()}.`, tab: 'g'+g, shedId: shed.id });
       }
     });
   }
@@ -751,11 +750,11 @@ function computeFarmAlerts() {
 
 function starterAlerts(g){
   const st=starterSiloStatus(g);if(!st||!st.inWin)return [];
-  const out=[];const P=`<strong>${pairLabel(g)} starter silo</strong>`;const co=fmtShortNoYear(st.co);
+  const out=[];const P=`<strong>${pairLabel(g)}</strong>`;const co=fmtShortNoYear(st.co);
   const sn=st.silo?`Silo ${siloNumber(g,st.silo)}`:'';
-  if(st.state==='pick')out.push({kind:'warn',msg:`${P} — pick which silo takes next batch's Starter (clean-out ${co})`,tab:'g'+g,feedGroup:g});
-  else if(st.state==='action')out.push({kind:st.late?'error':'warn',msg:`${P} — ${sn} still holds ${fmtFeed(st.kg,0)} · ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)} so it's empty by clean-out (${co})`,tab:'g'+g,feedGroup:g});
-  (st.wrong||[]).forEach(l=>out.push({kind:'warn',msg:`${P} — ${sn} gets ${feedTypeLabel(l.feedType)} on ${fmtShortNoYear(l.date)}; it must still be empty by ${co}`,tab:'g'+g,feedGroup:g}));
+  if(st.state==='pick')out.push({kind:'warn',msg:`${P} — Choose the starter silo for the next batch. Clean-out ${co}.`,tab:'g'+g,feedGroup:g,starter:true});
+  else if(st.state==='action')out.push({kind:st.late?'error':'warn',msg:`${P} — ${st.late?'Open':'Open by '+fmtShortNoYear(st.openBy)+':'} starter silo ${sn.replace('Silo ','')}. It still has ${fmtFeed(st.kg,0)} and must be empty by clean-out (${co}).`,tab:'g'+g,feedGroup:g,starter:true});
+  (st.wrong||[]).forEach(l=>out.push({kind:'warn',msg:`${P} — Move the ${fmtShortNoYear(l.date)} ${feedTypeLabel(l.feedType)} load out of starter silo ${sn.replace('Silo ','')}. Keep it empty for the next batch (clean-out ${co}).`,tab:'g'+g,feedGroup:g,starter:true}));
   return out;
 }
 function renderAlertsPopoverBody() {

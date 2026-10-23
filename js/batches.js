@@ -54,7 +54,8 @@ async function refreshRunningBatches(force){
       try{
         const r=await fetch(buildBatchUrl(syncFarmName,k),{cache:'no-store'});if(!r.ok)continue;
         const j=await r.json();const p=j&&j.data;if(!p||!p.farmData||!Array.isArray(p.farmData.sheds))continue;
-        others.push({key:k,newest:k===newest,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null}))});
+        others.push({key:k,newest:k===newest,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null})),
+          starter:(Array.isArray(p.farmLoads)?p.farmLoads:[]).filter(l=>l&&l.date&&l.feedType==='starter').map(l=>({date:l.date,splitKg:l.splitKg||{},siloFor:l.siloFor||null}))});
       }catch(e){}
     }
     pwRunOthers=others;pwRunAt=Date.now();pwRunFarm=syncFarmName;
