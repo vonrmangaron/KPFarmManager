@@ -580,11 +580,10 @@ function batchSoFar(sheds, today) {
 // Today's FCR from measured feed (feedEatenMeasured): each pair is taken
 // at its latest silo reading, so feed and weight are the same moment.
 // kpi is null when a placed pair has no reading or a shed has no weight.
-function batchMeasured(today) {
-  const t = dateOnly(today);
+// Feed eaten from records: carry-over + loads up to each pair's latest silo reading − that reading.
+// A finished pair (both sheds closed, leftover entered) counts every load it got minus its leftover.
+function recordsFeedEaten(t){
   const m = feedEatenMeasured();
-  // A finished pair (both sheds closed, leftover entered) counts every load it got minus its leftover,
-  // and every bird as shipped — instead of its last silo reading (closeout.js)
   const pl = predState.pairLeftover || {};
   [1,2,3,4].forEach(g => {
     const lo = pl[g], sheds = shedsForGroup(g).filter(s => s.placementDate);
@@ -596,6 +595,25 @@ function batchMeasured(today) {
     m.eaten += all - (Number(lo.kg) || 0);
     m.pairs.push({ g, date: t, morning: true, delivered: all, stock: Number(lo.kg) || 0, sheds, finished: true });
   });
+  return m;
+}
+// Finish forecast feed (2026-10-23, the user's choice): what's been eaten so far from the records above,
+// then the Ross 308 table × birds for the days still to come, to each shed's clean-out.
+// null (→ Ross table for the whole batch) while a running pair has no silo reading.
+function recordsBasedFeed(){
+  const t = dateOnly(new Date()), m = recordsFeedEaten(t);
+  if (m.missing.length || !(m.eaten > 0)) return null;
+  let after = 0;
+  withResultPlan(() => m.pairs.filter(p => !p.finished).forEach(p => {
+    // a morning reading is the start of its day, so that day's feed is still to come
+    const start = p.morning ? dateOnly(p.date) : addDays(dateOnly(p.date), 1);
+    p.sheds.forEach(s => { if (!s.cleanoutDate) return; const end = dateOnly(s.cleanoutDate); for (let d = start; d <= end; d = addDays(d, 1)) after += shedFeedOn(s, d); });
+  }));
+  return { eaten: m.eaten, after, total: m.eaten + after, finished: m.pairs.filter(p => p.finished).length };
+}
+function batchMeasured(today) {
+  const t = dateOnly(today);
+  const m = recordsFeedEaten(t);
   const acc = { feedKg: m.eaten, liveWeightKg: 0, birds: 0, ageBirdSum: 0, placed: 0, mortality: 0, targetBirdSum: 0,
     anyEstimated: false, onFarmKg: 0, shippedKg: 0, ordered: feedOrderedKg(), eaten: m.eaten, carry: m.carry, pairs: m.pairs, missing: m.missing.slice(), noWeight: [] };
   (farmData.sheds || []).forEach(shed => {
@@ -1832,7 +1850,8 @@ function computeFarmTotals(){
   const shedDone=s=>(s.cleanoutDate&&dateOnly(s.cleanoutDate)<todayD)||(s.pickups||[]).some(p=>p.isFinal&&p.date&&dateOnly(p.date)<=todayD);
   const batchDone=placedSheds.length>0&&placedSheds.every(shedDone);
   const fromDockets=!usingManualFeed&&batchDone&&farmLoads.length>0&&farmLoads.every(l=>l.actualKg!=null);
-  const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+(carryInDocket?0:carryKg):fromDockets?feedOrderedKg()+carryKg:totalFeedAuto;
+  let rec=null;if(!usingManualFeed&&!fromDockets){try{rec=recordsBasedFeed();}catch(e){rec=null;}}
+  const baseFeed=usingManualFeed?Number(predState.farmFeedOverride)+(carryInDocket?0:carryKg):fromDockets?feedOrderedKg()+carryKg:rec?rec.total:totalFeedAuto;
   // Leftover only comes off the docket-based total (delivered + carry-over − leftover).
   // The auto estimate is feed the birds eat, so the leftover was never in it.
   const totalFeed=Math.max(0,usingManualFeed||fromDockets?baseFeed-leftoverKg:baseFeed);
@@ -1840,7 +1859,7 @@ function computeFarmTotals(){
   const k=batchKpis({feedKg:totalFeed,liveWeightKg:totalLiveWeight,birds:totalBirdsAtHarvest,ageBirdSum:weightedAgeSum,placed:totalPlaced,mortality:totalMortalityEst,targetKg});
   const {fcr,cfcr,cfcrInd,pif}=k,avgWeight=k.alw,livability=k.livability,weightedAge=k.avgAge;
   const cage=cAge245ForSheds(sheds.filter(s=>s.placementDate));
-  return {feedMeasured,hasData:true,carryKg,carryInDocket,fromDockets,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
+  return {feedMeasured,feedRecords:rec,hasData:true,carryKg,carryInDocket,fromDockets,shedsWithData,totalLiveWeight,totalFeedAuto,totalFeed,fcr,cfcr,cfcrInd,pif,targetKg,cage,avgWeight,livability,weightedAge,placed:totalPlaced,mortality:totalMortalityEst,birdsAtHarvest:totalBirdsAtHarvest,usingManualFeed,autoLeftover,leftoverApplied,leftoverKg,totalCurrentMortality:totalCurrentMort,currentMortRate:totalPlaced>0?(totalCurrentMort/totalPlaced)*100:0,estMortRate:totalPlaced>0?(totalMortalityEst/totalPlaced)*100:0};
 }
 // Leftover hint: with expected pickups; never a negative 'leftover'
 // "Still to order" line: expected (with auto pickups) and safe (no future pickups)
@@ -1854,7 +1873,7 @@ function learnedBasisHtml(t){
   if(!FARM_LEARNING){const fm=t&&t.feedMeasured;
     const chk=fm&&fm.modelPast>0?Math.round((fm.eaten/fm.modelPast-1)*100):null;
     const feedPart=`<span title="Feed for the whole batch follows the Ross 308 intake table for the birds on the farm each day.">Feed: <b>Ross 308 intake</b></span>${chk!=null?`<span class="fk-sep"> · </span><span title="Check only, not used in the result: carry-over + docket loads − silo stock to ${fmtShortNoYear(fm.asOf)} = ${fmtFeed(fm.eaten)}; the Ross table says ${fmtFeed(fm.modelPast)}. Ring readings (8 t a ring), unread silos and loads arriving after a reading make this swing.">Silo readings: <b>${chk>0?'+':''}${chk}%</b> vs standard so far</span>`:''}`;
-    return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b>, <b>${Math.round((finalUpliftFactor()-1)*100)}%</b> heavier than thins</span></div>`;}
+    return `<div class="fk-basis fk-learned">${feedPart}<span class="fk-sep"> · </span><span title="Growth from the Ross 308 curve, fitted to your in-yard and pickup weighings.">Growth: <b>Ross 308 fitted to your weighings</b></span><span class="fk-sep"> · </span><span title="First thin from your density rules; last pickup at the plant's clean-out date (the ranges show ${PROJ_EARLY_DAYS} days earlier too).">Last pickup: <b>clean-out date</b>, <b>${Math.round((finalUpliftFactor()-1)*100)}%</b> heavier than thins${(()=>{const l=learnedFinalUplift();return l?` (learned from ${l.n} closed shed${l.n===1?'':'s'})`:'';})()}</span></div>`;}
   const parts=[];
   const cal=intakeCalibration();
   if(cal.ok&&cal.fromHistory){parts.push(`<span title="No usable silo readings yet this batch — starting from the average of ${cal.fromHistory} past batch${cal.fromHistory>1?'es':''} in Farm history. Switches to this batch's own readings once every pair has one.">Intake <b>${Math.round(cal.factor*100)}%</b> of Ross · from past batches</span>`);}
@@ -1880,6 +1899,7 @@ function farmFeedSubText(t){
     const parts=[`Delivery dockets ${fmtFeed(feedOrderedKg())}`];if(co)parts.push(`+ ${fmtFeed(co)} carried over`);if(t.leftoverApplied)parts.push(`− ${fmtFeed(t.leftoverKg)} leftover`);
     return `${parts.join(' ')} · batch finished, so the real feed is used · auto: ${fmtTonnesAlways(t.totalFeedAuto)}`;
   }
+  if(t.feedRecords)return `Eaten so far from your records ${fmtFeed(t.feedRecords.eaten)} (dockets + carry-over − silo readings${t.feedRecords.finished?', finished pairs: loads − leftover':''}) + ${fmtFeed(t.feedRecords.after)} still to eat (Ross 308) · Ross table only: ${fmtTonnesAlways(t.totalFeedAuto)}`;
   const base=`Auto-estimated from ${t.shedsWithData} shed${t.shedsWithData===1?'':'s'}${t.leftoverApplied?` · ${fmtFeed(t.leftoverKg)} leftover not deducted (the birds didn't eat it)`:''}`;
   return co?`${base} · carry-over ${fmtFeed(co)} is already in the birds' intake`:base;
 }

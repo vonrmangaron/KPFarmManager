@@ -573,7 +573,27 @@ function batchKpis(o){
   const pif=(avgAge>0&&fcr>0)?(livability*alw)/(avgAge*fcr)*100:0;
   return {fcr,alw,avgAge,livability,cfcr,cfcrInd,pif,beta,target};
 }
-function finalUpliftFactor(){const v=Number(predState.finalUpliftPct);return 1+(Number.isFinite(v)&&v>=0&&v<=20?v:DEFAULT_FINAL_UPLIFT_PCT)/100;}
+// Final pickups run heavier than the growth curve. Once sheds have closed, the farm's own figure is used
+// (2026-10-23, the user's choice): each closed shed's final plant weight vs the curve fitted to its earlier
+// pickups, averaged. Until then the Final pickup weight setting (Adjust).
+let learnedUpliftCache=null;
+function learnedFinalUplift(){
+  const sheds=(farmData&&farmData.sheds||[]).filter(s=>s.closed&&s.placementDate);
+  const sig=sheds.map(s=>s.id+':'+(s.pickups||[]).length+':'+(s.pickups||[]).reduce((n,p)=>n+(Number(p.totalWeightKg)||0),0)).join('|');
+  if(learnedUpliftCache&&learnedUpliftCache.sig===sig)return learnedUpliftCache.v;
+  const each=[];
+  sheds.forEach(s=>{
+    const fin=(s.pickups||[]).find(p=>p.isFinal&&!p.weightEstimated&&pickupAvgKg(p)>0);if(!fin)return;
+    const thin=(s.pickups||[]).filter(p=>p!==fin);
+    if(thin.filter(p=>!p.weightEstimated&&pickupAvgKg(p)>0).length<2)return;
+    const fit=computeShedGompertzFit({...s,pickups:thin});if(!fit)return;
+    const cur=gompertzWeightAt(fit,pickupAge(s,fin));if(!(cur>0))return;
+    const pct=(pickupAvgKg(fin)/cur-1)*100;if(Number.isFinite(pct))each.push({id:s.id,pct});
+  });
+  const v=each.length?{pct:Math.max(0,Math.min(20,each.reduce((n,x)=>n+x.pct,0)/each.length)),n:each.length,each}:null;
+  learnedUpliftCache={sig,v};return v;
+}
+function finalUpliftFactor(){const l=learnedFinalUplift();if(l)return 1+l.pct/100;const v=Number(predState.finalUpliftPct);return 1+(Number.isFinite(v)&&v>=0&&v<=20?v:DEFAULT_FINAL_UPLIFT_PCT)/100;}
 function pairTargetKg(g){return Number(predState.targetHarvestWeightKg&&predState.targetHarvestWeightKg[g])||2.65;}
 // CAge2.45 (Baiada "corrected age"): the age the flock reaches 2.45 kg — read off each shed's own
 // growth curve (the fitted curve from its weighings, Ross 308 only when there is no fit yet),
