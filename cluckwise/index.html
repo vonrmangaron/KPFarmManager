@@ -3529,7 +3529,7 @@
   /* filters: hide what doesn't match */
   [data-filter="todo"] .prep-u.done, [data-filter="late"] .prep-u:not(.f-late), [data-filter="week"] .prep-u:not(.f-week), [data-filter="task"] .prep-u:not(.f-task){ display:none; }
   [data-filter="todo"] .pg-c .prep-cb.on{ opacity:.25; }
-  .prep-board.prep-board2{ display:grid; grid-template-columns:repeat(var(--cols,3), minmax(270px,1fr)); gap:12px; align-items:start; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; }
+  .prep-board.prep-board2{ display:grid; grid-template-columns:repeat(var(--cols,8), minmax(270px,1fr)); gap:12px; align-items:start; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; }
   .prep-board2 .prep-col{ flex:none; scroll-snap-align:start; background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:16px; padding:0; gap:0; overflow:hidden; box-shadow:0 10px 26px rgba(22,25,27,.06); position:relative; }
   body.theme-dark .prep-board2 .prep-col{ box-shadow:0 10px 26px rgba(0,0,0,.3); }
   /* neighbouring sheds alternate shades (kept from c86) */
@@ -3570,45 +3570,11 @@
   .prep-rs b{ font:800 15px Sora,sans-serif; color:var(--ink); line-height:1.1; }
   .prep-rs small{ font:600 10px Inter,sans-serif; color:var(--muted); }
   .prep-runs-n{ font-size:11.5px; color:var(--muted); margin-left:auto; }
-  /* compact: every shed on one screen (computers only — a phone shows one shed at a time) */
-  @media (min-width:761px){
-  .prep-board2.compact{ grid-template-columns:repeat(var(--cols,8), minmax(0,1fr)); gap:8px; overflow:visible; }
-  .compact .prep-ch2{ grid-template-columns:1fr; justify-items:center; text-align:center; gap:4px; padding:12px 4px 8px; }
-  .compact .prep-ct2{ display:none; }
-  .compact .prep-sn{ width:30px; height:30px; font-size:14px; border-radius:9px; }
-  .compact .prep-ring{ width:40px; height:40px; }
-  .compact .prep-cd2{ flex-direction:column; align-items:center; gap:0; padding:5px 4px; font-size:10.5px; text-align:center; }
-  .compact .prep-secs{ padding:6px; gap:6px; }
-  .compact .prep-sh{ padding:5px 7px; font-size:9.5px; letter-spacing:.02em; }
-  .compact .prep-u{ margin:0 3px; font-size:11.5px; }
-  .compact .prep-u .prep-grip, .compact .prep-u .prep-mk, .compact .prep-add:not(.sec){ display:none; }
-  .compact .prep-cf{ flex-direction:column; align-items:stretch; padding:6px; gap:4px; }
-  .compact .prep-cf .prep-icons{ justify-content:center; }
-  .compact .prep-readybtn{ font-size:11px !important; padding:6px !important; }
-  .compact .prep-u{ padding:5px 6px !important; min-height:0 !important; gap:6px !important; }
-  .compact .prep-u .prep-um, .compact .prep-u .prep-del{ display:none; }
-  .compact .prep-u .prep-cb{ width:18px !important; height:18px !important; flex:0 0 18px; font-size:11px; }
-  .compact .prep-u b.prep-itname{ font-size:11.5px; line-height:1.25; }
-  .compact .prep-sh{ flex-wrap:wrap; }
-  .compact .prep-sh .prep-secname{ flex:1 1 100% !important; }
-  .compact .prep-sh .prep-mk.sec, .compact .prep-sh .prep-link.sec{ display:none; }
-  .compact .prep-sh .prep-grip{ display:none; }
-  }
-  /* grid view */
-  .prep-gridwrap{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 10px 26px rgba(22,25,27,.06); overflow:auto; }
-  .prep-grid table{ width:100%; border-collapse:collapse; min-width:560px; }
-  .prep-grid th, .prep-grid td{ padding:8px 10px; border-bottom:1px solid var(--line); text-align:center; font-size:13px; }
-  .prep-grid th:first-child, .prep-grid td:first-child{ text-align:left; }
-  .prep-grid thead th{ position:sticky; top:0; background:var(--surface); font:800 13px Sora,sans-serif; color:var(--ink); z-index:1; }
-  .prep-grid thead th small{ display:block; font:600 11px Inter,sans-serif; color:var(--muted); }
-  .prep-grid .pg-sec td{ background:var(--surface-soft); font:800 11px Inter,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); text-align:left; }
-  .prep-grid .pg-job{ color:var(--ink); font-weight:600; }
-  .prep-grid .pg-na{ color:var(--muted); }
-  .prep-grid .pg-c .prep-cb{ margin:0 auto; }
-  .prep-grid .pg-c small{ display:block; font-size:10.5px; color:var(--muted); margin-top:2px; }
-  .prep-tg{ display:inline-block; margin-top:3px; font:700 10.5px Inter,sans-serif; border-radius:99px; padding:1px 7px; white-space:nowrap; }
-  .prep-tg.late{ background:#FDE4DF; color:#B42318; } .prep-tg.task{ background:#E8EEFD; color:#2F55C8; } .prep-tg.date{ background:#FFF0CF; color:#7A4D00; }
-  body.theme-dark .prep-tg.late{ background:rgba(220,74,54,.22); color:#FF9C8A; } body.theme-dark .prep-tg.task{ background:rgba(47,107,216,.22); color:#9DBBF5; } body.theme-dark .prep-tg.date{ background:rgba(240,162,26,.18); color:#FFD58A; }
+  .prep-board2 .prep-col.run{ background:var(--surface-soft) !important; border-style:dashed !important; box-shadow:none; }
+  .prep-board2 .prep-col.run::before{ background:var(--line); }
+  .prep-board2 .prep-col.run .prep-sn{ background:var(--surface); color:var(--muted); border:1px solid var(--line); }
+  .prep-board2 .prep-col.run .prep-runb{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--muted); }
+  .prep-chip.run{ background:var(--surface); color:var(--muted); border:1px solid var(--line); }
   #prepMain{ gap:12px; }
   #prepMain > *{ flex-shrink:0; }
   .prep-board2 .prep-sh .prep-spb{ flex:0 0 100% !important; }
@@ -11337,12 +11303,14 @@
     const state = c ? (c.status === 'ready' ? 'ready' : 'prep') : run ? 'run' : 'idle';
     if(state === 'run'){
       const day = mlogDaysBetween(run.placement, today);
-      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b></div><span class="prep-st run">Running</span><span class="prep-cm">${run.batch ? 'Batch ' + escapeHtml(String(run.batch)) + ' · ' : ''}day ${day}</span></div>
-        <div class="prep-runb"><span>Clean-out ${escapeHtml(prepFmt(run.cleanout))}</span><span>The checklist appears when the shed is closed in Production.</span><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start early</button></div></section>`;
+      const left = run.cleanout ? Math.round((toDateObj(run.cleanout) - toDateObj(today)) / 86400000) : null;
+      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Running</span></b><span>${run.batch ? 'Batch ' + escapeHtml(String(run.batch)) + ' · ' : ''}day ${day}</span></div></div>
+        <div class="prep-cd2"><span>Clean-out <b>${escapeHtml(prepFmt(run.cleanout))}</b></span>${left != null && left >= 0 ? `<span><b>${left} d</b> left</span>` : ''}</div>
+        <div class="prep-runb"><span>The checklist appears when the shed is closed in Production.</span><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start early</button></div></section>`;
     }
     if(state === 'idle'){
-      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b></div><span class="prep-st run">Empty</span></div>
-        <div class="prep-runb"><span>No batch and no checklist.</span><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start a checklist</button></div></section>`;
+      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Empty</span></b><span>No batch and no checklist</span></div></div>
+        <div class="prep-runb"><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start a checklist</button></div></section>`;
     }
     const pr = prepProgress(c), pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
     const meta = [`${pr.done}/${pr.total}`, c.closedAt ? 'closed ' + prepFmt(c.closedAt) : 'started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : '', c.tpl && prepTemplates().length > 1 ? c.tpl : ''].filter(Boolean).join(' · ');
@@ -11627,26 +11595,6 @@
   let prepFilter = 'all';
   function prepPref(k, d){ try{ return localStorage.getItem('cw-prep-' + k) || d; }catch(e){ return d; } }
   function prepSetPref(k, v){ try{ localStorage.setItem('cw-prep-' + k, v); }catch(e){} }
-  function prepGridHtml(list){
-    if(!list.length) return '';
-    // rows: every section and job in the order they first appear across the sheds, matched by name
-    const norm = t=> String(t || '').trim().toLowerCase(), rows = [];
-    list.forEach(c=> (c.sections || []).forEach(sec=>{
-      let r = rows.find(x=> norm(x.t) === norm(sec.t)); if(!r){ r = { t: sec.t, items: [] }; rows.push(r); }
-      ((sec.items || []).length ? sec.items : [sec]).forEach(u=>{ if(!r.items.some(x=> norm(x) === norm(u.t))) r.items.push(u.t); });
-    }));
-    const cell = (c, secT, itT)=>{
-      const sec = (c.sections || []).find(x=> norm(x.t) === norm(secT)); if(!sec) return '<td class="pg-na">—</td>';
-      const u = (sec.items || []).length ? sec.items.find(x=> norm(x.t) === norm(itT)) : (norm(sec.t) === norm(itT) ? sec : null);
-      if(!u) return '<td class="pg-na">—</td>';
-      const fl = prepUnitFlags(c, u), tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
-      const tag = u.done ? (u.doneBy ? `<small>${escapeHtml(u.doneBy)}</small>` : '') : fl.late ? '<span class="prep-tg late">overdue</span>' : tk ? `<span class="prep-tg task">${escapeHtml(prepFmt(tk.date))}</span>` : u.due ? `<span class="prep-tg date">${escapeHtml(prepFmt(u.due))}</span>` : '';
-      return `<td class="pg-c${fl.late ? ' f-late' : ''}"><button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t + ' in Shed ' + c.shed)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${tag}</td>`;
-    };
-    const head = `<tr><th>Job</th>${list.map(c=>{ const p = prepProgress(c); return `<th>Shed ${escapeHtml(c.shed)}<small>${p.done}/${p.total}</small></th>`; }).join('')}</tr>`;
-    const body = rows.map(r=> `<tr class="pg-sec"><td colspan="${list.length + 1}">${escapeHtml(r.t)}</td></tr>` + r.items.map(it=> `<tr><td class="pg-job">${escapeHtml(it)}</td>${list.map(c=> cell(c, r.t, it)).join('')}</tr>`).join('')).join('');
-    return `<div class="prep-grid"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
-  }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
@@ -11656,9 +11604,7 @@
     const open = prepOpenList().length, ready = list.filter(c=> c.status === 'ready').length;
     const running = others.filter(sh=> prepShedRun(sh)).length;
     $('#mlogSub').textContent = [ghFarmName, `${open} preparing · ${ready} ready · ${running} running`].filter(Boolean).join(' · ');
-    if(!prepPhoneShed || !active.includes(prepPhoneShed)) prepPhoneShed = active[0] || sheds[0];
-    const view = prepPref('view', 'board'), dens = prepPref('density', 'auto');
-    const compact = dens === 'compact' || (dens === 'auto' && active.length > 4);
+    if(!prepPhoneShed || !sheds.includes(prepPhoneShed)) prepPhoneShed = active[0] || sheds[0];
     // summary
     let done = 0, total = 0, late = 0, week = 0; list.forEach(c=>{ const p = prepProgress(c); done += p.done; total += p.total; prepUnits(c).forEach(x=>{ const f = prepUnitFlags(c, x.u); if(f.late) late++; if(f.week) week++; }); });
     const firstChicks = list.map(c=> c.nextPlacement).filter(Boolean).sort()[0];
@@ -11666,16 +11612,11 @@
     const sum = list.length ? `<div class="prep-sum2"><div><h3>${list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : list.length + ' sheds are'} being prepared</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
         <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
-    const bar = list.length ? `<div class="prep-bar2"><div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>
-        <div class="prep-seg2" role="group" aria-label="View"><button type="button" data-prep-view="board" class="${view === 'board' ? 'on' : ''}">Board</button><button type="button" data-prep-view="grid" class="${view === 'grid' ? 'on' : ''}">Grid</button></div>
-        ${view === 'board' ? `<div class="prep-seg2 dens" role="group" aria-label="Column width"><button type="button" data-prep-dens="comfy" class="${!compact ? 'on' : ''}" title="Full-width columns">Comfortable</button><button type="button" data-prep-dens="compact" class="${compact ? 'on' : ''}" title="Narrow columns, every shed on one screen">Compact</button></div>` : ''}</div>` : '';
-    // the sheds that aren't being prepared: one slim strip
-    const strip = others.length ? `<div class="prep-runs"><span class="prep-runs-k">${list.length ? 'Still running' : 'No shed is being prepared yet'}</span>${others.map(sh=>{ const r = prepShedRun(sh);
-        return `<button type="button" class="prep-rs" data-prep-start="${escapeHtmlAttr(sh)}" title="${r ? `Batch ${escapeHtmlAttr(String(r.batch || ''))} · clean-out ${escapeHtmlAttr(prepFmt(r.cleanout))} — tap to start its checklist early` : 'Empty — tap to start a checklist'}"><b>${escapeHtml(sh)}</b><small>${r ? escapeHtml(prepFmt(r.cleanout).replace(/^\w+ /, '')) : 'empty'}</small></button>`; }).join('')}<span class="prep-runs-n">The checklist appears when a shed closes in Production · tap one to start early</span></div>` : '';
-    const tabs = active.length > 1 ? `<div class="prep-tabs">${active.map(sh=>{ const c = prepActiveFor(sh); return `<button type="button" class="prep-tab ${c.status === 'ready' ? 'ready' : 'prep'}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>` : '';
-    const main = !list.length ? '' : view === 'grid' ? `<div class="prep-gridwrap" data-filter="${prepFilter}">${prepGridHtml(list)}</div>`
-      : `${tabs}<div class="prep-board prep-board2${compact ? ' compact' : ''}" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${list.length}">${active.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
-    box.innerHTML = sum + strip + bar + main;
+    const bar = list.length ? `<div class="prep-bar2"><div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div></div>` : '';
+    // every shed is a column: the ones being prepared with their checklist, the rest running or empty
+    const tabs = `<div class="prep-tabs">${sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>`;
+    const main = `${tabs}<div class="prep-board prep-board2" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${sheds.length}">${sheds.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    box.innerHTML = sum + bar + main;
     if($('#prepTplEdModal').classList.contains('open')) renderPrepTplEd();
     prepSetupSort([box, $('#prepTplEdModal').classList.contains('open') ? $('#prepTplEdBoard') : null]);
     if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = document.querySelector(`[data-prep-add="${CSS.escape(k)}"]`); if(btn) prepStartAdd(btn); }
@@ -13568,8 +13509,6 @@
   $('#prepMain').addEventListener('click', prepBoardClick);
   $('#prepMain').addEventListener('click', (e)=>{
     const f = e.target.closest('[data-prep-f]'); if(f){ prepFilter = f.dataset.prepF; renderPrepBoard(); return; }
-    const v = e.target.closest('[data-prep-view]'); if(v){ prepSetPref('view', v.dataset.prepView); renderPrepBoard(); return; }
-    const d = e.target.closest('[data-prep-dens]'); if(d){ prepSetPref('density', d.dataset.prepDens); renderPrepBoard(); return; }
   });
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
