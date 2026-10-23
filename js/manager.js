@@ -52,11 +52,48 @@ function mgrNeeds(silos){
   return out.slice(0,4);
 }
 // Loads and pickups for today and the next 6 days
+// This week (2026-10-23): every day of the next 7 with its loads and pickups, for the strip + event list
+function mgrWeekDays(){
+  const today=mgrToday(),out=[];
+  for(let i=0;i<7;i++)out.push({date:addDays(today,i),loads:[],pick:[]});
+  const at=d=>out.find(x=>iso(x.date)===iso(d));
+  farmLoads.forEach(l=>{if(!l.date)return;const x=at(dateOnly(l.date));if(x)x.loads.push(l);});
+  mgrPlaced().forEach(s=>(s.pickups||[]).concat((s.predictedPickups||[]).map(p=>({...p,planned:true}))).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date),x=at(d);if(!x||x.pick.some(q=>q.shed===s.id))return;x.pick.push({shed:s.id,birds:Number(p.birds)||0,final:!!p.isFinal,planned:!!p.planned,age:ageInDays(s,d)});}));
+  out.forEach(x=>x.pick.sort((a,b)=>a.shed-b.shed));
+  return out;
+}
+let mgrWeekSel=null;   // a day picked in the strip (iso), or null for the whole week
+document.addEventListener('click',e=>{const d=e.target.closest&&e.target.closest('[data-wk-day]');if(!d)return;mgrWeekSel=mgrWeekSel===d.dataset.wkDay?null:d.dataset.wkDay;render();});
+function mgrWeekHtml(){
+  const days=mgrWeekDays(),WD=['SUN','MON','TUE','WED','THU','FRI','SAT'],todayK=iso(mgrToday());
+  if(mgrWeekSel&&!days.some(x=>iso(x.date)===mgrWeekSel))mgrWeekSel=null;
+  const kgOf=l=>l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0;
+  const nLoads=days.reduce((n,x)=>n+x.loads.length,0),tLoads=days.reduce((n,x)=>n+x.loads.reduce((m,l)=>m+kgOf(l),0),0);
+  const picks=days.flatMap(x=>x.pick),nFin=picks.filter(p=>p.final).length,nBirds=picks.reduce((n,p)=>n+p.birds,0);
+  const I={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17h13V7H3zM16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+    pick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>'};
+  const strip=days.map(x=>{const k=iso(x.date),has=x.loads.length||x.pick.length;
+    return `<button type="button" class="wk-day${k===todayK?' today':''}${k===mgrWeekSel?' sel':''}${has?'':' empty'}" data-wk-day="${k}" title="${escapeAttr(fmtShortNoYear(x.date))}${has?'':' · nothing booked'}" aria-pressed="${k===mgrWeekSel}"><small>${WD[x.date.getDay()]}</small><b>${x.date.getDate()}</b><span class="wk-dots">${x.loads.length?`<i class="wk-dot feed">${I.feed}</i>`:''}${x.pick.length?`<i class="wk-dot pick">${I.pick}</i>`:''}</span></button>`;}).join('');
+  const evs=[];
+  days.filter(x=>!mgrWeekSel||iso(x.date)===mgrWeekSel).forEach(x=>{
+    const when=`<span class="wk-when"><small>${WD[x.date.getDay()]}</small><b>${x.date.getDate()}</b></span>`;
+    x.loads.forEach(l=>{const gs=[1,2,3,4].filter(g=>Number(l.splitKg&&l.splitKg[g])>0);
+      evs.push(`<div class="wk-ev">${when}<span class="wk-ic feed">${I.feed}</span><span class="wk-tx"><b>Feed load${l.feedType?' · '+escapeHtml(feedTypeLabel(l.feedType).toLowerCase()):''}</b><span>${gs.map(g=>`${escapeHtml(pairLabel(g))} ${mgrT(Number(l.splitKg[g]))}`).join(' · ')||'not split yet'}</span></span><span class="wk-amt">${mgrT(kgOf(l))}</span></div>`);});
+    x.pick.forEach(p=>evs.push(`<div class="wk-ev">${when}<span class="wk-ic pick">${I.pick}</span><span class="wk-tx"><b>${p.final?'Final pickup':'Pickup'} · Shed ${p.shed}</b><span>${p.final?'clean-out · ':''}day ${p.age}${p.planned?' · planned':''}</span></span><span class="wk-amt">${p.birds.toLocaleString('en-US')}<small>birds</small></span></div>`));
+  });
+  const chips=[nLoads?`<span class="wk-chip feed">${nLoads} load${nLoads===1?'':'s'} · ${mgrT(tLoads)}</span>`:'',picks.length?`<span class="wk-chip pick">${nFin&&nFin===picks.length?`${nFin} final pickup${nFin===1?'':'s'}`:`${picks.length} pickup${picks.length===1?'':'s'}`} · ${nBirds.toLocaleString('en-US')} birds</span>`:''].join('');
+  return `<section class="mgr-card mgr-week2">
+      <div class="wk-head"><span class="mgr-title">This week</span><span class="wk-chips">${chips}</span></div>
+      <div class="wk-strip">${strip}</div>
+      ${evs.length?`<div class="wk-list">${evs.join('')}</div>`:`<p class="mgr-none">${mgrWeekSel?'Nothing booked that day.':'No loads or pickups in the next 7 days.'}</p>`}
+      <div class="wk-foot"><span>${mgrWeekSel?'Showing one day · tap it again for the whole week':'Tap a day to see just that day'}</span><button type="button" class="mgr-link" data-mgr-loads>Feed loads ›</button></div>
+    </section>`;
+}
 function mgrWeek(){
   const today=mgrToday(),end=addDays(today,6),days=new Map();
   const day=d=>{const k=iso(d);if(!days.has(k))days.set(k,{date:d,loads:[],pick:[]});return days.get(k);};
   farmLoads.forEach(l=>{if(!l.date)return;const d=dateOnly(l.date);if(d<today||d>end)return;day(d).loads.push(l);});
-  mgrPlaced().forEach(s=>(s.pickups||[]).concat((s.predictedPickups||[]).map(p=>({...p,planned:true}))).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date);if(d<today||d>end)return;const x=day(d);if(!x.pick.some(q=>q.shed===s.id&&iso(q.date)===iso(d)))x.pick.push({shed:s.id,birds:Number(p.birds)||0,date:d});}));
+  mgrPlaced().forEach(s=>(s.pickups||[]).concat((s.predictedPickups||[]).map(p=>({...p,planned:true}))).forEach(p=>{if(!p.date)return;const d=dateOnly(p.date);if(d<today||d>end)return;const x=day(d);if(!x.pick.some(q=>q.shed===s.id&&iso(q.date)===iso(d)))x.pick.push({shed:s.id,birds:Number(p.birds)||0,date:d,final:!!p.isFinal,planned:!!p.planned,age:ageInDays(s,d)});}));
   return [...days.values()].sort((a,b)=>a.date-b.date).map(x=>{
     const parts=[];
     if(x.pick.length){const b=x.pick.reduce((n,p)=>n+p.birds,0);parts.push(`Pickup${x.pick.length>1?'s':''} Shed${x.pick.length>1?'s':''} ${x.pick.map(p=>p.shed).sort((a,b)=>a-b).join(', ')} · ${b.toLocaleString('en-US')} birds`);}
@@ -163,11 +200,11 @@ function renderHomeView(){
     <div class="mgr-head">${(()=>{const last=cleans.length?cleans[cleans.length-1]:null,tot=last?daysBetween(first,last):0,pct=tot>0&&first<=today?Math.max(0,Math.min(100,daysBetween(first,today)/tot*100)):0;return tot>0?`<span class="mgr-prog" title="${Math.round(pct)}% of the batch, first placement to last clean-out"><i style="width:${pct.toFixed(1)}%"></i><em>${Math.round(pct)}%</em></span>`:'';})()}<button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · ${first>today?'starts '+escapeHtml(fmtShortNoYear(first)):'Day '+day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
     ${typeof changeoverHtml==='function'?changeoverHtml():''}
     ${kpis}
-    <div class="mk-row">${needsHtml}${flock}</div>
+    <div class="mk-row">${needsHtml}${mgrWeekHtml()}</div>
     ${feed}
     ${mgrFeedUseHtml()}
     ${typeof leftoverCardHtml==='function'?leftoverCardHtml():''}
-    <div class="mgr-row2">${shedsHtml}${weekHtml}</div>
+    <div class="mgr-row2">${shedsHtml}${flock}</div>
     ${offHtml}
   </div>`;
 }
