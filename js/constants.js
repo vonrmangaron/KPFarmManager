@@ -24,7 +24,7 @@ const FARM_LEARNING=false;
 // Projection model version — bump with a note whenever the maths behind the
 // projected result changes, so a jump in the numbers is never a mystery.
 const MODEL_VERSION='2026-10-23';
-const MODEL_NOTES={'2026-10-02':'Feed already eaten is measured (dockets + carry-over − silo stock), Ross 308 intake after','2026-10-02b':'Final pickups predicted heavier than the growth curve (Adjust → Final pickup weight vs thins)','2026-10-23':'Feed eaten so far from records (dockets + carry-over − silo readings; finished pairs: loads − leftover), Ross 308 for the days still to come; final pickups as much heavier as the closed sheds were'};
+const MODEL_NOTES={'2026-10-02':'Feed already eaten is measured (dockets + carry-over − silo stock), Ross 308 intake after','2026-10-02b':'Final pickups predicted heavier than the growth curve (Adjust → Final pickup weight vs thins)','2026-10-23':'Feed eaten so far from records (dockets + carry-over − silo readings; finished pairs: loads − leftover), Ross 308 for the days still to come; final estimated pickup weights are re-estimated'};
 // Final birds weigh more than thinned birds (relative to Ross): thins take
 // lighter birds and the rest grow on with more room. Default from Farm 1's
 // past batches (2606/2607: +8–10%); 0 = pure growth curve.

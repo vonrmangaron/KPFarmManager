@@ -211,7 +211,7 @@ const FS_ITEMS=[
     fmt:()=>[1,2,3,4].map(g=>pairTargetKg(g).toFixed(2)).join(' · '),get:()=>[1,2,3,4].map(g=>pairTargetKg(g)),set:v=>{[1,2,3,4].forEach((g,i)=>{const n=Number(v[i]);if(Number.isFinite(n)&&n>0)predState.targetHarvestWeightKg[g]=Math.max(0.5,Math.min(5,n));});},changes:['cFCR (Industry)'],not:'FCR or Cfcr2.45'},
   {key:'bias',sec:'Weights and result',label:'Shed weight to plant weight',hint:'Shed weighings × this = plant weight; set from your kill sheets',kind:'step',min:Math.round(MIN_BIAS_FACTOR*100),max:Math.round(MAX_BIAS_FACTOR*100),step:0.5,fmt:v=>`${v}%`,normal:null,
     get:()=>Math.round(currentBiasFactor()*1000)/10,set:v=>{if(farmData){farmData.biasFactor=Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,v/100));saveState();}},changes:['Projected weights and the result'],not:'Your recorded weighings'},
-  {key:'uplift',sec:'Weights and result',label:'Last pickup heavier',hint:'Used until a shed closes; after that the app uses how much heavier the closed sheds\' final pickups really were',kind:'step',min:0,max:15,step:1,fmt:v=>`+${v}%`,normal:DEFAULT_FINAL_UPLIFT_PCT,
+  {key:'uplift',sec:'Weights and result',label:'Last pickup heavier',hint:'Final birds vs thinning birds at the same age',rec:()=>{const l=typeof learnedFinalUplift==='function'?learnedFinalUplift():null;return l?{pct:l.pct,each:l.each,use:Math.max(0,Math.min(15,Math.round(l.pct)))}:null;},kind:'step',min:0,max:15,step:1,fmt:v=>`+${v}%`,normal:DEFAULT_FINAL_UPLIFT_PCT,
     get:()=>Number.isFinite(Number(predState.finalUpliftPct))?Number(predState.finalUpliftPct):DEFAULT_FINAL_UPLIFT_PCT,set:v=>{predState.finalUpliftPct=v;},changes:['Projected weight of the last pickups','The result'],not:'Kill sheets you have entered'},
   {key:'trig',sec:'Pickup planning',label:'Thin when density reaches',hint:'',kind:'step',min:15,max:45,step:0.5,fmt:v=>`${v} kg/m²`,normal:null,get:()=>Number(fsDens().triggerDensity),set:v=>fsSetDens('triggerDensity',v),changes:['Auto-planned pickups in the projection']},
   {key:'tgt',sec:'Pickup planning',label:'Thin down to',hint:'',kind:'step',min:10,max:40,step:0.5,fmt:v=>`${v} kg/m²`,normal:null,get:()=>Number(fsDens().targetDensity),set:v=>fsSetDens('targetDensity',v),changes:['Auto-planned pickups in the projection']},
@@ -255,7 +255,7 @@ function renderFarmSettingsView(embedded,onlySec){
     </section>`:`<p class="fs-allnormal">Every setting is at normal.</p>`;
   const offKeys=new Set(off.map(o=>o.key));
   const secHtml=secs.map(sec=>`<section class="fs-group"><span class="fs-sec-label">${escapeHtml(sec)}</span><div class="fs-list">
-      ${FS_ITEMS.filter(i=>i.sec===sec).map(i=>`<button type="button" class="fs-row" data-fs-edit="${i.key}"><span class="fs-row-text"><b>${escapeHtml(i.label)}</b>${i.hint?`<span>${escapeHtml(i.hint)}</span>`:''}</span><span class="fs-val${offKeys.has(i.key)?' off':''}">${escapeHtml(i.fmt(i.get()))}</span>${chev}</button>`).join('')}
+      ${FS_ITEMS.filter(i=>i.sec===sec).map(i=>`<button type="button" class="fs-row" data-fs-edit="${i.key}"><span class="fs-row-text"><b>${escapeHtml(i.label)}</b>${i.hint?`<span>${escapeHtml(i.hint)}</span>`:''}${(()=>{const r=i.rec&&i.rec();return r?`<span class="fs-rec">Closed sheds: ${r.each.map(x=>`Shed ${x.id} ${x.pct>=0?'+':''}${x.pct.toFixed(1)}%`).join(' · ')} — average +${r.pct.toFixed(1)}%</span>`:'';})()}</span><span class="fs-val${offKeys.has(i.key)?' off':''}">${escapeHtml(i.fmt(i.get()))}</span>${chev}</button>`).join('')}
     </div></section>`).join('');
   return `<div class="fs-page">
     ${onlySec?'':'<div class="fs-intro">These only change how ProdWise projects and plans. Your recorded data never changes, and every change is kept in History.</div>'}
@@ -286,6 +286,7 @@ function renderFsSheet(){
       <div class="fs-grip" aria-hidden="true"></div>
       <div class="fs-sheet-head"><div><h3>${escapeHtml(i.label)}</h3>${i.hint?`<p>${escapeHtml(i.hint)}</p>`:''}</div><button type="button" class="fs-x" data-fs-close aria-label="Close">${cross}</button></div>
       ${ctrl}
+      ${(()=>{const r=i.rec&&i.rec();if(!r)return '';return `<div class="fs-recbox"><b>From your closed sheds</b><span>${r.each.map(x=>`Shed ${x.id}: ${x.pct>=0?'+':''}${x.pct.toFixed(1)}%`).join(' · ')}</span><span>Average <b>+${r.pct.toFixed(1)}%</b> — each shed is different, so it's only a guide.</span>${Number(fsDraft)!==r.use?`<button type="button" class="fs-btn" data-fs-userec="${r.use}">Use +${r.use}%</button>`:'<em>Matches your setting</em>'}</div>`;})()}
       <div class="fs-changes"><span class="fs-k">This changes</span>${(i.changes||[]).map(c=>`<span class="fs-ch yes">${tick}${escapeHtml(c)}</span>`).join('')}${i.not?`<span class="fs-ch no">${cross}Not ${escapeHtml(i.not)}</span>`:''}</div>
       <div class="fs-sheet-btns">${i.normal!=null?`<button type="button" class="fs-btn" data-fs-normal>Reset to ${escapeHtml(i.fmt(i.normal))}</button>`:'<span></span>'}<button type="button" class="fs-btn primary" data-fs-save>Save</button></div>
     </div>`;
@@ -300,6 +301,7 @@ document.addEventListener('click',e=>{
   const rs=e.target.closest('[data-fs-reset]');if(rs){fsReset(rs.dataset.fsReset);return;}
   if(e.target.closest('[data-fs-reset-all]')){fsResetAll();return;}
   if(e.target.closest('[data-fs-close]')){closeFarmSettingEdit();return;}
+  const ur=e.target.closest('[data-fs-userec]');if(ur){fsDraft=Number(ur.dataset.fsUserec);renderFsSheet();return;}
   const st=e.target.closest('[data-fs-step]');if(st){fsStep(Number(st.dataset.fsStep));return;}
   const sg=e.target.closest('[data-fs-seg]');if(sg){fsDraft=sg.dataset.fsSeg;renderFsSheet();return;}
   if(e.target.closest('[data-fs-normal]')){const i=fsItem(fsEditKey);if(i&&i.normal!=null){fsDraft=i.normal;renderFsSheet();}return;}
