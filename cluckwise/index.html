@@ -3538,6 +3538,21 @@
   .prep-um{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:11.5px; color:var(--muted); }
   .prep-added{ align-self:flex-start; font:800 9.5px Inter,system-ui,sans-serif; padding:1px 6px; border-radius:999px; background:#E8EEFD; color:#2F55C8; text-transform:uppercase; }
   .prep-link{ all:unset; cursor:pointer; font:700 11.5px Inter,system-ui,sans-serif; color:#2F55C8; background:#E8EEFD; padding:2px 7px; border-radius:999px; }
+  .prep-link.due{ color:#7A4D00; background:#FFF0CF; }
+  .prep-link.due.late{ color:#B42318; background:#FDE4DF; }
+  .prep-link.due.ok{ color:#0F6E5D; background:#DFF4EF; }
+  body.theme-dark .prep-link.due{ color:#FFD58A; background:rgba(240,162,26,.18); }
+  body.theme-dark .prep-link.due.late{ color:#FF9C8A; background:rgba(220,74,54,.22); }
+  body.theme-dark .prep-link.due.ok{ color:#8FD9B5; background:rgba(15,138,117,.24); }
+  .prep-kind{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .prep-kind button{ all:unset; cursor:pointer; display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); }
+  .prep-kind button b{ font:800 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .prep-kind button span{ font:500 12px Inter,system-ui,sans-serif; color:var(--muted); line-height:1.35; }
+  .prep-kind button.on{ border-color:#F0A21A; background:#FFF6E2; box-shadow:0 0 0 3px rgba(240,162,26,.18); }
+  body.theme-dark .prep-kind button.on{ background:rgba(240,162,26,.14); }
+  .prep-kind button:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  #prepTaskModal .prep-only-task[hidden]{ display:none !important; }
+  .prep-tm-btns .prep-undate{ margin-right:auto; color:var(--danger,#B42318); }
   .prep-mk, .prep-del{ all:unset; cursor:pointer; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; color:var(--muted); }
   .prep-mk:hover, .prep-del:hover{ background:var(--surface-soft); }
   .prep-add{ all:unset; cursor:pointer; font:700 12px Inter,system-ui,sans-serif; color:var(--muted); padding:4px 4px 2px; }
@@ -4041,16 +4056,18 @@
   <div class="prep-main" id="prepMain" hidden></div>
 </section>
 <div class="form-modal prep-modal" id="prepTaskModal" role="dialog" aria-modal="true" aria-labelledby="prepTaskTitle">
-  <div class="form-modal-head"><h2 id="prepTaskTitle">Make it a daily task</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-head"><h2 id="prepTaskTitle">Plan this item</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
     <div class="prep-tm-name" id="prepTaskName"></div><span class="prep-lab" id="prepTaskLab"></span>
+    <label class="prep-tm-k">How</label>
+    <div class="prep-kind" id="prepTaskKind" role="radiogroup" aria-label="Task or date only"><button type="button" data-prep-kind="task" role="radio"><b>Task list</b><span>Shows in the workers' tasks for that day</span></button><button type="button" data-prep-kind="date" role="radio"><b>Date only</b><span>Just a date on the checklist — no task</span></button></div>
     <label class="prep-tm-k">Day</label>
     <div class="prep-chips" id="prepTaskDays"><button type="button" data-pday="0">Today</button><button type="button" data-pday="1">Tomorrow</button><input type="date" id="prepTaskDate" aria-label="Pick a day"></div>
     <label class="prep-tm-k" for="prepTaskWho">Who</label>
     <input type="text" id="prepTaskWho" class="st-input" list="assigneeList" placeholder="Worker's name (optional)" autocomplete="off">
-    <label class="prep-tm-k">Repeat</label>
-    <div class="prep-chips" id="prepTaskRepeat"><button type="button" data-prep-rep="0" class="on">Once</button><button type="button" data-prep-rep="1">Every day until done</button></div>
-    <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
+    <label class="prep-tm-k prep-only-task">Repeat</label>
+    <div class="prep-chips prep-only-task" id="prepTaskRepeat"><button type="button" data-prep-rep="0" class="on">Once</button><button type="button" data-prep-rep="1">Every day until done</button></div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost prep-undate" id="prepTaskUndate" hidden>Remove date</button><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepSecModal" role="dialog" aria-modal="true" aria-labelledby="prepSecTitle">
@@ -11094,7 +11111,7 @@
   function prepFmt(k){ return k ? toDateObj(k).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) : ''; }
 
   // ----- Shed preparation board (under Routine) -----
-  let mlogMode = 'routine', prepPhoneShed = null, prepTaskFor = null, prepTaskRep = false;
+  let mlogMode = 'routine', prepPhoneShed = null, prepTaskFor = null, prepTaskRep = false, prepTaskKind = 'task', prepTaskKindLast = 'task';
   function prepNotices(){ return shedPrep.filter(c=> c.auto && !c.seen && !c.archived && !prepPlaced(c)); }
   function syncPrepChrome(){
     const open = prepOpenList().length;
@@ -11115,7 +11132,10 @@
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
     const who = u.done ? [u.doneBy, u.doneAt ? prepFmt(dateKey(new Date(u.doneAt))) : ''].filter(Boolean).join(' · ') : '';
     const link = tk ? `<button type="button" class="prep-link" data-prep-open-task="${escapeHtmlAttr(tk.id)}" title="Open the task">📅 ${tk.status === 'done' ? 'Task done' : 'Task'} · ${escapeHtml(prepFmt(tk.date))}${(tk.assignees || []).length ? ' · ' + escapeHtml(tk.assignees.join(', ')) : ''}</button>` : '';
-    const mk = !u.done && !tk && c.status !== 'ready' ? `<button type="button" class="prep-mk" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Make it a daily task for a worker">📅</button>` : '';
+    // a date without a task (2026-10-23): shown on the item, red once it's past and still open
+    const due = !tk && u.due ? (()=>{ const late = !u.done && u.due < dateKey(new Date());
+      return `<button type="button" class="prep-link due${late ? ' late' : ''}${u.done ? ' ok' : ''}" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="${late ? 'Past its date — ' : ''}Date only (no task). Click to change">📅 ${escapeHtml(prepFmt(u.due))}${u.dueWho ? ' · ' + escapeHtml(u.dueWho) : ''}</button>`; })() : '';
+    const mk = !u.done && !tk && !u.due && c.status !== 'ready' ? `<button type="button" class="prep-mk" data-prep-task="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Give it a date, or put it on the task list">📅</button>` : '';
     const del = !isSection && c.status !== 'ready' ? `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove ${escapeHtmlAttr(u.t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : '';
     const isNew = prepJustAdded.has(u.id) && Date.now() - prepJustAdded.get(u.id) < 4000;
     const grip = !isSection && c.status !== 'ready' ? '<span class="prep-grip" title="Drag to reorder" aria-hidden="true">⋮⋮</span>' : '';
@@ -11123,7 +11143,7 @@
       const bin = isSection ? '' : `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove ${escapeHtmlAttr(u.t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`;
       return `<div class="prep-u tpl${isSection ? ' is-sec' : ''}${prepJustAdded.has(u.id) && Date.now() - prepJustAdded.get(u.id) < 4000 ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<span class="prep-dot" aria-hidden="true"></span><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${isSection ? '<span class="prep-um">ticked on its own</span>' : ''}</div>${bin}</div>`;
     }
-    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}</span>` : ''}</div>${mk}${del}</div>`;
+    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link || due) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}${due}</span>` : ''}</div>${mk}${del}</div>`;
   }
   function prepSecsHtml(c){
     return `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
@@ -11440,10 +11460,12 @@
   function openPrepTaskModal(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     prepTaskFor = { cid, id }; prepTaskRep = false;
+    prepTaskKind = u.due ? 'date' : prepTaskKindLast;
     $('#prepTaskName').textContent = u.t;
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
-    $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), 1);
-    $('#prepTaskWho').value = '';
+    $('#prepTaskDate').value = u.due || addDaysStr(dateKey(new Date()), 1);
+    $('#prepTaskWho').value = u.due ? (u.dueWho || '') : '';
+    $('#prepTaskUndate').hidden = !u.due;
     try{ refreshAssigneeDatalist(); }catch(e){}
     prepSyncTaskModal();
     $('#prepTaskModal').classList.add('open');
@@ -11452,15 +11474,38 @@
     const v = $('#prepTaskDate').value, t0 = dateKey(new Date());
     document.querySelectorAll('#prepTaskDays [data-pday]').forEach(b=> b.classList.toggle('on', addDaysStr(t0, +b.dataset.pday) === v));
     document.querySelectorAll('#prepTaskRepeat [data-prep-rep]').forEach(b=> b.classList.toggle('on', (b.dataset.prepRep === '1') === prepTaskRep));
+    const isTask = prepTaskKind === 'task';
+    document.querySelectorAll('#prepTaskKind [data-prep-kind]').forEach(b=>{ const on = b.dataset.prepKind === prepTaskKind; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    document.querySelectorAll('#prepTaskModal .prep-only-task').forEach(x=> x.hidden = !isTask);
+    $('#prepTaskWho').placeholder = isTask ? "Worker's name (optional)" : 'Who (optional — a note on the checklist)';
+    $('#prepTaskSave').textContent = isTask ? 'Add to the task list' : 'Save date';
   }
   function savePrepTask(){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
     const date = $('#prepTaskDate').value || dateKey(new Date()), who = $('#prepTaskWho').value.trim();
+    prepTaskKindLast = prepTaskKind;
+    if(prepTaskKind === 'date'){
+      // date only: no task on the planner, just the date on the checklist item
+      u.due = date; if(who) u.dueWho = who; else delete u.dueWho;
+      prepHist(c, `Shed ${c.shed}: "${u.t}" dated ${formatFull(date)}${who ? ' for ' + who : ''}`);
+      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
+      persist(); renderAll();
+      showToast(`Dated ${formatFull(date)} on the checklist — no task added.`);
+      return;
+    }
+    delete u.due; delete u.dueWho;
     const t = addTask(u.t, null, date, { assignees: who ? [who] : [], prep: { cid: c.id, uid: u.id, shed: c.shed, daily: prepTaskRep } });
     u.taskId = t.id; u.taskDate = date; u.taskWho = who;
     $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
     persist(); renderAll();
     showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
+  }
+  function undatePrepItem(){
+    const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
+    delete u.due; delete u.dueWho;
+    prepHist(c, `Shed ${c.shed}: date removed from "${u.t}"`);
+    $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
+    persist(); renderAll(); showToast('Date removed.');
   }
   // Shed preparation has its own menu item (Prep); its badge counts the sheds being prepared
   function renderPrepPill(){
@@ -13251,6 +13296,8 @@
   document.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
   $('#prepTaskDays').addEventListener('click', (e)=>{ const b = e.target.closest('[data-pday]'); if(!b) return; $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), +b.dataset.pday); prepSyncTaskModal(); });
   $('#prepTaskDate').addEventListener('change', prepSyncTaskModal);
+  $('#prepTaskKind').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-kind]'); if(!b) return; prepTaskKind = b.dataset.prepKind; prepSyncTaskModal(); });
+  $('#prepTaskUndate').addEventListener('click', undatePrepItem);
   $('#prepTaskRepeat').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-rep]'); if(!b) return; prepTaskRep = b.dataset.prepRep === '1'; prepSyncTaskModal(); });
   $('#prepTaskSave').addEventListener('click', savePrepTask);
   $('#prepSecSave').addEventListener('click', savePrepSec);
