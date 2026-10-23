@@ -842,7 +842,7 @@ function dashPairCardsHtml(){
       foot = p.next ? `<span>Next load</span><b>${d(dateOnly(p.next.date))} · ${fmtTonnesAlways(Number(p.next.splitKg[p.g]) || 0)}</b>` : `<span>No loads booked</span>${p.closed ? `<b>${p.sheds.filter(x => x.closed).map(x => 'Shed ' + x.id).join(', ')} closed</b>` : ''}`;
     }
     return `<div class="rd-pc"><div class="rd-pc-top" style="background:var(--pair${p.g})"></div><div class="rd-pc-in">
-      <div class="rd-pc-h"><button type="button" class="rd-pc-name" data-tab="g${p.g}" title="Open ${escapeAttr(pairLabel(p.g))}">${escapeHtml(pairLabel(p.g))}</button>${st}</div>${mid}</div>
+      <div class="rd-pc-h"><span class="rd-pc-av" style="background:var(--pair${p.g})" aria-hidden="true">${pairShort(p.g)}</span><button type="button" class="rd-pc-name" data-tab="g${p.g}" title="Open ${escapeAttr(pairLabel(p.g))}">${escapeHtml(pairLabel(p.g))}</button>${st}</div>${mid}</div>
       <div class="rd-pc-ft">${foot}</div></div>`;
   }).join('');
   if (!cards) return '';
