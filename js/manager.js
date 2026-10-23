@@ -165,10 +165,31 @@ function renderHomeView(){
     ${kpis}
     <div class="mk-row">${needsHtml}${flock}</div>
     ${feed}
+    ${mgrFeedUseHtml()}
     ${typeof leftoverCardHtml==='function'?leftoverCardHtml():''}
     <div class="mgr-row2">${shedsHtml}${weekHtml}</div>
     ${offHtml}
   </div>`;
+}
+
+// ── Home: feed eaten so far (records) vs expected by the finish (forecast) — v237 ──
+function mgrFeedUseHtml(){
+  if(!farmData)return '';
+  let so=null,t=null;try{so=batchMeasured(new Date());}catch(e){}try{t=computeFarmTotals();}catch(e){}
+  if(!t||!t.hasData)return '';
+  const today=dateOnly(new Date());
+  const eaten=so&&!so.missing.length&&so.eaten>0?so.eaten:null,exp=t.totalFeed;
+  const recv=carryoverTotalKg()+(farmLoads||[]).filter(l=>l.date&&dateOnly(l.date)<=today).reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
+  let left=null;
+  if(typeof dashPairInfo==='function'){const inf=[1,2,3,4].map(g=>dashPairInfo(g,today)).filter(Boolean);if(inf.length)left=inf.reduce((n,p)=>n+(p.open.length?Math.max(0,Number(p.leftover)||0):(p.lo?Number(p.lo.kg)||0:0)),0);}
+  const pct=eaten!=null&&exp>0?Math.max(0,Math.min(100,eaten/exp*100)):0;
+  return `<section class="mgr-card mfu" title="Eaten so far = dockets + carry-over − feed in the silos (records). Expected at finish = the forecast to clean-out.">
+    <div class="mfu-head"><span class="mgr-title">Feed consumption</span><button type="button" class="mgr-link" data-tab="dashboard">Result detail ›</button></div>
+    <div class="mfu-nums"><div><span class="mgr-k">Eaten so far</span><b>${eaten!=null?fmtTonnesAlways(eaten):'—'}</b>${so&&so.missing.length?`<em>needs a silo reading for ${escapeHtml(so.missing.map(pairShort).join(', '))}</em>`:''}</div>
+      <div><span class="mgr-k">Expected at finish</span><b>${fmtTonnesAlways(exp)}</b></div></div>
+    <div class="mfu-bar" role="img" aria-label="${pct.toFixed(0)}% of the expected feed eaten"><i style="width:${pct.toFixed(1)}%"></i><span>${eaten!=null?pct.toFixed(0)+'%':''}</span></div>
+    <div class="mfu-foot">Received <b>${fmtTonnesAlways(recv)}</b>${left!=null?` · expected leftover <b>≈ ${fmtTonnesAlways(left)}</b>`:''}</div>
+  </section>`;
 }
 
 // ── Farm settings ──────────────────────────────────────────────

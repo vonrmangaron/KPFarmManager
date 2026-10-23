@@ -775,6 +775,8 @@ window.addEventListener('resize',()=>{const pop=document.getElementById('alertsP
 // for each of the 4 groups, one click away from that group's page.
 // ─────────────────────────────────────────────────────────────
 // ── Result detail (v234): one card per pair — status, birds, weight, silo, next load ──
+// clean-out (or logged final pickup) date; shedOutDate lives in closeout.js, so fall back if it isn't loaded
+function rdOutDate(s){ return typeof shedOutDate === 'function' ? shedOutDate(s) : (s && s.cleanoutDate ? dateOnly(s.cleanoutDate) : null); }
 function dashPairInfo(g, today){
   const sheds = shedsForGroup(g).filter(x => x.placementDate);
   if (!sheds.length) return null;
@@ -782,8 +784,8 @@ function dashPairInfo(g, today){
   const lo = (predState.pairLeftover || {})[g];
   let live = 0, wSum = 0, wBirds = 0;
   open.forEach(x => { const l = Math.max(0, liveAtStartOfDay(x, today)); live += l; const e = currentShedWeightEstimate(x, today); if (e && l > 0) { wSum += e.kg * l; wBirds += l; } });
-  const ages = open.map(x => ageInDays(x, today)), outs = open.map(shedOutDate).filter(Boolean).sort((x,y) => x - y);
-  const allOuts = sheds.map(shedOutDate).filter(Boolean).sort((x,y) => x - y);
+  const ages = open.map(x => ageInDays(x, today)), outs = open.map(rdOutDate).filter(Boolean).sort((x,y) => x - y);
+  const allOuts = sheds.map(rdOutDate).filter(Boolean).sort((x,y) => x - y);
   const stock = open.length ? balanceOnEndOfDay(g, today, true) : null;
   const pl = open.length && typeof projectedLeftoverForGroup === 'function' ? projectedLeftoverForGroup(g) : null;
   let runsOut = null;
@@ -1119,7 +1121,7 @@ function renderDashboardView() {
   // ── Layout (v234, 2026-10-22): glance → result (today vs finish) → pairs → feed → shed table → chart ──
   const tlStart = batchStart, tlEnd = batchEnd;
   const tlPct = d => (tlStart && tlEnd && tlEnd > tlStart) ? Math.max(0, Math.min(100, daysBetween(tlStart, dateOnly(d)) / daysBetween(tlStart, tlEnd) * 100)) : 0;
-  const tlMarks = [1,2,3,4].map(g => { const outs = shedsForGroup(g).filter(x => x.placementDate).map(shedOutDate).filter(Boolean).sort((x,y)=>y-x); return outs.length ? { g, d: outs[0] } : null; }).filter(Boolean)
+  const tlMarks = [1,2,3,4].map(g => { const outs = shedsForGroup(g).filter(x => x.placementDate).map(rdOutDate).filter(Boolean).sort((x,y)=>y-x); return outs.length ? { g, d: outs[0] } : null; }).filter(Boolean)
     .map(m => `<span class="rd-tl-m" style="left:${tlPct(m.d).toFixed(1)}%;background:var(--pair${m.g})" title="${escapeAttr(pairLabel(m.g))} last clean-out ${escapeAttr(fmtShortNoYear(m.d))}"></span>`).join('');
   const closedN = allSheds.filter(x => x.closed).length;
   const glance = `<section class="rd-card rd-glance">
