@@ -3544,6 +3544,13 @@
   body.theme-dark .prep-link.due{ color:#FFD58A; background:rgba(240,162,26,.18); }
   body.theme-dark .prep-link.due.late{ color:#FF9C8A; background:rgba(220,74,54,.22); }
   body.theme-dark .prep-link.due.ok{ color:#8FD9B5; background:rgba(15,138,117,.24); }
+  .prep-sh .prep-mk.sec{ width:22px; height:22px; font-size:12px; opacity:.55; }
+  .prep-sh .prep-mk.sec:hover, .prep-sh:hover .prep-mk.sec{ opacity:1; }
+  .prep-sh .prep-link.due.sec{ text-transform:none; letter-spacing:0; font-size:11px; padding:1px 7px; }
+  .prep-apply{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:var(--surface-soft); font:600 13px Inter,system-ui,sans-serif; color:var(--ink); cursor:pointer; }
+  .prep-apply[hidden]{ display:none !important; }
+  .prep-apply input{ width:17px; height:17px; accent-color:#F0A21A; }
+  #prepTaskModal .prep-not-sec[hidden]{ display:none !important; }
   .prep-kind{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .prep-kind button{ all:unset; cursor:pointer; display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); }
   .prep-kind button b{ font:800 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
@@ -4059,8 +4066,9 @@
   <div class="form-modal-head"><h2 id="prepTaskTitle">Plan this item</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
     <div class="prep-tm-name" id="prepTaskName"></div><span class="prep-lab" id="prepTaskLab"></span>
-    <label class="prep-tm-k">How</label>
-    <div class="prep-kind" id="prepTaskKind" role="radiogroup" aria-label="Task or date only"><button type="button" data-prep-kind="task" role="radio"><b>Task list</b><span>Shows in the workers' tasks for that day</span></button><button type="button" data-prep-kind="date" role="radio"><b>Date only</b><span>Just a date on the checklist — no task</span></button></div>
+    <label class="prep-apply" id="prepSecApplyRow" hidden><input type="checkbox" id="prepSecApply" checked> <span id="prepSecApplyTx">Also put this date on its items</span></label>
+    <label class="prep-tm-k prep-not-sec">How</label>
+    <div class="prep-kind prep-not-sec" id="prepTaskKind" role="radiogroup" aria-label="Task or date only"><button type="button" data-prep-kind="task" role="radio"><b>Task list</b><span>Shows in the workers' tasks for that day</span></button><button type="button" data-prep-kind="date" role="radio"><b>Date only</b><span>Just a date on the checklist — no task</span></button></div>
     <label class="prep-tm-k">Day</label>
     <div class="prep-chips" id="prepTaskDays"><button type="button" data-pday="0">Today</button><button type="button" data-pday="1">Tomorrow</button><input type="date" id="prepTaskDate" aria-label="Pick a day"></div>
     <label class="prep-tm-k" for="prepTaskWho">Who</label>
@@ -9851,7 +9859,59 @@
     wrap.classList.add(cls);
   }
 
-  function renderAll(){
+  // ── Keep the scroll position across redraws (2026-10-23) ──
+  // Every change redraws the lists from scratch, which used to drop you back at the top. Before a redraw,
+  // note how far each visible scroll area is scrolled (keyed by its path from the nearest element with an id),
+  // then put it back. Only where you are on screen — nothing here touches the data or syncing.
+  let keepScrollDepth = 0;
+  function scrollKeyOf(el){
+    const parts = [];
+    for(let e = el; e && e !== document.body && e !== document.documentElement; e = e.parentElement){
+      if(e.id){ parts.unshift('#' + e.id); break; }
+      const cls = typeof e.className === 'string' ? e.className.trim().split(/\s+/)[0] : '';
+      const par = e.parentElement; let i = 0;
+      if(par) for(const x of par.children){ if(x === e) break; if(x.tagName === e.tagName && (typeof x.className === 'string' ? x.className.trim().split(/\s+/)[0] : '') === cls) i++; }
+      parts.unshift(e.tagName + '.' + cls + ':' + i);
+    }
+    return parts.join('>');
+  }
+  function scrollFindByKey(key){
+    const parts = key.split('>'); let el = null, i = 0;
+    if(parts[0][0] === '#'){ el = document.getElementById(parts[0].slice(1)); i = 1; if(!el) return null; } else el = document.body;
+    for(; i < parts.length && el; i++){
+      const m = parts[i].match(/^([A-Z0-9]+)\.([^:]*):(\d+)$/); if(!m) return null;
+      let n = +m[3], hit = null;
+      for(const x of el.children){ if(x.tagName === m[1] && (typeof x.className === 'string' ? x.className.trim().split(/\s+/)[0] : '') === m[2]){ if(n === 0){ hit = x; break; } n--; } }
+      el = hit;
+    }
+    return el;
+  }
+  function keepScroll(fn){
+    if(keepScrollDepth > 0) return fn();
+    const saved = [];
+    try{
+      const se = document.scrollingElement;
+      if(se && (se.scrollTop || se.scrollLeft)) saved.push({ el: se, top: se.scrollTop, left: se.scrollLeft });
+      document.querySelectorAll('body *').forEach(e=>{
+        if((e.scrollTop || e.scrollLeft) && e.getClientRects().length) saved.push({ key: scrollKeyOf(e), top: e.scrollTop, left: e.scrollLeft });
+      });
+    }catch(e){}
+    const toEnd = typeof mlogScrollToEnd !== 'undefined' && mlogScrollToEnd;   // Routine opening at today: let it
+    keepScrollDepth++;
+    try{ return fn(); }
+    finally{
+      keepScrollDepth--;
+      const put = ()=> saved.forEach(x=>{
+        if(toEnd && x.key && /^#mlog/.test(x.key)) return;
+        const el = x.el || scrollFindByKey(x.key); if(!el) return;
+        if(el.scrollTop !== x.top) el.scrollTop = x.top;
+        if(el.scrollLeft !== x.left) el.scrollLeft = x.left;
+      });
+      put(); requestAnimationFrame(put);
+    }
+  }
+  function renderAll(){ return keepScroll(renderAllNow); }
+  function renderAllNow(){
     closeAllTaskMenus();
     renderManagerFields();
     try{ renderPrepPill(); }catch(e){ console.warn('Shed prep pill', e); }
@@ -11145,11 +11205,18 @@
     }
     return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link || due) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}${due}</span>` : ''}</div>${mk}${del}</div>`;
   }
+  // a date on a whole section (optional) — 2026-10-23
+  function prepSecDateHtml(c, sec, allDone){
+    const key = escapeHtmlAttr(c.id + '|' + sec.id);
+    if(sec.due){ const late = !allDone && sec.due < dateKey(new Date());
+      return `<button type="button" class="prep-link due sec${late ? ' late' : ''}${allDone ? ' ok' : ''}" data-prep-secdate="${key}" title="Section date${late ? ' — past it' : ''}. Click to change">📅 ${escapeHtml(prepFmt(sec.due))}</button>`; }
+    return c.status !== 'ready' ? `<button type="button" class="prep-mk sec" data-prep-secdate="${key}" title="Give this section a date (optional)">📅</button>` : '';
+  }
   function prepSecsHtml(c){
     return `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
         const has = (sec.items || []).length, units = has ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
-        return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span><em>${c.isTpl ? (has ? units.length : '') : d + '/' + units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
+        return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span>${!c.isTpl && has ? prepSecDateHtml(c, sec, d === units.length) : ''}<em>${c.isTpl ? (has ? units.length : '') : d + '/' + units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `</div><button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>`;
   }
   function prepColHtml(shed){
@@ -11461,12 +11528,29 @@
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     prepTaskFor = { cid, id }; prepTaskRep = false;
     prepTaskKind = u.due ? 'date' : prepTaskKindLast;
+    $('#prepTaskTitle').textContent = 'Plan this item';
     $('#prepTaskName').textContent = u.t;
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
     $('#prepTaskDate').value = u.due || addDaysStr(dateKey(new Date()), 1);
     $('#prepTaskWho').value = u.due ? (u.dueWho || '') : '';
     $('#prepTaskUndate').hidden = !u.due;
     try{ refreshAssigneeDatalist(); }catch(e){}
+    prepSyncTaskModal();
+    $('#prepTaskModal').classList.add('open');
+  }
+  function openPrepSecDateModal(cid, sid){
+    const c = prepFind(cid), sec = c && (c.sections || []).find(x=> x.id === sid); if(!sec) return;
+    const open = (sec.items || []).filter(u=> !u.done && !u.taskId);
+    prepTaskFor = { cid, id: sid, sec: true }; prepTaskRep = false; prepTaskKind = 'date';
+    $('#prepTaskTitle').textContent = 'Date this section';
+    $('#prepTaskName').textContent = sec.t;
+    $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
+    $('#prepTaskDate').value = sec.due || addDaysStr(dateKey(new Date()), 1);
+    $('#prepTaskWho').value = sec.due ? (sec.dueWho || '') : '';
+    $('#prepTaskUndate').hidden = !sec.due;
+    $('#prepSecApplyRow').hidden = !open.length;
+    $('#prepSecApply').checked = true;
+    $('#prepSecApplyTx').textContent = `Also put this date on its ${open.length} open item${open.length === 1 ? '' : 's'}`;
     prepSyncTaskModal();
     $('#prepTaskModal').classList.add('open');
   }
@@ -11477,12 +11561,27 @@
     const isTask = prepTaskKind === 'task';
     document.querySelectorAll('#prepTaskKind [data-prep-kind]').forEach(b=>{ const on = b.dataset.prepKind === prepTaskKind; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
     document.querySelectorAll('#prepTaskModal .prep-only-task').forEach(x=> x.hidden = !isTask);
+    const forSec = !!(prepTaskFor && prepTaskFor.sec);
+    document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
+    if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Plan this item'; }
     $('#prepTaskWho').placeholder = isTask ? "Worker's name (optional)" : 'Who (optional — a note on the checklist)';
     $('#prepTaskSave').textContent = isTask ? 'Add to the task list' : 'Save date';
   }
   function savePrepTask(){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
     const date = $('#prepTaskDate').value || dateKey(new Date()), who = $('#prepTaskWho').value.trim();
+    if(f.sec){
+      const sec = (c.sections || []).find(x=> x.id === f.id); if(!sec) return;
+      const apply = !$('#prepSecApplyRow').hidden && $('#prepSecApply').checked;
+      let n = 0;
+      sec.due = date; if(who) sec.dueWho = who; else delete sec.dueWho;
+      if(apply) (sec.items || []).forEach(it=>{ if(it.done || it.taskId) return; it.due = date; if(who) it.dueWho = who; else delete it.dueWho; n++; });
+      prepHist(c, `Shed ${c.shed}: section "${sec.t}" dated ${formatFull(date)}${n ? ` (and ${n} item${n === 1 ? '' : 's'})` : ''}`);
+      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
+      persist(); renderAll();
+      showToast(`Section dated ${formatFull(date)}${n ? ` — and its ${n} open item${n === 1 ? '' : 's'}` : ''}.`);
+      return;
+    }
     prepTaskKindLast = prepTaskKind;
     if(prepTaskKind === 'date'){
       // date only: no task on the planner, just the date on the checklist item
@@ -11502,6 +11601,16 @@
   }
   function undatePrepItem(){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
+    if(f.sec){
+      // the items that still carry the section's date lose it too (only when the tick-box is on)
+      const old = u.due, apply = !$('#prepSecApplyRow').hidden && $('#prepSecApply').checked;
+      if(apply) (u.items || []).forEach(it=>{ if(!it.taskId && it.due === old){ delete it.due; delete it.dueWho; } });
+      delete u.due; delete u.dueWho;
+      prepHist(c, `Shed ${c.shed}: date removed from section "${u.t}"`);
+      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
+      persist(); renderAll(); showToast('Section date removed.');
+      return;
+    }
     delete u.due; delete u.dueWho;
     prepHist(c, `Shed ${c.shed}: date removed from "${u.t}"`);
     $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
@@ -11647,7 +11756,8 @@
     $('#mlogPage').classList.remove('open');
   }
 
-  function renderMlog(opts){
+  function renderMlog(opts){ return keepScroll(()=> renderMlogNow(opts)); }
+  function renderMlogNow(opts){
     if(!mlogIsOpen()) return;
     syncPrepChrome();
     if(mlogMode === 'prep'){ renderPrepBoard(); return; }
@@ -13264,6 +13374,7 @@
     if((b = g('[data-prep-rename]'))){ prepStartRename(b); return; }
     function c_ok(el){ const [cid] = el.dataset.prepEdit.split('|'); const c = prepFind(cid); return !!c && c.status !== 'ready'; }
     if((b = g('[data-prep-tick]'))){ const [cid, id] = b.dataset.prepTick.split('|'); prepToggleUnit(cid, id); return; }
+    if((b = g('[data-prep-secdate]'))){ const [cid, sid] = b.dataset.prepSecdate.split('|'); openPrepSecDateModal(cid, sid); return; }
     if((b = g('[data-prep-task]'))){ const [cid, id] = b.dataset.prepTask.split('|'); openPrepTaskModal(cid, id); return; }
     if((b = g('[data-prep-open-task]'))){ closeOverlays(); openTaskDetailModal(b.dataset.prepOpenTask); return; }
     if((b = g('[data-prep-add]'))){ prepStartAdd(b); return; }
