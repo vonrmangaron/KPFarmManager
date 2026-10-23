@@ -3508,6 +3508,112 @@
   .prep-legend i.prep{ background:#FCE7BE; border-color:#EFC77C; } .prep-legend i.ready{ background:#CDEFE6; border-color:#0F8A75; } .prep-legend i.run{ background:var(--surface-soft); border-style:dashed; }
   .prep-tabs{ display:none; }
   .prep-board{ display:flex; gap:12px; align-items:flex-start; overflow-x:auto; padding-bottom:10px; }
+  /* ── Upgraded board (2026-10-23) ── */
+  .prep-sum2{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:12px 18px; border-radius:16px; background:linear-gradient(120deg,#1E2A23 0%,#2B3A2F 55%,#4A3A12 100%); color:#F4F1E8; box-shadow:0 10px 26px rgba(22,25,27,.14); }
+  .prep-sum2 h3{ margin:0; font:800 17px Sora,sans-serif; color:#fff; }
+  .prep-sum2 span{ color:#CFD6CE; font-size:12.5px; }
+  .prep-sum2-st{ display:flex; gap:18px; margin-left:auto; flex-wrap:wrap; }
+  .prep-sum2-st div{ display:flex; flex-direction:column; }
+  .prep-sum2-st b{ font:800 19px Sora,sans-serif; color:#fff; font-variant-numeric:tabular-nums; }
+  .prep-sum2-st b.bad{ color:#FF9C8A; }
+  .prep-sum2-st small{ font:700 10.5px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#CFD6CE; }
+  .prep-bar2{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .prep-fl{ display:flex; gap:6px; flex-wrap:wrap; }
+  .prep-f{ all:unset; cursor:pointer; font:700 12px Inter,sans-serif; border:1px solid var(--line); background:var(--surface); border-radius:99px; padding:5px 11px; color:var(--muted); }
+  .prep-f.on{ background:var(--ink); color:var(--surface); border-color:var(--ink); }
+  .prep-seg2{ display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px; }
+  .prep-seg2:first-of-type{ margin-left:auto; }
+  .prep-seg2 button{ all:unset; cursor:pointer; padding:5px 11px; border-radius:7px; font:700 12px Inter,sans-serif; color:var(--muted); }
+  .prep-seg2 button.on{ background:#F0A21A; color:#241A08; }
+  .prep-seg2.dens button.on{ background:var(--ink); color:var(--surface); }
+  /* filters: hide what doesn't match */
+  [data-filter="todo"] .prep-u.done, [data-filter="late"] .prep-u:not(.f-late), [data-filter="week"] .prep-u:not(.f-week), [data-filter="task"] .prep-u:not(.f-task){ display:none; }
+  [data-filter="todo"] .pg-c .prep-cb.on{ opacity:.25; }
+  .prep-board.prep-board2{ display:grid; grid-template-columns:repeat(var(--cols,3), minmax(270px,1fr)); gap:12px; align-items:start; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; }
+  .prep-board2 .prep-col{ flex:none; scroll-snap-align:start; background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:16px; padding:0; gap:0; overflow:hidden; box-shadow:0 10px 26px rgba(22,25,27,.06); position:relative; }
+  body.theme-dark .prep-board2 .prep-col{ box-shadow:0 10px 26px rgba(0,0,0,.3); }
+  /* neighbouring sheds alternate shades (kept from c86) */
+  .prep-board2 .prep-col:nth-child(even){ background:#FFF8EA !important; }
+  body.theme-dark .prep-board2 .prep-col:nth-child(even){ background:rgba(240,162,26,.07) !important; }
+  .prep-board2 .prep-col::before{ content:""; position:absolute; left:0; right:0; top:0; height:4px; background:#F0A21A; }
+  .prep-board2 .prep-col.has-late::before{ background:#D9473A; }
+  .prep-board2 .prep-col.ready::before{ background:#0F8A75; }
+  .prep-ch2{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:14px 12px 10px; }
+  .prep-sn{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font:800 18px Sora,sans-serif; background:#FFF2D6; color:#8A5300; }
+  .prep-col.ready .prep-sn{ background:#DFF4EF; color:#0F7A67; }
+  body.theme-dark .prep-sn{ background:rgba(240,162,26,.18); color:#FFC876; }
+  .prep-ct2{ min-width:0; display:flex; flex-direction:column; }
+  .prep-ct2 b{ font:800 15px Sora,sans-serif; color:var(--ink); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .prep-ct2 span{ font-size:11.5px; color:var(--muted); }
+  .prep-chip{ font:700 10px Inter,sans-serif; border-radius:99px; padding:2px 7px; letter-spacing:.02em; }
+  .prep-chip.late{ background:#FDE4DF; color:#B42318; } .prep-chip.ok{ background:#DFF4EF; color:#0F6E5D; }
+  body.theme-dark .prep-chip.late{ background:rgba(220,74,54,.22); color:#FF9C8A; } body.theme-dark .prep-chip.ok{ background:rgba(15,138,117,.24); color:#8FD9B5; }
+  .prep-ring{ width:46px; height:46px; position:relative; flex:none; }
+  .prep-ring svg{ width:100%; height:100%; }
+  .prep-ring b{ position:absolute; inset:0; display:grid; place-items:center; font:800 11px Sora,sans-serif; color:var(--ink); }
+  .prep-cd2{ display:flex; justify-content:space-between; gap:8px; padding:7px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--surface-soft); font-size:11.5px; color:var(--muted); }
+  .prep-cd2 b{ color:var(--ink); }
+  .prep-board2 .prep-secs{ padding:8px 10px; display:flex; flex-direction:column; gap:8px; }
+  .prep-board2 .prep-sec{ border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface); padding:0 0 4px; }
+  .prep-board2 .prep-sh{ flex-wrap:wrap; padding:7px 10px 6px; background:var(--surface-soft); margin:0 0 4px; }
+  .prep-spb{ flex-basis:100%; height:4px; border-radius:9px; background:var(--line); overflow:hidden; margin-top:4px; }
+  .prep-spb i{ display:block; height:100%; border-radius:9px; background:#F0A21A; }
+  .prep-sec.all .prep-spb i{ background:#0F8A75; }
+  .prep-board2 .prep-u{ margin:0 6px; }
+  .prep-board2 .prep-cf{ padding:10px; border-top:1px solid var(--line); margin-top:auto; }
+  .prep-board2 .prep-col > .prep-ready, .prep-board2 .prep-col > details{ margin:10px; }
+  /* running sheds strip */
+  .prep-runs{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 12px; border:1px dashed var(--line); border-radius:14px; background:var(--surface-soft); }
+  .prep-runs-k{ font:700 11px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+  .prep-rs{ all:unset; cursor:pointer; display:flex; flex-direction:column; align-items:center; min-width:50px; padding:5px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--line); }
+  .prep-rs:hover{ border-color:#F0A21A; }
+  .prep-rs b{ font:800 15px Sora,sans-serif; color:var(--ink); line-height:1.1; }
+  .prep-rs small{ font:600 10px Inter,sans-serif; color:var(--muted); }
+  .prep-runs-n{ font-size:11.5px; color:var(--muted); margin-left:auto; }
+  /* compact: every shed on one screen (computers only — a phone shows one shed at a time) */
+  @media (min-width:761px){
+  .prep-board2.compact{ grid-template-columns:repeat(var(--cols,8), minmax(0,1fr)); gap:8px; overflow:visible; }
+  .compact .prep-ch2{ grid-template-columns:1fr; justify-items:center; text-align:center; gap:4px; padding:12px 4px 8px; }
+  .compact .prep-ct2{ display:none; }
+  .compact .prep-sn{ width:30px; height:30px; font-size:14px; border-radius:9px; }
+  .compact .prep-ring{ width:40px; height:40px; }
+  .compact .prep-cd2{ flex-direction:column; align-items:center; gap:0; padding:5px 4px; font-size:10.5px; text-align:center; }
+  .compact .prep-secs{ padding:6px; gap:6px; }
+  .compact .prep-sh{ padding:5px 7px; font-size:9.5px; letter-spacing:.02em; }
+  .compact .prep-u{ margin:0 3px; font-size:11.5px; }
+  .compact .prep-u .prep-grip, .compact .prep-u .prep-mk, .compact .prep-add:not(.sec){ display:none; }
+  .compact .prep-cf{ flex-direction:column; align-items:stretch; padding:6px; gap:4px; }
+  .compact .prep-cf .prep-icons{ justify-content:center; }
+  .compact .prep-readybtn{ font-size:11px !important; padding:6px !important; }
+  .compact .prep-u{ padding:5px 6px !important; min-height:0 !important; gap:6px !important; }
+  .compact .prep-u .prep-um, .compact .prep-u .prep-del{ display:none; }
+  .compact .prep-u .prep-cb{ width:18px !important; height:18px !important; flex:0 0 18px; font-size:11px; }
+  .compact .prep-u b.prep-itname{ font-size:11.5px; line-height:1.25; }
+  .compact .prep-sh{ flex-wrap:wrap; }
+  .compact .prep-sh .prep-secname{ flex:1 1 100% !important; }
+  .compact .prep-sh .prep-mk.sec, .compact .prep-sh .prep-link.sec{ display:none; }
+  .compact .prep-sh .prep-grip{ display:none; }
+  }
+  /* grid view */
+  .prep-gridwrap{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 10px 26px rgba(22,25,27,.06); overflow:auto; }
+  .prep-grid table{ width:100%; border-collapse:collapse; min-width:560px; }
+  .prep-grid th, .prep-grid td{ padding:8px 10px; border-bottom:1px solid var(--line); text-align:center; font-size:13px; }
+  .prep-grid th:first-child, .prep-grid td:first-child{ text-align:left; }
+  .prep-grid thead th{ position:sticky; top:0; background:var(--surface); font:800 13px Sora,sans-serif; color:var(--ink); z-index:1; }
+  .prep-grid thead th small{ display:block; font:600 11px Inter,sans-serif; color:var(--muted); }
+  .prep-grid .pg-sec td{ background:var(--surface-soft); font:800 11px Inter,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); text-align:left; }
+  .prep-grid .pg-job{ color:var(--ink); font-weight:600; }
+  .prep-grid .pg-na{ color:var(--muted); }
+  .prep-grid .pg-c .prep-cb{ margin:0 auto; }
+  .prep-grid .pg-c small{ display:block; font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .prep-tg{ display:inline-block; margin-top:3px; font:700 10.5px Inter,sans-serif; border-radius:99px; padding:1px 7px; white-space:nowrap; }
+  .prep-tg.late{ background:#FDE4DF; color:#B42318; } .prep-tg.task{ background:#E8EEFD; color:#2F55C8; } .prep-tg.date{ background:#FFF0CF; color:#7A4D00; }
+  body.theme-dark .prep-tg.late{ background:rgba(220,74,54,.22); color:#FF9C8A; } body.theme-dark .prep-tg.task{ background:rgba(47,107,216,.22); color:#9DBBF5; } body.theme-dark .prep-tg.date{ background:rgba(240,162,26,.18); color:#FFD58A; }
+  #prepMain{ gap:12px; }
+  #prepMain > *{ flex-shrink:0; }
+  .prep-board2 .prep-sh .prep-spb{ flex:0 0 100% !important; }
+  @media (max-width:760px){ .prep-board.prep-board2, .prep-board2.compact{ display:block; } .prep-sum2-st{ margin-left:0; gap:14px; } .prep-runs-n{ margin-left:0; } .prep-seg2:first-of-type{ margin-left:0; } .prep-seg2.dens{ display:none; } }
+
   .prep-col{ flex:0 0 268px; border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; border:1px solid var(--line); background:var(--surface); }
   .prep-col.prep{ background:#FFF4DE; border-color:#EFC77C; }
   .prep-col.ready{ background:#E2F5EF; border-color:#8FD3C3; }
@@ -11188,6 +11294,12 @@
     renderMlog();
     if(shed) setTimeout(()=>{ const col = document.querySelector(`#prepMain [data-prep-col="${CSS.escape(String(shed))}"]`); if(col && col.parentElement){ const bd = col.parentElement; bd.scrollTo({ left: Math.max(0, col.offsetLeft - (bd.clientWidth - col.offsetWidth) / 2), behavior:'smooth' }); } }, 60);
   }
+  // flags the board filters use: late (past its date or task day, still open), this week, has a task
+  function prepUnitFlags(c, u){
+    const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null, today = dateKey(new Date()), wk = addDaysStr(today, 6);
+    const when = tk ? (tk.status === 'done' ? null : tk.date) : u.due || null;
+    return { late: !u.done && !!when && when < today, week: !u.done && !!when && when >= today && when <= wk, task: !!tk };
+  }
   function prepUnitHtml(c, u, sec, isSection){
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
     const who = u.done ? [u.doneBy, u.doneAt ? prepFmt(dateKey(new Date(u.doneAt))) : ''].filter(Boolean).join(' · ') : '';
@@ -11203,7 +11315,8 @@
       const bin = isSection ? '' : `<button type="button" class="prep-del" data-prep-del="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Remove this item" aria-label="Remove ${escapeHtmlAttr(u.t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`;
       return `<div class="prep-u tpl${isSection ? ' is-sec' : ''}${prepJustAdded.has(u.id) && Date.now() - prepJustAdded.get(u.id) < 4000 ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<span class="prep-dot" aria-hidden="true"></span><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${isSection ? '<span class="prep-um">ticked on its own</span>' : ''}</div>${bin}</div>`;
     }
-    return `<div class="prep-u${u.done ? ' done' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link || due) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}${due}</span>` : ''}</div>${mk}${del}</div>`;
+    const fl = prepUnitFlags(c, u);
+    return `<div class="prep-u${u.done ? ' done' : ''}${fl.late ? ' f-late' : ''}${fl.week ? ' f-week' : ''}${fl.task ? ' f-task' : ''}${isSection ? ' is-sec' : ''}${isNew ? ' just-added' : ''}"${isSection ? '' : ` data-uid="${escapeHtmlAttr(u.id)}"`}>${grip}<button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button><div class="prep-ut"><b class="prep-itname" role="button" tabindex="0" data-prep-edit="${escapeHtmlAttr(c.id + '|' + u.id)}" title="Click to edit">${escapeHtml(u.t)}</b>${(who || link || due) ? `<span class="prep-um">${who ? escapeHtml(who) : ''}${link}${due}</span>` : ''}</div>${mk}${del}</div>`;
   }
   // a date on a whole section (optional) — 2026-10-23
   function prepSecDateHtml(c, sec, allDone){
@@ -11216,7 +11329,7 @@
     return `<div class="prep-secs" data-cid="${escapeHtmlAttr(c.id)}">` + (c.sections || []).map(sec=>{
         const has = (sec.items || []).length, units = has ? sec.items : [sec];
         const d = units.filter(u=> u.done).length;
-        return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span>${!c.isTpl && has ? prepSecDateHtml(c, sec, d === units.length) : ''}<em>${c.isTpl ? (has ? units.length : '') : d + '/' + units.length}</em></div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
+        return `<div class="prep-sec${d === units.length ? ' all' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span><span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span>${!c.isTpl && has ? prepSecDateHtml(c, sec, d === units.length) : ''}<em>${c.isTpl ? (has ? units.length : '') : d + '/' + units.length}</em>${c.isTpl ? '' : `<span class="prep-spb"><i style="width:${units.length ? Math.round(d / units.length * 100) : 0}%"></i></span>`}</div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `</div><button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>`;
   }
   function prepColHtml(shed){
@@ -11242,7 +11355,17 @@
       body = prepSecsHtml(c) + `
         <div class="prep-cf"><button type="button" class="btn-app prep-readybtn" data-prep-ready="${escapeHtmlAttr(c.id)}" ${pr.done === pr.total && pr.total ? '' : 'disabled'} title="${pr.done === pr.total ? 'Every item is done' : (pr.total - pr.done) + ' item' + (pr.total - pr.done === 1 ? '' : 's') + ' still open'}">Mark shed ready</button><span class="prep-icons"><button type="button" class="prep-ib" data-prep-copy="${escapeHtmlAttr(c.id)}" title="Copy this checklist to other sheds" aria-label="Copy to other sheds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button type="button" class="prep-ib" data-prep-tpl="${escapeHtmlAttr(c.id)}" title="Save as a template (and make it the default)" aria-label="Save as a template"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="prep-ib danger" data-prep-delcl="${escapeHtmlAttr(c.id)}" title="Delete this checklist" aria-label="Delete this checklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></span></div>`;
     }
-    return `<section class="prep-col ${state}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch"><div class="prep-ctitle"><b>Shed ${escapeHtml(shed)}</b><span class="prep-st ${state}">${state === 'ready' ? 'Ready' : 'Preparing'}</span></div><span class="prep-cm">${escapeHtml(meta)}</span><div class="prep-bar"><i style="width:${pct}%"></i></div></div>${body}</section>`;
+    // upgraded header (2026-10-23): shed tile, status chips, progress ring, chicks countdown
+    const late = prepUnits(c).filter(x=> prepUnitFlags(c, x.u).late).length;
+    const C = 2 * Math.PI * 18, ringCol = state === 'ready' ? '#0F8A75' : late ? '#D9473A' : '#F0A21A';
+    const toChicks = c.nextPlacement ? Math.round((toDateObj(c.nextPlacement) - toDateObj(today)) / 86400000) : null;
+    const sub2 = [c.closedAt ? 'Closed ' + prepFmt(c.closedAt) : 'Started early', c.tpl && prepTemplates().length > 1 ? c.tpl : ''].filter(Boolean).join(' · ');
+    return `<section class="prep-col ${state}${late ? ' has-late' : ''}" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2">
+        <span class="prep-sn">${escapeHtml(shed)}</span>
+        <div class="prep-ct2"><b>Shed ${escapeHtml(shed)}${late ? ` <span class="prep-chip late">${late} overdue</span>` : ''}${state === 'ready' ? ' <span class="prep-chip ok">Ready</span>' : ''}</b><span>${escapeHtml(sub2)}</span></div>
+        <span class="prep-ring" title="${pr.done} of ${pr.total} done"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="${ringCol}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(pr.total ? pr.done / pr.total * C : 0).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b>${pr.done}/${pr.total}</b></span>
+      </div>
+      <div class="prep-cd2">${c.nextPlacement ? `<span>Chicks <b>${escapeHtml(prepFmt(c.nextPlacement))}</b></span><span><b>${toChicks} d</b> left</span>` : '<span>Chicks date not set yet</span>'}</div>${body}</section>`;
   }
   // Click a section name to rename it right there (Enter or click away saves, Esc cancels)
   function prepStartRename(el){
@@ -11500,18 +11623,59 @@
     const def = prepTplDefault();
     $('#prepPickList').innerHTML = prepTemplates().map(t=> `<button type="button" class="prep-pk${t.id === prepPickTpl ? ' on' : ''}" data-pick-tpl="${escapeHtmlAttr(t.id)}" aria-pressed="${t.id === prepPickTpl}"><span class="prep-pk-r"></span><span class="prep-pk-tx"><b>${escapeHtml(t.name)}${t.id === def.id ? ' <span class="prep-defb">Default</span>' : ''}</b><span>${escapeHtml(prepTplCounts(t.text))}</span></span></button>`).join('');
   }
+  // Board (2026-10-23): a column per shed being prepared, the rest as a slim strip; filters, auto-compact, Grid
+  let prepFilter = 'all';
+  function prepPref(k, d){ try{ return localStorage.getItem('cw-prep-' + k) || d; }catch(e){ return d; } }
+  function prepSetPref(k, v){ try{ localStorage.setItem('cw-prep-' + k, v); }catch(e){} }
+  function prepGridHtml(list){
+    if(!list.length) return '';
+    // rows: every section and job in the order they first appear across the sheds, matched by name
+    const norm = t=> String(t || '').trim().toLowerCase(), rows = [];
+    list.forEach(c=> (c.sections || []).forEach(sec=>{
+      let r = rows.find(x=> norm(x.t) === norm(sec.t)); if(!r){ r = { t: sec.t, items: [] }; rows.push(r); }
+      ((sec.items || []).length ? sec.items : [sec]).forEach(u=>{ if(!r.items.some(x=> norm(x) === norm(u.t))) r.items.push(u.t); });
+    }));
+    const cell = (c, secT, itT)=>{
+      const sec = (c.sections || []).find(x=> norm(x.t) === norm(secT)); if(!sec) return '<td class="pg-na">—</td>';
+      const u = (sec.items || []).length ? sec.items.find(x=> norm(x.t) === norm(itT)) : (norm(sec.t) === norm(itT) ? sec : null);
+      if(!u) return '<td class="pg-na">—</td>';
+      const fl = prepUnitFlags(c, u), tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
+      const tag = u.done ? (u.doneBy ? `<small>${escapeHtml(u.doneBy)}</small>` : '') : fl.late ? '<span class="prep-tg late">overdue</span>' : tk ? `<span class="prep-tg task">${escapeHtml(prepFmt(tk.date))}</span>` : u.due ? `<span class="prep-tg date">${escapeHtml(prepFmt(u.due))}</span>` : '';
+      return `<td class="pg-c${fl.late ? ' f-late' : ''}"><button type="button" class="prep-cb${u.done ? ' on' : ''}" data-prep-tick="${escapeHtmlAttr(c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + u.t + ' in Shed ' + c.shed)}"${c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${tag}</td>`;
+    };
+    const head = `<tr><th>Job</th>${list.map(c=>{ const p = prepProgress(c); return `<th>Shed ${escapeHtml(c.shed)}<small>${p.done}/${p.total}</small></th>`; }).join('')}</tr>`;
+    const body = rows.map(r=> `<tr class="pg-sec"><td colspan="${list.length + 1}">${escapeHtml(r.t)}</td></tr>` + r.items.map(it=> `<tr><td class="pg-job">${escapeHtml(it)}</td>${list.map(c=> cell(c, r.t, it)).join('')}</tr>`).join('')).join('');
+    return `<div class="prep-grid"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
     const sheds = prepShedList();
-    const open = prepOpenList().length, ready = shedPrep.filter(c=> !c.archived && c.status === 'ready' && !prepPlaced(c)).length;
-    const running = sheds.filter(sh=> !prepActiveFor(sh) && prepShedRun(sh)).length;
+    const active = sheds.filter(sh=> prepActiveFor(sh)), others = sheds.filter(sh=> !prepActiveFor(sh));
+    const list = active.map(sh=> prepActiveFor(sh));
+    const open = prepOpenList().length, ready = list.filter(c=> c.status === 'ready').length;
+    const running = others.filter(sh=> prepShedRun(sh)).length;
     $('#mlogSub').textContent = [ghFarmName, `${open} preparing · ${ready} ready · ${running} running`].filter(Boolean).join(' · ');
-    if(!prepPhoneShed || !sheds.includes(prepPhoneShed)) prepPhoneShed = (prepOpenList()[0] || {}).shed || sheds[0];
-    const tabs = sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('');
-    box.innerHTML = `<div class="prep-legend"><span><i class="prep"></i>Preparing</span><span><i class="ready"></i>Ready for placement</span><span><i class="run"></i>Still running the current batch</span></div>
-      <div class="prep-tabs">${tabs}</div>
-      <div class="prep-board" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}">${sheds.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    if(!prepPhoneShed || !active.includes(prepPhoneShed)) prepPhoneShed = active[0] || sheds[0];
+    const view = prepPref('view', 'board'), dens = prepPref('density', 'auto');
+    const compact = dens === 'compact' || (dens === 'auto' && active.length > 4);
+    // summary
+    let done = 0, total = 0, late = 0, week = 0; list.forEach(c=>{ const p = prepProgress(c); done += p.done; total += p.total; prepUnits(c).forEach(x=>{ const f = prepUnitFlags(c, x.u); if(f.late) late++; if(f.week) week++; }); });
+    const firstChicks = list.map(c=> c.nextPlacement).filter(Boolean).sort()[0];
+    const toFirst = firstChicks ? Math.round((toDateObj(firstChicks) - toDateObj(dateKey(new Date()))) / 86400000) : null;
+    const sum = list.length ? `<div class="prep-sum2"><div><h3>${list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : list.length + ' sheds are'} being prepared</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
+        <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
+    const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
+    const bar = list.length ? `<div class="prep-bar2"><div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>
+        <div class="prep-seg2" role="group" aria-label="View"><button type="button" data-prep-view="board" class="${view === 'board' ? 'on' : ''}">Board</button><button type="button" data-prep-view="grid" class="${view === 'grid' ? 'on' : ''}">Grid</button></div>
+        ${view === 'board' ? `<div class="prep-seg2 dens" role="group" aria-label="Column width"><button type="button" data-prep-dens="comfy" class="${!compact ? 'on' : ''}" title="Full-width columns">Comfortable</button><button type="button" data-prep-dens="compact" class="${compact ? 'on' : ''}" title="Narrow columns, every shed on one screen">Compact</button></div>` : ''}</div>` : '';
+    // the sheds that aren't being prepared: one slim strip
+    const strip = others.length ? `<div class="prep-runs"><span class="prep-runs-k">${list.length ? 'Still running' : 'No shed is being prepared yet'}</span>${others.map(sh=>{ const r = prepShedRun(sh);
+        return `<button type="button" class="prep-rs" data-prep-start="${escapeHtmlAttr(sh)}" title="${r ? `Batch ${escapeHtmlAttr(String(r.batch || ''))} · clean-out ${escapeHtmlAttr(prepFmt(r.cleanout))} — tap to start its checklist early` : 'Empty — tap to start a checklist'}"><b>${escapeHtml(sh)}</b><small>${r ? escapeHtml(prepFmt(r.cleanout).replace(/^\w+ /, '')) : 'empty'}</small></button>`; }).join('')}<span class="prep-runs-n">The checklist appears when a shed closes in Production · tap one to start early</span></div>` : '';
+    const tabs = active.length > 1 ? `<div class="prep-tabs">${active.map(sh=>{ const c = prepActiveFor(sh); return `<button type="button" class="prep-tab ${c.status === 'ready' ? 'ready' : 'prep'}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>` : '';
+    const main = !list.length ? '' : view === 'grid' ? `<div class="prep-gridwrap" data-filter="${prepFilter}">${prepGridHtml(list)}</div>`
+      : `${tabs}<div class="prep-board prep-board2${compact ? ' compact' : ''}" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${list.length}">${active.map(prepColHtml).join('')}</div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    box.innerHTML = sum + strip + bar + main;
     if($('#prepTplEdModal').classList.contains('open')) renderPrepTplEd();
     prepSetupSort([box, $('#prepTplEdModal').classList.contains('open') ? $('#prepTplEdBoard') : null]);
     if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = document.querySelector(`[data-prep-add="${CSS.escape(k)}"]`); if(btn) prepStartAdd(btn); }
@@ -13402,6 +13566,11 @@
       persist(); renderAll(); return; }
   }
   $('#prepMain').addEventListener('click', prepBoardClick);
+  $('#prepMain').addEventListener('click', (e)=>{
+    const f = e.target.closest('[data-prep-f]'); if(f){ prepFilter = f.dataset.prepF; renderPrepBoard(); return; }
+    const v = e.target.closest('[data-prep-view]'); if(v){ prepSetPref('view', v.dataset.prepView); renderPrepBoard(); return; }
+    const d = e.target.closest('[data-prep-dens]'); if(d){ prepSetPref('density', d.dataset.prepDens); renderPrepBoard(); return; }
+  });
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
   document.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
