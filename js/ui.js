@@ -2818,6 +2818,22 @@ function pickupSummaryData(){
   const sum=(k)=>rows.reduce((s,r)=>s+r[k],0);
   return {rows,latest:{birds:sum('lastBirds'),kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length},todate:{birds:sum('birds'),kg:sum('kg'),n:sum('n')},waiting:sum('waiting')};
 }
+// Estimate (kept apart from the plant weights): the birds still in at today's estimated weight, plus any
+// pickup still waiting for its kill sheet at the curve weight for its day — 2026-10-23
+function pickupEstimateData(){
+  const today=dateOnly(new Date());let onB=0,onKg=0,waitB=0,waitKg=0;
+  const rows=(farmData&&farmData.sheds||[]).filter(sh=>sh.placementDate).map(sh=>{
+    const live=sh.closed?0:Math.max(0,liveAtStartOfDay(sh,today));
+    const est=live>0&&typeof currentShedWeightEstimate==='function'?currentShedWeightEstimate(sh,today):null;
+    const kg=est&&est.kg>0?est.kg*live:0;
+    const wt=(sh.pickups||[]).filter(p=>p.date&&!pkWeighed(p)&&dateOnly(p.date)<=today&&Number(p.birds)>0);
+    let wb=0,wk=0;wt.forEach(p=>{const f=typeof forecastWeightModeAware==='function'?forecastWeightModeAware(sh,dateOnly(p.date)):null;const a=f&&f.kg>0?f.kg:rossWeightKg(pickupAge(sh,p));wb+=Number(p.birds);wk+=a*Number(p.birds);});
+    onB+=live;onKg+=kg;waitB+=wb;waitKg+=wk;
+    return {id:sh.id,live,avg:est&&est.kg>0?est.kg:null,kg,closed:!!sh.closed,waitB:wb,waitKg:wk};
+  });
+  const off=pickupSummaryData().todate;
+  return {rows,onB,onKg,waitB,waitKg,offB:off.birds,offKg:off.kg,totB:off.birds+waitB+onB,totKg:off.kg+waitKg+onKg};
+}
 function pkSumAvg(kg,b){return b>0?kg/b:null;}
 function pkSumFmtKg(v){return Math.round(v).toLocaleString('en-US')+' kg';}
 function pkSumFmtAvg(v){return v!=null?v.toFixed(3)+' kg':'—';}
@@ -2829,6 +2845,13 @@ function pickupSummaryText(){
   L.push(`Farm latest pickups (${d.latest.sheds} sheds): ${d.latest.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))} · ${pkSumFmtKg(d.latest.kg)}`);
   L.push(`Farm batch to date (8 sheds): ${d.todate.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))} · ${pkSumFmtKg(d.todate.kg)}`);
   if(d.waiting)L.push(`${d.waiting} pickup${d.waiting===1?'':'s'} still waiting for the plant's weights (not included)`);
+  const e=pickupEstimateData();
+  L.push('','ESTIMATE — live weight to date (not plant weights)');
+  e.rows.forEach(r=>{if(r.live>0)L.push(`Shed ${r.id}: ${r.live.toLocaleString('en-US')} birds on hand · est. ${pkSumFmtAvg(r.avg)} · est. ${pkSumFmtKg(r.kg)}`);});
+  L.push(`Shipped (plant weights): ${pkSumFmtKg(e.offKg)}`);
+  if(e.waitB)L.push(`Picked up, waiting for weights (est.): ${pkSumFmtKg(e.waitKg)}`);
+  L.push(`Still on farm (est.): ${e.onB.toLocaleString('en-US')} birds · ${pkSumFmtKg(e.onKg)}`);
+  L.push(`Live weight to date (est.): ${e.totB.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(e.totKg,e.totB))} · ${pkSumFmtKg(e.totKg)}`);
   return L.join('\n');
 }
 function openPickupSummary(){
@@ -2849,6 +2872,15 @@ function openPickupSummary(){
       <div class="pks-cards">${cards}<div class="pks-card tot"><b>Farm · latest</b><span class="r"><b>${pkSumFmtKg(d.latest.kg)}</b></span><span class="m">${n(d.latest.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</span></div><div class="pks-card tot"><b>Farm · batch to date</b><span class="r"><b>${pkSumFmtKg(d.todate.kg)}</b></span><span class="m">${n(d.todate.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</span></div></div>
       <p class="pks-note">Only pickups with the plant's kill-sheet weight are counted.${d.waiting?` <b>${d.waiting} pickup${d.waiting===1?' is':'s are'} still waiting for weights</b> and not included.`:''} Averages are total weight ÷ birds.</p>
     </section>
+    ${(()=>{const e=pickupEstimateData();if(!e.rows.length)return '';
+      const er=e.rows.filter(r=>r.live>0||r.waitB>0).map(r=>`<tr><td><b>Shed ${r.id}</b></td><td class="num">${r.live>0?n(r.live):'—'}</td><td class="num">${r.live>0?pkSumFmtAvg(r.avg):'—'}</td><td class="num">${r.live>0?pkSumFmtKg(r.kg):'—'}${r.waitB?`<span class="pks-sub">+ ${n(r.waitB)} picked up, waiting · est. ${pkSumFmtKg(r.waitKg)}</span>`:''}</td></tr>`).join('');
+      return `<section class="ls-sec pks-est"><div class="ls-h"><span class="ls-dot"></span><b>Estimate · live weight to date</b><span class="pks-chip">est</span><span class="ls-n">not plant weights</span></div>
+      ${er?`<div class="pks-tw"><table class="ls-table pks-table pks-etable"><thead><tr><th>Shed</th><th class="num">Birds on hand</th><th class="num">Est. avg weight</th><th class="num">Est. live weight</th></tr></thead><tbody>${er}</tbody>
+        <tfoot><tr><td>Still on farm</td><td class="num">${n(e.onB)}</td><td class="num">${pkSumFmtAvg(pkSumAvg(e.onKg,e.onB))}</td><td class="num">${pkSumFmtKg(e.onKg)}</td></tr></tfoot></table></div>
+        <div class="pks-elist">${e.rows.filter(r=>r.live>0||r.waitB>0).map(r=>`<div><b>Shed ${r.id}</b><span>${r.live>0?`${n(r.live)} × ${pkSumFmtAvg(r.avg)}`:'closed'}${r.waitB?` · +${n(r.waitB)} waiting`:''}</span><em>${pkSumFmtKg(r.kg)}</em></div>`).join('')}</div>`:'<p class="pks-note">No birds left on the farm.</p>'}
+      <div class="pks-sum"><div><span>Shipped · plant weights</span><b>${pkSumFmtKg(e.offKg)}</b></div>${e.waitB?`<div><span>Waiting for weights · est.</span><b>${pkSumFmtKg(e.waitKg)}</b></div>`:''}<div><span>Still on farm · est.</span><b>${pkSumFmtKg(e.onKg)}</b></div>
+        <div class="tot"><span>Live weight to date · est.</span><b>${pkSumFmtKg(e.totKg)}</b><em>${n(e.totB)} birds · avg ${pkSumFmtAvg(pkSumAvg(e.totKg,e.totB))}</em></div></div>
+      <p class="pks-note">Birds still in use today's estimated weight (from their last pickup weighing, carried forward on their growth curve). This section is separate from the official figures above.</p></section>`;})()}
     <div class="ls-actions"><button type="button" class="ls-copy" id="pkSumCopy">Copy summary</button><button type="button" class="ls-close" id="pkSumDone">Close</button></div>`;
   document.getElementById('pkSumCopy').addEventListener('click',()=>{const txt=pickupSummaryText();const done=()=>showToast('Summary copied — paste it into a message.');
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));else fallbackCopy(txt,done);});
