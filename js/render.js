@@ -1747,8 +1747,13 @@ function computePredictionsInner(shed,group){
   const perfAdjustedFinal=curveFinal*perfFactor;
   const fit=getShedGompertzFit(shed);
   let estFinalALW;
-  if(fit){const gompFinal=gompertzWeightAt(fit,finalAge);const progressT=Math.min(1,currentAge/Math.max(1,finalAge));if(gompFinal!=null)estFinalALW=gompFinal*(1-progressT*0.3)+targetALW*(progressT*0.3);else estFinalALW=(perfCount>0)?(perfAdjustedFinal*(1-progressT*0.5)+targetALW*(progressT*0.5)):targetALW;}
-  else{const progressT=Math.min(1,currentAge/Math.max(1,finalAge));estFinalALW=(perfCount>0)?(perfAdjustedFinal*(1-progressT*0.5)+targetALW*(progressT*0.5)):targetALW;}
+  // The last birds' weight = the shed's own growth curve at the final age — the same estimate a planned
+  // pickup gets (forecastWeightModeAware). No pull toward the target weight any more (2026-10-23): that
+  // target is for cFCR (Industry), and the 30% blend pulled Shed 1's final 0.27 kg (7%) low on 2701.
+  {const fwEnd=forecastWeightModeAware(shed,addDays(dateOnly(shed.placementDate),finalAge));
+   if(fwEnd&&fwEnd.kg>0)estFinalALW=fwEnd.kg;
+   else if(fit&&gompertzWeightAt(fit,finalAge)!=null)estFinalALW=gompertzWeightAt(fit,finalAge);
+   else estFinalALW=perfCount>0?perfAdjustedFinal:targetALW;}
   const mortEstimate=estimateShedFinalMortality(shed,finalAge,currentAge);
   let estFinalMort=mortEstimate.estFinalMort;let estFinalLive=mortEstimate.estFinalLive;let estLivability=mortEstimate.estLivability;
   let totalWeightKg=0;const pickupDetails=[];let cumBirds=0,ageBirdSum=0;
