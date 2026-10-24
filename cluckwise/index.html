@@ -3625,6 +3625,17 @@
   .prep-board2 .prep-sec.folded .prep-sh{ margin-bottom:0; }
   .prep-foldall{ all:unset; cursor:pointer; font:700 11px Inter,sans-serif; color:var(--primary-dark,#8A5300); white-space:nowrap; }
   .prep-foldall:hover{ text-decoration:underline; }
+  /* fold whole shed columns (2026-10-24) */
+  .prep-ch2{ grid-template-columns:auto 1fr auto auto; }
+  .prep-colbtn{ width:26px; height:26px; font-size:14px; align-self:start; }
+  .prep-colall{ margin-left:auto; color:var(--ink); }
+  .prep-board2 .prep-col.cfolded, .prep-canvas .prep-board2 .prep-col.cfolded{ min-width:0; align-self:start; }
+  .prep-cfoldb{ all:unset; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 0 12px; height:100%; box-sizing:border-box; width:100%; }
+  .prep-cfoldb .prep-sn{ width:34px; height:34px; font-size:15px; border-radius:10px; }
+  .prep-vt{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; font:700 11.5px Inter,sans-serif; color:var(--muted); }
+  .prep-col.has-late .prep-vt{ color:#B42318; } body.theme-dark .prep-col.has-late .prep-vt{ color:#FF9C8A; }
+  .prep-cfoldb:hover .col-toggle-btn{ background:rgba(0,0,0,0.18); }
+  @media (max-width:760px){ .prep-colbtn{ display:none; } }
   /* kanban-style scrolling: the board fills the page, each column scrolls on its own (computers) */
   .prep-canvas{ position:relative; }
   .prep-canvas .kanban-fade{ display:none; }
@@ -11413,18 +11424,30 @@
         return `<div class="prep-sec${d === units.length ? ' all' : ''}${fold ? ' folded' : ''}" data-sid="${escapeHtmlAttr(sec.id)}"><div class="prep-sh"><span class="prep-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span>${!c.isTpl && has ? `<button type="button" class="prep-fold" data-prep-fold="${escapeHtmlAttr(c.id + '|' + sec.id)}" aria-expanded="${!fold}" title="${fold ? 'Show this section\'s items' : 'Fold this section'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>` : ''}<span class="prep-secname" role="button" tabindex="0" data-prep-rename="${escapeHtmlAttr(c.id + '|' + sec.id)}" title="Click to rename this section">${escapeHtml(sec.t)}</span>${!c.isTpl && has ? prepSecDateHtml(c, sec, d === units.length) : ''}<em>${c.isTpl ? (has ? units.length : '') : d + '/' + units.length}</em>${c.isTpl ? '' : `<span class="prep-spb"><i style="width:${units.length ? Math.round(d / units.length * 100) : 0}%"></i></span>`}</div>${has ? '' : prepUnitHtml(c, sec, sec, true)}<div class="prep-items${has ? '' : ' empty'}" data-cid="${escapeHtmlAttr(c.id)}" data-sid="${escapeHtmlAttr(sec.id)}">${has ? sec.items.map(u=> prepUnitHtml(c, u, sec)).join('') : ''}</div><button type="button" class="prep-add" data-prep-add="${escapeHtmlAttr(c.id + '|' + sec.id)}">＋ Add an item</button></div>`;
       }).join('') + `</div><button type="button" class="prep-add sec" data-prep-addsec="${escapeHtmlAttr(c.id)}">＋ Add a section</button>`;
   }
+  // Fold whole shed columns to a thin strip (kept per device, like the Planner's folded days)
+  let prepColFold = new Set();
+  try{ prepColFold = new Set(JSON.parse(localStorage.getItem('cw-prep-colfold') || '[]').map(String)); }catch(e){}
+  function prepColFoldSave(){ try{ localStorage.setItem('cw-prep-colfold', JSON.stringify([...prepColFold])); }catch(e){} }
+  function prepColBtn(shed){ return `<button type="button" class="col-toggle-btn prep-colbtn" data-prep-colfold="${escapeHtmlAttr(shed)}" title="Fold Shed ${escapeHtmlAttr(shed)} to a thin strip" aria-label="Fold Shed ${escapeHtmlAttr(shed)}">↔</button>`; }
+  function prepColFoldedHtml(shed){
+    const c = prepActiveFor(shed), run = prepShedRun(shed);
+    const state = c ? (c.status === 'ready' ? 'ready' : 'prep') : run ? 'run' : 'idle';
+    let tx = state === 'run' ? 'Running' : state === 'idle' ? 'Empty' : '', late = 0;
+    if(c){ const pr = prepProgress(c); late = prepUnits(c).filter(x=> prepUnitFlags(c, x.u).late).length; tx = (state === 'ready' ? 'Ready · ' : '') + pr.done + '/' + pr.total + ' done' + (late ? ' · ' + late + ' overdue' : ''); }
+    return `<section class="prep-col ${state === 'idle' ? 'run' : state}${late ? ' has-late' : ''} cfolded" data-prep-col="${escapeHtmlAttr(shed)}"><button type="button" class="prep-cfoldb" data-prep-colfold="${escapeHtmlAttr(shed)}" title="Unfold Shed ${escapeHtmlAttr(shed)}" aria-label="Unfold Shed ${escapeHtmlAttr(shed)}"><span class="col-toggle-btn" aria-hidden="true">↔</span><span class="prep-sn">${escapeHtml(shed)}</span><span class="prep-vt">Shed ${escapeHtml(shed)} · ${escapeHtml(tx)}</span></button></section>`;
+  }
   function prepColHtml(shed){
     const c = prepActiveFor(shed), run = prepShedRun(shed), today = dateKey(new Date());
     const state = c ? (c.status === 'ready' ? 'ready' : 'prep') : run ? 'run' : 'idle';
     if(state === 'run'){
       const day = mlogDaysBetween(run.placement, today);
       const left = run.cleanout ? Math.round((toDateObj(run.cleanout) - toDateObj(today)) / 86400000) : null;
-      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Running</span></b><span>${run.batch ? 'Batch ' + escapeHtml(String(run.batch)) + ' · ' : ''}day ${day}</span></div></div>
+      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Running</span></b><span>${run.batch ? 'Batch ' + escapeHtml(String(run.batch)) + ' · ' : ''}day ${day}</span></div>${prepColBtn(shed)}</div>
         <div class="prep-cd2"><span>Clean-out <b>${escapeHtml(prepFmt(run.cleanout))}</b></span>${left != null && left >= 0 ? `<span><b>${left} d</b> left</span>` : ''}</div>
         <div class="prep-runb"><span>The checklist appears when the shed is closed in Production.</span><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start early</button></div></section>`;
     }
     if(state === 'idle'){
-      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Empty</span></b><span>No batch and no checklist</span></div></div>
+      return `<section class="prep-col run" data-prep-col="${escapeHtmlAttr(shed)}"><div class="prep-ch2"><span class="prep-sn">${escapeHtml(shed)}</span><div class="prep-ct2"><b>Shed ${escapeHtml(shed)} <span class="prep-chip run">Empty</span></b><span>No batch and no checklist</span></div>${prepColBtn(shed)}</div>
         <div class="prep-runb"><button type="button" class="prep-early" data-prep-start="${escapeHtmlAttr(shed)}">＋ Start a checklist</button></div></section>`;
     }
     const pr = prepProgress(c), pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
@@ -11447,6 +11470,7 @@
         <span class="prep-sn">${escapeHtml(shed)}</span>
         <div class="prep-ct2"><b>Shed ${escapeHtml(shed)}${late ? ` <span class="prep-chip late">${late} overdue</span>` : ''}${state === 'ready' ? ' <span class="prep-chip ok">Ready</span>' : ''}</b><span>${escapeHtml(sub2)}</span></div>
         <span class="prep-ring" title="${pr.done} of ${pr.total} done"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="${ringCol}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(pr.total ? pr.done / pr.total * C : 0).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b>${pr.done}/${pr.total}</b></span>
+        ${prepColBtn(shed)}
       </div>
       <div class="prep-cd2">${c.nextPlacement ? `<span>Chicks <b>${escapeHtml(prepFmt(c.nextPlacement))}</b> · <b>${toChicks} d</b> left</span>` : '<span>Chicks date not set yet</span>'}${(c.sections || []).some(x=> (x.items || []).length) ? (()=>{ const allF = (c.sections || []).filter(x=> (x.items || []).length).every(x=> x.fold); return `<button type="button" class="prep-foldall" data-prep-foldall="${escapeHtmlAttr(c.id)}" data-to="${allF ? '0' : '1'}">${allF ? 'Unfold all' : 'Fold all'}</button>`; })() : ''}</div>${body}</section>`;
   }
@@ -11750,11 +11774,15 @@
     const sum = list.length ? `<div class="prep-sum2"><div><h3>${list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : list.length + ' sheds are'} being prepared</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
         <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
-    const bar = list.length ? `<div class="prep-bar2"><div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div></div>` : '';
+    const phone = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
+    const isF = sh=> !phone && prepColFold.has(String(sh)), allF = sheds.length && sheds.every(isF);
+    const foldAll = phone ? '' : `<button type="button" class="prep-f prep-colall" data-prep-colfoldall="${allF ? '0' : '1'}" title="${allF ? 'Open every shed column again' : 'Fold every shed column to a thin strip'}">↔ ${allF ? 'Unfold all sheds' : 'Fold all sheds'}</button>`;
+    const bar = list.length || foldAll ? `<div class="prep-bar2">${list.length ? `<div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>` : ''}${foldAll}</div>` : '';
+    const gridCols = sheds.map(sh=> isF(sh) ? '58px' : 'minmax(270px,1fr)').join(' ');
     // every shed is a column: the ones being prepared with their checklist, the rest running or empty
     const tabs = `<div class="prep-tabs">${sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>`;
     const CHEV = d=> `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-    const main = `${tabs}<div class="kanban-canvas prep-canvas"><div class="kanban-fade kanban-fade-left"></div><div class="kanban-fade kanban-fade-right"></div><button type="button" class="kanban-nav kanban-nav-left" data-prep-pan="-1" aria-label="Scroll to earlier sheds" title="Scroll to earlier sheds">${CHEV('M15 6l-6 6 6 6')}</button><button type="button" class="kanban-nav kanban-nav-right" data-prep-pan="1" aria-label="Scroll to later sheds" title="Scroll to later sheds">${CHEV('M9 6l6 6-6 6')}</button><div class="prep-board prep-board2" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${sheds.length}">${sheds.map(prepColHtml).join('')}</div></div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    const main = `${tabs}<div class="kanban-canvas prep-canvas"><div class="kanban-fade kanban-fade-left"></div><div class="kanban-fade kanban-fade-right"></div><button type="button" class="kanban-nav kanban-nav-left" data-prep-pan="-1" aria-label="Scroll to earlier sheds" title="Scroll to earlier sheds">${CHEV('M15 6l-6 6 6 6')}</button><button type="button" class="kanban-nav kanban-nav-right" data-prep-pan="1" aria-label="Scroll to later sheds" title="Scroll to later sheds">${CHEV('M9 6l6 6-6 6')}</button><div class="prep-board prep-board2" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${sheds.length};${phone ? '' : 'grid-template-columns:' + gridCols}">${sheds.map(sh=> isF(sh) ? prepColFoldedHtml(sh) : prepColHtml(sh)).join('')}</div></div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
     box.innerHTML = sum + bar + main;
     prepWireCanvas(box);
     if($('#prepTplEdModal').classList.contains('open')) renderPrepTplEd();
@@ -13617,6 +13645,8 @@
     let b;
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
     if((b = g('[data-prep-fold]'))){ const [cid, sid] = b.dataset.prepFold.split('|'); const c = prepFind(cid), sec = c && (c.sections || []).find(x=> x.id === sid); if(sec){ sec.fold = !sec.fold; persist(); renderAll(); } return; }
+    if((b = g('[data-prep-colfold]'))){ const k = String(b.dataset.prepColfold); if(prepColFold.has(k)) prepColFold.delete(k); else prepColFold.add(k); prepColFoldSave(); renderAll(); return; }
+    if((b = g('[data-prep-colfoldall]'))){ if(b.dataset.prepColfoldall === '1') prepShedList().forEach(sh=> prepColFold.add(String(sh))); else prepColFold.clear(); prepColFoldSave(); renderAll(); return; }
     if((b = g('[data-prep-foldall]'))){ const c = prepFind(b.dataset.prepFoldall); if(c){ const to = b.dataset.to === '1'; (c.sections || []).forEach(x=>{ if((x.items || []).length) x.fold = to; }); persist(); renderAll(); } return; }
     if((b = g('[data-prep-rename]'))){ prepStartRename(b); return; }
     function c_ok(el){ const [cid] = el.dataset.prepEdit.split('|'); const c = prepFind(cid); return !!c && c.status !== 'ready'; }
