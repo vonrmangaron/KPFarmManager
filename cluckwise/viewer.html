@@ -963,6 +963,21 @@
   .join-overlay{ background:var(--page-glow); }
   .prep-lab{ display:inline-flex; align-items:center; gap:4px; font:800 10.5px Inter,system-ui,sans-serif; padding:2px 8px; border-radius:999px; background:#F0A21A; color:#16191B; white-space:nowrap; margin:3px 0 0; }
   .task-body .prep-lab{ align-self:flex-start; }
+
+  /* subtasks (2026-10-24) */
+  .tsubs{ display:flex; flex-direction:column; gap:4px; margin-top:6px; width:100%; }
+  .tsubs-bar{ all:unset; cursor:pointer; display:flex; align-items:center; gap:8px; font:700 12px Inter,system-ui,sans-serif; color:var(--muted); padding:2px 0; }
+  .tsubs-pb{ flex:1; height:6px; border-radius:9px; background:var(--line); overflow:hidden; display:block; }
+  .tsubs-pb i{ display:block; height:100%; border-radius:9px; background:#F0A21A; }
+  .tsubs-car{ font-size:10px; transition:transform .15s ease; }
+  .tsubs.open .tsubs-car{ transform:rotate(180deg); }
+  .tsubs-list{ display:flex; flex-direction:column; border-top:1px dashed var(--line); padding-top:2px; }
+  .tsub{ all:unset; cursor:pointer; display:flex; align-items:flex-start; gap:10px; padding:9px 0; font:600 14px Inter,system-ui,sans-serif; color:var(--ink); border-bottom:1px solid var(--line); }
+  .tsub:last-child{ border-bottom:0; }
+  .tsub-cb{ flex:0 0 22px; width:22px; height:22px; border-radius:7px; border:2px solid var(--line); display:grid; place-items:center; font:800 12px Inter; color:#fff; box-sizing:border-box; background:var(--surface,#fff); }
+  .tsub.done .tsub-cb{ background:#0F8A75; border-color:#0F8A75; }
+  .tsub.done .tsub-t{ color:var(--muted); text-decoration:line-through; }
+  .tsub-t small{ display:block; font:500 11.5px Inter; color:var(--muted); text-decoration:none; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2549,6 +2564,7 @@
   }
   function applyPendingTicksOverlay(){
     pendingTicks.forEach((status, id)=>{
+      if(id.startsWith('sub:')){ const [, tid, sid] = id.split(':'); const tk = tasks.find(x=> x.id === tid); const st = tk && (tk.subs || []).find(x=> x.id === sid); if(st) st.done = status === 'done'; return; }
       const tk = tasks.find(x=> x.id === id);
       if(tk) tk.status = status;
     });
@@ -2638,6 +2654,33 @@
     scheduleTickFlush(900);
     return tk;
   }
+  // Subtasks (2026-10-24): a step tick rides the same queue as task ticks, keyed 'sub:<taskId>:<stepId>'.
+  // The last step ticks the task; unticking a step re-opens it.
+  const viewerSubsOpen = new Set();
+  function setSubLocal(tid, sid, done){
+    const tk = tasks.find(x=> x.id === tid); const st = tk && (tk.subs || []).find(x=> x.id === sid); if(!st) return;
+    st.done = done; const key = 'sub:' + tid + ':' + sid, who = loadTickWho();
+    if(done){ st.doneBy = tickerName(); st.doneAt = new Date().toISOString(); who[key] = { by: st.doneBy, at: st.doneAt }; }
+    else { delete st.doneBy; delete st.doneAt; who[key] = null; }
+    saveTickWho(who);
+    pendingTicks.set(key, done ? 'done' : 'open'); savePendingTicks();
+    const all = (tk.subs || []).every(x=> x.done);
+    if(done && all && tk.status !== 'done'){ setTaskStatusLocal(tid, 'done'); return; }
+    if(!done && tk.status === 'done'){ setTaskStatusLocal(tid, 'open'); return; }
+    renderAll(); scheduleTickFlush(900);
+  }
+  function subsBlockEl(tk){
+    const a = Array.isArray(tk.subs) ? tk.subs : []; if(!a.length) return null;
+    const done = a.filter(x=> x.done).length, open = viewerSubsOpen.has(tk.id);
+    const box = document.createElement('div'); box.className = 'tsubs' + (open ? ' open' : '');
+    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length}</span><span class="tsubs-car" aria-hidden="true">▾</span></button>${open ? `<div class="tsubs-list">${a.map(x=> `<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
+    box.querySelector('.tsubs-bar').addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.last || 0) < 400) return; subsBlockEl.last = now;   // one tap = one toggle
+      if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id); renderAll(); });
+    box.querySelectorAll('.tsub').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.lastTick || 0) < 400) return; subsBlockEl.lastTick = now;
+      if(!ghPath){ showToast(t('connectToSave'), true); return; }
+      const st = a.find(x=> x.id === b.dataset.sid); if(st) setSubLocal(tk.id, st.id, !st.done); }));
+    return box;
+  }
   function toggleTaskDoneInViewer(id){
     const tk = tasks.find(x=> x.id === id);
     if(!tk) return;
@@ -2725,6 +2768,14 @@
       const freshTasks = freshContent.tasks || [];
       const who = loadTickWho();
       batch.forEach((newStatus, id)=>{
+        if(id.startsWith('sub:')){
+          const [, tid, sid] = id.split(':'); const i = freshTasks.findIndex(tk=> tk.id === tid); if(i === -1) return;
+          const subs = (freshTasks[i].subs || []).map(x=> ({ ...x })); const st = subs.find(x=> x.id === sid); if(!st) return;
+          const w = who[id]; st.done = newStatus === 'done';
+          if(st.done && w){ st.doneBy = w.by; st.doneAt = w.at; } else if(!st.done){ delete st.doneBy; delete st.doneAt; }
+          freshTasks[i] = Object.assign({}, freshTasks[i], { subs });
+          return;
+        }
         const idx = freshTasks.findIndex(tk=>tk.id===id);
         if(idx===-1) return;
         const upd = Object.assign({}, freshTasks[idx], { status:newStatus });
@@ -3143,6 +3194,7 @@
       db.textContent = '✓ ' + tk.doneBy + (d && !isNaN(d) ? ' · ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : '');
       card.querySelector('.task-name').after(db);
     }
+    { const sb = subsBlockEl(tk); if(sb){ card.classList.add('has-subs'); (card.querySelector('.task-body') || card).appendChild(sb); } }
     const mcheck = isMaintCheck(tk);
     if(mcheck){
       // One normal-size card: a short count line, the list itself opens on its own page

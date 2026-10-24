@@ -3508,6 +3508,44 @@
   .prep-legend i.prep{ background:#FCE7BE; border-color:#EFC77C; } .prep-legend i.ready{ background:#CDEFE6; border-color:#0F8A75; } .prep-legend i.run{ background:var(--surface-soft); border-style:dashed; }
   .prep-tabs{ display:none; }
   .prep-board{ display:flex; gap:12px; align-items:flex-start; overflow-x:auto; padding-bottom:10px; }
+  /* ── Subtasks (2026-10-24) ── */
+  .tsubs{ display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+  .kcard .tsubs.k{ padding:0 10px 8px; margin-top:0; }
+  .tsubs-bar{ all:unset; cursor:pointer; display:flex; align-items:center; gap:8px; font:700 11.5px Inter,system-ui,sans-serif; color:var(--muted); }
+  .tsubs-pb{ flex:1; height:5px; border-radius:9px; background:var(--line); overflow:hidden; display:block; }
+  .tsubs-pb i{ display:block; height:100%; border-radius:9px; background:#F0A21A; }
+  .tsubs-car{ transition:transform .15s ease; font-size:10px; }
+  .tsubs.open .tsubs-car{ transform:rotate(180deg); }
+  .tsubs-list{ display:flex; flex-direction:column; border-top:1px dashed var(--line); padding-top:4px; }
+  .tsub{ all:unset; cursor:pointer; display:flex; align-items:flex-start; gap:8px; padding:4px 0; font:500 12.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .tsub-cb{ all:unset; cursor:pointer; flex:0 0 16px; width:16px; height:16px; border-radius:5px; border:2px solid var(--line); display:grid; place-items:center; font:800 10px Inter; color:#fff; background:var(--surface); box-sizing:border-box; }
+  .tsub.done .tsub-cb, .ds-row.done .tsub-cb{ background:#0F8A75; border-color:#0F8A75; }
+  .tsub.done .tsub-t, .ds-row.done .ds-t{ color:var(--muted); text-decoration:line-through; }
+  .st-edit{ display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+  .st-edit:empty{ display:none; }
+  .st-row{ display:grid; grid-template-columns:14px 1fr auto auto; gap:6px; align-items:center; }
+  .st-grip{ color:var(--muted); font-size:11px; letter-spacing:-2px; }
+  .st-in{ width:100%; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:7px 9px; font:600 14px Inter,system-ui,sans-serif; color:var(--ink); box-sizing:border-box; }
+  .st-row.done .st-in{ color:var(--muted); text-decoration:line-through; }
+  .st-up, .st-x{ all:unset; cursor:pointer; width:28px; height:28px; display:grid; place-items:center; border-radius:8px; color:var(--muted); }
+  .st-up:hover, .st-x:hover{ background:var(--surface-soft); color:var(--ink); }
+  .st-up[disabled]{ opacity:.3; cursor:default; }
+  .st-addrow, .ds-add{ display:flex; align-items:center; gap:8px; border:1px dashed var(--line); border-radius:10px; padding:2px 10px; color:var(--muted); margin-bottom:12px; }
+  .st-addrow input, .ds-add input{ flex:1; border:0; background:transparent; padding:8px 0; font:600 14px Inter,system-ui,sans-serif; color:var(--ink); outline:none; }
+  .detail-subs{ display:flex; flex-direction:column; gap:6px; padding:10px 0 4px; border-top:1px solid var(--line); margin-top:4px; }
+  .detail-subs[hidden]{ display:none; }
+  .ds-head{ display:flex; justify-content:space-between; align-items:baseline; }
+  .ds-n{ font:700 12px Inter,system-ui,sans-serif; color:var(--muted); }
+  .ds-pb{ flex:none; }
+  .ds-list{ display:flex; flex-direction:column; gap:2px; }
+  .ds-row{ display:grid; grid-template-columns:20px 1fr auto; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); }
+  .ds-row .tsub-cb{ width:18px; height:18px; }
+  .ds-t{ font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
+  .ds-t small{ display:block; font:500 11.5px Inter; color:var(--muted); text-decoration:none; }
+  .ds-x{ all:unset; cursor:pointer; color:var(--muted); width:26px; height:26px; display:grid; place-items:center; border-radius:7px; opacity:.5; }
+  .ds-x:hover{ opacity:1; background:var(--surface-soft); }
+  .ds-add{ margin:6px 0 0; }
+  .ds-hint{ margin:2px 0 0; font-size:11.5px; color:var(--muted); }
   /* ── Upgraded board (2026-10-23) ── */
   .prep-sum2{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:12px 18px; border-radius:16px; background:linear-gradient(120deg,#1E2A23 0%,#2B3A2F 55%,#4A3A12 100%); color:#F4F1E8; box-shadow:0 10px 26px rgba(22,25,27,.14); }
   .prep-sum2 h3{ margin:0; font:800 17px Sora,sans-serif; color:#fff; }
@@ -4552,6 +4590,7 @@
       <span class="dlabel">Assignees</span>
       <div class="assignee-list" id="detailAssigneeList"></div>
     </div>
+    <div class="detail-subs" id="detailSubs" hidden></div>
     <div class="series-note" id="detailSeriesNote" style="display:none;"></div>
   </div>
   <div class="detail-actions">
@@ -4571,6 +4610,10 @@
 
     <label for="editTaskNotesInput">Notes (optional)</label>
     <textarea id="editTaskNotesInput" maxlength="300" rows="2" placeholder="e.g. Gate was jammed, used side entrance" style="width:100%;border:1px solid var(--line);background:var(--surface-soft);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical;"></textarea>
+
+    <label for="editTaskSubInput">Subtasks (optional)</label>
+    <div class="st-edit" id="editTaskSubs"></div>
+    <div class="st-addrow"><span aria-hidden="true">＋</span><input type="text" id="editTaskSubInput" maxlength="80" placeholder="Add a step — press Enter for the next one" autocomplete="off"></div>
 
     <label for="editTaskAssigneeInput">Assignees (optional)</label>
     <div class="ai-icon-row">
@@ -5250,6 +5293,8 @@
     const out = {};
     const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(s)]);
     keys.forEach(k=>{
+      // a task's steps merge one by one, so a worker's tick and a step added here both survive
+      if(k === 'subs' && (Array.isArray(l.subs) || Array.isArray(s.subs))){ const m = mergeCollection(Array.isArray(b.subs) ? b.subs : [], Array.isArray(l.subs) ? l.subs : [], Array.isArray(s.subs) ? s.subs : [], x=> x.id); if(m.length) out.subs = m; return; }
       const val = stableStr(l[k]) !== stableStr(b[k]) ? l[k] : s[k];
       if(val !== undefined) out[k] = cloneData(val);
     });
@@ -6028,6 +6073,35 @@
     $('#batchModal').classList.toggle('bm-locked', locked);
     openDrawer('#batchModal');
   }
+  // ── Subtasks (2026-10-24): task.subs = [{id, t, done, doneBy, doneAt}] ──
+  // Ticking the last step ticks the task; unticking a step re-opens it.
+  let editingSubs = [];
+  const subsOpen = new Set();   // cards whose steps are showing
+  function subProgress(t){ const a = Array.isArray(t && t.subs) ? t.subs : []; return { done: a.filter(x=> x.done).length, total: a.length }; }
+  function freshSubs(list){ return (list || []).map(x=> ({ id: uid(), t: x.t })); }
+  function toggleSub(taskId, subId){
+    const t = tasks.find(x=> x.id === taskId); const st = t && (t.subs || []).find(x=> x.id === subId); if(!st) return;
+    st.done = !st.done;
+    if(st.done){ st.doneBy = managerName() || 'Manager'; st.doneAt = new Date().toISOString(); } else { delete st.doneBy; delete st.doneAt; }
+    addHistory(st.done ? 'Step done' : 'Step reopened', `${taskLabel(t)} · ${st.t}`);
+    const p = subProgress(t);
+    if((st.done && p.done === p.total && t.status !== 'done') || (!st.done && t.status === 'done')) toggleDone(t.id);   // last step ticks the task; a reopened step reopens it (toggleDone saves)
+    else { persist(); renderAll(); }
+    if($('#taskDetailModal').classList.contains('open') && detailTaskId === t.id){ renderDetailSubs(t); if(typeof openTaskDetailModal === 'function') openTaskDetailModal(t.id); }
+  }
+  function subsBlockHtml(task, cls){
+    const p = subProgress(task); if(!p.total) return '';
+    const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
+    return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
+      <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true">▾</span></button>
+      ${open ? `<div class="tsubs-list">${task.subs.map(x=> `<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}</span></button>`).join('')}</div>` : ''}
+    </div>`;
+  }
+  // steps editor in the Add/Edit window
+  function renderSubEditor(){
+    const box = $('#editTaskSubs'); if(!box) return;
+    box.innerHTML = editingSubs.map((x, i)=> `<div class="st-row${x.done ? ' done' : ''}" data-i="${i}"><span class="st-grip" aria-hidden="true">⋮⋮</span><input type="text" class="st-in" data-sub-i="${i}" value="${escapeHtmlAttr(x.t)}" maxlength="80" aria-label="Step ${i + 1}"><button type="button" class="st-up" data-sub-up="${i}" title="Move up" aria-label="Move step up"${i ? '' : ' disabled'}>↑</button><button type="button" class="st-x" data-sub-x="${i}" title="Remove this step" aria-label="Remove step">✕</button></div>`).join('');
+  }
   function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };
     if(meta) Object.assign(t, meta);
@@ -6232,7 +6306,7 @@
       else if(rule==='biweekly'){ cur = addDaysStr(cur, 14); }
       else break;
       if(cur > untilDate) break;
-      addTask(baseTask.name, baseTask.icon, cur, Object.assign({ seriesId, assignees: (baseTask.assignees || []).slice() }, baseTask.cat ? { cat: baseTask.cat } : {}));
+      addTask(baseTask.name, baseTask.icon, cur, Object.assign({ seriesId, assignees: (baseTask.assignees || []).slice() }, baseTask.cat ? { cat: baseTask.cat } : {}, (baseTask.subs || []).length ? { subs: freshSubs(baseTask.subs) } : {}));
       count++;
     }
     if(count>0) addHistory('Recurring task created', `"${baseTask.name}" repeats ${(REPEAT_LABELS[rule]||rule).toLowerCase()} — ${count} occurrence(s) added through ${formatFull(untilDate)}`);
@@ -7554,6 +7628,7 @@
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
       </div>
+      ${subsBlockHtml(task)}
       ${showMenu ? `<div class="task-menu-popup">
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
@@ -9449,6 +9524,7 @@
         <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
       </div>
       ${task.status==='done' && task.doneBy ? `<div class="kdoneby" title="Completed by ${escapeHtmlAttr(doneByText(task, false))}">✓ ${escapeHtml(doneByText(task, true))}</div>` : ''}
+      ${subsBlockHtml(task, 'k')}
       ${(kTags.length || task.notes || (task.assignees||[]).length) ? `<div class="kmeta">${kTags.join('')}${task.notes ? `<span class="knote" title="${escapeHtmlAttr(task.notes)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>Note</span>` : ''}<span class="kppl">${avatarsHtml}</span></div>` : ''}
       <div class="task-menu-popup">
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
@@ -10510,6 +10586,7 @@
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
     detailTaskId = id;
+    renderDetailSubs(t);
     renderTaskIcon($('#detailIcon'), t.name, t.icon);
     $('#detailName').textContent = t.name;
     const pill = $('#detailStatusPill');
@@ -10560,6 +10637,16 @@
     openDrawer('#taskDetailModal');
   }
   let taskModalMode = 'edit';
+  function renderDetailSubs(t){
+    const box = $('#detailSubs'); if(!box) return;
+    const p = subProgress(t);
+    box.hidden = false;
+    box.innerHTML = `<div class="ds-head"><span class="dlabel">Steps</span>${p.total ? `<span class="ds-n">${p.done} of ${p.total} done</span>` : ''}</div>
+      ${p.total ? `<div class="tsubs-pb ds-pb"><i style="width:${Math.round(p.done / p.total * 100)}%"></i></div>` : ''}
+      <div class="ds-list">${(t.subs || []).map(x=> `<div class="ds-row${x.done ? ' done' : ''}"><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '✓' : ''}</button><span class="ds-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
+        <div class="ds-add"><span aria-hidden="true">＋</span><input type="text" id="detailSubInput" data-sub-add="${escapeHtmlAttr(t.id)}" maxlength="80" placeholder="Add a step" autocomplete="off"></div></div>
+      ${p.total ? '<p class="ds-hint">Ticking the last step ticks the task. Unticking a step re-opens it.</p>' : ''}`;
+  }
   function openEditTaskModal(id){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
@@ -10578,6 +10665,7 @@
     const base = t.date || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
     $('#editTaskNotesInput').value = t.notes || '';
+    editingSubs = (t.subs || []).map(x=> ({ ...x })); renderSubEditor(); $('#editTaskSubInput').value = '';
     $('#editTaskPriorityInput').checked = t.priority === 'high';
     $('#editTaskMaintInput').checked = t.cat === 'maintenance' || !!t.linkedReportId;
     const seriesRow = $('#editTaskSeriesRow');
@@ -10603,6 +10691,7 @@
     const base = prefillDate || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
     $('#editTaskNotesInput').value = '';
+    editingSubs = []; renderSubEditor(); $('#editTaskSubInput').value = '';
     $('#editTaskPriorityInput').checked = false;
     $('#editTaskMaintInput').checked = false;
     $('#editTaskSeriesRow').style.display = 'none';
@@ -13703,6 +13792,31 @@
     const btn = e.target.closest('.chip-remove');
     if(btn){ editingAssignees.splice(Number(btn.dataset.idx),1); renderAssigneeChips('#editTaskAssigneeChips', editingAssignees); }
   });
+  // ── Subtasks: clicks and the editor ──
+  document.addEventListener('click', (e)=>{
+    const tg = e.target.closest && e.target.closest('[data-subs-toggle]');
+    if(tg){ e.stopPropagation(); e.preventDefault(); const id = tg.dataset.subsToggle; if(subsOpen.has(id)) subsOpen.delete(id); else subsOpen.add(id); renderAll(); return; }
+    const tk = e.target.closest && e.target.closest('[data-sub-tick]');
+    if(tk){ e.stopPropagation(); e.preventDefault(); const [tid, sid] = tk.dataset.subTick.split('|'); toggleSub(tid, sid); return; }
+    const dl = e.target.closest && e.target.closest('[data-sub-del]');
+    if(dl){ e.stopPropagation(); e.preventDefault(); const [tid, sid] = dl.dataset.subDel.split('|'); const t = tasks.find(x=> x.id === tid); if(!t) return;
+      const st = (t.subs || []).find(x=> x.id === sid); t.subs = (t.subs || []).filter(x=> x.id !== sid); if(!t.subs.length) delete t.subs;
+      if(st) addHistory('Step removed', `${taskLabel(t)} · ${st.t}`); persist(); renderAll(); renderDetailSubs(t); return; }
+    const ux = e.target.closest && e.target.closest('[data-sub-x]');
+    if(ux){ e.preventDefault(); editingSubs.splice(Number(ux.dataset.subX), 1); renderSubEditor(); return; }
+    const uu = e.target.closest && e.target.closest('[data-sub-up]');
+    if(uu){ e.preventDefault(); const i = Number(uu.dataset.subUp); if(i > 0){ const [x] = editingSubs.splice(i, 1); editingSubs.splice(i - 1, 0, x); renderSubEditor(); } return; }
+  }, true);
+  document.addEventListener('input', (e)=>{ const i = e.target.dataset && e.target.dataset.subI; if(i != null && editingSubs[Number(i)]) editingSubs[Number(i)].t = e.target.value; });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter') return;
+    if(e.target.id === 'editTaskSubInput'){ e.preventDefault(); const v = e.target.value.trim(); if(!v) return; editingSubs.push({ id: uid(), t: v }); e.target.value = ''; renderSubEditor(); return; }
+    const add = e.target.dataset && e.target.dataset.subAdd;
+    if(add){ e.preventDefault(); const v = e.target.value.trim(); if(!v) return; const t = tasks.find(x=> x.id === add); if(!t) return;
+      (t.subs = t.subs || []).push({ id: uid(), t: v }); addHistory('Step added', `${taskLabel(t)} · ${v}`);
+      if(t.status === 'done') toggleDone(t.id); else { persist(); renderAll(); }   // a new step means the task isn't finished
+      renderDetailSubs(t); const inp = $('#detailSubInput'); if(inp) inp.focus(); }
+  });
   $('#saveEditTaskBtn').addEventListener('click', ()=>{
     const name = $('#editTaskNameInput').value.trim();
     if(!name){ showToast('Enter a task name.', true); return; }
@@ -13730,6 +13844,9 @@
       const meta = {};
       if(assignees.length) meta.assignees = assignees;
       if(notes) meta.notes = notes;
+      { const typed = $('#editTaskSubInput').value.trim(); if(typed){ editingSubs.push({ id: uid(), t: typed }); $('#editTaskSubInput').value = ''; } }
+      const subsNow = editingSubs.map(x=> ({ ...x, t: String(x.t || '').trim() })).filter(x=> x.t);
+      if(subsNow.length) meta.subs = subsNow.map(x=> ({ id: x.id || uid(), t: x.t }));
       if(priority) meta.priority = priority;
       if(cat) meta.cat = cat;
       const newTask = addTask(name, guessIcon(name), dateVal, Object.keys(meta).length ? meta : null);
@@ -13750,6 +13867,10 @@
       return;
     }
     if(!editingTaskId) return;
+    { const typed = $('#editTaskSubInput').value.trim(); if(typed){ editingSubs.push({ id: uid(), t: typed }); $('#editTaskSubInput').value = ''; } }
+    { const et = tasks.find(x=> x.id === editingTaskId); if(et){ const subsNow = editingSubs.map(x=> ({ ...x, t: String(x.t || '').trim() })).filter(x=> x.t).map(x=> ({ ...x, id: x.id || uid() }));
+      if(subsNow.length) et.subs = subsNow; else delete et.subs;
+      if(applyToSeries && et.seriesId) tasks.forEach(sib=>{ if(sib.id !== et.id && sib.seriesId === et.seriesId && sib.date && et.date && sib.date >= et.date && sib.status !== 'done'){ if(subsNow.length) sib.subs = freshSubs(subsNow); else delete sib.subs; } }); } }
     const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat);
     closeOverlays();
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
