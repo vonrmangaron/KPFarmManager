@@ -4008,6 +4008,125 @@
   .kb-fold-btn{ border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,system-ui,sans-serif; height:32px; padding:0 12px; border-radius:999px; cursor:pointer; }
   .kb-fold-btn:hover{ border-color:var(--primary); }
   .kb-fold-btn:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+
+  /* ── Planner Board, look E "big tap cards" (2026-10-24) ── */
+  body #calendarWrap .kanban-column:not(.collapsed){ border-radius:18px; padding:14px 12px 12px; gap:10px; }
+  body #calendarWrap .kanban-column.collapsed{ border-radius:18px; }
+  @media (min-width:761px){ body #calendarWrap .kanban-column:not(.collapsed){ flex:0 0 340px; min-width:340px; width:340px; } }
+  body #calendarWrap .kanban-column .col-head{ border-bottom:none !important; padding:0 4px 2px !important; margin-bottom:0 !important; }
+  #calendarWrap .col-head-top{ align-items:flex-start; }
+  #calendarWrap .dtitles{ display:flex; flex-direction:column; min-width:0; }
+  body #calendarWrap .kanban-column .col-head .dtitle{ font:800 16px Sora,sans-serif !important; color:var(--ink) !important; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  #calendarWrap .dsub{ font:500 12.5px Inter,sans-serif; color:var(--muted); margin-top:1px; }
+  #calendarWrap .dtitle .dtoday{ margin-left:0; }
+  #calendarWrap .dlate{ font:700 11px Inter,sans-serif; border-radius:99px; padding:2px 8px; background:var(--danger-soft,#FDE4DF); color:var(--danger,#B42318); }
+  body.theme-dark #calendarWrap .dlate{ background:rgba(220,74,54,.22); color:#FF9C8A; }
+  #calendarWrap .dicons{ display:flex; gap:6px; flex:none; }
+  #calendarWrap .dicons .col-toggle-btn, #calendarWrap .wx-setup-ic{ width:30px; height:30px; border-radius:10px; background:var(--surface) !important; border:1px solid var(--line) !important; color:var(--muted); display:grid; place-items:center; padding:0; margin:0; font-size:15px; box-shadow:none; }
+  #calendarWrap .dicons .col-toggle-btn:hover, #calendarWrap .wx-setup-ic:hover{ border-color:var(--primary) !important; color:var(--ink); }
+  #calendarWrap .wx-setup-ic > span + span{ display:none; }
+  body #calendarWrap .kanban-column .col-head .dprogress{ margin-top:12px; gap:10px; }
+  body #calendarWrap .kanban-column .col-head .dbar{ height:6px; background:var(--line) !important; }
+  body #calendarWrap .kanban-column .col-head .dbar > span{ background:var(--primary) !important; }
+  body #calendarWrap .kanban-column .col-head .dfraction{ font:700 12.5px Inter,sans-serif; color:var(--muted); opacity:1; font-variant-numeric:tabular-nums; }
+  body #calendarWrap .kanban-column .col-head .col-batch-age{ margin-top:8px; }
+  /* cards */
+  body #calendarWrap .kanban-column .kcard{ display:flex; flex-direction:column; gap:8px; padding:13px 14px; border-radius:14px; border:1px solid var(--col-card-line, var(--line)); background:var(--col-card, var(--surface)); box-shadow:0 1px 0 var(--line); }
+  body #calendarWrap .kanban-column .kcard:hover{ box-shadow:0 4px 14px rgba(20,30,20,.12); }
+  body #calendarWrap .kcard .ktype{ display:none; }
+  body #calendarWrap .kcard .kphoto{ margin:0; }
+  body #calendarWrap .kcard .kbody{ padding:0; gap:10px; align-items:flex-start; min-height:30px; }
+  #calendarWrap .ktile{ width:30px; height:30px; border-radius:9px; flex:none; display:grid; place-items:center; background:var(--surface-soft); font-size:15px; }
+  #calendarWrap .ktile .kicon{ font-size:15px; display:grid; place-items:center; }
+  #calendarWrap .ktile-blue{ background:#E3ECFC; } #calendarWrap .ktile-green{ background:#DFF4EF; } #calendarWrap .ktile-red{ background:#FDE4DF; } #calendarWrap .ktile-amber{ background:#FFF2D6; }
+  body.theme-dark #calendarWrap .ktile{ background:rgba(255,255,255,.06); }
+  body.theme-dark #calendarWrap .ktile-blue{ background:rgba(47,111,219,.22); } body.theme-dark #calendarWrap .ktile-green{ background:rgba(15,138,117,.22); } body.theme-dark #calendarWrap .ktile-red{ background:rgba(220,74,54,.22); } body.theme-dark #calendarWrap .ktile-amber{ background:rgba(240,162,26,.16); }
+  body #calendarWrap .kcard .kname{ font:600 14.5px/1.35 Inter,system-ui,sans-serif; white-space:normal; padding-top:5px; color:var(--ink); }
+  body #calendarWrap .kcard .task-menu-btn{ width:28px; height:28px; margin:1px 0 0; flex:none; }
+  body #calendarWrap .kcard .task-complete-btn.kbig{ position:static; opacity:1; flex:none; width:28px; height:28px; border:2px solid var(--line); background:transparent; margin-top:1px; }
+  body #calendarWrap .kcard .task-complete-btn.kbig svg{ width:14px; height:14px; }
+  body #calendarWrap .kcard .task-complete-btn.kbig:hover{ border-color:var(--secondary); background:var(--secondary-soft); transform:none; }
+  body #calendarWrap .kcard.done .task-complete-btn.kbig{ width:24px; height:24px; background:var(--secondary); border-color:var(--secondary); }
+  body #calendarWrap .kcard .kmeta, body #calendarWrap .kcard .kdoneby, body #calendarWrap .kcard .tsubs.k{ padding:0 0 0 40px; margin:0; }
+  body #calendarWrap .kcard .ktag{ font:700 11px Inter,sans-serif; letter-spacing:0; padding:3px 8px; border:0; }
+  body #calendarWrap .kcard .ktag.late{ background:#FDE4DF; color:#B42318; }
+  body.theme-dark #calendarWrap .kcard .ktag.late{ background:rgba(220,74,54,.22); color:#FF9C8A; }
+  body #calendarWrap .kcard .knote{ font:700 11px Inter,sans-serif; background:var(--surface-soft); border-radius:99px; padding:3px 8px; }
+  body #calendarWrap .kcard .task-avatars .task-avatar{ width:24px; height:24px; font-size:10.5px; }
+  body #calendarWrap .kanban-column .kcard.high-priority{ background:var(--col-card, var(--surface)); }
+  body #calendarWrap .kanban-column .kcard.late{ border-color:#D9473A; box-shadow:inset 0 0 0 1px #D9473A; }
+  body #calendarWrap .kanban-column .kcard.late .task-complete-btn.kbig{ border-color:#D9473A; }
+  body #calendarWrap .kanban-column .kcard.done{ background:transparent; border-style:dashed; border-color:var(--line); box-shadow:none; padding-block:9px; }
+  body #calendarWrap .kcard.done .kname{ color:var(--muted); font-weight:500; }
+  body #calendarWrap .kcard.done .ktile{ opacity:.5; }
+  body #calendarWrap .kcard .tsubs.k .tsubs-pb{ height:6px; }
+  body #calendarWrap .kanban-column .inline-add-trigger{ display:flex; width:100%; box-sizing:border-box; justify-content:center; padding:11px; border:1.5px dashed var(--line); border-radius:14px; background:transparent; font:600 13.5px Inter,sans-serif; color:var(--muted); }
+  body #calendarWrap .kanban-column .inline-add-trigger:hover{ border-color:var(--primary); color:var(--ink); }
+  #calendarWrap .ktile:has(.sb-ic){ background:none !important; }
+  @media (max-width:760px){ body #calendarWrap .kanban-column .col-head{ padding:0 10px 2px 14px !important; } }
+  #calendarWrap .ktile .kicon.sb-ic{ width:30px; height:30px; border-radius:9px; }
+  #calendarWrap .ktile .kicon.sb-ic svg{ width:16px; height:16px; }
+  body #calendarWrap .kcard{ position:relative; }
+  body #calendarWrap .kcard .task-menu-btn{ position:absolute; top:13px; right:48px; background:var(--surface); border-radius:9px; }
+  body #calendarWrap .kcard.done .task-complete-btn.kbig{ background:#0F8A75; border-color:#0F8A75; }
+  body #calendarWrap .kcard .task-complete-btn.kbig:hover{ border-color:#0F8A75; background:rgba(15,138,117,.12); }
+  body #calendarWrap .kcard .task-complete-btn.kbig:hover svg{ color:#0F8A75; }
+  body #calendarWrap .kcard.done .task-complete-btn.kbig svg{ color:#fff; }
+  body.theme-dark #calendarWrap .kcard .task-complete-btn.kbig{ border-color:rgba(255,255,255,.28); }
+  body.theme-dark #calendarWrap .kcard.done .task-complete-btn.kbig{ border-color:#0F8A75; }
+  body.theme-dark #calendarWrap .kanban-column .kcard.done{ border-color:rgba(255,255,255,.14); }
+  body:not(.theme-dark) #calendarWrap .kanban-column .kcard.done{ border-color:#D6CFBF; }
+
+  /* ── Prep List mode: Routine-style table, all sheds (2026-10-24) ── */
+  .prep-bar-sp{ flex:1; }
+  .prep-colall{ margin-left:0; }
+  .prep-viewseg{ display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px; }
+  .prep-viewseg button{ all:unset; cursor:pointer; padding:5px 12px; border-radius:7px; font:700 12px Inter,sans-serif; color:var(--muted); }
+  .prep-viewseg button.on{ background:#F0A21A; color:#241A08; }
+  .pl-wrap{ overflow:auto; border:1px solid var(--line); border-radius:16px; background:var(--surface); flex:1 1 auto !important; min-height:0; }
+  .pl-tab{ border-collapse:separate; border-spacing:0; width:100%; min-width:max-content; }
+  .pl-tab th, .pl-tab td{ border-bottom:1px solid var(--line); padding:0; }
+  body:not(.theme-dark) .pl-tab th, body:not(.theme-dark) .pl-tab td{ border-bottom-color:#EFEAE0; }
+  .pl-tab thead th{ position:sticky; top:0; z-index:2; background:var(--surface-soft); padding:10px 6px; font:700 11px Inter,sans-serif; color:var(--muted); text-align:center; }
+  .pl-tab th.pl-job{ left:0; z-index:3; text-align:left; padding-left:16px; letter-spacing:.06em; text-transform:uppercase; }
+  .pl-tab td.pl-job{ position:sticky; left:0; z-index:1; background:var(--surface); padding:10px 16px; min-width:260px; max-width:300px; border-right:1px solid var(--line); }
+  .pl-tab td.pl-job b{ display:block; font:600 14px/1.35 Inter,sans-serif; color:var(--ink); }
+  .pl-tab td.pl-job span{ font:500 11.5px Inter,sans-serif; color:var(--muted); }
+  .pl-row.all td.pl-job b{ color:var(--muted); }
+  .pl-sech td{ background:var(--surface-soft) !important; padding:9px 16px !important; font:800 13.5px Sora,sans-serif; color:var(--ink); }
+  .pl-sech td em{ font:700 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); margin-left:8px; }
+  .pl-shh{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:84px; }
+  .pl-shh .prep-sn{ width:32px; height:32px; font-size:14px; border-radius:9px; }
+  .pl-shh small{ font:600 10.5px Inter,sans-serif; white-space:nowrap; }
+  .pl-pb{ width:48px; height:4px; border-radius:9px; background:var(--line); overflow:hidden; }
+  .pl-pb i{ display:block; height:100%; background:#F0A21A; border-radius:9px; }
+  .pl-sh.late .prep-sn{ background:#FDE4DF; color:#B42318; }
+  body.theme-dark .pl-sh.late .prep-sn{ background:rgba(220,74,54,.22); color:#FF9C8A; }
+  .pl-sh.ready .prep-sn{ background:#DFF4EF; color:#0F7A67; } .pl-sh.ready .pl-pb i{ background:#0F8A75; }
+  .pl-sh.off .prep-sn{ background:var(--surface); color:var(--muted); border:1px dashed var(--line); }
+  .pl-c{ text-align:center; padding:8px 6px !important; }
+  .pl-c.off{ background:repeating-linear-gradient(135deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); }
+  .pl-cell{ all:unset; cursor:pointer; box-sizing:border-box; width:40px; height:40px; border-radius:11px; display:grid; place-items:center; margin:0 auto; background:#EEEBE3; color:#fff; font:900 15px Inter,sans-serif; transition:transform .1s; }
+  body.theme-dark .pl-cell:not(.done):not(.late):not(.due):not(.task){ background:#22304D; }
+  .pl-cell:hover{ transform:scale(1.06); box-shadow:0 0 0 2px #F0A21A; }
+  .pl-cell:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .pl-cell[disabled]{ cursor:default; transform:none; box-shadow:none; }
+  .pl-cell.done{ background:#0F8A75; }
+  .pl-cell.late{ background:var(--surface); border:2px solid #D9473A; }
+  .pl-cell.due{ background:var(--surface); border:2px dashed #F0A21A; }
+  .pl-cell.task{ background:var(--surface); border:2px solid #2F6FDB; }
+  .pl-c small{ display:block; margin-top:3px; font:600 10.5px Inter,sans-serif; white-space:nowrap; color:var(--muted); }
+  .pl-c small.late{ color:#B42318; } .pl-c small.due{ color:#8A5300; } .pl-c small.task{ color:#1F4FA8; }
+  body.theme-dark .pl-c small.late{ color:#FF9C8A; } body.theme-dark .pl-c small.due{ color:#FFC876; } body.theme-dark .pl-c small.task{ color:#9DBDF5; }
+  .pl-na{ color:var(--muted); opacity:.6; }
+  .pl-legend{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; font:500 12px Inter,sans-serif; color:var(--muted); }
+  .pl-legend i{ display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:-2px; margin-right:5px; background:#EEEBE3; box-sizing:border-box; }
+  body.theme-dark .pl-legend i:not([class]){ background:#22304D; }
+  .pl-legend i.done{ background:#0F8A75; } .pl-legend i.late{ background:var(--surface); border:2px solid #D9473A; } .pl-legend i.due{ background:var(--surface); border:2px dashed #F0A21A; } .pl-legend i.task{ background:var(--surface); border:2px solid #2F6FDB; }
+  .pl-empty{ padding:30px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:16px; }
+  /* filters */
+  .pl-wrap[data-filter="todo"] .pl-row.all, .pl-wrap[data-filter="late"] .pl-row:not(.f-late), .pl-wrap[data-filter="week"] .pl-row:not(.f-week), .pl-wrap[data-filter="task"] .pl-row:not(.f-task){ display:none; }
+  @media (max-width:760px){ .pl-wrap{ flex:0 0 auto !important; } .pl-tab td.pl-job{ min-width:170px; max-width:190px; padding:9px 12px; } .pl-shh{ min-width:64px; } }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -9546,7 +9665,7 @@
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
     const isHighPriority = task.priority === 'high' && task.status!=='done';
-    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '');
+    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '') + (isOverdue ? ' late' : '');
     card.dataset.id = task.id;
     const activeBatch = taskBatch(task);
     const stripColor = activeBatch ? colorForBatchNumber(activeBatch.number) : 'var(--line)';
@@ -9567,12 +9686,10 @@
       <span class="ktype ktype-${kTone}" aria-hidden="true"></span>
       ${kPhoto ? `<div class="kphoto"><img alt="" loading="lazy"></div>` : ''}
       <div class="kbody">
-        <span class="kicon-slot">
-          <button class="task-complete-btn" type="button" aria-label="${task.status==='done'?'Reopen task':'Complete task'}" title="${task.status==='done'?'Reopen':'Mark done'}">${CHECK_ICON_SVG}</button>
-          <span class="kicon"></span>
-        </span>
+        <span class="ktile ktile-${kTone}" aria-hidden="true"><span class="kicon"></span></span>
         <span class="kname"></span>
         <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
+        <button class="task-complete-btn kbig" type="button" aria-label="${task.status==='done'?'Reopen task':'Complete task'}" title="${task.status==='done'?'Reopen':'Mark done'}">${CHECK_ICON_SVG}</button>
       </div>
       ${task.status==='done' && task.doneBy ? `<div class="kdoneby" title="Completed by ${escapeHtmlAttr(doneByText(task, false))}">✓ ${escapeHtml(doneByText(task, true))}</div>` : ''}
       ${subsBlockHtml(task, 'k')}
@@ -9654,17 +9771,18 @@
           <span class="dtitle-vertical">${dayNames[i]} ${d.getDate()} · ${dayTasks.length}</span>`;
       } else {
         head.innerHTML = `
-          ${showOverdueFlag ? `<span class="doverdue">⚠ ${openCount} open</span>` : ''}
           <div class="col-head-top">
-            <span class="dtitle" title="${formatFullWithWeekday(key)}">${formatShortWithWeekday(key)}${isToday ? ' <span class="dtoday">Today</span>' : ''}</span>
-            <button class="col-toggle-btn" title="Collapse day">↔</button>
+            <span class="dtitles"><span class="dtitle" title="${formatFullWithWeekday(key)}">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i]}${isToday ? ' <span class="dtoday">Today</span>' : ''}${showOverdueFlag ? ` <span class="dlate" title="${openCount} task${openCount===1?'':'s'} still open from this day">${openCount} open</span>` : ''}</span><span class="dsub">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></span>
+            <span class="dicons"><button class="col-toggle-btn" title="Fold this day" aria-label="Fold this day"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></button></span>
           </div>
           <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>
           ${batchesForDate(key).length ? `<div class="col-batch-age">${batchesForDate(key).map(b=>`<span style="background:${colorForBatchNumber(b.number)}">#${escapeHtml(b.number)} · Day ${batchAgeOn(b, key)}</span>`).join('')}</div>` : ''}`;
       }
       if(!isCollapsed){
-        const wxLine = buildWxCard(key, 'col') || buildWxSetupChip('line');
-        if(wxLine) head.appendChild(wxLine);
+        const wxCard = buildWxCard(key, 'col');
+        if(wxCard) head.appendChild(wxCard);
+        else { const wxSet = buildWxSetupChip('line'); const ic = head.querySelector('.dicons');
+          if(wxSet && ic){ wxSet.classList.add('wx-setup-ic'); wxSet.setAttribute('aria-label', 'Set weather location'); ic.prepend(wxSet); } else if(wxSet) head.appendChild(wxSet); }
       } else {
         const w = wxForDate(key);
         if(w){
@@ -11797,6 +11915,44 @@
     });
     board.addEventListener('scroll', fades); requestAnimationFrame(fades); fades();
   }
+  // List mode (2026-10-24): a table like the Routine Tracker — jobs down the left, all sheds across
+  let prepView = 'board';
+  try{ if(localStorage.getItem('cw-prep-view') === 'list') prepView = 'list'; }catch(e){}
+  function prepListHtml(sheds){
+    const norm = t=> String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const cols = sheds.map(sh=>{ const c = prepActiveFor(sh); return { sh, c, run: !c && prepShedRun(sh) }; });
+    // one row per job, matched across sheds by section name + job name, in the order they first appear
+    const secs = [], secBy = {};
+    cols.forEach(col=>{ if(!col.c) return; prepUnits(col.c).forEach(({ sec, u })=>{
+      const sk = norm(sec.t); let S = secBy[sk]; if(!S){ S = secBy[sk] = { t: sec.t, rows: [], by: {} }; secs.push(S); }
+      const rk = u === sec ? '§' : norm(u.t); let R = S.by[rk]; if(!R){ R = S.by[rk] = { t: u === sec ? sec.t : u.t, own: u === sec, cells: {} }; S.rows.push(R); }
+      if(!R.cells[col.sh]) R.cells[col.sh] = u; }); });
+    const shortD = k=> k ? toDateObj(k).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+    const head = `<tr><th class="pl-job">Job</th>${cols.map(({ sh, c, run })=>{
+      if(!c) return `<th class="pl-sh off"><div class="pl-shh"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></div></th>`;
+      const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}"><div class="pl-shh"><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span></div></th>`; }).join('')}</tr>`;
+    let body = '';
+    secs.forEach(S=>{
+      const rowsHtml = S.rows.map(R=>{
+        const cells = cols.map(col=>{ const u = R.cells[col.sh];
+          if(!col.c) return '<td class="pl-c off"></td>';
+          if(!u) return '<td class="pl-c"><span class="pl-na" title="Not on this shed\'s checklist">—</span></td>';
+          const f = prepUnitFlags(col.c, u), tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
+          const k = u.done ? 'done' : f.late ? 'late' : tk ? 'task' : u.due ? 'due' : '';
+          const lab = u.done ? (u.doneBy || 'Done') : f.late ? shortD(tk ? tk.date : u.due) + ' · late' : tk ? 'Task ' + shortD(tk.date) : u.due ? shortD(u.due) : '';
+          return `<td class="pl-c"><button type="button" class="pl-cell ${k}" data-prep-tick="${escapeHtmlAttr(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${escapeHtmlAttr('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : ''))}"${col.c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}</td>`; }).join('');
+        const us = Object.entries(R.cells).map(([sh, u])=> ({ u, c: cols.find(x=> x.sh === sh).c }));
+        const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.c, x.u));
+        const cls = [us.every(x=> x.u.done) ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
+        return `<tr class="pl-row ${cls}"><td class="pl-job"><b>${escapeHtml(R.t)}</b><span>${dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></td>${cells}</tr>`; }).join('');
+      const tot = S.rows.reduce((a, R)=> a + Object.keys(R.cells).length, 0), dn = S.rows.reduce((a, R)=> a + Object.values(R.cells).filter(u=> u.done).length, 0);
+      body += `<tbody class="pl-sec"><tr class="pl-sech"><td class="pl-job">${escapeHtml(S.t)}<em>${dn} of ${tot} done</em></td><td colspan="${cols.length}"></td></tr>${rowsHtml}</tbody>`;
+    });
+    if(!secs.length) return '<div class="pl-empty">No shed is being prepared right now. A checklist appears when a shed is closed in Production.</div>';
+    return `<div class="pl-wrap" data-filter="${prepFilter}"><table class="pl-tab"><thead>${head}</thead>${body}</table></div>
+      <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="due"></i>Dated</span><span><i class="task"></i>On the task list</span><span><i></i>Not started</span><span>Tap a cell to tick that job for that shed · — means it isn't on that shed's checklist</span></div>`;
+  }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
@@ -11816,13 +11972,16 @@
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
     const phone = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
     const isF = sh=> !phone && prepColFold.has(String(sh)), allF = sheds.length && sheds.every(isF);
-    const foldAll = phone ? '' : `<button type="button" class="prep-f prep-colall" data-prep-colfoldall="${allF ? '0' : '1'}" title="${allF ? 'Open every shed column again' : 'Fold every shed column to a thin strip'}">↔ ${allF ? 'Unfold all sheds' : 'Fold all sheds'}</button>`;
-    const bar = list.length || foldAll ? `<div class="prep-bar2">${list.length ? `<div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>` : ''}${foldAll}</div>` : '';
+    const viewSeg = `<span class="prep-viewseg" role="group" aria-label="View"><button type="button" data-prep-view="board"${prepView === 'board' ? ' class="on"' : ''}>Board</button><button type="button" data-prep-view="list"${prepView === 'list' ? ' class="on"' : ''}>List</button></span>`;
+    const foldAll = phone || prepView === 'list' ? '' : `<button type="button" class="prep-f prep-colall" data-prep-colfoldall="${allF ? '0' : '1'}" title="${allF ? 'Open every shed column again' : 'Fold every shed column to a thin strip'}">↔ ${allF ? 'Unfold all sheds' : 'Fold all sheds'}</button>`;
+    const bar = `<div class="prep-bar2">${list.length ? `<div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>` : ''}<span class="prep-bar-sp"></span>${foldAll}${viewSeg}</div>`;
     const gridCols = sheds.map(sh=> isF(sh) ? '58px' : '340px').join(' ');
     // every shed is a column: the ones being prepared with their checklist, the rest running or empty
     const tabs = `<div class="prep-tabs">${sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>`;
     const CHEV = d=> `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const main = `${tabs}<div class="kanban-canvas prep-canvas"><div class="kanban-fade kanban-fade-left"></div><div class="kanban-fade kanban-fade-right"></div><button type="button" class="kanban-nav kanban-nav-left" data-prep-pan="-1" aria-label="Scroll to earlier sheds" title="Scroll to earlier sheds">${CHEV('M15 6l-6 6 6 6')}</button><button type="button" class="kanban-nav kanban-nav-right" data-prep-pan="1" aria-label="Scroll to later sheds" title="Scroll to later sheds">${CHEV('M9 6l6 6-6 6')}</button><div class="prep-board prep-board2" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${sheds.length};${phone ? '' : 'grid-template-columns:' + gridCols}">${sheds.map(sh=> isF(sh) ? prepColFoldedHtml(sh) : prepColHtml(sh)).join('')}</div></div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
+    if(prepView === 'list'){ box.innerHTML = sum + bar + prepListHtml(sheds); box.classList.add('pl-mode'); return; }
+    box.classList.remove('pl-mode');
     box.innerHTML = sum + bar + main;
     prepWireCanvas(box);
     if($('#prepTplEdModal').classList.contains('open')) renderPrepTplEd();
@@ -13685,6 +13844,7 @@
     let b;
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
     if((b = g('[data-prep-fold]'))){ const [cid, sid] = b.dataset.prepFold.split('|'); const c = prepFind(cid), sec = c && (c.sections || []).find(x=> x.id === sid); if(sec){ sec.fold = !sec.fold; persist(); renderAll(); } return; }
+    if((b = g('[data-prep-view]'))){ prepView = b.dataset.prepView === 'list' ? 'list' : 'board'; try{ localStorage.setItem('cw-prep-view', prepView); }catch(e){} renderAll(); return; }
     if((b = g('[data-prep-colfold]'))){ const k = String(b.dataset.prepColfold); if(prepColFold.has(k)) prepColFold.delete(k); else prepColFold.add(k); prepColFoldSave(); renderAll(); return; }
     if((b = g('[data-prep-colfoldall]'))){ if(b.dataset.prepColfoldall === '1') prepShedList().forEach(sh=> prepColFold.add(String(sh))); else prepColFold.clear(); prepColFoldSave(); renderAll(); return; }
     if((b = g('[data-prep-foldall]'))){ const c = prepFind(b.dataset.prepFoldall); if(c){ const to = b.dataset.to === '1'; (c.sections || []).forEach(x=>{ if((x.items || []).length) x.fold = to; }); persist(); renderAll(); } return; }
