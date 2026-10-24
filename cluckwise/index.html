@@ -3567,7 +3567,7 @@
   /* filters: hide what doesn't match */
   [data-filter="todo"] .prep-u.done, [data-filter="late"] .prep-u:not(.f-late), [data-filter="week"] .prep-u:not(.f-week), [data-filter="task"] .prep-u:not(.f-task){ display:none; }
   [data-filter="todo"] .pg-c .prep-cb.on{ opacity:.25; }
-  .prep-board.prep-board2{ display:grid; grid-template-columns:repeat(var(--cols,8), minmax(270px,1fr)); gap:12px; align-items:start; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; }
+  .prep-board.prep-board2{ display:grid; grid-template-columns:repeat(var(--cols,8), 340px); gap:12px; align-items:start; overflow-x:auto; padding-bottom:8px; scroll-snap-type:x proximity; }
   .prep-board2 .prep-col{ flex:none; scroll-snap-align:start; background:var(--surface) !important; border:1px solid var(--line) !important; border-radius:16px; padding:0; gap:0; overflow:hidden; box-shadow:0 10px 26px rgba(22,25,27,.06); position:relative; }
   body.theme-dark .prep-board2 .prep-col{ box-shadow:0 10px 26px rgba(0,0,0,.3); }
   /* neighbouring sheds alternate shades (kept from c86) */
@@ -3642,7 +3642,7 @@
   @media (min-width:761px){
     #mlogPage.prep-mode #prepMain{ overflow:hidden; }
     .prep-canvas{ flex:1 1 auto !important; min-height:0; display:flex; }
-    .prep-canvas .prep-board2{ flex:1; min-height:0; height:100%; align-items:start; grid-template-rows:minmax(0,100%); scrollbar-width:none; overflow-y:hidden; }
+    .prep-canvas .prep-board2{ scroll-snap-type:none; flex:1; min-height:0; height:100%; align-items:start; grid-template-rows:minmax(0,100%); scrollbar-width:none; overflow-y:hidden; }
     .prep-canvas .prep-board2::-webkit-scrollbar{ display:none; }
     .prep-canvas .prep-board2 .prep-col{ max-height:100%; min-height:0; }
     .prep-canvas .prep-board2 .prep-col .prep-secs{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
@@ -3652,6 +3652,46 @@
     .prep-canvas .prep-board2.panning{ cursor:grabbing; user-select:none; }
   }
   .prep-board2 .prep-sh .prep-spb{ flex:0 0 100% !important; }
+  /* ── Checklist look E "big tap cards" (2026-10-24) ── */
+  .prep-foldall{ width:28px; height:28px; border-radius:9px; display:grid !important; place-items:center; background:var(--surface); border:1px solid var(--line); color:var(--muted) !important; margin:-5px 0; }
+  .prep-foldall:hover{ text-decoration:none; color:var(--ink) !important; border-color:#F0A21A; }
+  .prep-foldall svg{ width:15px; height:15px; }
+  .prep-board2 .prep-cd2{ align-items:center; }
+  .prep-board2 .prep-secs{ padding:12px; gap:18px; }
+  .prep-board2 .prep-sec{ border:0; border-radius:0; background:transparent !important; overflow:visible; padding:0; }
+  .prep-board2 .prep-sh{ background:transparent; padding:0 2px 10px; margin:0; gap:8px; font:800 15px Sora,sans-serif; letter-spacing:0; text-transform:none; color:var(--ink); }
+  .prep-board2 .prep-sec.all .prep-sh{ color:var(--ink); }
+  .prep-board2 .prep-sh em{ font:700 12.5px Inter,sans-serif; color:var(--muted); }
+  .prep-board2 .prep-spb{ height:6px; margin-top:8px; }
+  .prep-board2 .prep-sec.folded .prep-sh{ padding-bottom:0; }
+  .prep-board2 .prep-items{ gap:8px; }
+  .prep-board2 .prep-u{ margin:0; align-items:center; gap:12px; border:1px solid var(--line); border-radius:14px; padding:13px 14px; min-height:54px; box-sizing:border-box; background:var(--surface); }
+  body.theme-dark .prep-board2 .prep-u{ border-color:rgba(255,255,255,.08); }
+  .prep-board2 .prep-u .prep-cb{ order:9; width:28px; height:28px; border-radius:50%; margin:0; font-size:13px; }
+  .prep-board2 .prep-u .prep-mk{ order:8; }
+  @media (hover:hover){ .prep-board2 .prep-u .prep-mk{ opacity:0; transition:opacity .15s; } .prep-board2 .prep-u:hover .prep-mk, .prep-board2 .prep-u .prep-mk:focus-visible{ opacity:1; } }
+  .prep-board2 .prep-u .prep-grip{ margin:0 -6px 0 -8px; }
+  .prep-board2 .prep-ut b{ font:600 14.5px/1.35 Inter,system-ui,sans-serif; }
+  .prep-board2 .prep-um{ font:500 12.5px Inter,sans-serif; margin-top:2px; }
+  .prep-board2 .prep-u.done{ opacity:1; background:transparent; border-style:dashed; padding-block:9px; min-height:0; }
+  .prep-board2 .prep-u.done .prep-ut b{ color:var(--muted); font-weight:500; opacity:.75; }
+  .prep-board2 .prep-u.done .prep-cb{ width:24px; height:24px; }
+  .prep-board2 .prep-u.f-late:not(.done){ border-color:#D9473A; box-shadow:inset 0 0 0 1px #D9473A; }
+  .prep-board2 .prep-u.f-late:not(.done) .prep-cb{ border-color:#D9473A; }
+  /* dates and tasks: a coloured line, not a pill */
+  .prep-board2 .prep-link{ background:transparent !important; padding:0; border-radius:0; font:600 12.5px Inter,sans-serif; color:#2F55C8; }
+  .prep-board2 .prep-link.due{ color:#8A5300; }
+  .prep-board2 .prep-link.due.late{ color:#B42318; font-weight:700; }
+  .prep-board2 .prep-link.due.ok{ color:var(--muted); }
+  body.theme-dark .prep-board2 .prep-link{ color:#9DBDF5; }
+  body.theme-dark .prep-board2 .prep-link.due{ color:#FFC876; }
+  body.theme-dark .prep-board2 .prep-link.due.late{ color:#FF9C8A; }
+  body.theme-dark .prep-board2 .prep-link.due.ok{ color:var(--muted); }
+  .prep-board2 .prep-sh .prep-link.due.sec{ font-size:11.5px; padding:0; }
+  .prep-board2 .prep-add{ display:block; box-sizing:border-box; width:100%; text-align:center; margin-top:8px; padding:10px; border:1.5px dashed var(--line); border-radius:14px; font:600 13.5px Inter,sans-serif; }
+  .prep-board2 .prep-add:hover{ border-color:#F0A21A; color:var(--ink); }
+  .prep-board2 .prep-sec > .prep-u.is-sec{ margin-bottom:0; }
+
   @media (max-width:760px){ .prep-board.prep-board2, .prep-board2.compact{ display:block; } .prep-sum2-st{ margin-left:0; gap:14px; } .prep-runs-n{ margin-left:0; } .prep-seg2:first-of-type{ margin-left:0; } .prep-seg2.dens{ display:none; } }
 
   .prep-col{ flex:0 0 268px; border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; border:1px solid var(--line); background:var(--surface); }
@@ -11472,7 +11512,7 @@
         <span class="prep-ring" title="${pr.done} of ${pr.total} done"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="${ringCol}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(pr.total ? pr.done / pr.total * C : 0).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/></svg><b>${pr.done}/${pr.total}</b></span>
         ${prepColBtn(shed)}
       </div>
-      <div class="prep-cd2">${c.nextPlacement ? `<span>Chicks <b>${escapeHtml(prepFmt(c.nextPlacement))}</b> · <b>${toChicks} d</b> left</span>` : '<span>Chicks date not set yet</span>'}${(c.sections || []).some(x=> (x.items || []).length) ? (()=>{ const allF = (c.sections || []).filter(x=> (x.items || []).length).every(x=> x.fold); return `<button type="button" class="prep-foldall" data-prep-foldall="${escapeHtmlAttr(c.id)}" data-to="${allF ? '0' : '1'}">${allF ? 'Unfold all' : 'Fold all'}</button>`; })() : ''}</div>${body}</section>`;
+      <div class="prep-cd2">${c.nextPlacement ? `<span>Chicks <b>${escapeHtml(prepFmt(c.nextPlacement))}</b> · <b>${toChicks} d</b> left</span>` : '<span>Chicks date not set yet</span>'}${(c.sections || []).some(x=> (x.items || []).length) ? (()=>{ const allF = (c.sections || []).filter(x=> (x.items || []).length).every(x=> x.fold); return `<button type="button" class="prep-foldall" data-prep-foldall="${escapeHtmlAttr(c.id)}" data-to="${allF ? '0' : '1'}" title="${allF ? 'Unfold all sections' : 'Fold all sections'}" aria-label="${allF ? 'Unfold all sections' : 'Fold all sections'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${allF ? 'm7 15 5 5 5-5M7 9l5-5 5 5' : 'm7 20 5-5 5 5M7 4l5 5 5-5'}"/></svg></button>`; })() : ''}</div>${body}</section>`;
   }
   // Click a section name to rename it right there (Enter or click away saves, Esc cancels)
   function prepStartRename(el){
@@ -11778,7 +11818,7 @@
     const isF = sh=> !phone && prepColFold.has(String(sh)), allF = sheds.length && sheds.every(isF);
     const foldAll = phone ? '' : `<button type="button" class="prep-f prep-colall" data-prep-colfoldall="${allF ? '0' : '1'}" title="${allF ? 'Open every shed column again' : 'Fold every shed column to a thin strip'}">↔ ${allF ? 'Unfold all sheds' : 'Fold all sheds'}</button>`;
     const bar = list.length || foldAll ? `<div class="prep-bar2">${list.length ? `<div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>` : ''}${foldAll}</div>` : '';
-    const gridCols = sheds.map(sh=> isF(sh) ? '58px' : 'minmax(270px,1fr)').join(' ');
+    const gridCols = sheds.map(sh=> isF(sh) ? '58px' : '340px').join(' ');
     // every shed is a column: the ones being prepared with their checklist, the rest running or empty
     const tabs = `<div class="prep-tabs">${sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>`;
     const CHEV = d=> `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
