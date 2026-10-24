@@ -980,6 +980,19 @@
   .tsub-t small{ display:block; font:500 11.5px Inter; color:var(--muted); text-decoration:none; }
   .tsubs-h{ font:800 12px Sora,sans-serif; color:var(--muted); margin:8px 2px 2px; }
   .tsubs-list .tsubs-h:first-child{ margin-top:2px; }
+
+  /* tasks with steps (2026-10-24): easy to spot, big arrow, steps under the row */
+  .task-card.has-subs{ cursor:pointer; box-shadow:inset 4px 0 0 #F0A21A; }
+  .task-card.has-subs .task-card-row{ align-items:flex-start; }
+  .task-card.has-subs .task-card-row > .task-status-btn{ margin-top:2px; }
+  .subs-chip{ display:inline-flex; align-self:flex-start; margin-top:5px; font:700 12px Inter,system-ui,sans-serif; border-radius:99px; padding:3px 10px; background:#FFF2D6; color:#8A5300; }
+  body.theme-dark .subs-chip{ background:rgba(240,162,26,.18); color:#FFC876; }
+  .task-card > .tsubs{ margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  .task-card > .tsubs .tsubs-bar{ padding:4px 0; }
+  .tsubs-car{ width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--surface,#fff); display:grid; place-items:center; color:var(--ink); flex:none; font-size:0; transition:transform .2s ease; transform:rotate(-90deg); }
+  .tsubs-car svg{ width:18px; height:18px; }
+  .tsubs.open .tsubs-car{ transform:none; }
+  body.theme-dark .tsubs-car{ background:rgba(255,255,255,.06); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2672,14 +2685,19 @@
     if(!done && tk.status === 'done'){ setTaskStatusLocal(tid, 'open'); return; }
     renderAll(); scheduleTickFlush(900);
   }
+  function viewerToggleSubs(tk){
+    const a = tk.subs || [];
+    if(a.some(x=> x.sec)){ if(viewerSubsClosed.has(tk.id)) viewerSubsClosed.delete(tk.id); else viewerSubsClosed.add(tk.id); }
+    else if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id);
+    renderAll();
+  }
   function subsBlockEl(tk){
     const a = Array.isArray(tk.subs) ? tk.subs : []; if(!a.length) return null;
     const done = a.filter(x=> x.done).length, open = viewerSubsIsOpen(tk);
     const box = document.createElement('div'); box.className = 'tsubs' + (open ? ' open' : '');
-    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length}</span><span class="tsubs-car" aria-hidden="true">▾</span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
+    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
     box.querySelector('.tsubs-bar').addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.last || 0) < 400) return; subsBlockEl.last = now;   // one tap = one toggle
-      if(a.some(x=> x.sec)){ if(viewerSubsClosed.has(tk.id)) viewerSubsClosed.delete(tk.id); else viewerSubsClosed.add(tk.id); }
-      else if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id); renderAll(); });
+      viewerToggleSubs(tk); });
     box.querySelectorAll('.tsub').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.lastTick || 0) < 400) return; subsBlockEl.lastTick = now;
       if(!ghPath){ showToast(t('connectToSave'), true); return; }
       const st = a.find(x=> x.id === b.dataset.sid); if(st) setSubLocal(tk.id, st.id, !st.done); }));
@@ -3198,7 +3216,24 @@
       db.textContent = '✓ ' + tk.doneBy + (d && !isNaN(d) ? ' · ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : '');
       card.querySelector('.task-name').after(db);
     }
-    { const sb = subsBlockEl(tk); if(sb){ card.classList.add('has-subs'); (card.querySelector('.task-body') || card).appendChild(sb); } }
+    // A task with steps (2026-10-24): stands out, the whole card opens/closes its steps, and the steps sit under the
+    // row so the ✓ button stays up by the name
+    const sb = subsBlockEl(tk), subsOn = !!sb && viewerSubsIsOpen(tk);
+    if(sb){
+      const a = tk.subs || [], n = a.length, dn = a.filter(x=> x.done).length;
+      card.classList.add('has-subs'); card.classList.toggle('subs-open', subsOn);
+      const chip = document.createElement('span'); chip.className = 'subs-chip';
+      chip.textContent = `☰ ${n} step${n === 1 ? '' : 's'}${subsOn ? '' : dn ? ` · ${dn} done · tap to open` : ' · tap to open'}`;
+      card.querySelector('.task-name').after(chip);
+      card.appendChild(sb);
+      card.setAttribute('aria-expanded', String(subsOn));
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('.task-status-btn, .tsub, .tsubs-bar, .task-photo, a, button')) return;
+        const now = Date.now(); if(now - (subsBlockEl.last || 0) < 400) return; subsBlockEl.last = now;
+        viewerToggleSubs(tk);
+      });
+      if(tk.notes) card.classList.toggle('note-open', subsOn);   // the note opens with the steps
+    }
     const mcheck = isMaintCheck(tk);
     if(mcheck){
       // One normal-size card: a short count line, the list itself opens on its own page
@@ -3215,7 +3250,7 @@
       else { const row = document.createElement('span'); row.className = 'task-people'; row.appendChild(meta); card.querySelector('.task-name').after(row); }
       card.addEventListener('click', (e)=>{ if(e.target.closest('.task-status-btn')) return; openMaintPage(tk.id); });
     }
-    if(tk.notes && !mcheck){
+    if(tk.notes && !mcheck && !sb){
       card.querySelector('.tnc-text').textContent = tk.notes;
       card.setAttribute('aria-expanded', String(openNotes.has(tk.id)));
       card.addEventListener('click', (e)=>{

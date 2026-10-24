@@ -4286,6 +4286,12 @@
   .prep-tprev-i::before{ content:""; width:15px; height:15px; border-radius:5px; border:2px solid var(--line); flex:none; }
   .tsubs-h{ font:800 12px Sora,sans-serif; color:var(--muted); margin:8px 2px 2px; }
   .tsubs-list .tsubs-h:first-child, .ds-list .tsubs-h:first-child{ margin-top:2px; }
+
+  /* bigger fold arrow on steps (2026-10-24) */
+  .tsubs-car{ width:28px; height:28px; border-radius:9px; border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--ink); flex:none; font-size:0; transition:transform .2s ease; transform:rotate(-90deg); }
+  .tsubs-car svg{ width:16px; height:16px; }
+  .tsubs.open .tsubs-car{ transform:none; }
+  .tsubs-bar:hover .tsubs-car{ border-color:var(--primary); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -6438,7 +6444,7 @@
     const p = subProgress(task); if(!p.total) return '';
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
-      <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true">▾</span></button>
+      <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
       ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
