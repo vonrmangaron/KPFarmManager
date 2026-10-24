@@ -978,6 +978,8 @@
   .tsub.done .tsub-cb{ background:#0F8A75; border-color:#0F8A75; }
   .tsub.done .tsub-t{ color:var(--muted); text-decoration:line-through; }
   .tsub-t small{ display:block; font:500 11.5px Inter; color:var(--muted); text-decoration:none; }
+  .tsubs-h{ font:800 12px Sora,sans-serif; color:var(--muted); margin:8px 2px 2px; }
+  .tsubs-list .tsubs-h:first-child{ margin-top:2px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -2656,7 +2658,8 @@
   }
   // Subtasks (2026-10-24): a step tick rides the same queue as task ticks, keyed 'sub:<taskId>:<stepId>'.
   // The last step ticks the task; unticking a step re-opens it.
-  const viewerSubsOpen = new Set();
+  const viewerSubsOpen = new Set(), viewerSubsClosed = new Set();   // a task with section headings (Shed prep) starts open
+  function viewerSubsIsOpen(tk){ return (tk.subs || []).some(x=> x.sec) ? !viewerSubsClosed.has(tk.id) : viewerSubsOpen.has(tk.id); }
   function setSubLocal(tid, sid, done){
     const tk = tasks.find(x=> x.id === tid); const st = tk && (tk.subs || []).find(x=> x.id === sid); if(!st) return;
     st.done = done; const key = 'sub:' + tid + ':' + sid, who = loadTickWho();
@@ -2671,11 +2674,12 @@
   }
   function subsBlockEl(tk){
     const a = Array.isArray(tk.subs) ? tk.subs : []; if(!a.length) return null;
-    const done = a.filter(x=> x.done).length, open = viewerSubsOpen.has(tk.id);
+    const done = a.filter(x=> x.done).length, open = viewerSubsIsOpen(tk);
     const box = document.createElement('div'); box.className = 'tsubs' + (open ? ' open' : '');
-    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length}</span><span class="tsubs-car" aria-hidden="true">▾</span></button>${open ? `<div class="tsubs-list">${a.map(x=> `<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
+    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length}</span><span class="tsubs-car" aria-hidden="true">▾</span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
     box.querySelector('.tsubs-bar').addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.last || 0) < 400) return; subsBlockEl.last = now;   // one tap = one toggle
-      if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id); renderAll(); });
+      if(a.some(x=> x.sec)){ if(viewerSubsClosed.has(tk.id)) viewerSubsClosed.delete(tk.id); else viewerSubsClosed.add(tk.id); }
+      else if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id); renderAll(); });
     box.querySelectorAll('.tsub').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.lastTick || 0) < 400) return; subsBlockEl.lastTick = now;
       if(!ghPath){ showToast(t('connectToSave'), true); return; }
       const st = a.find(x=> x.id === b.dataset.sid); if(st) setSubLocal(tk.id, st.id, !st.done); }));

@@ -4148,7 +4148,7 @@
   .pl-sech td.pl-job{ padding:7px 10px 7px 6px !important; }
   .pl-sr{ display:flex; align-items:center; gap:7px; font:800 13.5px Sora,sans-serif; color:var(--ink); }
   .pl-sr em{ font:700 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); margin-right:auto; white-space:nowrap; }
-  .pl-secname{ cursor:text; border-radius:6px; font:800 14px Sora,sans-serif; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
+  .pl-tab td.pl-job .pl-secname{ cursor:text; border-radius:6px; font:800 14px Sora,sans-serif; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
   .pl-sr em, .pl-sr .pl-mini, .pl-sr .pl-sd, .pl-sr .pl-fold, .pl-sr .pl-grip{ flex-shrink:0; }
   .pl-secname:hover{ background:var(--surface); }
   .pl-fold{ all:unset; cursor:pointer; width:22px; height:22px; border-radius:6px; display:grid; place-items:center; color:var(--muted); flex:none; }
@@ -4258,6 +4258,34 @@
   .dm-addc span{ font-size:26px; line-height:1; }
   .dm-addc:hover{ border-color:var(--primary); color:var(--ink); }
   @media (prefers-reduced-motion:reduce){ .dm-box, .dm-scrim{ transition:opacity .2s ease !important; transform:none !important; } .dm-grid.anim .dm-card{ animation:none; opacity:1; transform:none; } }
+
+  /* ── Prep: Make a task, several jobs in one task (2026-10-24) ── */
+  .pl-cell.bun::after{ content:"≡"; font:900 13px Inter,sans-serif; color:#1F4FA8; }
+  body.theme-dark .pl-cell.bun::after{ color:#9DBDF5; }
+  .pl-cell.done.bun::after{ content:"✓"; color:#fff; }
+  .pl-cell.done.bun{ font-size:0; }
+  .pl-cell.done.bun::after{ font-size:15px; }
+  .pl-wrap.picking .pl-c:not(.pk), .pl-wrap.picking .pl-sh:not(.pk){ opacity:.35; }
+  .pl-c.pk, .pl-secfill.pk{ background:#FFF2D6 !important; text-align:center; }
+  body.theme-dark .pl-c.pk, body.theme-dark .pl-secfill.pk{ background:rgba(240,162,26,.14) !important; }
+  .pl-sh.pk .pl-shh{ background:var(--surface); box-shadow:0 0 0 2px #F0A21A; }
+  .pl-cbx{ all:unset; cursor:pointer; box-sizing:border-box; width:26px; height:26px; border-radius:8px; border:2px solid #F0A21A; background:var(--surface); display:inline-grid; place-items:center; font:900 13px Inter,sans-serif; color:#241A08; vertical-align:middle; }
+  .pl-cbx.on{ background:#F0A21A; }
+  .pl-cbx.dis{ cursor:default; border-color:var(--line); opacity:.5; }
+  .pl-pickbar{ position:sticky; bottom:0; left:0; z-index:4; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; background:#16191B; color:#fff; }
+  body.theme-dark .pl-pickbar{ background:#0A111F; border-top:1px solid var(--line); }
+  .pl-pickbar b{ font:800 14px Sora,sans-serif; }
+  .pl-pickbar span{ font:500 12.5px Inter,sans-serif; color:#CFD6CE; }
+  .pl-pb-sp{ flex:1; }
+  .pl-pbtn{ all:unset; cursor:pointer; border-radius:10px; padding:9px 14px; font:800 13px Inter,sans-serif; background:#F0A21A; color:#241A08; }
+  .pl-pbtn[disabled]{ opacity:.45; cursor:default; }
+  .pl-pbtn.ghost{ background:transparent; border:1px solid rgba(255,255,255,.3); color:#fff; }
+  .prep-tprev{ border:1px solid var(--line); border-radius:12px; padding:8px 12px; background:var(--surface-soft); max-height:220px; overflow:auto; }
+  .prep-tprev-h{ font:800 13px Sora,sans-serif; color:var(--ink); margin:6px 0 2px; }
+  .prep-tprev-i{ display:flex; gap:9px; align-items:center; font:500 13.5px Inter,sans-serif; padding:3px 0; color:var(--ink); }
+  .prep-tprev-i::before{ content:""; width:15px; height:15px; border-radius:5px; border:2px solid var(--line); flex:none; }
+  .tsubs-h{ font:800 12px Sora,sans-serif; color:var(--muted); margin:8px 2px 2px; }
+  .tsubs-list .tsubs-h:first-child, .ds-list .tsubs-h:first-child{ margin-top:2px; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4502,6 +4530,10 @@
   <div class="form-modal-head"><h2 id="prepTaskTitle">Plan this item</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
     <div class="prep-tm-name" id="prepTaskName"></div><span class="prep-lab" id="prepTaskLab"></span>
+    <label class="prep-tm-k" for="prepTaskTitleIn" id="prepTaskTitleK" hidden>Title</label>
+    <input type="text" id="prepTaskTitleIn" class="st-input" maxlength="80" hidden autocomplete="off">
+    <label class="prep-tm-k" id="prepTaskPrevK" hidden>Checklist</label>
+    <div class="prep-tprev" id="prepTaskPrev" hidden></div>
     <label class="prep-apply" id="prepSecApplyRow" hidden><input type="checkbox" id="prepSecApply" checked> <span id="prepSecApplyTx">Also put this date on its items</span></label>
     <label class="prep-tm-k prep-not-sec">How</label>
     <div class="prep-kind prep-not-sec" id="prepTaskKind" role="radiogroup" aria-label="Task or date only"><button type="button" data-prep-kind="task" role="radio"><b>Task list</b><span>Shows in the workers' tasks for that day</span></button><button type="button" data-prep-kind="date" role="radio"><b>Date only</b><span>Just a date on the checklist — no task</span></button></div>
@@ -6396,6 +6428,7 @@
     st.done = !st.done;
     if(st.done){ st.doneBy = managerName() || 'Manager'; st.doneAt = new Date().toISOString(); } else { delete st.doneBy; delete st.doneAt; }
     addHistory(st.done ? 'Step done' : 'Step reopened', `${taskLabel(t)} · ${st.t}`);
+    if(st.prepUid && typeof reconcileShedPrep === 'function') reconcileShedPrep();
     const p = subProgress(t);
     if((st.done && p.done === p.total && t.status !== 'done') || (!st.done && t.status === 'done')) toggleDone(t.id);   // last step ticks the task; a reopened step reopens it (toggleDone saves)
     else { persist(); renderAll(); }
@@ -6406,7 +6439,7 @@
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
       <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true">▾</span></button>
-      ${open ? `<div class="tsubs-list">${task.subs.map(x=> `<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}</span></button>`).join('')}</div>` : ''}
+      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
   // steps editor in the Add/Edit window
@@ -11025,7 +11058,7 @@
     box.hidden = false;
     box.innerHTML = `<div class="ds-head"><span class="dlabel">Steps</span>${p.total ? `<span class="ds-n">${p.done} of ${p.total} done</span>` : ''}</div>
       ${p.total ? `<div class="tsubs-pb ds-pb"><i style="width:${Math.round(p.done / p.total * 100)}%"></i></div>` : ''}
-      <div class="ds-list">${(t.subs || []).map(x=> `<div class="ds-row${x.done ? ' done' : ''}"><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '✓' : ''}</button><span class="ds-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
+      <div class="ds-list">${(t.subs || []).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<div class="ds-row${x.done ? ' done' : ''}"><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '✓' : ''}</button><span class="ds-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
         <div class="ds-add"><span aria-hidden="true">＋</span><input type="text" id="detailSubInput" data-sub-add="${escapeHtmlAttr(t.id)}" maxlength="80" placeholder="Add a step" autocomplete="off"></div></div>
       ${p.total ? '<p class="ds-hint">Ticking the last step ticks the task. Unticking a step re-opens it.</p>' : ''}`;
   }
@@ -11719,8 +11752,11 @@
         if(!u.taskId) return;
         const t = tasks.find(x=> x.id === u.taskId) || (typeof archivedTasks !== 'undefined' ? archivedTasks.find(x=> x.id === u.taskId) : null);
         if(!t){ delete u.taskId; delete u.taskDate; delete u.taskWho; changed = true; return; }
-        const done = t.status === 'done';
-        if(!!u.done !== done){ u.done = done; if(done){ u.doneBy = t.doneBy || (t.assignees || [])[0] || ''; u.doneAt = t.doneAt || new Date().toISOString(); } else { delete u.doneBy; delete u.doneAt; } changed = true; }
+        // a task made from several jobs: each job follows its own step
+        const sb = t.prep && t.prep.bundle ? (t.subs || []).find(x=> x.prepUid === u.id) : null;
+        if(t.prep && t.prep.bundle && !sb){ delete u.taskId; delete u.taskDate; delete u.taskWho; changed = true; return; }
+        const done = sb ? !!sb.done : t.status === 'done', by = sb ? sb.doneBy : t.doneBy, at = sb ? sb.doneAt : t.doneAt;
+        if(!!u.done !== done){ u.done = done; if(done){ u.doneBy = by || (t.assignees || [])[0] || ''; u.doneAt = at || new Date().toISOString(); } else { delete u.doneBy; delete u.doneAt; } changed = true; }
         const who = (t.assignees || []).join(', ');
         if(u.taskDate !== t.date || (u.taskWho || '') !== who){ u.taskDate = t.date; u.taskWho = who; changed = true; }
       });
@@ -11760,7 +11796,7 @@
   // flags the board filters use: late (past its date or task day, still open), this week, has a task
   function prepUnitFlags(c, u){
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null, today = dateKey(new Date()), wk = addDaysStr(today, 6);
-    const when = tk ? (tk.status === 'done' ? null : tk.date) : u.due || null;
+    const when = tk && tk.status !== 'done' && !u.done ? tk.date : null;   // no dates on the checklist any more (2026-10-24): only a task has a day
     return { late: !u.done && !!when && when < today, week: !u.done && !!when && when >= today && when <= wk, task: !!tk };
   }
   function prepUnitHtml(c, u, sec, isSection){
@@ -12165,6 +12201,8 @@
       return was !== arr.map(x=> x.t).join('\u0001'); };
     prepLiveLists().forEach(c=>{
       c.sections = c.sections || [];
+      // dates live on tasks only now: drop any date left on a job or section
+      c.sections.forEach(sec=>{ [sec].concat(sec.items || []).forEach(x=>{ if(x.due || x.dueWho){ delete x.due; delete x.dueWho; ch = true; } }); });
       m.forEach(S=>{
         let sec = prepSecOf(c, S.t);
         if(!sec){ sec = { id: uid(), t: S.t, items: [] }; c.sections.push(sec); ch = true; }
@@ -12231,7 +12269,7 @@
     if(i < 0 || j < 0 || j >= m.length) return; [m[i], m[j]] = [m[j], m[i]]; prepSaveMaster(m); prepStructDone();
   }
   // view settings (this device): folded sections, one shed only
-  let prepSecFold = new Set(), prepOnlyShed = null;
+  let prepSecFold = new Set(), prepOnlyShed = null, prepPick = null;   // prepPick: { shed, sel:Set of job ids } while picking jobs for one task
   try{ prepSecFold = new Set(JSON.parse(localStorage.getItem('cw-prep-secfold') || '[]')); }catch(e){}
   function prepSecFoldSave(){ try{ localStorage.setItem('cw-prep-secfold', JSON.stringify([...prepSecFold])); }catch(e){} }
   const PL_DOTS = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
@@ -12239,6 +12277,7 @@
   const PL_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
   function prepListHtml(sheds){
     const enc = x=> escapeHtmlAttr(x);
+    if(prepPick && !prepActiveFor(prepPick.shed)) prepPick = null;
     const cols = sheds.filter(sh=> !prepOnlyShed || sh === prepOnlyShed).map(sh=>{ const c = prepActiveFor(sh); return { sh, c, run: !c && prepShedRun(sh) }; });
     // rows: the one checklist, then anything a shed still has that the list doesn't (an older device may add one)
     const secs = [], secBy = {};
@@ -12253,7 +12292,7 @@
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
       const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
       const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
@@ -12263,10 +12302,15 @@
           if(!col.c) return '<td class="pl-c off"></td>';
           if(!u) return '<td class="pl-c"><span class="pl-na" title="Not in this shed\'s list yet">—</span></td>';
           const f = prepUnitFlags(col.c, u), tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
-          const k = u.done ? 'done' : f.late ? 'late' : tk ? 'task' : u.due ? 'due' : '';
-          const lab = u.done ? (u.doneBy || 'Done') : f.late ? shortD(tk ? tk.date : u.due) + ' · late' : tk ? 'Task ' + shortD(tk.date) : u.due ? shortD(u.due) : '';
+          const bun = !!(tk && tk.prep && tk.prep.bundle);
+          const k = u.done ? 'done' : f.late ? 'late' : tk ? 'task' : '';
+          const lab = u.done ? (u.doneBy || 'Done') : f.late ? 'Task ' + shortD(tk.date) + ' · late' : tk ? 'Task ' + shortD(tk.date) : '';
           const ro = col.c.status === 'ready';
-          return `<td class="pl-c"><button type="button" class="pl-cell ${k}" data-prep-tick="${enc(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${enc((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${enc('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : ''))}"${ro ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}${ro ? '' : `<button type="button" class="pl-cdot" data-pl-cellmenu="${enc(col.c.id + '|' + u.id)}" aria-label="${enc('More for ' + R.t + ' in Shed ' + col.sh)}" title="Date it, put it on the task list…">${PL_DOTS}</button>`}</td>`; }).join('');
+          if(prepPick && prepPick.shed === col.sh){
+            const can = !u.done && !u.taskId && !ro, on = prepPick.sel.has(u.id);
+            return `<td class="pl-c pk">${can ? `<button type="button" class="pl-cbx${on ? ' on' : ''}" data-pl-pick="${enc(u.id)}" aria-pressed="${on}" aria-label="${enc((on ? 'Unpick ' : 'Pick ') + R.t)}">${on ? '✓' : ''}</button>` : `<span class="pl-cbx dis" title="${u.done ? 'Already done' : 'Already in a task'}"></span>`}</td>`;
+          }
+          return `<td class="pl-c"><button type="button" class="pl-cell ${k}${bun ? ' bun' : ''}" data-prep-tick="${enc(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${enc((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${enc('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : bun ? ' — part of the task "' + tk.name + '"' : ''))}"${ro ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}${ro ? '' : `<button type="button" class="pl-cdot" data-pl-cellmenu="${enc(col.c.id + '|' + u.id)}" aria-label="${enc('More for ' + R.t + ' in Shed ' + col.sh)}" title="Make a task, open the task…">${PL_DOTS}</button>`}</td>`; }).join('');
         const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.col.c, x.u));
         const cls = [us.length && dn === us.length ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
         const key = enc(S.t + '|' + (R.own ? '' : R.t));
@@ -12274,7 +12318,10 @@
       let tot = 0, dn = 0, due = null;
       cols.forEach(col=>{ if(!col.c) return; S.rows.forEach(R=>{ const u = unitFor(col, S, R); if(u){ tot++; if(u.done) dn++; } }); const sec = prepSecOf(col.c, S.t); if(sec && sec.due && (!due || sec.due < due)) due = sec.due; });
       const own = S.rows.length === 1 && S.rows[0].own;
-      body += `<tbody class="pl-sec${folded ? ' folded' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr"><span class="pl-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span>${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? dn + ' of ' + tot + ' done' : ''}</em>${due ? `<button type="button" class="pl-sd" data-pl-secdate="${sk}" title="Section date — click to change">📅 ${escapeHtml(shortD(due))}</button>` : `<button type="button" class="pl-mini" data-pl-secdate="${sk}" title="Give this section a date">${PL_CAL}</button>`}<button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td><td class="pl-secfill" colspan="${cols.length}"></td></tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
+      body += `<tbody class="pl-sec${folded ? ' folded' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr"><span class="pl-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span>${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
+        const us = col.c ? S.rows.map(R=> unitFor(col, S, R)).filter(u=> u && !u.done && !u.taskId) : [];
+        const all = us.length && us.every(u=> prepPick.sel.has(u.id));
+        return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
     });
     const foot = `<tfoot><tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
       if(!c) return `<td><button type="button" class="pl-rdy st" data-prep-start="${enc(sh)}" title="Start Shed ${enc(sh)}'s checklist early">＋ Start</button></td>`;
@@ -12282,8 +12329,11 @@
       const pr = prepProgress(c), left = pr.total - pr.done;
       return `<td>${left ? `<button type="button" class="pl-rdy" disabled title="${left} job${left === 1 ? '' : 's'} still open">${left} left</button>` : `<button type="button" class="pl-rdy go" data-prep-ready="${enc(c.id)}">Mark ready</button>`}</td>`; }).join('')}</tr></tfoot>`;
     const addSec = `<tbody class="pl-end"><tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj sec" data-pl-addsec>＋ Add a section</button></td><td colspan="${cols.length}"></td></tr></tbody>`;
-    return `<div class="pl-wrap" data-filter="${prepFilter}"><table class="pl-tab"><thead>${head}</thead>${body}${addSec}${foot}</table></div>
-      <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="due"></i>Dated</span><span><i class="task"></i>On the task list</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · one checklist for every shed</span></div>`;
+    const pickBar = prepPick ? (()=>{ const c = prepActiveFor(prepPick.shed), n = prepPick.sel.size;
+      const secN = c ? new Set(prepUnits(c).filter(x=> prepPick.sel.has(x.u.id)).map(x=> x.sec.id)).size : 0;
+      return `<div class="pl-pickbar"><b>${n ? n + ' job' + (n === 1 ? '' : 's') + ' picked' : 'Pick the jobs'}</b><span>Shed ${escapeHtml(prepPick.shed)}${n ? ' · ' + secN + ' section' + (secN === 1 ? '' : 's') : ' · tick the boxes in its column'}</span><span class="pl-pb-sp"></span><button type="button" class="pl-pbtn ghost" data-pl-pickcancel>Cancel</button><button type="button" class="pl-pbtn" data-pl-pickmake${n ? '' : ' disabled'}>Make a task</button></div>`; })() : '';
+    return `<div class="pl-wrap${prepPick ? ' picking' : ''}" data-filter="${prepFilter}" data-pick-shed="${prepPick ? enc(prepPick.shed) : ''}"><table class="pl-tab"><thead>${head}</thead>${body}${prepPick ? '' : addSec + foot}</table>${pickBar}</div>
+      <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="task"></i>Task (its day under it)</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · ≡ several jobs in one task</span></div>`;
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
@@ -12373,6 +12423,13 @@
   }
   function plClick(e){
     const g = sel=> e.target.closest(sel); let b;
+    if((b = g('[data-pl-pick]'))){ const id = b.dataset.plPick; if(prepPick.sel.has(id)) prepPick.sel.delete(id); else prepPick.sel.add(id); renderPrepBoard(); return true; }
+    if((b = g('[data-pl-picksec]'))){ const c = prepActiveFor(prepPick.shed), sec = c && prepSecOf(c, b.dataset.plPicksec); if(!sec) return true;
+      const us = prepUnits({ sections:[sec] }).map(x=> x.u).filter(u=> !u.done && !u.taskId), all = us.every(u=> prepPick.sel.has(u.id));
+      us.forEach(u=> all ? prepPick.sel.delete(u.id) : prepPick.sel.add(u.id)); renderPrepBoard(); return true; }
+    if(g('[data-pl-pickcancel]')){ prepPick = null; renderPrepBoard(); return true; }
+    if((b = g('[data-pl-pickmake]'))){ if(!prepPick.sel.size) return true; const c = prepActiveFor(prepPick.shed); if(c) openPrepBundleModal(c, [...prepPick.sel]); return true; }
+    if(prepPick && g('[data-prep-tick]')) return true;   // while picking, taps don't tick
     if((b = g('[data-pl-fold]'))){ const k = prepNorm(b.dataset.plFold); if(prepSecFold.has(k)) prepSecFold.delete(k); else prepSecFold.add(k); prepSecFoldSave(); renderPrepBoard(); return true; }
     if((b = g('[data-pl-foldall]'))){ if(b.dataset.plFoldall === '1') prepMaster().forEach(S=> prepSecFold.add(prepNorm(S.t))); else prepSecFold.clear(); prepSecFoldSave(); renderPrepBoard(); return true; }
     if((b = g('[data-pl-only]'))){ prepOnlyShed = b.dataset.plOnly || null; renderPrepBoard(); return true; }
@@ -12392,6 +12449,7 @@
       plMenu(b, `Shed ${sh}`, [c.closedAt ? 'Closed ' + prepFmt(c.closedAt) : 'Started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : ''].filter(Boolean).join(' · '), [
         c.status === 'ready' ? { ic:'↺', label:'Reopen', act: ()=> plAct('unready', c.id) }
           : { ic:'✓', label:'Mark shed ready', note: left ? left + ' job' + (left === 1 ? '' : 's') + ' left' : '', disabled: !!left, act: ()=> plAct('ready', c.id) },
+        { ic:'☰', label:'Make a task from several jobs', disabled: c.status === 'ready' || !prepUnits(c).some(x=> !x.u.done && !x.u.taskId), act: ()=>{ prepPick = { shed: sh, sel: new Set() }; prepOnlyShed = null; renderPrepBoard(); } },
         { info:true, ic:'📅', label: c.nextPlacement ? 'Chicks ' + prepFmt(c.nextPlacement) + ' (from Production)' : 'Chicks date comes from Production' },
         { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; renderPrepBoard(); } },
         '-',
@@ -12402,18 +12460,16 @@
       return true; }
     if((b = g('[data-pl-cellmenu]'))){ const [cid, id] = b.dataset.plCellmenu.split('|'); const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return true;
       const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
-      plMenu(b, `${u.t} · Shed ${c.shed}`, u.done ? 'Done' + (u.doneBy ? ' by ' + u.doneBy : '') : tk ? 'On the task list · ' + prepFmt(tk.date) : u.due ? 'Dated ' + prepFmt(u.due) : 'Not started', [
+      plMenu(b, `${u.t} · Shed ${c.shed}`, u.done ? 'Done' + (u.doneBy ? ' by ' + u.doneBy : '') : tk ? (tk.prep && tk.prep.bundle ? `In "${tk.name}" · ` : 'Task · ') + prepFmt(tk.date) : 'Not started', [
         { ic: u.done ? '↺' : '✓', label: u.done ? 'Untick it' : 'Tick it', act: ()=> prepToggleUnit(cid, id) },
-        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'📅', label: u.due ? 'Change the date' : 'Date it', disabled: u.done, act: ()=>{ prepTaskKindLast = 'date'; openPrepTaskModal(cid, id); prepTaskKind = 'date'; prepSyncTaskModal(); } },
-        tk ? null : { ic:'☑', label:'Put it on the task list', disabled: u.done, act: ()=>{ prepTaskKindLast = 'task'; openPrepTaskModal(cid, id); prepTaskKind = 'task'; prepSyncTaskModal(); } }].filter(Boolean));
+        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'☑', label:'Make a task', disabled: u.done, act: ()=> openPrepTaskModal(cid, id) }]);
       return true; }
     if((b = g('[data-pl-jobmenu]'))){ const [s, j] = b.dataset.plJobmenu.split('|'); const own = !j, jobT = own ? null : j;
       const m = prepMaster(), S = prepMasterSec(m, s), i = S && !own ? S.items.findIndex(x=> prepNorm(x) === prepNorm(j)) : -1;
       const open = prepJobTargets(s, jobT, false);
       plMenu(b, own ? s : j, 'Same job in every shed', [
         own ? null : { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-renjob="${CSS.escape(s + '|' + j)}"]`); if(el) plStartRename(el, v=> prepRenameJob(s, j, v)); } },
-        { ic:'📅', label:'Date it in every shed', disabled: !open.length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'date') },
-        { ic:'☑', label:'Put on the task list for every shed', disabled: !prepJobTargets(s, jobT, true).length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'task') },
+        { ic:'☑', label:'Make a task in every shed', note:'one per shed', disabled: !prepJobTargets(s, jobT, true).length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'task') },
         { ic:'✓', label:'Tick it in every shed', disabled: !open.length, act: ()=>{ let n = 0; prepLiveLists().forEach(c=>{ const u = prepUnitByName(c, s, jobT); if(u && !u.done){ if(u.taskId) toggleDone(u.taskId); else { u.done = true; u.doneBy = managerName() || 'Manager'; u.doneAt = new Date().toISOString(); } n++; } });
           addHistory('Shed preparation', `"${own ? s : j}" ticked in ${n} shed${n === 1 ? '' : 's'}`); persist(); renderAll(); showToast(`Ticked in ${n} shed${n === 1 ? '' : 's'}.`); } },
         own ? null : '-',
@@ -12426,7 +12482,6 @@
       plMenu(b, s, 'Section · same in every shed', [
         { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-rensec="${CSS.escape(s)}"]`); if(el) plStartRename(el, v=> prepRenameSection(s, v)); } },
         { ic:'＋', label:'Add a job', act: ()=>{ prepSecFold.delete(prepNorm(s)); prepSecFoldSave(); prepAddAgain = s; renderPrepBoard(); } },
-        { ic:'📅', label:'Date it in every shed', act: ()=>{ const el = document.querySelector(`[data-pl-secdate="${CSS.escape(s)}"]`); if(el) el.click(); } },
         '-',
         { ic:'↑', label:'Move up', disabled: i <= 0, act: ()=> prepMoveSection(s, -1) },
         { ic:'↓', label:'Move down', disabled: i < 0 || i >= m.length - 1, act: ()=> prepMoveSection(s, 1) },
@@ -12439,6 +12494,8 @@
   function prepToggleUnit(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
+    const sb = tk && tk.prep && tk.prep.bundle ? (tk.subs || []).find(x=> x.prepUid === u.id) : null;
+    if(sb){ toggleSub(tk.id, sb.id); return; }   // a job inside a task with steps: tick its step (that ticks the job back)
     if(tk){ toggleDone(tk.id); }
     else { u.done = !u.done; if(u.done){ u.doneBy = managerName() || 'Manager'; u.doneAt = new Date().toISOString(); } else { delete u.doneBy; delete u.doneAt; } addHistory('Shed preparation', `Shed ${c.shed}: "${u.t}" ${u.done ? 'done' : 'reopened'}`); }
     c.seen = true;
@@ -12447,9 +12504,10 @@
   function openPrepTaskModal(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     prepTaskFor = { cid, id }; prepTaskRep = false;
-    prepTaskKind = u.due ? 'date' : prepTaskKindLast;
-    $('#prepTaskTitle').textContent = 'Plan this item';
-    $('#prepTaskName').textContent = u.t;
+    prepTaskKind = 'task';   // always a task now (2026-10-24)
+    $('#prepTaskTitle').textContent = 'Make a task';
+    $('#prepTaskName').textContent = u.t; $('#prepTaskName').hidden = false;
+    ['#prepTaskTitleK','#prepTaskTitleIn','#prepTaskPrevK','#prepTaskPrev'].forEach(x=> $(x).hidden = true);
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
     $('#prepTaskDate').value = u.due || addDaysStr(dateKey(new Date()), 1);
     $('#prepTaskWho').value = u.due ? (u.dueWho || '') : '';
@@ -12457,6 +12515,24 @@
     try{ refreshAssigneeDatalist(); }catch(e){}
     prepSyncTaskModal();
     $('#prepTaskModal').classList.add('open');
+  }
+  // several jobs from one shed → one task whose steps are the jobs, under their section names
+  function openPrepBundleModal(c, ids){
+    const picked = prepUnits(c).filter(x=> ids.includes(x.u.id));
+    prepTaskFor = { cid: c.id, id: picked[0].u.id, bundle: picked.map(x=> x.u.id) }; prepTaskRep = false; prepTaskKind = 'task';
+    $('#prepTaskTitle').textContent = 'Make a task';
+    $('#prepTaskName').hidden = true;
+    ['#prepTaskTitleK','#prepTaskTitleIn','#prepTaskPrevK','#prepTaskPrev'].forEach(x=> $(x).hidden = false);
+    $('#prepTaskTitleIn').value = `Shed ${c.shed} task list`;
+    $('#prepTaskPrevK').textContent = `Checklist (${picked.length} job${picked.length === 1 ? '' : 's'})`;
+    let last = null;
+    $('#prepTaskPrev').innerHTML = picked.map(x=>{ const h = x.sec.id !== last ? `<div class="prep-tprev-h">${escapeHtml(x.sec.t)}</div>` : ''; last = x.sec.id; return h + `<div class="prep-tprev-i">${escapeHtml(x.u === x.sec ? x.sec.t : x.u.t)}</div>`; }).join('');
+    $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
+    $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), 1); $('#prepTaskWho').value = '';
+    try{ refreshAssigneeDatalist(); }catch(e){}
+    prepSyncTaskModal();
+    $('#prepTaskModal').classList.add('open');
+    setTimeout(()=> $('#prepTaskTitleIn').select(), 60);
   }
   function openPrepSecDateModal(cid, sid){
     const c = prepFind(cid), sec = c && (c.sections || []).find(x=> x.id === sid); if(!sec) return;
@@ -12483,9 +12559,10 @@
     document.querySelectorAll('#prepTaskModal .prep-only-task').forEach(x=> x.hidden = !isTask);
     const forSec = !!(prepTaskFor && prepTaskFor.sec);
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
-    if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Plan this item'; }
-    $('#prepTaskWho').placeholder = isTask ? "Worker's name (optional)" : 'Who (optional — a note on the checklist)';
-    $('#prepTaskSave').textContent = isTask ? 'Add to the task list' : 'Save date';
+    if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Make a task'; }
+    document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
+    $('#prepTaskWho').placeholder = "Worker's name (optional)";
+    $('#prepTaskSave').textContent = 'Make task'; $('#prepTaskUndate').hidden = true;
   }
   function savePrepTaskOne(quiet){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
@@ -12503,6 +12580,19 @@
       return;
     }
     prepTaskKindLast = prepTaskKind;
+    if(f.bundle){
+      const picked = prepUnits(c).filter(x=> f.bundle.includes(x.u.id) && !x.u.done && !x.u.taskId);
+      if(!picked.length){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; renderAll(); return; }
+      const title = $('#prepTaskTitleIn').value.trim().replace(/\s+/g, ' ') || `Shed ${c.shed} task list`;
+      const t = addTask(title, '🧹', date, { assignees: who ? [who] : [], prep: { cid: c.id, uid: picked[0].u.id, uids: picked.map(x=> x.u.id), shed: c.shed, bundle: true, daily: prepTaskRep },
+        subs: picked.map(x=> ({ id: uid(), t: x.u === x.sec ? x.sec.t : x.u.t, sec: x.sec.t, prepUid: x.u.id })) });
+      picked.forEach(x=>{ x.u.taskId = t.id; x.u.taskDate = date; x.u.taskWho = who; });
+      prepHist(c, `Shed ${c.shed}: ${picked.length} jobs made into the task "${title}"`);
+      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; prepPick = null;
+      persist(); renderAll();
+      showToast(`"${title}" added to ${formatFull(date)}${who ? ' for ' + who : ''} with ${picked.length} step${picked.length === 1 ? '' : 's'}.`);
+      return;
+    }
     if(prepTaskKind === 'date'){
       // date only: no task on the planner, just the date on the checklist item
       u.due = date; if(who) u.dueWho = who; else delete u.dueWho;
