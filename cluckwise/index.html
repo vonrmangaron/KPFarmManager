@@ -4127,6 +4127,137 @@
   /* filters */
   .pl-wrap[data-filter="todo"] .pl-row.all, .pl-wrap[data-filter="late"] .pl-row:not(.f-late), .pl-wrap[data-filter="week"] .pl-row:not(.f-week), .pl-wrap[data-filter="task"] .pl-row:not(.f-task){ display:none; }
   @media (max-width:760px){ .pl-wrap{ flex:0 0 auto !important; } .pl-tab td.pl-job{ min-width:170px; max-width:190px; padding:9px 12px; } .pl-shh{ min-width:64px; } }
+
+  /* ── Prep: one list, List only (2026-10-24) ── */
+  .pl-tab td.pl-job{ padding:8px 10px 8px 6px; }
+  .pl-jr{ display:flex; align-items:center; gap:6px; }
+  .pl-jn{ min-width:0; flex:1; }
+  .pl-jn b[role="button"]{ cursor:text; border-radius:6px; }
+  .pl-jn b[role="button"]:hover{ background:var(--surface-soft); }
+  .pl-grip{ cursor:grab; color:var(--muted); font:800 12px/1 Inter,sans-serif; letter-spacing:-2px; padding:6px 3px; opacity:.4; user-select:none; touch-action:none; flex:none; }
+  tr:hover .pl-grip, .pl-sech:hover .pl-grip{ opacity:1; }
+  .pl-mini{ all:unset; cursor:pointer; box-sizing:border-box; width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--muted); flex:none; }
+  .pl-mini svg{ width:13px; height:13px; }
+  .pl-mini:hover, .pl-mini.pl-menu-on{ color:var(--ink); border-color:#F0A21A; }
+  @media (hover:hover){ .pl-ract{ opacity:0; transition:opacity .15s; } tr:hover .pl-ract, .pl-ract.pl-menu-on, .pl-ract:focus-visible{ opacity:1; } }
+  .pl-c{ position:relative; }
+  .pl-cdot{ all:unset; cursor:pointer; position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:6px; display:grid; place-items:center; color:var(--muted); background:var(--surface); border:1px solid var(--line); }
+  .pl-cdot svg{ width:11px; height:11px; }
+  @media (hover:hover){ .pl-cdot{ opacity:0; transition:opacity .15s; } .pl-c:hover .pl-cdot, .pl-cdot.pl-menu-on, .pl-cdot:focus-visible{ opacity:1; } }
+  @media (hover:none){ .pl-cdot{ opacity:.7; } }
+  .pl-sech td.pl-job{ padding:7px 10px 7px 6px !important; }
+  .pl-sr{ display:flex; align-items:center; gap:7px; font:800 13.5px Sora,sans-serif; color:var(--ink); }
+  .pl-sr em{ font:700 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); margin-right:auto; white-space:nowrap; }
+  .pl-secname{ cursor:text; border-radius:6px; font:800 14px Sora,sans-serif; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
+  .pl-sr em, .pl-sr .pl-mini, .pl-sr .pl-sd, .pl-sr .pl-fold, .pl-sr .pl-grip{ flex-shrink:0; }
+  .pl-secname:hover{ background:var(--surface); }
+  .pl-fold{ all:unset; cursor:pointer; width:22px; height:22px; border-radius:6px; display:grid; place-items:center; color:var(--muted); flex:none; }
+  .pl-fold svg{ width:15px; height:15px; transition:transform .15s; }
+  .pl-sec.folded .pl-fold svg{ transform:rotate(-90deg); }
+  .pl-wrap[data-filter="all"] .pl-sec.folded .pl-row, .pl-wrap[data-filter="all"] .pl-sec.folded .pl-addrow{ display:none; }
+  .pl-sd{ all:unset; cursor:pointer; font:700 11px Inter,sans-serif; border-radius:99px; padding:2px 8px; background:#FFF2D6; color:#8A5300; white-space:nowrap; }
+  body.theme-dark .pl-sd{ background:rgba(240,162,26,.16); color:#FFC876; }
+  .pl-addrow td{ border-bottom:0 !important; }
+  .pl-addrow td.pl-job{ padding:4px 10px 10px 30px !important; }
+  .pl-addj{ all:unset; cursor:pointer; box-sizing:border-box; display:block; width:100%; padding:7px 12px; border:1.5px dashed var(--line); border-radius:11px; font:600 13px Inter,sans-serif; color:var(--muted); }
+  .pl-addj:hover{ border-color:#F0A21A; color:var(--ink); }
+  .pl-addj.sec{ border-style:solid; }
+  .pl-end .pl-addrow td.pl-job{ padding-top:10px !important; padding-left:10px !important; }
+  .pl-addin, .pl-renin{ box-sizing:border-box; width:100%; font:600 14px Inter,sans-serif; padding:7px 10px; border:2px solid #F0A21A; border-radius:10px; background:var(--surface); color:var(--ink); outline:none; }
+  .pl-shh{ all:unset; cursor:pointer; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:92px; padding:4px 6px 6px; border-radius:12px; position:relative; }
+  .pl-shh:hover, .pl-shh.pl-menu-on{ background:var(--surface); box-shadow:0 0 0 2px #F0A21A; }
+  .pl-dots{ position:absolute; top:1px; right:5px; font:800 12px Inter,sans-serif; color:var(--muted); }
+  .pl-cd{ font:600 10px Inter,sans-serif; color:var(--muted); white-space:nowrap; }
+  .pl-tab tfoot td{ position:sticky; bottom:0; z-index:2; background:var(--surface-soft); padding:9px 6px; text-align:center; border-bottom:0; border-top:1px solid var(--line); }
+  .pl-tab tfoot td.pl-job{ left:0; z-index:3; text-align:left; padding-left:16px; font:700 12px Inter,sans-serif; }
+  .pl-rdy{ all:unset; cursor:pointer; box-sizing:border-box; border-radius:9px; padding:7px 11px; font:800 11.5px Inter,sans-serif; white-space:nowrap; background:var(--line); color:var(--muted); }
+  .pl-rdy[disabled]{ cursor:default; }
+  .pl-rdy.go{ background:#0F8A75; color:#fff; }
+  .pl-rdy.ok{ background:#DFF4EF; color:#0F6E5D; }
+  body.theme-dark .pl-rdy.ok{ background:rgba(15,138,117,.22); color:#8FD9B5; }
+  .pl-rdy.st{ background:var(--surface); border:1px dashed var(--line); color:var(--ink); }
+  .pl-rdy.st:hover{ border-color:#F0A21A; }
+  .pl-only{ margin-left:4px; }
+  .pl-foldall{ margin:0; }
+  .pl-menu{ position:fixed; z-index:9999; min-width:240px; max-width:320px; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:0 18px 50px rgba(22,25,27,.2); padding:6px; animation:plMenuIn .14s ease-out; }
+  body.theme-dark .pl-menu{ box-shadow:0 18px 50px rgba(0,0,0,.5); }
+  @keyframes plMenuIn{ from{ opacity:0; transform:translateY(-4px) scale(.98); } }
+  .pl-mh{ padding:8px 10px 6px; }
+  .pl-mh b{ display:block; font:800 13.5px Sora,sans-serif; color:var(--ink); }
+  .pl-mh small{ display:block; font:500 11.5px Inter,sans-serif; color:var(--muted); margin-top:2px; }
+  .pl-mi{ all:unset; cursor:pointer; box-sizing:border-box; display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border-radius:9px; font:600 13px Inter,sans-serif; color:var(--ink); }
+  .pl-mi:hover:not([disabled]), .pl-mi:focus-visible{ background:var(--surface-soft); }
+  .pl-mi[disabled]{ opacity:.45; cursor:default; }
+  .pl-mi.info{ cursor:default; color:var(--muted); font-weight:500; }
+  .pl-mi.dan{ color:#B42318; } body.theme-dark .pl-mi.dan{ color:#FF9C8A; }
+  .pl-mi em{ margin-left:auto; font:600 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); }
+  .pl-mic{ width:18px; text-align:center; flex:none; }
+  .pl-menu hr{ border:0; border-top:1px solid var(--line); margin:4px 0; }
+
+  /* ── Planner: open a whole day (2026-10-24) ── */
+  #calendarWrap .dicons .col-open-btn{ width:30px; height:30px; border-radius:10px; background:var(--surface) !important; border:1px solid var(--line) !important; color:var(--muted); display:grid; place-items:center; padding:0; cursor:pointer; }
+  #calendarWrap .dicons .col-open-btn:hover{ border-color:var(--primary) !important; color:var(--ink); background:var(--primary-soft,#FFF2D6) !important; }
+  .day-view-header .col-open-btn{ display:grid; place-items:center; }
+  .dm-scrim{ position:fixed; inset:0; z-index:47; display:grid; place-items:center; padding:16px; background:rgba(14,18,24,.45); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, visibility 0s linear .25s; }
+  .dm-scrim.open{ opacity:1; visibility:visible; pointer-events:auto; transition:opacity .25s ease; }
+  .dm-box{ width:min(1180px,100%); max-height:calc(100% - 16px); overflow:auto; overscroll-behavior:contain; background:var(--bg,#F6F1E6); border-radius:24px; box-shadow:0 30px 80px rgba(0,0,0,.35); transform:translateY(40px) scale(.94); opacity:0; transition:transform .45s cubic-bezier(.2,1.2,.3,1), opacity .3s ease; }
+  body.theme-dark .dm-box{ background:#0E1626; }
+  .dm-scrim.open .dm-box{ transform:none; opacity:1; }
+  .dm-head{ position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:16px; padding:18px 22px; background:var(--surface); border-bottom:1px solid var(--line); }
+  .dm-ring{ width:54px; height:54px; position:relative; flex:none; }
+  .dm-ring svg{ width:100%; height:100%; }
+  .dm-ring b{ position:absolute; inset:0; display:grid; place-items:center; font:800 12px Sora,sans-serif; color:var(--ink); }
+  .dm-t{ min-width:0; }
+  .dm-t b{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font:800 22px Sora,sans-serif; color:var(--ink); }
+  .dm-t b .dtoday{ margin:0; display:inline-block; padding:3px 8px; border-radius:999px; font:800 10px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; background:var(--primary); color:#241A08; }
+  .dm-t span{ display:block; font:500 13px Inter,sans-serif; color:var(--muted); margin-top:2px; }
+  .dm-x{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .dm-ib{ all:unset; cursor:pointer; box-sizing:border-box; width:38px; height:38px; border-radius:12px; border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--muted); font:700 18px Inter,sans-serif; }
+  .dm-ib:hover{ border-color:var(--primary); color:var(--ink); }
+  .dm-close{ font-size:15px; }
+  .dm-add{ white-space:nowrap; }
+  .dm-filters{ display:flex; gap:8px; flex-wrap:wrap; padding:14px 22px 0; }
+  .dm-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; padding:16px 22px 24px; }
+  @media (max-width:1000px){ .dm-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:560px){ .dm-grid{ grid-template-columns:1fr; padding-inline:16px; } .dm-filters{ padding-inline:16px; } .dm-head{ padding:14px 16px; flex-wrap:wrap; } .dm-t{ flex:1; } .dm-t b{ font-size:18px; } .dm-x{ margin-left:0; width:100%; } .dm-add{ margin-left:auto; } .dm-scrim{ padding:8px; } }
+  .dm-card{ all:unset; box-sizing:border-box; cursor:pointer; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; display:flex; flex-direction:column; gap:12px; min-height:180px; box-shadow:0 1px 0 var(--line); transition:box-shadow .15s ease, transform .15s ease; }
+  .dm-card:hover{ box-shadow:0 10px 26px rgba(22,25,27,.12); transform:translateY(-2px); }
+  .dm-card:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .dm-grid.anim .dm-card{ opacity:0; transform:translateY(18px) scale(.97); animation:dmCardIn .5s cubic-bezier(.2,1.1,.3,1) forwards; animation-delay:calc(var(--i) * 55ms + 120ms); }
+  @keyframes dmCardIn{ to{ opacity:1; transform:none; } }
+  .dm-top{ display:flex; align-items:flex-start; gap:12px; }
+  .dm-ic{ width:40px !important; height:40px !important; border-radius:12px !important; font-size:20px; }
+  .dm-ic .kicon.sb-ic{ width:40px !important; height:40px !important; border-radius:12px !important; }
+  .dm-ic .kicon.sb-ic svg{ width:20px !important; height:20px !important; }
+  .dm-ic:has(.sb-ic){ background:none !important; }
+  .dm-tick{ all:unset; cursor:pointer; box-sizing:border-box; margin-left:auto; width:32px; height:32px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; color:#fff; font:900 14px Inter,sans-serif; flex:none; transition:background .2s, border-color .2s, transform .15s; }
+  body.theme-dark .dm-tick{ border-color:rgba(255,255,255,.28); }
+  .dm-tick:hover{ border-color:#0F8A75; transform:scale(1.08); }
+  .dm-card.done .dm-tick{ background:#0F8A75; border-color:#0F8A75; animation:dmPop .3s ease; }
+  @keyframes dmPop{ 50%{ transform:scale(1.2); } }
+  .dm-nm{ font:700 16px/1.3 Inter,sans-serif; color:var(--ink); }
+  .dm-note{ font:500 12.5px/1.45 Inter,sans-serif; color:var(--muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .dm-tags{ display:flex; gap:6px; flex-wrap:wrap; }
+  .dm-tags .ktag{ font:700 11px Inter,sans-serif; border-radius:99px; padding:3px 8px; background:var(--surface-soft); color:var(--muted); border:0; }
+  .dm-tags .ktag.late, .dm-tags .ktag.hi{ background:#FDE4DF; color:#B42318; }
+  body.theme-dark .dm-tags .ktag.late, body.theme-dark .dm-tags .ktag.hi{ background:rgba(220,74,54,.22); color:#FF9C8A; }
+  .dm-steps{ display:flex; flex-direction:column; gap:6px; }
+  .dm-bar{ height:6px; border-radius:9px; background:var(--line); overflow:hidden; }
+  .dm-bar i{ display:block; height:100%; background:#F0A21A; border-radius:9px; }
+  .dm-steps small{ font:600 12px Inter,sans-serif; color:var(--muted); }
+  .dm-foot{ margin-top:auto; display:flex; align-items:center; gap:8px; padding-top:10px; border-top:1px solid var(--line); font:600 12px Inter,sans-serif; color:var(--muted); }
+  .dm-by{ color:#0F7A67; } body.theme-dark .dm-by{ color:#8FD9B5; }
+  .dm-ppl{ margin-left:auto; display:flex; }
+  .dm-ppl .task-avatar{ width:28px; height:28px; font-size:11px; }
+  .dm-card.late{ border-color:#D9473A; box-shadow:inset 0 0 0 1px #D9473A; }
+  .dm-card.late .dm-tick{ border-color:#D9473A; }
+  .dm-card.done{ background:transparent; border-style:dashed; box-shadow:none; }
+  .dm-card.done .dm-nm{ color:var(--muted); text-decoration:line-through; }
+  .dm-card.done .dm-ic{ opacity:.5; }
+  .dm-addc{ border:2px dashed var(--line); background:transparent; box-shadow:none; align-items:center; justify-content:center; color:var(--muted); font:700 14px Inter,sans-serif; text-align:center; }
+  .dm-addc span{ font-size:26px; line-height:1; }
+  .dm-addc:hover{ border-color:var(--primary); color:var(--ink); }
+  @media (prefers-reduced-motion:reduce){ .dm-box, .dm-scrim{ transition:opacity .2s ease !important; transform:none !important; } .dm-grid.anim .dm-card{ animation:none; opacity:1; transform:none; } }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4394,6 +4525,17 @@
     <button type="button" class="prep-addrow" id="prepSecAddRow">＋ Add another item</button>
     <p class="prep-tm-hint">Press Enter in an item to add the next one. Leave the items empty and the section is ticked on its own.</p>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepSecSave">Add section</button></div>
+  </div>
+</div>
+<div class="dm-scrim" id="dayView" aria-hidden="true">
+  <div class="dm-box" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
+    <div class="dm-head">
+      <span class="dm-ring" id="dmRing"></span>
+      <div class="dm-t"><b id="dmTitle"></b><span id="dmSub"></span></div>
+      <div class="dm-x"><button type="button" class="dm-ib" id="dmPrev" aria-label="Previous day" title="Previous day (←)">‹</button><button type="button" class="dm-ib" id="dmNext" aria-label="Next day" title="Next day (→)">›</button><button type="button" class="btn-app dm-add" id="dmAdd">＋ Add task</button><button type="button" class="dm-ib dm-close" id="dmClose" aria-label="Close" title="Close (Esc)">✕</button></div>
+    </div>
+    <div class="dm-filters" id="dmFilters" role="group" aria-label="Show"></div>
+    <div class="dm-grid" id="dmGrid"></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepTplsModal" role="dialog" aria-modal="true" aria-labelledby="prepTplsTitle">
@@ -9219,6 +9361,11 @@
       renderAll();
     });
     header.appendChild(nextDayBtn);
+    const openDayBtn = document.createElement('button');
+    openDayBtn.type = 'button'; openDayBtn.className = 'icon-btn col-open-btn'; openDayBtn.dataset.dayOpen = selectedKey;
+    openDayBtn.title = 'Open this day as big cards'; openDayBtn.setAttribute('aria-label', 'Open this day as big cards');
+    openDayBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+    header.appendChild(openDayBtn);
     const wxBig = buildWxCard(selectedKey, 'wide') || buildWxSetupChip('big');
     if(wxBig) header.appendChild(wxBig);
 
@@ -9773,7 +9920,7 @@
         head.innerHTML = `
           <div class="col-head-top">
             <span class="dtitles"><span class="dtitle" title="${formatFullWithWeekday(key)}">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i]}${isToday ? ' <span class="dtoday">Today</span>' : ''}${showOverdueFlag ? ` <span class="dlate" title="${openCount} task${openCount===1?'':'s'} still open from this day">${openCount} open</span>` : ''}</span><span class="dsub">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></span>
-            <span class="dicons"><button class="col-toggle-btn" title="Fold this day" aria-label="Fold this day"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></button></span>
+            <span class="dicons"><button type="button" class="col-open-btn" data-day-open="${key}" title="Open this day as big cards" aria-label="Open ${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][i]}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button class="col-toggle-btn" title="Fold this day" aria-label="Fold this day"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></button></span>
           </div>
           <div class="dprogress"><div class="dbar"><span style="width:${pct}%;"></span></div><span class="dfraction">${doneCount}/${dayTasks.length}</span></div>
           ${batchesForDate(key).length ? `<div class="col-batch-age">${batchesForDate(key).map(b=>`<span style="background:${colorForBatchNumber(b.number)}">#${escapeHtml(b.number)} · Day ${batchAgeOn(b, key)}</span>`).join('')}</div>` : ''}`;
@@ -10252,7 +10399,73 @@
       put(); requestAnimationFrame(put);
     }
   }
-  function renderAll(){ return keepScroll(renderAllNow); }
+
+  // ── Open a whole day (2026-10-24): every task of the day as big cards, 4 per row ──
+  let dayViewKey = null, dayViewFilter = 'all';
+  function openDayView(key){
+    dayViewKey = key; dayViewFilter = 'all';
+    const m = $('#dayView'); m.setAttribute('aria-hidden', 'false');
+    renderDayView(true);
+    requestAnimationFrame(()=> m.classList.add('open'));
+    setTimeout(()=>{ const c = $('#dmClose'); if(c) c.focus({ preventScroll:true }); }, 60);
+  }
+  function closeDayView(){ const m = $('#dayView'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); dayViewKey = null; }
+  function dayViewStep(d){ if(!dayViewKey) return; dayViewKey = addDaysStr(dayViewKey, d); dayViewFilter = 'all'; renderDayView(true); }
+  function renderDayView(animate){
+    const key = dayViewKey; if(!key) return;
+    const today = dateKey(new Date()), d = toDateObj(key);
+    const all = tasks.filter(t=> t.date === key).sort(taskSortCompare);
+    const done = all.filter(t=> t.status === 'done').length;
+    const isHi = t=> t.priority === 'high' && t.status !== 'done';
+    const F = [['all', 'All', all.length], ['todo', 'To do', all.length - done], ['done', 'Done', done], ['high', 'High', all.filter(isHi).length], ['prep', 'Shed prep', all.filter(t=> t.prep).length]];
+    if(!F.some(f=> f[0] === dayViewFilter && (f[0] === 'all' || f[2]))) dayViewFilter = 'all';
+    const list = all.filter(t=> dayViewFilter === 'all' || (dayViewFilter === 'todo' ? t.status !== 'done' : dayViewFilter === 'done' ? t.status === 'done' : dayViewFilter === 'high' ? isHi(t) : !!t.prep));
+    const C = 2 * Math.PI * 22, pct = all.length ? done / all.length : 0;
+    $('#dmRing').innerHTML = `<svg viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--line)" stroke-width="6"/><circle cx="27" cy="27" r="22" fill="none" stroke="${pct === 1 ? '#0F8A75' : '#F0A21A'}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(pct * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 27 27)"/></svg><b>${done}/${all.length}</b>`;
+    $('#dmTitle').innerHTML = `${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }))}${key === today ? ' <span class="dtoday">Today</span>' : ''}`;
+    const late = key < today ? all.length - done : 0, w = typeof wxForDate === 'function' ? wxForDate(key) : null;
+    $('#dmSub').textContent = [all.length ? `${all.length} task${all.length === 1 ? '' : 's'} · ${done} done` : 'Nothing planned yet', late ? `${late} still open` : '', w && w.max != null ? `${wxT(w.max)} / ${wxT(w.min)}` : ''].filter(Boolean).join(' · ');
+    $('#dmFilters').innerHTML = F.filter(f=> f[0] === 'all' || f[2]).map(([k, l, n])=> `<button type="button" class="prep-f${dayViewFilter === k ? ' on' : ''}" data-dm-f="${k}">${l} · ${n}</button>`).join('');
+    const grid = $('#dmGrid'); grid.classList.toggle('anim', !!animate);
+    grid.innerHTML = list.map((t, i)=>{
+      const tone = taskIconFor(t.name)[2], isDone = t.status === 'done', isLate = !isDone && t.date < today;
+      const tags = [isLate ? '<span class="ktag late">Overdue</span>' : '', isHi(t) ? '<span class="ktag hi">High</span>' : '', t.prep ? prepLabelHtml(t) : '', typeof isMaintTask === 'function' && isMaintTask(t) ? '<span class="ktag">Maintenance</span>' : '', t.seriesId ? '<span class="ktag">Repeats</span>' : ''].join('');
+      const sp = subProgress(t);
+      return `<div class="dm-card${isDone ? ' done' : ''}${isLate ? ' late' : ''}" data-dm-task="${escapeHtmlAttr(t.id)}" style="--i:${i}" tabindex="0" role="button" aria-label="${escapeHtmlAttr('Open ' + t.name)}">
+        <div class="dm-top"><span class="ktile ktile-${tone} dm-ic"><span class="kicon" data-dm-ic="${i}"></span></span><button type="button" class="dm-tick" data-dm-tick="${escapeHtmlAttr(t.id)}" aria-pressed="${isDone}" aria-label="${isDone ? 'Reopen' : 'Mark done'}" title="${isDone ? 'Reopen' : 'Mark done'}">${isDone ? '✓' : ''}</button></div>
+        <div class="dm-nm">${escapeHtml(t.name)}</div>
+        ${t.notes ? `<div class="dm-note">${escapeHtml(t.notes)}</div>` : ''}
+        ${tags ? `<div class="dm-tags">${tags}</div>` : ''}
+        ${sp.total ? `<div class="dm-steps"><span class="dm-bar"><i style="width:${Math.round(sp.done / sp.total * 100)}%"></i></span><small>${sp.done} of ${sp.total} steps</small></div>` : ''}
+        <div class="dm-foot">${isDone ? `<span class="dm-by">✓ ${escapeHtml(doneByText(t, true) || 'Done')}</span>` : `<span>${isLate ? 'Open since ' + escapeHtml(d.toLocaleDateString('en-GB', { weekday:'short' })) : 'Open'}</span>`}<span class="dm-ppl">${buildAssigneeAvatarsHtml(t.assignees)}</span></div>
+      </div>`; }).join('') + `<button type="button" class="dm-card dm-addc" id="dmAddCard" style="--i:${list.length}"><span>＋</span>Add a task to ${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'long' }))}</button>`;
+    list.forEach((t, i)=>{ const el = grid.querySelector(`[data-dm-ic="${i}"]`); if(el) renderTaskIcon(el, t.name, t.icon); });
+  }
+  (function wireDayView(){
+    const m = $('#dayView'); if(!m) return;
+    document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-day-open]'); if(!b) return; e.preventDefault(); e.stopPropagation(); openDayView(b.dataset.dayOpen); }, true);
+    document.addEventListener('dblclick', (e)=>{ const t = e.target.closest && e.target.closest('#calendarWrap .kanban-column .dtitles'); if(!t) return; const b = t.closest('.col-head').querySelector('[data-day-open]'); if(b) openDayView(b.dataset.dayOpen); });
+    m.addEventListener('click', (e)=>{
+      if(e.target === m){ closeDayView(); return; }
+      const g = sel=> e.target.closest(sel); let b;
+      if((b = g('[data-dm-tick]'))){ e.stopPropagation(); toggleDone(b.dataset.dmTick); return; }
+      if((b = g('[data-dm-f]'))){ dayViewFilter = b.dataset.dmF; renderDayView(true); return; }
+      if(g('#dmClose')){ closeDayView(); return; }
+      if(g('#dmPrev')){ dayViewStep(-1); return; }
+      if(g('#dmNext')){ dayViewStep(1); return; }
+      if(g('#dmAdd') || g('#dmAddCard')){ openCreateTaskModal(dayViewKey); return; }
+      if(g('.prep-lab')) return;
+      if((b = g('[data-dm-task]'))){ openTaskDetailModal(b.dataset.dmTask); return; }
+    });
+    m.addEventListener('keydown', (e)=>{ const c = e.target.closest && e.target.closest('[data-dm-task]'); if(c && e.target === c && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openTaskDetailModal(c.dataset.dmTask); } });
+    document.addEventListener('keydown', (e)=>{
+      if(!dayViewKey || document.querySelector('.form-modal.open, .modal.open, #plMenu')) return;
+      if(e.target.closest && e.target.closest('input, textarea, select')) return;
+      if(e.key === 'Escape'){ e.preventDefault(); closeDayView(); }
+      else if(e.key === 'ArrowLeft'){ dayViewStep(-1); } else if(e.key === 'ArrowRight'){ dayViewStep(1); }
+    });
+  })();
+  function renderAll(){ const r = keepScroll(renderAllNow); if(dayViewKey) renderDayView(false); return r; }
   function renderAllNow(){
     closeAllTaskMenus();
     renderManagerFields();
@@ -11514,6 +11727,7 @@
     });
     // "every day until done": an open prep task moves to today
     tasks.forEach(t=>{ if(t.prep && t.prep.daily && t.status !== 'done' && t.date && t.date < today){ t.date = today; changed = true; } });
+    if(prepSyncStructure()) changed = true;   // every shed follows the one checklist (2026-10-24)
     return changed;
   }
   function prepFromTask(t){
@@ -11534,7 +11748,7 @@
     document.querySelectorAll('#prepSeg [data-mlogmode]').forEach(b=>{ const on = b.dataset.mlogmode === mlogMode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     $('#mlogPage').classList.toggle('prep-mode', mlogMode === 'prep');
     $('#prepMain').hidden = mlogMode !== 'prep'; $('#mlogMain').hidden = mlogMode === 'prep';
-    $('#prepStdBtn').hidden = mlogMode !== 'prep'; $('#mlogAddBtn').hidden = mlogMode === 'prep';
+    $('#prepStdBtn').hidden = true; $('#mlogAddBtn').hidden = mlogMode === 'prep';
     const h = document.querySelector('#mlogPage .mlog-title h2'); if(h) h.textContent = mlogMode === 'prep' ? 'Shed preparation' : 'Routine Tracker';
   }
   function openPrepBoard(shed){
@@ -11680,19 +11894,20 @@
     return row;
   }
   function openPrepSecModal(cid){
-    const c = prepFind(cid); if(!c) return;
+    const c = cid === '__list' ? { isTpl:false, shed:'' } : prepFind(cid); if(!c) return;
     prepSecFor = cid;
-    $('#prepSecLab').textContent = c.isTpl ? `Template · ${$('#prepTplEdName').value || 'new'}` : `🧹 Shed ${c.shed} · Preparation`;
+    if(cid === '__list') $('#prepSecLab').textContent = '🧹 Every shed · Preparation'; else $('#prepSecLab').textContent = c.isTpl ? `Template · ${$('#prepTplEdName').value || 'new'}` : `🧹 Shed ${c.shed} · Preparation`;
     $('#prepSecName').value = '';
     const list = $('#prepSecItems'); list.innerHTML = ''; list.appendChild(prepSecRow('')); list.appendChild(prepSecRow(''));
     $('#prepSecModal').classList.add('open');
     setTimeout(()=> $('#prepSecName').focus(), 60);
   }
   function savePrepSec(){
-    const c = prepFind(prepSecFor); if(!c) return;
+    const c = prepSecFor === '__list' ? {} : prepFind(prepSecFor); if(!c) return;
     const name = $('#prepSecName').value.trim().replace(/\s+/g, ' ');
     if(!name){ showToast('Give the section a name.', true); $('#prepSecName').focus(); return; }
     const items = [...document.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
+    if(prepSecFor === '__list'){ if(prepAddSection(name, items)){ $('#prepSecModal').classList.remove('open'); prepSecFor = null; showToast(`Section "${name}" added for every shed.`); } return; }
     c.sections.push({ id: uid(), t: name, items: items.map(t=> prepMarkNew({ id: uid(), t, added: true })), added: true });
     prepHist(c, `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`);
     $('#prepSecModal').classList.remove('open'); prepSecFor = null;
@@ -11878,8 +12093,8 @@
     addHistory('Shed preparation', `Shed Preparation Checklist (Shed ${sh}) started${run ? ' early' : ''} from "${c.tpl}"`); prepPhoneShed = sh; persist(); renderAll();
   }
   function openPrepPick(sh){
+    startPrepChecklist(sh, null); return;   // one checklist for every shed (2026-10-24)
     const list = prepTemplates();
-    if(list.length < 2){ startPrepChecklist(sh, null); return; }
     prepPickShed = sh; prepPickTpl = prepTplDefault().id;
     $('#prepPickTitle').textContent = `Start Shed ${sh}'s checklist`;
     renderPrepPick(); $('#prepPickModal').classList.add('open');
@@ -11915,54 +12130,171 @@
     });
     board.addEventListener('scroll', fades); requestAnimationFrame(fades); fades();
   }
-  // List mode (2026-10-24): a table like the Routine Tracker — jobs down the left, all sheds across
-  let prepView = 'board';
-  try{ if(localStorage.getItem('cw-prep-view') === 'list') prepView = 'list'; }catch(e){}
+  // ── One checklist for the whole farm (2026-10-24) ──
+  // Every shed uses the same jobs: the default template is the one list. Adding, renaming, moving or removing a
+  // job or section changes it there and in every shed being prepared (matched by name, so ids never change).
+  // Only ticks, dates and tasks belong to a shed. Shown as one table: jobs down the left, all sheds across.
+  function prepLiveLists(){ return prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status !== 'ready'); }
+  function prepMaster(){ return prepParse(prepTplDefault().text).map(s=> ({ t: s.t, items: s.items.slice() })); }
+  function prepSaveMaster(m){
+    const def = prepTplDefault();
+    const text = m.map((s, i)=> [`${i + 1}. ${s.t}`].concat(s.items.map(x=> '- ' + x)).join('\n')).join('\n');
+    prepSaveTemplates([Object.assign({}, def, { text, at: dateKey(new Date()) })], def.id);
+  }
+  function prepMasterSec(m, t){ return m.find(s=> prepNorm(s.t) === prepNorm(t)); }
+  function prepSecOf(c, t){ return (c.sections || []).find(s=> prepNorm(s.t) === prepNorm(t)); }
+  function prepItemOf(sec, t){ return sec && (sec.items || []).find(x=> prepNorm(x.t) === prepNorm(t)); }
+  // the unit for a job in one checklist (a section with no jobs is ticked on its own)
+  function prepUnitByName(c, secT, jobT){ const sec = prepSecOf(c, secT); if(!sec) return null; return jobT == null ? ((sec.items || []).length ? null : sec) : prepItemOf(sec, jobT); }
+  function prepSyncStructure(){
+    let ch = false;
+    if(!settings.prepOneList){
+      // first run: the sheds being prepared now are combined into the one list (ticks stay)
+      const lists = prepLiveLists();
+      if(lists.length){
+        const m = [];
+        lists.forEach(c=> (c.sections || []).forEach(sec=>{ let S = prepMasterSec(m, sec.t); if(!S){ S = { t: sec.t, items: [] }; m.push(S); }
+          (sec.items || []).forEach(it=>{ if(!S.items.some(x=> prepNorm(x) === prepNorm(it.t))) S.items.push(it.t); }); }));
+        prepSaveMaster(m);
+      } else if(prepTemplates().length > 1) prepSaveMaster(prepMaster());
+      settings.prepOneList = true; ch = true;
+    }
+    const m = prepMaster();
+    const ord = (arr, keys)=>{ const was = arr.map(x=> x.t).join('\u0001');
+      arr.sort((a, b)=>{ const ia = keys.indexOf(prepNorm(a.t)), ib = keys.indexOf(prepNorm(b.t)); return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib); });
+      return was !== arr.map(x=> x.t).join('\u0001'); };
+    prepLiveLists().forEach(c=>{
+      c.sections = c.sections || [];
+      m.forEach(S=>{
+        let sec = prepSecOf(c, S.t);
+        if(!sec){ sec = { id: uid(), t: S.t, items: [] }; c.sections.push(sec); ch = true; }
+        S.items.forEach(t=>{ if(!prepItemOf(sec, t)){ (sec.items = sec.items || []).push({ id: uid(), t }); delete sec.done; delete sec.taskId; ch = true; } });
+      });
+      if(ord(c.sections, m.map(S=> prepNorm(S.t)))) ch = true;
+      c.sections.forEach(sec=>{ const S = prepMasterSec(m, sec.t); if(S && (sec.items || []).length && ord(sec.items, S.items.map(prepNorm))) ch = true; });
+    });
+    return ch;
+  }
+  function prepStructDone(msg){ prepSyncStructure(); if(msg) addHistory('Shed preparation', msg); persist(); renderAll(); }
+  function prepAddJob(secT, t){
+    t = String(t || '').trim().replace(/\s+/g, ' '); if(!t) return false;
+    const m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return false;
+    if(S.items.some(x=> prepNorm(x) === prepNorm(t))){ showToast(`"${t}" is already in ${S.t}.`, true); return false; }
+    S.items.push(t); prepSaveMaster(m); prepStructDone(`Checklist: added "${t}" to ${S.t}`); return true;
+  }
+  function prepAddSection(name, items){
+    const m = prepMaster(); if(prepMasterSec(m, name)){ showToast(`There is already a section called "${name}".`, true); return false; }
+    m.push({ t: name, items: [...new Set(items)] }); prepSaveMaster(m); prepStructDone(`Checklist: added section "${name}"`); return true;
+  }
+  function prepRenameJob(secT, oldT, newT){
+    newT = String(newT || '').trim().replace(/\s+/g, ' '); if(!newT || newT === oldT) return;
+    const m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
+    if(S.items.some(x=> prepNorm(x) === prepNorm(newT) && prepNorm(x) !== prepNorm(oldT))){ showToast(`"${newT}" is already in ${S.t}.`, true); return; }
+    const i = S.items.findIndex(x=> prepNorm(x) === prepNorm(oldT)); if(i < 0) return; S.items[i] = newT; prepSaveMaster(m);
+    prepLiveLists().forEach(c=>{ const it = prepItemOf(prepSecOf(c, secT), oldT); if(it){ it.t = newT; if(it.taskId){ const tk = tasks.find(x=> x.id === it.taskId); if(tk) tk.name = newT; } } });
+    prepStructDone(`Checklist: "${oldT}" renamed to "${newT}"`);
+  }
+  function prepRenameSection(oldT, newT){
+    newT = String(newT || '').trim().replace(/\s+/g, ' '); if(!newT || newT === oldT) return;
+    const m = prepMaster(), S = prepMasterSec(m, oldT); if(!S) return;
+    if(m.some(x=> x !== S && prepNorm(x.t) === prepNorm(newT))){ showToast(`There is already a section called "${newT}".`, true); return; }
+    S.t = newT; prepSaveMaster(m);
+    prepLiveLists().forEach(c=>{ const sec = prepSecOf(c, oldT); if(sec) sec.t = newT; });
+    if(prepSecFold.has(prepNorm(oldT))){ prepSecFold.delete(prepNorm(oldT)); prepSecFold.add(prepNorm(newT)); prepSecFoldSave(); }
+    prepStructDone(`Checklist: section "${oldT}" renamed to "${newT}"`);
+  }
+  function prepRemoveJob(secT, jobT){
+    const m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
+    const withTask = prepLiveLists().filter(c=>{ const it = prepItemOf(prepSecOf(c, secT), jobT); return it && it.taskId; }).length;
+    if(!confirm(`Remove "${jobT}" from the checklist? It goes from every shed${withTask ? ` (its ${withTask} task${withTask === 1 ? '' : 's'} stay on the calendar without the label)` : ''}.`)) return;
+    S.items = S.items.filter(x=> prepNorm(x) !== prepNorm(jobT)); prepSaveMaster(m);
+    prepLiveLists().forEach(c=>{ const sec = prepSecOf(c, secT); if(!sec) return;
+      (sec.items || []).forEach(it=>{ if(prepNorm(it.t) === prepNorm(jobT) && it.taskId){ const tk = tasks.find(x=> x.id === it.taskId); if(tk) delete tk.prep; } });
+      sec.items = (sec.items || []).filter(it=> prepNorm(it.t) !== prepNorm(jobT)); });
+    prepStructDone(`Checklist: removed "${jobT}"`);
+  }
+  function prepRemoveSection(secT){
+    const m = prepMaster(); if(!prepMasterSec(m, secT)) return;
+    if(!confirm(`Delete the section "${secT}" and all its jobs from the checklist? It goes from every shed.`)) return;
+    prepSaveMaster(m.filter(s=> prepNorm(s.t) !== prepNorm(secT)));
+    prepLiveLists().forEach(c=>{ const sec = prepSecOf(c, secT); if(!sec) return;
+      prepUnits({ sections: [sec] }).forEach(({ u })=>{ if(u.taskId){ const tk = tasks.find(x=> x.id === u.taskId); if(tk) delete tk.prep; } });
+      c.sections = c.sections.filter(s=> s !== sec); });
+    prepStructDone(`Checklist: removed section "${secT}"`);
+  }
+  function prepMoveJob(secT, jobT, d){
+    const m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return; const i = S.items.findIndex(x=> prepNorm(x) === prepNorm(jobT)), j = i + d;
+    if(i < 0 || j < 0 || j >= S.items.length) return; [S.items[i], S.items[j]] = [S.items[j], S.items[i]]; prepSaveMaster(m); prepStructDone();
+  }
+  function prepMoveSection(secT, d){
+    const m = prepMaster(); const i = m.findIndex(s=> prepNorm(s.t) === prepNorm(secT)), j = i + d;
+    if(i < 0 || j < 0 || j >= m.length) return; [m[i], m[j]] = [m[j], m[i]]; prepSaveMaster(m); prepStructDone();
+  }
+  // view settings (this device): folded sections, one shed only
+  let prepSecFold = new Set(), prepOnlyShed = null;
+  try{ prepSecFold = new Set(JSON.parse(localStorage.getItem('cw-prep-secfold') || '[]')); }catch(e){}
+  function prepSecFoldSave(){ try{ localStorage.setItem('cw-prep-secfold', JSON.stringify([...prepSecFold])); }catch(e){} }
+  const PL_DOTS = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  const PL_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+  const PL_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
   function prepListHtml(sheds){
-    const norm = t=> String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
-    const cols = sheds.map(sh=>{ const c = prepActiveFor(sh); return { sh, c, run: !c && prepShedRun(sh) }; });
-    // one row per job, matched across sheds by section name + job name, in the order they first appear
+    const enc = x=> escapeHtmlAttr(x);
+    const cols = sheds.filter(sh=> !prepOnlyShed || sh === prepOnlyShed).map(sh=>{ const c = prepActiveFor(sh); return { sh, c, run: !c && prepShedRun(sh) }; });
+    // rows: the one checklist, then anything a shed still has that the list doesn't (an older device may add one)
     const secs = [], secBy = {};
-    cols.forEach(col=>{ if(!col.c) return; prepUnits(col.c).forEach(({ sec, u })=>{
-      const sk = norm(sec.t); let S = secBy[sk]; if(!S){ S = secBy[sk] = { t: sec.t, rows: [], by: {} }; secs.push(S); }
-      const rk = u === sec ? '§' : norm(u.t); let R = S.by[rk]; if(!R){ R = S.by[rk] = { t: u === sec ? sec.t : u.t, own: u === sec, cells: {} }; S.rows.push(R); }
-      if(!R.cells[col.sh]) R.cells[col.sh] = u; }); });
+    const addRow = (secT, jobT, own)=>{ const sk = prepNorm(secT); let S = secBy[sk]; if(!S){ S = secBy[sk] = { t: secT, rows: [], by: {} }; secs.push(S); }
+      if(jobT == null) return S; const rk = own ? '§' : prepNorm(jobT); if(!S.by[rk]){ S.by[rk] = { t: jobT, own }; S.rows.push(S.by[rk]); } return S; };
+    prepMaster().forEach(S=>{ addRow(S.t, null); if(S.items.length) S.items.forEach(t=> addRow(S.t, t, false)); else addRow(S.t, S.t, true); });
+    cols.forEach(col=>{ if(col.c) prepUnits(col.c).forEach(({ sec, u })=> addRow(sec.t, u === sec ? sec.t : u.t, u === sec)); });
+    secs.forEach(S=>{ if(S.rows.length > 1) S.rows = S.rows.filter(R=> !R.own); });   // a section that has jobs isn't ticked on its own
     const shortD = k=> k ? toDateObj(k).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+    const unitFor = (col, S, R)=> col.c ? prepUnitByName(col.c, S.t, R.own ? null : R.t) : null;
     const head = `<tr><th class="pl-job">Job</th>${cols.map(({ sh, c, run })=>{
-      if(!c) return `<th class="pl-sh off"><div class="pl-shh"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></div></th>`;
+      if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}"><div class="pl-shh"><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span></div></th>`; }).join('')}</tr>`;
+      const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
+      const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
       const rowsHtml = S.rows.map(R=>{
-        const cells = cols.map(col=>{ const u = R.cells[col.sh];
+        const us = cols.map(col=> ({ col, u: unitFor(col, S, R) })).filter(x=> x.u);
+        const cells = cols.map(col=>{ const u = unitFor(col, S, R);
           if(!col.c) return '<td class="pl-c off"></td>';
-          if(!u) return '<td class="pl-c"><span class="pl-na" title="Not on this shed\'s checklist">—</span></td>';
+          if(!u) return '<td class="pl-c"><span class="pl-na" title="Not in this shed\'s list yet">—</span></td>';
           const f = prepUnitFlags(col.c, u), tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
           const k = u.done ? 'done' : f.late ? 'late' : tk ? 'task' : u.due ? 'due' : '';
           const lab = u.done ? (u.doneBy || 'Done') : f.late ? shortD(tk ? tk.date : u.due) + ' · late' : tk ? 'Task ' + shortD(tk.date) : u.due ? shortD(u.due) : '';
-          return `<td class="pl-c"><button type="button" class="pl-cell ${k}" data-prep-tick="${escapeHtmlAttr(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${escapeHtmlAttr((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${escapeHtmlAttr('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : ''))}"${col.c.status === 'ready' ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}</td>`; }).join('');
-        const us = Object.entries(R.cells).map(([sh, u])=> ({ u, c: cols.find(x=> x.sh === sh).c }));
-        const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.c, x.u));
-        const cls = [us.every(x=> x.u.done) ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
-        return `<tr class="pl-row ${cls}"><td class="pl-job"><b>${escapeHtml(R.t)}</b><span>${dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></td>${cells}</tr>`; }).join('');
-      const tot = S.rows.reduce((a, R)=> a + Object.keys(R.cells).length, 0), dn = S.rows.reduce((a, R)=> a + Object.values(R.cells).filter(u=> u.done).length, 0);
-      body += `<tbody class="pl-sec"><tr class="pl-sech"><td class="pl-job">${escapeHtml(S.t)}<em>${dn} of ${tot} done</em></td><td colspan="${cols.length}"></td></tr>${rowsHtml}</tbody>`;
+          const ro = col.c.status === 'ready';
+          return `<td class="pl-c"><button type="button" class="pl-cell ${k}" data-prep-tick="${enc(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${enc((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${enc('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : ''))}"${ro ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}${ro ? '' : `<button type="button" class="pl-cdot" data-pl-cellmenu="${enc(col.c.id + '|' + u.id)}" aria-label="${enc('More for ' + R.t + ' in Shed ' + col.sh)}" title="Date it, put it on the task list…">${PL_DOTS}</button>`}</td>`; }).join('');
+        const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.col.c, x.u));
+        const cls = [us.length && dn === us.length ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
+        const key = enc(S.t + '|' + (R.own ? '' : R.t));
+        return `<tr class="pl-row ${cls}" data-pl-job="${key}"><td class="pl-job"><div class="pl-jr">${R.own ? '' : '<span class="pl-grip" title="Drag to move" aria-hidden="true">⋮⋮</span>'}<div class="pl-jn">${R.own ? `<b>${escapeHtml(R.t)}</b>` : `<b role="button" tabindex="0" data-pl-renjob="${key}" title="Click to rename">${escapeHtml(R.t)}</b>`}<span>${!us.length ? 'No shed being prepared' : dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></div><button type="button" class="pl-mini pl-ract" data-pl-jobmenu="${key}" aria-label="${enc('More for ' + R.t)}" title="Rename, date it in every shed, remove…">${PL_DOTS}</button></div></td>${cells}</tr>`; }).join('');
+      let tot = 0, dn = 0, due = null;
+      cols.forEach(col=>{ if(!col.c) return; S.rows.forEach(R=>{ const u = unitFor(col, S, R); if(u){ tot++; if(u.done) dn++; } }); const sec = prepSecOf(col.c, S.t); if(sec && sec.due && (!due || sec.due < due)) due = sec.due; });
+      const own = S.rows.length === 1 && S.rows[0].own;
+      body += `<tbody class="pl-sec${folded ? ' folded' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr"><span class="pl-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span>${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? dn + ' of ' + tot + ' done' : ''}</em>${due ? `<button type="button" class="pl-sd" data-pl-secdate="${sk}" title="Section date — click to change">📅 ${escapeHtml(shortD(due))}</button>` : `<button type="button" class="pl-mini" data-pl-secdate="${sk}" title="Give this section a date">${PL_CAL}</button>`}<button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td><td class="pl-secfill" colspan="${cols.length}"></td></tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
     });
-    if(!secs.length) return '<div class="pl-empty">No shed is being prepared right now. A checklist appears when a shed is closed in Production.</div>';
-    return `<div class="pl-wrap" data-filter="${prepFilter}"><table class="pl-tab"><thead>${head}</thead>${body}</table></div>
-      <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="due"></i>Dated</span><span><i class="task"></i>On the task list</span><span><i></i>Not started</span><span>Tap a cell to tick that job for that shed · — means it isn't on that shed's checklist</span></div>`;
+    const foot = `<tfoot><tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
+      if(!c) return `<td><button type="button" class="pl-rdy st" data-prep-start="${enc(sh)}" title="Start Shed ${enc(sh)}'s checklist early">＋ Start</button></td>`;
+      if(c.status === 'ready') return `<td><button type="button" class="pl-rdy ok" data-prep-unready="${enc(c.id)}" title="${enc('Ready' + (c.readyBy ? ' — signed off by ' + c.readyBy : '') + '. Click to reopen')}">✓ Ready</button></td>`;
+      const pr = prepProgress(c), left = pr.total - pr.done;
+      return `<td>${left ? `<button type="button" class="pl-rdy" disabled title="${left} job${left === 1 ? '' : 's'} still open">${left} left</button>` : `<button type="button" class="pl-rdy go" data-prep-ready="${enc(c.id)}">Mark ready</button>`}</td>`; }).join('')}</tr></tfoot>`;
+    const addSec = `<tbody class="pl-end"><tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj sec" data-pl-addsec>＋ Add a section</button></td><td colspan="${cols.length}"></td></tr></tbody>`;
+    return `<div class="pl-wrap" data-filter="${prepFilter}"><table class="pl-tab"><thead>${head}</thead>${body}${addSec}${foot}</table></div>
+      <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="due"></i>Dated</span><span><i class="task"></i>On the task list</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · one checklist for every shed</span></div>`;
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
     const sheds = prepShedList();
+    if(prepOnlyShed && !sheds.includes(prepOnlyShed)) prepOnlyShed = null;
     const active = sheds.filter(sh=> prepActiveFor(sh)), others = sheds.filter(sh=> !prepActiveFor(sh));
     const list = active.map(sh=> prepActiveFor(sh));
     const open = prepOpenList().length, ready = list.filter(c=> c.status === 'ready').length;
     const running = others.filter(sh=> prepShedRun(sh)).length;
     $('#mlogSub').textContent = [ghFarmName, `${open} preparing · ${ready} ready · ${running} running`].filter(Boolean).join(' · ');
-    if(!prepPhoneShed || !sheds.includes(prepPhoneShed)) prepPhoneShed = active[0] || sheds[0];
     // summary
     let done = 0, total = 0, late = 0, week = 0; list.forEach(c=>{ const p = prepProgress(c); done += p.done; total += p.total; prepUnits(c).forEach(x=>{ const f = prepUnitFlags(c, x.u); if(f.late) late++; if(f.week) week++; }); });
     const firstChicks = list.map(c=> c.nextPlacement).filter(Boolean).sort()[0];
@@ -11970,24 +12302,140 @@
     const sum = list.length ? `<div class="prep-sum2"><div><h3>${list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : list.length + ' sheds are'} being prepared</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
         <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
-    const phone = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
-    const isF = sh=> !phone && prepColFold.has(String(sh)), allF = sheds.length && sheds.every(isF);
-    const viewSeg = `<span class="prep-viewseg" role="group" aria-label="View"><button type="button" data-prep-view="board"${prepView === 'board' ? ' class="on"' : ''}>Board</button><button type="button" data-prep-view="list"${prepView === 'list' ? ' class="on"' : ''}>List</button></span>`;
-    const foldAll = phone || prepView === 'list' ? '' : `<button type="button" class="prep-f prep-colall" data-prep-colfoldall="${allF ? '0' : '1'}" title="${allF ? 'Open every shed column again' : 'Fold every shed column to a thin strip'}">↔ ${allF ? 'Unfold all sheds' : 'Fold all sheds'}</button>`;
-    const bar = `<div class="prep-bar2">${list.length ? `<div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}</div>` : ''}<span class="prep-bar-sp"></span>${foldAll}${viewSeg}</div>`;
-    const gridCols = sheds.map(sh=> isF(sh) ? '58px' : '340px').join(' ');
-    // every shed is a column: the ones being prepared with their checklist, the rest running or empty
-    const tabs = `<div class="prep-tabs">${sheds.map(sh=>{ const c = prepActiveFor(sh), st = c ? (c.status === 'ready' ? 'ready' : 'prep') : prepShedRun(sh) ? 'run' : 'idle'; return `<button type="button" class="prep-tab ${st}${sh === prepPhoneShed ? ' on' : ''}" data-prep-tab="${escapeHtmlAttr(sh)}">S${escapeHtml(sh)}</button>`; }).join('')}</div>`;
-    const CHEV = d=> `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-    const main = `${tabs}<div class="kanban-canvas prep-canvas"><div class="kanban-fade kanban-fade-left"></div><div class="kanban-fade kanban-fade-right"></div><button type="button" class="kanban-nav kanban-nav-left" data-prep-pan="-1" aria-label="Scroll to earlier sheds" title="Scroll to earlier sheds">${CHEV('M15 6l-6 6 6 6')}</button><button type="button" class="kanban-nav kanban-nav-right" data-prep-pan="1" aria-label="Scroll to later sheds" title="Scroll to later sheds">${CHEV('M9 6l6 6-6 6')}</button><div class="prep-board prep-board2" data-filter="${prepFilter}" data-phone-shed="${escapeHtmlAttr(prepPhoneShed)}" style="--cols:${sheds.length};${phone ? '' : 'grid-template-columns:' + gridCols}">${sheds.map(sh=> isF(sh) ? prepColFoldedHtml(sh) : prepColHtml(sh)).join('')}</div></div><style>@media (max-width:760px){ #prepMain .prep-col[data-prep-col="${CSS.escape(prepPhoneShed)}"]{ display:flex; } }</style>`;
-    if(prepView === 'list'){ box.innerHTML = sum + bar + prepListHtml(sheds); box.classList.add('pl-mode'); return; }
-    box.classList.remove('pl-mode');
-    box.innerHTML = sum + bar + main;
-    prepWireCanvas(box);
-    if($('#prepTplEdModal').classList.contains('open')) renderPrepTplEd();
-    prepSetupSort([box, $('#prepTplEdModal').classList.contains('open') ? $('#prepTplEdBoard') : null]);
-    if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = document.querySelector(`[data-prep-add="${CSS.escape(k)}"]`); if(btn) prepStartAdd(btn); }
+    const allF = prepMaster().every(S=> prepSecFold.has(prepNorm(S.t)));
+    const foldAll = `<button type="button" class="prep-foldall pl-foldall" data-pl-foldall="${allF ? '0' : '1'}" title="${allF ? 'Unfold all sections' : 'Fold all sections'}" aria-label="${allF ? 'Unfold all sections' : 'Fold all sections'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${allF ? 'm7 15 5 5 5-5M7 9l5-5 5 5' : 'm7 20 5-5 5 5M7 4l5 5 5-5'}"/></svg></button>`;
+    const only = prepOnlyShed ? `<button type="button" class="prep-f on pl-only" data-pl-only="" title="Show every shed again">Shed ${escapeHtml(prepOnlyShed)} only ✕</button>` : '';
+    const bar = `<div class="prep-bar2"><div class="prep-fl">${F.map(([k,l])=> `<button type="button" class="prep-f${prepFilter === k ? ' on' : ''}" data-prep-f="${k}">${l}</button>`).join('')}${only}</div><span class="prep-bar-sp"></span>${foldAll}</div>`;
+    box.innerHTML = sum + bar + prepListHtml(sheds); box.classList.add('pl-mode');
+    prepListSort(box);
+    if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = box.querySelector(`[data-pl-addjob="${CSS.escape(k)}"]`); if(btn) plStartAddJob(btn); }
   }
+  // drag ⋮⋮ to move a job inside its section, or a whole section
+  function prepListSort(box){
+    prepSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); prepSortables = [];
+    if(typeof Sortable === 'undefined') return;
+    const tab = box.querySelector('.pl-tab'); if(!tab) return;
+    prepSortables.push(Sortable.create(tab, { draggable:'tbody.pl-sec', handle:'.pl-grip.sec', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
+        m.sort((a, b)=> order.indexOf(prepNorm(a.t)) - order.indexOf(prepNorm(b.t))); prepSaveMaster(m); prepStructDone(); } }));
+    tab.querySelectorAll('tbody.pl-sec').forEach(tb=>{
+      prepSortables.push(Sortable.create(tb, { draggable:'tr.pl-row', handle:'.pl-grip:not(.sec)', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+        onEnd: ()=>{ const secT = tb.dataset.plSec, m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
+          const order = [...tb.querySelectorAll('tr.pl-row')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
+          S.items.sort((a, b)=> order.indexOf(prepNorm(a)) - order.indexOf(prepNorm(b))); prepSaveMaster(m); prepStructDone(); } }));
+    });
+  }
+  // inline add and rename, like ＋ Add task
+  function plStartAddJob(btn){
+    const secT = btn.dataset.plAddjob;
+    const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'pl-addin'; inp.maxLength = 100; inp.placeholder = 'Type the job and press Enter'; inp.setAttribute('aria-label', 'New job in ' + secT);
+    btn.replaceWith(inp); inp.focus();
+    let done = false;
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); const v = inp.value; if(!v.trim()) return; done = true; prepAddAgain = secT; if(!prepAddJob(secT, v)){ prepAddAgain = null; done = false; } }
+      else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; renderAll(); }
+    });
+    inp.addEventListener('blur', ()=>{ if(done) return; done = true; if(inp.value.trim()) prepAddJob(secT, inp.value); else renderAll(); });
+  }
+  function plStartRename(el, save){
+    const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'pl-renin'; inp.maxLength = 100; inp.value = el.textContent; inp.setAttribute('aria-label', 'New name');
+    el.replaceWith(inp); inp.focus(); inp.select();
+    let done = false;
+    const finish = ok=>{ if(done) return; done = true; if(ok && inp.value.trim() && inp.value.trim() !== el.textContent) save(inp.value); else renderAll(); };
+    inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); finish(true); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); } });
+    inp.addEventListener('blur', ()=> finish(true));
+  }
+  // small menus (shed, job, cell, section)
+  function plCloseMenu(){ const m = document.getElementById('plMenu'); if(m) m.remove(); document.querySelectorAll('.pl-menu-on').forEach(x=> x.classList.remove('pl-menu-on')); }
+  function plMenu(anchor, title, sub, items){
+    plCloseMenu();
+    const m = document.createElement('div'); m.id = 'plMenu'; m.className = 'pl-menu'; m.setAttribute('role', 'menu');
+    m.innerHTML = `<div class="pl-mh"><b>${escapeHtml(title)}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>` + items.map((it, i)=> it === '-' ? '<hr>' : it.info ? `<div class="pl-mi info"><span class="pl-mic">${it.ic || ''}</span>${escapeHtml(it.label)}</div>` : `<button type="button" role="menuitem" class="pl-mi${it.danger ? ' dan' : ''}" data-i="${i}"${it.disabled ? ' disabled' : ''}><span class="pl-mic">${it.ic || ''}</span><span>${escapeHtml(it.label)}</span>${it.note ? `<em>${escapeHtml(it.note)}</em>` : ''}</button>`).join('');
+    document.body.appendChild(m); anchor.classList.add('pl-menu-on');
+    const r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    let x = Math.min(Math.max(8, r.left), innerWidth - w - 8), y = r.bottom + 6; if(y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    m.style.left = x + 'px'; m.style.top = y + 'px';
+    m.addEventListener('click', (e)=>{ const b = e.target.closest('[data-i]'); if(!b || b.disabled) return; const it = items[+b.dataset.i]; plCloseMenu(); it.act(); });
+    const first = m.querySelector('button.pl-mi:not([disabled])'); if(first) first.focus({ preventScroll:true });
+  }
+  document.addEventListener('pointerdown', (e)=>{ const m = document.getElementById('plMenu'); if(m && !m.contains(e.target) && !e.target.closest('.pl-menu-on')) plCloseMenu(); }, true);
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && document.getElementById('plMenu')){ e.stopPropagation(); plCloseMenu(); } }, true);
+  window.addEventListener('resize', plCloseMenu);
+  // the same date/task window, for one job in every shed (or a section in every shed)
+  function prepJobTargets(secT, jobT, forTask){
+    return prepLiveLists().map(c=> ({ c, u: prepUnitByName(c, secT, jobT) })).filter(x=> x.u && !x.u.done && !(forTask && x.u.taskId)).map(x=> ({ cid: x.c.id, id: x.u.id }));
+  }
+  function prepOpenMulti(list, kind){
+    if(!list.length){ showToast('Nothing open to date — every shed has done it already.'); return; }
+    prepTaskKindLast = kind; openPrepTaskModal(list[0].cid, list[0].id); prepTaskKind = kind;
+    prepTaskFor.multi = list.slice(1); prepSyncTaskModal();
+    const n = list.length; if(n > 1) $('#prepTaskLab').textContent = `🧹 ${n} sheds · Preparation`;
+  }
+  function plClick(e){
+    const g = sel=> e.target.closest(sel); let b;
+    if((b = g('[data-pl-fold]'))){ const k = prepNorm(b.dataset.plFold); if(prepSecFold.has(k)) prepSecFold.delete(k); else prepSecFold.add(k); prepSecFoldSave(); renderPrepBoard(); return true; }
+    if((b = g('[data-pl-foldall]'))){ if(b.dataset.plFoldall === '1') prepMaster().forEach(S=> prepSecFold.add(prepNorm(S.t))); else prepSecFold.clear(); prepSecFoldSave(); renderPrepBoard(); return true; }
+    if((b = g('[data-pl-only]'))){ prepOnlyShed = b.dataset.plOnly || null; renderPrepBoard(); return true; }
+    if((b = g('[data-pl-addjob]'))){ plStartAddJob(b); return true; }
+    if((b = g('[data-pl-addsec]'))){ openPrepSecModal('__list'); return true; }
+    if((b = g('[data-pl-renjob]'))){ const [s, j] = b.dataset.plRenjob.split('|'); plStartRename(b, v=> prepRenameJob(s, j, v)); return true; }
+    if((b = g('[data-pl-rensec]'))){ const s = b.dataset.plRensec; plStartRename(b, v=> prepRenameSection(s, v)); return true; }
+    if((b = g('[data-pl-secdate]'))){ const s = b.dataset.plSecdate; const t = prepLiveLists().map(c=> ({ c, sec: prepSecOf(c, s) })).filter(x=> x.sec);
+      if(!t.length){ showToast('No shed is being prepared — dates go on a shed\'s jobs.'); return true; }
+      openPrepSecDateModal(t[0].c.id, t[0].sec.id); prepTaskFor.multi = t.slice(1).map(x=> ({ cid: x.c.id, id: x.sec.id, sec: true }));
+      if(t.length > 1) $('#prepTaskLab').textContent = `🧹 ${t.length} sheds · Preparation`; return true; }
+    if((b = g('[data-pl-shmenu]'))){ const sh = b.dataset.plShmenu, c = prepActiveFor(sh);
+      if(!c){ plMenu(b, `Shed ${sh}`, prepShedRun(sh) ? 'Running — the checklist starts when it closes in Production' : 'Empty', [
+        { ic:'＋', label:'Start the checklist early', act: ()=> startPrepChecklist(sh, null) },
+        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; renderPrepBoard(); } }]); return true; }
+      const pr = prepProgress(c), left = pr.total - pr.done;
+      plMenu(b, `Shed ${sh}`, [c.closedAt ? 'Closed ' + prepFmt(c.closedAt) : 'Started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : ''].filter(Boolean).join(' · '), [
+        c.status === 'ready' ? { ic:'↺', label:'Reopen', act: ()=> plAct('unready', c.id) }
+          : { ic:'✓', label:'Mark shed ready', note: left ? left + ' job' + (left === 1 ? '' : 's') + ' left' : '', disabled: !!left, act: ()=> plAct('ready', c.id) },
+        { info:true, ic:'📅', label: c.nextPlacement ? 'Chicks ' + prepFmt(c.nextPlacement) + ' (from Production)' : 'Chicks date comes from Production' },
+        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; renderPrepBoard(); } },
+        '-',
+        { ic:'↺', label:'Clear this shed\'s ticks', danger:true, disabled: c.status === 'ready', act: ()=>{
+          const us = prepUnits(c).filter(x=> x.u.done && !x.u.taskId); if(!us.length){ showToast('Nothing to clear.'); return; }
+          if(!confirm(`Clear ${us.length} tick${us.length === 1 ? '' : 's'} in Shed ${sh}? Jobs on the task list keep their task.`)) return;
+          us.forEach(({ u })=>{ u.done = false; delete u.doneBy; delete u.doneAt; }); addHistory('Shed preparation', `Shed ${sh}: ticks cleared`); persist(); renderAll(); } }]);
+      return true; }
+    if((b = g('[data-pl-cellmenu]'))){ const [cid, id] = b.dataset.plCellmenu.split('|'); const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return true;
+      const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
+      plMenu(b, `${u.t} · Shed ${c.shed}`, u.done ? 'Done' + (u.doneBy ? ' by ' + u.doneBy : '') : tk ? 'On the task list · ' + prepFmt(tk.date) : u.due ? 'Dated ' + prepFmt(u.due) : 'Not started', [
+        { ic: u.done ? '↺' : '✓', label: u.done ? 'Untick it' : 'Tick it', act: ()=> prepToggleUnit(cid, id) },
+        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'📅', label: u.due ? 'Change the date' : 'Date it', disabled: u.done, act: ()=>{ prepTaskKindLast = 'date'; openPrepTaskModal(cid, id); prepTaskKind = 'date'; prepSyncTaskModal(); } },
+        tk ? null : { ic:'☑', label:'Put it on the task list', disabled: u.done, act: ()=>{ prepTaskKindLast = 'task'; openPrepTaskModal(cid, id); prepTaskKind = 'task'; prepSyncTaskModal(); } }].filter(Boolean));
+      return true; }
+    if((b = g('[data-pl-jobmenu]'))){ const [s, j] = b.dataset.plJobmenu.split('|'); const own = !j, jobT = own ? null : j;
+      const m = prepMaster(), S = prepMasterSec(m, s), i = S && !own ? S.items.findIndex(x=> prepNorm(x) === prepNorm(j)) : -1;
+      const open = prepJobTargets(s, jobT, false);
+      plMenu(b, own ? s : j, 'Same job in every shed', [
+        own ? null : { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-renjob="${CSS.escape(s + '|' + j)}"]`); if(el) plStartRename(el, v=> prepRenameJob(s, j, v)); } },
+        { ic:'📅', label:'Date it in every shed', disabled: !open.length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'date') },
+        { ic:'☑', label:'Put on the task list for every shed', disabled: !prepJobTargets(s, jobT, true).length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'task') },
+        { ic:'✓', label:'Tick it in every shed', disabled: !open.length, act: ()=>{ let n = 0; prepLiveLists().forEach(c=>{ const u = prepUnitByName(c, s, jobT); if(u && !u.done){ if(u.taskId) toggleDone(u.taskId); else { u.done = true; u.doneBy = managerName() || 'Manager'; u.doneAt = new Date().toISOString(); } n++; } });
+          addHistory('Shed preparation', `"${own ? s : j}" ticked in ${n} shed${n === 1 ? '' : 's'}`); persist(); renderAll(); showToast(`Ticked in ${n} shed${n === 1 ? '' : 's'}.`); } },
+        own ? null : '-',
+        own ? null : { ic:'↑', label:'Move up', disabled: i <= 0, act: ()=> prepMoveJob(s, j, -1) },
+        own ? null : { ic:'↓', label:'Move down', disabled: i < 0 || i >= S.items.length - 1, act: ()=> prepMoveJob(s, j, 1) },
+        own ? null : '-',
+        own ? null : { ic:'✕', label:'Remove this job', danger:true, act: ()=> prepRemoveJob(s, j) }].filter(Boolean));
+      return true; }
+    if((b = g('[data-pl-secmenu]'))){ const s = b.dataset.plSecmenu, m = prepMaster(), i = m.findIndex(x=> prepNorm(x.t) === prepNorm(s));
+      plMenu(b, s, 'Section · same in every shed', [
+        { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-rensec="${CSS.escape(s)}"]`); if(el) plStartRename(el, v=> prepRenameSection(s, v)); } },
+        { ic:'＋', label:'Add a job', act: ()=>{ prepSecFold.delete(prepNorm(s)); prepSecFoldSave(); prepAddAgain = s; renderPrepBoard(); } },
+        { ic:'📅', label:'Date it in every shed', act: ()=>{ const el = document.querySelector(`[data-pl-secdate="${CSS.escape(s)}"]`); if(el) el.click(); } },
+        '-',
+        { ic:'↑', label:'Move up', disabled: i <= 0, act: ()=> prepMoveSection(s, -1) },
+        { ic:'↓', label:'Move down', disabled: i < 0 || i >= m.length - 1, act: ()=> prepMoveSection(s, 1) },
+        '-',
+        { ic:'✕', label:'Delete this section', danger:true, act: ()=> prepRemoveSection(s) }]);
+      return true; }
+    return false;
+  }
+  function plAct(kind, cid){ const b = document.createElement('button'); b.dataset[kind === 'ready' ? 'prepReady' : 'prepUnready'] = cid; prepBoardClick({ target: b }); }
   function prepToggleUnit(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
@@ -12039,7 +12487,7 @@
     $('#prepTaskWho').placeholder = isTask ? "Worker's name (optional)" : 'Who (optional — a note on the checklist)';
     $('#prepTaskSave').textContent = isTask ? 'Add to the task list' : 'Save date';
   }
-  function savePrepTask(){
+  function savePrepTaskOne(quiet){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
     const date = $('#prepTaskDate').value || dateKey(new Date()), who = $('#prepTaskWho').value.trim();
     if(f.sec){
@@ -12049,9 +12497,9 @@
       sec.due = date; if(who) sec.dueWho = who; else delete sec.dueWho;
       if(apply) (sec.items || []).forEach(it=>{ if(it.done || it.taskId) return; it.due = date; if(who) it.dueWho = who; else delete it.dueWho; n++; });
       prepHist(c, `Shed ${c.shed}: section "${sec.t}" dated ${formatFull(date)}${n ? ` (and ${n} item${n === 1 ? '' : 's'})` : ''}`);
-      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
-      persist(); renderAll();
-      showToast(`Section dated ${formatFull(date)}${n ? ` — and its ${n} open item${n === 1 ? '' : 's'}` : ''}.`);
+      if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
+      if(!quiet){ persist(); renderAll(); }
+      if(!quiet) showToast(`Section dated ${formatFull(date)}${n ? ` — and its ${n} open item${n === 1 ? '' : 's'}` : ''}.`);
       return;
     }
     prepTaskKindLast = prepTaskKind;
@@ -12059,19 +12507,19 @@
       // date only: no task on the planner, just the date on the checklist item
       u.due = date; if(who) u.dueWho = who; else delete u.dueWho;
       prepHist(c, `Shed ${c.shed}: "${u.t}" dated ${formatFull(date)}${who ? ' for ' + who : ''}`);
-      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
-      persist(); renderAll();
-      showToast(`Dated ${formatFull(date)} on the checklist — no task added.`);
+      if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
+      if(!quiet){ persist(); renderAll(); }
+      if(!quiet) showToast(`Dated ${formatFull(date)} on the checklist — no task added.`);
       return;
     }
     delete u.due; delete u.dueWho;
     const t = addTask(u.t, null, date, { assignees: who ? [who] : [], prep: { cid: c.id, uid: u.id, shed: c.shed, daily: prepTaskRep } });
     u.taskId = t.id; u.taskDate = date; u.taskWho = who;
-    $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
-    persist(); renderAll();
-    showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
+    if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
+    if(!quiet){ persist(); renderAll(); }
+    if(!quiet) showToast(`Added to ${formatFull(date)}${who ? ' for ' + who : ''} — labelled Shed ${c.shed} · Preparation.`);
   }
-  function undatePrepItem(){
+  function undatePrepItemOne(quiet){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
     if(f.sec){
       // the items that still carry the section's date lose it too (only when the tick-box is on)
@@ -12079,15 +12527,23 @@
       if(apply) (u.items || []).forEach(it=>{ if(!it.taskId && it.due === old){ delete it.due; delete it.dueWho; } });
       delete u.due; delete u.dueWho;
       prepHist(c, `Shed ${c.shed}: date removed from section "${u.t}"`);
-      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
-      persist(); renderAll(); showToast('Section date removed.');
+      if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
+      if(!quiet){ persist(); renderAll(); } if(!quiet) showToast('Section date removed.');
       return;
     }
     delete u.due; delete u.dueWho;
     prepHist(c, `Shed ${c.shed}: date removed from "${u.t}"`);
-    $('#prepTaskModal').classList.remove('open'); prepTaskFor = null;
-    persist(); renderAll(); showToast('Date removed.');
+    if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
+    if(!quiet){ persist(); renderAll(); } if(!quiet) showToast('Date removed.');
   }
+  // one job (or section) in several sheds at once: the others first, quietly, then the one the window was opened for
+  function prepEachTarget(fn){ const f = prepTaskFor; if(!f) return; const more = f.multi || [];
+    more.forEach(x=>{ prepTaskFor = Object.assign({}, f, x, { multi: null }); fn(true); });
+    prepTaskFor = Object.assign({}, f, { multi: null }); fn(false);
+    if(more.length) showToast(`Done for ${more.length + 1} sheds.`); }
+  function savePrepTask(){ prepEachTarget(savePrepTaskOne); }
+  function undatePrepItem(){ prepEachTarget(undatePrepItemOne); }
+
   // Shed preparation has its own menu item (Prep); its badge counts the sheds being prepared
   function renderPrepPill(){
     const n = prepOpenList().length;
@@ -13836,10 +14292,11 @@
   function openPtypes(){ ptConfirm = null; renderPtypes(); $('#ptypesNewInput').value = ''; $('#ptypesModal').classList.add('open'); }
 
   // Shed preparation: page switch, board actions, the daily-task window, the standard list
-  const prepBoardKey = (e)=>{ const b = e.target.closest && e.target.closest('[data-prep-rename],[data-prep-edit]'); if(b && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); prepStartRename(b); } };
+  const prepBoardKey = (e)=>{ const pk = e.target.closest && e.target.closest('[data-pl-renjob],[data-pl-rensec]'); if(pk && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); pk.click(); return; } const b = e.target.closest && e.target.closest('[data-prep-rename],[data-prep-edit]'); if(b && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); prepStartRename(b); } };
   $('#prepMain').addEventListener('keydown', prepBoardKey);
   $('#prepTplEdBoard').addEventListener('keydown', prepBoardKey);
   function prepBoardClick(e){
+    if(plClick(e)) return;
     const g = (sel)=> e.target.closest(sel);
     let b;
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
