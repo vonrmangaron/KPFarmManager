@@ -4395,6 +4395,43 @@
   .kb-flip-prev .kanban-column{ animation:kbFlipPrev .38s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes kbFlipNext{ from{ opacity:.25; transform:translateX(60px); } }
   @keyframes kbFlipPrev{ from{ opacity:.25; transform:translateX(-60px); } }
+  /* Shed prep cells line up (2026-10-25): the tick is a drawn check, centred in its box; the name under a
+     ticked box no longer pushes that box up, so every box in a row sits at the same height */
+  .pl-cell .pl-tick{ width:20px; height:20px; display:block; }
+  .pl-cell.done.bun::after{ content:none; }
+  .pl-tab td.pl-c{ padding:8px 6px 22px !important; vertical-align:top; }
+  .pl-tab td.pl-c > small{ position:absolute; left:2px; right:2px; bottom:5px; margin:0; overflow:hidden; text-overflow:ellipsis; }
+  .pl-cdot{ border:0 !important; border-radius:50% !important; background:transparent !important; width:22px !important; height:22px !important; }
+  .pl-cdot:hover, .pl-cdot.pl-menu-on{ background:var(--surface-soft) !important; color:var(--ink); }
+  /* Notes on shed prep jobs (2026-10-25) */
+  #detailNotes{ white-space:pre-line; }
+  .pl-c{ position:relative; }
+  .pl-ndot{ all:unset; cursor:pointer; position:absolute; top:4px; left:calc(50% + 12px); width:20px; height:20px; border-radius:50%; background:#F2D46B; border:2px solid var(--surface); display:grid; place-items:center; font-size:10px; box-shadow:0 2px 6px rgba(0,0,0,.15); z-index:1; }
+  .pl-ndot.last{ background:var(--surface-soft); filter:grayscale(1); opacity:.75; }
+  .pl-ndot:hover{ transform:scale(1.12); }
+  .pl-ndot:focus-visible{ outline:2px solid #F0A21A; outline-offset:1px; }
+  .pl-tab td.pl-job .pl-jnote{ all:unset; box-sizing:border-box; cursor:pointer; display:block; margin-top:6px; max-width:100%; background:#FFF1B8; color:#5C4A00; border-left:3px solid #F2D46B; border-radius:8px; padding:5px 8px; font:600 12px/1.35 Inter,sans-serif; white-space:normal; }
+  .pl-tab td.pl-job .pl-jnote span{ font:inherit; color:inherit; display:inline; }
+  .pl-tab td.pl-job .pl-jnote em{ font-style:normal; font-weight:500; opacity:.75; }
+  .pl-tab td.pl-job .pl-jnote.last{ background:var(--surface-soft); color:var(--muted); border-left-color:var(--line); }
+  body.theme-dark .pl-tab td.pl-job .pl-jnote{ background:rgba(242,212,107,.16); color:#F6DD86; border-left-color:rgba(242,212,107,.5); }
+  body.theme-dark .pl-tab td.pl-job .pl-jnote.last{ background:var(--surface-soft); color:var(--muted); border-left-color:var(--line); }
+  .pn-sub{ font:600 12.5px Inter,sans-serif; color:var(--muted); margin-top:-4px; }
+  .pn-seg{ display:inline-flex; align-self:flex-start; background:var(--surface-soft); border-radius:10px; padding:3px; gap:3px; }
+  .pn-seg button{ all:unset; cursor:pointer; padding:6px 12px; border-radius:8px; font:700 12.5px Inter,sans-serif; color:var(--muted); }
+  .pn-seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  #prepNoteText{ width:100%; min-height:84px; border:1.5px solid #F2D46B; background:#FFFBEA; color:var(--ink); border-radius:12px; padding:10px 12px; font:500 15px/1.4 Inter,sans-serif; resize:vertical; box-sizing:border-box; }
+  body.theme-dark #prepNoteText{ background:rgba(242,212,107,.10); border-color:rgba(242,212,107,.45); }
+  .pn-keep{ display:flex; align-items:center; gap:8px; font:600 13px Inter,sans-serif; color:var(--ink); cursor:pointer; }
+  .pn-last{ display:flex; flex-direction:column; gap:2px; background:var(--surface-soft); border-radius:12px; padding:10px 12px; font:500 13px Inter,sans-serif; color:var(--muted); }
+  .pn-last b{ font:800 11px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; }
+  .pn-last span{ color:var(--ink); }
+  .pn-use{ all:unset; cursor:pointer; align-self:flex-start; margin-top:4px; font:700 12.5px Inter,sans-serif; color:var(--primary-dark,#B8730C); }
+  .pn-del{ color:#D9473A !important; margin-right:auto; }
+  .tsub-note{ display:block; margin-top:4px; background:#FFF1B8; color:#5C4A00; border-left:3px solid #F2D46B; border-radius:6px; padding:3px 7px; font:600 11.5px/1.35 Inter,sans-serif; white-space:normal; }
+  body.theme-dark .tsub-note{ background:rgba(242,212,107,.16); color:#F6DD86; }
+  .dm-card .dm-note.pn{ background:#FFF1B8; color:#5C4A00; border-left:3px solid #F2D46B; }
+  body.theme-dark .dm-card .dm-note.pn{ background:rgba(242,212,107,.16); color:#F6DD86; }
   @media (prefers-reduced-motion:reduce){ .sortable-fallback{ rotate:none; animation:none; } .drop-settle, .kb-flip-next .kanban-column, .kb-flip-prev .kanban-column{ animation:none; } }
   .pl-tab td.pl-job, .task-card, .kcard, .mtb-card{ -webkit-user-select:none; user-select:none; }
   .pl-tab td.pl-job input, .pl-tab td.pl-job .pl-addin, .pl-tab td.pl-job .pl-renin{ -webkit-user-select:text; user-select:text; }
@@ -4689,6 +4726,17 @@
   <div class="mlog-main" id="mlogMain"></div>
   <div class="prep-main" id="prepMain" hidden></div>
 </section>
+<div class="form-modal prep-modal" id="prepNoteModal" role="dialog" aria-modal="true" aria-labelledby="prepNoteTitle">
+  <div class="form-modal-head"><h2 id="prepNoteTitle">📝 Note</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body prep-tm">
+    <div class="prep-tm-name" id="prepNoteName"></div><div class="pn-sub" id="prepNoteSub"></div>
+    <div class="pn-seg" id="prepNoteSeg" role="group" aria-label="Who the note is for"><button type="button" data-pn-scope="one" id="prepNoteOne">This shed only</button><button type="button" data-pn-scope="all">Every shed</button></div>
+    <textarea id="prepNoteText" maxlength="300" rows="3" placeholder="e.g. Cool room was not washed properly this batch — check behind the door seal"></textarea>
+    <label class="pn-keep"><input type="checkbox" id="prepNoteKeep"> Show again next batch</label>
+    <div class="pn-last" id="prepNoteLast" hidden></div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost pn-del" id="prepNoteDel">Delete note</button><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepNoteSave">Save note</button></div>
+  </div>
+</div>
 <div class="form-modal prep-modal" id="prepTaskModal" role="dialog" aria-modal="true" aria-labelledby="prepTaskTitle">
   <div class="form-modal-head"><h2 id="prepTaskTitle">Plan this item</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
@@ -6632,7 +6680,7 @@
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
       <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
-      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}</span></button>`).join('')}</div>` : ''}
+      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
   // steps editor in the Add/Edit window
@@ -10746,6 +10794,7 @@
       return `<div class="dm-card${isLate ? ' late' : ''}" ${open}><span class="dm-sb"></span><div class="dm-in">
         <div class="dm-top">${icon}<div class="dm-nmw"><div class="dm-nm">${escapeHtml(t.name)}</div>${meta ? `<span class="dm-meta">${escapeHtml(meta)}</span>` : ''}</div>${tick}</div>
         ${t.notes ? `<div class="dm-note">${escapeHtml(t.notes)}</div>` : ''}
+        ${t.prepNote ? `<div class="dm-note pn">📝 ${escapeHtml(t.prepNote)}</div>` : ''}
         ${tags ? `<div class="dm-tags">${tags}</div>` : ''}
         ${sp.total ? `<div class="dm-steps"><span class="dm-bar"><i style="width:${Math.round(sp.done / sp.total * 100)}%"></i></span><small>${sp.done} of ${sp.total} steps</small></div>` : ''}
         <div class="dm-foot"><span>${who ? 'For ' + escapeHtml(who) : 'Anyone'}</span><span class="dm-ppl">${buildAssigneeAvatarsHtml(t.assignees)}</span></div>
@@ -11314,8 +11363,8 @@
       });
     } else { assigneeRow.style.display = 'none'; }
     const notesRow = $('#detailNotesRow');
-    if(t.notes){ notesRow.style.display = 'flex'; $('#detailNotes').textContent = t.notes; }
-    else { notesRow.style.display = 'none'; }
+    { const nt = t.notes && t.prepNote ? t.notes + '\n📝 ' + t.prepNote : (t.notes || t.prepNote || '');   // a shed prep job's note rides along (2026-10-25)
+      if(nt){ notesRow.style.display = 'flex'; $('#detailNotes').textContent = nt; } else { notesRow.style.display = 'none'; } }
     const reportRow = $('#detailReportRow');
     if(t.linkedReportId){
       const r = reports.find(x => x.id === t.linkedReportId);
@@ -11983,6 +12032,18 @@
       tpl: (tplId ? (prepTemplates().find(x=> x.id === tplId) || prepTplDefault()) : prepTplDefault()).name,
       sections: prepParse(prepTemplateText(tplId)).map(x=> ({ id: uid(), t: x.t, fold: true, items: x.items.map(t=> ({ id: uid(), t })) })) };   // a new shed starts with its sections folded (2026-10-24)
   }
+  // Notes on jobs (2026-10-25): u.note = for this shed, u.jnote = for the job in every shed — {t, by, at, keep}.
+  // A note with keep comes back on that shed's next checklist as u.lastNote / u.lastJNote (a greyed reminder).
+  function prepNoteText(u){ return [u && u.jnote && u.jnote.t, u && u.note && u.note.t].filter(Boolean).join(' · '); }
+  function prepCarryNotes(cl){
+    const prev = (typeof shedPrep !== 'undefined' ? shedPrep : []).filter(c=> c.shed === cl.shed && c.id !== cl.id && !c.isTpl).sort((a, b)=> (b.createdAt || 0) - (a.createdAt || 0))[0];
+    if(!prev) return;
+    prepUnits(cl).forEach(({ sec, u })=>{
+      const pu = prepUnitByName(prev, sec.t, (sec.items || []).length ? u.t : null); if(!pu) return;
+      if(pu.note && pu.note.keep) u.lastNote = Object.assign({}, pu.note, { batch: prev.batch || '' });
+      if(pu.jnote && pu.jnote.keep) u.lastJNote = Object.assign({}, pu.jnote, { batch: prev.batch || '' });
+    });
+  }
   function prepUnits(cl){ const out = []; (cl.sections || []).forEach(sec=>{ if((sec.items || []).length) sec.items.forEach(it=> out.push({ sec, u: it })); else out.push({ sec, u: sec }); }); return out; }
   function prepProgress(cl){ const u = prepUnits(cl); return { done: u.filter(x=> x.u.done).length, total: u.length }; }
   let prepTplDraft = null;   // the template being edited: shown and edited like a shed column
@@ -12035,6 +12096,7 @@
       if(np && np <= today) return;                    // closed long ago, already placed again
       const early = shedPrep.find(c=> c.shed === String(sh.shed) && !c.batch && !c.archived && !prepPlaced(c));
       const cl = early || prepNewChecklist(sh.shed, b.number, sh.closed, true);
+      if(!early) prepCarryNotes(cl);
       if(early){ early.batch = String(b.number); early.closedAt = sh.closed; early.auto = true; early.seen = false; }
       else shedPrep.push(cl);
       cl.nextPlacement = np || null;
@@ -12042,6 +12104,9 @@
       addHistory('Shed preparation', `Shed ${sh.shed} closed — Shed Preparation Checklist (Shed ${sh.shed}) started${jobs ? ', ' + jobs + ' routine job' + (jobs === 1 ? '' : 's') + ' reset' : ''}`);
       changed = true;
     }));
+    { const live = prepLiveLists(), jn = new Map(), key = (sec, u)=> prepNorm(sec.t) + '|' + (u === sec ? '' : prepNorm(u.t));
+      live.forEach(c=> prepUnits(c).forEach(({ sec, u })=>{ if(!u.jnote) return; const k = key(sec, u), o = jn.get(k); if(!o || (u.jnote.at || '') > (o.at || '')) jn.set(k, u.jnote); }));
+      live.forEach(c=> prepUnits(c).forEach(({ sec, u })=>{ const n = jn.get(key(sec, u)); if(n && (!u.jnote || u.jnote.at !== n.at || u.jnote.t !== n.t)){ u.jnote = Object.assign({}, n); changed = true; } })); }
     shedPrep.forEach(c=>{
       if(c.closedAt){
         const np = prepNextPlacement(c.shed, c.closedAt) || null;
@@ -12061,6 +12126,9 @@
         if(!!u.done !== done){ u.done = done; if(done){ u.doneBy = by || (t.assignees || [])[0] || ''; u.doneAt = at || new Date().toISOString(); } else { delete u.doneBy; delete u.doneAt; } changed = true; }
         const who = (t.assignees || []).join(', ');
         if(u.taskDate !== t.date || (u.taskWho || '') !== who){ u.taskDate = t.date; u.taskWho = who; changed = true; }
+        const nt = prepNoteText(u);
+        if(sb){ if((sb.note || '') !== nt){ if(nt) sb.note = nt; else delete sb.note; changed = true; } }
+        else if((t.prepNote || '') !== nt){ if(nt) t.prepNote = nt; else delete t.prepNote; changed = true; }
       });
     });
     // "every day until done": an open prep task moves to today
@@ -12427,7 +12495,7 @@
   let prepPickShed = null, prepPickTpl = null;
   function startPrepChecklist(sh, tplId){
     if(prepActiveFor(sh)) return;
-    const run = prepShedRun(sh); const c = prepNewChecklist(sh, '', null, false, tplId); shedPrep.push(c);
+    const run = prepShedRun(sh); const c = prepNewChecklist(sh, '', null, false, tplId); prepCarryNotes(c); shedPrep.push(c);
     addHistory('Shed preparation', `Shed Preparation Checklist (Shed ${sh}) started${run ? ' early' : ''} from "${c.tpl}"`); prepPhoneShed = sh; persist(); renderAll();
   }
   function openPrepPick(sh){
@@ -12574,6 +12642,7 @@
   let prepSecFold = new Set(), prepOnlyShed = null, prepPick = null;   // prepPick: { shed, sel:Set of job ids } while picking jobs for one task
   try{ prepSecFold = new Set(JSON.parse(localStorage.getItem('cw-prep-secfold') || '[]')); }catch(e){}
   function prepSecFoldSave(){ try{ localStorage.setItem('cw-prep-secfold', JSON.stringify([...prepSecFold])); }catch(e){} }
+  const PL_TICK = '<svg class="pl-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   const PL_DOTS = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   const PL_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
   const PL_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
@@ -12612,11 +12681,13 @@
             const can = !u.done && !u.taskId && !ro, on = prepPick.sel.has(u.id);
             return `<td class="pl-c pk">${can ? `<button type="button" class="pl-cbx${on ? ' on' : ''}" data-pl-pick="${enc(u.id)}" aria-pressed="${on}" aria-label="${enc((on ? 'Unpick ' : 'Pick ') + R.t)}">${on ? '✓' : ''}</button>` : `<span class="pl-cbx dis" title="${u.done ? 'Already done' : 'Already in a task'}"></span>`}</td>`;
           }
-          return `<td class="pl-c"><button type="button" class="pl-cell ${k}${bun ? ' bun' : ''}" data-prep-tick="${enc(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${enc((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${enc('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : bun ? ' — part of the task "' + tk.name + '"' : ''))}"${ro ? ' disabled' : ''}>${u.done ? '✓' : ''}</button>${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}${ro ? '' : `<button type="button" class="pl-cdot" data-pl-cellmenu="${enc(col.c.id + '|' + u.id)}" aria-label="${enc('More for ' + R.t + ' in Shed ' + col.sh)}" title="Make a task, open the task…">${PL_DOTS}</button>`}</td>`; }).join('');
+          return `<td class="pl-c"><button type="button" class="pl-cell ${k}${bun ? ' bun' : ''}" data-prep-tick="${enc(col.c.id + '|' + u.id)}" aria-pressed="${!!u.done}" aria-label="${enc((u.done ? 'Untick ' : 'Tick ') + R.t + ' in Shed ' + col.sh)}" title="${enc('Shed ' + col.sh + ': ' + R.t + (u.done ? ' — done' + (u.doneBy ? ' by ' + u.doneBy : '') : bun ? ' — part of the task "' + tk.name + '"' : '') + (u.note ? '\n📝 ' + u.note.t : ''))}"${ro ? ' disabled' : ''}>${u.done ? PL_TICK : ''}</button>${u.note ? `<button type="button" class="pl-ndot" data-pl-note="${enc(col.c.id + '|' + u.id)}" title="${enc('Note for Shed ' + col.sh + ': ' + u.note.t + ' — ' + (u.note.by || '') )}" aria-label="${enc('Note for Shed ' + col.sh)}">📝</button>` : u.lastNote ? `<button type="button" class="pl-ndot last" data-pl-note="${enc(col.c.id + '|' + u.id)}" title="${enc('Last batch: ' + u.lastNote.t)}" aria-label="${enc('Last batch note for Shed ' + col.sh)}">📝</button>` : ''}${lab ? `<small class="${k}">${escapeHtml(lab)}</small>` : ''}${ro ? '' : `<button type="button" class="pl-cdot" data-pl-cellmenu="${enc(col.c.id + '|' + u.id)}" aria-label="${enc('More for ' + R.t + ' in Shed ' + col.sh)}" title="Make a task, open the task…">${PL_DOTS}</button>`}</td>`; }).join('');
         const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.col.c, x.u));
         const cls = [us.length && dn === us.length ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
         const key = enc(S.t + '|' + (R.own ? '' : R.t));
-        return `<tr class="pl-row ${cls}" data-pl-job="${key}"><td class="pl-job"><div class="pl-jr"><div class="pl-jn">${R.own ? `<b>${escapeHtml(R.t)}</b>` : `<b role="button" tabindex="0" data-pl-renjob="${key}" title="Click to rename">${escapeHtml(R.t)}</b>`}<span>${!us.length ? 'No shed being prepared' : dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></div><button type="button" class="pl-mini pl-ract" data-pl-jobmenu="${key}" aria-label="${enc('More for ' + R.t)}" title="Rename, date it in every shed, remove…">${PL_DOTS}</button></div></td>${cells}</tr>`; }).join('');
+        return `<tr class="pl-row ${cls}" data-pl-job="${key}"><td class="pl-job"><div class="pl-jr"><div class="pl-jn">${R.own ? `<b>${escapeHtml(R.t)}</b>` : `<b role="button" tabindex="0" data-pl-renjob="${key}" title="Click to rename">${escapeHtml(R.t)}</b>`}<span>${!us.length ? 'No shed being prepared' : dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span>${(()=>{ const jn = us.map(x=> x.u.jnote).find(Boolean), lj = !jn && us.map(x=> x.u.lastJNote).find(Boolean);
+            return jn ? `<button type="button" class="pl-jnote" data-pl-jnote="${key}" title="Every shed · tap to edit">📝 <span>${escapeHtml(jn.t)}</span> <em>· ${escapeHtml(jn.by || 'Manager')}, ${escapeHtml(prepFmt(String(jn.at || '').slice(0, 10)))}</em></button>`
+              : lj ? `<button type="button" class="pl-jnote last" data-pl-jnote="${key}" title="A note from the last batch — tap to use it again">📝 <span>Last batch: ${escapeHtml(lj.t)}</span></button>` : ''; })()}</div><button type="button" class="pl-mini pl-ract" data-pl-jobmenu="${key}" aria-label="${enc('More for ' + R.t)}" title="Rename, date it in every shed, remove…">${PL_DOTS}</button></div></td>${cells}</tr>`; }).join('');
       let tot = 0, dn = 0, due = null;
       cols.forEach(col=>{ if(!col.c) return; S.rows.forEach(R=>{ const u = unitFor(col, S, R); if(u){ tot++; if(u.done) dn++; } }); const sec = prepSecOf(col.c, S.t); if(sec && sec.due && (!due || sec.due < due)) due = sec.due; });
       const own = S.rows.length === 1 && S.rows[0].own;
@@ -12761,11 +12832,14 @@
           if(!confirm(`Clear ${us.length} tick${us.length === 1 ? '' : 's'} in Shed ${sh}? Jobs on the task list keep their task.`)) return;
           us.forEach(({ u })=>{ u.done = false; delete u.doneBy; delete u.doneAt; }); addHistory('Shed preparation', `Shed ${sh}: ticks cleared`); persist(); renderAll(); } }]);
       return true; }
+    if((b = g('[data-pl-note]'))){ const [cid, id] = b.dataset.plNote.split('|'); openPrepNote({ cid, id }); return true; }
+    if((b = g('[data-pl-jnote]'))){ const [s2, j2] = b.dataset.plJnote.split('|'); openPrepNote({ sec: s2, job: j2 || null }); return true; }
     if((b = g('[data-pl-cellmenu]'))){ const [cid, id] = b.dataset.plCellmenu.split('|'); const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return true;
       const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
       plMenu(b, `${u.t} · Shed ${c.shed}`, u.done ? 'Done' + (u.doneBy ? ' by ' + u.doneBy : '') : tk ? (tk.prep && tk.prep.bundle ? `In "${tk.name}" · ` : 'Task · ') + prepFmt(tk.date) : 'Not started', [
         { ic: u.done ? '↺' : '✓', label: u.done ? 'Untick it' : 'Tick it', act: ()=> prepToggleUnit(cid, id) },
-        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'☑', label:'Make a task', disabled: u.done, act: ()=> openPrepTaskModal(cid, id) }]);
+        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'☑', label:'Make a task', disabled: u.done, act: ()=> openPrepTaskModal(cid, id) },
+        { ic:'📝', label: u.note ? 'Edit the note' : `Note for Shed ${c.shed}…`, act: ()=> openPrepNote({ cid, id }) }]);
       return true; }
     if((b = g('[data-pl-jobmenu]'))){ const [s, j] = b.dataset.plJobmenu.split('|'); const own = !j, jobT = own ? null : j;
       const m = prepMaster(), S = prepMasterSec(m, s), i = S && !own ? S.items.findIndex(x=> prepNorm(x) === prepNorm(j)) : -1;
@@ -12773,6 +12847,7 @@
       plMenu(b, own ? s : j, 'Same job in every shed', [
         own ? null : { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-renjob="${CSS.escape(s + '|' + j)}"]`); if(el) plStartRename(el, v=> prepRenameJob(s, j, v)); } },
         { ic:'☑', label:'Make a task in every shed', note:'one per shed', disabled: !prepJobTargets(s, jobT, true).length, act: ()=> prepOpenMulti(prepJobTargets(s, jobT, true), 'task') },
+        { ic:'📝', label: prepLiveLists().some(c=>{ const u = prepUnitByName(c, s, jobT); return u && u.jnote; }) ? 'Edit the note for every shed' : 'Note for every shed…', disabled: !prepLiveLists().some(c=> prepUnitByName(c, s, jobT)), act: ()=> openPrepNote({ sec: s, job: jobT }) },
         { ic:'✓', label:'Tick it in every shed', disabled: !open.length, act: ()=>{ let n = 0; prepLiveLists().forEach(c=>{ const u = prepUnitByName(c, s, jobT); if(u && !u.done){ if(u.taskId) toggleDone(u.taskId); else { u.done = true; u.doneBy = managerName() || 'Manager'; u.doneAt = new Date().toISOString(); } n++; } });
           addHistory('Shed preparation', `"${own ? s : j}" ticked in ${n} shed${n === 1 ? '' : 's'}`); persist(); renderAll(); showToast(`Ticked in ${n} shed${n === 1 ? '' : 's'}.`); } },
         own ? null : '-',
@@ -12803,6 +12878,49 @@
     else { u.done = !u.done; if(u.done){ u.doneBy = managerName() || 'Manager'; u.doneAt = new Date().toISOString(); } else { delete u.doneBy; delete u.doneAt; } addHistory('Shed preparation', `Shed ${c.shed}: "${u.t}" ${u.done ? 'done' : 'reopened'}`); }
     c.seen = true;
     persist(); renderAll();
+  }
+  // Note window: one shed (from a cell) or the job in every shed (from the job menu)
+  let prepNoteFor = null, prepNoteScope = 'one';
+  function prepNoteSecOf(c, u){ return (c.sections || []).find(sec=> sec === u || (sec.items || []).includes(u)); }
+  function prepNoteTargets(){
+    const f = prepNoteFor; if(!f) return { one:null, all:[] };
+    let sec = f.sec, job = f.job, one = null;
+    if(f.cid){ const c = prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return { one:null, all:[] }; const S = prepNoteSecOf(c, u); sec = S.t; job = u === S ? null : u.t; one = { c, u }; }
+    return { one, sec, job, all: prepLiveLists().map(c=> prepUnitByName(c, sec, job)).filter(Boolean) };
+  }
+  function openPrepNote(f){
+    prepNoteFor = f; const T = prepNoteTargets();
+    const ref = T.one ? T.one.u : T.all[0]; if(!ref) return;
+    prepNoteScope = T.one ? (ref.jnote && !ref.note ? 'all' : 'one') : 'all';
+    $('#prepNoteName').textContent = T.job || T.sec;
+    $('#prepNoteSeg').hidden = !T.one;
+    if(T.one) $('#prepNoteOne').textContent = `Shed ${T.one.c.shed} only`;
+    prepNoteFill(); $('#prepNoteModal').classList.add('open');
+    setTimeout(()=> $('#prepNoteText').focus(), 60);
+  }
+  function prepNoteFill(){
+    const T = prepNoteTargets(), u = T.one ? T.one.u : (T.all.find(x=> x.jnote) || T.all[0]);
+    const n = prepNoteScope === 'one' ? u.note : u.jnote, last = prepNoteScope === 'one' ? u.lastNote : (T.all.map(x=> x.lastJNote).find(Boolean));
+    $('#prepNoteSub').textContent = prepNoteScope === 'one' ? `Shed ${T.one.c.shed}${T.one.c.batch ? ' · after batch ' + T.one.c.batch : ''}` : `Every shed being prepared (${T.all.length})`;
+    document.querySelectorAll('#prepNoteSeg [data-pn-scope]').forEach(b=>{ const on = b.dataset.pnScope === prepNoteScope; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    $('#prepNoteText').value = n ? n.t : '';
+    $('#prepNoteKeep').checked = n ? !!n.keep : false;
+    $('#prepNoteDel').hidden = !n;
+    const L = $('#prepNoteLast'); L.hidden = !last;
+    if(last){ L.innerHTML = `<b>Last batch${last.batch ? ' (' + escapeHtml(last.batch) + ')' : ''}</b><span>${escapeHtml(last.t)}</span><small>${escapeHtml(last.by || '')}</small><button type="button" class="pn-use" id="prepNoteUse">Use it again</button>`;
+      $('#prepNoteUse').onclick = ()=>{ $('#prepNoteText').value = last.t; $('#prepNoteKeep').checked = true; $('#prepNoteText').focus(); }; }
+  }
+  function savePrepNote(del){
+    const T = prepNoteTargets(); if(!T.all.length && !T.one) return;
+    const txt = del ? '' : String($('#prepNoteText').value || '').trim().slice(0, 300);
+    const note = txt ? { t: txt, by: managerName() || 'Manager', at: new Date().toISOString(), keep: $('#prepNoteKeep').checked } : null;
+    const where = prepNoteScope === 'one' ? 'Shed ' + T.one.c.shed : 'every shed';
+    if(prepNoteScope === 'one'){ if(note) T.one.u.note = note; else delete T.one.u.note; delete T.one.u.lastNote; }
+    else T.all.forEach(u=>{ if(note) u.jnote = Object.assign({}, note); else delete u.jnote; delete u.lastJNote; });
+    addHistory('Shed preparation', note ? `Note on "${T.job || T.sec}" (${where}): ${txt}` : `Note removed from "${T.job || T.sec}" (${where})`);
+    $('#prepNoteModal').classList.remove('open');
+    reconcileShedPrep(); persist(); renderAll();
+    showToast(note ? `Note saved for ${where}.` : 'Note deleted.');
   }
   function openPrepTaskModal(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
@@ -14735,6 +14853,9 @@
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
   document.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
+  $('#prepNoteSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-pn-scope]'); if(!b) return; prepNoteScope = b.dataset.pnScope; prepNoteFill(); });
+  $('#prepNoteSave').addEventListener('click', ()=> savePrepNote(false));
+  $('#prepNoteDel').addEventListener('click', ()=> savePrepNote(true));
   $('#prepTaskDays').addEventListener('click', (e)=>{ const b = e.target.closest('[data-pday]'); if(!b) return; $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), +b.dataset.pday); prepSyncTaskModal(); });
   $('#prepTaskDate').addEventListener('change', prepSyncTaskModal);
   $('#prepTaskKind').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-kind]'); if(!b) return; prepTaskKind = b.dataset.prepKind; prepSyncTaskModal(); });

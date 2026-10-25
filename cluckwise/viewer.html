@@ -872,6 +872,9 @@
   .mtt-card.res .mtt-pill{ background:var(--success-soft); color:var(--success); }
   .mtt-card.urgent .mtt-pill{ background:var(--danger); color:#fff; }
   .mtt-place{ font-size:13.5px; font-weight:600; color:var(--ink); }
+  .tsub-note{ display:block; margin-top:4px; background:#FFF1B8; color:#5C4A00; border-left:3px solid #F2D46B; border-radius:6px; padding:4px 8px; font:600 12.5px/1.35 Inter,sans-serif; white-space:normal; }
+  .prep-jnote{ margin:8px 0 0; background:#FFF1B8; color:#5C4A00; border-left:3px solid #F2D46B; border-radius:8px; padding:6px 10px; font:600 13px/1.4 Inter,sans-serif; overflow-wrap:anywhere; }
+  body.theme-dark .tsub-note, body.theme-dark .prep-jnote, [data-theme="dark"] .tsub-note, [data-theme="dark"] .prep-jnote{ background:rgba(242,212,107,.16); color:#F6DD86; }
   .mtt-notes{ font-size:13px; color:var(--ink); opacity:.85; overflow-wrap:anywhere; }
   .mtt-who{ font-size:12.5px; color:var(--muted); }
   .mtt-task{ font-size:12.5px; font-weight:700; color:var(--primary-dark); }
@@ -2695,7 +2698,7 @@
     const a = Array.isArray(tk.subs) ? tk.subs : []; if(!a.length) return null;
     const done = a.filter(x=> x.done).length, open = viewerSubsIsOpen(tk);
     const box = document.createElement('div'); box.className = 'tsubs' + (open ? ' open' : '');
-    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
+    box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
     box.querySelector('.tsubs-bar').addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.last || 0) < 400) return; subsBlockEl.last = now;   // one tap = one toggle
       viewerToggleSubs(tk); });
     box.querySelectorAll('.tsub').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); const now = Date.now(); if(now - (subsBlockEl.lastTick || 0) < 400) return; subsBlockEl.lastTick = now;
@@ -3249,6 +3252,10 @@
       if(people) people.prepend(meta);
       else { const row = document.createElement('span'); row.className = 'task-people'; row.appendChild(meta); card.querySelector('.task-name').after(row); }
       card.addEventListener('click', (e)=>{ if(e.target.closest('.task-status-btn')) return; openMaintPage(tk.id); });
+    }
+    if(tk.prepNote){   // a shed prep job's note — always shown, so it's read before the job (2026-10-25)
+      const pn = document.createElement('div'); pn.className = 'prep-jnote'; pn.textContent = '📝 ' + tk.prepNote;
+      const row = card.querySelector('.task-card-row'); if(row) row.after(pn); else card.appendChild(pn);
     }
     if(tk.notes && !mcheck && !sb){
       card.querySelector('.tnc-text').textContent = tk.notes;
