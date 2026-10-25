@@ -148,6 +148,7 @@ function askRender(){
     if(d!==lastDay){lastDay=d;h+=`<div class="ak-day">${d===day?'Today':escapeHtml(fmtShortNoYear(new Date(d+'T00:00:00')))}</div>`;}
     if(m.r==='greet')h+=`<div class="ak-m bot greet"><b>${d===day?'This morning':'Morning greeting'}</b><br>${escapeHtml(m.t)}</div>`;
     else if(m.r==='me')h+=`<div class="ak-m me">${escapeHtml(m.t)}<small>${m.from==='tasks'?'asked in Tasks':''}</small></div>`;
+    else if(m.r==='act')h+=askActHtml(m);
     else h+=`<div class="ak-m bot${m.err?' err':''}">${escapeHtml(m.t).replace(/\n/g,'<br>')}${m.src?`<span class="ak-src">From: ${escapeHtml(m.src)}</span>`:''}</div>`;});
   if(askBusy)h+='<div class="ak-m bot typing"><i></i><i></i><i></i></div>';
   box.innerHTML=h;box.scrollTop=box.scrollHeight;
@@ -160,7 +161,8 @@ async function askSend(q){
   st.msgs.push({r:'me',t:q,day,at:Date.now(),from:typeof pwSection!=='undefined'&&pwSection==='tasks'?'tasks':'production'});askSave(st);
   askBusy=true;askRender();
   let msg;
-  try{const f=askFacts();const j=await askCall({mode:'ask',question:q,history:hist,facts:f.text,context:askContext(),name:askName(),today:day});msg={r:'ai',t:j.text||'(no answer)',src:j.src||'',day,at:Date.now()};}
+  try{const f=askFacts();const j=await askCall({mode:'ask',question:q,history:hist,facts:f.text,context:askContext(),calendar:askCalendar(),name:askName(),today:day});
+    msg=Array.isArray(j.actions)&&j.actions.length?{r:'act',id:'act'+Date.now(),say:j.text||'',raw:j.actions,state:'pending',day,at:Date.now()}:{r:'ai',t:j.text||'(no answer)',src:j.src||'',day,at:Date.now()};}
   catch(e){msg={r:'ai',t:askErrText(e),err:true,day,at:Date.now()};}
   const s2=askLoad();s2.msgs.push(msg);askSave(s2);askBusy=false;askRender();
 }
@@ -195,3 +197,81 @@ function askMaybeGreet(){
 document.addEventListener('DOMContentLoaded',()=>{askPlaceButton();askSetDot();setTimeout(askMaybeGreet,2500);});
 setInterval(()=>{if(document.visibilityState!=='visible')return;askPlaceButton();askSetDot();askMaybeGreet();},30000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){askGreetTried=false;setTimeout(askMaybeGreet,1500);}});
+
+// ── Changes through ✨ Ask (2026-10-25) ───────────────────────────────────────────────────────────────────
+// The AI only proposes {type,…} actions. Each is checked here against the farm as it is now and shown on a
+// card with before → after; nothing changes until Confirm, and then it goes through the app's own save code.
+function askCalendar(){const out=[],t=mgrToday(),WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];for(let i=-7;i<=21;i++){const d=addDays(t,i);out.push(`${iso(d)} ${WD[d.getDay()]}${i===0?' (today)':i===1?' (tomorrow)':i===-1?' (yesterday)':''}`);}return out.join(', ');}
+function askDate(v){if(v==null||v==='')return null;const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return undefined;const d=new Date(+m[1],+m[2]-1,+m[3]);return d.getMonth()===+m[2]-1?dateOnly(d):undefined;}
+function askN(n){return Number(n).toLocaleString('en-US');}
+function askCheck(a){
+  const today=mgrToday(),bad=msg=>({ok:false,label:msg});
+  const shedOf=v=>(farmData&&farmData.sheds||[]).find(s=>s.id===Number(v));
+  if(a.type==='set_mortality'){
+    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
+    const n=Number(a.total);if(!Number.isFinite(n)||n<0||Math.floor(n)!==n)return bad(`Shed ${s.id}: "${a.total}" isn't a whole number of birds`);
+    const placed=s.placementDate?dateOnly(s.placementDate):null,clean=s.cleanoutDate?dateOnly(s.cleanoutDate):null,pop=Number(s.initialPopulation)||0;
+    if(!placed||placed>today||(clean&&clean<today)||!pop)return bad(`Shed ${s.id} has no birds in it now`);
+    if(n>pop)return bad(`Shed ${s.id}: ${askN(n)} is more than the ${askN(pop)} birds placed`);
+    const cur=Math.max(0,Number(s.mortality)||0);if(n===cur)return bad(`Shed ${s.id} total mortality is already ${askN(n)}`);
+    return {ok:true,label:`Shed ${s.id} total mortality: ${askN(cur)} → <b>${askN(n)}</b>`,note:n<cur?'lower than the total now':`${(n/pop*100).toFixed(2)}% of birds placed`,
+      apply:()=>{s.mortality=n;s.mortalityUpdatedAt=today;pwActivity('ask',`Shed ${s.id} total mortality ${askN(cur)} → ${askN(n)}`);return 'mortality';}};
+  }
+  if(a.type==='move_pickup'){
+    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
+    const to=askDate(a.to),from=askDate(a.from);if(!to)return bad(`Shed ${s.id}: no clear new date for the pickup`);
+    if(from===undefined)return bad(`Shed ${s.id}: no clear date for the pickup to move`);
+    const real=new Set((s.pickups||[]).map(p=>iso(p.date)));
+    const plan=(s.predictedPickups||[]).filter(p=>p.date&&!real.has(iso(p.date))).sort((x,y)=>dateOnly(x.date)-dateOnly(y.date));
+    const pp=from?plan.find(p=>iso(p.date)===iso(from)):plan.find(p=>dateOnly(p.date)>=today);
+    if(!pp)return bad(from?`Shed ${s.id} has no planned pickup on ${fmtShortNoYear(from)}`:`Shed ${s.id} has no planned pickup coming up`);
+    if(pp.isFinal)return bad(`Shed ${s.id}: that's the clean-out pickup — change the clean-out date in Set up sheds`);
+    if(iso(pp.date)===iso(to))return bad(`Shed ${s.id}'s pickup is already on ${fmtShortNoYear(to)}`);
+    if(to<today)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is in the past`);
+    if(s.cleanoutDate&&to>dateOnly(s.cleanoutDate))return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is after its clean-out (${fmtShortNoYear(s.cleanoutDate)})`);
+    if(real.has(iso(to)))return bad(`Shed ${s.id} already has a pickup on ${fmtShortNoYear(to)}`);
+    const was=dateOnly(pp.date);
+    return {ok:true,label:`Shed ${s.id} pickup (${askN(Number(pp.birds)||0)} birds): ${fmtShortNoYear(was)} → <b>${fmtShortNoYear(to)}</b>`,note:'later planned pickups are re-sized, as when you edit one',
+      apply:()=>{const x=(s.predictedPickups||[]).find(p=>p.id===pp.id);if(!x)return null;x.date=to;s.predictedPickups.sort((p,q)=>dateOnly(p.date)-dateOnly(q.date));
+        if(typeof cascadePredictedPickups==='function')cascadePredictedPickups(s,x.id);pwActivity('ask',`Shed ${s.id} pickup moved ${fmtShortNoYear(was)} → ${fmtShortNoYear(to)}`);return 'pickup';}};
+  }
+  const cw=(()=>{try{return cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwAct?cwFrame.contentWindow:null;}catch(e){return null;}})();
+  if(a.type==='add_task'){
+    const name=String(a.name||'').trim();if(!name)return bad('A task needs a name');
+    const d=askDate(a.date);if(d===undefined)return bad(`"${name}": no clear day`);
+    if(!cw)return bad('Tasks isn\'t loaded yet — open Tasks once, then ask again');
+    const who=(Array.isArray(a.who)?a.who:[]).map(x=>String(x).trim()).filter(Boolean);
+    return {ok:true,label:`Add task <b>${escapeHtml(name)}</b> · ${d?fmtShortNoYear(d):'backlog'}${who.length?' · for '+escapeHtml(who.join(', ')):''}`,
+      apply:()=>{const r=cw.__cwAct({type:'add_task',name,date:d?iso(d):null,who});if(r&&r.ok){pwActivity('ask',`Added task "${name}"`);return 'task';}return null;}};
+  }
+  if(a.type==='tick_task'){
+    const name=String(a.name||'').trim();if(!name)return bad('Which task?');
+    if(!cw)return bad('Tasks isn\'t loaded yet — open Tasks once, then ask again');
+    const d=askDate(a.date);const found=cw.__cwTaskFind(name,d?iso(d):null)||[];
+    if(!found.length)return bad(`No open task called "${name}"${d?' on '+fmtShortNoYear(d):''}`);
+    const t=found[0];
+    return {ok:true,label:`Tick done: <b>${escapeHtml(t.name)}</b> · ${t.date?fmtShortNoYear(new Date(t.date+'T00:00:00')):'backlog'}`,note:found.length>1?`${found.length} open tasks match — this is the nearest one`:'',
+      apply:()=>{const r=cw.__cwAct({type:'tick_task',id:t.id});if(r&&r.ok){pwActivity('ask',`Ticked "${t.name}"`);return 'task';}return null;}};
+  }
+  return bad('That change isn\'t something Ask can do yet');
+}
+function askActHtml(m){
+  const items=m.state==='pending'?(m.raw||[]).map(askCheck):(m.done||[]);
+  const nOk=items.filter(x=>x.ok).length;
+  const rows=items.map(x=>`<div class="ak-act ${x.ok?'ok':'no'}"><i aria-hidden="true">${m.state==='done'?(x.ok?'✓':'✕'):x.ok?'•':'!'}</i><span>${x.label}${x.note?`<small>${escapeHtml(x.note)}</small>`:''}</span></div>`).join('');
+  const foot=m.state==='pending'?(nOk?`<div class="ak-actb"><button type="button" class="ak-conf" data-ak-confirm="${m.id}">Confirm ${nOk} change${nOk===1?'':'s'}</button><button type="button" class="ak-canc" data-ak-cancel="${m.id}">Cancel</button></div>`:'<div class="ak-actn">Nothing here can be changed.</div>')
+    :m.state==='done'?`<div class="ak-actn done">Done · ${new Date(m.doneAt||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} · in History</div>`:'<div class="ak-actn">Cancelled — nothing changed.</div>';
+  return `<div class="ak-m bot actcard">${m.say?`<div class="ak-say">${escapeHtml(m.say)}</div>`:''}<b class="ak-acth">${m.state==='pending'?'Check before saving':'Changes'}</b>${rows}${foot}</div>`;
+}
+function askActDo(id,confirm){
+  const st=askLoad(),m=st.msgs.find(x=>x.id===id);if(!m||m.state!=='pending')return;
+  if(!confirm){m.state='cancelled';askSave(st);askRender();return;}
+  if(m.day!==askDayKey()){showToast('That suggestion is from another day — ask again.',true);return;}
+  const checks=(m.raw||[]).map(askCheck),done=[];let prod=false,n=0;
+  checks.forEach(c=>{if(!c.ok){done.push({ok:false,label:c.label});return;}let r=null;try{r=c.apply();}catch(e){}
+    if(r){n++;if(r!=='task')prod=true;done.push({ok:true,label:c.label});}else done.push({ok:false,label:c.label+' — could not be saved'});});
+  if(prod){saveState();schedulePush();autoPlanCache=new Map();if(typeof farmRangeCache!=='undefined')farmRangeCache=null;scheduleRender(60);}
+  m.state='done';m.done=done;m.doneAt=Date.now();askSave(st);askRender();
+  showToast(n?`${n} change${n===1?'':'s'} saved.`:'Nothing could be saved.',!n);
+}
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-ak-confirm],[data-ak-cancel]');if(!c)return;askActDo(c.dataset.akConfirm||c.dataset.akCancel,!!c.dataset.akConfirm);});

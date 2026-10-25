@@ -1,7 +1,11 @@
 // ProdWise AI — the morning greeting and "✨ Ask the farm", on Cloudflare Workers AI (free daily allowance).
 //
-//   POST /ai/<farm-slug>   { mode: 'greet' | 'ask', name, facts, context, history: [{role, content}], question }
-//                          → { text, src, left }
+//   POST /ai/<farm-slug>   { mode: 'greet' | 'ask', name, facts, context, calendar, history: [{role, content}], question }
+//                          → { text, src, left }  or, when the manager asks for a change, { actions: [...], text, left }
+//
+// Changes (2026-10-25): the AI never changes anything itself. It turns "Shed 1 mortality 2156" or "move Shed 5's
+// pickup to Monday" into proposed actions; the app checks them, shows a confirm card and applies them only after
+// the manager taps Confirm, through the app's own save code.
 //
 // Setup in the Cloudflare dashboard (Workers & Pages → Create → Worker, name it "prodwise-ai", paste this file):
 //   • Settings → Bindings → Add → Workers AI, variable name AI            (required)
@@ -76,6 +80,19 @@ Put the most urgent things first (red, then amber), then mention the rest briefl
 Answer in 1–5 short sentences, or a short list when listing sheds or tasks. Lead with the answer.
 On the last line write "From:" and the names of the FARM DATA sections you used, e.g. "From: Silos · Feed loads".
 
+CHANGES: if the manager asks you to change, set, update, move, add or tick something, do NOT answer in sentences.
+Reply with ONLY one JSON object, nothing before or after it:
+{"say":"one short sentence","actions":[ ... ]}
+Allowed actions (use as many as the manager asked for, one per shed or task):
+{"type":"set_mortality","shed":1,"total":2156}   total dead birds so far in that shed (a whole number)
+{"type":"move_pickup","shed":5,"from":null,"to":"2026-10-26"}   a planned pickup; "from" = its current date if the manager names it, otherwise null for the next one
+{"type":"add_task","name":"Check drinkers","date":"2026-10-26","who":["Miguel"]}   date null = backlog, who [] = anyone
+{"type":"tick_task","name":"Order shavings","date":null}   mark a task done; date only if the manager gives one
+Dates are YYYY-MM-DD — use the CALENDAR to turn "Monday", "tomorrow" or "Oct 26" into a date. Shed numbers are whole numbers.
+If the change isn't one of these, answer in a sentence that you can't make that change and where to do it in the app.
+
+CALENDAR: ${clip(b.calendar, 900)}
+
 FARM DATA (today: ${clip(b.today, 40)}):
 ${clip(b.context, 24000)}
 
@@ -127,6 +144,18 @@ export default {
     }
     if (env.USAGE) { used++; await env.USAGE.put(ck, String(used), { expirationTtl: 172800 }); }
 
+    // A change request: pass the proposed actions on (the app checks every one before showing them)
+    if (b.mode === 'ask') {
+      const a = text.indexOf('{'), z = text.lastIndexOf('}');
+      if (a >= 0 && z > a) {
+        try {
+          const j = JSON.parse(text.slice(a, z + 1));
+          const OK = ['set_mortality', 'move_pickup', 'add_task', 'tick_task'];
+          const actions = (Array.isArray(j.actions) ? j.actions : []).filter(x => x && OK.includes(x.type)).slice(0, 12);
+          if (actions.length) return reply(200, { actions, text: String(j.say || '').slice(0, 300), left: env.USAGE ? Math.max(0, DAILY_LIMIT - used) : null }, cors);
+        } catch (e) { /* not JSON — treat as a normal answer */ }
+      }
+    }
     // "From: …" goes in its own field so the app can show it small
     let src = '';
     const fm = text.match(/\n\s*\**From:\**\s*(.+)\s*$/i);

@@ -14793,6 +14793,21 @@
         prepUnits(c).forEach(({ u })=>{ const n = prepNoteText(u); if(n) out.push(`  note on "${u.t}": ${n}`); }); }); }
     return out.join('\n');
   };
+  // ✨ Ask changes (2026-10-25): ProdWise checks and confirms first, then calls these
+  window.__cwTaskFind = (name, date)=>{
+    const n = String(name || '').trim().toLowerCase(); if(!n) return [];
+    const open = tasks.filter(t=> t.status !== 'done' && String(t.name || '').toLowerCase().includes(n) && (!date || t.date === date));
+    const today = dateKey(new Date());
+    return open.sort((a, b)=> Math.abs((a.date ? toDateObj(a.date) : 9e15) - toDateObj(today)) - Math.abs((b.date ? toDateObj(b.date) : 9e15) - toDateObj(today)))
+      .slice(0, 5).map(t=> ({ id: t.id, name: t.name, date: t.date || null, who: (t.assignees || []).slice() }));
+  };
+  window.__cwAct = (a)=>{
+    if(a.type === 'add_task'){ const t = addTask(String(a.name).slice(0, 50), null, a.date || null, { assignees: (a.who || []).map(x=> String(x).slice(0, 30)).filter(Boolean) });
+      addHistory('✨ Ask', `Added "${t.name}"${t.date ? ' to ' + formatFull(t.date) : ' to the backlog'}`); persist(); renderAll(); return { ok: true }; }
+    if(a.type === 'tick_task'){ const t = tasks.find(x=> x.id === a.id); if(!t) return { ok: false, msg: 'That task is gone' };
+      if(t.status !== 'done') toggleDone(t.id); persist(); renderAll(); return { ok: t.status === 'done', msg: t.status === 'done' ? '' : 'It could not be ticked' }; }
+    return { ok: false, msg: 'Unknown change' };
+  };
   window.__cwOpen = (what)=>{ try{ closeOverlays(); }catch(e){}
     if(what === 'prep') openPrepBoard(null);
     else if(what === 'overdue') openOverdueModal();

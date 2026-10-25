@@ -201,7 +201,7 @@ async function historyPopulatePage() {
   let tlog=[];try{if(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwHistory)tlog=cwFrame.contentWindow.__cwHistory()||[];}catch(e){}
   const items=[];
   snaps.forEach(sn=>items.push({kind:'copies',ts:sn.timestamp,snap:sn}));
-  (typeof pwActivityList==='function'?pwActivityList():[]).forEach(a=>items.push({kind:a.kind==='settings'?'settings':'tasks',ts:a.ts,title:'Settings · '+a.text,sub:'Production'}));
+  (typeof pwActivityList==='function'?pwActivityList():[]).forEach(a=>items.push({kind:a.kind==='settings'?'settings':'tasks',ts:a.ts,title:(a.kind==='ask'?'✨ Ask · ':'Settings · ')+a.text,sub:'Production'}));
   tlog.forEach(h=>{const k=hxKindOfTask(h.action);items.push({kind:k,ts:h.ts,title:`${h.action}${h.detail?' · '+h.detail:''}`,sub:k==='reports'?'Maintenance':'Tasks',act:h.action});});
   const counts={all:items.length};items.forEach(x=>counts[x.kind]=(counts[x.kind]||0)+1);
   document.querySelectorAll('[data-hx-count]').forEach(b=>{const n=counts[b.dataset.hxCount]||0;b.textContent=n?' '+n:'';});
