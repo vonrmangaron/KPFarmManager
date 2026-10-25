@@ -1268,7 +1268,6 @@ function render(){
     if(typeof refreshPickupsModal==='function')refreshPickupsModal();
     if(feedCompareState.modalOpen)renderCompareModalBody();
     refreshLoadsViews();
-    if(typeof smApply==='function')smApply();   // Summarise button + today's saved summary (js/ask.js)
     if(inlinePickupState)requestAnimationFrame(sizeTestPickupForms);
     if(inlineDeliveryState||inlinePickupState){
       const scope=feedCompareState.modalOpen?document.getElementById('compareFeedModal'):app;

@@ -1,8 +1,10 @@
 // ProdWise AI — the morning greeting and "✨ Ask the farm", on Cloudflare Workers AI (free daily allowance).
 //
-//   POST /ai/<farm-slug>   { mode: 'greet' | 'summary' | 'ask', name, facts, context, calendar, history: [{role, content}], question, page, sheds }
-//   'greet'   → the 2–3 sentence summary at the top of the Daily report
-//   'summary' → a page's Summarise card: 2–4 tagged bullets, or a note per shed when `sheds` is given
+//   POST /ai/<farm-slug>   { mode: 'ross' | 'greet' | 'ask', part, name, facts, context, ... }
+//   'ross'  → Ross, the farm's AI (named after the Ross 308), writes the morning report:
+//             part 'main'  → JSON {overview, plan:[{fact,title,why}], crew, warnings:[...], weather}
+//             part 'sheds' → JSON {sheds:{"1":"note",…}}
+//   'greet' → a plain 2–3 sentence summary (older app versions)
 //                          → { text, src, left }  or, when the manager asks for a change, { actions: [...], text, left }
 //
 // Changes (2026-10-25): the AI never changes anything itself. It turns "Shed 1 mortality 2156" or "move Shed 5's
@@ -77,22 +79,27 @@ No greeting, no list, no heading, no emoji, no exclamation marks, no sign-off.` 
       { role: 'user', content: `TODAY'S FACTS (red = act today, amber = keep an eye on, blue = for info, green = fine):\n${clip(b.facts, 4000)}` },
     ];
   }
-  if (b.mode === 'summary') {
-    const sheds = Array.isArray(b.sheds) ? b.sheds.map(x => String(x).replace(/[^0-9]/g, '')).filter(Boolean).slice(0, 4) : [];
-    const page = clip(b.page, 60);
-    const want = sheds.length
-      ? `Reply with ONLY one JSON object: {"pair":"one sentence about the sheds together","sheds":{${sheds.map(x => `"${x}":"1–2 sentences on Shed ${x}"`).join(',')}}}
-Each shed note: how it is doing (growth vs target, mortality), the next thing coming up, and anything to check. Under 35 words each.`
-      : `Write 2–4 bullet lines, each starting with "- " and then a tag: [red] act now, [amber] keep an eye on, [green] fine. Example: "- [amber] **Shed 4** is 2.1 days behind target."
-Each bullet one short sentence with the useful number or name. Most important first. Nothing before or after the bullets.`;
+  if (b.mode === 'ross') {
+    const who = name || 'the manager';
+    if (b.part === 'sheds') {
+      return [
+        { role: 'system', content: `You are Ross, the farm assistant inside ProdWise (named after the Ross 308 broiler). ${RULES}
+Write one short note per shed for this morning's report: how it is doing and the one thing that matters for it next. Under 16 words each, plain words, no shed number at the start.
+Reply with ONLY one JSON object: {"sheds":{"1":"…","2":"…"}} — one key per shed in SHEDS.` },
+        { role: 'user', content: `SHEDS:\n${clip(b.context, 6000)}` },
+      ];
+    }
     return [
-      { role: 'system', content: `${RULES}
-Summarise the "${page}" page of the farm app for the manager: what's good, what to watch, what to do. Calm, professional, factual.
-${want}
-
-PAGE DATA (today: ${clip(b.today, 40)}):
-${clip(b.context, 20000)}` },
-      { role: 'user', content: 'Summarise this page.' },
+      { role: 'system', content: `You are Ross, the farm assistant inside ProdWise (named after the Ross 308 broiler). ${RULES}
+Write this morning's report for ${who}. Reply with ONLY one JSON object, nothing before or after:
+{"overview":"3–4 sentences. Start with 'Morning ${name || ''}.' then how the day looks, what to do first and why, and how the batch stands overall.",
+ "plan":[{"fact":"F3","title":"short instruction, e.g. Book a feed load for Sheds 5–6","why":"one sentence with the useful number or reason"}],
+ "crew":"one sentence on the crew's workload today (who is overloaded, unassigned jobs, a suggested move) or empty",
+ "warnings":["one sentence each — risks building up, from TRENDS and FACTS"],
+ "weather":"1–2 sentences of farm advice for the coming days from WEATHER (heat, cold, rain, wind, on pickup or clean-out days) or empty"}
+plan: the 3–5 most important things to do today, most urgent first, each pointing at one FACT id it comes from. warnings: 0–4, only real ones.
+Calm, practical, like a good farm supervisor. No emoji, no exclamation marks.` },
+      { role: 'user', content: `TODAY: ${clip(b.today, 40)}\n\n${clip(b.context, 16000)}` },
     ];
   }
   const hist = Array.isArray(b.history) ? b.history.slice(-6).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: clip(m.content, 1200) })) : [];
@@ -144,7 +151,7 @@ export default {
     const raw = await request.text();
     if (raw.length > MAX_BODY) return reply(413, { error: 'Too much data' }, cors);
     let b; try { b = JSON.parse(raw); } catch (e) { return reply(400, { error: 'Bad request' }, cors); }
-    if (b.mode !== 'greet' && !(b.mode === 'summary' && String(b.context || '').trim()) && !(b.mode === 'ask' && String(b.question || '').trim())) return reply(400, { error: 'Nothing to answer' }, cors);
+    if (b.mode !== 'greet' && !(b.mode === 'ross' && String(b.context || '').trim()) && !(b.mode === 'ask' && String(b.question || '').trim())) return reply(400, { error: 'Nothing to answer' }, cors);
 
     // Daily limit per farm (optional)
     const day = new Date().toISOString().slice(0, 10), ck = `n:${farm}:${day}`;
@@ -155,7 +162,7 @@ export default {
     let text = '', lastErr = null;
     for (const model of MODELS) {
       try {
-        const out = await env.AI.run(model, { messages, max_tokens: b.mode === 'greet' ? 220 : 420, temperature: 0.3 });
+        const out = await env.AI.run(model, { messages, max_tokens: b.mode === 'greet' ? 220 : b.mode === 'ross' ? (b.part === 'sheds' ? 500 : 1100) : 420, temperature: 0.3 });
         // Workers AI hands back JSON answers as an object, not text (2026-10-25: showed as "[object Object]")
         const r = out && (out.response != null ? out.response : out.result && out.result.response);
         text = (r && typeof r === 'object' ? JSON.stringify(r) : String(r || '')).trim();

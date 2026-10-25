@@ -1,13 +1,12 @@
-// ── Daily report + Summarise (2026-10-25, mockup ERt6X8yqonhZLd2qXAnKGu) ──────────────────────────────────
-// Replaces the ✨ Ask chat. Two things use the free AI on the farm's Cloudflare account (workers/prodwise-ai.js):
-//  • the Daily report: pops up once a day from 7:00 and opens from 📋 in the header. Its numbers, priorities,
-//    watch list and schedule come straight from the app (mgrBriefData); only the short summary is AI.
-//  • Summarise: a button by the page title on the pages that benefit. Nothing is sent until it's tapped; the
-//    result is kept for the day (tapping again is free), ↻ writes a fresh one. Tasks (CluckWise) uses the same
-//    store through window.pwSum, so its Planner, Maintenance and Shed prep pages work the same way.
-// No AI (offline, not set up, or the day's allowance used up): the report shows without its summary box, and
-// Summarise says when the AI is back.
+// ── Ross — the farm's AI and its morning report (2026-10-25, mockup G9Akjz37VWHJTHyL9g2MTL) ────────────────
+// Named after the Ross 308. One detailed report covering Production and Tasks pops up once a day from 7:00 and
+// reopens from the Ross button in the header (and in Tasks). The numbers, lists, week strip and "since yesterday"
+// come straight from the apps; Ross (free AI on the farm's Cloudflare account, workers/prodwise-ai.js) writes the
+// overview, the ranked plan with reasons, a note per shed, the crew note, warnings and weather advice — two AI
+// requests a morning, saved for the day. With no AI (offline, not set up, allowance used) every section still
+// shows its facts; only Ross's sentences are missing. Replaces the Daily report and the per-page Summarise.
 const AI_WORKER_URL='https://prodwise-ai.vonrmangaron.workers.dev';
+const ROSS_SVG='<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 9c0-2 1.5-3.5 3-3.5.6-1.4 2-2 3.2-1.4 1-.9 2.6-.7 3.3.5 1.4 0 2.3 1.3 1.9 2.6" fill="#D6453B"/><path d="M8 14c0-4 3.3-6.8 7.4-6.8 4.4 0 7.6 3.3 7.6 7.6 0 1.6-.4 3-1.2 4.2L24 24c.6 1.6-.5 3-2.2 3H12c-2.7 0-4.7-2.4-4.3-5l.6-3.4C8.1 17.5 8 15.8 8 14z" fill="#F4EFE6" stroke="#2A2F33" stroke-width="1.3"/><path d="M8.2 13.6 4.6 15l3.6 1.2z" fill="#E7A33A" stroke="#2A2F33" stroke-width="1"/><circle cx="12.2" cy="12.6" r="1.25" fill="#2A2F33"/><path d="M9.4 17.2c.8 1.9.4 3.3-.6 4" stroke="#D6453B" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
 let aiLeft=null;
 function aiFarm(){return String(syncFarmName||'').trim();}
 function aiSlug(){return aiFarm().toLowerCase().replace(/[^a-z0-9-]/g,'-');}
@@ -21,236 +20,227 @@ async function aiCall(body){
   if(j.text!=null&&typeof j.text!=='string')j.text=JSON.stringify(j.text);
   return j;
 }
+function aiJson(t){t=String(t||'');const a=t.indexOf('{'),z=t.lastIndexOf('}');if(a<0||z<=a)return null;try{return JSON.parse(t.slice(a,z+1));}catch(e){return null;}}
 function aiResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
 function aiErrText(e){
-  if(!navigator.onLine)return 'Offline — the AI needs the internet.';
-  if(e&&e.limit)return `The free AI allowance is used up for today. It's back at ${aiResetTime()}.`;
-  if(e&&(e.setup||e.status===404||e.status===undefined))return 'The AI isn\'t set up on Cloudflare yet (prodwise-ai worker).';
-  if(e&&e.status===403)return 'Only the manager can use the AI on this farm.';
-  return 'The AI didn\'t answer just now. Try again in a moment.';
+  if(!navigator.onLine)return 'Ross is offline — the AI needs the internet.';
+  if(e&&e.limit)return `Ross is resting until ${aiResetTime()} (free AI allowance used up).`;
+  if(e&&(e.setup||e.status===404||e.status===undefined))return 'Ross isn\'t set up on Cloudflare yet (prodwise-ai worker).';
+  if(e&&e.status===403)return 'Only the manager can use Ross on this farm.';
+  return 'Ross didn\'t answer just now.';
 }
-function aiLeftText(){return aiLeft!=null?` · ${aiLeft} left today`:'';}
+function rsColor(n){const P=['#5E7A3A','#2F7D6E','#7A5C9E','#B0603A','#3E6FB0','#9E4F6E'];let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return P[h%P.length];}
+const rsInl=x=>escapeHtml(String(x||'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 
-// ---------- Daily report ----------
-function rpKey(){return 'pw-report-'+aiSlug();}
-function rpLoad(){try{const j=JSON.parse(localStorage.getItem(rpKey())||'null');if(j&&j.day===aiDay())return j;}catch(e){}return {day:aiDay(),seen:false,sum:null,err:null};}
-function rpSave(x){try{localStorage.setItem(rpKey(),JSON.stringify(x));}catch(e){}}
-function rpOn(){try{return localStorage.getItem('pw-greet-on')!=='0';}catch(e){return true;}}
-function rpFacts(){
-  if(!farmData||typeof mgrBriefData!=='function')return {G:{today:[],watch:[],feed:[],co:[]},cw:null,lines:[]};
-  const d=mgrBriefData(),lines=[];
-  [['Today',d.G.today],['Watch',d.G.watch],['Feed',d.G.feed],['Changeover & prep',d.G.co]].forEach(([g,a])=>a.forEach(x=>lines.push({grp:g,tone:x.tone,html:x.html,act:x.act,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')})));
-  return {G:d.G,cw:d.cw,lines};
+// ---------- store: today's report (per farm) and a few days of history for "since yesterday" ----------
+function rsKey(){return 'pw-ross-'+aiSlug();}
+function rsLoad(){try{const j=JSON.parse(localStorage.getItem(rsKey())||'null');if(j&&j.day===aiDay())return j;}catch(e){}return {day:aiDay(),seen:false,main:null,sheds:null,err:null};}
+function rsSave(x){try{localStorage.setItem(rsKey(),JSON.stringify(x));}catch(e){}}
+function rsHistKey(){return 'pw-ross-hist-'+aiSlug();}
+function rsHist(){try{const j=JSON.parse(localStorage.getItem(rsHistKey())||'{}');return j&&typeof j==='object'?j:{};}catch(e){return {};}}
+function rsSnap(){   // today's figures, kept a week, so tomorrow can say what changed
+  if(!farmData)return;const h=rsHist(),d=aiDay();if(h[d])return;
+  h[d]={mort:Object.fromEntries((farmData.sheds||[]).map(s=>[s.id,Math.max(0,Number(s.mortality)||0)]))};
+  Object.keys(h).sort().slice(0,-8).forEach(k=>delete h[k]);
+  try{localStorage.setItem(rsHistKey(),JSON.stringify(h));}catch(e){}
 }
-function rpFactsText(lines){const T={r:'red',a:'amber',b:'blue',g:'green'};return lines.map(l=>`[${T[l.tone]}] ${l.grp}: ${l.text}`).join('\n')||'Nothing special today.';}
-function rpGo(act){
+function rsOn(){try{return localStorage.getItem('pw-greet-on')!=='0';}catch(e){return true;}}
+// Wait (up to ms) until Tasks has its farm data in, so Ross never writes the day's report without the tasks
+function rsTasksReady(){try{const w=cwFrame&&cwFrame.contentWindow;return !!(w&&w.__cwRoss&&w.__cwReady);}catch(e){return false;}}
+function rsWaitTasks(ms){return new Promise(res=>{const t0=Date.now();const tick=()=>{if(rsTasksReady()||Date.now()-t0>ms)res(rsTasksReady());else setTimeout(tick,250);};tick();});}
+function rsCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__cwRoss==='function'?w.__cwRoss():null;}catch(e){return null;}}
+
+// ---------- the facts (straight from the apps) ----------
+function rsGo(act){
   const a=String(act||'');
   if(/data-mgr-loads/.test(a))return 'Feed loads';if(/data-mgr-pickups/.test(a))return 'Pickups';if(/data-mgr-mort/.test(a))return 'Mortality';
   if(/data-brief-cw="prep"/.test(a))return 'Shed prep';if(/data-brief-cw/.test(a))return 'Tasks';
   let m=a.match(/data-brief-pair="\d+:(\d+)"/);if(m)return 'Shed '+m[1];
   m=a.match(/data-tab="g(\d)"/);if(m)return pairLabel(Number(m[1]));return '';
 }
-function rpKpis(){
-  const out=[],today=mgrToday();
-  try{
-    const sh=mgrPlaced(),placed=sh.reduce((n,s)=>n+(Number(s.initialPopulation)||0),0),live=sh.reduce((n,s)=>n+Math.max(0,liveAtStartOfDay(s,today)),0);
-    const mort=sh.reduce((n,s)=>n+Math.max(0,Number(s.mortality)||0),0);
-    out.push({k:'Birds on hand',v:live.toLocaleString('en-US'),s:`of ${placed.toLocaleString('en-US')}`});
-    out.push({k:'Mortality',v:placed?(mort/placed*100).toFixed(2)+'%':'—',s:`${mort.toLocaleString('en-US')} birds`});
-    const t=computeFarmTotals(),lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
-    if(t&&t.hasData){const d=lk&&Number.isFinite(lk.cfcr)&&lk.cfcr>0?t.cfcr-lk.cfcr:null;
-      out.push({k:'Cfcr2.45 finish',v:Number(t.cfcr).toFixed(3),s:d==null?'projected':`${d<=0?'−':'+'}${Math.abs(d).toFixed(3)} vs ${escapeHtml(String(lr.batch||'last'))}`,tone:d==null?'':d<=0?'ok':'up'});}
-    let sil=[];try{sil=mgrSiloOutlook().filter(x=>!(typeof pairAllClosed==='function'&&pairAllClosed(x.g)));}catch(e){}
-    const lo=sil.filter(x=>x.dep).sort((a,b)=>a.dep-b.dep)[0];
-    out.push(lo?{k:'Feed cover',v:`${lo.days} day${lo.days===1?'':'s'}`,s:`${pairLabel(lo.g)} lowest`,tone:lo.days<=3?'up':''}:{k:'Feed cover',v:'60+ days',s:'every pair',tone:'ok'});
-  }catch(e){}
-  return out;
+function rsData(){
+  const today=mgrToday(),T=iso(today),cw=rsCw();
+  const b=typeof mgrBriefData==='function'?mgrBriefData():{G:{today:[],watch:[],feed:[],co:[]},cw:null};
+  const facts=[];let n=0;
+  [['Today',b.G.today],['Watch',b.G.watch],['Feed',b.G.feed],['Changeover & prep',b.G.co]].forEach(([g,a])=>a.forEach(x=>facts.push({id:'F'+(++n),grp:g,tone:x.tone,html:x.html,act:x.act,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')})));
+  // key numbers
+  const sh=mgrPlaced(),placed=sh.reduce((s,x)=>s+(Number(x.initialPopulation)||0),0),live=sh.reduce((s,x)=>s+Math.max(0,liveAtStartOfDay(x,today)),0);
+  const mort=sh.reduce((s,x)=>s+Math.max(0,Number(x.mortality)||0),0);
+  const hist=rsHist(),ys=Object.keys(hist).filter(k=>k<T).sort().pop(),yd=ys?hist[ys]:null;
+  const kpi=[];
+  kpi.push({k:'Birds on hand',v:live.toLocaleString('en-US'),s:`of ${placed.toLocaleString('en-US')}`});
+  let dM=null;if(yd){dM=0;sh.forEach(s=>{const was=yd.mort[s.id];if(was!=null)dM+=Math.max(0,Number(s.mortality)||0)-was;});}
+  kpi.push({k:'Mortality',v:placed?(mort/placed*100).toFixed(2)+'%':'—',s:dM!=null&&placed?`${dM>=0?'+':'−'}${Math.abs(dM/placed*100).toFixed(2)} since ${ys===iso(addDays(today,-1))?'yesterday':fmtShortNoYear(new Date(ys+'T00:00:00'))}`:`${mort.toLocaleString('en-US')} birds`,tone:dM>0?'up':''});
+  try{const t=computeFarmTotals(),lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
+    if(t&&t.hasData){const d=lk&&Number.isFinite(lk.cfcr)&&lk.cfcr>0?t.cfcr-lk.cfcr:null;kpi.push({k:'Cfcr2.45 finish',v:Number(t.cfcr).toFixed(3),s:d==null?'projected':`${d<=0?'−':'+'}${Math.abs(d).toFixed(3)} vs ${escapeHtml(String(lr.batch||'last'))}`,tone:d==null?'':d<=0?'ok':'up'});}}catch(e){}
+  let silos=[];try{silos=mgrSiloOutlook().filter(x=>!(typeof pairAllClosed==='function'&&pairAllClosed(x.g)));}catch(e){}
+  const lo=silos.filter(x=>x.dep).sort((a,c)=>a.dep-c.dep)[0];
+  kpi.push(lo?{k:'Feed cover',v:`${lo.days} day${lo.days===1?'':'s'}`,s:pairLabel(lo.g),tone:lo.days<=3?'up':''}:{k:'Feed cover',v:'60+ days',s:'every pair',tone:'ok'});
+  if(cw)kpi.push({k:'Tasks today',v:String(cw.today.length),s:cw.overdue.length?`${cw.overdue.length} overdue`:'none overdue',tone:cw.overdue.length?'up':'ok'});
+  // sheds
+  const days=mgrWeekDays(),pickToday=new Set(days[0].pick.map(p=>p.shed)),prepBy={};(cw&&cw.prep||[]).forEach(p=>prepBy[String(p.shed)]=p);
+  const sheds=(farmData.sheds||[]).map(s=>{
+    const id=s.id,pr=prepBy[String(id)],placedD=s.placementDate?dateOnly(s.placementDate):null,clean=s.cleanoutDate?dateOnly(s.cleanoutDate):null;
+    const empty=s.closed||!placedD||placedD>today||(clean&&clean<today);
+    if(empty){const dn=pr&&pr.chicks?mgrDays(today,dateOnly(new Date(pr.chicks+'T00:00:00'))):null;
+      return {id,tone:'b',head:pr?`Empty · prep ${pr.done} of ${pr.total}`:'Empty',fact:pr?`Empty, prep ${pr.done} of ${pr.total} jobs${dn!=null?', chicks in '+dn+' days':''}${pr.left.length?', left: '+pr.left.join(', '):''}`:'Empty'};}
+    const age=ageInDays(s,today),pop=Number(s.initialPopulation)||0,m=Math.max(0,Number(s.mortality)||0),pc=pop?m/pop*100:0;
+    let dv=null;try{const f=forecastWeightModeAware(s,today);if(f&&f.kg!=null)dv=daysVsTarget(age,f.kg);}catch(e){}
+    const dvt=dv==null?'':Math.abs(dv)<0.5?'on target':dv>0?`${dv.toFixed(1)} d ahead`:`${(-dv).toFixed(1)} d behind`;
+    const out1=clean?mgrDays(today,clean):null,nx=mgrComingPickups(s)[0],sev=dv==null?'ok':daysBehindSeverity(dv);
+    const mDay=yd&&yd.mort[id]!=null?m-yd.mort[id]:null;
+    const tone=pickToday.has(id)?'r':sev==='bad'||(dv!=null&&dv<=-2)?'a':out1!=null&&out1<=1?'b':'g';
+    const head=`Day ${age}${dvt?' · '+dvt:''}${pickToday.has(id)?' · pickup today':out1===0?' · clean-out today':out1===1?' · out tomorrow':''}`;
+    return {id,tone,head,fact:`Day ${age}, ${dvt||'no weight yet'}, mortality ${pc.toFixed(2)}%${mDay!=null?' ('+(mDay>=0?'+':'')+mDay+' since yesterday)':''}${pickToday.has(id)?', pickup today':''}${nx&&!pickToday.has(id)?', next pickup '+fmtShortNoYear(nx.date)+' '+nx.birds.toLocaleString('en-US')+' birds':''}${clean?', clean-out '+fmtShortNoYear(clean):''}`};
+  });
+  // crew
+  const crew=[];if(cw){const by={};const add=(t,od)=>{const who=t.who.length?t.who:[''];who.forEach(w=>{(by[w]=by[w]||[]).push({name:t.name,done:t.done,od});});};
+    cw.today.forEach(t=>add(t,false));cw.overdue.forEach(t=>add(t,true));
+    Object.entries(by).sort((a,c)=>(a[0]===''?1:c[0]===''?-1:c[1].length-a[1].length)).forEach(([w,list])=>crew.push({who:w,list,open:list.filter(x=>!x.done).length}));}
+  // since yesterday
+  const since=[];
+  if(dM!=null){let worst=null;sh.forEach(s=>{const was=yd.mort[s.id];if(was==null)return;const d=Math.max(0,Number(s.mortality)||0)-was;if(!worst||d>worst.d)worst={id:s.id,d};});
+    since.push({tone:dM>0?'a':'g',html:`Mortality <b>${dM>=0?'+':'−'}${Math.abs(dM).toLocaleString('en-US')} birds</b>${worst&&worst.d>0&&dM>0?` — ${worst.d.toLocaleString('en-US')} of them in Shed ${worst.id}`:''}`});}
+  if(cw&&cw.yesterday.total)since.push({tone:cw.yesterday.done===cw.yesterday.total?'g':'a',html:`<b>${cw.yesterday.done} of ${cw.yesterday.total}</b> jobs done yesterday`});
+  (cw&&cw.newReports||[]).slice(0,3).forEach(r=>since.push({tone:r.urgent?'r':'a',html:`New problem report: <b>${escapeHtml(r.label)}</b>${r.by?' ('+escapeHtml(r.by)+')':''}`}));
+  farmLoads.filter(l=>l.date&&iso(dateOnly(l.date))===iso(addDays(today,-1))).forEach(l=>{const gs=[1,2,3,4].filter(g=>Number(l.splitKg&&l.splitKg[g])>0).map(g=>pairLabel(g)).join(', ');
+    since.push({tone:'g',html:`Load ${mgrT(l.actualKg!=null?Number(l.actualKg):Number(l.plannedKg)||0)} delivered${gs?' → '+escapeHtml(gs):''}${l.actualKg==null?' (docket weight still to enter)':''}`});});
+  // trends (Ross words them into warnings; shown as they are without AI)
+  const trends=[];
+  sh.forEach(s=>{const ks=Object.keys(hist).sort().slice(-4);if(ks.length<4)return;const v=ks.map(k=>hist[k].mort[s.id]).concat([Math.max(0,Number(s.mortality)||0)]);if(v.some(x=>x==null))return;
+    const d=v.slice(1).map((x,i)=>x-v[i]);if(d.length>=3&&d.slice(-3).every((x,i,a)=>i===0||x>a[i-1]))trends.push({tone:'a',text:`Shed ${s.id} daily mortality up three days running`});});
+  silos.filter(x=>x.dep&&x.days<=4).forEach(x=>trends.push({tone:x.days<=2?'r':'a',text:`${pairLabel(x.g)} feed runs low ${fmtShortNoYear(x.dep)} (${x.days} days of cover)`}));
+  (cw&&cw.recurring||[]).slice(0,2).forEach(r=>trends.push({tone:'a',text:`${r.label} reported ${r.n} times this month`}));
+  (cw&&cw.urgent||[]).filter(r=>r.days>=3).slice(0,2).forEach(r=>trends.push({tone:r.urgent?'r':'a',text:`${r.label} — ${r.status.toLowerCase()} for ${r.days} days`}));
+  (cw&&cw.prep||[]).forEach(p=>{if(!p.chicks)return;const dn=mgrDays(today,dateOnly(new Date(p.chicks+'T00:00:00'))),left=p.total-p.done;if(left>0&&dn>0&&left/dn>1)trends.push({tone:'a',text:`Shed ${p.shed} prep needs about ${Math.ceil(left/dn)} jobs a day to be ready for chicks`});});
+  // week ahead
+  const week=days.map((x,i)=>{const ev=[];x.pick.forEach(p=>ev.push({k:'p',t:`${p.final?'Final ':''}Pickup S${p.shed}`}));
+    x.loads.forEach(l=>ev.push({k:'f',t:`Load ${mgrT(l.actualKg!=null?Number(l.actualKg):Number(l.plannedKg)||0)}`}));
+    (farmData.sheds||[]).forEach(s=>{if(!s.closed&&s.cleanoutDate&&iso(dateOnly(s.cleanoutDate))===iso(x.date))ev.push({k:'c',t:`S${s.id} clean-out`});});
+    (cw&&cw.prep||[]).forEach(p=>{if(p.chicks===iso(x.date))ev.push({k:'p',t:`Chicks S${p.shed}`});});
+    const nt=cw&&cw.perDay?cw.perDay[iso(x.date)]||0:0;if(nt)ev.push({k:'k',t:`${nt} task${nt===1?'':'s'}`});
+    return {date:x.date,ev,busy:ev.length>=3||nt>=10};});
+  return {T,cw,facts,kpi,sheds,crew,since,trends,week,wx:cw&&cw.wx||[]};
 }
-function rpEnsureDom(){
-  if(document.getElementById('rpModal'))return;
-  document.body.insertAdjacentHTML('beforeend',`<div class="rp-scrim" id="rpModal" aria-hidden="true"><div class="rp" role="dialog" aria-modal="true" aria-labelledby="rpTitle"><div id="rpInner"></div></div></div>`);
-  const m=document.getElementById('rpModal');
-  m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-rp-close]')){rpClose();return;}const go=e.target.closest('[data-rp-go]');if(go)rpClose();});
-  m.addEventListener('change',e=>{if(e.target.matches('[data-rp-on]')){try{localStorage.setItem('pw-greet-on',e.target.checked?'1':'0');}catch(er){}}});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open'))rpClose();});
+function rsContext(d){
+  const L=[];
+  L.push('FACTS (red = act today, amber = watch, blue = info, green = fine):',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}] ${f.grp}: ${f.text}`));
+  L.push('KEY NUMBERS:',...d.kpi.map(k=>`- ${k.k}: ${String(k.v).replace(/<[^>]+>/g,'')} (${String(k.s).replace(/<[^>]+>/g,'')})`));
+  L.push('SHEDS:',...d.sheds.map(s=>`- Shed ${s.id}: ${s.fact}`));
+  if(d.crew.length)L.push('CREW TODAY:',...d.crew.map(c=>`- ${c.who||'Not assigned'}: ${c.list.map(x=>x.name+(x.od?' (overdue)':'')+(x.done?' (done)':'')).join(', ')}`));
+  if(d.since.length)L.push('SINCE YESTERDAY:',...d.since.map(x=>'- '+x.html.replace(/<[^>]+>/g,'')));
+  if(d.trends.length)L.push('TRENDS:',...d.trends.map(t=>'- '+t.text));
+  L.push('WEEK AHEAD:',...d.week.map(w=>`- ${fmtShortNoYear(w.date)}: ${w.ev.map(e=>e.t).join(', ')||'nothing booked'}`));
+  if(d.wx.length)L.push('WEATHER:',...d.wx.map(w=>`- ${fmtShortNoYear(new Date(w.date+'T00:00:00'))}: ${w.maxT} / ${w.minT}, ${w.label}${w.rain!=null?', rain '+Math.round(w.rain)+'%':''}${w.wind!=null?', wind '+Math.round(w.wind)+' km/h':''}${w.alerts.length?' — '+w.alerts.join(', '):''}`));
+  return L.join('\n');
 }
-function rpHtml(st){
-  const f=rpFacts(),now=new Date(),wx=f.cw&&f.cw.wx,who=aiName();
+
+// ---------- the report ----------
+const RS_TABS=[['ov','Overview'],['plan',"Today's plan"],['sheds','Sheds'],['crew','Crew'],['since','Since yesterday'],['warn','Warnings'],['week','Week ahead'],['wx','Weather']];
+function rsHtml(st,d){
+  const now=new Date(),who=aiName(),w0=d.wx[0],tm=new Date(st.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
   let bd='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);bd=`Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · day ${Math.max(0,mgrDays(first,mgrToday()))}`;}}catch(e){}
-  const tm=now.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
-  const meta=[bd,wx?`${escapeHtml(wx.maxT)} / ${escapeHtml(wx.minT)}${wx.label?', '+escapeHtml(wx.label.toLowerCase()):''}`:'',`prepared${who?' for '+escapeHtml(who):''}, ${tm}`].filter(Boolean).join(' · ');
-  const kp=rpKpis().map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('');
-  const sum=st.sum?`<div class="rp-sum"><small>Summary <i>AI · check before acting</i></small><p>${escapeHtml(st.sum)}</p></div>`
-    :st.err?'':`<div class="rp-sum loading"><small>Summary <i>writing…</i></small><div class="sm-load"><i></i><i></i><i></i></div></div>`;
-  const row=(l,mark)=>{const go=rpGo(l.act);return l.act?`<button type="button" class="rp-it" data-rp-go ${l.act}><span class="rp-n ${l.tone}">${mark}</span><span>${l.html}</span><span class="rp-go">${go?escapeHtml(go)+' ›':''}</span></button>`:`<div class="rp-it"><span class="rp-n ${l.tone}">${mark}</span><span>${l.html}</span><span></span></div>`;};
-  const pri=f.lines.filter(l=>l.tone==='r'),wat=f.lines.filter(l=>l.tone==='a'&&l.grp!=='Changeover & prep');
-  const sec=(t,arr,mk)=>arr.length?`<div class="rp-sec"><h3>${t}</h3>${arr.map((l,i)=>row(l,mk(i))).join('')}</div>`:'';
-  let sched='';try{sched=mgrWeekDays().slice(0,2).map((x,i)=>{const bits=[];
-      x.pick.forEach(p=>bits.push(`${p.final?'Final pickup':'Pickup'} Shed ${p.shed}`));
-      if(x.loads.length){const kg=x.loads.reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);bits.push(`Feed ${x.loads.length>1?x.loads.length+' loads':'load'} ${mgrT(kg)}`);}
-      mgrPlaced().forEach(s=>{if(!s.closed&&s.cleanoutDate&&iso(dateOnly(s.cleanoutDate))===iso(x.date))bits.push(`Shed ${s.id} clean-out`);});
-      if(i===0&&f.cw&&f.cw.today)bits.push(`${f.cw.today} task${f.cw.today===1?'':'s'} (${f.cw.done} done)`);
-      return `<div class="rp-day"><b>${i===0?'Today':'Tomorrow'}</b><div>${bits.length?escapeHtml(bits.join(' · ')):'Nothing booked'}</div></div>`;}).join('');}catch(e){}
-  const prep=f.lines.filter(l=>l.grp==='Changeover & prep'&&/prep/i.test(l.text));
-  const quiet=!pri.length&&!wat.length?'<div class="rp-sec"><h3>Priorities today</h3><p class="rp-quiet">Nothing urgent — every shed, silo and task is on track.</p></div>':'';
-  return `<div class="rp-h"><div class="rp-ht"><small>Daily report${typeof farmDisplayName!=='undefined'&&farmDisplayName?' · '+escapeHtml(farmDisplayName):''}</small><h2 id="rpTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rp-m">${meta}</div></div><button type="button" class="rp-x" data-rp-close aria-label="Close" title="Close">✕</button></div>
-    ${kp?`<div class="rp-kpi">${kp}</div>`:''}
-    <div class="rp-b">${sum}${quiet}${sec('Priorities today',pri,i=>i+1)}${sec('Watch',wat,()=>'!')}
-      ${sched?`<div class="rp-sec"><h3>Schedule</h3><div class="rp-sched">${sched}</div></div>`:''}
-      ${sec('Shed prep',prep,()=>'✓')}</div>
-    <div class="rp-f"><span>Numbers from ProdWise${f.cw?' and Tasks':''} at ${tm}${st.err?' · '+escapeHtml(st.err):''}</span><label class="rp-on"><input type="checkbox" data-rp-on ${rpOn()?'checked':''}> Show at 7:00</label><button type="button" class="rp-done" data-rp-close>Done</button></div>`;
+  const meta=[bd,w0?`${escapeHtml(w0.maxT)} / ${escapeHtml(w0.minT)}${w0.label?', '+escapeHtml(w0.label.toLowerCase()):''}`:'',`prepared${who?' for '+escapeHtml(who):''} at ${tm}`].filter(Boolean).join(' · ');
+  const M=st.main,S=st.sheds&&st.sheds.sheds?st.sheds.sheds:{},busy=st.busy,tag='<span class="rs-tag">Ross</span>';
+  const rossBox=(inner)=>`<div class="rs-ross"><span class="rs-av">${ROSS_SVG}</span><div class="rs-bx">${inner}</div></div>`;
+  const loading='<div class="rs-load"><i></i><i></i><i></i></div>';
+  // overview
+  let ov='';
+  if(M&&M.overview)ov=rossBox(`<small>Ross <i>AI · check before acting</i></small><p>${rsInl(M.overview)}</p>`);
+  else if(busy)ov=rossBox(`<small>Ross <i>writing…</i></small>${loading}`);
+  else ov=rossBox(`<small>Ross <i>${escapeHtml(st.err||'not available')}</i></small><p class="rs-muted">Here are today's numbers and lists without Ross's notes.</p>`);
+  // plan
+  const byId=Object.fromEntries(d.facts.map(f=>[f.id,f]));
+  let plan=(M&&Array.isArray(M.plan)?M.plan:[]).map(p=>({f:byId[String(p.fact||'')]||null,title:String(p.title||''),why:String(p.why||'')})).filter(p=>p.title).slice(0,5);
+  const aiPlan=plan.length>0;
+  if(!aiPlan)plan=d.facts.filter(f=>f.tone==='r').concat(d.facts.filter(f=>f.tone==='a')).slice(0,5).map(f=>({f,title:f.text,why:''}));
+  const planHtml=plan.length?plan.map((p,i)=>{const tone=p.f?p.f.tone:'r',go=p.f?rsGo(p.f.act):'';const inner=`<span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span><b>${rsInl(p.title)}</b>${p.why?`<span class="rs-why">${rsInl(p.why)}</span>`:''}</span><span class="rs-go">${go?escapeHtml(go)+' ›':''}</span>`;
+    return p.f&&p.f.act?`<button type="button" class="rs-act" data-rs-go ${p.f.act}>${inner}</button>`:`<div class="rs-act">${inner}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
+  // sheds
+  const shedHtml=d.sheds.map(s=>`<div class="rs-sh ${s.tone}"><span class="rs-no">${s.id}</span><div><b>${escapeHtml(s.head)}</b><p>${S[String(s.id)]?rsInl(S[String(s.id)]):busy?'<span class="rs-muted">…</span>':escapeHtml(s.fact.replace(/^Day \d+, /,''))}</p></div></div>`).join('');
+  // crew
+  const crewHtml=d.cw?(d.crew.length?`<div class="rs-crew">${d.crew.map(c=>`<div class="rs-cw${c.who?'':' none'}"><div class="rs-who">${c.who?`<i style="background:${rsColor(c.who)}">${escapeHtml(c.who.slice(0,1).toUpperCase())}</i>`:''}<b>${c.who?escapeHtml(c.who):'Not assigned'}</b><em class="${c.open>=6?'hi':''}">${c.open} open</em></div><ul>${c.list.slice(0,6).map(x=>`<li class="${x.done?'done':''}">${escapeHtml(x.name)}${x.od?' <span class="rs-od">overdue</span>':''}</li>`).join('')}${c.list.length>6?`<li class="rs-muted">+${c.list.length-6} more</li>`:''}</ul></div>`).join('')}</div>`:'<p class="rs-muted">No tasks on today.</p>')+(M&&M.crew?rossBox(`<p>${rsInl(M.crew)}</p>`):''):'<p class="rs-muted">Tasks hasn\'t loaded yet.</p>';
+  const li=(x)=>`<div class="rs-li"><span class="rs-d ${x.tone}"></span><span>${x.html}</span></div>`;
+  const sinceHtml=d.since.length?d.since.map(li).join(''):'<p class="rs-muted">Ross compares from tomorrow — today\'s figures are saved on this device.</p>';
+  const warns=M&&Array.isArray(M.warnings)&&M.warnings.length?M.warnings.slice(0,4).map(t=>({tone:'a',html:rsInl(t)})):d.trends.map(t=>({tone:t.tone,html:escapeHtml(t.text)}));
+  const warnHtml=warns.length?warns.map(li).join(''):'<p class="rs-muted">No risks building up.</p>';
+  const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const weekHtml=`<div class="rs-week">${d.week.map(w=>`<div class="rs-wd${w.busy?' busy':''}"><b>${WD[w.date.getDay()]} ${w.date.getDate()}</b>${w.ev.map(e=>`<div class="rs-ev ${e.k}">${escapeHtml(e.t)}</div>`).join('')||'<div class="rs-ev">—</div>'}</div>`).join('')}</div>`;
+  const hot=d.wx.filter(w=>w.alerts.length);
+  const wxHtml=(M&&M.weather?`<div class="rs-wx"><span class="rs-wxi">${escapeHtml((hot[0]||d.wx[0]||{}).icon||'🌤')}</span><div>${hot.length?`<b>${escapeHtml(hot.map(w=>fmtShortNoYear(new Date(w.date+'T00:00:00'))+': '+w.alerts.join(', ')).join(' · '))}</b>`:''}<p>${rsInl(M.weather)}</p></div></div>`:'')
+    +(d.wx.length?`<div class="rs-wxrow">${d.wx.map(w=>`<span class="${w.alerts.length?'al':''}" title="${escapeAttr(w.label+(w.alerts.length?' — '+w.alerts.join(', '):''))}"><b>${WD[new Date(w.date+'T00:00:00').getDay()]}</b>${escapeHtml(w.icon)}<i>${escapeHtml(w.maxT)}</i></span>`).join('')}</div>`:'<p class="rs-muted">No weather location set (Tasks › Settings › Weather).</p>');
+  const sec=(id,title,ai,body)=>`<section class="rs-sec" id="rs-${id}"><h3>${title}${ai?tag:''}</h3>${body}</section>`;
+  return `<div class="rs-h"><div class="rs-ht"><span class="rs-mark">${ROSS_SVG}</span><div class="rs-t"><small>Ross · morning report</small><h2 id="rsTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rs-m">${meta}</div></div><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div>
+      <nav class="rs-nav" aria-label="Sections">${RS_TABS.map(([k,l],i)=>`<button type="button" data-rs-tab="${k}" class="${i===0?'on':''}">${l}</button>`).join('')}</nav></div>
+    <div class="rs-scroll" id="rsScroll">
+      <div class="rs-kpi">${d.kpi.map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('')}</div>
+      <div class="rs-b">
+        <section class="rs-sec" id="rs-ov">${ov}</section>
+        ${sec('plan',"Today's plan",aiPlan,planHtml)}
+        ${sec('sheds','Sheds',!!st.sheds,`<div class="rs-sheds">${shedHtml}</div>`)}
+        ${sec('crew','Crew today',!!(M&&M.crew),crewHtml)}
+        <div class="rs-two">${sec('since','Since yesterday',false,sinceHtml)}${sec('warn','Warnings',!!(M&&M.warnings&&M.warnings.length),warnHtml)}</div>
+        ${sec('week','Week ahead',false,weekHtml)}
+        ${sec('wx','Weather',!!(M&&M.weather),wxHtml)}
+      </div>
+      <div class="rs-f"><span>Numbers from ProdWise${d.cw?' and Tasks':''} at ${tm} · Ross is AI — check before acting${aiLeft!=null?' · '+aiLeft+' AI requests left today':''}</span><label class="rs-on"><input type="checkbox" data-rs-on ${rsOn()?'checked':''}> Show at 7:00</label><button type="button" class="rs-done" data-rs-close>Done</button></div>
+    </div>`;
 }
-async function rpOpen(){
+let rsTabLock=0;   // a tapped tab stays lit while the report scrolls to it
+function rsEnsureDom(){
+  if(document.getElementById('rsModal'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div class="rs-scrim" id="rsModal" aria-hidden="true"><div class="rs" role="dialog" aria-modal="true" aria-labelledby="rsTitle"><div id="rsInner"></div></div></div>`);
+  const m=document.getElementById('rsModal');
+  m.addEventListener('click',e=>{
+    if(e.target===m||e.target.closest('[data-rs-close]')){rsClose();return;}
+    const t=e.target.closest('[data-rs-tab]');if(t){const sc=document.getElementById('rsScroll'),el=document.getElementById('rs-'+t.dataset.rsTab);if(sc&&el){rsTabLock=Date.now();m.querySelectorAll('[data-rs-tab]').forEach(b=>b.classList.toggle('on',b===t));sc.scrollTo({top:sc.scrollTop+el.getBoundingClientRect().top-sc.getBoundingClientRect().top-8,behavior:'smooth'});}return;}
+    if(e.target.closest('[data-rs-go]'))rsClose();
+  });
+  m.addEventListener('change',e=>{if(e.target.matches('[data-rs-on]')){try{localStorage.setItem('pw-greet-on',e.target.checked?'1':'0');}catch(er){}}});
+  m.addEventListener('scroll',e=>{const sc=e.target;if(sc.id!=='rsScroll'||Date.now()-rsTabLock<900)return;const top=sc.getBoundingClientRect().top;let cur=RS_TABS[0][0];
+    RS_TABS.forEach(([k])=>{const el=document.getElementById('rs-'+k);if(el&&el.getBoundingClientRect().top-top<=60)cur=k;});
+    if(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-4)cur=RS_TABS[RS_TABS.length-1][0];   // at the bottom: the last section
+    m.querySelectorAll('[data-rs-tab]').forEach(b=>b.classList.toggle('on',b.dataset.rsTab===cur));},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open'))rsClose();});
+}
+function rsPaint(st,d){const inner=document.getElementById('rsInner');if(!inner)return;const sc=document.getElementById('rsScroll'),top=sc?sc.scrollTop:0;inner.innerHTML=rsHtml(st,d);const s2=document.getElementById('rsScroll');if(s2)s2.scrollTop=top;}
+async function rsOpen(){
   if(!farmData)return;
-  rpEnsureDom();
-  const m=document.getElementById('rpModal'),inner=document.getElementById('rpInner');
-  const st=rpLoad();st.seen=true;rpSave(st);rpDot();
-  inner.innerHTML=rpHtml(st);m.classList.add('open');m.setAttribute('aria-hidden','false');
-  if(!st.sum&&!st.err){
-    try{const j=await aiCall({mode:'greet',name:aiName(),facts:rpFactsText(rpFacts().lines)});st.sum=String(j.text||'').trim()||null;if(!st.sum)st.err='No summary today';}
-    catch(e){st.err=aiErrText(e);}
-    rpSave(st);
-    if(m.classList.contains('open'))inner.innerHTML=rpHtml(st);
-  }
+  rsEnsureDom();rsSnap();
+  const m=document.getElementById('rsModal');
+  let st=rsLoad();st.seen=true;if(!st.at)st.at=Date.now();rsSave(st);rsDot();
+  let d=rsData();const need=!st.main&&!st.err;
+  st.busy=need;rsPaint(st,d);m.classList.add('open');m.setAttribute('aria-hidden','false');
+  if(!need)return;
+  if(!rsTasksReady()){if(typeof pwEnsureTasksFrame==='function')pwEnsureTasksFrame(()=>{});await rsWaitTasks(12000);d=rsData();rsPaint(st,d);}
+  const ctx=rsContext(d);
+  const [a,b]=await Promise.all([
+    aiCall({mode:'ross',part:'main',name:aiName(),context:ctx}).then(j=>({ok:aiJson(j.text)})).catch(e=>({err:aiErrText(e)})),
+    aiCall({mode:'ross',part:'sheds',context:d.sheds.map(s=>`Shed ${s.id}: ${s.fact}`).join('\n')}).then(j=>({ok:aiJson(j.text)})).catch(e=>({err:aiErrText(e)}))]);
+  st=rsLoad();st.busy=false;
+  if(a.ok&&(a.ok.overview||a.ok.plan))st.main=a.ok;else st.err=a.err||'Ross\'s notes didn\'t come through today';
+  if(b.ok&&b.ok.sheds)st.sheds=b.ok;
+  rsSave(st);
+  if(m.classList.contains('open'))rsPaint(st,rsData());
 }
-function rpClose(){const m=document.getElementById('rpModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');}
-function rpDot(){const st=rpLoad(),on=!!farmData&&new Date().getHours()>=7&&!st.seen;const d=document.getElementById('reportDot');if(d)d.hidden=!on;}
-function rpPlaceButton(){
-  if(document.getElementById('reportBtn'))return;
+function rsClose(){const m=document.getElementById('rsModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+function rsDot(){const on=!!farmData&&new Date().getHours()>=7&&!rsLoad().seen;const d=document.getElementById('rossDot');if(d)d.hidden=!on;try{cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwRossDot&&cwFrame.contentWindow.__cwRossDot(on);}catch(e){}}
+function rsPlaceButton(){
+  if(document.getElementById('rossBtn'))return;
   const bell=document.querySelector('#pageHeader .alerts-bell-wrap');if(!bell)return;
-  bell.insertAdjacentHTML('beforebegin',`<button type="button" class="report-btn" id="reportBtn" title="Daily report" aria-label="Daily report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l1 2h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h2z"/><path d="M9 11h6M9 15h4"/></svg><span class="report-dot" id="reportDot" hidden></span></button>`);
-  document.getElementById('reportBtn').addEventListener('click',rpOpen);
+  bell.insertAdjacentHTML('beforebegin',`<button type="button" class="ross-btn" id="rossBtn" title="Ross · morning report" aria-label="Ross · morning report"><span class="ross-mk">${ROSS_SVG}</span><span class="ross-l">Ross</span><span class="ross-dot" id="rossDot" hidden></span></button>`);
+  document.getElementById('rossBtn').addEventListener('click',rsOpen);
 }
-let rpTried=false;
-function rpMaybeShow(){
-  if(rpTried||!farmData||!aiFarm()||!rpOn()||new Date().getHours()<7)return;
-  if(rpLoad().seen)return;
-  rpTried=true;
-  const go=()=>{try{rpOpen();}catch(e){}};
-  let ready=false;try{ready=!!(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwBrief);}catch(e){}
-  if(ready)go();else if(typeof pwEnsureTasksFrame==='function'){let done=false;const once=()=>{if(!done){done=true;go();}};pwEnsureTasksFrame(once);setTimeout(once,8000);}else go();
+window.pwOpenRoss=()=>rsOpen();   // Tasks' Ross button
+let rsTried=false;
+function rsMaybeShow(){
+  if(rsTried||!farmData||!aiFarm()||!rsOn()||new Date().getHours()<7)return;
+  if(rsLoad().seen)return;
+  rsTried=true;
+  const go=()=>{try{rsOpen();}catch(e){}};
+  if(typeof pwEnsureTasksFrame==='function')pwEnsureTasksFrame(()=>{});
+  rsWaitTasks(15000).then(go);   // the report waits for Tasks' data (or 15 s), then opens
 }
-
-// ---------- Summarise ----------
-function smKey(){return 'pw-sum-'+aiSlug();}
-function smLoad(){try{const j=JSON.parse(localStorage.getItem(smKey())||'null');if(j&&j.day===aiDay())return j;}catch(e){}return {day:aiDay(),items:{},hidden:{}};}
-function smSave(x){try{localStorage.setItem(smKey(),JSON.stringify(x));}catch(e){}}
-// Bullets "- [red] text" → [{tone,text}]
-function smParse(text){
-  return String(text||'').split(/\n/).map(l=>l.trim()).filter(l=>/^[-*•]\s+/.test(l)).map(l=>{l=l.replace(/^[-*•]\s+/,'');const m=l.match(/^\[(red|amber|green|blue)\]\s*/i);
-    return {tone:m?{red:'r',amber:'a',green:'g',blue:'b'}[m[1].toLowerCase()]:'g',text:m?l.slice(m[0].length):l};}).filter(x=>x.text).slice(0,5);
-}
-const smInl=x=>escapeHtml(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-// The shared store and AI call — Tasks uses this too (window.pwSum)
-const pwSum={
-  get(key){const s=smLoad();return s.hidden[key]?null:s.items[key]||null;},
-  cached(key){return smLoad().items[key]||null;},
-  show(key){const s=smLoad();delete s.hidden[key];smSave(s);},
-  hide(key){const s=smLoad();s.hidden[key]=true;smSave(s);},
-  async run(key,page,context,sheds){
-    pwSum.show(key);
-    let item;
-    try{const j=await aiCall({mode:'summary',page,context,sheds:sheds||null});
-      if(sheds&&sheds.length){let o=null;const t=String(j.text||''),a=t.indexOf('{'),z=t.lastIndexOf('}');try{o=JSON.parse(t.slice(a,z+1));}catch(e){}
-        item=o&&o.sheds&&typeof o.sheds==='object'?{pair:String(o.pair||''),sheds:o.sheds,at:Date.now()}:{lines:smParse(j.text),at:Date.now()};}
-      else item={lines:smParse(j.text),at:Date.now()};
-      if(!item.sheds&&!(item.lines||[]).length)item={lines:[{tone:'g',text:String(j.text||'').trim().slice(0,400)}],at:Date.now()};
-      const s2=smLoad();s2.items[key]=item;smSave(s2);}
-    catch(e){item={err:aiErrText(e),at:Date.now()};}
-    return item;
-  },
-  card(item,title,key){return smCardHtml(item,title,key);},
-};
-window.pwSum=pwSum;
-function smCardHtml(item,title,key){
-  const t=new Date(item&&item.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
-  const head=`<div class="sm-h"><b>Summary · ${escapeHtml(title)}</b><small>${item&&item.busy?'writing…':item&&item.err?'':t}</small>${item&&!item.busy?`<button type="button" class="sm-ib" data-sm-again="${escapeAttr(key)}" title="Write it again (uses the free AI allowance)" aria-label="Write again">↻</button>`:''}<button type="button" class="sm-ib" data-sm-hide="${escapeAttr(key)}" title="Hide" aria-label="Hide">✕</button></div>`;
-  let body='';
-  if(!item||item.busy)body='<div class="sm-load"><i></i><i></i><i></i></div>';
-  else if(item.err)body=`<p class="sm-err">${escapeHtml(item.err)}</p>`;
-  else if(item.sheds)body=`<p>${smInl(item.pair||'A note for each shed is in its card below.')}</p>`;
-  else body=`<ul>${(item.lines||[]).map(l=>`<li><span class="sm-d ${l.tone}"></span><span>${smInl(l.text)}</span></li>`).join('')}</ul>`;
-  return `<section class="sm-card" data-sm-card="${escapeAttr(key)}">${head}${body}${item&&!item.busy&&!item.err?`<span class="sm-f">AI summary of this page · check before acting${aiLeftText()}</span>`:''}</section>`;
-}
-// Which page is showing, and what to send for it
-function smPage(){
-  if(!farmData)return null;
-  const tool=typeof toolPageOpen!=='undefined'?toolPageOpen:null;
-  if(tool==='loadsModal')return {key:'loads',title:'Feed loads',anchor:()=>document.getElementById('loadsBody')};
-  if(tool==='pickupsModal')return {key:'pickups-all',title:'Pickups',anchor:()=>document.querySelector('#pickupsModal .compare-modal-body')};
-  if(tool)return null;
-  if(activeTab==='dashboard')return {key:'results',title:'Result detail',anchor:()=>document.getElementById('app')};
-  const m=/^g([1-4])$/.exec(activeTab);if(!m)return null;
-  const g=Number(m[1]),view=shedViewByGroup[g]||'overview';
-  const T={overview:'Overview',planner:'Feed & silo',pickups:'Pickups',growth:'Growth'};if(!T[view])return null;
-  return {key:`g${g}:${view}`,title:`${pairLabel(g)} · ${T[view]}`,g,view,sheds:view==='overview'?shedsForGroup(g).filter(s=>s.placementDate).map(s=>s.id):null,anchor:()=>document.getElementById('app')};
-}
-function smShedLine(s,today){
-  const age=ageInDays(s,today),live=Math.max(0,liveAtStartOfDay(s,today)),pop=Number(s.initialPopulation)||0,mort=Math.max(0,Number(s.mortality)||0);
-  let g='';try{const f=forecastWeightModeAware(s,today);const dv=f&&f.kg!=null?daysVsTarget(age,f.kg):null;if(dv!=null)g=` · weight ${f.kg.toFixed(2)} kg, ${Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' days ahead':(-dv).toFixed(1)+' days behind'}`;}catch(e){}
-  const nx=mgrComingPickups(s);
-  return `Shed ${s.id}: ${s.closed?'closed':'day '+age} · ${live.toLocaleString('en-US')} birds of ${pop.toLocaleString('en-US')} · mortality ${mort.toLocaleString('en-US')} (${pop?(mort/pop*100).toFixed(2):'0'}%)${s.mortalityUpdatedAt?', updated '+fmtShortNoYear(s.mortalityUpdatedAt):''}${g}${nx.length?' · pickups to come: '+nx.slice(0,4).map(p=>`${fmtShortNoYear(p.date)} ${p.birds.toLocaleString('en-US')}${p.planned?' (planned)':''}`).join(', '):''}${s.cleanoutDate?' · clean-out '+fmtShortNoYear(s.cleanoutDate):''}`;
-}
-function smContext(p){
-  const today=mgrToday(),out=[];
-  try{
-    out.push(`BATCH ${predState.batchNumber||farmData.batchNumber||''} · today ${fmtShortNoYear(today)}`);
-    if(p.key==='results'){
-      const t=computeFarmTotals();if(t&&t.hasData)out.push(`Projected at finish: FCR ${Number(t.fcr).toFixed(3)}, Cfcr2.45 ${Number(t.cfcr).toFixed(3)}`);
-      const lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
-      if(lk)out.push(`Last batch ${lr.batch||''}: ${Object.entries(lk).filter(([k,v])=>typeof v==='number'&&Number.isFinite(v)).slice(0,10).map(([k,v])=>`${k} ${Math.abs(v)<10?v.toFixed(3):Math.round(v)}`).join(', ')}`);
-      out.push('SHEDS:',...mgrPlaced().map(s=>'- '+smShedLine(s,today)));
-      return out.join('\n');
-    }
-    if(p.key==='loads'||p.key==='pickups-all'){
-      out.push('SILOS (run-out with booked loads):');mgrSiloOutlook().forEach(x=>out.push(`- ${pairLabel(x.g)}: ${x.dep?'run low '+fmtShortNoYear(x.dep)+' (in '+x.days+' days)':'covered for 60+ days'}${x.stock!=null?' · '+mgrT(x.stock)+' in silos at last reading':''}${x.readAge!=null?' · read '+x.readAge+' days ago':''}`));
-      const wk=mgrWeek();out.push('LOADS & PICKUPS · next 7 days:',...(wk.length?wk.map(w=>`- ${fmtShortNoYear(w.date)}: ${w.text}`):['- none']));
-      let sum=null;try{sum=farmLoadsSummary();}catch(e){}if(sum&&sum.needsActual)out.push(`${sum.needsActual} delivered load(s) still need docket weights`);
-      if(p.key==='pickups-all')out.push('SHEDS:',...mgrPlaced().map(s=>'- '+smShedLine(s,today)));
-      return out.join('\n');
-    }
-    const sh=shedsForGroup(p.g).filter(s=>s.placementDate);
-    out.push(`${pairLabel(p.g)}:`,...sh.map(s=>'- '+smShedLine(s,today)));
-    const x=mgrSiloOutlook().find(y=>y.g===p.g);if(x)out.push(`Silos: ${x.dep?'run low '+fmtShortNoYear(x.dep)+' (in '+x.days+' days, with booked loads)':'covered for 60+ days'}${x.stock!=null?' · '+mgrT(x.stock)+' in silos at last reading':''}`);
-    if(p.view==='planner'){let perDay=0;sh.forEach(s=>{perDay+=shedFeedOn(s,today)||0;});out.push(`Eating about ${mgrT(perDay)} a day now`);
-      const ls=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[p.g])>0).slice(0,6);out.push('Booked loads for this pair:',...(ls.length?ls.map(l=>`- ${fmtShortNoYear(l.date)} ${mgrT(Number(l.splitKg[p.g]))}${l.feedType?' '+l.feedType:''}`):['- none']));}
-    if(p.view==='growth'){sh.forEach(s=>{try{[7,14,21].forEach(k=>{const d=addDays(today,k),f=forecastWeightModeAware(s,d);if(f&&f.kg!=null)out.push(`Shed ${s.id} forecast ${fmtShortNoYear(d)} (day ${ageInDays(s,d)}): ${f.kg.toFixed(2)} kg`);});}catch(e){}});}
-    if(typeof pairNeeds==='function'){try{const n=pairNeeds(p.g);if(n&&n.length)out.push('Flagged on this page:',...n.map(z=>`- ${String(z.title||'').replace(/<[^>]+>/g,'')}${z.sub?' — '+String(z.sub).replace(/<[^>]+>/g,''):''}`));}catch(e){}}
-  }catch(e){out.push('(some numbers could not be read)');}
-  return out.join('\n');
-}
-// Put the button and any saved summary on the page after each render
-function smApply(){
-  const p=smPage(),hdr=document.querySelector('#pageHeader .page-header-left');
-  let btn=document.getElementById('smBtn');
-  if(!p){if(btn)btn.hidden=true;return;}
-  if(!btn&&hdr){hdr.insertAdjacentHTML('beforeend',`<button type="button" class="sm-btn" id="smBtn" title="Summarise this page with the free AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Summarise</span></button>`);btn=document.getElementById('smBtn');btn.addEventListener('click',()=>smTap());}
-  if(btn)btn.hidden=false;
-  const it=pwSum.get(p.key);if(it)smShow(p,it);
-}
-function smShow(p,item){
-  const anchor=p.anchor&&p.anchor();if(!anchor)return;
-  const card=anchor.querySelector(':scope > [data-sm-card]');
-  const html=smCardHtml(item,p.title,p.key);
-  if(card)card.outerHTML=html;else anchor.insertAdjacentHTML('afterbegin',html);
-  document.querySelectorAll('.sm-shed').forEach(x=>x.remove());
-  if(item&&item.sheds)Object.entries(item.sheds).forEach(([id,txt])=>{const el=document.querySelector(`#pair-shed-${CSS.escape(String(id))} .pair-shed-head`);if(el&&txt)el.insertAdjacentHTML('afterend',`<div class="sm-shed"><small>Summary</small>${smInl(String(txt))}</div>`);});
-}
-let smBusy=false;
-async function smTap(again){
-  const p=smPage();if(!p||smBusy)return;
-  const cached=pwSum.cached(p.key);
-  if(cached&&!again&&!cached.err){pwSum.show(p.key);smShow(p,cached);return;}
-  smBusy=true;smShow(p,{busy:true});
-  const item=await pwSum.run(p.key,p.title,smContext(p),p.sheds);
-  smBusy=false;const now=smPage();if(now&&now.key===p.key)smShow(p,item);
-}
-document.addEventListener('click',e=>{
-  if(!e.target.closest)return;
-  const a=e.target.closest('#app [data-sm-again], .compare-modal [data-sm-again]');if(a){smTap(true);return;}
-  const h=e.target.closest('#app [data-sm-hide], .compare-modal [data-sm-hide]');if(h){pwSum.hide(h.dataset.smHide);const c=h.closest('[data-sm-card]');if(c)c.remove();document.querySelectorAll('.sm-shed').forEach(x=>x.remove());}
-});
-
-document.addEventListener('DOMContentLoaded',()=>{rpPlaceButton();rpDot();setTimeout(rpMaybeShow,2500);});
-setInterval(()=>{if(document.visibilityState!=='visible')return;rpPlaceButton();rpDot();rpMaybeShow();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){rpTried=false;setTimeout(rpMaybeShow,1500);}});
+document.addEventListener('DOMContentLoaded',()=>{rsPlaceButton();rsDot();setTimeout(rsMaybeShow,2500);});
+setInterval(()=>{if(document.visibilityState!=='visible')return;rsPlaceButton();rsDot();rsMaybeShow();},30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){rsTried=false;setTimeout(rsMaybeShow,1500);}});

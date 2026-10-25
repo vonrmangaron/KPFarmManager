@@ -534,7 +534,6 @@ function syncToolPages(changed){
   if(typeof updatePageHeader==='function')updatePageHeader();
   Object.entries(TOOL_PAGES).forEach(([id,t])=>{const b=document.getElementById(t.btn);if(b)b.classList.toggle('active',id===toolPageOpen);});
   renderPwBatchPanel();syncPwRail();
-  if(typeof smApply==='function')setTimeout(smApply,0);   // tool pages that can be summarised (Feed loads, Pickups)
 }
 // ── Icon rail + side panel, like CluckWise (2026-10-11, mockup QW7BBs25AAbiLRddm8s14L) ─────
 // Desktop: a slim rail that never collapses. Sheds and Tools open the side panel; clicking the lit one again hides it.
