@@ -3288,9 +3288,9 @@
   function getAgendaTasks(){
     const todayKey=dateKey(new Date());
     let filtered;
-    if(agendaFilter==='today'){ const dk = agendaDayKey(); filtered = tasks.filter(tk=> tk.date===dk); }
-    else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey && tk.date<=weekEnd); }
-    else filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey);
+    if(agendaFilter==='today'){ const dk = agendaDayKey(); filtered = tasks.filter(tk=> tk.date===dk && crewShows(tk)); }
+    else if(agendaFilter==='week'){ const weekEnd=addDaysStr(todayKey,6); filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey && tk.date<=weekEnd && crewShows(tk)); }
+    else filtered = tasks.filter(tk=> tk.date && tk.date>=todayKey && crewShows(tk));
     return filtered.sort((a,b)=> a.date.localeCompare(b.date) || ((a.status==='done'?1:0)-(b.status==='done'?1:0)) || taskCmp(a,b));
   }
   // ---------- Day navigation (Today/Day tab) ----------
@@ -3318,7 +3318,7 @@
   function buildDayNav(){
     const key = agendaDayKey();
     const today = dateKey(new Date());
-    const dayTasks = tasks.filter(tk=> tk.date === key);
+    const dayTasks = tasks.filter(tk=> tk.date === key && crewShows(tk));
     const done = dayTasks.filter(tk=> tk.status === 'done').length;
     const nav = document.createElement('div');
     nav.className = 'day-nav';
@@ -3372,7 +3372,7 @@
   function renderHero(){
     const key = agendaDayKey();
     const todayKey = dateKey(new Date());
-    const dayTasks = tasks.filter(tk=> tk.date === key);
+    const dayTasks = tasks.filter(tk=> tk.date === key && crewShows(tk));
     const done = dayTasks.filter(tk=> tk.status === 'done').length;
     const total = dayTasks.length;
     $('#dcMain').textContent = dayName(key);
@@ -4070,6 +4070,8 @@
 
   // ---------- Maintenance for today: opened from the "Check maintenance for today" task ----------
   function isMaintCheck(tk){ const n = (tk && tk.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
+  // the maintenance list only shows while there is repair work (2026-10-25)
+  function crewShows(tk){ return !(tk.status !== 'done' && isMaintCheck(tk) && typeof repairJobs === 'function' && !repairJobs().length); }
   // Maintenance tasks: the manager ticked "Maintenance", or the task was made from a report.
   // They live on the Maintenance page, not in the main Today list.
   // Maintenance v2: jobs are reports In progress on the Maintenance board (no task, no date);

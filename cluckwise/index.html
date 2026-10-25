@@ -3886,6 +3886,7 @@
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
   .prep-tm .prep-lab{ align-self:flex-start; cursor:default; }
+  #prepTaskLab{ display:none !important; }   /* the Shed N · Preparation label shows on the task itself, not in the Make a task window */
   .prep-tm-k{ font:800 11px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
   .prep-tm-hint{ font-size:13px; color:var(--muted); margin:0; }
   .prep-chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
@@ -4136,9 +4137,11 @@
   .pl-jn b[role="button"]:hover{ background:var(--surface-soft); }
   .pl-grip{ cursor:grab; color:var(--muted); font:800 12px/1 Inter,sans-serif; letter-spacing:-2px; padding:6px 3px; opacity:.4; user-select:none; touch-action:none; flex:none; }
   tr:hover .pl-grip, .pl-sech:hover .pl-grip{ opacity:1; }
-  .pl-mini{ all:unset; cursor:pointer; box-sizing:border-box; width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--muted); flex:none; }
-  .pl-mini svg{ width:13px; height:13px; }
-  .pl-mini:hover, .pl-mini.pl-menu-on{ color:var(--ink); border-color:#F0A21A; }
+  .pl-mini{ all:unset; cursor:pointer; box-sizing:border-box; width:24px; height:24px; border-radius:999px; background:transparent; display:grid; place-items:center; color:var(--muted); opacity:.75; flex:none; align-self:center; transition:background .15s, color .15s; }
+  .pl-mini svg{ width:14px; height:14px; }
+  .pl-mini:hover, .pl-mini.pl-menu-on{ color:var(--ink); opacity:1; background:var(--surface-soft); }
+  .pl-mini.pl-menu-on{ background:var(--primary-soft); color:var(--ink); }
+  .pl-mini:focus-visible{ outline:2px solid #F0A21A; outline-offset:1px; }
   @media (hover:hover){ .pl-ract{ opacity:0; transition:opacity .15s; } tr:hover .pl-ract, .pl-ract.pl-menu-on, .pl-ract:focus-visible{ opacity:1; } }
   .pl-c{ position:relative; }
   .pl-cdot{ all:unset; cursor:pointer; position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:6px; display:grid; place-items:center; color:var(--muted); background:var(--surface); border:1px solid var(--line); }
@@ -4292,6 +4295,41 @@
   .tsubs-car svg{ width:16px; height:16px; }
   .tsubs.open .tsubs-car{ transform:none; }
   .tsubs-bar:hover .tsubs-car{ border-color:var(--primary); }
+
+  /* ── 2026-10-25 round ── */
+  /* hold 1 s to drag: the item lifts with an amber glow */
+  .drag-ready{ animation:dragReady .45s cubic-bezier(.2,1.4,.4,1) both; box-shadow:0 0 0 2px #F0A21A, 0 14px 30px rgba(22,25,27,.22) !important; position:relative; z-index:5; cursor:grabbing !important; }
+  @keyframes dragReady{ 0%{ transform:scale(1); } 45%{ transform:scale(1.045) rotate(-.6deg); } 100%{ transform:scale(1.02); } }
+  tr.drag-ready, tbody.drag-ready{ animation:none; transform:none; }
+  tr.drag-ready > td, tbody.drag-ready > tr > td{ background:#FFF2D6 !important; animation:dragReadyRow .45s ease both; }
+  body.theme-dark tr.drag-ready > td, body.theme-dark tbody.drag-ready > tr > td{ background:rgba(240,162,26,.18) !important; }
+  tr.drag-ready > td, tbody.drag-ready > tr > td{ box-shadow:inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; border-right-color:transparent !important; }
+  tr.drag-ready > td:first-child, tbody.drag-ready > tr > td:first-child{ box-shadow:inset 2px 0 0 #F0A21A, inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; }
+  tr.drag-ready > td:last-child, tbody.drag-ready > tr > td:last-child{ box-shadow:inset -2px 0 0 #F0A21A, inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; }
+  @keyframes dragReadyRow{ 0%{ opacity:.6; } 100%{ opacity:1; } }
+  .pl-tab td.pl-job, .task-card, .kcard, .mtb-card{ -webkit-user-select:none; user-select:none; }
+  .pl-tab td.pl-job input, .pl-tab td.pl-job .pl-addin, .pl-tab td.pl-job .pl-renin{ -webkit-user-select:text; user-select:text; }
+  /* ＋ Add a job / ＋ Add a section: compact pills, not full width */
+  .pl-addj{ display:inline-flex !important; align-items:center; gap:6px; width:auto !important; padding:6px 14px 6px 10px !important; border:1.5px dashed var(--line) !important; border-radius:99px !important; font:700 12.5px Inter,sans-serif !important; color:var(--muted); background:transparent; }
+  .pl-addj:hover{ border-color:#F0A21A !important; border-style:solid !important; color:#8A5300; background:#FFF8EA; }
+  body.theme-dark .pl-addj:hover{ color:#FFC876; background:rgba(240,162,26,.1); }
+  .pl-addj.sec{ border-style:solid !important; color:var(--ink); background:var(--surface); box-shadow:0 1px 0 var(--line); }
+  .pl-addrow td.pl-job{ padding:4px 10px 12px 16px !important; }
+  .pl-end .pl-addrow td.pl-job{ padding:12px 10px 14px 16px !important; }
+  .pl-addin{ max-width:260px; }
+  /* completed sections and sheds go green (most visible with Collapse all) */
+  .pl-tab td.pl-job .pl-donechip, .pl-donechip{ display:inline-block; font:800 10.5px Inter,sans-serif; border-radius:99px; padding:2px 8px; background:#0F8A75; color:#fff; margin-right:4px; }
+  .pl-sec.alldone .pl-sech td{ background:#DFF4EF !important; }
+  .pl-sec.alldone .pl-sech td.pl-job{ box-shadow:inset 4px 0 0 #0F8A75; }
+  .pl-tab td.pl-job .pl-sec.alldone .pl-secname, .pl-sec.alldone .pl-secname{ color:#0F6E5D !important; }
+  body.theme-dark .pl-sec.alldone .pl-sech td{ background:rgba(15,138,117,.2) !important; }
+  body.theme-dark .pl-sec.alldone .pl-secname{ color:#8FD9B5 !important; }
+  .pl-sh.alldone .prep-sn{ background:#0F8A75 !important; color:#fff !important; }
+  .pl-sh.alldone .pl-pb i{ background:#0F8A75; }
+  /* the task window stands out from the page */
+  #taskDetailModal{ box-shadow:0 30px 80px rgba(0,0,0,.38), 0 0 0 1px rgba(22,25,27,.10) !important; border-top:5px solid var(--primary); }
+  body.theme-dark #taskDetailModal{ box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.10) !important; }
+  body:has(#taskDetailModal.open) .scrim{ background:rgba(14,18,24,.55) !important; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -5372,6 +5410,29 @@
   const MCHECK_TPL_ID = 'tpl-mcheck';
   const MCHECK_NAME = 'Check maintenance for today';
   function isMaintCheckTask(t){ const n = (t && t.name) || ''; return /maint/i.test(n) && /check|review|list/i.test(n); }
+  // The maintenance list task follows the repair work (2026-10-25): while repair jobs are in progress it sits in the
+  // Backlog (added on its own if there isn't an open one); when nothing is left to fix, open ones go away, so it can
+  // never be ticked off with nothing to do. Only after the farm's reports have loaded.
+  let mcheckReady = false;
+  function syncMaintCheckTask(){
+    if(!mcheckReady || !ghFarmName) return false;
+    const n = repairsInProgress().length;
+    const open = tasks.filter(t=> t.status !== 'done' && isMaintCheckTask(t));
+    if(n && !open.length){
+      tasks.push({ id: uid(), name: MCHECK_NAME, icon: '🔧', date: null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [], auto: 'mcheck' });
+      addHistory('Added', `"${MCHECK_NAME}" added to the Backlog — ${n} repair job${n === 1 ? '' : 's'} in progress`);
+      return true;
+    }
+    if(!n && open.length){
+      tasks = tasks.filter(t=> !(t.status !== 'done' && isMaintCheckTask(t)));
+      addHistory('Removed', `"${MCHECK_NAME}" taken off — no repair jobs left`);
+      return true;
+    }
+    // two devices may each add one: keep the first
+    const autos = open.filter(t=> t.auto === 'mcheck' && !t.date);
+    if(autos.length > 1){ const keep = autos[0].id; tasks = tasks.filter(t=> !(t.auto === 'mcheck' && !t.date && t.status !== 'done' && t.id !== keep)); return true; }
+    return false;
+  }
   // A maintenance task: ticked "Maintenance", or made from a report. Workers see these on the
   // Maintenance for today page (opened from the check task), not in their main list.
   function isMaintTask(t){ return false; }   // maintenance v2: repairs live on the Maintenance board, not as tasks
@@ -5909,6 +5970,7 @@
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
       migrateMaintV2();
+      mcheckReady = true; if(syncMaintCheckTask()){ persist(); renderAll(); }
       syncBatchesFromProdWise(false);
       if(!pushPending) flashSaved(); else renderSyncStatus();
       loadAccess(true);
@@ -6425,6 +6487,9 @@
   }
   // ── Subtasks (2026-10-24): task.subs = [{id, t, done, doneBy, doneAt}] ──
   // Ticking the last step ticks the task; unticking a step re-opens it.
+  // Drag (2026-10-25): press and hold an empty part of a task or job for 1 second — it lifts (drag-ready) and
+  // can then be moved. No drag icons. A quick tap still does what it always did.
+  const HOLD_DRAG = { delay:1000, delayOnTouchOnly:false, touchStartThreshold:8, chosenClass:'drag-ready', fallbackTolerance:3 };
   let editingSubs = [];
   const subsOpen = new Set();   // cards whose steps are showing
   function subProgress(t){ const a = Array.isArray(t && t.subs) ? t.subs : []; return { done: a.filter(x=> x.done).length, total: a.length }; }
@@ -6451,7 +6516,7 @@
   // steps editor in the Add/Edit window
   function renderSubEditor(){
     const box = $('#editTaskSubs'); if(!box) return;
-    box.innerHTML = editingSubs.map((x, i)=> `<div class="st-row${x.done ? ' done' : ''}" data-i="${i}"><span class="st-grip" aria-hidden="true">⋮⋮</span><input type="text" class="st-in" data-sub-i="${i}" value="${escapeHtmlAttr(x.t)}" maxlength="80" aria-label="Step ${i + 1}"><button type="button" class="st-up" data-sub-up="${i}" title="Move up" aria-label="Move step up"${i ? '' : ' disabled'}>↑</button><button type="button" class="st-x" data-sub-x="${i}" title="Remove this step" aria-label="Remove step">✕</button></div>`).join('');
+    box.innerHTML = editingSubs.map((x, i)=> `<div class="st-row${x.done ? ' done' : ''}" data-i="${i}"><input type="text" class="st-in" data-sub-i="${i}" value="${escapeHtmlAttr(x.t)}" maxlength="80" aria-label="Step ${i + 1}"><button type="button" class="st-up" data-sub-up="${i}" title="Move up" aria-label="Move step up"${i ? '' : ' disabled'}>↑</button><button type="button" class="st-x" data-sub-x="${i}" title="Remove this step" aria-label="Remove step">✕</button></div>`).join('');
   }
   function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };
@@ -7265,7 +7330,7 @@
     mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
     if(typeof Sortable !== 'undefined'){
       box.querySelectorAll('.mtb-list').forEach(list=>{
-        mtSortables.push(Sortable.create(list, { group:'mtboard', animation:150, filter:'.mtb-locked, .mtb-empty, button', preventOnFilter:false, draggable:'.mtb-card:not(.mtb-locked)',
+        mtSortables.push(Sortable.create(list, { ...HOLD_DRAG, group:'mtboard', animation:150, filter:'.mtb-locked, .mtb-empty, button', preventOnFilter:false, draggable:'.mtb-card:not(.mtb-locked)',
           onEnd: ev=>{ const to = ev.to.dataset.col, from = ev.from.dataset.col, id = ev.item.dataset.id; if(to === from){ renderMtBoard(); return; } mtMove(id, to); } }));
       });
     }
@@ -10279,7 +10344,7 @@
         ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         filter:'.empty-note, .task-menu-btn, .freq-edit-row',
         preventOnFilter:false,
-        delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        delay:HOLD_DRAG.delay, chosenClass:'drag-ready', delayOnTouchOnly:false, touchStartThreshold:8, fallbackTolerance:3,
         forceFallback: true,
         fallbackOnBody: true,
         onChoose: beginDragNoSelect,
@@ -10318,7 +10383,7 @@
         animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         filter:'.day-count, .empty-note, .col-empty, .day-more, .task-menu-btn, .task-complete-btn, .bulk-select-cb',
         preventOnFilter:false,
-        delay:150, delayOnTouchOnly:true, touchStartThreshold:4,
+        delay:HOLD_DRAG.delay, chosenClass:'drag-ready', delayOnTouchOnly:false, touchStartThreshold:8, fallbackTolerance:3,
         forceFallback: true,
         fallbackOnBody: true,
         onChoose: beginDragNoSelect,
@@ -10506,6 +10571,7 @@
   })();
   function renderAll(){ const r = keepScroll(renderAllNow); if(dayViewKey) renderDayView(false); return r; }
   function renderAllNow(){
+    if(syncMaintCheckTask()) persist();
     closeAllTaskMenus();
     renderManagerFields();
     try{ renderPrepPill(); }catch(e){ console.warn('Shed prep pill', e); }
@@ -12298,7 +12364,7 @@
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
       const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
       const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
@@ -12320,11 +12386,11 @@
         const dn = us.filter(x=> x.u.done).length, fl = us.map(x=> prepUnitFlags(x.col.c, x.u));
         const cls = [us.length && dn === us.length ? 'all' : '', fl.some(x=> x.late) ? 'f-late' : '', fl.some(x=> x.week) ? 'f-week' : '', fl.some(x=> x.task) ? 'f-task' : ''].filter(Boolean).join(' ');
         const key = enc(S.t + '|' + (R.own ? '' : R.t));
-        return `<tr class="pl-row ${cls}" data-pl-job="${key}"><td class="pl-job"><div class="pl-jr">${R.own ? '' : '<span class="pl-grip" title="Drag to move" aria-hidden="true">⋮⋮</span>'}<div class="pl-jn">${R.own ? `<b>${escapeHtml(R.t)}</b>` : `<b role="button" tabindex="0" data-pl-renjob="${key}" title="Click to rename">${escapeHtml(R.t)}</b>`}<span>${!us.length ? 'No shed being prepared' : dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></div><button type="button" class="pl-mini pl-ract" data-pl-jobmenu="${key}" aria-label="${enc('More for ' + R.t)}" title="Rename, date it in every shed, remove…">${PL_DOTS}</button></div></td>${cells}</tr>`; }).join('');
+        return `<tr class="pl-row ${cls}" data-pl-job="${key}"><td class="pl-job"><div class="pl-jr"><div class="pl-jn">${R.own ? `<b>${escapeHtml(R.t)}</b>` : `<b role="button" tabindex="0" data-pl-renjob="${key}" title="Click to rename">${escapeHtml(R.t)}</b>`}<span>${!us.length ? 'No shed being prepared' : dn === us.length ? (us.length > 1 ? 'Done in every shed' : 'Done') : dn + ' of ' + us.length + ' shed' + (us.length === 1 ? '' : 's') + ' done'}</span></div><button type="button" class="pl-mini pl-ract" data-pl-jobmenu="${key}" aria-label="${enc('More for ' + R.t)}" title="Rename, date it in every shed, remove…">${PL_DOTS}</button></div></td>${cells}</tr>`; }).join('');
       let tot = 0, dn = 0, due = null;
       cols.forEach(col=>{ if(!col.c) return; S.rows.forEach(R=>{ const u = unitFor(col, S, R); if(u){ tot++; if(u.done) dn++; } }); const sec = prepSecOf(col.c, S.t); if(sec && sec.due && (!due || sec.due < due)) due = sec.due; });
       const own = S.rows.length === 1 && S.rows[0].own;
-      body += `<tbody class="pl-sec${folded ? ' folded' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr"><span class="pl-grip sec" title="Drag to move this section" aria-hidden="true">⋮⋮</span>${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
+      body += `<tbody class="pl-sec${folded ? ' folded' : ''}${tot && dn === tot ? ' alldone' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr">${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? (dn === tot ? '<span class="pl-donechip">✓ Done</span> ' : '') + dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
         const us = col.c ? S.rows.map(R=> unitFor(col, S, R)).filter(u=> u && !u.done && !u.taskId) : [];
         const all = us.length && us.every(u=> prepPick.sel.has(u.id));
         return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
@@ -12371,14 +12437,15 @@
     prepSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); prepSortables = [];
     if(typeof Sortable === 'undefined') return;
     const tab = box.querySelector('.pl-tab'); if(!tab) return;
-    prepSortables.push(Sortable.create(tab, { draggable:'tbody.pl-sec', handle:'.pl-grip.sec', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+    // hold a section's row (not its name or buttons) to move the whole section; hold a job's name cell to move the job
+    prepSortables.push(Sortable.create(tab, Object.assign({}, HOLD_DRAG, { draggable:'tbody.pl-sec', handle:'.pl-sech td.pl-job', filter:'button, input, [data-pl-rensec]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
       onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
-        m.sort((a, b)=> order.indexOf(prepNorm(a.t)) - order.indexOf(prepNorm(b.t))); prepSaveMaster(m); prepStructDone(); } }));
+        m.sort((a, b)=> order.indexOf(prepNorm(a.t)) - order.indexOf(prepNorm(b.t))); prepSaveMaster(m); prepStructDone(); } })));
     tab.querySelectorAll('tbody.pl-sec').forEach(tb=>{
-      prepSortables.push(Sortable.create(tb, { draggable:'tr.pl-row', handle:'.pl-grip:not(.sec)', animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      prepSortables.push(Sortable.create(tb, Object.assign({}, HOLD_DRAG, { draggable:'tr.pl-row', handle:'.pl-row td.pl-job', filter:'button, input, [data-pl-renjob]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
         onEnd: ()=>{ const secT = tb.dataset.plSec, m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
           const order = [...tb.querySelectorAll('tr.pl-row')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
-          S.items.sort((a, b)=> order.indexOf(prepNorm(a)) - order.indexOf(prepNorm(b))); prepSaveMaster(m); prepStructDone(); } }));
+          S.items.sort((a, b)=> order.indexOf(prepNorm(a)) - order.indexOf(prepNorm(b))); prepSaveMaster(m); prepStructDone(); } })));
     });
   }
   // inline add and rename, like ＋ Add task
@@ -12429,16 +12496,16 @@
   }
   function plClick(e){
     const g = sel=> e.target.closest(sel); let b;
-    if((b = g('[data-pl-pick]'))){ const id = b.dataset.plPick; if(prepPick.sel.has(id)) prepPick.sel.delete(id); else prepPick.sel.add(id); renderPrepBoard(); return true; }
+    if((b = g('[data-pl-pick]'))){ const id = b.dataset.plPick; if(prepPick.sel.has(id)) prepPick.sel.delete(id); else prepPick.sel.add(id); keepScroll(renderPrepBoard); return true; }
     if((b = g('[data-pl-picksec]'))){ const c = prepActiveFor(prepPick.shed), sec = c && prepSecOf(c, b.dataset.plPicksec); if(!sec) return true;
       const us = prepUnits({ sections:[sec] }).map(x=> x.u).filter(u=> !u.done && !u.taskId), all = us.every(u=> prepPick.sel.has(u.id));
-      us.forEach(u=> all ? prepPick.sel.delete(u.id) : prepPick.sel.add(u.id)); renderPrepBoard(); return true; }
-    if(g('[data-pl-pickcancel]')){ prepPick = null; renderPrepBoard(); return true; }
+      us.forEach(u=> all ? prepPick.sel.delete(u.id) : prepPick.sel.add(u.id)); keepScroll(renderPrepBoard); return true; }
+    if(g('[data-pl-pickcancel]')){ prepPick = null; keepScroll(renderPrepBoard); return true; }
     if((b = g('[data-pl-pickmake]'))){ if(!prepPick.sel.size) return true; const c = prepActiveFor(prepPick.shed); if(c) openPrepBundleModal(c, [...prepPick.sel]); return true; }
     if(prepPick && g('[data-prep-tick]')) return true;   // while picking, taps don't tick
-    if((b = g('[data-pl-fold]'))){ const k = prepNorm(b.dataset.plFold); if(prepSecFold.has(k)) prepSecFold.delete(k); else prepSecFold.add(k); prepSecFoldSave(); renderPrepBoard(); return true; }
-    if((b = g('[data-pl-foldall]'))){ if(b.dataset.plFoldall === '1') prepMaster().forEach(S=> prepSecFold.add(prepNorm(S.t))); else prepSecFold.clear(); prepSecFoldSave(); renderPrepBoard(); return true; }
-    if((b = g('[data-pl-only]'))){ prepOnlyShed = b.dataset.plOnly || null; renderPrepBoard(); return true; }
+    if((b = g('[data-pl-fold]'))){ const k = prepNorm(b.dataset.plFold); if(prepSecFold.has(k)) prepSecFold.delete(k); else prepSecFold.add(k); prepSecFoldSave(); keepScroll(renderPrepBoard); return true; }
+    if((b = g('[data-pl-foldall]'))){ if(b.dataset.plFoldall === '1') prepMaster().forEach(S=> prepSecFold.add(prepNorm(S.t))); else prepSecFold.clear(); prepSecFoldSave(); keepScroll(renderPrepBoard); return true; }
+    if((b = g('[data-pl-only]'))){ prepOnlyShed = b.dataset.plOnly || null; keepScroll(renderPrepBoard); return true; }
     if((b = g('[data-pl-addjob]'))){ plStartAddJob(b); return true; }
     if((b = g('[data-pl-addsec]'))){ openPrepSecModal('__list'); return true; }
     if((b = g('[data-pl-renjob]'))){ const [s, j] = b.dataset.plRenjob.split('|'); plStartRename(b, v=> prepRenameJob(s, j, v)); return true; }
@@ -12450,14 +12517,14 @@
     if((b = g('[data-pl-shmenu]'))){ const sh = b.dataset.plShmenu, c = prepActiveFor(sh);
       if(!c){ plMenu(b, `Shed ${sh}`, prepShedRun(sh) ? 'Running — the checklist starts when it closes in Production' : 'Empty', [
         { ic:'＋', label:'Start the checklist early', act: ()=> startPrepChecklist(sh, null) },
-        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; renderPrepBoard(); } }]); return true; }
+        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; keepScroll(renderPrepBoard); } }]); return true; }
       const pr = prepProgress(c), left = pr.total - pr.done;
       plMenu(b, `Shed ${sh}`, [c.closedAt ? 'Closed ' + prepFmt(c.closedAt) : 'Started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : ''].filter(Boolean).join(' · '), [
         c.status === 'ready' ? { ic:'↺', label:'Reopen', act: ()=> plAct('unready', c.id) }
           : { ic:'✓', label:'Mark shed ready', note: left ? left + ' job' + (left === 1 ? '' : 's') + ' left' : '', disabled: !!left, act: ()=> plAct('ready', c.id) },
-        { ic:'☰', label:'Make a task from several jobs', disabled: c.status === 'ready' || !prepUnits(c).some(x=> !x.u.done && !x.u.taskId), act: ()=>{ prepPick = { shed: sh, sel: new Set() }; prepOnlyShed = null; renderPrepBoard(); } },
+        { ic:'☰', label:'Make a task from several jobs', disabled: c.status === 'ready' || !prepUnits(c).some(x=> !x.u.done && !x.u.taskId), act: ()=>{ prepPick = { shed: sh, sel: new Set() }; prepOnlyShed = null; keepScroll(renderPrepBoard); } },
         { info:true, ic:'📅', label: c.nextPlacement ? 'Chicks ' + prepFmt(c.nextPlacement) + ' (from Production)' : 'Chicks date comes from Production' },
-        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; renderPrepBoard(); } },
+        { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; keepScroll(renderPrepBoard); } },
         '-',
         { ic:'↺', label:'Clear this shed\'s ticks', danger:true, disabled: c.status === 'ready', act: ()=>{
           const us = prepUnits(c).filter(x=> x.u.done && !x.u.taskId); if(!us.length){ showToast('Nothing to clear.'); return; }
@@ -12487,7 +12554,7 @@
     if((b = g('[data-pl-secmenu]'))){ const s = b.dataset.plSecmenu, m = prepMaster(), i = m.findIndex(x=> prepNorm(x.t) === prepNorm(s));
       plMenu(b, s, 'Section · same in every shed', [
         { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-rensec="${CSS.escape(s)}"]`); if(el) plStartRename(el, v=> prepRenameSection(s, v)); } },
-        { ic:'＋', label:'Add a job', act: ()=>{ prepSecFold.delete(prepNorm(s)); prepSecFoldSave(); prepAddAgain = s; renderPrepBoard(); } },
+        { ic:'＋', label:'Add a job', act: ()=>{ prepSecFold.delete(prepNorm(s)); prepSecFoldSave(); prepAddAgain = s; keepScroll(renderPrepBoard); } },
         '-',
         { ic:'↑', label:'Move up', disabled: i <= 0, act: ()=> prepMoveSection(s, -1) },
         { ic:'↓', label:'Move down', disabled: i < 0 || i >= m.length - 1, act: ()=> prepMoveSection(s, 1) },
@@ -14433,7 +14500,7 @@
   }
   $('#prepMain').addEventListener('click', prepBoardClick);
   $('#prepMain').addEventListener('click', (e)=>{
-    const f = e.target.closest('[data-prep-f]'); if(f){ prepFilter = f.dataset.prepF; renderPrepBoard(); return; }
+    const f = e.target.closest('[data-prep-f]'); if(f){ prepFilter = f.dataset.prepF; keepScroll(renderPrepBoard); return; }
   });
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
