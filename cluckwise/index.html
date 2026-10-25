@@ -14748,6 +14748,23 @@
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   // One History (2026-10-19): inside ProdWise, History is Production's page (saved copies + this log on one timeline)
   window.__cwHistory = ()=> history.slice();
+  // Morning briefing on ProdWise Home (2026-10-25): a small summary of today's tasks, shed prep and weather.
+  window.__cwBrief = ()=>{
+    const today = dateKey(new Date());
+    const day = tasks.filter(t=> t.date === today), over = tasks.filter(t=> t.status !== 'done' && t.date && t.date < today);
+    let pd = 0, pt = 0; const live = prepLiveLists();
+    live.forEach(c=>{ const p = prepProgress(c); pd += p.done; pt += p.total; });
+    const chicks = live.map(c=> c.nextPlacement).filter(Boolean).sort()[0] || null;
+    let wx = null;
+    try{ const w = wxForDate(today); if(w){ const [icon, label] = wxIconLabel(w.code);
+      wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]) }; } }catch(e){}
+    return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
+      prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx };
+  };
+  window.__cwOpen = (what)=>{ try{ closeOverlays(); }catch(e){}
+    if(what === 'prep') openPrepBoard(null);
+    else if(what === 'overdue') openOverdueModal();
+    else if(what === 'today') openDayView(dateKey(new Date())); };
   window.__cwClearHistory = ()=>{ history = []; persist(); renderAll(); };
   const openHistoryPage = ()=>{ if(CW_EMBED){ closeOverlays(); parent.postMessage({ pwSection:'production', tab:'history' }, location.origin); return true; } return false; };
   $('#moreHistoryBtn').addEventListener('click', ()=>{ if(openHistoryPage()) return; closeOverlays(); openDrawer('#historyDrawer'); });

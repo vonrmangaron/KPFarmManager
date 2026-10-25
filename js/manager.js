@@ -198,6 +198,7 @@ function renderHomeView(){
   const offHtml=off.length?`<button type="button" class="mgr-off" data-tab="farmsettings"><span><b>${off.length} farm setting${off.length===1?'':'s'} not at normal</b> and changing these numbers: ${escapeHtml(off.map(o=>o.short).join(', '))}</span><span class="mgr-off-go">Review ›</span></button>`:'';
   return `<div class="mgr-home">
     <div class="mgr-head">${(()=>{const last=cleans.length?cleans[cleans.length-1]:null,tot=last?daysBetween(first,last):0,pct=tot>0&&first<=today?Math.max(0,Math.min(100,daysBetween(first,today)/tot*100)):0;return tot>0?`<span class="mgr-prog" title="${Math.round(pct)}% of the batch, first placement to last clean-out"><i style="width:${pct.toFixed(1)}%"></i><em>${Math.round(pct)}%</em></span>`:'';})()}<button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · ${first>today?'starts '+escapeHtml(fmtShortNoYear(first)):'Day '+day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
+    ${mgrBriefHtml()}
     ${typeof changeoverHtml==='function'?changeoverHtml():''}
     ${kpis}
     <div class="mk-row">${needsHtml}${mgrWeekHtml()}</div>
@@ -1078,3 +1079,89 @@ function pwActivityKey(){return 'pw-activity-'+(syncFarmName?sanitizeUserFarmNam
 function pwActivityList(){try{const v=JSON.parse(localStorage.getItem(pwActivityKey())||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
 function pwActivity(kind,text){if(!text)return;try{const l=pwActivityList();l.unshift({ts:Date.now(),kind,text});localStorage.setItem(pwActivityKey(),JSON.stringify(l.slice(0,300)));}catch(e){}}
 
+
+// ── Morning briefing (2026-10-25, mockup LMSt4FmdcpzDnTEmqcjB4W): a few lines on Home that put the day together —
+// Today · Watch · Feed · Changeover & prep. Fixed rules on numbers both apps already work out: no AI, no cost,
+// works offline. Tasks, shed prep and weather come from the Tasks app (window.__cwBrief in the Tasks frame).
+// Dots: r act today · a keep an eye on · b just so you know · g fine. Tap a line to open its page.
+let mgrBriefFold=false;try{mgrBriefFold=localStorage.getItem('pw-brief-fold')==='1';}catch(e){}
+let mgrBriefAsked=false;
+function mgrBriefCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__cwBrief==='function'?w.__cwBrief():null;}catch(e){return null;}}
+function mgrBriefData(){
+  const today=mgrToday(),days=mgrWeekDays(),cw=mgrBriefCw();
+  if(!cw&&!mgrBriefAsked&&syncFarmName&&typeof pwEnsureTasksFrame==='function'){mgrBriefAsked=true;pwEnsureTasksFrame(()=>mgrBriefRefresh());}
+  const L=(tone,html,act)=>({tone,html,act:act||''});
+  const G={today:[],watch:[],feed:[],co:[]};
+  // Today
+  const d0=days[0];
+  d0.pick.forEach(p=>G.today.push(L('r',p.final?`<b>Final pickup · Shed ${p.shed}</b> · clean-out`:`<b>Pickup Shed ${p.shed}</b> · about ${p.birds.toLocaleString('en-US')} birds${p.planned?' (planned)':''}`,'data-mgr-pickups')));
+  if(d0.loads.length){const kg=d0.loads.reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
+    G.today.push(L('b',`<b>Feed ${d0.loads.length>1?d0.loads.length+' loads':'load'}</b> arriving today · ${mgrT(kg)}`,'data-mgr-loads'));}
+  if(cw){
+    if(cw.overdue.length)G.today.push(L('r',`<b>${cw.overdue.length} task${cw.overdue.length===1?'':'s'} overdue</b> · ${escapeHtml(cw.overdue.slice(0,2).join(', '))}${cw.overdue.length>2?' …':''}`,'data-brief-cw="overdue"'));
+    if(cw.today)G.today.push(L(cw.done===cw.today?'g':'b',`${cw.today} task${cw.today===1?'':'s'} today · ${cw.done===cw.today?'all done':cw.done+' done'}`,'data-brief-cw="today"'));
+  }
+  // Watch: growth, mortality, weather
+  const live=mgrPlaced().filter(s=>!s.closed&&!(s.cleanoutDate&&dateOnly(s.cleanoutDate)<today));
+  live.forEach(s=>{const age=ageInDays(s,today);if(age<=0)return;let f=null;try{f=forecastWeightModeAware(s,today);}catch(e){}
+    if(!f||f.kg==null)return;const dv=daysVsTarget(age,f.kg);if(dv==null)return;const sev=daysBehindSeverity(dv);
+    if(sev==='bad'||(sev==='warn'&&dv<=-2))G.watch.push(L(sev==='bad'?'r':'a',`<b>Shed ${s.id}</b> is ${(-dv).toFixed(1)} days behind target weight`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
+  const placed=mgrPlaced().reduce((n,s)=>n+(Number(s.initialPopulation)||0),0),mortAll=mgrPlaced().reduce((n,s)=>n+Math.max(0,Number(s.mortality)||0),0);
+  const avg=placed?mortAll/placed*100:0;
+  live.forEach(s=>{const pop=Number(s.initialPopulation)||0;if(!pop)return;const pc=Math.max(0,Number(s.mortality)||0)/pop*100;
+    if(avg>0&&pc>avg*1.4&&pc-avg>=0.3)G.watch.push(L('a',`<b>Shed ${s.id}</b> mortality ${pc.toFixed(1)}% — above the farm average (${avg.toFixed(1)}%)`,'data-mgr-mort'));});
+  if(cw&&cw.wx){const w=cw.wx,hot=w.max!=null&&w.max>=(w.f?90:32);
+    w.alerts.forEach(a=>G.watch.push(L('a',`<b>${escapeHtml(a)}</b> today · ${escapeHtml(w.maxT)} / ${escapeHtml(w.minT)}${/heat/i.test(a)?' — check ventilation and water':''}`)));
+    if(hot&&!w.alerts.some(a=>/heat/i.test(a)))G.watch.push(L('a',`<b>Hot day</b> · ${escapeHtml(w.maxT)} — check ventilation and water`));}
+  // Feed
+  let silos=[];try{silos=mgrSiloOutlook();}catch(e){}
+  if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));
+  silos.filter(x=>x.dep&&x.days<=7).forEach(x=>G.feed.push(L(x.days<=3?'r':'a',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run low ${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?' (in '+x.days+' days)':''} · book a load`,`data-tab="g${x.g}"`)));
+  let sum=null;try{sum=farmLoadsSummary();}catch(e){}
+  if(sum&&sum.needsActual>0)G.feed.push(L('a',`<b>${sum.needsActual} load${sum.needsActual===1?'':'s'}</b> still need${sum.needsActual===1?'s':''} the docket weight`,'data-mgr-loads'));
+  if(!G.feed.length&&silos.length){const nx=silos.filter(x=>x.dep).sort((a,b)=>a.dep-b.dep)[0];
+    G.feed.push(L('g',nx?`Every silo covered to ${fmtShortNoYear(nx.dep)}`:'Every silo covered for the next 60 days','data-mgr-loads'));}
+  // Changeover & prep
+  mgrPlaced().forEach(s=>{if(s.closed||!s.cleanoutDate)return;const n=mgrDays(today,dateOnly(s.cleanoutDate));
+    if(n===0||n===1)G.co.push(L('b',`<b>Shed ${s.id}</b> cleans out ${n===0?'today':'tomorrow'}`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
+  try{const rl=typeof pwRunningList==='function'?pwRunningList():[];if(rl.length>1){const nu=rl[rl.length-1];
+    (nu.rows||[]).forEach(r=>{if(!r.place)return;const n=mgrDays(today,dateOnly(r.place));if(n>=0&&n<=3)G.co.push(L('b',`<b>Shed ${r.id}</b> chicks arrive ${n===0?'today':n===1?'tomorrow':fmtShortNoYear(r.place)} (${escapeHtml(nu.key)})`));});}}catch(e){}
+  if(cw&&cw.prep){const p=cw.prep,left=p.total-p.done,dn=p.chicks?mgrDays(today,dateOnly(p.chicks)):null;
+    const sh=p.sheds.length>2&&p.sheds.every((x,i)=>i===0||Number(x)===Number(p.sheds[i-1])+1)?`Sheds ${p.sheds[0]}–${p.sheds[p.sheds.length-1]}`:`Shed${p.sheds.length===1?'':'s'} ${p.sheds.join(', ')}`;
+    G.co.push(L(!left?'g':dn!=null&&dn<=7?'a':'b',`${sh} prep · ${p.done} of ${p.total} jobs done${dn!=null?' · chicks '+(dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days'):''}`,'data-brief-cw="prep"'));}
+  return {G,cw,today};
+}
+function mgrBriefInner(){
+  if(!farmData)return '';
+  const {G,cw}=mgrBriefData(),now=new Date(),h=now.getHours();
+  const who=String((typeof cachedManager==='function'&&cachedManager())||'').trim().split(/\s+/)[0];
+  const all=[...G.today,...G.watch,...G.feed,...G.co],nr=all.filter(x=>x.tone==='r').length,na=all.filter(x=>x.tone==='a').length,ng=all.filter(x=>x.tone==='g').length;
+  const wx=cw&&cw.wx?` · ${escapeHtml(cw.wx.maxT)} / ${escapeHtml(cw.wx.minT)}${cw.wx.label?', '+escapeHtml(cw.wx.label.toLowerCase()):''}`:'';
+  const icon=cw&&cw.wx&&cw.wx.icon?cw.wx.icon:(h<18?'☀️':'🌙');
+  const pills=nr||na?[nr?`<span class="bf-pill r">${nr} today</span>`:'',na?`<span class="bf-pill a">${na} to watch</span>`:'',ng?`<span class="bf-pill g">${ng} fine</span>`:''].join(''):'<span class="bf-pill g">All good</span>';
+  const ln=x=>x.act?`<button type="button" class="bf-ln" ${x.act}><i class="bf-dot ${x.tone}"></i><span>${x.html}</span><em aria-hidden="true">›</em></button>`:`<div class="bf-ln"><i class="bf-dot ${x.tone}"></i><span>${x.html}</span></div>`;
+  const grp=(ic,title,arr,ok)=>`<div class="bf-grp"><div class="bf-gh"><i aria-hidden="true">${ic}</i>${title}</div>${arr.length?arr.map(ln).join(''):`<div class="bf-ok">✓ ${ok}</div>`}</div>`;
+  return `<div class="bf-h"><span class="bf-sun" aria-hidden="true">${icon}</span>
+      <div class="bf-t"><b>Good ${h<12?'morning':h<18?'afternoon':'evening'}${who?', '+escapeHtml(who):''}</b><span>${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}${wx}</span></div>
+      <div class="bf-sum">${pills}</div>
+      <button type="button" class="bf-fold" data-brief-fold aria-expanded="${!mgrBriefFold}" title="${mgrBriefFold?'Show the briefing':'Fold the briefing'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button></div>
+    ${mgrBriefFold?'':`<div class="bf-grid">
+      ${grp('📋','Today',G.today,cw?'Nothing booked today':'Nothing booked today in Production')}
+      ${grp('👀','Watch',G.watch,'All good — every shed on target')}
+      ${grp('🌾','Feed',G.feed,'All good')}
+      ${grp('🔁','Changeover &amp; prep',G.co,'Nothing this week')}
+    </div>
+    <div class="bf-foot"><span>Made from today's numbers · updated ${now.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}${cw?'':' · tasks and weather appear once Tasks has loaded'}</span><span>Tap a line to open it</span></div>`}`;
+}
+function mgrBriefHtml(){if(!farmData)return '';return `<section class="mgr-card bf-card${mgrBriefFold?' folded':''}" id="mgrBrief" aria-label="Morning briefing">${mgrBriefInner()}</section>`;}
+function mgrBriefRefresh(){const el=document.getElementById('mgrBrief');if(!el)return;el.classList.toggle('folded',mgrBriefFold);el.innerHTML=mgrBriefInner();}
+setInterval(()=>{if(document.visibilityState==='visible')mgrBriefRefresh();},60000);   // tasks ticked in Tasks show up within a minute
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('[data-brief-fold],[data-brief-cw],[data-brief-pair]');if(!t)return;
+  if(t.hasAttribute('data-brief-fold')){mgrBriefFold=!mgrBriefFold;try{localStorage.setItem('pw-brief-fold',mgrBriefFold?'1':'0');}catch(er){}mgrBriefRefresh();return;}
+  if(t.dataset.briefPair){const [g,sh]=t.dataset.briefPair.split(':').map(Number);gotoPair(g,'overview',sh);return;}
+  if(t.dataset.briefCw){const what=t.dataset.briefCw;openTasksSection();
+    const go=()=>{try{cwFrame.contentWindow.__cwOpen(what);}catch(er){}};
+    let ok=false;try{ok=!!cwFrame.contentWindow.__cwOpen;}catch(er){}
+    if(ok)go();else cwFrame.addEventListener('load',()=>setTimeout(go,500),{once:true});}
+});
