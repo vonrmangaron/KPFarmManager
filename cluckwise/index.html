@@ -4403,10 +4403,32 @@
   .pl-tab td.pl-c > small{ position:absolute; left:2px; right:2px; bottom:5px; margin:0; overflow:hidden; text-overflow:ellipsis; }
   .pl-cdot{ border:0 !important; border-radius:50% !important; background:transparent !important; width:22px !important; height:22px !important; }
   .pl-cdot:hover, .pl-cdot.pl-menu-on{ background:var(--surface-soft) !important; color:var(--ink); }
-  .cw-ask-btn{ all:unset; cursor:pointer; position:relative; display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 13px; border-radius:11px; font:800 13px Inter,sans-serif; color:#fff; background:linear-gradient(135deg,#7B5BF0,#5A3BD8); box-shadow:0 6px 16px rgba(109,74,224,.32); white-space:nowrap; }
-  .cw-ask-btn:hover{ filter:brightness(1.06); } .cw-ask-btn:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
-  .cw-ask-btn[hidden]{ display:none; }
-  .cw-ask-dot{ position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%; background:#F0A21A; border:2px solid var(--surface); }
+  /* Summarise (2026-10-25): the free AI writes a short summary of this page when tapped (store and AI in ProdWise: window.parent.pwSum) */
+  .cw-sum-btn{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 11px; border-radius:10px; border:1px solid var(--line); background:var(--surface); font:700 12.5px Inter,sans-serif; color:#3343A8; cursor:pointer; white-space:nowrap; }
+  body.theme-dark .cw-sum-btn{ color:#B9C3FF; }
+  .cw-sum-btn:hover{ border-color:#4B5FD6; } .cw-sum-btn:focus-visible{ outline:2px solid #4B5FD6; outline-offset:2px; }
+  .cw-sum-btn svg{ width:15px; height:15px; } .cw-sum-btn[hidden]{ display:none; }
+  @media (max-width:760px){ .cw-sum-btn{ padding:0 9px; } .cw-sum-btn span{ display:none; } }
+  .cw-sumwrap{ margin:0 0 12px; }
+  #mlogPage .cw-sumwrap{ margin:12px 16px 0; } #reportsDrawer .cw-sumwrap{ margin:10px 16px; }
+  .cw-sumwrap .sm-card{ background:var(--surface); border:1px solid var(--line); border-top:3px solid #4B5FD6; border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .cw-sumwrap .sm-h{ display:flex; align-items:center; gap:8px; }
+  .cw-sumwrap .sm-h b{ flex:1; font:800 11px Inter,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#3343A8; }
+  body.theme-dark .cw-sumwrap .sm-h b{ color:#B9C3FF; }
+  .cw-sumwrap .sm-h small{ font:600 11px Inter,sans-serif; color:var(--muted); }
+  .cw-sumwrap .sm-ib{ width:28px; height:28px; border-radius:7px; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:12px; cursor:pointer; }
+  .cw-sumwrap .sm-ib:hover{ color:var(--ink); border-color:#4B5FD6; }
+  .cw-sumwrap ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px; }
+  .cw-sumwrap li{ display:flex; gap:8px; align-items:flex-start; font:500 13.5px/1.45 Inter,sans-serif; color:var(--ink); }
+  .cw-sumwrap p{ margin:0; font:500 13.5px/1.5 Inter,sans-serif; color:var(--ink); }
+  .cw-sumwrap .sm-d{ flex:none; width:8px; height:8px; border-radius:2px; margin-top:6px; }
+  .cw-sumwrap .sm-d.r{ background:#C8443A; } .cw-sumwrap .sm-d.a{ background:#E7A33A; } .cw-sumwrap .sm-d.g{ background:#13806D; } .cw-sumwrap .sm-d.b{ background:#2F6BD8; }
+  .cw-sumwrap .sm-err{ color:var(--muted); font-style:italic; }
+  .cw-sumwrap .sm-f{ font:600 10.5px Inter,sans-serif; color:var(--muted); }
+  .cw-sumwrap .sm-load{ display:flex; flex-direction:column; gap:6px; }
+  .cw-sumwrap .sm-load i{ display:block; height:10px; border-radius:6px; background:linear-gradient(90deg,var(--surface-soft),rgba(75,95,214,.18),var(--surface-soft)); background-size:200% 100%; animation:cwSumSh 1.3s linear infinite; }
+  .cw-sumwrap .sm-load i:nth-child(1){ width:92%; } .cw-sumwrap .sm-load i:nth-child(2){ width:76%; } .cw-sumwrap .sm-load i:nth-child(3){ width:58%; }
+  @keyframes cwSumSh{ to{ background-position:-200% 0; } }
   /* Notes on shed prep jobs (2026-10-25) */
   #detailNotes{ white-space:pre-line; }
   .pl-c{ position:relative; }
@@ -4562,7 +4584,7 @@
 
     <div class="toolbar">
       <button type="button" class="btn-report-top" id="topReportBtn" title="Report a problem on the farm (a photo is optional)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg><span>Report a problem</span></button>
-      <button type="button" class="cw-ask-btn" id="cwAskBtn" hidden title="Ask about the farm, and this morning's greeting (the same chat as in Production)">✨ Ask<span class="cw-ask-dot" id="cwAskDot" hidden></span></button>
+      <button type="button" class="cw-sum-btn" id="cwSumPlan" data-cw-sum="plan" hidden title="Summarise this week's tasks with the free AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Summarise</span></button>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
       <div class="tb-group" role="group" aria-label="Farm tools">
@@ -4700,6 +4722,7 @@
       <h2>Routine Tracker</h2>
       <div class="mlog-sub" id="mlogSub"></div>
     </div>
+    <button type="button" class="cw-sum-btn" id="cwSumPrep" data-cw-sum="prep" hidden title="Summarise shed preparation with the free AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Summarise</span></button>
     <button type="button" class="btn-app prep-std-btn" id="prepStdBtn" hidden title="The lists new Shed Preparation Checklists start from">Templates</button>
     <button type="button" class="btn-app mlog-add" id="mlogAddBtn">+ Track task</button>
   </header>
@@ -4903,6 +4926,7 @@
       <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
     <button type="button" class="rp-head-btn rp-ic" id="rpSearchToggle" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+    <button type="button" class="cw-sum-btn" id="cwSumMt" data-cw-sum="mt" hidden title="Summarise maintenance with the free AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Summarise</span></button>
     <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">＋ New report</button>
     <div class="rp-more"><button type="button" class="rp-head-btn rp-ic" id="rpMoreBtn" aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More">⋯</button>
       <div class="rp-more-menu" id="rpMoreMenu" role="menu" hidden><button type="button" role="menuitem" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button><button type="button" role="menuitem" class="rp-alert-btn" id="rpAlertBtn" hidden>Turn on alerts</button></div></div>
@@ -10867,6 +10891,7 @@
     renderReportsView();
     animateViewChange();
     applyDropFx();
+    try{ cwSumSync(); }catch(e){}
     renderMlog();
     if(mlogHistId) renderMlogHistory();
   }
@@ -12154,6 +12179,7 @@
   let mlogMode = 'routine', prepPhoneShed = null, prepTaskFor = null, prepTaskRep = false, prepTaskKind = 'task', prepTaskKindLast = 'task';
   function prepNotices(){ return shedPrep.filter(c=> c.auto && !c.seen && !c.archived && !prepPlaced(c)); }
   function syncPrepChrome(){
+    try{ cwSumSync(); }catch(e){}   // Summarise button follows Routine / Shed prep
     const open = prepOpenList().length;
     const ct = $('#prepSegCt'); if(ct){ ct.hidden = !open; ct.textContent = open; }
     document.querySelectorAll('#prepSeg [data-mlogmode]').forEach(b=>{ const on = b.dataset.mlogmode === mlogMode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -14753,10 +14779,6 @@
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   // One History (2026-10-19): inside ProdWise, History is Production's page (saved copies + this log on one timeline)
   window.__cwHistory = ()=> history.slice();
-  // ✨ Ask lives in ProdWise; inside it, this button opens the same panel (one chat for both)
-  (function(){ const b = $('#cwAskBtn'); let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenAsk === 'function'; }catch(e){}
-    if(!b || !ok) return; b.hidden = false; b.addEventListener('click', ()=>{ try{ window.parent.pwOpenAsk(); }catch(e){} });
-    window.__cwAskDot = on=>{ const d = $('#cwAskDot'); if(d) d.hidden = !on; }; })();
   // Morning briefing on ProdWise Home (2026-10-25): a small summary of today's tasks, shed prep and weather.
   window.__cwBrief = ()=>{
     const today = dateKey(new Date());
@@ -14770,44 +14792,76 @@
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx };
   };
-  // ✨ Ask (2026-10-25): tasks, maintenance and shed prep as short text for the AI to read (ProdWise sends it)
-  window.__cwAskContext = ()=>{
-    const today = dateKey(new Date()), wk = addDaysStr(today, 7), yd = addDaysStr(today, -1), out = [];
-    const tl = t=> `${t.name}${t.date ? ' · ' + t.date : ' · backlog'}${(t.assignees || []).length ? ' · for ' + t.assignees.join(', ') : ''}${t.status === 'done' ? ' · done' + (t.doneBy ? ' by ' + t.doneBy : '') : ''}${t.priority === 'high' && t.status !== 'done' ? ' · HIGH' : ''}${t.prep ? ' · Shed ' + t.prep.shed + ' prep' : ''}`;
-    const over = tasks.filter(t=> t.status !== 'done' && t.date && t.date < today);
-    out.push('TASKS · overdue (' + over.length + '):', ...over.slice(0, 25).map(t=> '- ' + tl(t)));
-    const td = tasks.filter(t=> t.date === today);
-    out.push('TASKS · today (' + td.length + '):', ...td.slice(0, 30).map(t=> '- ' + tl(t)));
-    const yy = tasks.filter(t=> t.date === yd);
-    out.push('TASKS · yesterday (' + yy.length + '):', ...yy.slice(0, 30).map(t=> '- ' + tl(t)));
-    const nx = tasks.filter(t=> t.date && t.date > today && t.date <= wk).sort((a, b)=> a.date < b.date ? -1 : 1);
-    out.push('TASKS · next 7 days (' + nx.length + '):', ...nx.slice(0, 40).map(t=> '- ' + tl(t)));
-    const bl = tasks.filter(t=> !t.date && t.status !== 'done');
-    if(bl.length) out.push('TASKS · backlog (' + bl.length + '):', ...bl.slice(0, 15).map(t=> '- ' + tl(t)));
-    const open = reports.filter(r=> r.status !== 'Resolved');
-    out.push('MAINTENANCE · open problem reports (' + open.length + '):', ...open.slice(0, 25).map(r=> `- ${rpLabel(r)} · ${r.status}${r.urgent ? ' · URGENT' : ''} · reported ${String(r.createdAt || '').slice(0, 10)}${r.createdBy ? ' by ' + r.createdBy : ''}${r.notes ? ' · "' + String(r.notes).slice(0, 120) + '"' : ''}`));
-    const live = prepLiveLists();
-    if(live.length){ out.push('SHED PREP (preparing for the next batch):');
-      live.forEach(c=>{ const p = prepProgress(c), left = prepUnits(c).filter(x=> !x.u.done);
-        out.push(`- Shed ${c.shed}: ${p.done} of ${p.total} jobs done${c.nextPlacement ? ' · chicks ' + c.nextPlacement : ''}${left.length ? ' · left: ' + left.slice(0, 12).map(x=> x.u.t).join(', ') + (left.length > 12 ? ' …' : '') : ''}`);
-        prepUnits(c).forEach(({ u })=>{ const n = prepNoteText(u); if(n) out.push(`  note on "${u.t}": ${n}`); }); }); }
+  // Summarise (2026-10-25): Planner (this week), Maintenance and Shed prep. ProdWise holds the store and calls the AI.
+  function cwSumApi(){ try{ return window.parent !== window && window.parent.pwSum ? window.parent.pwSum : null; }catch(e){ return null; } }
+  const CW_SUM = {
+    plan: { title:'This week', place: ()=> $('#calendarWrap') },
+    mt:   { title:'Maintenance', place: ()=> document.querySelector('#reportsDrawer .rp-body') },
+    prep: { title:'Shed prep', place: ()=> $('#prepMain') } };
+  function cwSumContext(k){
+    const today = dateKey(new Date()), out = [];
+    const tl = t=> `${t.name}${t.date ? ' · ' + t.date : ' · backlog'}${(t.assignees || []).length ? ' · ' + t.assignees.join(', ') : ' · unassigned'}${t.status === 'done' ? ' · done' : ''}${t.priority === 'high' && t.status !== 'done' ? ' · HIGH' : ''}`;
+    if(k === 'plan'){
+      const over = tasks.filter(t=> t.status !== 'done' && t.date && t.date < today);
+      out.push(`TODAY ${today}`, `OVERDUE (${over.length}):`, ...over.slice(0, 20).map(t=> '- ' + tl(t)));
+      for(let i = 0; i < 7; i++){ const d = addDaysStr(today, i), dt = tasks.filter(t=> t.date === d);
+        const who = {}; dt.forEach(t=> (t.assignees || []).forEach(a=> who[a] = (who[a] || 0) + 1));
+        out.push(`${d} (${dt.length} tasks, ${dt.filter(t=> t.status === 'done').length} done${Object.keys(who).length ? '; ' + Object.entries(who).map(([a, n])=> a + ' ' + n).join(', ') : ''}):`, ...dt.slice(0, 25).map(t=> '- ' + tl(t))); }
+      const bl = tasks.filter(t=> !t.date && t.status !== 'done'); if(bl.length) out.push(`BACKLOG (${bl.length}):`, ...bl.slice(0, 15).map(t=> '- ' + tl(t)));
+    } else if(k === 'mt'){
+      const open = reports.filter(r=> r.status !== 'Resolved'), now = Date.now();
+      out.push(`OPEN PROBLEM REPORTS (${open.length}):`, ...open.slice(0, 30).map(r=> `- ${rpLabel(r)} · ${r.status}${r.urgent ? ' · URGENT' : ''} · ${Math.max(0, Math.round((now - new Date(r.createdAt).getTime()) / 864e5))} days old${r.notes ? ' · "' + String(r.notes).slice(0, 100) + '"' : ''}`));
+      const recent = reports.filter(r=> now - new Date(r.createdAt).getTime() < 60 * 864e5), byType = {};
+      recent.forEach(r=> { const k2 = rpLabel(r); byType[k2] = (byType[k2] || 0) + 1; });
+      const rep2 = Object.entries(byType).filter(([, n])=> n > 1).sort((a, b)=> b[1] - a[1]);
+      if(rep2.length) out.push('REPORTED MORE THAN ONCE IN 60 DAYS:', ...rep2.slice(0, 8).map(([t, n])=> `- ${t}: ${n} times`));
+      out.push(`Fixed in the last 7 days: ${reports.filter(r=> r.status === 'Resolved' && r.resolvedAt && now - new Date(r.resolvedAt).getTime() < 7 * 864e5).length}`);
+    } else if(k === 'prep'){
+      const live = prepLiveLists(); if(!live.length) out.push('No shed is being prepared.');
+      live.forEach(c=>{ const pr = prepProgress(c), left = prepUnits(c).filter(x=> !x.u.done);
+        const days = c.nextPlacement ? Math.round((toDateObj(c.nextPlacement) - toDateObj(today)) / 864e5) : null;
+        out.push(`Shed ${c.shed}: ${pr.done} of ${pr.total} jobs done${days != null ? ' · chicks ' + c.nextPlacement + ' (in ' + days + ' days)' : ''}`);
+        left.slice(0, 14).forEach(({ sec, u })=>{ const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null; out.push(`  - left: ${sec.t} › ${u.t}${tk ? ' (task ' + (tk.date || 'backlog') + ')' : ''}`); });
+        prepUnits(c).forEach(({ u })=>{ const n = prepNoteText(u); if(n) out.push(`  note on "${u.t}": ${n}`); if(u.lastNote || u.lastJNote) out.push(`  last batch note on "${u.t}": ${(u.lastJNote || u.lastNote).t}`); }); });
+    }
     return out.join('\n');
-  };
-  // ✨ Ask changes (2026-10-25): ProdWise checks and confirms first, then calls these
-  window.__cwTaskFind = (name, date)=>{
-    const n = String(name || '').trim().toLowerCase(); if(!n) return [];
-    const open = tasks.filter(t=> t.status !== 'done' && String(t.name || '').toLowerCase().includes(n) && (!date || t.date === date));
-    const today = dateKey(new Date());
-    return open.sort((a, b)=> Math.abs((a.date ? toDateObj(a.date) : 9e15) - toDateObj(today)) - Math.abs((b.date ? toDateObj(b.date) : 9e15) - toDateObj(today)))
-      .slice(0, 5).map(t=> ({ id: t.id, name: t.name, date: t.date || null, who: (t.assignees || []).slice() }));
-  };
-  window.__cwAct = (a)=>{
-    if(a.type === 'add_task'){ const t = addTask(String(a.name).slice(0, 50), null, a.date || null, { assignees: (a.who || []).map(x=> String(x).slice(0, 30)).filter(Boolean) });
-      addHistory('✨ Ask', `Added "${t.name}"${t.date ? ' to ' + formatFull(t.date) : ' to the backlog'}`); persist(); renderAll(); return { ok: true }; }
-    if(a.type === 'tick_task'){ const t = tasks.find(x=> x.id === a.id); if(!t) return { ok: false, msg: 'That task is gone' };
-      if(t.status !== 'done') toggleDone(t.id); persist(); renderAll(); return { ok: t.status === 'done', msg: t.status === 'done' ? '' : 'It could not be ticked' }; }
-    return { ok: false, msg: 'Unknown change' };
-  };
+  }
+  function cwSumShow(k, item){
+    const api = cwSumApi(), place = CW_SUM[k].place(); if(!api || !place || !place.parentNode) return;
+    let w = document.querySelector(`[data-cw-sumwrap="${k}"]`);
+    if(!w){ w = document.createElement('div'); w.className = 'cw-sumwrap'; w.dataset.cwSumwrap = k; }
+    if(w.nextElementSibling !== place) place.parentNode.insertBefore(w, place);
+    w.innerHTML = api.card(item, CW_SUM[k].title, 'tasks:' + k);
+  }
+  let cwSumBusy = false;
+  async function cwSumTap(k, again){
+    const api = cwSumApi(); if(!api || cwSumBusy) return;
+    const key = 'tasks:' + k, cached = api.cached(key);
+    if(cached && !again && !cached.err){ api.show(key); cwSumShow(k, cached); return; }
+    cwSumBusy = true; cwSumShow(k, { busy:true });
+    const item = await api.run(key, 'Tasks · ' + CW_SUM[k].title, cwSumContext(k), null);
+    cwSumBusy = false; cwSumShow(k, item);
+  }
+  function cwSumSync(){
+    const api = cwSumApi();
+    const b = { plan: $('#cwSumPlan'), mt: $('#cwSumMt'), prep: $('#cwSumPrep') };
+    if(b.plan) b.plan.hidden = !api;
+    if(b.mt) b.mt.hidden = !api;
+    if(b.prep) b.prep.hidden = !api || mlogMode !== 'prep';
+    if(!api) return;
+    Object.keys(CW_SUM).forEach(k=>{ const it = api.get('tasks:' + k), w = document.querySelector(`[data-cw-sumwrap="${k}"]`);
+      if(k === 'prep' && mlogMode !== 'prep'){ if(w) w.remove(); return; }
+      if(it && !cwSumBusy) cwSumShow(k, it); else if(!it && w && !cwSumBusy) w.remove(); });
+  }
+  window.__cwSumSync = ()=>{ try{ cwSumSync(); }catch(e){} };
+  window.addEventListener('load', ()=> setTimeout(window.__cwSumSync, 400));   // shows the buttons even before the farm data arrives
+  document.addEventListener('click', (e)=>{
+    const b = e.target.closest && e.target.closest('[data-cw-sum]'); if(b){ cwSumTap(b.dataset.cwSum); return; }
+    const w = e.target.closest && e.target.closest('[data-cw-sumwrap]'); if(!w) return;
+    const k = w.dataset.cwSumwrap;
+    if(e.target.closest('[data-sm-again]')){ cwSumTap(k, true); return; }
+    if(e.target.closest('[data-sm-hide]')){ const api = cwSumApi(); if(api) api.hide('tasks:' + k); w.remove(); }
+  });
   window.__cwOpen = (what)=>{ try{ closeOverlays(); }catch(e){}
     if(what === 'prep') openPrepBoard(null);
     else if(what === 'overdue') openOverdueModal();

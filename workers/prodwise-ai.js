@@ -1,6 +1,8 @@
 // ProdWise AI — the morning greeting and "✨ Ask the farm", on Cloudflare Workers AI (free daily allowance).
 //
-//   POST /ai/<farm-slug>   { mode: 'greet' | 'ask', name, facts, context, calendar, history: [{role, content}], question }
+//   POST /ai/<farm-slug>   { mode: 'greet' | 'summary' | 'ask', name, facts, context, calendar, history: [{role, content}], question, page, sheds }
+//   'greet'   → the 2–3 sentence summary at the top of the Daily report
+//   'summary' → a page's Summarise card: 2–4 tagged bullets, or a note per shed when `sheds` is given
 //                          → { text, src, left }  or, when the manager asks for a change, { actions: [...], text, left }
 //
 // Changes (2026-10-25): the AI never changes anything itself. It turns "Shed 1 mortality 2156" or "move Shed 5's
@@ -69,9 +71,28 @@ function buildMessages(b) {
   if (b.mode === 'greet') {
     return [
       { role: 'system', content: `${RULES}
-Write a short, warm morning greeting paragraph (60–110 words) for ${name || 'the manager'}, from TODAY'S FACTS only.
-Put the most urgent things first (red, then amber), then mention the rest briefly. One paragraph, no list, no heading, no emoji, no sign-off. Do not start with "Good morning" — the app already shows that.` },
+Write the summary for the top of today's Daily report for ${name || 'the farm manager'}: 2–3 sentences, 40–70 words, from TODAY'S FACTS only.
+Tone: calm, professional, factual — like a farm supervisor's handover note. Most important first (red, then amber), then one line on how things stand overall.
+No greeting, no list, no heading, no emoji, no exclamation marks, no sign-off.` },
       { role: 'user', content: `TODAY'S FACTS (red = act today, amber = keep an eye on, blue = for info, green = fine):\n${clip(b.facts, 4000)}` },
+    ];
+  }
+  if (b.mode === 'summary') {
+    const sheds = Array.isArray(b.sheds) ? b.sheds.map(x => String(x).replace(/[^0-9]/g, '')).filter(Boolean).slice(0, 4) : [];
+    const page = clip(b.page, 60);
+    const want = sheds.length
+      ? `Reply with ONLY one JSON object: {"pair":"one sentence about the sheds together","sheds":{${sheds.map(x => `"${x}":"1–2 sentences on Shed ${x}"`).join(',')}}}
+Each shed note: how it is doing (growth vs target, mortality), the next thing coming up, and anything to check. Under 35 words each.`
+      : `Write 2–4 bullet lines, each starting with "- " and then a tag: [red] act now, [amber] keep an eye on, [green] fine. Example: "- [amber] **Shed 4** is 2.1 days behind target."
+Each bullet one short sentence with the useful number or name. Most important first. Nothing before or after the bullets.`;
+    return [
+      { role: 'system', content: `${RULES}
+Summarise the "${page}" page of the farm app for the manager: what's good, what to watch, what to do. Calm, professional, factual.
+${want}
+
+PAGE DATA (today: ${clip(b.today, 40)}):
+${clip(b.context, 20000)}` },
+      { role: 'user', content: 'Summarise this page.' },
     ];
   }
   const hist = Array.isArray(b.history) ? b.history.slice(-6).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: clip(m.content, 1200) })) : [];
@@ -123,7 +144,7 @@ export default {
     const raw = await request.text();
     if (raw.length > MAX_BODY) return reply(413, { error: 'Too much data' }, cors);
     let b; try { b = JSON.parse(raw); } catch (e) { return reply(400, { error: 'Bad request' }, cors); }
-    if (b.mode !== 'greet' && !(b.mode === 'ask' && String(b.question || '').trim())) return reply(400, { error: 'Nothing to answer' }, cors);
+    if (b.mode !== 'greet' && !(b.mode === 'summary' && String(b.context || '').trim()) && !(b.mode === 'ask' && String(b.question || '').trim())) return reply(400, { error: 'Nothing to answer' }, cors);
 
     // Daily limit per farm (optional)
     const day = new Date().toISOString().slice(0, 10), ck = `n:${farm}:${day}`;
@@ -134,7 +155,7 @@ export default {
     let text = '', lastErr = null;
     for (const model of MODELS) {
       try {
-        const out = await env.AI.run(model, { messages, max_tokens: b.mode === 'greet' ? 260 : 420, temperature: 0.4 });
+        const out = await env.AI.run(model, { messages, max_tokens: b.mode === 'greet' ? 220 : 420, temperature: 0.3 });
         // Workers AI hands back JSON answers as an object, not text (2026-10-25: showed as "[object Object]")
         const r = out && (out.response != null ? out.response : out.result && out.result.response);
         text = (r && typeof r === 'object' ? JSON.stringify(r) : String(r || '')).trim();

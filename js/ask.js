@@ -1,313 +1,256 @@
-// ── Morning greeting + ✨ Ask (2026-10-25, mockup 9EcTR653QyiqCQs1WMXhXN) ──────────────────────────────
-// From 7:00, the first time the app opens that day, a greeting pops up: a short paragraph written by a free AI
-// model on the farm's Cloudflare account (workers/prodwise-ai.js) from today's facts, with the facts as chips.
-// Closed, it stays away until tomorrow; ✨ Ask in the header (and in Tasks) opens one shared panel with this
-// morning's greeting and a chat. One chat for Production and Tasks: the panel lives here and Tasks opens it
-// through window.pwOpenAsk. Chats are kept on this device (localStorage, per farm).
-// No AI (offline, not set up, or the free allowance used up for the day): the plain fact lines show instead.
+// ── Daily report + Summarise (2026-10-25, mockup ERt6X8yqonhZLd2qXAnKGu) ──────────────────────────────────
+// Replaces the ✨ Ask chat. Two things use the free AI on the farm's Cloudflare account (workers/prodwise-ai.js):
+//  • the Daily report: pops up once a day from 7:00 and opens from 📋 in the header. Its numbers, priorities,
+//    watch list and schedule come straight from the app (mgrBriefData); only the short summary is AI.
+//  • Summarise: a button by the page title on the pages that benefit. Nothing is sent until it's tapped; the
+//    result is kept for the day (tapping again is free), ↻ writes a fresh one. Tasks (CluckWise) uses the same
+//    store through window.pwSum, so its Planner, Maintenance and Shed prep pages work the same way.
+// No AI (offline, not set up, or the day's allowance used up): the report shows without its summary box, and
+// Summarise says when the AI is back.
 const AI_WORKER_URL='https://prodwise-ai.vonrmangaron.workers.dev';
-const ASK_MAX=80;
-let askBusy=false,askLeft=null;
-function askFarm(){return String(syncFarmName||'').trim();}
-function askKey(){return 'pw-ask-'+(typeof accSlug==='function'?accSlug():askFarm().toLowerCase());}
-function askDayKey(){return iso(mgrToday());}
-function askLoad(){try{const j=JSON.parse(localStorage.getItem(askKey())||'null');if(j&&Array.isArray(j.msgs))return j;}catch(e){}return {msgs:[],greet:null};}
-function askSave(st){st.msgs=st.msgs.slice(-ASK_MAX);try{localStorage.setItem(askKey(),JSON.stringify(st));}catch(e){}}
-function askGreetOn(){try{return localStorage.getItem('pw-greet-on')!=='0';}catch(e){return true;}}
-function askSetGreetOn(v){try{localStorage.setItem('pw-greet-on',v?'1':'0');}catch(e){}}
-function askName(){return String((typeof cachedManager==='function'&&cachedManager())||'').trim().split(/\s+/)[0];}
-// Today's facts as plain lines (the same rules the briefing used)
-function askFacts(){
-  if(!farmData||typeof mgrBriefData!=='function')return {lines:[],text:'',cw:null};
-  const d=mgrBriefData(),lines=[];
-  const add=(grp,arr)=>arr.forEach(x=>lines.push({grp,tone:x.tone,html:x.html,act:x.act,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')}));
-  add('Today',d.G.today);add('Watch',d.G.watch);add('Feed',d.G.feed);add('Changeover & prep',d.G.co);
-  const TN={r:'red',a:'amber',b:'blue',g:'green'};
-  return {lines,cw:d.cw,text:lines.map(l=>`[${TN[l.tone]}] ${l.grp}: ${l.text}`).join('\n')||'Nothing special today.'};
-}
-// Production numbers as short text for the AI (plus Tasks' own summary)
-function askContext(){
-  const out=[],today=mgrToday();
-  try{
-    const t=computeFarmTotals(),placed=mgrPlaced();
-    const first=placed.length?placed.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a):null;
-    out.push(`BATCH: ${predState.batchNumber||farmData.batchNumber||'?'}${first?' · day '+Math.max(0,mgrDays(first,today)):''} · ${placed.length} sheds placed`);
-    if(t&&t.hasData)out.push(`KPIs: projected FCR at finish ${Number(t.fcr).toFixed(3)} · projected Cfcr2.45 ${Number(t.cfcr).toFixed(3)}`);
-    out.push('SHEDS:');
-    placed.forEach(s=>{const age=ageInDays(s,today),live=Math.max(0,liveAtStartOfDay(s,today)),pop=Number(s.initialPopulation)||0,mort=Math.max(0,Number(s.mortality)||0);
-      let g='';try{const f=forecastWeightModeAware(s,today);const dv=f&&f.kg!=null?daysVsTarget(age,f.kg):null;if(dv!=null)g=` · weight ${f.kg.toFixed(2)} kg, ${Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' days ahead':(-dv).toFixed(1)+' days behind'}`;}catch(e){}
-      const nx=mgrComingPickups(s)[0];
-      out.push(`- Shed ${s.id}: ${s.closed?'closed':'day '+age} · ${live.toLocaleString('en-US')} birds of ${pop.toLocaleString('en-US')} placed · mortality ${mort.toLocaleString('en-US')} (${pop?(mort/pop*100).toFixed(1):'0'}%)${g}${nx?' · next pickup '+fmtShortNoYear(nx.date)+' '+nx.birds.toLocaleString('en-US')+' birds'+(nx.planned?' (planned)':''):''}${s.cleanoutDate?' · clean-out '+fmtShortNoYear(s.cleanoutDate):''}`);});
-    out.push('SILOS (run-out with booked loads):');
-    mgrSiloOutlook().forEach(x=>out.push(`- ${pairLabel(x.g)}: ${x.dep?'run low '+fmtShortNoYear(x.dep)+' (in '+x.days+' days)':'no run-out in the next 60 days'}${x.stock!=null?' · '+mgrT(x.stock)+' in silos at the last reading':''}`));
-    const wk=mgrWeek();out.push('FEED LOADS & PICKUPS · next 7 days:',...(wk.length?wk.map(w=>`- ${fmtShortNoYear(w.date)}: ${w.text}`):['- none booked']));
-  }catch(e){out.push('(some production numbers could not be read)');}
-  try{const w=cwFrame&&cwFrame.contentWindow;if(w&&typeof w.__cwAskContext==='function')out.push(w.__cwAskContext());}catch(e){}
-  return out.join('\n');
-}
-async function askCall(body){
-  const r=await fetch(AI_WORKER_URL+'/ai/'+encodeURIComponent(askFarm().toLowerCase().replace(/[^a-z0-9-]/g,'-')),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+let aiLeft=null;
+function aiFarm(){return String(syncFarmName||'').trim();}
+function aiSlug(){return aiFarm().toLowerCase().replace(/[^a-z0-9-]/g,'-');}
+function aiDay(){return iso(mgrToday());}
+function aiName(){return String((typeof cachedManager==='function'&&cachedManager())||'').trim().split(/\s+/)[0];}
+async function aiCall(body){
+  const r=await fetch(AI_WORKER_URL+'/ai/'+encodeURIComponent(aiSlug()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({today:aiDay()},body))});
   let j=null;try{j=await r.json();}catch(e){}
   if(!r.ok){const err=new Error((j&&j.error)||('AI '+r.status));err.limit=!!(j&&j.limit)||r.status===429;err.setup=!!(j&&j.setup);err.status=r.status;throw err;}
-  if(j&&j.left!=null)askLeft=j.left;
-  j=j||{};
-  // older worker: an object or JSON-in-text answer — pick the proposed changes out of it here
+  j=j||{};if(j.left!=null)aiLeft=j.left;
   if(j.text!=null&&typeof j.text!=='string')j.text=JSON.stringify(j.text);
-  if(!j.actions&&typeof j.text==='string'&&/"actions"\s*:/.test(j.text)){const a=j.text.indexOf('{'),z=j.text.lastIndexOf('}');
-    try{const x=JSON.parse(j.text.slice(a,z+1));if(Array.isArray(x.actions)&&x.actions.length){j.actions=x.actions;j.text=String(x.say||'');}}catch(e){}}
   return j;
 }
-function askResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
-function askErrText(e){
-  if(!navigator.onLine)return 'You\'re offline — the AI needs the internet.';
-  if(e&&e.limit)return `The free AI allowance is used up for today. It comes back at ${askResetTime()}.`;
-  if(e&&(e.setup||e.status===404||e.status===undefined||e.message==='Failed to fetch'))return 'The AI isn\'t set up yet on Cloudflare (the prodwise-ai worker).';
-  if(e&&e.status===403)return 'Only the manager can use Ask on this farm.';
+function aiResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
+function aiErrText(e){
+  if(!navigator.onLine)return 'Offline — the AI needs the internet.';
+  if(e&&e.limit)return `The free AI allowance is used up for today. It's back at ${aiResetTime()}.`;
+  if(e&&(e.setup||e.status===404||e.status===undefined))return 'The AI isn\'t set up on Cloudflare yet (prodwise-ai worker).';
+  if(e&&e.status===403)return 'Only the manager can use the AI on this farm.';
   return 'The AI didn\'t answer just now. Try again in a moment.';
 }
-// ---------- UI ----------
-function askChipsHtml(lines){return lines.map(l=>`<button type="button" class="ak-chip ${l.tone}" ${l.act||''} data-ak-close title="${escapeAttr(l.text)}"><i></i>${escapeHtml(l.text.length>34?l.text.slice(0,32)+'…':l.text)}</button>`).join('');}
-function askFactsHtml(lines){return lines.length?`<div class="ak-facts">${lines.map(l=>`<div class="ak-fact"><i class="bf-dot ${l.tone}"></i><span>${l.html}</span></div>`).join('')}</div>`:'<p class="ak-quiet">Nothing special today — every shed, silo and task is on track.</p>';}
-function askEnsureDom(){
-  if(document.getElementById('akGreet'))return;
-  document.body.insertAdjacentHTML('beforeend',`
-  <div class="ak-scrim" id="akGreet" aria-hidden="true"><div class="ak-greet" role="dialog" aria-modal="true" aria-labelledby="akGreetTitle">
-    <div class="ak-gtop"><button type="button" class="ak-x" data-ak-close aria-label="Close" title="Close">✕</button><small id="akGreetDate"></small><h2 id="akGreetTitle"></h2><div class="ak-wx" id="akGreetWx"></div></div>
-    <div class="ak-gbody"><div class="ak-ai"><span class="ak-av" aria-hidden="true">✨</span><div class="ak-p" id="akGreetText"></div></div>
-      <div class="ak-chips" id="akGreetChips"></div>
-      <form class="ak-in" data-ak-form><input type="text" maxlength="300" placeholder="Ask about the farm…" aria-label="Ask about the farm"><button type="submit" class="ak-send" aria-label="Ask" title="Ask">↑</button></form>
-      <div class="ak-sugg" data-ak-sugg></div>
-      <button type="button" class="ak-ok" data-ak-close>Thanks — let's go</button></div>
-    <div class="ak-gfoot"><span id="akGreetFoot">✨ Written by AI from today's numbers — check before acting</span><span>Back anytime: ✨ Ask</span></div>
-  </div></div>
-  <div class="ak-pscrim" id="akPanelScrim"></div>
-  <aside class="ak-panel" id="akPanel" role="dialog" aria-modal="true" aria-labelledby="akPanelTitle" aria-hidden="true">
-    <div class="ak-ph"><span class="ak-pav" aria-hidden="true">✨</span><b id="akPanelTitle">Ask the farm</b>
-      <button type="button" class="ak-ib" id="akMenuBtn" aria-label="Options" title="Morning greeting · clear chat">⋯</button>
-      <button type="button" class="ak-ib" id="akPanelClose" aria-label="Close" title="Close">✕</button>
-      <div class="ak-menu" id="akMenu" hidden><label class="ak-mi"><input type="checkbox" id="akGreetOn"> Morning greeting from 7:00 on this device</label><button type="button" class="ak-mi danger" id="akClear">Clear this chat</button></div></div>
-    <div class="ak-msgs" id="akMsgs"></div>
-    <div class="ak-pf"><div class="ak-sugg" data-ak-sugg></div><form class="ak-in" data-ak-form><input type="text" maxlength="300" placeholder="Ask about the farm…" aria-label="Ask about the farm"><button type="submit" class="ak-send" aria-label="Ask" title="Ask">↑</button></form><span class="ak-lim" id="akLim"></span></div>
-  </aside>`);
-  const SUG=['What should I do first today?','Which sheds need attention this week?','When do the silos run low?','What\'s still left in shed prep?'];
-  document.querySelectorAll('[data-ak-sugg]').forEach(x=>x.innerHTML=SUG.map(q=>`<button type="button" class="ak-s" data-ak-q="${escapeAttr(q)}">${escapeHtml(q)}</button>`).join(''));
-  const g=document.getElementById('akGreet');
-  g.addEventListener('click',e=>{if(e.target===g||e.target.closest('[data-ak-close]'))askCloseGreet();});
-  document.addEventListener('submit',e=>{const f=e.target.closest&&e.target.closest('[data-ak-form]');if(!f)return;e.preventDefault();const i=f.querySelector('input'),q=i.value.trim();if(!q)return;i.value='';askOpen();askSend(q);});
-  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ak-q]');if(!b)return;askOpen();askSend(b.dataset.akQ);});
-  document.getElementById('akPanelClose').addEventListener('click',askClosePanel);
-  document.getElementById('akPanelScrim').addEventListener('click',askClosePanel);
-  document.getElementById('akMenuBtn').addEventListener('click',()=>{const m=document.getElementById('akMenu');m.hidden=!m.hidden;document.getElementById('akGreetOn').checked=askGreetOn();});
-  document.getElementById('akGreetOn').addEventListener('change',e=>{askSetGreetOn(e.target.checked);showToast(e.target.checked?'Morning greeting on for this device.':'Morning greeting off for this device — ✨ Ask still works.');});
-  document.getElementById('akClear').addEventListener('click',()=>{const st=askLoad();st.msgs=[];askSave(st);document.getElementById('akMenu').hidden=true;askRender();});
-  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('akGreet').classList.contains('open'))askCloseGreet();else if(document.getElementById('akPanel').classList.contains('open'))askClosePanel();});
+function aiLeftText(){return aiLeft!=null?` · ${aiLeft} left today`:'';}
+
+// ---------- Daily report ----------
+function rpKey(){return 'pw-report-'+aiSlug();}
+function rpLoad(){try{const j=JSON.parse(localStorage.getItem(rpKey())||'null');if(j&&j.day===aiDay())return j;}catch(e){}return {day:aiDay(),seen:false,sum:null,err:null};}
+function rpSave(x){try{localStorage.setItem(rpKey(),JSON.stringify(x));}catch(e){}}
+function rpOn(){try{return localStorage.getItem('pw-greet-on')!=='0';}catch(e){return true;}}
+function rpFacts(){
+  if(!farmData||typeof mgrBriefData!=='function')return {G:{today:[],watch:[],feed:[],co:[]},cw:null,lines:[]};
+  const d=mgrBriefData(),lines=[];
+  [['Today',d.G.today],['Watch',d.G.watch],['Feed',d.G.feed],['Changeover & prep',d.G.co]].forEach(([g,a])=>a.forEach(x=>lines.push({grp:g,tone:x.tone,html:x.html,act:x.act,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')})));
+  return {G:d.G,cw:d.cw,lines};
 }
-function askSetDot(){   // amber dot: today's greeting not read yet (from 7:00)
-  const st=askLoad(),on=!!farmData&&new Date().getHours()>=7&&!(st.greet&&st.greet.day===askDayKey()&&st.greet.seen);
-  const d=document.getElementById('askDot');if(d)d.hidden=!on;
-  try{cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwAskDot&&cwFrame.contentWindow.__cwAskDot(on);}catch(e){}
+function rpFactsText(lines){const T={r:'red',a:'amber',b:'blue',g:'green'};return lines.map(l=>`[${T[l.tone]}] ${l.grp}: ${l.text}`).join('\n')||'Nothing special today.';}
+function rpGo(act){
+  const a=String(act||'');
+  if(/data-mgr-loads/.test(a))return 'Feed loads';if(/data-mgr-pickups/.test(a))return 'Pickups';if(/data-mgr-mort/.test(a))return 'Mortality';
+  if(/data-brief-cw="prep"/.test(a))return 'Shed prep';if(/data-brief-cw/.test(a))return 'Tasks';
+  let m=a.match(/data-brief-pair="\d+:(\d+)"/);if(m)return 'Shed '+m[1];
+  m=a.match(/data-tab="g(\d)"/);if(m)return pairLabel(Number(m[1]));return '';
 }
-function askMarkSeen(){const st=askLoad();if(st.greet&&st.greet.day===askDayKey()){st.greet.seen=true;askSave(st);}askSetDot();}
-// The greeting for today: AI words when available, otherwise the plain facts
-async function askMakeGreeting(force){
-  const st=askLoad(),day=askDayKey();
-  if(!force&&st.greet&&st.greet.day===day&&st.greet.text)return st.greet;
-  const f=askFacts();
-  const g={day,facts:f.lines.map(l=>({tone:l.tone,html:l.html,act:l.act,text:l.text})),text:'',ai:false,seen:false,at:Date.now()};
-  try{const j=await askCall({mode:'greet',name:askName(),facts:f.text,today:day});if(j.text){g.text=j.text;g.ai=true;}}catch(e){g.err=askErrText(e);}
-  const s2=askLoad();s2.greet=g;
-  if(g.ai){s2.msgs=s2.msgs.filter(m=>!(m.r==='greet'&&m.day===day));s2.msgs.push({r:'greet',t:g.text,day,at:Date.now()});}
-  askSave(s2);return g;
+function rpKpis(){
+  const out=[],today=mgrToday();
+  try{
+    const sh=mgrPlaced(),placed=sh.reduce((n,s)=>n+(Number(s.initialPopulation)||0),0),live=sh.reduce((n,s)=>n+Math.max(0,liveAtStartOfDay(s,today)),0);
+    const mort=sh.reduce((n,s)=>n+Math.max(0,Number(s.mortality)||0),0);
+    out.push({k:'Birds on hand',v:live.toLocaleString('en-US'),s:`of ${placed.toLocaleString('en-US')}`});
+    out.push({k:'Mortality',v:placed?(mort/placed*100).toFixed(2)+'%':'—',s:`${mort.toLocaleString('en-US')} birds`});
+    const t=computeFarmTotals(),lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
+    if(t&&t.hasData){const d=lk&&Number.isFinite(lk.cfcr)&&lk.cfcr>0?t.cfcr-lk.cfcr:null;
+      out.push({k:'Cfcr2.45 finish',v:Number(t.cfcr).toFixed(3),s:d==null?'projected':`${d<=0?'−':'+'}${Math.abs(d).toFixed(3)} vs ${escapeHtml(String(lr.batch||'last'))}`,tone:d==null?'':d<=0?'ok':'up'});}
+    let sil=[];try{sil=mgrSiloOutlook().filter(x=>!(typeof pairAllClosed==='function'&&pairAllClosed(x.g)));}catch(e){}
+    const lo=sil.filter(x=>x.dep).sort((a,b)=>a.dep-b.dep)[0];
+    out.push(lo?{k:'Feed cover',v:`${lo.days} day${lo.days===1?'':'s'}`,s:`${pairLabel(lo.g)} lowest`,tone:lo.days<=3?'up':''}:{k:'Feed cover',v:'60+ days',s:'every pair',tone:'ok'});
+  }catch(e){}
+  return out;
 }
-function askGreetHead(){
-  const now=new Date(),h=now.getHours(),who=askName(),f=askFacts(),w=f.cw&&f.cw.wx;
-  document.getElementById('akGreetDate').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('akGreetTitle').textContent=`Good ${h<12?'morning':h<18?'afternoon':'evening'}${who?', '+who:''} ${w&&w.icon?w.icon:h<18?'☀️':'🌙'}`;
-  let day='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);day=`Day ${Math.max(0,mgrDays(first,mgrToday()))} of ${predState.batchNumber||farmData.batchNumber||'this batch'}`;}}catch(e){}
-  document.getElementById('akGreetWx').textContent=[w?`${w.maxT} / ${w.minT}${w.label?' · '+w.label.toLowerCase():''}`:'',day].filter(Boolean).join(' · ');
-  return f;
+function rpEnsureDom(){
+  if(document.getElementById('rpModal'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div class="rp-scrim" id="rpModal" aria-hidden="true"><div class="rp" role="dialog" aria-modal="true" aria-labelledby="rpTitle"><div id="rpInner"></div></div></div>`);
+  const m=document.getElementById('rpModal');
+  m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-rp-close]')){rpClose();return;}const go=e.target.closest('[data-rp-go]');if(go)rpClose();});
+  m.addEventListener('change',e=>{if(e.target.matches('[data-rp-on]')){try{localStorage.setItem('pw-greet-on',e.target.checked?'1':'0');}catch(er){}}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open'))rpClose();});
 }
-async function askShowGreeting(){
-  askEnsureDom();
-  const f=askGreetHead(),el=document.getElementById('akGreet'),tx=document.getElementById('akGreetText');
-  document.getElementById('akGreetChips').innerHTML=askChipsHtml(f.lines);
-  const st=askLoad(),cached=st.greet&&st.greet.day===askDayKey()&&st.greet.ai?st.greet:null;
-  tx.innerHTML=cached?escapeHtml(cached.text):'<span class="ak-writing">Writing your morning greeting…</span>';
-  document.getElementById('akGreetFoot').textContent='✨ Written by AI from today\'s numbers — check before acting';
-  el.classList.add('open');el.setAttribute('aria-hidden','false');
-  const g=cached||await askMakeGreeting();
-  if(!el.classList.contains('open'))return;
-  if(g.ai)tx.innerHTML=escapeHtml(g.text);
-  else{tx.innerHTML=`<p class="ak-note">${escapeHtml(g.err||'The AI isn\'t available right now.')} Here are today's facts:</p>${askFactsHtml(f.lines)}`;document.getElementById('akGreetChips').innerHTML='';document.getElementById('akGreetFoot').textContent='Made from today\'s numbers (no AI)';}
-  const s3=askLoad();if(s3.greet){s3.greet.seen=true;askSave(s3);}askSetDot();
+function rpHtml(st){
+  const f=rpFacts(),now=new Date(),wx=f.cw&&f.cw.wx,who=aiName();
+  let bd='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);bd=`Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · day ${Math.max(0,mgrDays(first,mgrToday()))}`;}}catch(e){}
+  const tm=now.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  const meta=[bd,wx?`${escapeHtml(wx.maxT)} / ${escapeHtml(wx.minT)}${wx.label?', '+escapeHtml(wx.label.toLowerCase()):''}`:'',`prepared${who?' for '+escapeHtml(who):''}, ${tm}`].filter(Boolean).join(' · ');
+  const kp=rpKpis().map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('');
+  const sum=st.sum?`<div class="rp-sum"><small>Summary <i>AI · check before acting</i></small><p>${escapeHtml(st.sum)}</p></div>`
+    :st.err?'':`<div class="rp-sum loading"><small>Summary <i>writing…</i></small><div class="sm-load"><i></i><i></i><i></i></div></div>`;
+  const row=(l,mark)=>{const go=rpGo(l.act);return l.act?`<button type="button" class="rp-it" data-rp-go ${l.act}><span class="rp-n ${l.tone}">${mark}</span><span>${l.html}</span><span class="rp-go">${go?escapeHtml(go)+' ›':''}</span></button>`:`<div class="rp-it"><span class="rp-n ${l.tone}">${mark}</span><span>${l.html}</span><span></span></div>`;};
+  const pri=f.lines.filter(l=>l.tone==='r'),wat=f.lines.filter(l=>l.tone==='a'&&l.grp!=='Changeover & prep');
+  const sec=(t,arr,mk)=>arr.length?`<div class="rp-sec"><h3>${t}</h3>${arr.map((l,i)=>row(l,mk(i))).join('')}</div>`:'';
+  let sched='';try{sched=mgrWeekDays().slice(0,2).map((x,i)=>{const bits=[];
+      x.pick.forEach(p=>bits.push(`${p.final?'Final pickup':'Pickup'} Shed ${p.shed}`));
+      if(x.loads.length){const kg=x.loads.reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);bits.push(`Feed ${x.loads.length>1?x.loads.length+' loads':'load'} ${mgrT(kg)}`);}
+      mgrPlaced().forEach(s=>{if(!s.closed&&s.cleanoutDate&&iso(dateOnly(s.cleanoutDate))===iso(x.date))bits.push(`Shed ${s.id} clean-out`);});
+      if(i===0&&f.cw&&f.cw.today)bits.push(`${f.cw.today} task${f.cw.today===1?'':'s'} (${f.cw.done} done)`);
+      return `<div class="rp-day"><b>${i===0?'Today':'Tomorrow'}</b><div>${bits.length?escapeHtml(bits.join(' · ')):'Nothing booked'}</div></div>`;}).join('');}catch(e){}
+  const prep=f.lines.filter(l=>l.grp==='Changeover & prep'&&/prep/i.test(l.text));
+  const quiet=!pri.length&&!wat.length?'<div class="rp-sec"><h3>Priorities today</h3><p class="rp-quiet">Nothing urgent — every shed, silo and task is on track.</p></div>':'';
+  return `<div class="rp-h"><div class="rp-ht"><small>Daily report${typeof farmDisplayName!=='undefined'&&farmDisplayName?' · '+escapeHtml(farmDisplayName):''}</small><h2 id="rpTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rp-m">${meta}</div></div><button type="button" class="rp-x" data-rp-close aria-label="Close" title="Close">✕</button></div>
+    ${kp?`<div class="rp-kpi">${kp}</div>`:''}
+    <div class="rp-b">${sum}${quiet}${sec('Priorities today',pri,i=>i+1)}${sec('Watch',wat,()=>'!')}
+      ${sched?`<div class="rp-sec"><h3>Schedule</h3><div class="rp-sched">${sched}</div></div>`:''}
+      ${sec('Shed prep',prep,()=>'✓')}</div>
+    <div class="rp-f"><span>Numbers from ProdWise${f.cw?' and Tasks':''} at ${tm}${st.err?' · '+escapeHtml(st.err):''}</span><label class="rp-on"><input type="checkbox" data-rp-on ${rpOn()?'checked':''}> Show at 7:00</label><button type="button" class="rp-done" data-rp-close>Done</button></div>`;
 }
-function askCloseGreet(){const el=document.getElementById('akGreet');if(!el)return;el.classList.remove('open');el.setAttribute('aria-hidden','true');askMarkSeen();}
-function askRender(){
-  const box=document.getElementById('akMsgs');if(!box)return;
-  const st=askLoad(),day=askDayKey(),g=st.greet&&st.greet.day===day?st.greet:null;
-  let h='';
-  if(g&&!g.ai)h+=`<div class="ak-m bot greet"><b>This morning</b>${askFactsHtml(g.facts||[])}</div>`;
-  if(!g&&!st.msgs.length)h+=`<div class="ak-empty">Ask anything about the farm — sheds, feed, pickups, tasks, maintenance or shed prep. Answers come from today's numbers.</div>`;
-  let lastDay='';
-  st.msgs.forEach(m=>{const d=m.day||iso(new Date(m.at||Date.now()));
-    if(d!==lastDay){lastDay=d;h+=`<div class="ak-day">${d===day?'Today':escapeHtml(fmtShortNoYear(new Date(d+'T00:00:00')))}</div>`;}
-    if(m.r==='greet')h+=`<div class="ak-m bot greet"><b>${d===day?'This morning':'Morning greeting'}</b><br>${escapeHtml(m.t)}</div>`;
-    else if(m.r==='me')h+=`<div class="ak-m me">${escapeHtml(m.t)}<small>${m.from==='tasks'?'asked in Tasks':''}</small></div>`;
-    else if(m.r==='act')h+=askActHtml(m);
-    else h+=`<div class="ak-m bot${m.err?' err':''}">${m.err?escapeHtml(m.t):askFmt(m.t)}${m.src?`<span class="ak-src">From: ${escapeHtml(m.src)}</span>`:''}</div>`;});
-  if(askBusy)h+='<div class="ak-m bot typing"><i></i><i></i><i></i></div>';
-  box.innerHTML=h;box.scrollTop=box.scrollHeight;
-  const lim=document.getElementById('akLim');if(lim)lim.textContent=`Free AI on your Cloudflare account${askLeft!=null?' · '+askLeft+' question'+(askLeft===1?'':'s')+' left today':''} · chats kept on this device`;
+async function rpOpen(){
+  if(!farmData)return;
+  rpEnsureDom();
+  const m=document.getElementById('rpModal'),inner=document.getElementById('rpInner');
+  const st=rpLoad();st.seen=true;rpSave(st);rpDot();
+  inner.innerHTML=rpHtml(st);m.classList.add('open');m.setAttribute('aria-hidden','false');
+  if(!st.sum&&!st.err){
+    try{const j=await aiCall({mode:'greet',name:aiName(),facts:rpFactsText(rpFacts().lines)});st.sum=String(j.text||'').trim()||null;if(!st.sum)st.err='No summary today';}
+    catch(e){st.err=aiErrText(e);}
+    rpSave(st);
+    if(m.classList.contains('open'))inner.innerHTML=rpHtml(st);
+  }
 }
-async function askSend(q){
-  if(askBusy)return;
-  const st=askLoad(),day=askDayKey();
-  const hist=st.msgs.filter(m=>m.r==='me'||m.r==='ai').slice(-6).map(m=>({role:m.r==='me'?'user':'assistant',content:m.t}));
-  st.msgs.push({r:'me',t:q,day,at:Date.now(),from:typeof pwSection!=='undefined'&&pwSection==='tasks'?'tasks':'production'});askSave(st);
-  askBusy=true;askRender();
-  let msg;
-  try{const f=askFacts();const j=await askCall({mode:'ask',question:q,history:hist,facts:f.text,context:askContext(),calendar:askCalendar(),name:askName(),today:day});
-    msg=Array.isArray(j.actions)&&j.actions.length?{r:'act',id:'act'+Date.now(),say:j.text||'',raw:j.actions,state:'pending',day,at:Date.now()}:{r:'ai',t:j.text||'(no answer)',src:j.src||'',day,at:Date.now()};}
-  catch(e){msg={r:'ai',t:askErrText(e),err:true,day,at:Date.now()};}
-  const s2=askLoad();s2.msgs.push(msg);askSave(s2);askBusy=false;askRender();
-}
-function askOpen(){
-  askEnsureDom();
-  const g=document.getElementById('akGreet');if(g.classList.contains('open'))askCloseGreet();
-  const p=document.getElementById('akPanel');p.classList.add('open');p.setAttribute('aria-hidden','false');document.getElementById('akPanelScrim').classList.add('open');
-  document.getElementById('akMenu').hidden=true;askRender();
-  const st=askLoad();if(!(st.greet&&st.greet.day===askDayKey())&&farmData){askMakeGreeting().then(()=>{askMarkSeen();askRender();});}else askMarkSeen();
-  setTimeout(()=>{const i=p.querySelector('.ak-pf input');if(i&&matchMedia('(hover:hover)').matches)i.focus();},80);
-}
-function askClosePanel(){const p=document.getElementById('akPanel');if(!p)return;p.classList.remove('open');p.setAttribute('aria-hidden','true');document.getElementById('akPanelScrim').classList.remove('open');}
-window.pwOpenAsk=askOpen;   // Tasks' ✨ Ask button
-// Header button
-function askPlaceButton(){
-  if(document.getElementById('askBtn'))return;
+function rpClose(){const m=document.getElementById('rpModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');}
+function rpDot(){const st=rpLoad(),on=!!farmData&&new Date().getHours()>=7&&!st.seen;const d=document.getElementById('reportDot');if(d)d.hidden=!on;}
+function rpPlaceButton(){
+  if(document.getElementById('reportBtn'))return;
   const bell=document.querySelector('#pageHeader .alerts-bell-wrap');if(!bell)return;
-  bell.insertAdjacentHTML('beforebegin','<button type="button" class="ask-btn" id="askBtn" title="Ask about the farm, and this morning\'s greeting">✨ <span>Ask</span><span class="ask-dot" id="askDot" hidden></span></button>');
-  document.getElementById('askBtn').addEventListener('click',askOpen);
+  bell.insertAdjacentHTML('beforebegin',`<button type="button" class="report-btn" id="reportBtn" title="Daily report" aria-label="Daily report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l1 2h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h2z"/><path d="M9 11h6M9 15h4"/></svg><span class="report-dot" id="reportDot" hidden></span></button>`);
+  document.getElementById('reportBtn').addEventListener('click',rpOpen);
 }
-// Once a day from 7:00, the first time the app opens (needs the farm's numbers; waits for Tasks for its part)
-let askGreetTried=false;
-function askMaybeGreet(){
-  if(askGreetTried||!farmData||!askFarm()||!askGreetOn())return;
-  if(new Date().getHours()<7)return;
-  const st=askLoad();if(st.greet&&st.greet.day===askDayKey()&&st.greet.seen)return;
-  askGreetTried=true;
-  const go=()=>{try{askShowGreeting();}catch(e){}};
+let rpTried=false;
+function rpMaybeShow(){
+  if(rpTried||!farmData||!aiFarm()||!rpOn()||new Date().getHours()<7)return;
+  if(rpLoad().seen)return;
+  rpTried=true;
+  const go=()=>{try{rpOpen();}catch(e){}};
   let ready=false;try{ready=!!(cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwBrief);}catch(e){}
   if(ready)go();else if(typeof pwEnsureTasksFrame==='function'){let done=false;const once=()=>{if(!done){done=true;go();}};pwEnsureTasksFrame(once);setTimeout(once,8000);}else go();
 }
-document.addEventListener('DOMContentLoaded',()=>{askPlaceButton();askSetDot();setTimeout(askMaybeGreet,2500);});
-setInterval(()=>{if(document.visibilityState!=='visible')return;askPlaceButton();askSetDot();askMaybeGreet();},30000);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){askGreetTried=false;setTimeout(askMaybeGreet,1500);}});
 
-// ── Changes through ✨ Ask (2026-10-25) ───────────────────────────────────────────────────────────────────
-// The AI only proposes {type,…} actions. Each is checked here against the farm as it is now and shown on a
-// card with before → after; nothing changes until Confirm, and then it goes through the app's own save code.
-function askCalendar(){const out=[],t=mgrToday(),WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];for(let i=-7;i<=21;i++){const d=addDays(t,i);out.push(`${iso(d)} ${WD[d.getDay()]}${i===0?' (today)':i===1?' (tomorrow)':i===-1?' (yesterday)':''}`);}return out.join(', ');}
-function askDate(v){if(v==null||v==='')return null;const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return undefined;const d=new Date(+m[1],+m[2]-1,+m[3]);return d.getMonth()===+m[2]-1?dateOnly(d):undefined;}
-function askN(n){return Number(n).toLocaleString('en-US');}
-function askCheck(a){
-  const today=mgrToday(),bad=msg=>({ok:false,label:msg});
-  const shedOf=v=>(farmData&&farmData.sheds||[]).find(s=>s.id===Number(v));
-  if(a.type==='set_mortality'){
-    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
-    const n=Number(a.total);if(!Number.isFinite(n)||n<0||Math.floor(n)!==n)return bad(`Shed ${s.id}: "${a.total}" isn't a whole number of birds`);
-    const placed=s.placementDate?dateOnly(s.placementDate):null,clean=s.cleanoutDate?dateOnly(s.cleanoutDate):null,pop=Number(s.initialPopulation)||0;
-    if(!placed||placed>today||(clean&&clean<today)||!pop)return bad(`Shed ${s.id} has no birds in it now`);
-    if(n>pop)return bad(`Shed ${s.id}: ${askN(n)} is more than the ${askN(pop)} birds placed`);
-    const cur=Math.max(0,Number(s.mortality)||0);if(n===cur)return bad(`Shed ${s.id} total mortality is already ${askN(n)}`);
-    return {ok:true,label:`Shed ${s.id} total mortality: ${askN(cur)} → <b>${askN(n)}</b>`,note:n<cur?'lower than the total now':`${(n/pop*100).toFixed(2)}% of birds placed`,
-      apply:()=>{s.mortality=n;s.mortalityUpdatedAt=today;pwActivity('ask',`Shed ${s.id} total mortality ${askN(cur)} → ${askN(n)}`);return 'mortality';}};
-  }
-  if(a.type==='move_pickup'){
-    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
-    const to=askDate(a.to),from=askDate(a.from);if(!to)return bad(`Shed ${s.id}: no clear new date for the pickup`);
-    if(from===undefined)return bad(`Shed ${s.id}: no clear date for the pickup to move`);
-    const real=new Set((s.pickups||[]).map(p=>iso(p.date)));
-    const plan=(s.predictedPickups||[]).filter(p=>p.date&&!real.has(iso(p.date))).sort((x,y)=>dateOnly(x.date)-dateOnly(y.date));
-    const pp=from?plan.find(p=>iso(p.date)===iso(from)):plan.find(p=>dateOnly(p.date)>=today);
-    if(!pp)return bad(from?`Shed ${s.id} has no planned pickup on ${fmtShortNoYear(from)}`:`Shed ${s.id} has no planned pickup coming up`);
-    if(pp.isFinal)return askCheck({type:'set_cleanout',shed:s.id,to:a.to});   // the clean-out pickup moves with the clean-out date
-    if(iso(pp.date)===iso(to))return bad(`Shed ${s.id}'s pickup is already on ${fmtShortNoYear(to)}`);
-    if(to<today)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is in the past`);
-    if(s.cleanoutDate&&to>dateOnly(s.cleanoutDate))return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is after its clean-out (${fmtShortNoYear(s.cleanoutDate)})`);
-    if(real.has(iso(to)))return bad(`Shed ${s.id} already has a pickup on ${fmtShortNoYear(to)}`);
-    const was=dateOnly(pp.date);
-    return {ok:true,label:`Shed ${s.id} pickup (${askN(Number(pp.birds)||0)} birds): ${fmtShortNoYear(was)} → <b>${fmtShortNoYear(to)}</b>`,note:'later planned pickups are re-sized, as when you edit one',
-      apply:()=>{const x=(s.predictedPickups||[]).find(p=>p.id===pp.id);if(!x)return null;x.date=to;s.predictedPickups.sort((p,q)=>dateOnly(p.date)-dateOnly(q.date));
-        if(typeof cascadePredictedPickups==='function')cascadePredictedPickups(s,x.id);pwActivity('ask',`Shed ${s.id} pickup moved ${fmtShortNoYear(was)} → ${fmtShortNoYear(to)}`);return 'pickup';}};
-  }
-  if(a.type==='set_cleanout'){
-    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
-    const to=askDate(a.to);if(!to)return bad(`Shed ${s.id}: no clear clean-out date`);
-    if(s.closed)return bad(`Shed ${s.id} is already closed`);
-    if(typeof finalPickupOf==='function'&&finalPickupOf(s))return bad(`Shed ${s.id}'s final pickup is already logged — its clean-out follows that kill sheet`);
-    const placed=s.placementDate?dateOnly(s.placementDate):null;if(!placed)return bad(`Shed ${s.id} has no placement date`);
-    if(to<=placed)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is before its placement`);
-    if(to<today)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is in the past`);
-    const lastReal=(s.pickups||[]).map(p=>dateOnly(p.date)).sort((x,y)=>y-x)[0];
-    if(lastReal&&to<=lastReal)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} isn't after its last pickup (${fmtShortNoYear(lastReal)})`);
-    const was=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(was&&iso(was)===iso(to))return bad(`Shed ${s.id}'s clean-out is already ${fmtShortNoYear(to)}`);
-    const late=(s.predictedPickups||[]).filter(p=>!p.isFinal&&p.date&&dateOnly(p.date)>=to);
-    return {ok:true,label:`Shed ${s.id} clean-out: ${was?fmtShortNoYear(was):'not set'} → <b>${fmtShortNoYear(to)}</b>`,note:late.length?`planned pickup${late.length>1?'s':''} on ${late.map(p=>fmtShortNoYear(p.date)).join(', ')} fall${late.length>1?'':'s'} on or after it — check them after`:'the final pickup moves with it · day '+mgrDays(placed,to),
-      apply:()=>{s.cleanoutDate=to;s.cleanoutAuto=false;if(typeof reconcilePredictedPickups==='function')reconcilePredictedPickups(s);pwActivity('ask',`Shed ${s.id} clean-out ${was?fmtShortNoYear(was):'—'} → ${fmtShortNoYear(to)}`);return 'cleanout';}};
-  }
-  const cw=(()=>{try{return cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwAct?cwFrame.contentWindow:null;}catch(e){return null;}})();
-  if(a.type==='add_task'){
-    const name=String(a.name||'').trim();if(!name)return bad('A task needs a name');
-    const d=askDate(a.date);if(d===undefined)return bad(`"${name}": no clear day`);
-    if(!cw)return bad('Tasks isn\'t loaded yet — open Tasks once, then ask again');
-    const who=(Array.isArray(a.who)?a.who:[]).map(x=>String(x).trim()).filter(Boolean);
-    return {ok:true,label:`Add task <b>${escapeHtml(name)}</b> · ${d?fmtShortNoYear(d):'backlog'}${who.length?' · for '+escapeHtml(who.join(', ')):''}`,
-      apply:()=>{const r=cw.__cwAct({type:'add_task',name,date:d?iso(d):null,who});if(r&&r.ok){pwActivity('ask',`Added task "${name}"`);return 'task';}return null;}};
-  }
-  if(a.type==='tick_task'){
-    const name=String(a.name||'').trim();if(!name)return bad('Which task?');
-    if(!cw)return bad('Tasks isn\'t loaded yet — open Tasks once, then ask again');
-    const d=askDate(a.date);const found=cw.__cwTaskFind(name,d?iso(d):null)||[];
-    if(!found.length)return bad(`No open task called "${name}"${d?' on '+fmtShortNoYear(d):''}`);
-    const t=found[0];
-    return {ok:true,label:`Tick done: <b>${escapeHtml(t.name)}</b> · ${t.date?fmtShortNoYear(new Date(t.date+'T00:00:00')):'backlog'}`,note:found.length>1?`${found.length} open tasks match — this is the nearest one`:'',
-      apply:()=>{const r=cw.__cwAct({type:'tick_task',id:t.id});if(r&&r.ok){pwActivity('ask',`Ticked "${t.name}"`);return 'task';}return null;}};
-  }
-  return bad('That change isn\'t something Ask can do yet');
+// ---------- Summarise ----------
+function smKey(){return 'pw-sum-'+aiSlug();}
+function smLoad(){try{const j=JSON.parse(localStorage.getItem(smKey())||'null');if(j&&j.day===aiDay())return j;}catch(e){}return {day:aiDay(),items:{},hidden:{}};}
+function smSave(x){try{localStorage.setItem(smKey(),JSON.stringify(x));}catch(e){}}
+// Bullets "- [red] text" → [{tone,text}]
+function smParse(text){
+  return String(text||'').split(/\n/).map(l=>l.trim()).filter(l=>/^[-*•]\s+/.test(l)).map(l=>{l=l.replace(/^[-*•]\s+/,'');const m=l.match(/^\[(red|amber|green|blue)\]\s*/i);
+    return {tone:m?{red:'r',amber:'a',green:'g',blue:'b'}[m[1].toLowerCase()]:'g',text:m?l.slice(m[0].length):l};}).filter(x=>x.text).slice(0,5);
 }
-function askActHtml(m){
-  const items=m.state==='pending'?(m.raw||[]).map(askCheck):(m.done||[]);
-  const nOk=items.filter(x=>x.ok).length;
-  const rows=items.map(x=>`<div class="ak-act ${x.ok?'ok':'no'}"><i aria-hidden="true">${m.state==='done'?(x.ok?'✓':'✕'):x.ok?'•':'!'}</i><span>${x.label}${x.note?`<small>${escapeHtml(x.note)}</small>`:''}</span></div>`).join('');
-  const foot=m.state==='pending'?(nOk?`<div class="ak-actb"><button type="button" class="ak-conf" data-ak-confirm="${m.id}">Confirm ${nOk} change${nOk===1?'':'s'}</button><button type="button" class="ak-canc" data-ak-cancel="${m.id}">Cancel</button></div>`:'<div class="ak-actn">Nothing here can be changed.</div>')
-    :m.state==='done'?`<div class="ak-actn done">Done · ${new Date(m.doneAt||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} · in History</div>`:'<div class="ak-actn">Cancelled — nothing changed.</div>';
-  return `<div class="ak-m bot actcard">${m.say?`<div class="ak-say">${escapeHtml(m.say)}</div>`:''}<b class="ak-acth">${m.state==='pending'?'Check before saving':'Changes'}</b>${rows}${foot}</div>`;
+const smInl=x=>escapeHtml(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+// The shared store and AI call — Tasks uses this too (window.pwSum)
+const pwSum={
+  get(key){const s=smLoad();return s.hidden[key]?null:s.items[key]||null;},
+  cached(key){return smLoad().items[key]||null;},
+  show(key){const s=smLoad();delete s.hidden[key];smSave(s);},
+  hide(key){const s=smLoad();s.hidden[key]=true;smSave(s);},
+  async run(key,page,context,sheds){
+    pwSum.show(key);
+    let item;
+    try{const j=await aiCall({mode:'summary',page,context,sheds:sheds||null});
+      if(sheds&&sheds.length){let o=null;const t=String(j.text||''),a=t.indexOf('{'),z=t.lastIndexOf('}');try{o=JSON.parse(t.slice(a,z+1));}catch(e){}
+        item=o&&o.sheds&&typeof o.sheds==='object'?{pair:String(o.pair||''),sheds:o.sheds,at:Date.now()}:{lines:smParse(j.text),at:Date.now()};}
+      else item={lines:smParse(j.text),at:Date.now()};
+      if(!item.sheds&&!(item.lines||[]).length)item={lines:[{tone:'g',text:String(j.text||'').trim().slice(0,400)}],at:Date.now()};
+      const s2=smLoad();s2.items[key]=item;smSave(s2);}
+    catch(e){item={err:aiErrText(e),at:Date.now()};}
+    return item;
+  },
+  card(item,title,key){return smCardHtml(item,title,key);},
+};
+window.pwSum=pwSum;
+function smCardHtml(item,title,key){
+  const t=new Date(item&&item.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  const head=`<div class="sm-h"><b>Summary · ${escapeHtml(title)}</b><small>${item&&item.busy?'writing…':item&&item.err?'':t}</small>${item&&!item.busy?`<button type="button" class="sm-ib" data-sm-again="${escapeAttr(key)}" title="Write it again (uses the free AI allowance)" aria-label="Write again">↻</button>`:''}<button type="button" class="sm-ib" data-sm-hide="${escapeAttr(key)}" title="Hide" aria-label="Hide">✕</button></div>`;
+  let body='';
+  if(!item||item.busy)body='<div class="sm-load"><i></i><i></i><i></i></div>';
+  else if(item.err)body=`<p class="sm-err">${escapeHtml(item.err)}</p>`;
+  else if(item.sheds)body=`<p>${smInl(item.pair||'A note for each shed is in its card below.')}</p>`;
+  else body=`<ul>${(item.lines||[]).map(l=>`<li><span class="sm-d ${l.tone}"></span><span>${smInl(l.text)}</span></li>`).join('')}</ul>`;
+  return `<section class="sm-card" data-sm-card="${escapeAttr(key)}">${head}${body}${item&&!item.busy&&!item.err?`<span class="sm-f">AI summary of this page · check before acting${aiLeftText()}</span>`:''}</section>`;
 }
-function askActDo(id,confirm){
-  const st=askLoad(),m=st.msgs.find(x=>x.id===id);if(!m||m.state!=='pending')return;
-  if(!confirm){m.state='cancelled';askSave(st);askRender();return;}
-  if(m.day!==askDayKey()){showToast('That suggestion is from another day — ask again.',true);return;}
-  const checks=(m.raw||[]).map(askCheck),done=[];let prod=false,n=0;
-  checks.forEach(c=>{if(!c.ok){done.push({ok:false,label:c.label});return;}let r=null;try{r=c.apply();}catch(e){}
-    if(r){n++;if(r!=='task')prod=true;done.push({ok:true,label:c.label});}else done.push({ok:false,label:c.label+' — could not be saved'});});
-  if(prod){saveState();schedulePush();autoPlanCache=new Map();if(typeof farmRangeCache!=='undefined')farmRangeCache=null;scheduleRender(60);}
-  m.state='done';m.done=done;m.doneAt=Date.now();askSave(st);askRender();
-  showToast(n?`${n} change${n===1?'':'s'} saved.`:'Nothing could be saved.',!n);
+// Which page is showing, and what to send for it
+function smPage(){
+  if(!farmData)return null;
+  const tool=typeof toolPageOpen!=='undefined'?toolPageOpen:null;
+  if(tool==='loadsModal')return {key:'loads',title:'Feed loads',anchor:()=>document.getElementById('loadsBody')};
+  if(tool==='pickupsModal')return {key:'pickups-all',title:'Pickups',anchor:()=>document.querySelector('#pickupsModal .compare-modal-body')};
+  if(tool)return null;
+  if(activeTab==='dashboard')return {key:'results',title:'Result detail',anchor:()=>document.getElementById('app')};
+  const m=/^g([1-4])$/.exec(activeTab);if(!m)return null;
+  const g=Number(m[1]),view=shedViewByGroup[g]||'overview';
+  const T={overview:'Overview',planner:'Feed & silo',pickups:'Pickups',growth:'Growth'};if(!T[view])return null;
+  return {key:`g${g}:${view}`,title:`${pairLabel(g)} · ${T[view]}`,g,view,sheds:view==='overview'?shedsForGroup(g).filter(s=>s.placementDate).map(s=>s.id):null,anchor:()=>document.getElementById('app')};
 }
-document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-ak-confirm],[data-ak-cancel]');if(!c)return;askActDo(c.dataset.akConfirm||c.dataset.akCancel,!!c.dataset.akConfirm);});
+function smShedLine(s,today){
+  const age=ageInDays(s,today),live=Math.max(0,liveAtStartOfDay(s,today)),pop=Number(s.initialPopulation)||0,mort=Math.max(0,Number(s.mortality)||0);
+  let g='';try{const f=forecastWeightModeAware(s,today);const dv=f&&f.kg!=null?daysVsTarget(age,f.kg):null;if(dv!=null)g=` · weight ${f.kg.toFixed(2)} kg, ${Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' days ahead':(-dv).toFixed(1)+' days behind'}`;}catch(e){}
+  const nx=mgrComingPickups(s);
+  return `Shed ${s.id}: ${s.closed?'closed':'day '+age} · ${live.toLocaleString('en-US')} birds of ${pop.toLocaleString('en-US')} · mortality ${mort.toLocaleString('en-US')} (${pop?(mort/pop*100).toFixed(2):'0'}%)${s.mortalityUpdatedAt?', updated '+fmtShortNoYear(s.mortalityUpdatedAt):''}${g}${nx.length?' · pickups to come: '+nx.slice(0,4).map(p=>`${fmtShortNoYear(p.date)} ${p.birds.toLocaleString('en-US')}${p.planned?' (planned)':''}`).join(', '):''}${s.cleanoutDate?' · clean-out '+fmtShortNoYear(s.cleanoutDate):''}`;
+}
+function smContext(p){
+  const today=mgrToday(),out=[];
+  try{
+    out.push(`BATCH ${predState.batchNumber||farmData.batchNumber||''} · today ${fmtShortNoYear(today)}`);
+    if(p.key==='results'){
+      const t=computeFarmTotals();if(t&&t.hasData)out.push(`Projected at finish: FCR ${Number(t.fcr).toFixed(3)}, Cfcr2.45 ${Number(t.cfcr).toFixed(3)}`);
+      const lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
+      if(lk)out.push(`Last batch ${lr.batch||''}: ${Object.entries(lk).filter(([k,v])=>typeof v==='number'&&Number.isFinite(v)).slice(0,10).map(([k,v])=>`${k} ${Math.abs(v)<10?v.toFixed(3):Math.round(v)}`).join(', ')}`);
+      out.push('SHEDS:',...mgrPlaced().map(s=>'- '+smShedLine(s,today)));
+      return out.join('\n');
+    }
+    if(p.key==='loads'||p.key==='pickups-all'){
+      out.push('SILOS (run-out with booked loads):');mgrSiloOutlook().forEach(x=>out.push(`- ${pairLabel(x.g)}: ${x.dep?'run low '+fmtShortNoYear(x.dep)+' (in '+x.days+' days)':'covered for 60+ days'}${x.stock!=null?' · '+mgrT(x.stock)+' in silos at last reading':''}${x.readAge!=null?' · read '+x.readAge+' days ago':''}`));
+      const wk=mgrWeek();out.push('LOADS & PICKUPS · next 7 days:',...(wk.length?wk.map(w=>`- ${fmtShortNoYear(w.date)}: ${w.text}`):['- none']));
+      let sum=null;try{sum=farmLoadsSummary();}catch(e){}if(sum&&sum.needsActual)out.push(`${sum.needsActual} delivered load(s) still need docket weights`);
+      if(p.key==='pickups-all')out.push('SHEDS:',...mgrPlaced().map(s=>'- '+smShedLine(s,today)));
+      return out.join('\n');
+    }
+    const sh=shedsForGroup(p.g).filter(s=>s.placementDate);
+    out.push(`${pairLabel(p.g)}:`,...sh.map(s=>'- '+smShedLine(s,today)));
+    const x=mgrSiloOutlook().find(y=>y.g===p.g);if(x)out.push(`Silos: ${x.dep?'run low '+fmtShortNoYear(x.dep)+' (in '+x.days+' days, with booked loads)':'covered for 60+ days'}${x.stock!=null?' · '+mgrT(x.stock)+' in silos at last reading':''}`);
+    if(p.view==='planner'){let perDay=0;sh.forEach(s=>{perDay+=shedFeedOn(s,today)||0;});out.push(`Eating about ${mgrT(perDay)} a day now`);
+      const ls=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[p.g])>0).slice(0,6);out.push('Booked loads for this pair:',...(ls.length?ls.map(l=>`- ${fmtShortNoYear(l.date)} ${mgrT(Number(l.splitKg[p.g]))}${l.feedType?' '+l.feedType:''}`):['- none']));}
+    if(p.view==='growth'){sh.forEach(s=>{try{[7,14,21].forEach(k=>{const d=addDays(today,k),f=forecastWeightModeAware(s,d);if(f&&f.kg!=null)out.push(`Shed ${s.id} forecast ${fmtShortNoYear(d)} (day ${ageInDays(s,d)}): ${f.kg.toFixed(2)} kg`);});}catch(e){}});}
+    if(typeof pairNeeds==='function'){try{const n=pairNeeds(p.g);if(n&&n.length)out.push('Flagged on this page:',...n.map(z=>`- ${String(z.title||'').replace(/<[^>]+>/g,'')}${z.sub?' — '+String(z.sub).replace(/<[^>]+>/g,''):''}`));}catch(e){}}
+  }catch(e){out.push('(some numbers could not be read)');}
+  return out.join('\n');
+}
+// Put the button and any saved summary on the page after each render
+function smApply(){
+  const p=smPage(),hdr=document.querySelector('#pageHeader .page-header-left');
+  let btn=document.getElementById('smBtn');
+  if(!p){if(btn)btn.hidden=true;return;}
+  if(!btn&&hdr){hdr.insertAdjacentHTML('beforeend',`<button type="button" class="sm-btn" id="smBtn" title="Summarise this page with the free AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg><span>Summarise</span></button>`);btn=document.getElementById('smBtn');btn.addEventListener('click',()=>smTap());}
+  if(btn)btn.hidden=false;
+  const it=pwSum.get(p.key);if(it)smShow(p,it);
+}
+function smShow(p,item){
+  const anchor=p.anchor&&p.anchor();if(!anchor)return;
+  const card=anchor.querySelector(':scope > [data-sm-card]');
+  const html=smCardHtml(item,p.title,p.key);
+  if(card)card.outerHTML=html;else anchor.insertAdjacentHTML('afterbegin',html);
+  document.querySelectorAll('.sm-shed').forEach(x=>x.remove());
+  if(item&&item.sheds)Object.entries(item.sheds).forEach(([id,txt])=>{const el=document.querySelector(`#pair-shed-${CSS.escape(String(id))} .pair-shed-head`);if(el&&txt)el.insertAdjacentHTML('afterend',`<div class="sm-shed"><small>Summary</small>${smInl(String(txt))}</div>`);});
+}
+let smBusy=false;
+async function smTap(again){
+  const p=smPage();if(!p||smBusy)return;
+  const cached=pwSum.cached(p.key);
+  if(cached&&!again&&!cached.err){pwSum.show(p.key);smShow(p,cached);return;}
+  smBusy=true;smShow(p,{busy:true});
+  const item=await pwSum.run(p.key,p.title,smContext(p),p.sheds);
+  smBusy=false;const now=smPage();if(now&&now.key===p.key)smShow(p,item);
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest)return;
+  const a=e.target.closest('#app [data-sm-again], .compare-modal [data-sm-again]');if(a){smTap(true);return;}
+  const h=e.target.closest('#app [data-sm-hide], .compare-modal [data-sm-hide]');if(h){pwSum.hide(h.dataset.smHide);const c=h.closest('[data-sm-card]');if(c)c.remove();document.querySelectorAll('.sm-shed').forEach(x=>x.remove());}
+});
 
-// AI answers: bullets ("- ", "* ", "• "), numbered lines ("1. ") and **bold**, everything else as short paragraphs.
-// The text is escaped first, so nothing the AI writes can become HTML.
-function askFmt(t){
-  const inl=x=>escapeHtml(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-  const out=[];let list=null;
-  const close=()=>{if(list){out.push(`<${list.tag} class="ak-list">${list.items.map(i=>`<li>${i}</li>`).join('')}</${list.tag}>`);list=null;}};
-  String(t||'').split(/\n/).forEach(raw=>{const l=raw.trim();
-    if(!l){close();return;}
-    let m=l.match(/^(?:[-*•]|–)\s+(.*)$/);
-    if(m){if(!list||list.tag!=='ul'){close();list={tag:'ul',items:[]};}list.items.push(inl(m[1]));return;}
-    m=l.match(/^\d+[.)]\s+(.*)$/);
-    if(m){if(!list||list.tag!=='ol'){close();list={tag:'ol',items:[]};}list.items.push(inl(m[1]));return;}
-    close();out.push(/:$/.test(l)&&l.length<60?`<p class="ak-lh">${inl(l)}</p>`:`<p>${inl(l)}</p>`);});
-  close();return out.join('');
-}
+document.addEventListener('DOMContentLoaded',()=>{rpPlaceButton();rpDot();setTimeout(rpMaybeShow,2500);});
+setInterval(()=>{if(document.visibilityState!=='visible')return;rpPlaceButton();rpDot();rpMaybeShow();},30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){rpTried=false;setTimeout(rpMaybeShow,1500);}});
