@@ -2475,8 +2475,13 @@
       events = parsed.events || [];
       tasks.forEach(tk=>{ if(!Array.isArray(tk.assignees)) tk.assignees = tk.assignee ? [tk.assignee] : []; });
       // Tasks assigned only to the manager stay in the main app (workers never see them)
-      const mgr = String((parsed.settings && parsed.settings.manager) || '').trim().toLowerCase();
-      if(mgr) tasks = tasks.filter(tk=> !(tk.assignees.length && tk.assignees.every(a=> String(a || '').trim().toLowerCase() === mgr)));
+      // (2026-10-25) the manager's name can change in ProdWise › Account ("Von" → "Von Mangaron"), so a task for
+      // "Von", "Von Mangaron" or "Manager" is the manager's; a task that also has a worker on it still shows.
+      const mgr = String((parsed.settings && parsed.settings.manager) || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const isMgr = a=>{ const n = String(a || '').trim().toLowerCase().replace(/\s+/g, ' '); if(!n) return false;
+        if(n === 'manager' || n === 'farm manager') return true; if(!mgr) return false;
+        return n === mgr || n === mgr.split(' ')[0] || n.split(' ')[0] === mgr; };
+      tasks = tasks.filter(tk=> !(tk.assignees.length && tk.assignees.every(isMgr)));
       applyPendingTicksOverlay();
       if(parsed.settings){
         syncedDisplay = {
