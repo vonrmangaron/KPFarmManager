@@ -435,7 +435,7 @@ let pwFarmKeyInfo=null;
 let pwConnectingFarm=null;
 function installFarmKey(){
   if(!window.FarmKey)return;
-  FarmKey.install({server:SYNC_WORKER_URL,urls:()=>[SYNC_WORKER_URL],farm:()=>pwConnectingFarm||syncFarmName,role:'manager',
+  FarmKey.install({server:SYNC_WORKER_URL,urls:()=>[SYNC_WORKER_URL,typeof AI_WORKER_URL==='string'?AI_WORKER_URL:''],farm:()=>pwConnectingFarm||syncFarmName,role:'manager',
     text:k=>({wrong:'Incorrect password.',left:'{n} attempts remaining.',left1:'1 attempt remaining.',wait:'Too many incorrect attempts. Please try again in {m} minutes.',wait1:'Too many incorrect attempts. Please try again in 1 minute.',noSetup:'Passwords are not enabled for this farm.',offline:'Unable to connect. Check your connection and try again.'})[k],
     onRefused:j=>{if(!pwConnectingFarm)farmKeyPrompt(j);}});
 }

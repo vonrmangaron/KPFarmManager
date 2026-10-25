@@ -198,7 +198,6 @@ function renderHomeView(){
   const offHtml=off.length?`<button type="button" class="mgr-off" data-tab="farmsettings"><span><b>${off.length} farm setting${off.length===1?'':'s'} not at normal</b> and changing these numbers: ${escapeHtml(off.map(o=>o.short).join(', '))}</span><span class="mgr-off-go">Review ›</span></button>`:'';
   return `<div class="mgr-home">
     <div class="mgr-head">${(()=>{const last=cleans.length?cleans[cleans.length-1]:null,tot=last?daysBetween(first,last):0,pct=tot>0&&first<=today?Math.max(0,Math.min(100,daysBetween(first,today)/tot*100)):0;return tot>0?`<span class="mgr-prog" title="${Math.round(pct)}% of the batch, first placement to last clean-out"><i style="width:${pct.toFixed(1)}%"></i><em>${Math.round(pct)}%</em></span>`:'';})()}<button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · ${first>today?'starts '+escapeHtml(fmtShortNoYear(first)):'Day '+day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>
-    ${mgrBriefHtml()}
     ${typeof changeoverHtml==='function'?changeoverHtml():''}
     ${kpis}
     <div class="mk-row">${needsHtml}${mgrWeekHtml()}</div>
@@ -1080,7 +1079,8 @@ function pwActivityList(){try{const v=JSON.parse(localStorage.getItem(pwActivity
 function pwActivity(kind,text){if(!text)return;try{const l=pwActivityList();l.unshift({ts:Date.now(),kind,text});localStorage.setItem(pwActivityKey(),JSON.stringify(l.slice(0,300)));}catch(e){}}
 
 
-// ── Morning briefing (2026-10-25, mockup LMSt4FmdcpzDnTEmqcjB4W): a few lines on Home that put the day together —
+// ── Morning briefing facts (2026-10-25, mockup LMSt4FmdcpzDnTEmqcjB4W). The Home card was removed the same day —
+// the facts now feed the AI morning greeting and ✨ Ask (js/ask.js). Originally: a few lines on Home that put the day together —
 // Today · Watch · Feed · Changeover & prep. Fixed rules on numbers both apps already work out: no AI, no cost,
 // works offline. Tasks, shed prep and weather come from the Tasks app (window.__cwBrief in the Tasks frame).
 // Dots: r act today · a keep an eye on · b just so you know · g fine. Tap a line to open its page.

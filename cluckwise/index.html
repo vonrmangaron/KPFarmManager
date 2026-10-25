@@ -4403,6 +4403,10 @@
   .pl-tab td.pl-c > small{ position:absolute; left:2px; right:2px; bottom:5px; margin:0; overflow:hidden; text-overflow:ellipsis; }
   .pl-cdot{ border:0 !important; border-radius:50% !important; background:transparent !important; width:22px !important; height:22px !important; }
   .pl-cdot:hover, .pl-cdot.pl-menu-on{ background:var(--surface-soft) !important; color:var(--ink); }
+  .cw-ask-btn{ all:unset; cursor:pointer; position:relative; display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 13px; border-radius:11px; font:800 13px Inter,sans-serif; color:#fff; background:linear-gradient(135deg,#7B5BF0,#5A3BD8); box-shadow:0 6px 16px rgba(109,74,224,.32); white-space:nowrap; }
+  .cw-ask-btn:hover{ filter:brightness(1.06); } .cw-ask-btn:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  .cw-ask-btn[hidden]{ display:none; }
+  .cw-ask-dot{ position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%; background:#F0A21A; border:2px solid var(--surface); }
   /* Notes on shed prep jobs (2026-10-25) */
   #detailNotes{ white-space:pre-line; }
   .pl-c{ position:relative; }
@@ -4558,6 +4562,7 @@
 
     <div class="toolbar">
       <button type="button" class="btn-report-top" id="topReportBtn" title="Report a problem on the farm (a photo is optional)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg><span>Report a problem</span></button>
+      <button type="button" class="cw-ask-btn" id="cwAskBtn" hidden title="Ask about the farm, and this morning's greeting (the same chat as in Production)">✨ Ask<span class="cw-ask-dot" id="cwAskDot" hidden></span></button>
       <button class="btn-today" id="todayBtn">Today</button>
       <button class="icon-btn tb-search" id="searchBtn" title="Search ( / or Ctrl+K )" aria-label="Search"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="tb-label">Search</span><kbd class="tb-kbd">/</kbd></button>
       <div class="tb-group" role="group" aria-label="Farm tools">
@@ -14748,6 +14753,10 @@
   $('#moreKanbanBtn').addEventListener('click', ()=>{ closeOverlays(); viewMode='kanban'; syncViewButtons(); renderAll(); });
   // One History (2026-10-19): inside ProdWise, History is Production's page (saved copies + this log on one timeline)
   window.__cwHistory = ()=> history.slice();
+  // ✨ Ask lives in ProdWise; inside it, this button opens the same panel (one chat for both)
+  (function(){ const b = $('#cwAskBtn'); let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenAsk === 'function'; }catch(e){}
+    if(!b || !ok) return; b.hidden = false; b.addEventListener('click', ()=>{ try{ window.parent.pwOpenAsk(); }catch(e){} });
+    window.__cwAskDot = on=>{ const d = $('#cwAskDot'); if(d) d.hidden = !on; }; })();
   // Morning briefing on ProdWise Home (2026-10-25): a small summary of today's tasks, shed prep and weather.
   window.__cwBrief = ()=>{
     const today = dateKey(new Date());
@@ -14760,6 +14769,29 @@
       wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]) }; } }catch(e){}
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx };
+  };
+  // ✨ Ask (2026-10-25): tasks, maintenance and shed prep as short text for the AI to read (ProdWise sends it)
+  window.__cwAskContext = ()=>{
+    const today = dateKey(new Date()), wk = addDaysStr(today, 7), yd = addDaysStr(today, -1), out = [];
+    const tl = t=> `${t.name}${t.date ? ' · ' + t.date : ' · backlog'}${(t.assignees || []).length ? ' · for ' + t.assignees.join(', ') : ''}${t.status === 'done' ? ' · done' + (t.doneBy ? ' by ' + t.doneBy : '') : ''}${t.priority === 'high' && t.status !== 'done' ? ' · HIGH' : ''}${t.prep ? ' · Shed ' + t.prep.shed + ' prep' : ''}`;
+    const over = tasks.filter(t=> t.status !== 'done' && t.date && t.date < today);
+    out.push('TASKS · overdue (' + over.length + '):', ...over.slice(0, 25).map(t=> '- ' + tl(t)));
+    const td = tasks.filter(t=> t.date === today);
+    out.push('TASKS · today (' + td.length + '):', ...td.slice(0, 30).map(t=> '- ' + tl(t)));
+    const yy = tasks.filter(t=> t.date === yd);
+    out.push('TASKS · yesterday (' + yy.length + '):', ...yy.slice(0, 30).map(t=> '- ' + tl(t)));
+    const nx = tasks.filter(t=> t.date && t.date > today && t.date <= wk).sort((a, b)=> a.date < b.date ? -1 : 1);
+    out.push('TASKS · next 7 days (' + nx.length + '):', ...nx.slice(0, 40).map(t=> '- ' + tl(t)));
+    const bl = tasks.filter(t=> !t.date && t.status !== 'done');
+    if(bl.length) out.push('TASKS · backlog (' + bl.length + '):', ...bl.slice(0, 15).map(t=> '- ' + tl(t)));
+    const open = reports.filter(r=> r.status !== 'Resolved');
+    out.push('MAINTENANCE · open problem reports (' + open.length + '):', ...open.slice(0, 25).map(r=> `- ${rpLabel(r)} · ${r.status}${r.urgent ? ' · URGENT' : ''} · reported ${String(r.createdAt || '').slice(0, 10)}${r.createdBy ? ' by ' + r.createdBy : ''}${r.notes ? ' · "' + String(r.notes).slice(0, 120) + '"' : ''}`));
+    const live = prepLiveLists();
+    if(live.length){ out.push('SHED PREP (preparing for the next batch):');
+      live.forEach(c=>{ const p = prepProgress(c), left = prepUnits(c).filter(x=> !x.u.done);
+        out.push(`- Shed ${c.shed}: ${p.done} of ${p.total} jobs done${c.nextPlacement ? ' · chicks ' + c.nextPlacement : ''}${left.length ? ' · left: ' + left.slice(0, 12).map(x=> x.u.t).join(', ') + (left.length > 12 ? ' …' : '') : ''}`);
+        prepUnits(c).forEach(({ u })=>{ const n = prepNoteText(u); if(n) out.push(`  note on "${u.t}": ${n}`); }); }); }
+    return out.join('\n');
   };
   window.__cwOpen = (what)=>{ try{ closeOverlays(); }catch(e){}
     if(what === 'prep') openPrepBoard(null);
