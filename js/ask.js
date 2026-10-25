@@ -154,7 +154,7 @@ function askRender(){
     if(m.r==='greet')h+=`<div class="ak-m bot greet"><b>${d===day?'This morning':'Morning greeting'}</b><br>${escapeHtml(m.t)}</div>`;
     else if(m.r==='me')h+=`<div class="ak-m me">${escapeHtml(m.t)}<small>${m.from==='tasks'?'asked in Tasks':''}</small></div>`;
     else if(m.r==='act')h+=askActHtml(m);
-    else h+=`<div class="ak-m bot${m.err?' err':''}">${escapeHtml(m.t).replace(/\n/g,'<br>')}${m.src?`<span class="ak-src">From: ${escapeHtml(m.src)}</span>`:''}</div>`;});
+    else h+=`<div class="ak-m bot${m.err?' err':''}">${m.err?escapeHtml(m.t):askFmt(m.t)}${m.src?`<span class="ak-src">From: ${escapeHtml(m.src)}</span>`:''}</div>`;});
   if(askBusy)h+='<div class="ak-m bot typing"><i></i><i></i><i></i></div>';
   box.innerHTML=h;box.scrollTop=box.scrollHeight;
   const lim=document.getElementById('akLim');if(lim)lim.textContent=`Free AI on your Cloudflare account${askLeft!=null?' · '+askLeft+' question'+(askLeft===1?'':'s')+' left today':''} · chats kept on this device`;
@@ -295,3 +295,19 @@ function askActDo(id,confirm){
   showToast(n?`${n} change${n===1?'':'s'} saved.`:'Nothing could be saved.',!n);
 }
 document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-ak-confirm],[data-ak-cancel]');if(!c)return;askActDo(c.dataset.akConfirm||c.dataset.akCancel,!!c.dataset.akConfirm);});
+
+// AI answers: bullets ("- ", "* ", "• "), numbered lines ("1. ") and **bold**, everything else as short paragraphs.
+// The text is escaped first, so nothing the AI writes can become HTML.
+function askFmt(t){
+  const inl=x=>escapeHtml(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  const out=[];let list=null;
+  const close=()=>{if(list){out.push(`<${list.tag} class="ak-list">${list.items.map(i=>`<li>${i}</li>`).join('')}</${list.tag}>`);list=null;}};
+  String(t||'').split(/\n/).forEach(raw=>{const l=raw.trim();
+    if(!l){close();return;}
+    let m=l.match(/^(?:[-*•]|–)\s+(.*)$/);
+    if(m){if(!list||list.tag!=='ul'){close();list={tag:'ul',items:[]};}list.items.push(inl(m[1]));return;}
+    m=l.match(/^\d+[.)]\s+(.*)$/);
+    if(m){if(!list||list.tag!=='ol'){close();list={tag:'ol',items:[]};}list.items.push(inl(m[1]));return;}
+    close();out.push(/:$/.test(l)&&l.length<60?`<p class="ak-lh">${inl(l)}</p>`:`<p>${inl(l)}</p>`);});
+  close();return out.join('');
+}

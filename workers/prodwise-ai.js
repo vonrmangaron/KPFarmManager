@@ -77,7 +77,8 @@ Put the most urgent things first (red, then amber), then mention the rest briefl
   const hist = Array.isArray(b.history) ? b.history.slice(-6).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: clip(m.content, 1200) })) : [];
   return [
     { role: 'system', content: `${RULES}
-Answer in 1–5 short sentences, or a short list when listing sheds or tasks. Lead with the answer.
+Lead with the answer in one short sentence. Keep it short.
+FORMAT: whenever you list 3 or more things (tasks, sheds, dates, jobs), put them in a bullet list — one per line, each line starting with "- " — and give each bullet its useful detail (shed, who it's for, day, number), e.g. "- Weigh Sheds 6 and 7 · Miguel". Group bullets under a short line ending in ":" when it helps (e.g. "Morning:" / "Afternoon:" or "Shed 5:" / "Shed 6:"). Use **bold** only for shed numbers or the key number. No headings, no tables.
 On the last line write "From:" and the names of the FARM DATA sections you used, e.g. "From: Silos · Feed loads".
 
 CHANGES: if the manager asks you to change, set, update, move, add or tick something, do NOT answer in sentences.
