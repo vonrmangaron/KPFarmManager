@@ -50,7 +50,12 @@ async function askCall(body){
   let j=null;try{j=await r.json();}catch(e){}
   if(!r.ok){const err=new Error((j&&j.error)||('AI '+r.status));err.limit=!!(j&&j.limit)||r.status===429;err.setup=!!(j&&j.setup);err.status=r.status;throw err;}
   if(j&&j.left!=null)askLeft=j.left;
-  return j||{};
+  j=j||{};
+  // older worker: an object or JSON-in-text answer — pick the proposed changes out of it here
+  if(j.text!=null&&typeof j.text!=='string')j.text=JSON.stringify(j.text);
+  if(!j.actions&&typeof j.text==='string'&&/"actions"\s*:/.test(j.text)){const a=j.text.indexOf('{'),z=j.text.lastIndexOf('}');
+    try{const x=JSON.parse(j.text.slice(a,z+1));if(Array.isArray(x.actions)&&x.actions.length){j.actions=x.actions;j.text=String(x.say||'');}}catch(e){}}
+  return j;
 }
 function askResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
 function askErrText(e){
@@ -225,7 +230,7 @@ function askCheck(a){
     const plan=(s.predictedPickups||[]).filter(p=>p.date&&!real.has(iso(p.date))).sort((x,y)=>dateOnly(x.date)-dateOnly(y.date));
     const pp=from?plan.find(p=>iso(p.date)===iso(from)):plan.find(p=>dateOnly(p.date)>=today);
     if(!pp)return bad(from?`Shed ${s.id} has no planned pickup on ${fmtShortNoYear(from)}`:`Shed ${s.id} has no planned pickup coming up`);
-    if(pp.isFinal)return bad(`Shed ${s.id}: that's the clean-out pickup — change the clean-out date in Set up sheds`);
+    if(pp.isFinal)return askCheck({type:'set_cleanout',shed:s.id,to:a.to});   // the clean-out pickup moves with the clean-out date
     if(iso(pp.date)===iso(to))return bad(`Shed ${s.id}'s pickup is already on ${fmtShortNoYear(to)}`);
     if(to<today)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is in the past`);
     if(s.cleanoutDate&&to>dateOnly(s.cleanoutDate))return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is after its clean-out (${fmtShortNoYear(s.cleanoutDate)})`);
@@ -234,6 +239,21 @@ function askCheck(a){
     return {ok:true,label:`Shed ${s.id} pickup (${askN(Number(pp.birds)||0)} birds): ${fmtShortNoYear(was)} → <b>${fmtShortNoYear(to)}</b>`,note:'later planned pickups are re-sized, as when you edit one',
       apply:()=>{const x=(s.predictedPickups||[]).find(p=>p.id===pp.id);if(!x)return null;x.date=to;s.predictedPickups.sort((p,q)=>dateOnly(p.date)-dateOnly(q.date));
         if(typeof cascadePredictedPickups==='function')cascadePredictedPickups(s,x.id);pwActivity('ask',`Shed ${s.id} pickup moved ${fmtShortNoYear(was)} → ${fmtShortNoYear(to)}`);return 'pickup';}};
+  }
+  if(a.type==='set_cleanout'){
+    const s=shedOf(a.shed);if(!s)return bad(`There's no Shed ${a.shed}`);
+    const to=askDate(a.to);if(!to)return bad(`Shed ${s.id}: no clear clean-out date`);
+    if(s.closed)return bad(`Shed ${s.id} is already closed`);
+    if(typeof finalPickupOf==='function'&&finalPickupOf(s))return bad(`Shed ${s.id}'s final pickup is already logged — its clean-out follows that kill sheet`);
+    const placed=s.placementDate?dateOnly(s.placementDate):null;if(!placed)return bad(`Shed ${s.id} has no placement date`);
+    if(to<=placed)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is before its placement`);
+    if(to<today)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} is in the past`);
+    const lastReal=(s.pickups||[]).map(p=>dateOnly(p.date)).sort((x,y)=>y-x)[0];
+    if(lastReal&&to<=lastReal)return bad(`Shed ${s.id}: ${fmtShortNoYear(to)} isn't after its last pickup (${fmtShortNoYear(lastReal)})`);
+    const was=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(was&&iso(was)===iso(to))return bad(`Shed ${s.id}'s clean-out is already ${fmtShortNoYear(to)}`);
+    const late=(s.predictedPickups||[]).filter(p=>!p.isFinal&&p.date&&dateOnly(p.date)>=to);
+    return {ok:true,label:`Shed ${s.id} clean-out: ${was?fmtShortNoYear(was):'not set'} → <b>${fmtShortNoYear(to)}</b>`,note:late.length?`planned pickup${late.length>1?'s':''} on ${late.map(p=>fmtShortNoYear(p.date)).join(', ')} fall${late.length>1?'':'s'} on or after it — check them after`:'the final pickup moves with it · day '+mgrDays(placed,to),
+      apply:()=>{s.cleanoutDate=to;s.cleanoutAuto=false;if(typeof reconcilePredictedPickups==='function')reconcilePredictedPickups(s);pwActivity('ask',`Shed ${s.id} clean-out ${was?fmtShortNoYear(was):'—'} → ${fmtShortNoYear(to)}`);return 'cleanout';}};
   }
   const cw=(()=>{try{return cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwAct?cwFrame.contentWindow:null;}catch(e){return null;}})();
   if(a.type==='add_task'){

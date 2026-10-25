@@ -86,6 +86,7 @@ Reply with ONLY one JSON object, nothing before or after it:
 Allowed actions (use as many as the manager asked for, one per shed or task):
 {"type":"set_mortality","shed":1,"total":2156}   total dead birds so far in that shed (a whole number)
 {"type":"move_pickup","shed":5,"from":null,"to":"2026-10-26"}   a planned pickup; "from" = its current date if the manager names it, otherwise null for the next one
+{"type":"set_cleanout","shed":5,"to":"2026-10-29"}   the shed's clean-out date (its last pickup)
 {"type":"add_task","name":"Check drinkers","date":"2026-10-26","who":["Miguel"]}   date null = backlog, who [] = anyone
 {"type":"tick_task","name":"Order shavings","date":null}   mark a task done; date only if the manager gives one
 Dates are YYYY-MM-DD — use the CALENDAR to turn "Monday", "tomorrow" or "Oct 26" into a date. Shed numbers are whole numbers.
@@ -133,7 +134,9 @@ export default {
     for (const model of MODELS) {
       try {
         const out = await env.AI.run(model, { messages, max_tokens: b.mode === 'greet' ? 260 : 420, temperature: 0.4 });
-        text = String((out && (out.response || out.result && out.result.response)) || '').trim();
+        // Workers AI hands back JSON answers as an object, not text (2026-10-25: showed as "[object Object]")
+        const r = out && (out.response != null ? out.response : out.result && out.result.response);
+        text = (r && typeof r === 'object' ? JSON.stringify(r) : String(r || '')).trim();
         if (text) break;
       } catch (e) { lastErr = e; if (/neuron|quota|limit|4006|capacity/i.test(String(e && e.message))) break; }
     }
@@ -150,7 +153,7 @@ export default {
       if (a >= 0 && z > a) {
         try {
           const j = JSON.parse(text.slice(a, z + 1));
-          const OK = ['set_mortality', 'move_pickup', 'add_task', 'tick_task'];
+          const OK = ['set_mortality', 'move_pickup', 'set_cleanout', 'add_task', 'tick_task'];
           const actions = (Array.isArray(j.actions) ? j.actions : []).filter(x => x && OK.includes(x.type)).slice(0, 12);
           if (actions.length) return reply(200, { actions, text: String(j.say || '').slice(0, 300), left: env.USAGE ? Math.max(0, DAILY_LIMIT - used) : null }, cors);
         } catch (e) { /* not JSON — treat as a normal answer */ }
