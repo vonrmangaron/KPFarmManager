@@ -6276,7 +6276,7 @@ button.bf-ln{cursor:pointer}button.bf-ln:hover{background:var(--surface-soft)}bu
 /* Ross — the farm's AI and its morning report (v256) */
 .ross-btn{position:relative;display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px 0 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font:700 13px Inter,sans-serif;color:var(--ink);cursor:pointer;white-space:nowrap}
 .ross-btn:hover{border-color:var(--primary)}.ross-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-.ross-mk{width:28px;height:28px;border-radius:8px;background:#fff;display:grid;place-items:center;border:1px solid var(--line)}.ross-mk svg{width:22px;height:22px}
+.ross-mk{width:30px;height:30px;border-radius:9px;background:linear-gradient(160deg,#16233A,#22365A);display:grid;place-items:center;overflow:hidden}.ross-mk .rossR{display:block;width:30px;height:33px;margin-top:3px}.ross-mk svg{width:100%;height:100%;overflow:visible}
 .ross-dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#E2A13A;border:2px solid var(--surface)}.ross-dot[hidden]{display:none}
 @media (max-width:760px){.ross-btn{padding:0 6px}.ross-l{display:none}}
 .rs-scrim{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:16px;background:rgba(14,18,24,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility 0s .22s}
@@ -6319,7 +6319,8 @@ body.theme-dark .rs-bx small{color:#B9C3FF}
 .rs-sec h3::after{content:"";flex:1;height:1px;background:var(--line)}
 .rs-tag{font:700 9.5px Inter,sans-serif;letter-spacing:.06em;color:#3343A8;background:#EEF0FD;border-radius:99px;padding:2px 7px}
 body.theme-dark .rs-tag{color:#B9C3FF;background:rgba(75,95,214,.2)}
-.rs-act{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start;color:var(--ink)}
+.rs-act{box-sizing:border-box;width:100%;display:grid;grid-template-columns:26px 24px minmax(0,1fr) auto;gap:10px;padding:9px 6px;border-bottom:1px solid var(--line);border-radius:10px;align-items:start;color:var(--ink);transition:background .2s}
+.rs-act:hover{background:var(--surface-soft)}
 .rs-act:last-child{border-bottom:0}
 button.rs-act{cursor:pointer}button.rs-act:hover .rs-go{text-decoration:underline}button.rs-act:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px;border-radius:6px}
 .rs-n{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font:800 11.5px Inter,sans-serif;color:#fff;background:#C8443A}
@@ -6372,3 +6373,92 @@ body.theme-dark .rs-sh.r .rs-no{background:rgba(200,68,58,.22)}body.theme-dark .
 body.theme-dark .rs-done{background:#EEF1F6;color:#16233A}
 @media (max-width:640px){.rs-scrim{padding:0}.rs{height:100%;border-radius:0}.rs-h{padding:14px 16px 0;padding-top:max(14px,env(safe-area-inset-top))}.rs-b,.rs-f{padding-left:16px;padding-right:16px}.rs-sheds,.rs-two{grid-template-columns:1fr}.rs-week{grid-template-columns:repeat(4,minmax(0,1fr))}.rs-wxrow{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){.rs,.rs-scrim{transition:none}.rs-load i{animation:none}}
+
+/* Ross robot face + interactive report (v257) */
+/* Ross robot face (moods: calm, thinking, happy, alert, rest; tap: crow) */
+.rossR .rz-float{transform-box:fill-box;transform-origin:50% 50%;animation:rossfHover 3.6s ease-in-out infinite}
+@keyframes rossfHover{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.rossR .rz-shadow{transform-box:fill-box;transform-origin:50% 50%;animation:rossfShadow 3.6s ease-in-out infinite}
+@keyframes rossfShadow{0%,100%{transform:scaleX(1);opacity:.35}50%{transform:scaleX(.82);opacity:.22}}
+.rossR .rz-comb{transform-box:fill-box;transform-origin:30% 100%;transition:transform .3s}
+.rossR .rz-bLow{transform-box:fill-box;transform-origin:30% 0%;transition:transform .2s}
+.rossR .rz-visor{transition:fill .35s}
+.rossR .rz-vglow{transition:fill .35s,opacity .35s}
+.rossR .rz-e{transition:opacity .25s}
+.rossR .rz-eCalm{opacity:1}.rossR .rz-eHappy,.rossR .rz-eWorry,.rossR .rz-eSleep,.rossR .rz-load,.rossR .rz-zz{opacity:0}
+.rossR .rz-eCalm .rz-eye{transform-box:fill-box;transform-origin:50% 50%;animation:rossrBlink2 4.8s infinite}
+@keyframes rossrBlink2{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+.rossR .rz-look{transition:transform .35s ease}
+/* thinking */
+.rossR.thinking .rz-look{transform:translate(4px,-3px)}
+.rossR.thinking .rz-load{opacity:1}
+.rossR.thinking .rz-bar{animation:rossrLoad 1.3s ease-in-out infinite}
+@keyframes rossrLoad{0%{transform:translateX(-30px)}100%{transform:translateX(30px)}}
+/* happy */
+.rossR.happy .rz-eCalm{opacity:0}.rossR.happy .rz-eHappy{opacity:1}
+.rossR.happy .rz-bLow{transform:rotate(14deg)}
+.rossR.happy .rz-float{animation:rossfBounce .8s ease-in-out 2}
+@keyframes rossfBounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}}
+.rossR.happy .rz-vglow{fill:#2BD39A;opacity:.35}
+/* worried */
+.rossR.alert .rz-eCalm{opacity:0}.rossR.alert .rz-eWorry{opacity:1}
+.rossR.alert .rz-visor{fill:#3A1520}.rossR.alert .rz-vglow{fill:#FF4D5E;opacity:.5;animation:rossrRed 1.4s ease-in-out infinite}
+@keyframes rossrRed{0%,100%{opacity:.3}50%{opacity:.65}}
+.rossR.alert .rz-comb{transform:rotate(-6deg) scaleY(1.08)}
+/* sleepy */
+.rossR.rest .rz-eCalm{opacity:0}.rossR.rest .rz-eSleep{opacity:1}.rossR.rest .rz-zz{opacity:1}
+.rossR.rest .rz-visor{fill:#121A2B}.rossR.rest .rz-vglow{opacity:.05}
+.rossR.rest .rz-float{animation:rossfHover 7s ease-in-out infinite}
+.rossR.rest .rz-zz text{animation:rossrZ 2.4s ease-in-out infinite}.rossR.rest .rz-zz text:nth-child(2){animation-delay:1s}
+@keyframes rossrZ{0%{opacity:0;transform:translateY(6px)}40%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+/* tap */
+.rossR.crow .rz-bLow{transform:rotate(20deg)}.rossR.crow .rz-float{animation:rossfCrow .9s ease-in-out}
+@keyframes rossfCrow{0%,100%{transform:rotate(0)}30%,70%{transform:rotate(-7deg) translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.rossR *{animation:none!important;transition:none!important}}
+
+.rs-face{flex:none;width:82px;height:90px;cursor:pointer}.rs-face .rossR{display:block;width:100%;height:100%}.rs-face svg{width:100%;height:100%;overflow:visible}
+.rs-face:focus-visible{outline:2px solid #E2A13A;outline-offset:2px;border-radius:12px}
+.rs-ht{align-items:center!important}
+.rs-say{position:relative;display:inline-block;max-width:100%;margin-top:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 11px;font:500 13.5px/1.45 Inter,sans-serif;color:#EEF2FA;min-height:32px}
+.rs-say::before{content:"";position:absolute;left:-7px;top:11px;border:7px solid transparent;border-right-color:rgba(255,255,255,.14);border-left:0}
+.rs-muted2{color:#AEB9CF}
+.rs-cur{display:inline-block;width:7px;height:14px;background:#7FE3FF;vertical-align:-2px;margin-left:2px;animation:rsCur 1s steps(1) infinite}
+@keyframes rsCur{50%{opacity:0}}
+.rs-nav button{display:inline-flex;align-items:center;gap:6px}
+.rs-nav button i{width:7px;height:7px;border-radius:50%}.rs-nav button i.r{background:#FF7A6E}.rs-nav button i.a{background:#E2A13A}
+.rs-ovp{margin:0;font:500 14px/1.6 Inter,sans-serif;color:var(--ink)}
+.rs-sec{border-radius:14px;padding:4px 6px;margin:-4px -6px;transition:box-shadow .3s,background .3s}
+.rs-sec.focus{box-shadow:0 0 0 2px #4B5FD6;background:#EEF0FD}
+body.theme-dark .rs-sec.focus{background:rgba(75,95,214,.14)}
+.rs-prog{font:700 11px Inter,sans-serif;color:#13806D;letter-spacing:0;text-transform:none}
+.rs-tick{all:unset;cursor:pointer;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font:900 12px Inter,sans-serif;color:transparent;transition:.2s}
+.rs-tick:hover{border-color:#13806D}.rs-tick:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px}
+.rs-act.done .rs-tick{background:#13806D;border-color:#13806D;color:#fff}
+.rs-act.done b{color:var(--muted);text-decoration:line-through}
+.rs-at{min-width:0}
+.rs-whyb{all:unset;cursor:pointer;display:inline-block;margin-top:3px;font:700 11.5px Inter,sans-serif;color:#3343A8}body.theme-dark .rs-whyb{color:#B9C3FF}
+.rs-whyb:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px}
+button.rs-go{all:unset;cursor:pointer;font:700 12px Inter,sans-serif;color:#3343A8;white-space:nowrap}body.theme-dark button.rs-go{color:#B9C3FF}
+button.rs-go:hover{text-decoration:underline}button.rs-go:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px}
+.rs-sheds{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.rs-sh{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:9px 10px;display:flex!important;flex-direction:column;gap:6px;transition:.2s}
+.rs-sh:hover,.rs-sh.sel{border-color:#4B5FD6;box-shadow:0 4px 14px rgba(75,95,214,.15)}.rs-sh:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px}
+.rs-sht{display:flex;align-items:center;gap:8px;min-width:0}.rs-sht b{font:700 12px Inter,sans-serif;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs-sh .rs-no{width:28px;height:28px;font-size:13px;flex:none}
+.rs-bar{height:5px;border-radius:5px;background:var(--surface-soft);overflow:hidden}.rs-bar i{display:block;height:100%;border-radius:5px}
+.rs-sh small{font:600 11px Inter,sans-serif;color:var(--muted)}
+.rs-blocks{display:flex;gap:3px}.rs-blocks span{width:8px;height:14px;border-radius:2px;background:var(--line)}.rs-blocks span.f{background:#13806D}.rs-blocks span.o{background:#E2A13A}.rs-blocks span.h{background:#C8443A}
+.rs-note{display:flex;gap:10px;align-items:center;margin:8px 0 0;font:500 13px/1.45 Inter,sans-serif;color:var(--ink);background:#EEF0FD;border-left:3px solid #4B5FD6;border-radius:0 10px 10px 0;padding:6px 10px}
+body.theme-dark .rs-note{background:rgba(75,95,214,.2)}
+.rs-nf{flex:none;width:30px;height:33px;border-radius:8px;background:linear-gradient(160deg,#16233A,#22365A);display:block;overflow:hidden}.rs-nf svg{width:30px;height:33px;margin-top:2px;overflow:visible}
+.rs-endnote{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--line);font:600 11.5px Inter,sans-serif;color:var(--muted)}
+.rs-endnote>span{flex:1;min-width:200px}
+.rs-dock{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.rs-dface{flex:none;width:42px;height:46px;border-radius:12px;background:linear-gradient(160deg,#16233A,#22365A);overflow:hidden}.rs-dface .rossR{display:block;width:42px;height:46px;margin-top:4px}.rs-dface svg{width:100%;height:100%;overflow:visible}
+.rs-msg{flex:1;min-width:0;font:500 13px/1.4 Inter,sans-serif;color:var(--ink)}.rs-msg b{font-weight:700}
+.rs-dots{display:flex;gap:4px}.rs-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.rs-dots i.on{background:#4B5FD6}
+.rs-db{all:unset;cursor:pointer;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);font:700 12.5px Inter,sans-serif;color:var(--ink);display:grid;place-items:center;white-space:nowrap}
+.rs-db.p{background:#16233A;color:#fff;border-color:#16233A}body.theme-dark .rs-db.p{background:#EEF1F6;color:#16233A;border-color:#EEF1F6}
+.rs-db:focus-visible{outline:2px solid #4B5FD6;outline-offset:2px}
+@media (max-width:700px){.rs-sheds{grid-template-columns:repeat(2,minmax(0,1fr))!important}.rs-dots{display:none}.rs-face{width:62px;height:68px}.rs-msg{font-size:12.5px}}
+@media (prefers-reduced-motion:reduce){.rs-cur{animation:none}}
