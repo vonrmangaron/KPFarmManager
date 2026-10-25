@@ -4368,16 +4368,34 @@
   .tsubs-bar:hover .tsubs-car{ border-color:var(--primary); }
 
   /* ── 2026-10-25 round ── */
-  /* hold 1 s to drag: the item lifts with an amber glow */
-  .drag-ready{ animation:dragReady .45s cubic-bezier(.2,1.4,.4,1) both; box-shadow:0 0 0 2px #F0A21A, 0 14px 30px rgba(22,25,27,.22) !important; position:relative; z-index:5; cursor:grabbing !important; }
-  @keyframes dragReady{ 0%{ transform:scale(1); } 45%{ transform:scale(1.045) rotate(-.6deg); } 100%{ transform:scale(1.02); } }
-  tr.drag-ready, tbody.drag-ready{ animation:none; transform:none; }
-  tr.drag-ready > td, tbody.drag-ready > tr > td{ background:#FFF2D6 !important; animation:dragReadyRow .45s ease both; }
-  body.theme-dark tr.drag-ready > td, body.theme-dark tbody.drag-ready > tr > td{ background:rgba(240,162,26,.18) !important; }
-  tr.drag-ready > td, tbody.drag-ready > tr > td{ box-shadow:inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; border-right-color:transparent !important; }
-  tr.drag-ready > td:first-child, tbody.drag-ready > tr > td:first-child{ box-shadow:inset 2px 0 0 #F0A21A, inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; }
-  tr.drag-ready > td:last-child, tbody.drag-ready > tr > td:last-child{ box-shadow:inset -2px 0 0 #F0A21A, inset 0 2px 0 #F0A21A, inset 0 -2px 0 #F0A21A !important; }
-  @keyframes dragReadyRow{ 0%{ opacity:.6; } 100%{ opacity:1; } }
+  /* Drag like Trello (2026-10-25): the card tilts and floats under the pointer, a soft grey slot shows where it
+     will land, the cards around it slide out of the way, and on drop it settles in with a small bounce */
+  .sortable-fallback{ opacity:1 !important; rotate:3deg; scale:1.04; cursor:grabbing !important; z-index:100000 !important;
+    box-shadow:0 22px 44px rgba(20,25,30,.28), 0 6px 14px rgba(20,25,30,.14) !important; animation:cwLift .18s cubic-bezier(.2,.8,.2,1); }
+  @keyframes cwLift{ from{ rotate:0deg; scale:1; box-shadow:0 1px 2px rgba(20,25,30,.1); } }
+  .task-card.sortable-fallback{ rotate:1.2deg; scale:1.02; }   /* wide list rows tilt less than Board cards */
+  tr.sortable-fallback, tbody.sortable-fallback{ rotate:1deg; scale:1.01; background:var(--surface); }
+  tr.sortable-fallback > td, tbody.sortable-fallback td{ background:var(--surface) !important; }
+  .task-card.sortable-ghost, .kcard.sortable-ghost, .mtb-card.sortable-ghost, .frequent-chip.sortable-ghost{ opacity:1 !important; background:rgba(22,25,27,.07) !important; border-color:transparent !important; box-shadow:inset 0 0 0 1.5px rgba(22,25,27,.06) !important; }
+  .task-card.sortable-ghost > *, .kcard.sortable-ghost > *, .mtb-card.sortable-ghost > *, .frequent-chip.sortable-ghost > *{ visibility:hidden; }
+  body.theme-dark .task-card.sortable-ghost, body.theme-dark .kcard.sortable-ghost, body.theme-dark .mtb-card.sortable-ghost, body.theme-dark .frequent-chip.sortable-ghost{ background:rgba(255,255,255,.07) !important; box-shadow:none !important; }
+  tr.sortable-ghost > td, tbody.sortable-ghost > tr > td{ background:rgba(240,162,26,.10) !important; }
+  tr.sortable-ghost > td > *, tbody.sortable-ghost > tr > td > *{ visibility:hidden; }
+  .drop-settle{ animation:cwSettle .42s cubic-bezier(.2,1.3,.4,1); }
+  @keyframes cwSettle{ 0%{ transform:scale(1.04) rotate(1.5deg); box-shadow:0 16px 30px rgba(20,25,30,.22); } 100%{ transform:none; } }
+  .kb-edgehint{ position:absolute; top:0; bottom:0; width:64px; z-index:7; pointer-events:none; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .18s ease; }
+  .kb-edgehint.l{ left:0; background:linear-gradient(90deg, rgba(240,162,26,.30), transparent); border-radius:14px 0 0 14px; }
+  .kb-edgehint.r{ right:0; background:linear-gradient(270deg, rgba(240,162,26,.30), transparent); border-radius:0 14px 14px 0; }
+  .kb-edgehint span{ font:800 11.5px Inter,sans-serif; color:#241A08; background:#F0A21A; border-radius:99px; padding:6px 10px; white-space:nowrap; writing-mode:vertical-rl; box-shadow:0 6px 16px rgba(240,162,26,.4); }
+  .kb-edgehint.l span{ transform:rotate(180deg); }
+  .kanban-canvas.kb-edge-l .kb-edgehint.l, .kanban-canvas.kb-edge-r .kb-edgehint.r{ opacity:1; }
+  .kanban-canvas.kb-edge-l .kb-edgehint.l span, .kanban-canvas.kb-edge-r .kb-edgehint.r span{ animation:kbEdgePulse .65s ease-in-out; }
+  @keyframes kbEdgePulse{ 0%{ scale:.9; } 60%{ scale:1.06; } 100%{ scale:1; } }
+  .kb-flip-next .kanban-column{ animation:kbFlipNext .38s cubic-bezier(.2,.8,.2,1) both; }
+  .kb-flip-prev .kanban-column{ animation:kbFlipPrev .38s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes kbFlipNext{ from{ opacity:.25; transform:translateX(60px); } }
+  @keyframes kbFlipPrev{ from{ opacity:.25; transform:translateX(-60px); } }
+  @media (prefers-reduced-motion:reduce){ .sortable-fallback{ rotate:none; animation:none; } .drop-settle, .kb-flip-next .kanban-column, .kb-flip-prev .kanban-column{ animation:none; } }
   .pl-tab td.pl-job, .task-card, .kcard, .mtb-card{ -webkit-user-select:none; user-select:none; }
   .pl-tab td.pl-job input, .pl-tab td.pl-job .pl-addin, .pl-tab td.pl-job .pl-renin{ -webkit-user-select:text; user-select:text; }
   /* ＋ Add a job / ＋ Add a section: compact pills, not full width */
@@ -6592,9 +6610,8 @@
   }
   // ── Subtasks (2026-10-24): task.subs = [{id, t, done, doneBy, doneAt}] ──
   // Ticking the last step ticks the task; unticking a step re-opens it.
-  // Drag (2026-10-25): press and hold an empty part of a task or job for 1 second — it lifts (drag-ready) and
-  // can then be moved. No drag icons. A quick tap still does what it always did.
-  const HOLD_DRAG = { delay:1000, delayOnTouchOnly:false, touchStartThreshold:8, chosenClass:'drag-ready', fallbackTolerance:3 };
+  // Like Trello (2026-10-25): a mouse picks a card up as soon as it moves a few pixels; on a touch screen a short hold first.
+  const HOLD_DRAG = { delay:180, delayOnTouchOnly:true, touchStartThreshold:5, chosenClass:'drag-chosen', fallbackTolerance:4, easing:'cubic-bezier(.2,.8,.2,1)' };
   let editingSubs = [];
   const subsOpen = new Set();   // cards whose steps are showing
   function subProgress(t){ const a = Array.isArray(t && t.subs) ? t.subs : []; return { done: a.filter(x=> x.done).length, total: a.length }; }
@@ -10093,8 +10110,8 @@
   // Keep the Board where you were across redraws (duplicate, copy, tick…):
   // the day shown on phones, the sideways scroll on desktop, and each day's list scroll.
   let kanbanViewKey = null, kanbanDeskScroll = null; const kanbanColScroll = {};
-  function renderKanban(){
-    const wrap = $('#calendarWrap');
+  function renderKanban(into){
+    const wrap = into || $('#calendarWrap');
     wrap.innerHTML = '';
     const board = document.createElement('div');
     board.className = 'kanban-board';
@@ -10189,13 +10206,10 @@
     const canvas = document.createElement('div');
     canvas.className = 'kanban-canvas';
     canvas.appendChild(board);
-    // While dragging: drop on an edge to move the task to the same weekday a week earlier / later
-    [['-7','◀','Previous\nweek','left'],['7','▶','Next\nweek','right']].forEach(([shift, arrow, label, side])=>{
-      const z = document.createElement('div');
-      z.className = 'day-tasks week-jump week-jump-' + side;
-      z.dataset.shift = shift;
-      z.dataset.label = arrow + '\n' + label;   // drawn by CSS so the zone stays an empty drop list
-      canvas.appendChild(z);
+    // While dragging: hold a card at the left / right edge and the board turns to the week before / after (kbFlipWeek)
+    [['l', 'Previous week'], ['r', 'Next week']].forEach(([side, label])=>{
+      const h = document.createElement('div'); h.className = 'kb-edgehint ' + side; h.setAttribute('aria-hidden', 'true');
+      h.innerHTML = `<span>${side === 'l' ? '‹ ' : ''}${label}${side === 'r' ? ' ›' : ''}</span>`; canvas.appendChild(h);
     });
     // Phones: a day strip to jump between days; swiping past Sunday/Monday changes the week
     let strip = null;
@@ -10435,6 +10449,66 @@
     document.body.classList.remove('is-dragging');
     try{ const sel = window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
   }
+  function taskListSortOpts(list, isSelectModeList){
+    return {
+          group: { name: 'tasks', pull: true, put: true },
+          animation:200, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
+          filter:'.day-count, .empty-note, .col-empty, .day-more, .task-menu-btn, .task-complete-btn, .bulk-select-cb',
+          preventOnFilter:false,
+          delay:HOLD_DRAG.delay, chosenClass:HOLD_DRAG.chosenClass, delayOnTouchOnly:true, touchStartThreshold:HOLD_DRAG.touchStartThreshold, fallbackTolerance:HOLD_DRAG.fallbackTolerance, easing:HOLD_DRAG.easing,
+          forceFallback: true,
+          fallbackOnBody: true,
+          onChoose: beginDragNoSelect,
+          onUnchoose: endDragNoSelect,
+          // Picking up a task while the Batches & audits panel is open flips it to Tasks, so the backlog is there to drop on
+          onStart: ()=>{ if(typeof window.__cwTasksPanelForDrag === 'function') window.__cwTasksPanelForDrag(); },
+          disabled: isSelectModeList,
+          onUpdate:(evt)=>{
+            const id = evt.item && evt.item.dataset ? evt.item.dataset.id : null;
+            // the week flipped under the card: same list, new day
+            const tk = id ? tasks.find(x=> x.id === id) : null, toD = evt.to.dataset.date;
+            if(tk && toD && toD !== 'backlog' && evt.to.classList.contains('day-tasks') && tk.date !== toD){ moveTask(id, toD, { deferRender: true, dropEvt: evt }); persist(); requestAnimationFrame(renderAll); return; }
+            if(id) placeTaskAtDrop(id, evt);
+            persist();
+            requestAnimationFrame(renderAll);
+          },
+          onAdd:(evt)=>{
+            suppressNextClick = true;
+            setTimeout(()=>{ suppressNextClick = false; }, 80);
+            const item = evt.item;
+            let toDate = evt.to.dataset.date;
+            const shift = Number(evt.to.dataset.shift || 0);
+            if(shift){
+              // Week-jump zone: same weekday one week earlier/later, and the board follows the task there
+              const t = tasks.find(x=> x.id === item.dataset.id);
+              const fromKey = (t && t.date) || dateKey(getMonday(currentDate));
+              toDate = addDaysStr(fromKey, shift);
+              currentDate = toDateObj(toDate);
+              if(item.dataset.template !== 'true' && t){ item.remove(); moveTask(t.id, toDate, { deferRender: true }); return; }
+            }
+            if(item.dataset.template==='true'){
+              instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true, dropEvt: evt });
+            } else {
+              const id = item.dataset.id;
+              if(id) moveTask(id, toDate, { deferRender: true, dropEvt: evt });
+            }
+          },
+          onDragEnter:(evt)=>{
+            if(evt.to && (evt.to.classList.contains('day-tasks') || evt.to.classList.contains('backlog-list'))) evt.to.classList.add('drop-target');
+          },
+          onDragLeave:(evt)=>{
+            if(evt.to) evt.to.classList.remove('drop-target');
+          },
+          onEnd:(evt)=>{
+            endDragNoSelect();
+            cwDropFx(evt && evt.item);
+            kbEdgeStop();
+            if(kbFlipped){ kbFlipped = false; requestAnimationFrame(renderAll); }
+            document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
+            if(typeof window.__cwTasksPanelAfterDrag === 'function') window.__cwTasksPanelAfterDrag();
+          }
+        };
+  }
   function initSortables(){
     if(typeof Sortable === 'undefined'){
       console.warn('SortableJS did not load — drag-and-drop is unavailable, but the rest of the app continues normally.');
@@ -10449,7 +10523,7 @@
         ghostClass:'sortable-ghost', dragClass:'sortable-drag',
         filter:'.empty-note, .task-menu-btn, .freq-edit-row',
         preventOnFilter:false,
-        delay:HOLD_DRAG.delay, chosenClass:'drag-ready', delayOnTouchOnly:false, touchStartThreshold:8, fallbackTolerance:3,
+        delay:HOLD_DRAG.delay, chosenClass:HOLD_DRAG.chosenClass, delayOnTouchOnly:true, touchStartThreshold:HOLD_DRAG.touchStartThreshold, fallbackTolerance:HOLD_DRAG.fallbackTolerance, easing:HOLD_DRAG.easing,
         forceFallback: true,
         fallbackOnBody: true,
         onChoose: beginDragNoSelect,
@@ -10483,60 +10557,71 @@
     }
     document.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
       const isSelectModeList = list.dataset.selectMode === 'true';
-      const s = Sortable.create(list, {
-        group: { name: 'tasks', pull: true, put: true },
-        animation:150, ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-        filter:'.day-count, .empty-note, .col-empty, .day-more, .task-menu-btn, .task-complete-btn, .bulk-select-cb',
-        preventOnFilter:false,
-        delay:HOLD_DRAG.delay, chosenClass:'drag-ready', delayOnTouchOnly:false, touchStartThreshold:8, fallbackTolerance:3,
-        forceFallback: true,
-        fallbackOnBody: true,
-        onChoose: beginDragNoSelect,
-        onUnchoose: endDragNoSelect,
-        // Picking up a task while the Batches & audits panel is open flips it to Tasks, so the backlog is there to drop on
-        onStart: ()=>{ if(typeof window.__cwTasksPanelForDrag === 'function') window.__cwTasksPanelForDrag(); },
-        disabled: isSelectModeList,
-        onUpdate:(evt)=>{
-          const id = evt.item && evt.item.dataset ? evt.item.dataset.id : null;
-          if(id) placeTaskAtDrop(id, evt);
-          persist();
-          requestAnimationFrame(renderAll);
-        },
-        onAdd:(evt)=>{
-          suppressNextClick = true;
-          setTimeout(()=>{ suppressNextClick = false; }, 80);
-          const item = evt.item;
-          let toDate = evt.to.dataset.date;
-          const shift = Number(evt.to.dataset.shift || 0);
-          if(shift){
-            // Week-jump zone: same weekday one week earlier/later, and the board follows the task there
-            const t = tasks.find(x=> x.id === item.dataset.id);
-            const fromKey = (t && t.date) || dateKey(getMonday(currentDate));
-            toDate = addDaysStr(fromKey, shift);
-            currentDate = toDateObj(toDate);
-            if(item.dataset.template !== 'true' && t){ item.remove(); moveTask(t.id, toDate, { deferRender: true }); return; }
-          }
-          if(item.dataset.template==='true'){
-            instantiateFrequentTask(item.dataset.name, item.dataset.icon, toDate, { deferRender: true, dropEvt: evt });
-          } else {
-            const id = item.dataset.id;
-            if(id) moveTask(id, toDate, { deferRender: true, dropEvt: evt });
-          }
-        },
-        onDragEnter:(evt)=>{
-          if(evt.to && (evt.to.classList.contains('day-tasks') || evt.to.classList.contains('backlog-list'))) evt.to.classList.add('drop-target');
-        },
-        onDragLeave:(evt)=>{
-          if(evt.to) evt.to.classList.remove('drop-target');
-        },
-        onEnd:()=>{
-          endDragNoSelect();
-          document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
-          if(typeof window.__cwTasksPanelAfterDrag === 'function') window.__cwTasksPanelAfterDrag();
-        }
-      });
+      const s = Sortable.create(list, taskListSortOpts(list, isSelectModeList));
       sortables.push(s);
     });
+  }
+
+  // Drop: the card settles into place
+  let dropFxId = null, dropFxAt = 0;
+  function cwDropFx(el){
+    const id = el && el.dataset ? el.dataset.id : null; if(!id) return;
+    dropFxId = id; dropFxAt = Date.now(); setTimeout(applyDropFx, 0);
+  }
+  function applyDropFx(){
+    if(!dropFxId || Date.now() - dropFxAt > 900) return;
+    document.querySelectorAll(`.day-tasks [data-id="${CSS.escape(dropFxId)}"], .backlog-list [data-id="${CSS.escape(dropFxId)}"]`).forEach(el=>{
+      el.classList.remove('drop-settle'); void el.offsetWidth; el.classList.add('drop-settle');
+      setTimeout(()=> el.classList.remove('drop-settle'), 450); });
+  }
+  // Board: hold a dragged card at the left / right edge (with the board scrolled to that end) and it turns to the
+  // week before / after — the same columns get the new days, so the drag carries on and you drop on any day.
+  let kbEdge = { dir:0, t:null }, kbFlipped = false;
+  function kbEdgeStop(){ clearTimeout(kbEdge.t); kbEdge.dir = 0; document.querySelectorAll('.kanban-canvas.kb-edge-l, .kanban-canvas.kb-edge-r').forEach(c=> c.classList.remove('kb-edge-l', 'kb-edge-r')); }
+  function kbEdgeWatch(x){
+    if(viewMode !== 'kanban' || !document.body.classList.contains('is-dragging')) return;
+    const canvas = document.querySelector('#calendarWrap .kanban-canvas'), board = canvas && canvas.querySelector('.kanban-board'); if(!board) return;
+    const r = canvas.getBoundingClientRect(), E = 60;
+    let dir = x < r.left + E ? -1 : x > r.right - E ? 1 : 0;
+    if(dir < 0 && board.scrollLeft > 4) dir = 0;
+    if(dir > 0 && board.scrollLeft < board.scrollWidth - board.clientWidth - 4) dir = 0;
+    canvas.classList.toggle('kb-edge-l', dir < 0); canvas.classList.toggle('kb-edge-r', dir > 0);
+    if(dir === kbEdge.dir) return;
+    clearTimeout(kbEdge.t); kbEdge.dir = dir;
+    if(dir) kbEdge.t = setTimeout(()=>{ kbEdge.dir = 0; canvas.classList.remove('kb-edge-l', 'kb-edge-r'); kbFlipWeek(dir); }, 650);
+  }
+  document.addEventListener('pointermove', e=> kbEdgeWatch(e.clientX), { passive:true });
+  document.addEventListener('mousemove', e=> kbEdgeWatch(e.clientX), { passive:true });
+  document.addEventListener('touchmove', e=>{ if(e.touches && e.touches[0]) kbEdgeWatch(e.touches[0].clientX); }, { passive:true });
+  function kbFlipWeek(dir){
+    const live = $('#calendarWrap'), oldBoard = live && live.querySelector('.kanban-board'); if(!oldBoard) return;
+    const d = new Date(currentDate); d.setDate(d.getDate() + 7 * dir); currentDate = d;
+    const keepFade = kanbanEdgeFadeUpdater, tmp = document.createElement('div');
+    renderKanban(tmp); kanbanEdgeFadeUpdater = keepFade;
+    const newBoard = tmp.querySelector('.kanban-board'); if(!newBoard) return;
+    const dragEl = (typeof Sortable !== 'undefined' && Sortable.dragged) || null;
+    const oldCols = [...oldBoard.children], newCols = [...newBoard.children];
+    oldCols.forEach((oc, i)=>{ const nc = newCols[i]; if(!nc) return;
+      const ol = oc.querySelector('.day-tasks'), nl = nc.querySelector('.day-tasks');
+      if(ol && nl){
+        ol.dataset.date = nl.dataset.date;
+        [...ol.children].forEach(ch=>{ if(ch !== dragEl) ch.remove(); });
+        [...nl.children].forEach(ch=>{ if(!(dragEl && ch.dataset && ch.dataset.id && ch.dataset.id === dragEl.dataset.id)) ol.appendChild(ch); });
+        [...oc.children].forEach(ch=>{ if(ch !== ol) ch.remove(); });
+        [...nc.children].forEach(ch=> oc.appendChild(ch === nl ? ol : ch));
+        oc.className = nc.className;
+      } else if(!(dragEl && oc.contains(dragEl))){
+        oc.replaceWith(nc);
+        if(nl && typeof Sortable !== 'undefined') sortables.push(Sortable.create(nl, taskListSortOpts(nl, false)));
+      }
+    });
+    const ns = tmp.querySelector('.kb-daystrip'), os = live.querySelector('.kb-daystrip'); if(ns && os) os.replaceWith(ns);
+    oldBoard.classList.remove('kb-flip-next', 'kb-flip-prev'); void oldBoard.offsetWidth;
+    oldBoard.classList.add(dir > 0 ? 'kb-flip-next' : 'kb-flip-prev');
+    setTimeout(()=> oldBoard.classList.remove('kb-flip-next', 'kb-flip-prev'), 420);
+    oldBoard.scrollLeft = dir > 0 ? 0 : oldBoard.scrollWidth;
+    kbFlipped = true;
+    updatePeriodLabel();
   }
 
   // Switching view or moving to another period eases the new content in:
@@ -10727,6 +10812,7 @@
     updateReportsBadge();
     renderReportsView();
     animateViewChange();
+    applyDropFx();
     renderMlog();
     if(mlogHistId) renderMlogHistory();
   }
