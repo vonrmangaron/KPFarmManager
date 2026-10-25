@@ -4260,7 +4260,78 @@
   .dm-addc{ border:2px dashed var(--line); background:transparent; box-shadow:none; align-items:center; justify-content:center; color:var(--muted); font:700 14px Inter,sans-serif; text-align:center; }
   .dm-addc span{ font-size:26px; line-height:1; }
   .dm-addc:hover{ border-color:var(--primary); color:var(--ink); }
-  @media (prefers-reduced-motion:reduce){ .dm-box, .dm-scrim{ transition:opacity .2s ease !important; transform:none !important; } .dm-grid.anim .dm-card{ animation:none; opacity:1; transform:none; } }
+  @media (prefers-reduced-motion:reduce){ .dm-box, .dm-scrim{ transition:opacity .2s ease !important; transform:none !important; } .dm-body.anim .dm-card{ animation:none; opacity:1; transform:none; } }
+  /* Day view in look C (2026-10-25) */
+  .dm-head{ flex-direction:column; align-items:stretch; gap:12px; padding:18px 22px 0; }
+  .dm-hrow{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .dm-cal{ flex:none; width:58px; border-radius:14px; overflow:hidden; text-align:center; background:var(--surface); border:1px solid var(--line); box-shadow:0 4px 12px rgba(20,25,30,.08); }
+  .dm-cal i{ display:block; font:800 10px Inter,sans-serif; font-style:normal; letter-spacing:.08em; text-transform:uppercase; background:#F0A21A; color:#241A08; padding:3px 0; }
+  .dm-cal b{ display:block; font:800 24px Sora,sans-serif; color:var(--ink); padding:3px 0 5px; }
+  .dm-t{ flex:1; }
+  .dm-t b{ font-size:24px; letter-spacing:-.01em; }
+  .dm-pills{ display:flex; gap:8px; flex-wrap:wrap; margin-top:5px; }
+  .dm-pill{ display:inline-flex; align-items:center; gap:5px; font:700 12px Inter,sans-serif; color:var(--muted); background:var(--surface-soft); border-radius:99px; padding:4px 10px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dm-pill.late{ background:#FBE3E0; color:#9A2A20; } body.theme-dark .dm-pill.late{ background:rgba(217,71,58,.22); color:#FF9C92; }
+  .dm-pn{ display:inline-flex; background:var(--surface-soft); border-radius:99px; padding:4px; gap:2px; }
+  .dm-pn .dm-ib{ width:34px; height:34px; border:0; border-radius:99px; background:transparent; }
+  .dm-pn .dm-ib:hover{ background:var(--surface); box-shadow:var(--shadow-sm); }
+  .dm-add{ all:unset; cursor:pointer; white-space:nowrap; background:linear-gradient(160deg,#F0A21A,#E07A12); color:#241A08; font:800 13.5px Inter,sans-serif; border-radius:12px; padding:10px 16px; box-shadow:0 6px 16px rgba(240,162,26,.35); }
+  .dm-add:hover{ filter:brightness(1.05); }
+  .dm-add:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+  .dm-close{ border:0 !important; border-radius:50% !important; background:var(--surface-soft) !important; }
+  .dm-prog{ display:flex; align-items:center; gap:12px; }
+  .dm-prog:empty{ display:none; }
+  .dm-pbar{ flex:1; height:8px; border-radius:9px; background:var(--surface-soft); overflow:hidden; }
+  .dm-pbar i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg,#21A88F,#0F8A75); transition:width .4s ease; }
+  .dm-prog small{ font:700 12px Inter,sans-serif; color:var(--muted); white-space:nowrap; }
+  .dm-filters{ display:flex; gap:2px; flex-wrap:wrap; padding:0; margin:0 -4px; }
+  .dm-tab{ all:unset; cursor:pointer; padding:9px 12px 11px; font:700 13px Inter,sans-serif; color:var(--muted); border-bottom:3px solid transparent; }
+  .dm-tab b{ font-weight:800; margin-left:5px; color:var(--ink); opacity:.55; }
+  .dm-tab:hover{ color:var(--ink); }
+  .dm-tab.on{ color:var(--ink); border-color:#F0A21A; } .dm-tab.on b{ opacity:1; }
+  .dm-tab:focus-visible{ outline:2px solid #F0A21A; outline-offset:-2px; border-radius:6px; }
+  .dm-body{ display:flex; flex-direction:column; gap:12px; padding:18px 22px 24px; }
+  .dm-grp{ display:flex; align-items:center; gap:10px; font:800 12px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .dm-grp::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .dm-body .dm-grid{ padding:0; gap:12px; }
+  .dm-body.anim .dm-card{ opacity:0; transform:translateY(18px) scale(.97); animation:dmCardIn .5s cubic-bezier(.2,1.1,.3,1) forwards; animation-delay:calc(var(--i, 0) * 55ms + 120ms); }
+  .dm-card{ --dmc:#F0A21A; --dmc2:#E07A12; --dmc-soft:#FFF4DE; display:grid !important; grid-template-columns:6px minmax(0,1fr); padding:0 !important; gap:0 !important; border:0 !important; border-radius:16px !important; overflow:hidden; min-height:0 !important; box-shadow:0 1px 2px rgba(20,25,30,.05), 0 6px 18px rgba(20,25,30,.06) !important; }
+  .dm-card.late{ --dmc:#D9473A; --dmc2:#B8321F; --dmc-soft:#FBE3E0; }
+  .dm-card.done{ --dmc:#0F8A75; --dmc2:#0B6F5E; --dmc-soft:#DFF4EF; background:var(--surface) !important; border-style:solid !important; }
+  body.theme-dark .dm-card{ --dmc-soft:rgba(240,162,26,.16); box-shadow:0 6px 18px rgba(0,0,0,.35) !important; }
+  body.theme-dark .dm-card.late{ --dmc-soft:rgba(217,71,58,.22); } body.theme-dark .dm-card.done{ --dmc-soft:rgba(15,138,117,.24); }
+  .dm-card:hover{ box-shadow:0 12px 26px rgba(20,25,30,.14) !important; }
+  .dm-sb{ background:linear-gradient(180deg,var(--dmc),var(--dmc2)); }
+  .dm-in{ padding:14px 14px 12px; display:flex; flex-direction:column; gap:9px; min-width:0; }
+  .dm-top{ align-items:flex-start; gap:11px; }
+  .dm-card .dm-ic{ width:42px !important; height:42px !important; border-radius:13px !important; background:var(--dmc-soft) !important; flex:none; }
+  .dm-card .dm-ic .kicon.sb-ic{ width:42px !important; height:42px !important; background:transparent !important; }
+  .dm-nmw{ flex:1; min-width:0; }
+  .dm-card .dm-nm{ font:800 15px/1.25 Sora,sans-serif; color:var(--ink); text-decoration:none !important; word-break:break-word; }
+  .dm-meta{ display:block; font:600 12px Inter,sans-serif; color:var(--muted); margin-top:2px; }
+  .dm-card.late .dm-meta{ color:#D9473A; }
+  .dm-meta.by{ color:#0F7A67; } body.theme-dark .dm-meta.by{ color:#8FD9B5; }
+  .dm-card .dm-tick{ width:34px; height:34px; color:transparent; margin-left:0; }
+  .dm-card .dm-tick:hover{ color:#0F8A75; }
+  .dm-card.done .dm-tick{ color:#fff; }
+  .dm-card.late .dm-tick{ border-color:var(--line); }
+  .dm-card .dm-note{ color:var(--ink); background:var(--surface-soft); border-radius:10px; padding:7px 10px; }
+  .dm-tags .prep-lab{ background:#FFF4DE; color:#7A4E10; } body.theme-dark .dm-tags .prep-lab{ background:rgba(240,162,26,.16); color:#FFD164; }
+  .dm-tags .ktag.hi{ background:#D9473A; color:#fff; }
+  .dm-foot{ border-top:1px dashed var(--line); padding-top:9px; min-height:36px; }
+  .dm-card.done .dm-nm{ color:var(--muted); }
+  .dm-card.done .dm-ic{ opacity:1; }
+  .dm-card.compact .dm-in{ flex-direction:row; align-items:center; gap:10px; padding:10px 12px; }
+  .dm-card.compact .dm-ic{ width:34px !important; height:34px !important; border-radius:10px !important; }
+  .dm-card.compact .dm-ic .kicon.sb-ic{ width:34px !important; height:34px !important; }
+  .dm-card.compact .dm-nm{ font-size:13.5px; }
+  .dm-card.compact .dm-tick{ width:30px; height:30px; font-size:13px; }
+  .dm-addc{ display:flex !important; flex-direction:column; gap:6px; border:2px dashed var(--line) !important; background:transparent !important; box-shadow:none !important; min-height:150px !important; padding:16px !important; }
+  .dm-addc span{ width:38px; height:38px; border-radius:50%; background:var(--surface-soft); display:grid; place-items:center; font-size:20px; color:var(--ink); }
+  .dm-addc:hover{ border-color:#F0A21A !important; }
+  @media (max-width:1100px){ .dm-body .dm-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:820px){ .dm-body .dm-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:560px){ .dm-body .dm-grid{ grid-template-columns:1fr; } .dm-head{ padding:14px 16px 0; } .dm-body{ padding:14px 16px 20px; } .dm-cal{ width:50px; } .dm-cal b{ font-size:20px; } .dm-t b{ font-size:19px; } .dm-x{ width:100%; } .dm-add{ margin-left:auto; } .dm-addc{ min-height:90px !important; } }
 
   /* ── Prep: Make a task, several jobs in one task (2026-10-24) ── */
   .pl-cell.bun::after{ content:"≡"; font:900 13px Inter,sans-serif; color:#1F4FA8; }
@@ -4327,8 +4398,38 @@
   .pl-sh.alldone .prep-sn{ background:#0F8A75 !important; color:#fff !important; }
   .pl-sh.alldone .pl-pb i{ background:#0F8A75; }
   /* the task window stands out from the page */
-  #taskDetailModal{ box-shadow:0 30px 80px rgba(0,0,0,.38), 0 0 0 1px rgba(22,25,27,.10) !important; border-top:5px solid var(--primary); }
-  body.theme-dark #taskDetailModal{ box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.10) !important; }
+  /* Task window look C (2026-10-25): colour bar down the left — amber open, red overdue, green done */
+  #taskDetailModal{ --dc:#F0A21A; --dc2:#E07A12; --dc-soft:#FFF4DE; box-shadow:0 30px 80px rgba(0,0,0,.38), 0 0 0 1px rgba(22,25,27,.08) !important; overflow:hidden; padding-left:8px; }
+  @media (min-width:761px){ #taskDetailModal{ border-radius:20px; width:400px; } }
+  @media (max-width:760px){ #taskDetailModal{ width:100%; max-width:100%; } }
+  #taskDetailModal.st-late{ --dc:#D9473A; --dc2:#B8321F; --dc-soft:#FBE3E0; }
+  #taskDetailModal.st-done{ --dc:#0F8A75; --dc2:#0B6F5E; --dc-soft:#DFF4EF; }
+  body.theme-dark #taskDetailModal{ --dc-soft:rgba(240,162,26,.16); box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.10) !important; }
+  body.theme-dark #taskDetailModal.st-late{ --dc-soft:rgba(217,71,58,.22); }
+  body.theme-dark #taskDetailModal.st-done{ --dc-soft:rgba(15,138,117,.24); }
+  #taskDetailModal::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:8px; background:linear-gradient(180deg,var(--dc),var(--dc2)); z-index:2; }
+  #taskDetailModal .detail-head{ border-bottom:0; padding:18px 18px 8px 16px; align-items:center; gap:12px; position:relative; }
+  #taskDetailModal .detail-head .dicon{ width:46px; height:46px; border-radius:14px; background:var(--dc-soft); display:grid; place-items:center; font-size:22px; }
+  #taskDetailModal .detail-head .dname{ font:800 19px/1.25 Sora,sans-serif; padding-right:34px; }
+  #taskDetailModal .dwhen{ font:600 12.5px Inter,sans-serif; color:var(--muted); margin-top:2px; }
+  #taskDetailModal.st-late .dwhen{ color:#D9473A; }
+  #taskDetailModal .dclose{ position:absolute; right:12px; top:12px; width:32px; height:32px; border-radius:50%; border:none; background:var(--surface-soft); color:var(--muted); font-size:14px; cursor:pointer; display:grid; place-items:center; }
+  #taskDetailModal .dclose:hover{ color:var(--ink); background:var(--line); }
+  #taskDetailModal .dchips{ display:flex; flex-wrap:wrap; gap:6px; padding:2px 18px 6px 16px; }
+  #taskDetailModal .dchip{ display:inline-flex; align-items:center; gap:5px; font:800 10.5px Inter,sans-serif; letter-spacing:.04em; text-transform:uppercase; border-radius:99px; padding:3px 9px; background:var(--surface-soft); color:var(--ink); }
+  #taskDetailModal .dchip.st{ background:var(--dc); color:#fff; }
+  #taskDetailModal.st-open .dchip.st{ color:#241A08; }
+  #taskDetailModal .dchip.by{ background:var(--dc-soft); color:var(--ink); text-transform:none; letter-spacing:0; font-size:11.5px; }
+  #taskDetailModal .dchip.hi{ background:#D9473A; color:#fff; }
+  #taskDetailModal .dchip.who{ text-transform:none; letter-spacing:0; font-size:11.5px; padding:2px 9px 2px 2px; }
+  #taskDetailModal .dchip .task-avatar{ width:18px; height:18px; font-size:9px; margin:0; }
+  #taskDetailModal .dchip .batch-chip{ font-size:10px; padding:1px 6px; }
+  #taskDetailModal .dchips .prep-lab{ cursor:pointer; }
+  #taskDetailModal .detail-body{ padding-left:16px; }
+  #taskDetailModal .detail-body > .drow{ display:none !important; }   /* status, day, batch, done by and who are in the header now */
+  #taskDetailModal .detail-actions{ border-top:0; padding:6px 18px 18px 16px; }
+  #taskDetailModal .dbtn.done{ background:linear-gradient(160deg,#21A88F,#0F8A75); color:#fff; border-radius:14px; padding:14px; font-size:15px; box-shadow:0 8px 20px rgba(15,138,117,.3); }
+  #taskDetailModal.st-done .dbtn.done{ background:var(--surface-soft); color:var(--ink); box-shadow:none; }
   body:has(#taskDetailModal.open) .scrim{ background:rgba(14,18,24,.55) !important; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
 </style>
 <script>
@@ -4606,12 +4707,15 @@
 <div class="dm-scrim" id="dayView" aria-hidden="true">
   <div class="dm-box" role="dialog" aria-modal="true" aria-labelledby="dmTitle">
     <div class="dm-head">
-      <span class="dm-ring" id="dmRing"></span>
-      <div class="dm-t"><b id="dmTitle"></b><span id="dmSub"></span></div>
-      <div class="dm-x"><button type="button" class="dm-ib" id="dmPrev" aria-label="Previous day" title="Previous day (←)">‹</button><button type="button" class="dm-ib" id="dmNext" aria-label="Next day" title="Next day (→)">›</button><button type="button" class="btn-app dm-add" id="dmAdd">＋ Add task</button><button type="button" class="dm-ib dm-close" id="dmClose" aria-label="Close" title="Close (Esc)">✕</button></div>
+      <div class="dm-hrow">
+        <span class="dm-cal" id="dmCal" aria-hidden="true"></span>
+        <div class="dm-t"><b id="dmTitle"></b><div class="dm-pills" id="dmSub"></div></div>
+        <div class="dm-x"><span class="dm-pn"><button type="button" class="dm-ib" id="dmPrev" aria-label="Previous day" title="Previous day (←)">‹</button><button type="button" class="dm-ib" id="dmNext" aria-label="Next day" title="Next day (→)">›</button></span><button type="button" class="dm-add" id="dmAdd" title="Add a task to this day">＋ Add task</button><button type="button" class="dm-ib dm-close" id="dmClose" aria-label="Close" title="Close (Esc)">✕</button></div>
+      </div>
+      <div class="dm-prog" id="dmProg"></div>
+      <div class="dm-filters" id="dmFilters" role="tablist" aria-label="Show"></div>
     </div>
-    <div class="dm-filters" id="dmFilters" role="group" aria-label="Show"></div>
-    <div class="dm-grid" id="dmGrid"></div>
+    <div class="dm-body" id="dmGrid"></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepTplsModal" role="dialog" aria-modal="true" aria-labelledby="prepTplsTitle">
@@ -4945,9 +5049,10 @@
 <div class="form-modal detail-modal" id="taskDetailModal">
   <div class="detail-head">
     <span class="dicon" id="detailIcon"></span>
-    <div class="dnamewrap"><div class="dname" id="detailName"></div></div>
-    <button class="dclose" id="closeTaskDetailModal" aria-label="Close" style="border:none;background:transparent;font-size:16px;color:var(--muted);cursor:pointer;">✕</button>
+    <div class="dnamewrap"><div class="dname" id="detailName"></div><div class="dwhen" id="detailWhen"></div></div>
+    <button class="dclose" id="closeTaskDetailModal" aria-label="Close" title="Close">✕</button>
   </div>
+  <div class="dchips" id="detailChips"></div>
   <div class="detail-body">
     <div class="detail-notes-callout" id="detailNotesRow" style="display:none;">
       <span class="dnc-icon">📝</span>
@@ -10524,26 +10629,50 @@
     const F = [['all', 'All', all.length], ['todo', 'To do', all.length - done], ['done', 'Done', done], ['high', 'High', all.filter(isHi).length], ['prep', 'Shed prep', all.filter(t=> t.prep).length]];
     if(!F.some(f=> f[0] === dayViewFilter && (f[0] === 'all' || f[2]))) dayViewFilter = 'all';
     const list = all.filter(t=> dayViewFilter === 'all' || (dayViewFilter === 'todo' ? t.status !== 'done' : dayViewFilter === 'done' ? t.status === 'done' : dayViewFilter === 'high' ? isHi(t) : !!t.prep));
-    const C = 2 * Math.PI * 22, pct = all.length ? done / all.length : 0;
-    $('#dmRing').innerHTML = `<svg viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--line)" stroke-width="6"/><circle cx="27" cy="27" r="22" fill="none" stroke="${pct === 1 ? '#0F8A75' : '#F0A21A'}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(pct * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 27 27)"/></svg><b>${done}/${all.length}</b>`;
+    // Day view in look C (2026-10-25): colour bar per card (amber open, red overdue, green done);
+    // open tasks first as big cards, finished ones in a smaller Done row underneath.
+    const pct = all.length ? done / all.length : 0;
+    $('#dmCal').innerHTML = `<i>${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'short' }))}</i><b>${d.getDate()}</b>`;
     $('#dmTitle').innerHTML = `${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }))}${key === today ? ' <span class="dtoday">Today</span>' : ''}`;
     const late = key < today ? all.length - done : 0, w = typeof wxForDate === 'function' ? wxForDate(key) : null;
-    $('#dmSub').textContent = [all.length ? `${all.length} task${all.length === 1 ? '' : 's'} · ${done} done` : 'Nothing planned yet', late ? `${late} still open` : '', w && w.max != null ? `${wxT(w.max)} / ${wxT(w.min)}` : ''].filter(Boolean).join(' · ');
-    $('#dmFilters').innerHTML = F.filter(f=> f[0] === 'all' || f[2]).map(([k, l, n])=> `<button type="button" class="prep-f${dayViewFilter === k ? ' on' : ''}" data-dm-f="${k}">${l} · ${n}</button>`).join('');
+    const crew = [...new Set(all.flatMap(t=> t.assignees || []))];
+    $('#dmSub').innerHTML = [w && w.max != null ? `<span class="dm-pill" title="Weather">${escapeHtml(w.code != null ? wxIconLabel(w.code, 1)[0] : '🌤')} ${escapeHtml(wxT(w.max))} / ${escapeHtml(wxT(w.min))}</span>` : '',
+      crew.length ? `<span class="dm-pill" title="Who has tasks this day">👥 ${escapeHtml(crew.join(', '))}</span>` : '',
+      late ? `<span class="dm-pill late">${late} still open</span>` : '',
+      !all.length ? '<span class="dm-pill">Nothing planned yet</span>' : ''].join('');
+    $('#dmProg').innerHTML = all.length ? `<span class="dm-pbar${pct === 1 ? ' full' : ''}"><i style="width:${(pct * 100).toFixed(1)}%"></i></span><small>${done} of ${all.length} done</small>` : '';
+    $('#dmFilters').innerHTML = F.filter(f=> f[0] === 'all' || f[2]).map(([k, l, n])=> `<button type="button" role="tab" class="dm-tab${dayViewFilter === k ? ' on' : ''}" aria-selected="${dayViewFilter === k}" data-dm-f="${k}">${l}<b>${n}</b></button>`).join('');
     const grid = $('#dmGrid'); grid.classList.toggle('anim', !!animate);
-    grid.innerHTML = list.map((t, i)=>{
-      const tone = taskIconFor(t.name)[2], isDone = t.status === 'done', isLate = !isDone && t.date < today;
-      const tags = [isLate ? '<span class="ktag late">Overdue</span>' : '', isHi(t) ? '<span class="ktag hi">High</span>' : '', t.prep ? prepLabelHtml(t) : '', typeof isMaintTask === 'function' && isMaintTask(t) ? '<span class="ktag">Maintenance</span>' : '', t.seriesId ? '<span class="ktag">Repeats</span>' : ''].join('');
+    const dayShort = d.toLocaleDateString('en-GB', { weekday:'short' });
+    let n = 0;
+    const card = (t, i)=>{
+      const isDone = t.status === 'done', isLate = !isDone && t.date < today;
+      const icon = `<span class="ktile ktile-${taskIconFor(t.name)[2]} dm-ic"><span class="kicon" data-dm-ic="${i}"></span></span>`;
+      const tick = `<button type="button" class="dm-tick" data-dm-tick="${escapeHtmlAttr(t.id)}" aria-pressed="${isDone}" aria-label="${isDone ? 'Reopen' : 'Mark done'}" title="${isDone ? 'Reopen' : 'Mark done'}">✓</button>`;
       const sp = subProgress(t);
-      return `<div class="dm-card${isDone ? ' done' : ''}${isLate ? ' late' : ''}" data-dm-task="${escapeHtmlAttr(t.id)}" style="--i:${i}" tabindex="0" role="button" aria-label="${escapeHtmlAttr('Open ' + t.name)}">
-        <div class="dm-top"><span class="ktile ktile-${tone} dm-ic"><span class="kicon" data-dm-ic="${i}"></span></span><button type="button" class="dm-tick" data-dm-tick="${escapeHtmlAttr(t.id)}" aria-pressed="${isDone}" aria-label="${isDone ? 'Reopen' : 'Mark done'}" title="${isDone ? 'Reopen' : 'Mark done'}">${isDone ? '✓' : ''}</button></div>
-        <div class="dm-nm">${escapeHtml(t.name)}</div>
+      const open = `data-dm-task="${escapeHtmlAttr(t.id)}" style="--i:${n++}" tabindex="0" role="button" aria-label="${escapeHtmlAttr('Open ' + t.name)}"`;
+      if(isDone){
+        const by = doneByText(t, true) || 'Done';
+        return `<div class="dm-card done compact" ${open}><span class="dm-sb"></span><div class="dm-in">${icon}<div class="dm-nmw"><div class="dm-nm">${escapeHtml(t.name)}</div><span class="dm-meta by">✓ ${escapeHtml(by)}${sp.total ? ' · ' + sp.done + '/' + sp.total + ' steps' : ''}</span></div>${tick}</div></div>`;
+      }
+      const who = (t.assignees || []).join(', ');
+      const meta = [isLate ? 'Overdue since ' + toDateObj(t.date).toLocaleDateString('en-GB', { weekday:'short' }) : who, t.seriesId ? 'repeats' : ''].filter(Boolean).join(' · ');
+      const tags = [isLate ? '<span class="ktag late">Overdue</span>' : '', isHi(t) ? '<span class="ktag hi">🔥 High</span>' : '', t.prep ? prepLabelHtml(t) : '', typeof isMaintTask === 'function' && isMaintTask(t) ? '<span class="ktag">Maintenance</span>' : ''].join('');
+      return `<div class="dm-card${isLate ? ' late' : ''}" ${open}><span class="dm-sb"></span><div class="dm-in">
+        <div class="dm-top">${icon}<div class="dm-nmw"><div class="dm-nm">${escapeHtml(t.name)}</div>${meta ? `<span class="dm-meta">${escapeHtml(meta)}</span>` : ''}</div>${tick}</div>
         ${t.notes ? `<div class="dm-note">${escapeHtml(t.notes)}</div>` : ''}
         ${tags ? `<div class="dm-tags">${tags}</div>` : ''}
         ${sp.total ? `<div class="dm-steps"><span class="dm-bar"><i style="width:${Math.round(sp.done / sp.total * 100)}%"></i></span><small>${sp.done} of ${sp.total} steps</small></div>` : ''}
-        <div class="dm-foot">${isDone ? `<span class="dm-by">✓ ${escapeHtml(doneByText(t, true) || 'Done')}</span>` : `<span>${isLate ? 'Open since ' + escapeHtml(d.toLocaleDateString('en-GB', { weekday:'short' })) : 'Open'}</span>`}<span class="dm-ppl">${buildAssigneeAvatarsHtml(t.assignees)}</span></div>
-      </div>`; }).join('') + `<button type="button" class="dm-card dm-addc" id="dmAddCard" style="--i:${list.length}"><span>＋</span>Add a task to ${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'long' }))}</button>`;
-    list.forEach((t, i)=>{ const el = grid.querySelector(`[data-dm-ic="${i}"]`); if(el) renderTaskIcon(el, t.name, t.icon); });
+        <div class="dm-foot"><span>${who ? 'For ' + escapeHtml(who) : 'Anyone'}</span><span class="dm-ppl">${buildAssigneeAvatarsHtml(t.assignees)}</span></div>
+      </div></div>`; };
+    const todo = list.filter(t=> t.status !== 'done'), fin = list.filter(t=> t.status === 'done');
+    const addCard = `<button type="button" class="dm-card dm-addc" id="dmAddCard" title="Add a task to this day"><span>＋</span>Add a task to ${escapeHtml(d.toLocaleDateString('en-GB', { weekday:'long' }))}</button>`;
+    let idx = 0; const cards = arr=> arr.map(t=> card(t, idx++)).join('');
+    const todoHtml = dayViewFilter === 'done' ? '' : `${fin.length || todo.length ? `<div class="dm-grp">To do · ${todo.length}</div>` : ''}<div class="dm-grid">${cards(todo)}${addCard}</div>`;
+    const doneHtml = fin.length ? `<div class="dm-grp">Done · ${fin.length}</div><div class="dm-grid compact">${cards(fin)}</div>` : '';
+    grid.innerHTML = todoHtml + doneHtml;
+    const ordered = dayViewFilter === 'done' ? fin : [...todo, ...fin];
+    ordered.forEach((t, i)=>{ const el = grid.querySelector(`[data-dm-ic="${i}"]`); if(el) renderTaskIcon(el, t.name, t.icon); });
   }
   (function wireDayView(){
     const m = $('#dayView'); if(!m) return;
@@ -11121,6 +11250,21 @@
       seriesNote.textContent = `🔁 Part of a repeating series — through ${formatFull(lastDate)}`;
     } else { seriesNote.style.display = 'none'; }
     $('#detailDoneBtn').innerHTML = t.status==='done' ? UNDO_ICON_SVG+' Reopen' : CHECK_ICON_SVG+' Mark Done';
+    // look C (2026-10-25): colour bar by state, the day under the name, status / who / batch as chips
+    { const today = dateKey(new Date()), st = t.status==='done' ? 'done' : (t.date && t.date < today ? 'late' : 'open');
+      const m = $('#taskDetailModal'); m.classList.remove('st-open','st-late','st-done'); m.classList.add('st-' + st);
+      const rel = !t.date ? '' : t.date === today ? 'Today · ' : t.date === addDaysStr(today, 1) ? 'Tomorrow · ' : t.date === addDaysStr(today, -1) ? 'Yesterday · ' : '';
+      $('#detailWhen').textContent = t.date ? rel + toDateObj(t.date).toLocaleDateString(undefined,{weekday:'long', day:'numeric', month:'long'}) : 'Backlog — no day yet';
+      const db = doneByText(t, false);
+      $('#detailChips').innerHTML = [
+        `<span class="dchip st">${st==='done' ? '✓ Done' : st==='late' ? 'Overdue' : 'Open'}</span>`,
+        db ? `<span class="dchip by">✓ ${escapeHtml(db)}</span>` : '',
+        t.priority==='high' && st!=='done' ? '<span class="dchip hi">🔥 High</span>' : '',
+        ...(t.assignees||[]).map(n=> `<span class="dchip who"><span class="task-avatar" style="background:${colorForAssignee(n)}">${escapeHtml(initialsForAssignee(n))}</span>${escapeHtml(n)}</span>`),
+        activeBatch ? `<span class="dchip"><span class="batch-chip" style="background:${colorForBatchNumber(activeBatch.number)}">#${escapeHtml(activeBatch.number)}</span>Day ${escapeHtml(String(batchAgeOn(activeBatch, t.date)))}</span>` : '<span class="dchip">No batch</span>',
+        t.prep ? prepLabelHtml(t) : '',
+        t.seriesId ? '<span class="dchip">🔁 Repeats</span>' : ''
+      ].join(''); }
     openDrawer('#taskDetailModal');
   }
   let taskModalMode = 'edit';
