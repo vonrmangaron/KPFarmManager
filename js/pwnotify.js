@@ -14,7 +14,7 @@ async function pnLoad(force){
   try{
     pnMine=await FarmNotify.state();
     const [s,p]=await Promise.all([FarmNotify.settings(farm),FarmNotify.phones(farm)]);
-    pnCfg=s.settings;pnDraft=Object.assign({},pnCfg);pnPhones=p.phones||[];
+    pnCfg=Object.assign({foOn:true,foTime:'07:00',foRemindOn:true,foRemindTime:'11:00'},s.settings);pnDraft=Object.assign({},pnCfg);   /* fo*: older server without the feed-off alert */pnPhones=p.phones||[];
     try{const r=await fetch(accAccessUrl());const j=r.ok?await r.json():null;pnMembers=(j&&j.data&&Array.isArray(j.data.members))?j.data.members.map(m=>m&&m.name).filter(Boolean):[];}catch(e){pnMembers=[];}
     pnLoadedFor=farm;
   }catch(e){pnErr=e.setup?'setup':(e.status===403?'signin':(navigator.onLine?'server':'offline'));}
@@ -70,6 +70,9 @@ function pnInner(){
       stRow('Hold notifications overnight','Nothing is sent during these hours. Held notifications are delivered when they end.',pnSw('quietOn','Quiet hours'))
      +(pnDraft.quietOn?`<div class="st2-row pn-qrow"><div class="pn-q"><span>From</span>${pnTime('quietFrom','Quiet from')}<span>to</span>${pnTime('quietTo','Quiet until')}<span class="st2-chip">Every day</span></div>${pnBar()}</div>`
        +stRow('Urgent reports override quiet hours','Sent to managers only.',pnSw('urgentBreak','Urgent reports override quiet hours')):''))
+   +stSec('Ross: feed-off alert',
+      stRow('Feed-off alert','The day before each pickup (kill sheet date), to managers. Sent even in quiet hours.',`${pnDraft.foOn?pnTime('foTime','Feed-off alert time'):''}${pnSw('foOn','Feed-off alert')}`)
+     +(pnDraft.foOn?stRow('Reminder if not done','A second alert when nobody has tapped “Feed is off”.',`${pnDraft.foRemindOn?pnTime('foRemindTime','Feed-off reminder time'):''}${pnSw('foRemindOn','Feed-off reminder')}`):''))
    +stSec('Schedule',
       stRow('Daily summary','“Your day”: each person’s tasks for the day, sent every morning.',`${pnDraft.dayOn?pnTime('dayTime','Your day time'):''}${pnSw('dayOn','Your day')}`)
      +stRow('Afternoon reminder','Sent when a task due today is still open.',`${pnDraft.remindOn?pnTime('remindTime','Reminder time'):''}${pnSw('remindOn','Afternoon reminder')}`))
@@ -131,6 +134,7 @@ document.addEventListener('change',e=>{
 function pnOpen(nt){
   nt=String(nt||'');if(!nt)return;
   const [kind,id]=[nt.split(':')[0],nt.slice(nt.indexOf(':')+1)];
+  if(kind==='feedoff'){if(pwSection!=='production'&&typeof openProductionSection==='function')openProductionSection();activeTab='home';render();window.scrollTo(0,0);return;}
   if(kind==='feed'){if(pwSection!=='production'&&typeof openProductionSection==='function')openProductionSection();activeTab='home';render();return;}
   if(typeof openTasksSection!=='function')return;
   openTasksSection();

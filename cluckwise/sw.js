@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.10.26-c123';
+const CACHE_VERSION = 'cluckwise-2026.10.26-c124';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
@@ -189,6 +189,7 @@ self.addEventListener('push', (event) => {
   try { m = event.data ? event.data.json() : {}; } catch (e) { m = { title: event.data ? event.data.text() : '' }; }
   event.waitUntil(self.registration.showNotification(m.title || 'Farm', {
     body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag,
+    requireInteraction: !!m.sticky, vibrate: m.sticky ? [300, 120, 300, 120, 600] : undefined,
     icon: 'icons/icon-viewer-192.png', badge: 'icons/icon-viewer-192.png', data: { url: m.url || self.registration.scope },
   }));
 });

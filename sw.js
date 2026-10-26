@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v264';
+const CACHE_NAME = 'prodwise-v265';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -29,6 +29,7 @@ const CORE_ASSETS = [
   './js/batches.js',
   './js/ask.js',
   './js/pwnotify.js',
+  './js/feedoff.js',
   './js/account.js',
   './js/closeout.js',
   './js/shedtabs.js',
@@ -109,6 +110,7 @@ self.addEventListener('push', (event) => {
   try { m = event.data ? event.data.json() : {}; } catch (e) { m = { title: event.data ? event.data.text() : '' }; }
   event.waitUntil(self.registration.showNotification(m.title || 'Farm', {
     body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag,
+    requireInteraction: !!m.sticky, vibrate: m.sticky ? [300, 120, 300, 120, 600] : undefined,
     icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { url: m.url || self.registration.scope },
   }));
 });

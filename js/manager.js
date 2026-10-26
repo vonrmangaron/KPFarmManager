@@ -1093,6 +1093,11 @@ function mgrBriefData(){
   if(!cw&&!mgrBriefAsked&&syncFarmName&&typeof pwEnsureTasksFrame==='function'){mgrBriefAsked=true;pwEnsureTasksFrame(()=>mgrBriefRefresh());}
   const L=(tone,html,act)=>({tone,html,act:act||''});
   const G={today:[],watch:[],feed:[],co:[]};
+  // Feed off before the catch (js/feedoff.js): first thing today, a heads-up the day before
+  if(typeof foToday==='function'){const fo=foToday(),ft=foTomorrow();
+    if(fo&&!fo.done)G.today.push(L('r',`<b>Feed off today · ${escapeHtml(foLabel(fo.sheds))}</b> · catch tonight, kill sheet ${escapeHtml(foDay(fo.kill))}`));
+    else if(fo&&fo.done)G.today.push(L('g',`Feed off · ${escapeHtml(foLabel(fo.sheds))} · done`));
+    if(ft&&!ft.done)G.today.push(L('a',`<b>Feed off tomorrow morning · ${escapeHtml(foLabel(ft.sheds))}</b> · kill sheet ${escapeHtml(foDay(ft.kill))}`));}
   // Today
   const d0=days[0];
   d0.pick.forEach(p=>G.today.push(L('r',p.final?`<b>Final pickup · Shed ${p.shed}</b> · clean-out`:`<b>Pickup Shed ${p.shed}</b> · about ${p.birds.toLocaleString('en-US')} birds${p.planned?' (planned)':''}`,'data-mgr-pickups')));

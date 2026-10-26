@@ -198,9 +198,10 @@
   // ---------- manager settings ----------
   const settings = (farm, set) => call('settings', set ? { farm, set } : { farm });
   const phones = farm => call('list', { farm });
+  const feedoff = (farm, events) => call('feedoff', { farm, events });
   const test = (farm, target) => call('test', target ? { farm, target } : { farm, id: phoneId(farm, 'manager') });
 
   window.FarmNotify = { URL: URL_, isIOS, isAndroid, standalone, supported, state, enable, disable, refresh, phoneId,
     hasSeen: farm => ls.get(seenKey(farm), null) != null,
-    send, flush, taskBaseline, taskChanges, dayDigest, sendDay, changedSince, markSeen, settings, phones, test };
+    send, flush, feedoff, taskBaseline, taskChanges, dayDigest, sendDay, changedSince, markSeen, settings, phones, test };
 })();

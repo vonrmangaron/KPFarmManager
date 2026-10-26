@@ -10,6 +10,11 @@
 //   settings    { farm, set? }        manager: read (and with set, save) quiet hours, times and switches
 //   list        { farm }              manager: who has notifications on
 //   test        { farm, target? }     manager: send a test to one phone (default: the one asking)
+//   feedoff     { farm, events:[{ date, kill, sheds:[ids], birds, done }] }   manager: the feed-off days (ProdWise)
+//
+// FEED OFF (2026-10-26): the kill sheet date is the pickup; birds are caught the evening before, so Ross tells the
+// managers at foTime (7:00) on that day to turn the feed off, again at foRemindTime (11:00) if nobody tapped
+// "Feed is off". It ignores quiet hours and stays on screen (requireInteraction) where the phone allows it.
 //
 // EVENTS
 //   { type:'task', kind:'new'|'moved'|'changed', to:[names], id, title, date, from }   → those workers
@@ -46,6 +51,7 @@ const DEFAULTS = {
   remindOn: false, remindTime: '15:00',
   wNew: true, wMoved: true,
   mReports: true, mDone: true, mFeed: false,
+  foOn: true, foTime: '07:00', foRemindOn: true, foRemindTime: '11:00',   // Ross: feed off the morning of the catch
 };
 
 // ---------- small helpers ----------
@@ -264,6 +270,31 @@ async function rememberFarm(env, farm) {
   if (!farms.includes(farm)) { farms.push(farm); await putJson(env, 'farms', farms.slice(-50)); }
 }
 
+// ---------- feed off before the catch ----------
+const fmtDay = d => { const x = new Date(d + 'T12:00:00Z'); return isNaN(x) ? '' : `${DOW[x.getUTCDay()].slice(0, 3)} ${x.getUTCDate()} ${MON[x.getUTCMonth()]}`; };
+const shedsLabel = a => { const s = (a || []).slice().sort((x, y) => x - y); return s.length === 1 ? 'Shed ' + s[0] : 'Sheds ' + s.slice(0, -1).join(', ') + ' & ' + s[s.length - 1]; };
+async function feedOffTick(env, farm, cfg, subs, now) {
+  const evs = (await getJson(env, `fo:${farm}`)) || [];
+  const ev = evs.find(e => e.date === now.day);
+  if (!ev || ev.done) return;
+  const sent = (await getJson(env, `fosent:${farm}`)) || {};
+  const t1 = toMin(cfg.foTime), t2 = toMin(cfg.foRemindTime);
+  let kind = null;
+  if (sent[ev.date] !== 1 && sent[ev.date] !== 2 && now.min >= t1 && now.min < t1 + 240) kind = 1;
+  else if (sent[ev.date] === 1 && cfg.foRemindOn && now.min >= t2 && now.min < t2 + 240) kind = 2;
+  if (!kind) return;
+  const label = shedsLabel(ev.sheds), birds = ev.birds ? ` · ${Number(ev.birds).toLocaleString('en-US')} birds` : '';
+  const msg = kind === 1
+    ? { title: `Feed off today: ${label}`, body: `Ross: they’re caught tonight (kill sheet ${fmtDay(ev.kill)}${birds}). Tap when the feed is off.` }
+    : { title: `Still to do: feed off ${label}`, body: `Ross: nobody has marked the feed off yet. Catch tonight, kill sheet ${fmtDay(ev.kill)}.` };
+  const msgs = Object.entries(subs).filter(([, s]) => s.role === 'manager')
+    .map(([id]) => ({ id, msg: { ...msg, tag: 'feedoff-' + ev.date, sticky: true, url: `${MGR_URL}?nt=${encodeURIComponent('feedoff:' + ev.date)}`, app: 'manager' }, urgent: true }));
+  Object.keys(sent).forEach(k => { if (k < now.day) delete sent[k]; });
+  sent[ev.date] = kind;
+  await putJson(env, `fosent:${farm}`, sent);
+  if (msgs.length) await deliver(env, farm, subs, msgs);
+}
+
 // ---------- the 15-minute timer ----------
 function dayMessage(p, kind) {
   const open = (p.open || []).length, od = p.overdue || 0;
@@ -283,6 +314,7 @@ async function tick(env) {
     const { cfg, subs } = await farmState(env, farm);
     if (!Object.keys(subs).length) continue;
     const now = localNow(cfg.tz), quiet = isQuiet(cfg, now.min);
+    if (cfg.foOn) await feedOffTick(env, farm, cfg, subs, now);
     if (quiet) continue;
     // 1. what quiet hours held back
     const held = await getJson(env, `held:${farm}`);
@@ -420,6 +452,15 @@ export default {
         await putJson(env, `cfg:${farm}`, cfg);
       }
       return json({ ok: true, settings: Object.assign({}, DEFAULTS, cfg) });
+    }
+    if (action === 'feedoff') {
+      const evs = (Array.isArray(b.events) ? b.events : []).slice(0, 20)
+        .filter(e => e && /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') && /^\d{4}-\d{2}-\d{2}$/.test(e.kill || ''))
+        .map(e => ({ date: e.date, kill: e.kill, sheds: (Array.isArray(e.sheds) ? e.sheds : []).slice(0, 12).map(Number).filter(n => n > 0 && n < 100), birds: Math.max(0, Math.min(1e6, Math.round(+e.birds || 0))), done: !!e.done }));
+      const next = JSON.stringify(evs), cur = await env.NOTIFY.get(`fo:${farm}`);
+      if (next !== cur) await env.NOTIFY.put(`fo:${farm}`, next);
+      ctx.waitUntil(rememberFarm(env, farm));
+      return json({ ok: true, events: evs.length });
     }
     if (action === 'list') {
       const subs = (await getJson(env, `subs:${farm}`)) || {};
