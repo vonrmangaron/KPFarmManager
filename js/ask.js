@@ -195,7 +195,7 @@ function rsHtml(st,d,R){
   const nDone=R.plan.filter((p,i)=>R.ticks.has(i)).length;
   return `<div class="rs-h"><div class="rs-ht"><div class="rs-face" id="rsFace" role="button" tabindex="0" title="Tap Ross for today's top job" aria-label="Ross">${rsFace(R.mood)}</div>
         <div class="rs-t"><small>Ross · morning report</small><h2 id="rsTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rs-m">${meta}</div><div class="rs-say" id="rsSay">${st.busy?'<span class="rs-muted2">Ross is reading the farm…</span>':escapeHtml(R.say)}</div></div>
-        <button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div>
+        <div class="rs-hb"><button type="button" class="rs-x rs-redo" data-rs-redo aria-label="Refresh the report with the latest farm data" title="Refresh: Ross reads the farm again"${st.busy?' disabled':''}>↻</button><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div></div>
       <nav class="rs-nav" aria-label="Sections">${RS_TABS.map(([k,l],i)=>`<button type="button" data-rs-tab="${k}" class="${i===0?'on':''}">${l}${R.tone[k]?`<i class="${R.tone[k]}"></i>`:''}</button>`).join('')}</nav></div>
     <div class="rs-scroll" id="rsScroll">
       <div class="rs-kpi">${d.kpi.map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('')}</div>
@@ -233,6 +233,8 @@ function rsEnsureDom(){
   const m=document.getElementById('rsModal');
   m.addEventListener('click',e=>{
     if(e.target===m||e.target.closest('[data-rs-close]')){rsClose();return;}
+    // ↻ (2026-10-26): Ross reads the farm again — after a change, the report shouldn't wait until tomorrow
+    const redo=e.target.closest('[data-rs-redo]');if(redo){if(redo.disabled)return;const st=rsLoad();delete st.main;delete st.err;delete st.sheds;rsSave(st);rsOpen();return;}
     const t=e.target.closest('[data-rs-tab]');if(t){const i=RS_TABS.findIndex(x=>x[0]===t.dataset.rsTab);if(rsStep>=0)rsGoStep(i);else rsScrollTo(t.dataset.rsTab);return;}
     if(e.target.closest('#rsNext')){if(rsStep===RS_TABS.length-1)rsEndWalk();else rsGoStep(rsStep+1);return;}
     if(e.target.closest('#rsPrev')){rsGoStep(rsStep<=0?0:rsStep-1);return;}
