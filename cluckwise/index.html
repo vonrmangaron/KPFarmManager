@@ -4413,6 +4413,18 @@
   .cw-ross-dot{ position:absolute; top:-3px; right:-3px; width:11px; height:11px; border-radius:50%; background:#E2A13A; border:2px solid var(--surface); }
   .cw-ross-dot[hidden]{ display:none; }
   @media (max-width:760px){ .cw-ross-btn{ padding:0 6px 0 5px; } .cw-ross-btn span{ display:none; } }
+  /* Tick animation (2026-10-26) */
+  .tick-pop{ animation:tickPop .5s cubic-bezier(.2,1.6,.4,1); position:relative; }
+  .tick-pop::after{ content:""; position:absolute; inset:-2px; border-radius:inherit; box-shadow:0 0 0 0 rgba(15,138,117,.55); animation:tickRing .6s ease-out; pointer-events:none; }
+  @keyframes tickPop{ 0%{ transform:scale(.6); } 55%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
+  @keyframes tickRing{ to{ box-shadow:0 0 0 12px rgba(15,138,117,0); } }
+  .done-flash{ animation:doneFlash .9s ease-out; }
+  @keyframes doneFlash{ 0%{ box-shadow:0 0 0 2px #13806D, 0 0 0 0 rgba(15,138,117,.35); background-color:#E1F2EE; } 100%{ box-shadow:none; } }
+  .open-flash{ animation:openFlash .7s ease-out; }
+  @keyframes openFlash{ 0%{ box-shadow:0 0 0 2px #E2A13A; } 100%{ box-shadow:none; } }
+  .undo-toast .undo-key{ font:700 11px Inter,sans-serif; opacity:.7; border:1px solid currentColor; border-radius:6px; padding:1px 6px; margin-left:8px; }
+  @media (hover:none){ .undo-toast .undo-key{ display:none; } }
+  @media (prefers-reduced-motion:reduce){ .tick-pop, .tick-pop::after, .done-flash, .open-flash{ animation:none; } }
   /* Notes on shed prep jobs (2026-10-25) */
   #detailNotes{ white-space:pre-line; }
   .pl-c{ position:relative; }
@@ -4762,7 +4774,11 @@
     <label class="prep-tm-k">Day</label>
     <div class="prep-chips" id="prepTaskDays"><button type="button" data-pday="0">Today</button><button type="button" data-pday="1">Tomorrow</button><input type="date" id="prepTaskDate" aria-label="Pick a day"></div>
     <label class="prep-tm-k" for="prepTaskWho">Who</label>
-    <input type="text" id="prepTaskWho" class="st-input" list="assigneeList" placeholder="Worker's name (optional)" autocomplete="off">
+    <div class="prep-who">
+      <div class="assignee-chips" id="prepWhoChips"></div>
+      <div class="ai-icon-row"><input type="text" id="prepTaskWho" class="st-input" list="assigneeList" placeholder="Type a name, press Enter — or tap below" maxlength="40" autocomplete="off"><button class="btn-ghost-ai" id="prepWhoAdd" title="Add this person" type="button">+</button></div>
+      <div class="assignee-picks" id="prepWhoPicks" aria-label="Tap a name to add"></div>
+    </div>
     <label class="prep-tm-k prep-only-task">Repeat</label>
     <div class="prep-chips prep-only-task" id="prepTaskRepeat"><button type="button" data-prep-rep="0" class="on">Once</button><button type="button" data-prep-rep="1">Every day until done</button></div>
     <div class="prep-tm-btns"><button type="button" class="btn-ghost prep-undate" id="prepTaskUndate" hidden>Remove date</button><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
@@ -6772,6 +6788,7 @@
   function toggleDone(id){
     const t = tasks.find(t=>t.id===id);
     if(!t) return;
+    const undoTick = captureUndo();
     // The maintenance check is done only once every repair job in progress is fixed
     if(t.status !== 'done' && isMaintCheckTask(t)){
       const n = repairsInProgress().length;
@@ -6779,6 +6796,8 @@
     }
     t.status = t.status==='done' ? 'open' : 'done';
     stampDone(t);
+    offerUndo(`${t.status === 'done' ? 'Ticked' : 'Reopened'} ${taskLabel(t)}`, undoTick, { quiet:true });
+    tickFxId = id; tickFxAt = Date.now(); tickFxDone = t.status === 'done';
     prepFromTask(t);
     addHistory(t.status==='done' ? 'Completed' : 'Reopened', taskLabel(t));
     if(t.linkedReportId){
@@ -10625,6 +10644,14 @@
 
   // Drop: the card settles into place
   let dropFxId = null, dropFxAt = 0;
+  // Tick: the box pops, a ring ripples out and the card flashes green (or fades back when reopened)
+  let tickFxId = null, tickFxAt = 0, tickFxDone = true;
+  function applyTickFx(){
+    if(!tickFxId || Date.now() - tickFxAt > 900) return;
+    const id = CSS.escape(tickFxId);
+    document.querySelectorAll(`[data-id="${id}"] .task-complete-btn, [data-dm-tick="${id}"], [data-id="${id}"] .kcheck, [data-id="${id}"] .k-tick`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); });
+    document.querySelectorAll(`.task-card[data-id="${id}"], .kcard[data-id="${id}"], [data-dm-task="${id}"]`).forEach(el=>{ const c = tickFxDone ? 'done-flash' : 'open-flash'; el.classList.remove('done-flash', 'open-flash'); void el.offsetWidth; el.classList.add(c); setTimeout(()=> el.classList.remove(c), 900); });
+  }
   function cwDropFx(el){
     const id = el && el.dataset ? el.dataset.id : null; if(!id) return;
     dropFxId = id; dropFxAt = Date.now(); setTimeout(applyDropFx, 0);
@@ -10875,39 +10902,48 @@
     renderReportsView();
     animateViewChange();
     applyDropFx();
+    applyTickFx();
     renderMlog();
     if(mlogHistId) renderMlogHistory();
   }
 
   // ==================== UNDO ====================
-  let undoState = null, undoTimer = null;
+  // Undo (2026-10-26): a history of the last 30 changes, each undoable for 30 minutes — Ctrl/⌘+Z steps back one
+  // at a time (deletes, moves, ticks…), the toast stays 15 s. Each undo reverts only its own change, so anything
+  // synced in from another phone since stays.
+  let undoState = null, undoTimer = null, undoStack = [];
+  const UNDO_KEEP_MS = 30 * 60000, UNDO_MAX = 30, UNDO_TOAST_MS = 15000;
   function captureUndo(){ return cloneData({ tasks, batches, events, frequentTemplates, maintenance }); }
+  function undoFresh(){ const now = Date.now(); undoStack = undoStack.filter(x=> now - x.at < UNDO_KEEP_MS); undoState = undoStack[undoStack.length - 1] || null; return undoState; }
   function hideUndoToast(){
     const el = $('#undoToast');
     if(el) el.classList.remove('show');
     clearTimeout(undoTimer);
   }
-  function offerUndo(label, snap){
+  function offerUndo(label, snap, opts){
     if(!snap) return;
-    undoState = { label, snap, after: captureUndo() };
+    undoStack.push({ label, snap, after: captureUndo(), at: Date.now() });
+    if(undoStack.length > UNDO_MAX) undoStack.shift();
+    undoFresh();
+    if(opts && opts.quiet) return;   // ticks: no toast, but Ctrl+Z still brings them back
     let el = $('#undoToast');
     if(!el){
       el = document.createElement('div');
       el.id = 'undoToast';
       el.className = 'undo-toast';
-      el.innerHTML = '<span class="undo-msg"></span><button type="button">Undo</button>';
+      el.innerHTML = '<span class="undo-msg"></span><span class="undo-key" title="Keyboard: Ctrl+Z (⌘Z on a Mac)">Ctrl+Z</span><button type="button">Undo</button>';
       document.body.appendChild(el);
       el.querySelector('button').addEventListener('click', performUndo);
     }
     el.querySelector('.undo-msg').textContent = label;
     el.classList.add('show');
     clearTimeout(undoTimer);
-    undoTimer = setTimeout(()=>{ el.classList.remove('show'); undoState = null; }, 7000);
+    undoTimer = setTimeout(()=>{ el.classList.remove('show'); }, UNDO_TOAST_MS);
   }
   function performUndo(){
-    if(!undoState) return;
-    const s = undoState.snap, label = undoState.label, after = undoState.after;
-    undoState = null;
+    if(!undoFresh()){ showToast('Nothing to undo.'); return; }
+    const top = undoStack.pop(), s = top.snap, label = top.label, after = top.after;
+    undoFresh();
     hideUndoToast();
     // Undo only this action's changes: anything synced in from another phone since stays.
     const current = { tasks, batches, events, frequentTemplates, maintenance };
@@ -10929,7 +10965,7 @@
     if(relinked) scheduleReportsPush();
     addHistory('Undone', label);
     persist(); renderAll();
-    showToast('Undone.');
+    showToast(`Undone: ${label}${undoState ? ' · Ctrl+Z again for "' + undoState.label + '"' : ''}`);
   }
 
   // ==================== AUDIT PREP ====================
@@ -12721,6 +12757,8 @@
     return `<div class="pl-wrap${prepPick ? ' picking' : ''}" data-filter="${prepFilter}" data-pick-shed="${prepPick ? enc(prepPick.shed) : ''}"><table class="pl-tab"><thead>${head}</thead>${body}${prepPick ? '' : addSec + foot}</table>${pickBar}</div>
       <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="task"></i>Task (its day under it)</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · ≡ several jobs in one task</span></div>`;
   }
+  let prepTickFx = null, prepTickAt = 0;
+  function applyPrepTickFx(){ if(!prepTickFx || Date.now() - prepTickAt > 900) return; document.querySelectorAll(`[data-prep-tick="${CSS.escape(prepTickFx)}"]`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); }); }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
     if(reconcileShedPrep()) persist();
@@ -12883,6 +12921,7 @@
   }
   function plAct(kind, cid){ const b = document.createElement('button'); b.dataset[kind === 'ready' ? 'prepReady' : 'prepUnready'] = cid; prepBoardClick({ target: b }); }
   function prepToggleUnit(cid, id){
+    prepTickFx = cid + '|' + id; prepTickAt = Date.now(); setTimeout(applyPrepTickFx, 0); setTimeout(applyPrepTickFx, 120);
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
     const sb = tk && tk.prep && tk.prep.bundle ? (tk.subs || []).find(x=> x.prepUid === u.id) : null;
@@ -12935,6 +12974,16 @@
     reconcileShedPrep(); persist(); renderAll();
     showToast(note ? `Note saved for ${where}.` : 'Note deleted.');
   }
+  // Who (2026-10-26): several people can share a shed prep task — chips like the task window, tap a name to add
+  let prepWho = [];
+  function prepWhoSet(v){ prepWho = String(v || '').split(',').map(x=> x.trim()).filter(Boolean); $('#prepTaskWho').value = ''; prepWhoRender(); }
+  function prepWhoValue(){ const typed = $('#prepTaskWho').value.trim(); if(typed && !prepWho.some(n=> n.toLowerCase() === typed.toLowerCase())) prepWho.push(typed); $('#prepTaskWho').value = ''; return prepWho.slice(); }
+  function prepWhoRender(){
+    renderAssigneeChips('#prepWhoChips', prepWho);
+    const taken = new Set(prepWho.map(n=> n.toLowerCase())), box = $('#prepWhoPicks'); if(!box) return;
+    box.innerHTML = knownPeople().filter(n=> !taken.has(n.toLowerCase())).map(n=> `<button type="button" class="assignee-pick" data-prep-pick="${escapeHtmlAttr(n)}"><span class="ap-dot" style="background:${colorForAssignee(n)}"></span>${escapeHtml(n)}</button>`).join('');
+  }
+  function prepWhoAdd(name){ name = String(name || '').trim(); if(!name) return; if(!prepWho.some(n=> n.toLowerCase() === name.toLowerCase())) prepWho.push(name); $('#prepTaskWho').value = ''; prepWhoRender(); }
   function openPrepTaskModal(cid, id){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
     prepTaskFor = { cid, id }; prepTaskRep = false;
@@ -12944,7 +12993,7 @@
     ['#prepTaskTitleK','#prepTaskTitleIn','#prepTaskPrevK','#prepTaskPrev'].forEach(x=> $(x).hidden = true);
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
     $('#prepTaskDate').value = u.due || addDaysStr(dateKey(new Date()), 1);
-    $('#prepTaskWho').value = u.due ? (u.dueWho || '') : '';
+    prepWhoSet(u.due ? (u.dueWho || '') : '');
     $('#prepTaskUndate').hidden = !u.due;
     try{ refreshAssigneeDatalist(); }catch(e){}
     prepSyncTaskModal();
@@ -12962,7 +13011,7 @@
     let last = null;
     $('#prepTaskPrev').innerHTML = picked.map(x=>{ const h = x.sec.id !== last ? `<div class="prep-tprev-h">${escapeHtml(x.sec.t)}</div>` : ''; last = x.sec.id; return h + `<div class="prep-tprev-i">${escapeHtml(x.u === x.sec ? x.sec.t : x.u.t)}</div>`; }).join('');
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
-    $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), 1); $('#prepTaskWho').value = '';
+    $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), 1); prepWhoSet('');
     try{ refreshAssigneeDatalist(); }catch(e){}
     prepSyncTaskModal();
     $('#prepTaskModal').classList.add('open');
@@ -12976,7 +13025,7 @@
     $('#prepTaskName').textContent = sec.t;
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
     $('#prepTaskDate').value = sec.due || addDaysStr(dateKey(new Date()), 1);
-    $('#prepTaskWho').value = sec.due ? (sec.dueWho || '') : '';
+    prepWhoSet(sec.due ? (sec.dueWho || '') : '');
     $('#prepTaskUndate').hidden = !sec.due;
     $('#prepSecApplyRow').hidden = !open.length;
     $('#prepSecApply').checked = true;
@@ -12995,12 +13044,12 @@
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
     if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Make a task'; }
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
-    $('#prepTaskWho').placeholder = "Worker's name (optional)";
+    $('#prepTaskWho').placeholder = 'Type a name, press Enter — or tap below';
     $('#prepTaskSave').textContent = 'Make task'; $('#prepTaskUndate').hidden = true;
   }
   function savePrepTaskOne(quiet){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
-    const date = $('#prepTaskDate').value || dateKey(new Date()), who = $('#prepTaskWho').value.trim();
+    const date = $('#prepTaskDate').value || dateKey(new Date()), whoList = prepWhoValue(), who = whoList.join(', ');
     if(f.sec){
       const sec = (c.sections || []).find(x=> x.id === f.id); if(!sec) return;
       const apply = !$('#prepSecApplyRow').hidden && $('#prepSecApply').checked;
@@ -13018,7 +13067,7 @@
       const picked = prepUnits(c).filter(x=> f.bundle.includes(x.u.id) && !x.u.done && !x.u.taskId);
       if(!picked.length){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; renderAll(); return; }
       const title = $('#prepTaskTitleIn').value.trim().replace(/\s+/g, ' ') || `Shed ${c.shed} task list`;
-      const t = addTask(title, '🧹', date, { assignees: who ? [who] : [], prep: { cid: c.id, uid: picked[0].u.id, uids: picked.map(x=> x.u.id), shed: c.shed, bundle: true, daily: prepTaskRep },
+      const t = addTask(title, '🧹', date, { assignees: whoList.slice(), prep: { cid: c.id, uid: picked[0].u.id, uids: picked.map(x=> x.u.id), shed: c.shed, bundle: true, daily: prepTaskRep },
         subs: picked.map(x=> ({ id: uid(), t: x.u === x.sec ? x.sec.t : x.u.t, sec: x.sec.t, prepUid: x.u.id })) });
       picked.forEach(x=>{ x.u.taskId = t.id; x.u.taskDate = date; x.u.taskWho = who; });
       prepHist(c, `Shed ${c.shed}: ${picked.length} jobs made into the task "${title}"`);
@@ -13037,7 +13086,7 @@
       return;
     }
     delete u.due; delete u.dueWho;
-    const t = addTask(u.t, null, date, { assignees: who ? [who] : [], prep: { cid: c.id, uid: u.id, shed: c.shed, daily: prepTaskRep } });
+    const t = addTask(u.t, null, date, { assignees: whoList.slice(), prep: { cid: c.id, uid: u.id, shed: c.shed, daily: prepTaskRep } });
     u.taskId = t.id; u.taskDate = date; u.taskWho = who;
     if(!quiet){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; }
     if(!quiet){ persist(); renderAll(); }
@@ -14906,6 +14955,10 @@
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
   document.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
+  $('#prepWhoAdd').addEventListener('click', ()=> prepWhoAdd($('#prepTaskWho').value));
+  $('#prepTaskWho').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); prepWhoAdd($('#prepTaskWho').value); } });
+  $('#prepWhoChips').addEventListener('click', (e)=>{ const b = e.target.closest('.chip-remove'); if(!b) return; prepWho.splice(Number(b.dataset.idx), 1); prepWhoRender(); });
+  $('#prepWhoPicks').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-pick]'); if(b) prepWhoAdd(b.dataset.prepPick); });
   $('#prepNoteSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-pn-scope]'); if(!b) return; prepNoteScope = b.dataset.pnScope; prepNoteFill(); });
   $('#prepNoteSave').addEventListener('click', ()=> savePrepNote(false));
   $('#prepNoteDel').addEventListener('click', ()=> savePrepNote(true));
@@ -16076,7 +16129,7 @@
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable);
     if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openSearch(); return; }
     if(typing) return;
-    if((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && undoState){ e.preventDefault(); performUndo(); return; }
+    if((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && undoFresh()){ e.preventDefault(); performUndo(); return; }
     if(e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); openSearch(); }
     if((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && viewMode === 'list' && agendaFilter === 'today'
        && !e.metaKey && !e.ctrlKey && !e.altKey && !document.querySelector('.form-modal.open, .history-drawer.open')){
@@ -16102,10 +16155,13 @@
     if(CW_EMBED) parent.postMessage({ pwSection:'production' }, location.origin);
     else location.href = '../';
   });
-  // the floating pill slides away while a page scrolls down, back on the way up or when it stops
-  (function(){ const last = new WeakMap(); let t = null;
+  // the floating pill slides away while a page scrolls down, back on the way up or when it stops — only for the
+  // user's own scrolling (2026-10-26): a redraw after a sync check used to bounce it while the app sat idle
+  (function(){ const last = new WeakMap(); let t = null, userAt = 0;
+    ['wheel','touchstart','touchmove','keydown','pointerdown'].forEach(ev=> window.addEventListener(ev, ()=>{ userAt = Date.now(); }, { passive:true, capture:true }));
     document.addEventListener('scroll', e=>{ const el = e.target === document ? document.scrollingElement : e.target; const d = document.getElementById('cwDock'); if(!d || !el || typeof el.scrollTop !== 'number') return;
       const y = el.scrollTop, prev = last.has(el) ? last.get(el) : 0; last.set(el, y);
+      if(Date.now() - userAt > 1200) return;   // not the user scrolling: the app redrew or restored a position
       if(y > prev + 4 && y > 80) d.classList.add('away'); else if(y < prev - 4) d.classList.remove('away');
       clearTimeout(t); t = setTimeout(()=> d.classList.remove('away'), 2000); }, true); })();
   load();

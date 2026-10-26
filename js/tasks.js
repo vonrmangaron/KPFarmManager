@@ -66,10 +66,14 @@ function openProductionSection(opts){
 }
 // the switch slides its highlight across to the section that just opened
 function pwSlide(to){const d=document.getElementById('pwDock');if(!d)return;d.classList.add(to==='tasks'?'ws-from-production':'ws-from-tasks');void d.offsetWidth;requestAnimationFrame(()=>d.classList.remove('ws-from-production','ws-from-tasks'));}
-// The floating pill slides out of the way while a page scrolls down, and comes back on the way up or when it stops
-(function(){const last=new WeakMap();let t=null;
+// The floating pill slides out of the way while a page scrolls down, and comes back on the way up or when it stops.
+// Only the user's own scrolling counts (2026-10-26): a redraw after a sync check moves the scroll for a moment,
+// and that used to send the pill down and back up while the app sat idle.
+(function(){const last=new WeakMap();let t=null,userAt=0;
+  ['wheel','touchstart','touchmove','keydown','pointerdown'].forEach(ev=>window.addEventListener(ev,()=>{userAt=Date.now();},{passive:true,capture:true}));
   document.addEventListener('scroll',e=>{const el=e.target===document?document.scrollingElement:e.target;const d=document.getElementById('pwDock');if(!d||!el||typeof el.scrollTop!=='number')return;
     const y=el.scrollTop,prev=last.has(el)?last.get(el):0;last.set(el,y);
+    if(Date.now()-userAt>1200)return;   // not the user scrolling: the app redrew or restored a position
     if(y>prev+4&&y>80)d.classList.add('away');else if(y<prev-4)d.classList.remove('away');
     clearTimeout(t);t=setTimeout(()=>d.classList.remove('away'),2000);},true);})();
 // Tasks can ask for a Production page: Set up sheds, or the New batch window

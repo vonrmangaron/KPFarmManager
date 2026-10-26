@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.10.25-c117';
+const CACHE_VERSION = 'cluckwise-2026.10.26-c119';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
