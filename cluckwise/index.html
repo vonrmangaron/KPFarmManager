@@ -3524,10 +3524,11 @@
   .tsub.done .tsub-t, .ds-row.done .ds-t{ color:var(--muted); text-decoration:line-through; }
   .st-edit{ display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
   .st-edit:empty{ display:none; }
-  .st-row{ display:grid; grid-template-columns:14px 1fr auto auto; gap:6px; align-items:center; }
+  .sub-row{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:6px; align-items:center; }   /* own class: "st-row" is the Settings row and squeezed the step box to 14 px on phones (2026-10-26) */
   .st-grip{ color:var(--muted); font-size:11px; letter-spacing:-2px; }
   .st-in{ width:100%; border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:7px 9px; font:600 14px Inter,system-ui,sans-serif; color:var(--ink); box-sizing:border-box; }
-  .st-row.done .st-in{ color:var(--muted); text-decoration:line-through; }
+  @media (max-width:760px){ .st-in, .st-addrow input{ font-size:16px; padding-block:9px; } .st-up, .st-x{ width:34px; height:34px; } }   /* iPhone zooms on boxes under 16 px */
+  .sub-row.done .st-in{ color:var(--muted); text-decoration:line-through; }
   .st-up, .st-x{ all:unset; cursor:pointer; width:28px; height:28px; display:grid; place-items:center; border-radius:8px; color:var(--muted); }
   .st-up:hover, .st-x:hover{ background:var(--surface-soft); color:var(--ink); }
   .st-up[disabled]{ opacity:.3; cursor:default; }
@@ -5220,7 +5221,7 @@
 
     <label for="editTaskSubInput">Subtasks (optional)</label>
     <div class="st-edit" id="editTaskSubs"></div>
-    <div class="st-addrow"><span aria-hidden="true">＋</span><input type="text" id="editTaskSubInput" maxlength="80" placeholder="Add a step — press Enter for the next one" autocomplete="off"></div>
+    <div class="st-addrow"><span aria-hidden="true">＋</span><input type="text" id="editTaskSubInput" maxlength="80" placeholder="Add a step (Enter adds the next)" autocomplete="off"></div>
 
     <label for="editTaskAssigneeInput">Assignees (optional)</label>
     <div class="ai-icon-row">
@@ -6752,7 +6753,7 @@
   // steps editor in the Add/Edit window
   function renderSubEditor(){
     const box = $('#editTaskSubs'); if(!box) return;
-    box.innerHTML = editingSubs.map((x, i)=> `<div class="st-row${x.done ? ' done' : ''}" data-i="${i}"><input type="text" class="st-in" data-sub-i="${i}" value="${escapeHtmlAttr(x.t)}" maxlength="80" aria-label="Step ${i + 1}"><button type="button" class="st-up" data-sub-up="${i}" title="Move up" aria-label="Move step up"${i ? '' : ' disabled'}>↑</button><button type="button" class="st-x" data-sub-x="${i}" title="Remove this step" aria-label="Remove step">✕</button></div>`).join('');
+    box.innerHTML = editingSubs.map((x, i)=> `<div class="sub-row${x.done ? ' done' : ''}" data-i="${i}"><input type="text" class="st-in" data-sub-i="${i}" value="${escapeHtmlAttr(x.t)}" maxlength="80" aria-label="Step ${i + 1}"><button type="button" class="st-up" data-sub-up="${i}" title="Move up" aria-label="Move step up"${i ? '' : ' disabled'}>↑</button><button type="button" class="st-x" data-sub-x="${i}" title="Remove this step" aria-label="Remove step">✕</button></div>`).join('');
   }
   function addTask(name, icon, dateVal, meta){
     const t = { id: uid(), name, icon: icon || guessIcon(name), date: dateVal || null, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [] };

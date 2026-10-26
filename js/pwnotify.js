@@ -36,11 +36,11 @@ function pnBar(){
 function pnThisDevice(){
   const N=window.FarmNotify;
   let hint,ctl;
-  if(pnMine==='on'){hint='This device gets your notifications.';ctl=`<span class="st2-chip ok">● On</span><button type="button" class="set-btn" data-pn-test>Send a test</button><button type="button" class="set-btn" data-pn-off>Turn off</button>`;}
+  if(pnMine==='on'){hint='This device receives your notifications.';ctl=`<span class="st2-chip ok">● On</span><button type="button" class="set-btn" data-pn-test>Send a test</button><button type="button" class="set-btn" data-pn-off>Turn off</button>`;}
   else if(pnMine==='install'){hint='On iPhone, add ProdWise to the Home Screen first (Share ⬆ › Add to Home Screen), then open it from there and come back here.';ctl='<span class="st2-chip">Home Screen first</span>';}
   else if(pnMine==='denied'){hint='Notifications are blocked for ProdWise in this phone’s settings. Allow them there, then come back.';ctl='<span class="st2-chip">Blocked</span>';}
   else if(pnMine==='unsupported'){hint='This browser can’t show notifications. Use Chrome on Android, or ProdWise from the Home Screen on iPhone.';ctl='<span class="st2-chip">Not available</span>';}
-  else{hint=N&&N.isIOS()?'You’ll be asked to allow notifications.':'Problem reports, finished high-priority tasks and your own jobs.';ctl=`<button type="button" class="set-btn primary" data-pn-on>Turn on</button>`;}
+  else{hint=N&&N.isIOS()?'You’ll be asked to allow notifications.':'Problem reports, completed high-priority tasks and your own tasks.';ctl=`<button type="button" class="set-btn primary" data-pn-on>Turn on</button>`;}
   return stRow('Notifications on this device',hint,ctl);
 }
 function pnWho(){
@@ -53,9 +53,9 @@ function pnWho(){
     const dev=p.devs.length?[...new Set(p.devs.map(d=>d.device||'Phone'))].join(' · '):'—';
     const ctl=p.devs.length?`<span class="st2-chip">${escapeHtml(dev)}</span><span class="st2-chip ok">On</span><button type="button" class="set-btn" data-pn-test="${escapeAttr(p.devs[0].id)}">Send a test</button>`
       :`<span class="st2-chip">Not set up</span><button type="button" class="set-btn" data-pn-link="${escapeAttr(p.name)}">Send setup link</button>`;
-    return stRow(`${you?'You ('+escapeHtml(p.name)+')':escapeHtml(p.name)}`,p.role==='manager'?'Manager':'Crew',ctl);
+    return stRow(`${you?escapeHtml(p.name)+' (you)':escapeHtml(p.name)}`,p.role==='manager'?'Manager':'Crew',ctl);
   }).join('');
-  return rows||stRow('Nobody yet','Workers turn it on in the Crew app (a card at the top of Today). Send them the link.',`<button type="button" class="set-btn" data-pn-link="">Copy setup link</button>`);
+  return rows||stRow('No recipients yet','Workers turn notifications on in the Crew app. Send them the setup link.',`<button type="button" class="set-btn" data-pn-link="">Copy setup link</button>`);
 }
 function pnInner(){
   if(!pnFarm())return `<div class="st2-empty">Connect this device to a farm first.</div>`;
@@ -67,21 +67,21 @@ function pnInner(){
   return `<div class="set-apply" id="pnApply" role="region" aria-label="Unapplied changes"${ch.length?'':' hidden'}><div class="set-apply-txt"><b>${ch.length} change${ch.length===1?'':'s'} not applied</b><span>Notifications</span></div><button type="button" class="set-btn" data-pn-discard>Discard</button><button type="button" class="set-btn primary" data-pn-apply>Apply</button></div>`
    +stSec('This device',pnThisDevice())
    +stSec('Quiet hours',
-      stRow('Quiet hours','Nothing is sent in this time — it’s held back and sent when it ends.',pnSw('quietOn','Quiet hours'))
-     +(pnDraft.quietOn?`<div class="st2-row pn-qrow"><div class="pn-q"><span>From</span>${pnTime('quietFrom','Quiet from')}<span>to</span>${pnTime('quietTo','Quiet until')}<span class="st2-chip">every day</span></div>${pnBar()}</div>`
-       +stRow('Urgent problem reports break through','To you only, even in quiet hours.',pnSw('urgentBreak','Urgent reports break through')):''))
-   +stSec('Times',
-      stRow('“Your day”','Each person’s jobs for the day, in the morning.',`${pnDraft.dayOn?pnTime('dayTime','Your day time'):''}${pnSw('dayOn','Your day')}`)
-     +stRow('Afternoon reminder','If someone’s task for today is still open.',`${pnDraft.remindOn?pnTime('remindTime','Reminder time'):''}${pnSw('remindOn','Afternoon reminder')}`))
-   +stSec('Workers are told about',
-      stRow('A new task for them','Several in a row come as one notification.',pnSw('wNew','New task'))
-     +stRow('Their task moved or changed','',pnSw('wMoved','Task moved or changed')))
-   +stSec('You’re told about',
-      stRow('Problem reports','Urgent ones straight away.',pnSw('mReports','Problem reports'))
-     +stRow('High-priority task finished','When a worker ticks off a 🔥 task.',pnSw('mDone','High-priority task finished'))
-     +stRow('Feed and silo warnings','A pair’s silos run low within 3 days. Checked when ProdWise is open.',pnSw('mFeed','Feed and silo warnings')))
-   +stSec('Who has notifications on',pnWho())
-   +`<p class="set-muted pn-foot">Free · sent from your Cloudflare account. Times are the farm’s time (${escapeHtml(pnCfg.tz||'')}).</p>`;
+      stRow('Hold notifications overnight','Nothing is sent during these hours. Held notifications are delivered when they end.',pnSw('quietOn','Quiet hours'))
+     +(pnDraft.quietOn?`<div class="st2-row pn-qrow"><div class="pn-q"><span>From</span>${pnTime('quietFrom','Quiet from')}<span>to</span>${pnTime('quietTo','Quiet until')}<span class="st2-chip">Every day</span></div>${pnBar()}</div>`
+       +stRow('Urgent reports override quiet hours','Sent to managers only.',pnSw('urgentBreak','Urgent reports override quiet hours')):''))
+   +stSec('Schedule',
+      stRow('Daily summary','“Your day”: each person’s tasks for the day, sent every morning.',`${pnDraft.dayOn?pnTime('dayTime','Your day time'):''}${pnSw('dayOn','Your day')}`)
+     +stRow('Afternoon reminder','Sent when a task due today is still open.',`${pnDraft.remindOn?pnTime('remindTime','Reminder time'):''}${pnSw('remindOn','Afternoon reminder')}`))
+   +stSec('Crew notifications',
+      stRow('New task assigned','Tasks added together are sent as one notification.',pnSw('wNew','New task assigned'))
+     +stRow('Task moved or changed','When a task’s day, name or people change.',pnSw('wMoved','Task moved or changed')))
+   +stSec('Manager notifications',
+      stRow('Problem reports','Urgent reports are sent immediately.',pnSw('mReports','Problem reports'))
+     +stRow('High-priority task completed','When a worker completes a task marked high priority.',pnSw('mDone','High-priority task completed'))
+     +stRow('Feed and silo warnings','When a pair’s silos will run low within 3 days. Checked while ProdWise is open.',pnSw('mFeed','Feed and silo warnings')))
+   +stSec('Recipients',pnWho())
+   +`<p class="set-muted pn-foot">Delivered free through your Cloudflare account. All times use the farm’s time zone (${escapeHtml(pnCfg.tz||'')}).</p>`;
 }
 function pnHtml(){setTimeout(()=>pnLoad(false),0);return `<div id="pnBody">${pnInner()}</div>`;}
 function pnSetupLink(){return new URL('cluckwise/viewer.html?setup=notify',location.href.split('#')[0].replace(/[^/]*$/,'')).href;}

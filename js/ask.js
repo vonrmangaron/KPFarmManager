@@ -285,12 +285,23 @@ function rsDot(){const on=!!farmData&&new Date().getHours()>=7&&!rsLoad().seen;c
 // The header Ross wears today's mood: worried with a red item, sleepy with no AI, happy when the plan is cleared
 function rsBtnMood(m){const f=document.querySelector('#rossBtn .rossR');if(f){f.classList.remove('calm','thinking','happy','alert','rest');f.classList.add(m);}}
 function rsMoodNow(){try{if(!farmData)return 'calm';const st=rsLoad();if(st.main||st.err){const R=rsModel(st,rsData());return R.mood;}const b=mgrBriefData();return b.G.today.concat(b.G.watch,b.G.feed,b.G.co).some(x=>x.tone==='r')?'alert':'calm';}catch(e){return 'calm';}}
+// Phones: Ross floats at the bottom right above the bottom bar; computers: beside the bell (2026-10-26)
+const RS_PHONE=window.matchMedia?matchMedia('(max-width:768px)'):{matches:false};
+function rsDockBtn(){
+  const b=document.getElementById('rossBtn');if(!b)return;
+  if(RS_PHONE.matches){b.classList.add('ross-float');if(b.parentNode!==document.body)document.body.appendChild(b);return;}
+  b.classList.remove('ross-float');
+  const bell=document.querySelector('#pageHeader .alerts-bell-wrap');
+  if(bell&&b.nextElementSibling!==bell)bell.before(b);
+}
 function rsPlaceButton(){
-  if(document.getElementById('rossBtn'))return;
+  if(document.getElementById('rossBtn')){rsDockBtn();return;}
   const bell=document.querySelector('#pageHeader .alerts-bell-wrap');if(!bell)return;
   bell.insertAdjacentHTML('beforebegin',`<button type="button" class="ross-btn" id="rossBtn" title="Ross · morning report" aria-label="Ross · morning report"><span class="ross-mk">${rsFace('calm')}</span><span class="ross-l">Ross</span><span class="ross-dot" id="rossDot" hidden></span></button>`);
   document.getElementById('rossBtn').addEventListener('click',rsOpen);
+  rsDockBtn();
 }
+if(RS_PHONE.addEventListener)RS_PHONE.addEventListener('change',rsDockBtn);
 window.pwOpenRoss=()=>rsOpen();   // Tasks' Ross button
 let rsTried=false;
 function rsMaybeShow(){

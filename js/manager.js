@@ -745,7 +745,7 @@ const SET_GROUPS=[
   ['Account',[['profile','Profile','Your farm’s name, its manager and the silo numbers. Shared by Production, Tasks and the Crew app.'],['security','Security','Passwords keep your farm’s data to you and your crew.']]],
   ['Production',[['feed','Feed & silos','How the feed forecast plans deliveries. Changes wait for Apply.'],['weights','Weights & result','Target weights and how shed weights turn into plant weights.'],['pickups','Pickup planning','When sheds are thinned and how many pickups to plan.'],['pairs','Per pair & shed','Scale corrections and normal daily mortality, shed by shed.']]],
   ['Tasks',[['calendar','Calendar','What opens first.'],['weather','Weather','The forecast on the calendar, board and list.']]],
-  ['Crew',[['workers','Workers','Who uses the Crew app on your farm.'],['notify','Notifications','Phone notifications for you and the crew: quiet hours, “Your day”, who has them on.']]],
+  ['Crew',[['workers','Workers','Who uses the Crew app on your farm.'],['notify','Notifications','Phone notifications for you and the crew: quiet hours, schedule and recipients.']]],
   ['Farm',[['sync','Sync & cloud','Where this farm’s files live and how this device syncs.'],['batches','Batches & history','Past batches and the farm’s results over time.']]],
   ['App',[['alerts','Alerts','What ProdWise tells you about, in Production and in Tasks.'],['backup','Backup & reports','Copies and reports for both sections in one place.'],['appearance','Display','Theme, text size and units on this device. Production and Tasks use the same.'],['about','About','Version and credits.']]]
 ];

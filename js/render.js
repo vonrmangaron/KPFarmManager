@@ -1955,7 +1955,7 @@ function renderFarmKpiCard(so,fcrWhy){
   const lastCell=(now,last,dp,lowerBetter)=>{if(last==null||!(now>0))return '';const d=now-last,same=Math.abs(d)<Math.pow(10,-dp)/2,good=lowerBetter?d<0:d>0;return `<span class="rd-last${same?'':good?' good':' bad'}" title="Batch ${escapeAttr(lr.batch||'')} from Farm history">${last.toFixed(dp)}</span>`;};
   const row=(lbl,tv,fv,fid,last,cls)=>`<tr${cls?` class="${cls}"`:''}><td>${lbl}</td><td class="rd-today">${tv}</td><td class="rd-fin"${fid?` id="${fid}"`:''}>${fv}</td>${lk?`<td class="rd-lastc">${last||''}</td>`:''}</tr>`;
   const kgU=v=>`${v} <small>kg</small>`;
-  const tbl=`<table class="rd-cmp"><thead><tr><th></th><th>Today<em>${asOf?escapeHtml(fmtShortNoYear(asOf))+' · ':''}records ${est}</em></th><th>Finish<em>forecast</em></th>${lk?`<th>Last batch<em>${escapeHtml(String(lr.batch||''))}</em></th>`:''}</tr></thead><tbody>
+  const tbl=`<div class="rd-cmp-wrap"><table class="rd-cmp"><thead><tr><th></th><th>Today<em>${asOf?escapeHtml(fmtShortNoYear(asOf))+' · ':''}records ${est}</em></th><th>Finish<em>forecast</em></th>${lk?`<th>Last batch<em>${escapeHtml(String(lr.batch||''))}</em></th>`:''}</tr></thead><tbody>
     ${row('Cfcr2.45',tdy(k&&k.cfcr,d3),t.cfcr.toFixed(3),'kpiCFCR',lk&&lastCell(t.cfcr,lk.cfcr,3,true),'hero')}
     ${row('FCR',tdy(k&&k.fcr,d3),t.fcr.toFixed(3),'kpiFCR',lk&&lastCell(t.fcr,lk.fcr,3,true))}
     ${row(`cFCR (Industry) <span class="rd-hint" title="FCR − (ALW − target) ÷ 3.2">vs ${t.targetKg.toFixed(2)} kg</span>`,tdy(k&&k.cfcrInd,d3),t.cfcrInd.toFixed(3),'kpiCFCRInd','')}
@@ -1963,9 +1963,9 @@ function renderFarmKpiCard(so,fcrWhy){
     ${row('Average age',tdy(k&&k.avgAge,v=>v.toFixed(1)+' <small>d</small>'),t.weightedAge.toFixed(1)+' <small>d</small>','','')}
     ${row('Livability',tdy(k&&k.livability,v=>v.toFixed(1)+'%'),t.livability.toFixed(1)+'%','kpiLivability',lk&&lastCell(t.livability,lk.livability,1,false))}
     ${row('PIF',tdy(k&&k.pif,v=>Math.round(v)),Math.round(t.pif),'kpiPIF',lk&&lastCell(t.pif,lk.pif,0,false))}
-    ${row('Feed eaten',so&&so.eaten>0&&!so.missing.length?fmtTonnesAlways(so.eaten):'—',fmtTonnesAlways(t.totalFeed),'kpiFeed','')}
-    ${row('Live weight',k?fmtTonnesAlways(so.liveWeightKg):'—',fmtTonnesAlways(t.totalLiveWeight),'kpiLiveWeight','')}
-  </tbody></table>${fcrWhy?`<p class="rd-why">Today: ${escapeHtml(fcrWhy)}</p>`:''}`;
+    ${row('Feed eaten',so&&so.eaten>0&&!so.missing.length?fmtTonnesAlways(so.eaten):'—',fmtTonnesAlways(t.totalFeed),'kpiFeed','','rd-big')}
+    ${row('Live weight',k?fmtTonnesAlways(so.liveWeightKg):'—',fmtTonnesAlways(t.totalLiveWeight),'kpiLiveWeight','','rd-big')}
+  </tbody></table></div>${fcrWhy?`<p class="rd-why">Today: ${escapeHtml(fcrWhy)}</p>`:''}`;
   // How "today" is worked out
   let howToday='';
   if(so&&so.pairs&&so.pairs.length&&!so.missing.length){

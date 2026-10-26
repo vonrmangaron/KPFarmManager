@@ -5688,7 +5688,7 @@ details.st2-row{display:block}
   .st2-in.st2-in-sm{width:96px;flex:none}   /* a short number box keeps its unit beside it */
   .st2-ctl:has(> .st2-in-sm){flex-wrap:nowrap}
 }
-#accBody{display:flex;flex-direction:column;gap:18px}
+#accBody,#pnBody{display:flex;flex-direction:column;gap:18px}   /* space between Settings sections, like every other page */
 /* Settings v3 (2026-10-18): Apply / Discard sits at the top, not floating; the mockup's cream page with white boxes */
 .st2 .set-apply{position:static!important;bottom:auto!important;margin:0 0 16px;box-shadow:none}
 .st2{background:linear-gradient(180deg,#FFF7EA 0%,#F6F1E4 40%,#F2F2EA 100%);border-color:#E7E1D3}
@@ -5698,7 +5698,7 @@ body.theme-dark .st2-nav{background:rgba(255,255,255,.03)}
 .st2-body .fs-group.set-wide{background:none;border:0;padding:0}
 .st2-det .st2-ctl .set-btn{display:inline-flex;align-items:center;justify-content:center;height:36px;line-height:1}
 @media (max-width:768px){.st2,body.theme-dark .st2{background:none}}
-.st2-row[hidden],#pfSave[hidden]{display:none!important}
+.st2-row[hidden],#pfSave[hidden],#pnApply[hidden]{display:none!important}
 
 /* One Settings (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): a full page like Tasks' Settings —
    no side panel or page header; its own "Settings" bar with the search on the right */
@@ -5923,6 +5923,7 @@ body.theme-dark .pks-card.tot{background:rgba(240,162,26,.1);border-color:var(--
 .rd-res-head h2{margin:0;font:800 18px Sora,sans-serif;color:var(--ink)}
 .rd-res-head span{font-size:12.5px;color:var(--muted)}
 .rd-cmp{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rd-cmp-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-inline:-2px;padding-inline:2px}   /* never cut off: scrolls inside the card if a phone is too narrow */
 .rd-cmp th{text-align:right;font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 0 8px 12px;vertical-align:bottom}
 .rd-cmp th:first-child{padding-left:0}
 .rd-cmp th em{display:block;font:500 11px Inter,sans-serif;letter-spacing:0;text-transform:none;font-style:normal;white-space:nowrap}
@@ -5993,6 +5994,17 @@ body.theme-dark .pks-card.tot{background:rgba(240,162,26,.1);border-color:var(--
 .rd-feed-acts{display:flex;gap:14px;margin-top:8px}
 @media (max-width:1100px){.rd-pairs{grid-template-columns:repeat(2,minmax(0,1fr))}.rd-feed{grid-template-columns:1fr 1fr}.rd-feed>div:nth-child(3){border-left:0}.rd-feed>div:nth-child(n+3){border-top:1px solid var(--line)}}
 @media (max-width:860px){.rd-glance,.rd-result{grid-template-columns:1fr}.rd-glance>div+div{border-left:0;border-top:1px solid var(--line)}.rd-res-l{border-right:0;border-bottom:1px solid var(--line)}.rd-cmp tr.hero td{font-size:24px}}
+@media (max-width:520px){   /* Batch result on phones (2026-10-26): four columns fit — tighter spacing, smaller kg totals, compact last batch */
+  .rd-cmp th{padding-left:8px;letter-spacing:.04em;font-size:10.5px}
+  .rd-cmp th em{font-size:10.5px}
+  .rd-cmp td{padding-left:8px}
+  .rd-cmp td:first-child{font-size:13px;line-height:1.25;padding-right:4px}
+  .rd-cmp tr.hero td{padding-left:8px}
+  .rd-cmp tr.rd-big td:not(:first-child){font-size:12.5px}
+  .rd-cmp td.rd-lastc{font-size:12px}
+  .rd-cmp tr.hero td.rd-lastc{font-size:14px}
+  .rd-cmp th .rd-chip{margin-left:2px}
+}
 @media (max-width:520px){.rd-pairs,.rd-feed{grid-template-columns:1fr}.rd-feed>div+div{border-left:0;border-top:1px solid var(--line)}.rd-cmp td{font-size:14px}.rd-cmp tr.hero td{font-size:22px}.rd-glance>div,.rd-res-l,.rd-res-r,.rd-feed>div{padding-inline:14px}.rd-hint{display:none}}
 
 /* leftover feed: compact line on Feed loads (v236) */
@@ -6467,12 +6479,14 @@ body.theme-dark .rs-note{background:rgba(75,95,214,.2)}
 @media (prefers-reduced-motion:reduce){.rs-cur{animation:none}}
 /* Phone header: Ross sits beside the bell in the top row (was dropping onto its own stretched row) — v258 */
 @media (max-width:768px){
-  #pageHeader:has(.ws-pill){grid-template-columns:minmax(0,1fr) auto auto}
-  #pageHeader:has(.ws-pill) .ross-btn{grid-column:2;grid-row:1;justify-self:end}
-  #pageHeader:has(.ws-pill) .alerts-bell-wrap{grid-column:3}
-  #pageHeader:has(.ws-pill) .batch-switch{grid-column:2 / 4}
-  .ross-btn{width:42px;height:42px;padding:0;justify-content:center;border-radius:12px}
-  .ross-btn .ross-mk{width:32px;height:32px;border-radius:9px}.ross-btn .ross-mk .rossR{width:32px;height:36px;margin-top:3px}
+  /* Ross floats at the bottom right, above the bottom bar (v263) */
+  .ross-btn.ross-float{position:fixed;right:16px;bottom:calc(56px + 16px + env(safe-area-inset-bottom, 0px));z-index:290;width:58px;height:58px;padding:0;justify-content:center;border-radius:18px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 26px rgba(22,35,58,.22),0 2px 6px rgba(22,35,58,.12)}
+  .ross-btn.ross-float .ross-mk{width:46px;height:46px;border-radius:13px}.ross-btn.ross-float .ross-mk .rossR{width:46px;height:52px;margin-top:4px}
+  .ross-btn.ross-float .ross-dot{top:-2px;right:-2px;width:13px;height:13px}
+  .ross-btn.ross-float:active{transform:scale(.96)}
+  body.pw-in-tasks .ross-btn.ross-float,body.pw-on-settings .ross-btn.ross-float{display:none}
+  body:has(.compare-modal.open) .ross-btn.ross-float,body:has(.sync-modal.open) .ross-btn.ross-float,body:has(.modal-overlay.open) .ross-btn.ross-float,body:has(.tool-page.open) .ross-btn.ross-float{display:none}   /* not on top of a window */   /* Tasks has its own quick actions there; Settings has Apply at the bottom */
+  body.theme-dark .ross-btn.ross-float{box-shadow:0 10px 26px rgba(0,0,0,.45)}
 }
 
 /* Settings › Notifications (2026-10-26, mockup PZkDNiKCzRoxzJhUkab9BQ) */
@@ -6491,9 +6505,43 @@ body.theme-dark .rs-note{background:rgba(75,95,214,.2)}
 .pn-ticks span{position:absolute;font:600 10.5px Inter,system-ui,sans-serif;color:var(--muted);white-space:nowrap}
 .pn-ticks span:not(:first-child){transform:translateX(-50%)}
 .pn-steps{margin:0 0 10px;padding-left:20px;font-size:13.5px;line-height:1.5}
-.pn-foot{margin:4px 2px 0;font-size:12.5px}
+.pn-foot{margin:0 2px;font-size:12.5px}
 body.theme-dark .pn-bar{background:rgba(19,128,109,.24)}
 body.theme-dark .pn-sw:not(.on){background:#3C4869}
-@media (max-width:640px){.st2-row .st2-ctl .pn-time{width:112px}}
+@media (max-width:768px){.st2-row .st2-ctl .st2-in.pn-time{width:136px;flex:none}}   /* room for “06:00 AM” on phones */
+body.theme-dark .pn-time{color-scheme:dark}   /* the clock icon follows the dark theme */
 /* a row whose only control is a switch keeps it on the right on phones too */
 .st2-row:has(> .st2-ctl > .pn-sw:only-child){grid-template-columns:minmax(0,1fr) auto!important;display:grid!important}
+
+/* Pickups on phones (2026-10-26, mockup AUKY4X8BfBCD24BRy7QqM3): one line per pickup, tap to edit */
+.pkm-total{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:2px 2px 10px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pkm-total b{font:800 16px Sora,sans-serif;color:var(--ink)}
+.pkm-list{display:flex;flex-direction:column;gap:12px}
+.pkm-shed{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.pkm-head{display:flex;align-items:center;gap:8px;padding:12px 14px 2px}
+.pkm-head b{font:800 15px Sora,sans-serif;color:var(--ink)}
+.pkm-closed{font:700 10.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:99px;background:#DFF4EF;color:#0F7A67}
+body.theme-dark .pkm-closed{background:rgba(19,128,109,.24);color:#5FD3B6}
+.pkm-add{margin-left:auto;border:0;cursor:pointer;font:700 12.5px Inter,sans-serif;color:#8A5300;background:#FFF3DC;padding:7px 11px;border-radius:9px}
+body.theme-dark .pkm-add{color:#FFC876;background:rgba(240,162,26,.16)}
+.pkm-add[disabled]{opacity:.45;cursor:default}
+.pkm-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 14px 10px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pkm-go{border:0;background:none;padding:4px 0;cursor:pointer;font:700 12px Inter,sans-serif;color:#8A5300;white-space:nowrap}
+body.theme-dark .pkm-go{color:#FFC876}
+.pkm-row{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto auto 12px;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);-webkit-tap-highlight-color:transparent}
+.pkm-row:active{background:var(--surface-soft)}
+.pkm-row:focus-visible{outline:2px solid #F0A21A;outline-offset:-2px}
+.pkm-d b{display:block;font:700 14px Inter,sans-serif;color:var(--ink);white-space:nowrap}
+.pkm-d small,.pkm-n small{display:block;font:500 11.5px Inter,sans-serif;color:var(--muted)}
+.pkm-n{text-align:right;font-variant-numeric:tabular-nums}
+.pkm-n b{display:block;font:700 14px Inter,sans-serif;color:var(--ink);white-space:nowrap}
+.pkm-avg b{font:800 15px Sora,sans-serif}
+.pkm-avg .pk-vs-badge,.pkm-avg .pk-vs-none{display:inline-block;margin-top:2px}
+.pkm-tag{display:inline-block;margin-left:6px;font:800 9.5px Inter,sans-serif;font-style:normal;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#16233A;color:#fff;vertical-align:1px}
+body.theme-dark .pkm-tag{background:#EEF1F6;color:#16233A}
+.pkm-est{margin-left:4px;font:700 10px Inter,sans-serif;font-style:normal;color:var(--muted)}
+.pkm-chev{color:var(--muted);font-size:17px}
+.pkm-empty{padding:12px 14px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.pkm-hint{margin:10px 2px 0;font-size:12px;color:var(--muted)}
+.mp-delete{display:block;margin:14px auto 0;border:0;background:none;cursor:pointer;font:700 13px Inter,sans-serif;color:#B42318;padding:6px 10px}
+body.theme-dark .mp-delete{color:#FF9C8A}
