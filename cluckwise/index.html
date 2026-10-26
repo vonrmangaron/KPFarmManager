@@ -4425,6 +4425,12 @@
   .undo-toast .undo-key{ font:700 11px Inter,sans-serif; opacity:.7; border:1px solid currentColor; border-radius:6px; padding:1px 6px; margin-left:8px; }
   @media (hover:none){ .undo-toast .undo-key{ display:none; } }
   @media (prefers-reduced-motion:reduce){ .tick-pop, .tick-pop::after, .done-flash, .open-flash{ animation:none; } }
+  /* Day view ⋯ menu (2026-10-26) */
+  .dm-card .dm-menu{ all:unset; cursor:pointer; flex:none; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:var(--muted); font:800 16px Inter,sans-serif; line-height:1; }
+  .dm-card .dm-menu:hover, .dm-card.menu-open .dm-menu{ background:var(--surface-soft); color:var(--ink); }
+  .dm-card .dm-menu:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .dm-card.compact .dm-menu{ width:26px; height:26px; }
+  .dm-menu-pop{ z-index:60; }
   /* Notes on shed prep jobs (2026-10-25) */
   #detailNotes{ white-space:pre-line; }
   .pl-c{ position:relative; }
@@ -5675,7 +5681,11 @@
   let collapsedKanbanCols = new Set(loadCollapsedKanbanCols());
   function loadCollapsedKanbanCols(){ try{ return JSON.parse(localStorage.getItem('prodplan-collapsed-kanban-days') || '[]'); }catch(e){ return []; } }
   function saveCollapsedKanbanCols(){ try{ localStorage.setItem('prodplan-collapsed-kanban-days', JSON.stringify([...collapsedKanbanCols])); }catch(e){} }
-  let viewMode = window.innerWidth <= 1024 ? 'list' : 'month';
+  // Width that decides "desktop or phone" (2026-10-26): inside ProdWise, Tasks loads hidden in the background (Ross
+  // reads it at start-up), and a hidden page is 0 px wide — so "Auto" opening views used to pick the phone view on a
+  // computer. Use ProdWise's window instead.
+  function cwViewW(){ let w = window.innerWidth; try{ if(window.parent !== window && window.parent.innerWidth) w = window.parent.innerWidth; }catch(e){} return w || (screen && screen.width) || 1280; }
+  let viewMode = cwViewW() <= 1024 ? 'list' : 'month';
   let openingViewApplied = false;
   let hiddenAt = 0;
   const RESUME_RESET_MS = 30 * 60 * 1000;   // back after this long counts as reopening the app
@@ -6418,9 +6428,9 @@
 
   function openingViewMode(){
     const v = settings.defaultView;
-    if(v === 'auto-board') return window.innerWidth <= 1024 ? 'list' : 'kanban';
+    if(v === 'auto-board') return cwViewW() <= 1024 ? 'list' : 'kanban';
     if(['month','day','list','kanban'].includes(v)) return v;
-    return window.innerWidth <= 1024 ? 'list' : 'month';
+    return cwViewW() <= 1024 ? 'list' : 'month';
   }
 
   // Enough history to trace what happened over the past week or two (was 200 ≈ one busy day)
@@ -10793,6 +10803,27 @@
   }
   function closeDayView(){ const m = $('#dayView'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); dayViewKey = null; }
   function dayViewStep(d){ if(!dayViewKey) return; dayViewKey = addDaysStr(dayViewKey, d); dayViewFilter = 'all'; renderDayView(true); }
+  // ⋯ on each day-view card (2026-10-26): the same menu as the Planner cards, plus Move to tomorrow
+  function dmOpenMenu(btn){
+    const id = btn.dataset.dmMenu, t = tasks.find(x=> x.id === id); if(!t) return;
+    const card = btn.closest('[data-dm-task]');
+    if(activeMenuPopup && activeMenuPopup.dataset.taskId === id){ closeAllTaskMenus(); return; }
+    const pop = document.createElement('div'); pop.className = 'task-menu-popup dm-menu-pop'; pop.dataset.taskId = id;
+    const today = dateKey(new Date()), late = t.status !== 'done' && t.date && t.date < today;
+    pop.innerHTML = `${late ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (t.priority === 'high' && t.status !== 'done' ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
+      <button class="task-menu-item dm-open" type="button"><span class="tmi-ic">▣</span>Open card</button>
+      <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+      ${t.date && t.status !== 'done' ? `<button class="task-menu-item dm-tomorrow" type="button"><span class="tmi-ic">→</span>Move to ${t.date < today ? 'today' : 'the next day'}</button>` : ''}
+      <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
+      <button class="task-menu-item btn-duplicate" type="button"><span class="tmi-ic">⧉</span>Duplicate</button>
+      <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${t.status === 'done' ? UNDO_ICON_SVG : CHECK_ICON_SVG}</span>${t.status === 'done' ? 'Reopen' : 'Mark done'}</button>
+      <div class="task-menu-sep"></div>
+      <button class="task-menu-item btn-delete danger" type="button"><span class="tmi-ic">🗑️</span>Delete</button>`;
+    pop.querySelector('.dm-open').addEventListener('click', (e)=>{ e.stopPropagation(); closeAllTaskMenus(); openTaskDetailModal(id); });
+    const mv = pop.querySelector('.dm-tomorrow');
+    if(mv) mv.addEventListener('click', (e)=>{ e.stopPropagation(); closeAllTaskMenus(); moveTask(id, t.date < today ? today : addDaysStr(t.date, 1)); });
+    openTaskMenu(card || btn, btn, pop);
+  }
   function renderDayView(animate){
     const key = dayViewKey; if(!key) return;
     const today = dateKey(new Date()), d = toDateObj(key);
@@ -10821,7 +10852,7 @@
     const card = (t, i)=>{
       const isDone = t.status === 'done', isLate = !isDone && t.date < today;
       const icon = `<span class="ktile ktile-${taskIconFor(t.name)[2]} dm-ic"><span class="kicon" data-dm-ic="${i}"></span></span>`;
-      const tick = `<button type="button" class="dm-tick" data-dm-tick="${escapeHtmlAttr(t.id)}" aria-pressed="${isDone}" aria-label="${isDone ? 'Reopen' : 'Mark done'}" title="${isDone ? 'Reopen' : 'Mark done'}">✓</button>`;
+      const tick = `<button type="button" class="dm-menu task-menu-btn" data-dm-menu="${escapeHtmlAttr(t.id)}" aria-label="Task menu" title="Edit, move, copy, delete…">⋯</button><button type="button" class="dm-tick" data-dm-tick="${escapeHtmlAttr(t.id)}" aria-pressed="${isDone}" aria-label="${isDone ? 'Reopen' : 'Mark done'}" title="${isDone ? 'Reopen' : 'Mark done'}">✓</button>`;
       const sp = subProgress(t);
       const open = `data-dm-task="${escapeHtmlAttr(t.id)}" style="--i:${n++}" tabindex="0" role="button" aria-label="${escapeHtmlAttr('Open ' + t.name)}"`;
       if(isDone){
@@ -10856,6 +10887,7 @@
       if(e.target === m){ closeDayView(); return; }
       const g = sel=> e.target.closest(sel); let b;
       if((b = g('[data-dm-tick]'))){ e.stopPropagation(); toggleDone(b.dataset.dmTick); return; }
+      if((b = g('[data-dm-menu]'))){ e.stopPropagation(); dmOpenMenu(b); return; }
       if((b = g('[data-dm-f]'))){ dayViewFilter = b.dataset.dmF; renderDayView(true); return; }
       if(g('#dmClose')){ closeDayView(); return; }
       if(g('#dmPrev')){ dayViewStep(-1); return; }
@@ -15975,7 +16007,11 @@
       closeOverlays();
     }
   });
+  let cwLastW = window.innerWidth;
   window.addEventListener('resize', ()=>{
+    // first real size after loading hidden inside ProdWise: draw everything again at the right size
+    const was = cwLastW; cwLastW = window.innerWidth;
+    if(was < 50 && cwLastW >= 50 && !document.body.classList.contains('is-dragging')){ renderAll(); return; }
     closeAllTaskMenus();
     if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();
     updatePeriodLabel();
