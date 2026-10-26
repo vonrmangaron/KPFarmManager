@@ -5,13 +5,14 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v259';
+const CACHE_NAME = 'prodwise-v260';
 const CORE_ASSETS = [
   './',
   './index.html',
   './prodwise.css',
   './manifest.json',
   './js/farmkey.js',
+  './js/notify.js',
   './js/tasks.js',
   './js/shedsetup.js',
   './js/newfarm.js',
@@ -27,6 +28,7 @@ const CORE_ASSETS = [
   './js/manager.js',
   './js/batches.js',
   './js/ask.js',
+  './js/pwnotify.js',
   './js/account.js',
   './js/closeout.js',
   './js/shedtabs.js',
@@ -98,4 +100,27 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// ---------- Phone notifications (farm-notify worker, 2026-10-26) ----------
+// The message is { title, body, tag, url }. Tapping it opens (or brings back) the app on that task / report.
+self.addEventListener('push', (event) => {
+  let m = {};
+  try { m = event.data ? event.data.json() : {}; } catch (e) { m = { title: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(m.title || 'Farm', {
+    body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag,
+    icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { url: m.url || self.registration.scope },
+  }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || self.registration.scope;
+  event.waitUntil((async () => {
+    const target = new URL(url, self.registration.scope);
+    const nt = target.searchParams.get('nt') || '';
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const same = wins.find((w) => new URL(w.url).pathname === target.pathname) || wins.find((w) => w.url.startsWith(self.registration.scope));
+    if (same) { await same.focus(); same.postMessage({ type: 'farm-notify-open', nt }); return; }
+    await clients.openWindow(target.href);
+  })());
 });

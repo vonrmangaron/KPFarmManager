@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="../js/farmkey.js"></script>
+<script src="../js/notify.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4992,7 +4993,7 @@
     <div class="cs2-grp" data-g="Account"><span class="cs2-k">Account</span><button type="button" data-page="profile" data-owner="pw">Profile</button><button type="button" data-page="security" data-owner="pw">Security<span class="cs2-dot" id="csSecDot" hidden></span></button></div>
     <div class="cs2-grp" data-g="Production"><span class="cs2-k">Production</span><button type="button" data-page="feed" data-owner="pw">Feed &amp; silos<span class="cs2-bd" id="csFeedBd" hidden></span></button><button type="button" data-page="weights" data-owner="pw">Weights &amp; result</button><button type="button" data-page="pickups" data-owner="pw">Pickup planning</button><button type="button" data-page="pairs" data-owner="pw">Per pair &amp; shed</button></div>
     <div class="cs2-grp" data-g="Tasks"><span class="cs2-k">Tasks</span><button type="button" data-page="calendar">Calendar</button><button type="button" data-page="weather">Weather</button></div>
-    <div class="cs2-grp" data-g="Crew"><span class="cs2-k">Crew</span><button type="button" data-page="workers">Workers<span class="cs2-bd" id="csWorkersBd" hidden></span></button></div>
+    <div class="cs2-grp" data-g="Crew"><span class="cs2-k">Crew</span><button type="button" data-page="workers">Workers<span class="cs2-bd" id="csWorkersBd" hidden></span></button><button type="button" data-page="notify" data-owner="pw">Notifications</button></div>
     <div class="cs2-grp" data-g="Farm"><span class="cs2-k">Farm</span><button type="button" data-page="sync" data-owner="pw">Sync &amp; cloud</button><button type="button" data-page="batches" data-owner="pw">Batches &amp; history</button></div>
     <div class="cs2-grp" data-g="App"><span class="cs2-k">App</span><button type="button" data-page="alerts">Alerts</button><button type="button" data-page="backup">Backup &amp; reports</button><button type="button" data-page="appearance">Display</button><button type="button" data-page="about" data-owner="pw">About</button></div>
   </nav>
@@ -5958,7 +5959,8 @@
     };
   }
   function applyMergedState(d){
-    tasks = d.tasks; history = d.history; batches = d.batches; events = d.events;
+    tasks = d.tasks; history = d.history; batches = d.batches; events = d.events; notifyBaseline();
+    if(window.FarmNotify && ghFarmName) FarmNotify.sendDay(ghFarmName, 'manager', ()=> tasks, t=> !isMaintCheckTask(t));
     settings = Object.assign({}, DEFAULT_SETTINGS, d.settings || {}); adoptPwTheme();
     frequentTemplates = d.frequentTemplates;
     maintenance = d.maintenance || [];
@@ -5983,7 +5985,18 @@
     try{ localStorage.setItem(localCacheKey(), JSON.stringify({ at: Date.now(), pending: !!pending, data: snapshotLocal(), base: lastSyncedSnapshot })); }catch(e){}
   }
   function loadLocalCache(){ try{ const v = JSON.parse(localStorage.getItem(localCacheKey()) || 'null'); return v && v.data ? v : null; }catch(e){ return null; } }
-  async function persist(){ saveLocalCache(true); showSyncPending(); schedulePush(); }
+  async function persist(){ saveLocalCache(true); showSyncPending(); schedulePush(); notifyTaskChanges(); }
+  // Phone notifications (../js/notify.js): new / moved tasks go to the people on them, grouped; plus each
+  // person's jobs for the week ("Your day" at 6:00). Only this device's own changes — a sync just updates the copy.
+  function notifyTaskChanges(){
+    if(!window.FarmNotify || !ghFarmName) return;
+    try{
+      const ev = FarmNotify.taskChanges(tasks);
+      if(ev.length) FarmNotify.send(ghFarmName, 'manager', ev, (managerName() || '').split(/\s+/)[0]);
+      FarmNotify.sendDay(ghFarmName, 'manager', ()=> tasks, t=> !isMaintCheckTask(t));
+    }catch(e){ console.warn('Notifications', e); }
+  }
+  function notifyBaseline(){ if(window.FarmNotify) FarmNotify.taskBaseline(tasks); }
   let syncState = 'idle';
   let lastSyncAt = null;
   function renderSyncStatus(){
@@ -6399,7 +6412,7 @@
   function applyImportedData(rawText){
     try{
       const parsed = JSON.parse(rawText);
-      tasks = parsed.tasks || [];
+      tasks = parsed.tasks || []; notifyBaseline();
       history = parsed.history || [];
       batches = parsed.batches || [];
       events = parsed.events || [];
@@ -11397,7 +11410,7 @@
       await saveSnapshotEntry({ id: uid(), kind:'before-restore', date: dateKey(new Date()), takenAt: Date.now(), data: snapshotPayload(snapshotLocal()) }, false);
     }catch(e){ console.warn('Could not save the before-restore point', e); }
     const d = cloneData(entry.data) || {};
-    tasks = d.tasks || [];
+    tasks = d.tasks || []; notifyBaseline();
     batches = d.batches || [];
     events = d.events || [];
     frequentTemplates = d.frequentTemplates || [];
@@ -14881,7 +14894,10 @@
   window.__cwOpen = (what)=>{ try{ closeOverlays(); }catch(e){}
     if(what === 'prep') openPrepBoard(null);
     else if(what === 'overdue') openOverdueModal();
-    else if(what === 'today') openDayView(dateKey(new Date())); };
+    else if(what === 'today') openDayView(dateKey(new Date()));
+    // a tapped notification (2026-10-26): its report or task
+    else if(/^report:/.test(what)){ const id = what.slice(7); if(reports.some(r=> r.id === id)) openReportDetailModal(id); else openReportsDrawer(); }
+    else if(/^task:/.test(what)){ const id = what.slice(5); if(tasks.some(t=> t.id === id)) openTaskDetailModal(id); else openDayView(dateKey(new Date())); } };
   window.__cwClearHistory = ()=>{ history = []; persist(); renderAll(); };
   const openHistoryPage = ()=>{ if(CW_EMBED){ closeOverlays(); parent.postMessage({ pwSection:'production', tab:'history' }, location.origin); return true; } return false; };
   $('#moreHistoryBtn').addEventListener('click', ()=>{ if(openHistoryPage()) return; closeOverlays(); openDrawer('#historyDrawer'); });
@@ -15620,7 +15636,8 @@
     feed:{ g:'Production', t:'Feed & silos', k:'feed silos deliveries safety stock' }, weights:{ g:'Production', t:'Weights & result', k:'target weight plant growth standard ross free range' },
     pickups:{ g:'Production', t:'Pickup planning', k:'pickups thinning density no-pickup days' }, pairs:{ g:'Production', t:'Per pair & shed', k:'scale correction mortality morts shed' },
     sync:{ g:'Farm', t:'Sync & cloud', k:'sync cloud folder disconnect switch farm' }, batches:{ g:'Farm', t:'Batches & history', k:'farm history past batch results' },
-    about:{ g:'App', t:'About', k:'version credits' }
+    about:{ g:'App', t:'About', k:'version credits' },
+    notify:{ g:'Crew', t:'Notifications', k:'notifications push phone quiet hours your day reminder test' }
   };
   const csIsPw = page => !!CS_PW_PAGES[page] && (CW_EMBED || !CS_PAGES[page]);
   function csOpenPw(page){
@@ -15700,7 +15717,7 @@
   });
   $('#csBackupRestore').addEventListener('click', ()=> $('#csBackupFile').click());
   function csApplyTasksData(parsed){
-    tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || [];
+    tasks = parsed.tasks || []; history = parsed.history || []; batches = parsed.batches || []; events = parsed.events || []; notifyBaseline();
     reports = parsed.reports || []; settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings || {}); adoptPwTheme();
     frequentTemplates = parsed.frequentTemplates || []; maintenance = parsed.maintenance || []; shedPrep = parsed.shedPrep || [];
     applySettings(); updateBatchColorDefault(); updateEventColorDefault(); persist(); scheduleReportsPush(); renderAll();
@@ -15969,7 +15986,7 @@
     reader.onload = (ev)=>{
       try{
         const parsed = JSON.parse(ev.target.result);
-        tasks = parsed.tasks || [];
+        tasks = parsed.tasks || []; notifyBaseline();
         history = parsed.history || [];
         batches = parsed.batches || [];
         events = parsed.events || [];
@@ -16173,7 +16190,7 @@
     }
   });
 
-  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
+  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL, window.FarmNotify ? FarmNotify.URL : ''], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
   // One app (2026-10-17): this is the Tasks section of ProdWise. Inside ProdWise (?embed=1) the
   // Production switch hands back to ProdWise's page; opened on its own it goes to ProdWise.
   const CW_EMBED = window.parent !== window && /[?&]embed=1\b/.test(location.search);

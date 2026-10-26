@@ -745,7 +745,7 @@ const SET_GROUPS=[
   ['Account',[['profile','Profile','Your farm’s name, its manager and the silo numbers. Shared by Production, Tasks and the Crew app.'],['security','Security','Passwords keep your farm’s data to you and your crew.']]],
   ['Production',[['feed','Feed & silos','How the feed forecast plans deliveries. Changes wait for Apply.'],['weights','Weights & result','Target weights and how shed weights turn into plant weights.'],['pickups','Pickup planning','When sheds are thinned and how many pickups to plan.'],['pairs','Per pair & shed','Scale corrections and normal daily mortality, shed by shed.']]],
   ['Tasks',[['calendar','Calendar','What opens first.'],['weather','Weather','The forecast on the calendar, board and list.']]],
-  ['Crew',[['workers','Workers','Who uses the Crew app on your farm.']]],
+  ['Crew',[['workers','Workers','Who uses the Crew app on your farm.'],['notify','Notifications','Phone notifications for you and the crew: quiet hours, “Your day”, who has them on.']]],
   ['Farm',[['sync','Sync & cloud','Where this farm’s files live and how this device syncs.'],['batches','Batches & history','Past batches and the farm’s results over time.']]],
   ['App',[['alerts','Alerts','What ProdWise tells you about, in Production and in Tasks.'],['backup','Backup & reports','Copies and reports for both sections in one place.'],['appearance','Display','Theme, text size and units on this device. Production and Tasks use the same.'],['about','About','Version and credits.']]]
 ];
@@ -773,7 +773,7 @@ function setPageInfo(k){for(const [g,items] of SET_GROUPS){const it=items.find(x
 function setOffCount(k){if(!farmData||!SET_SEC[k])return 0;const keys=new Set(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.key));return farmSettingsNotNormal().filter(o=>keys.has(o.key)).length;}
 // words each page answers to in the search box (its name, its group and the settings on it)
 function setKeywords(k){const p=setPageInfo(k);let w=[p.label,p.group,p.sub];if(SET_SEC[k])w=w.concat(FS_ITEMS.filter(i=>i.sec===SET_SEC[k]).map(i=>i.label+' '+(i.hint||'')));
-  const extra={appearance:'display theme dark light text size font units kg tonnes feed batch labels icons',calendar:'opening view month day agenda board',weather:'weather location units forecast',workers:'crew farm password joined invite',backup:'backup restore export import excel pdf csv checklist report download',profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders overdue reports silos shed performance empty shed close',about:'version credits'}[k]||'';
+  const extra={notify:'notifications push phone quiet hours your day reminder crew alerts test',appearance:'display theme dark light text size font units kg tonnes feed batch labels icons',calendar:'opening view month day agenda board',weather:'weather location units forecast',workers:'crew farm password joined invite',backup:'backup restore export import excel pdf csv checklist report download',profile:'farm name manager silo numbers',security:'password lock unlock devices sign out crew',pairs:'scale mortality morts shed',sync:'cloud folder disconnect switch farm sync now download excel',batches:'farm history past batch results',alerts:'notifications reminders overdue reports silos shed performance empty shed close',about:'version credits'}[k]||'';
   return (w.join(' ')+' '+extra).toLowerCase();}
 function setPageBody(k){
   if(!farmData&&SET_NEEDS_BATCH.includes(k))return `<div class="st2-empty">Load or start a batch to see these settings.</div>`;
@@ -784,6 +784,7 @@ function setPageBody(k){
   if(k==='sync')return `<div class="set-cards">${settingsCloudFolderHtml()}${renderSettingsSyncCard()}</div>`;
   if(k==='batches')return `<div class="set-cards">${setBatchListHtml()}${renderSettingsFarmHistoryCard()}</div>`;
   if(k==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
+  if(k==='notify')return pnHtml();
   if(k==='display')return `<div class="set-cards">${renderSettingsUnitsCard()}</div>`;
   if(k==='data')return `<div class="set-cards">${renderSettingsDataCard()}${renderSettingsReportsCard()}</div>`;
   return `<div class="st2-about"><b>ProdWise.VM</b><span>Production · Tasks · Crew</span><span id="st2Ver">App version …</span><span class="settings-credit">Made by Von Mangaron · Personal use only · Not for commercial use</span></div>`;

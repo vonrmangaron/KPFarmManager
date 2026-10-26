@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.10.26-c120';
+const CACHE_VERSION = 'cluckwise-2026.10.26-c121';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
@@ -33,7 +33,8 @@ const APP_SHELL = [
   'manifest-viewer.json',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  '../js/farmkey.js'
+  '../js/farmkey.js',
+  '../js/notify.js'
 ];
 
 // Third-party hosts that are safe to keep a copy of.
@@ -179,4 +180,27 @@ function stripQuery(u) {
 // Lets a page ask a waiting worker to take over immediately.
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// ---------- Phone notifications (farm-notify worker, 2026-10-26) ----------
+// The message is { title, body, tag, url }. Tapping it opens (or brings back) the app on that task / report.
+self.addEventListener('push', (event) => {
+  let m = {};
+  try { m = event.data ? event.data.json() : {}; } catch (e) { m = { title: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(m.title || 'Farm', {
+    body: m.body || '', tag: m.tag || undefined, renotify: !!m.tag,
+    icon: 'icons/icon-viewer-192.png', badge: 'icons/icon-viewer-192.png', data: { url: m.url || self.registration.scope },
+  }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || self.registration.scope;
+  event.waitUntil((async () => {
+    const target = new URL(url, self.registration.scope);
+    const nt = target.searchParams.get('nt') || '';
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const same = wins.find((w) => new URL(w.url).pathname === target.pathname) || wins.find((w) => w.url.startsWith(self.registration.scope));
+    if (same) { await same.focus(); same.postMessage({ type: 'farm-notify-open', nt }); return; }
+    await clients.openWindow(target.href);
+  })());
 });

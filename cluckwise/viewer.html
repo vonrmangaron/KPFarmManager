@@ -966,6 +966,29 @@
   .join-overlay{ background:var(--page-glow); }
   .prep-lab{ display:inline-flex; align-items:center; gap:4px; font:800 10.5px Inter,system-ui,sans-serif; padding:2px 8px; border-radius:999px; background:#F0A21A; color:#16191B; white-space:nowrap; margin:3px 0 0; }
   .task-body .prep-lab{ align-self:flex-start; }
+  /* Phone notifications (2026-10-26): the setup card, and NEW / MOVED on tasks changed since you last looked */
+  .nt-card{ display:flex; flex-direction:column; gap:10px; margin:0 0 12px; padding:14px; border-radius:14px; background:var(--surface); border:1px solid var(--line); border-left:4px solid #F0A21A; }
+  .nt-card[hidden]{ display:none; }
+  .nt-head{ display:flex; gap:10px; align-items:flex-start; }
+  .nt-bell{ flex:none; width:34px; height:34px; border-radius:10px; background:var(--primary-soft); display:grid; place-items:center; font-size:17px; }
+  .nt-head b{ display:block; font:700 15px Inter,system-ui,sans-serif; color:var(--ink); }
+  .nt-head p{ margin:2px 0 0; font-size:13px; color:var(--muted); line-height:1.35; }
+  .nt-seg{ display:inline-flex; align-self:flex-start; padding:3px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); }
+  .nt-seg button{ border:0; background:transparent; padding:6px 12px; border-radius:8px; font:700 12.5px Inter,system-ui,sans-serif; color:var(--muted); cursor:pointer; }
+  .nt-seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  .nt-steps{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .nt-steps li{ display:flex; gap:9px; font:500 13.5px/1.4 Inter,system-ui,sans-serif; color:var(--ink); }
+  .nt-steps li i{ flex:none; width:21px; height:21px; border-radius:50%; background:#EEF0FD; color:#4B5FD6; display:grid; place-items:center; font:800 11px Inter,system-ui,sans-serif; font-style:normal; }
+  .nt-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .nt-btns .nt-go{ flex:1; min-height:44px; border:0; border-radius:11px; background:#F0A21A; color:#16191B; font:800 14.5px Inter,system-ui,sans-serif; cursor:pointer; }
+  .nt-btns .nt-go:disabled{ opacity:.6; }
+  .nt-btns .nt-later{ min-height:44px; padding:0 14px; border-radius:11px; border:1px solid var(--line); background:transparent; color:var(--muted); font:700 13.5px Inter,system-ui,sans-serif; cursor:pointer; }
+  .nt-note{ margin:0; font-size:12.5px; color:var(--muted); }
+  .task-card.nt-changed{ box-shadow:inset 4px 0 0 #F0A21A; }
+  .nt-tag{ display:inline-flex; align-self:flex-start; align-items:center; margin-left:7px; vertical-align:2px; font:800 10.5px Inter,system-ui,sans-serif; letter-spacing:.04em; padding:2px 7px; border-radius:6px; background:#F0A21A; color:#16191B; }
+  .task-card.nt-flash{ animation:ntFlash 1.6s ease-out 2; }
+  @keyframes ntFlash{ 0%{ box-shadow:0 0 0 0 rgba(240,162,26,.75); } 100%{ box-shadow:0 0 0 14px rgba(240,162,26,0); } }
+  body.theme-dark .nt-steps li i{ background:rgba(75,95,214,.22); color:#AFC0FF; }
 
   /* subtasks (2026-10-24) */
   .tsubs{ display:flex; flex-direction:column; gap:4px; margin-top:6px; width:100%; }
@@ -1009,6 +1032,7 @@
 })();
 </script>
 <script src="../js/farmkey.js"></script>
+<script src="../js/notify.js"></script>
 </head>
 <body>
 
@@ -1096,6 +1120,7 @@
 
   <div class="wide-grid">
     <div>
+      <div class="nt-card" id="ntCard" hidden></div>
       <div class="agenda-filter" id="agendaFilterBar"></div>
       <div id="taskListSection"></div>
     </div>
@@ -1170,6 +1195,10 @@
       <option value="tl">Tagalog</option>
       <option value="id">Bahasa Indonesia</option>
     </select>
+
+    <span class="field-label" id="ntLabel">Notifications</span>
+    <div class="status-line" id="ntStatus">…</div>
+    <button class="btn-secondary" id="ntToggleBtn" type="button" hidden>Turn on notifications</button>
 
     <span class="field-label" id="farmConnLabel">Farm connection</span>
     <div class="status-line" id="githubStatus">Not connected</div>
@@ -1533,6 +1562,9 @@
   let tasks = [], history = [], batches = [], events = [], reports = [];
   let settings = Object.assign({}, DEFAULT_SETTINGS);
   let agendaFilter = 'today';
+  // phone notifications (see the Phone notifications section further down)
+  let ntState = 'off', ntOs = (window.FarmNotify && FarmNotify.isAndroid()) ? 'android' : 'iphone', ntChanged = new Map(), ntSetup = false;
+  const NT_LATER = 'cw-nt-later';
   let agendaDate = null;   // day shown by the Today/Day tab (null = today)
   let ghPath=null, ghFarmName=null, ghSha=null;
 
@@ -2670,6 +2702,11 @@
     if(status === 'done'){ tk.doneBy = tickerName(); tk.doneAt = new Date().toISOString(); who[id] = { by: tk.doneBy, at: tk.doneAt }; }
     else { delete tk.doneBy; delete tk.doneAt; who[id] = null; }
     saveTickWho(who);
+    // the manager hears when a high-priority task is finished
+    if(window.FarmNotify && ghFarmName){
+      if(status === 'done' && tk.priority === 'high') FarmNotify.send(ghFarmName, 'worker', [{ type:'done', id: tk.id, title: tk.name, by: tk.doneBy }], tk.doneBy);
+      FarmNotify.sendDay(ghFarmName, 'worker', ()=> tasks, crewShows);
+    }
     queueLinkedReport(tk);
     pendingTicks.set(id, status);
     savePendingTicks();
@@ -3139,6 +3176,7 @@
     queueReportPhoto(report.id, report.photoUrls[0], photoFile);
     reports.unshift(report);
     addPendingReport(report);
+    if(window.FarmNotify && ghFarmName) FarmNotify.send(ghFarmName, 'worker', [{ type:'report', urgent: !!report.urgent, id: report.id, title: problemType, shed: shed ? 'Shed ' + shed : location, by: createdBy }], createdBy);
 
     closeOverlays();
 
@@ -3218,6 +3256,8 @@
       ic.replaceWith(b);
     }
     card.querySelector('.task-name').textContent = tk.name;
+    const ntKind = ntChanged.get(tk.id);   // changed since this phone last looked
+    if(ntKind){ card.classList.add('nt-changed'); const tg = document.createElement('span'); tg.className = 'nt-tag'; tg.textContent = t(ntKind === 'new' ? 'ntTagNew' : 'ntTagMoved'); card.querySelector('.task-name').after(tg); }
     if(tk.status === 'done' && tk.doneBy){
       const db = document.createElement('span'); db.className = 'task-doneby';
       const d = tk.doneAt ? new Date(tk.doneAt) : null;
@@ -3476,6 +3516,7 @@
 
   let showDoneTasks = false;
   function renderList(){
+    ntComputeChanged();
     renderAgendaFilterBar();
     const wrap=$('#taskListSection'); wrap.innerHTML='';
     const dated=getAgendaTasks();
@@ -4210,6 +4251,7 @@
     updateIssuesBadge();
     updateOverdueBadge();
     renderSyncStatus();
+    ntRenderCard(); ntRenderSettings();
     if($('#overdueTransferModal').classList.contains('open')) renderOverdueList();
   }
 
@@ -4395,6 +4437,87 @@
     openSheet('#settingsSheet');
   });
 
+  // ---------- Phone notifications (2026-10-26, ../js/notify.js) ----------
+  // A card at the top of Today until this phone has them on (iPhone: Home Screen first), a switch in Settings,
+  // and NEW / MOVED on my tasks that changed since I last had the app open.
+  Object.assign(TRANSLATIONS.en, { ntTitle:'Get told when you have a new job', ntSub:'“Your day” each morning, new and moved tasks. You can turn it off any time.', ntIos1:'Tap Share ⬆ at the bottom of Safari', ntIos2:'Tap Add to Home Screen, then open Crew from that icon', ntIos3:'Tap below and choose Allow', ntAnd1:'Tap the button below', ntAnd2:'Choose Allow', ntAnd3:'Optional: ⋮ › Add to Home screen, to open Crew in one tap', ntGo:'Turn on notifications', ntLater:'Not now', ntInstallNote:'Steps 1–2 first: notifications only work from the Home Screen icon.', ntOnToast:'Notifications are on', ntOffToast:'Notifications are off on this phone', ntOff:'Turn off notifications', ntIsOn:'On — new and moved tasks, and your day each morning.', ntIsOff:'Off on this phone.', ntBlocked:'Blocked in the phone’s settings. Allow notifications for this app there.', ntInstall:'iPhone: add the app to your Home Screen first, then open it from there.', ntUnsupported:'This browser can’t show notifications.', ntTagNew:'NEW', ntTagMoved:'MOVED', ntLabel:'Notifications' });
+  Object.assign(TRANSLATIONS.es, { ntTitle:'Entérate cuando tengas un trabajo nuevo', ntSub:'“Tu día” cada mañana, tareas nuevas y movidas. Puedes apagarlo cuando quieras.', ntIos1:'Toca Compartir ⬆ abajo en Safari', ntIos2:'Toca Agregar a inicio y abre Crew desde ese ícono', ntIos3:'Toca abajo y elige Permitir', ntAnd1:'Toca el botón de abajo', ntAnd2:'Elige Permitir', ntAnd3:'Opcional: ⋮ › Agregar a la pantalla de inicio', ntGo:'Activar notificaciones', ntLater:'Ahora no', ntInstallNote:'Primero los pasos 1–2: solo funciona desde el ícono de inicio.', ntOnToast:'Notificaciones activadas', ntOffToast:'Notificaciones apagadas en este teléfono', ntOff:'Apagar notificaciones', ntIsOn:'Activadas — tareas nuevas y movidas, y tu día cada mañana.', ntIsOff:'Apagadas en este teléfono.', ntBlocked:'Bloqueadas en los ajustes del teléfono. Permítelas ahí.', ntInstall:'iPhone: primero agrega la app a la pantalla de inicio y ábrela desde ahí.', ntUnsupported:'Este navegador no puede mostrar notificaciones.', ntTagNew:'NUEVA', ntTagMoved:'MOVIDA', ntLabel:'Notificaciones' });
+  Object.assign(TRANSLATIONS.tl, { ntTitle:'Malaman kapag may bago kang trabaho', ntSub:'“Ang araw mo” tuwing umaga, bago at inilipat na gawain. Puwede mong patayin anumang oras.', ntIos1:'I-tap ang Share ⬆ sa ibaba ng Safari', ntIos2:'I-tap ang Add to Home Screen, tapos buksan ang Crew mula sa icon', ntIos3:'I-tap sa ibaba at piliin ang Allow', ntAnd1:'I-tap ang button sa ibaba', ntAnd2:'Piliin ang Allow', ntAnd3:'Opsyonal: ⋮ › Add to Home screen', ntGo:'I-on ang notifications', ntLater:'Mamaya na', ntInstallNote:'Unahin ang 1–2: gumagana lang mula sa icon sa Home Screen.', ntOnToast:'Naka-on ang notifications', ntOffToast:'Naka-off ang notifications sa phone na ito', ntOff:'I-off ang notifications', ntIsOn:'Naka-on — bago at inilipat na gawain, at ang araw mo tuwing umaga.', ntIsOff:'Naka-off sa phone na ito.', ntBlocked:'Naka-block sa settings ng phone. Payagan doon.', ntInstall:'iPhone: idagdag muna ang app sa Home Screen, tapos buksan mula doon.', ntUnsupported:'Hindi kaya ng browser na ito ang notifications.', ntTagNew:'BAGO', ntTagMoved:'INILIPAT', ntLabel:'Notifications' });
+  Object.assign(TRANSLATIONS.id, { ntTitle:'Dapat kabar saat ada tugas baru', ntSub:'“Harimu” tiap pagi, tugas baru dan yang dipindah. Bisa dimatikan kapan saja.', ntIos1:'Ketuk Bagikan ⬆ di bawah Safari', ntIos2:'Ketuk Tambah ke Layar Utama, lalu buka Crew dari ikon itu', ntIos3:'Ketuk di bawah dan pilih Izinkan', ntAnd1:'Ketuk tombol di bawah', ntAnd2:'Pilih Izinkan', ntAnd3:'Opsional: ⋮ › Tambahkan ke layar utama', ntGo:'Nyalakan notifikasi', ntLater:'Nanti', ntInstallNote:'Langkah 1–2 dulu: hanya bisa dari ikon di Layar Utama.', ntOnToast:'Notifikasi menyala', ntOffToast:'Notifikasi mati di ponsel ini', ntOff:'Matikan notifikasi', ntIsOn:'Menyala — tugas baru dan dipindah, dan harimu tiap pagi.', ntIsOff:'Mati di ponsel ini.', ntBlocked:'Diblokir di pengaturan ponsel. Izinkan di sana.', ntInstall:'iPhone: tambahkan aplikasi ke Layar Utama dulu, lalu buka dari sana.', ntUnsupported:'Browser ini tidak bisa menampilkan notifikasi.', ntTagNew:'BARU', ntTagMoved:'DIPINDAH', ntLabel:'Notifikasi' });
+  try{ const u = new URL(location.href); ntSetup = u.searchParams.get('setup') === 'notify'; if(ntSetup) localStorage.removeItem(NT_LATER); }catch(e){}
+  function ntMeName(){ const me = loadMember(); return me && me.name ? String(me.name).trim() : ''; }
+  function ntComputeChanged(){
+    ntChanged = new Map();
+    if(!window.FarmNotify || !ghFarmName || !tasks.length) return;
+    if(!FarmNotify.hasSeen(ghFarmName)){ FarmNotify.markSeen(ghFarmName, tasks); return; }   // first time: nothing is "new"
+    ntChanged = FarmNotify.changedSince(ghFarmName, tasks, ntMeName());
+  }
+  // Leaving the app = I've seen what's there now
+  function ntMarkSeen(){ if(window.FarmNotify && ghFarmName && tasks.length) FarmNotify.markSeen(ghFarmName, tasks); }
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') ntMarkSeen(); });
+  window.addEventListener('pagehide', ntMarkSeen);
+  async function ntRefresh(){
+    if(!window.FarmNotify) return;
+    ntState = await FarmNotify.state();
+    ntRenderCard(); ntRenderSettings();
+  }
+  function ntRenderCard(){
+    const el = $('#ntCard'); if(!el) return;
+    let later = 0; try{ later = +localStorage.getItem(NT_LATER) || 0; }catch(e){}
+    const show = !!ghFarmName && !!ntMeName() && (ntState === 'off' || ntState === 'install') && (ntSetup || Date.now() - later > 3 * 864e5);
+    el.hidden = !show; if(!show){ el.innerHTML = ''; return; }
+    const ios = ntOs === 'iphone';
+    const steps = ios ? (ntState === 'install' || !FarmNotify.standalone() ? ['ntIos1','ntIos2','ntIos3'] : ['ntIos3']) : ['ntAnd1','ntAnd2','ntAnd3'];
+    const canGo = ntState === 'off';
+    el.innerHTML = `<div class="nt-head"><span class="nt-bell" aria-hidden="true">🔔</span><div><b>${escapeHtml(t('ntTitle'))}</b><p>${escapeHtml(t('ntSub'))}</p></div></div>
+      <div class="nt-seg" role="tablist"><button type="button" role="tab" data-nt-os="iphone" class="${ios ? 'on' : ''}" aria-selected="${ios}">iPhone</button><button type="button" role="tab" data-nt-os="android" class="${ios ? '' : 'on'}" aria-selected="${!ios}">Android</button></div>
+      <ol class="nt-steps">${steps.map((k, i)=> `<li><i>${i + 1}</i><span>${escapeHtml(t(k))}</span></li>`).join('')}</ol>
+      ${canGo ? '' : `<p class="nt-note">${escapeHtml(t('ntInstallNote'))}</p>`}
+      <div class="nt-btns">${canGo ? `<button type="button" class="nt-go" data-nt-go>${escapeHtml(t('ntGo'))}</button>` : ''}<button type="button" class="nt-later" data-nt-later>${escapeHtml(t('ntLater'))}</button></div>`;
+  }
+  function ntRenderSettings(){
+    const st = $('#ntStatus'), b = $('#ntToggleBtn'); if(!st || !b) return;
+    $('#ntLabel').textContent = t('ntLabel');
+    st.textContent = t({ on:'ntIsOn', off:'ntIsOff', denied:'ntBlocked', install:'ntInstall', unsupported:'ntUnsupported' }[ntState] || 'ntIsOff');
+    b.hidden = !(ntState === 'on' || ntState === 'off') || !ghFarmName;
+    b.textContent = t(ntState === 'on' ? 'ntOff' : 'ntGo');
+  }
+  async function ntTurnOn(btn){
+    if(!ntMeName()){ showToast(t('fillAllFields'), true); return; }
+    if(btn){ btn.disabled = true; }
+    try{ await FarmNotify.enable({ farm: ghFarmName, name: ntMeName(), role:'worker' }); showToast(t('ntOnToast')); }
+    catch(e){ showToast(e.message || 'Could not turn notifications on', true); }
+    if(btn) btn.disabled = false;
+    ntRefresh();
+  }
+  document.addEventListener('click', (e)=>{
+    const os = e.target.closest('[data-nt-os]'); if(os){ ntOs = os.dataset.ntOs; ntRenderCard(); return; }
+    if(e.target.closest('[data-nt-go]')){ ntTurnOn(e.target.closest('[data-nt-go]')); return; }
+    if(e.target.closest('[data-nt-later]')){ try{ localStorage.setItem(NT_LATER, String(Date.now())); }catch(er){} ntSetup = false; ntRenderCard(); return; }
+  });
+  $('#ntToggleBtn').addEventListener('click', async (e)=>{
+    if(ntState === 'on'){ await FarmNotify.disable({ farm: ghFarmName, role:'worker' }); showToast(t('ntOffToast')); ntRefresh(); }
+    else ntTurnOn(e.currentTarget);
+  });
+  // A tapped notification: show that task's day and point at it
+  function ntOpen(nt){
+    nt = String(nt || ''); if(!/^task:/.test(nt)) return;
+    const id = nt.slice(5); let n = 0;
+    const go = ()=>{
+      const tk = tasks.find(x=> x.id === id);
+      if(!tk){ if(++n < 30) setTimeout(go, 500); return; }
+      if(typeof closeOverlays === 'function') closeOverlays();
+      if(tk.date) goAgendaDay(tk.date);
+      setTimeout(()=>{ const c = document.querySelector(`.task-card[data-id="${CSS.escape(id)}"]`); if(c){ c.scrollIntoView({ block:'center', behavior:'smooth' }); c.classList.add('nt-flash'); setTimeout(()=> c.classList.remove('nt-flash'), 3400); } }, 120);
+    };
+    go();
+  }
+  try{ const u = new URL(location.href), nt = u.searchParams.get('nt'); if(nt || ntSetup){ u.searchParams.delete('nt'); u.searchParams.delete('setup'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } if(nt) ntOpen(nt); }catch(e){}
+  if('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', (e)=>{ if(e.data && e.data.type === 'farm-notify-open') ntOpen(e.data.nt); });
+  // Keep the name with the server if it changed, and the day lists fresh
+  setTimeout(()=>{ if(window.FarmNotify && ghFarmName && ntMeName()){ FarmNotify.refresh({ farm: ghFarmName, name: ntMeName(), role:'worker' }); FarmNotify.sendDay(ghFarmName, 'worker', ()=> tasks, crewShows); } ntRefresh(); }, 1500);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') ntRefresh(); });
+
   // ---------- Farm password: this phone's key (see ../js/farmkey.js) ----------
   function joinShowing(){ const o = $('#joinOverlay'); return !!(o && o.classList.contains('show')); }
   function askFarmPassword(kind){
@@ -4410,7 +4533,7 @@
         return null;
       } });
   }
-  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL], farm: ()=> ghFarmName, role:'worker',
+  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL, window.FarmNotify ? FarmNotify.URL : ''], farm: ()=> ghFarmName, role:'worker',
     text: k=> t({ wrong:'fkWrong', left:'fkLeft', left1:'fkLeft1', wait:'fkWait', wait1:'fkWait1', noSetup:'fkNoSetup', offline:'fkOffline' }[k]),
     onRefused: j=>{
       if(joinShowing()) return;
