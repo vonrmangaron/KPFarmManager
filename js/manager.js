@@ -677,7 +677,7 @@ function settingsPairsHtml(){
   return `<div class="set-pairs">${[1,2,3,4].map(x=>`<button type="button" class="adj-pair${x===g?' active':''}" data-set-pair="${x}" style="--pc:var(--pair${x})">${escapeHtml(pairLabel(x))}</button>`).join('')}</div>
     <section class="fs-group"><span class="fs-sec-label">Per shed · ${escapeHtml(pairLabel(g))}</span>
       <div class="set-card"><table class="set-table"><thead><tr><th>Shed</th><th title="In-yard (shed-scale) readings only — plant weights are never scaled">Scale correction</th><th>From the kill sheets</th><th title="Expected daily mortality used for the forecast (normal ${DEFAULT_MORT_RATE_PCT.toFixed(2)}%)">Daily morts</th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    <p class="set-muted">Changes wait for <b>Apply</b> at the bottom, then update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="predictions">Predictions</button>.</p>`;
+    <p class="set-muted">Changes wait for <b>Apply</b> at the bottom, then update the forecast. Farm-wide numbers (scale, target weight, pickup planning, no-pickup days) are in <button type="button" class="set-link" data-set-tab="feed">Feed &amp; silos</button>, <button type="button" class="set-link" data-set-tab="weights">Weights &amp; result</button> and <button type="button" class="set-link" data-set-tab="pickups">Pickup planning</button>.</p>`;
 }
 // Growth standard: what "vs std", the days-behind alerts, shed colours and the growth chart compare against
 function settingsGrowthStdHtml(){
@@ -1028,7 +1028,7 @@ async function loadSetBatchList(force){
     // newest first; the original (unnumbered) file last
     out.sort((a,b)=>a.isLegacy!==b.isLegacy?(a.isLegacy?1:-1):compareBatchKeys(a.batchKey,b.batchKey));
     setBatchList=out;setBatchListFarm=syncFarmName;setBatchListPage=0;
-  }catch(e){setBatchListErr=navigator.onLine?'Could not load the batches. '+(e.message||''):'You are offline — the list loads when you are back online.';}
+  }catch(e){setBatchListErr=navigator.onLine?'Could not load the batches. Check your connection and try again.':'You are offline — the list loads when you are back online.';}
   setBatchListBusy=false;
   const el=document.getElementById('stBatchList');if(el)el.outerHTML=setBatchListHtml();
 }

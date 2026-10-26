@@ -3951,7 +3951,7 @@
   #settingsBody .st-row:first-child{ border-top:0; }
   #settingsBody .st-row-text{ flex:1 1 240px; min-width:0; margin-right:8px; }
   #settingsBody .st-row-stack{ flex-direction:column; align-items:stretch; }
-  #settingsBody .st-row-stack > .st-row-text{ flex:none; margin-right:0; }
+  #settingsBody .st-row-stack > .st-row-text{ flex:1 1 100%; min-width:0; margin-right:0; }   /* was flex:none: long hints ran off the phone screen */
   #settingsBody .fk-panel{ flex-direction:row; align-items:center; }
   #settingsBody .fk-panel .fk-state{ display:flex; gap:6px; margin:4px 0; }
   #settingsBody .st-row .st-label{ font-size:14px !important; }
@@ -4097,7 +4097,9 @@
   .pl-row.all td.pl-job b{ color:var(--muted); }
   .pl-sech td{ background:var(--surface-soft) !important; padding:9px 16px !important; font:800 13.5px Sora,sans-serif; color:var(--ink); }
   .pl-sech td em{ font:700 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); margin-left:8px; }
-  .pl-shh{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:84px; }
+  .pl-shh{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:84px; position:relative; }
+  .pl-tab thead th.pl-sh{ vertical-align:top; }
+  .pl-shh .pl-dots{ top:8px; right:6px; line-height:16px; }
   .pl-shh .prep-sn{ width:32px; height:32px; font-size:14px; border-radius:9px; }
   .pl-shh small{ font:600 10.5px Inter,sans-serif; white-space:nowrap; }
   .pl-pb{ width:48px; height:4px; border-radius:9px; background:var(--line); overflow:hidden; }
@@ -4123,6 +4125,7 @@
   .pl-na{ color:var(--muted); opacity:.6; }
   .pl-legend{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; font:500 12px Inter,sans-serif; color:var(--muted); }
   .pl-legend i{ display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:-2px; margin-right:5px; background:#EEEBE3; box-sizing:border-box; }
+  body:not(.theme-dark) .pl-legend i:not([class]){ border:1px solid #D6CFBF; }
   body.theme-dark .pl-legend i:not([class]){ background:#22304D; }
   .pl-legend i.done{ background:#0F8A75; } .pl-legend i.late{ background:var(--surface); border:2px solid #D9473A; } .pl-legend i.due{ background:var(--surface); border:2px dashed #F0A21A; } .pl-legend i.task{ background:var(--surface); border:2px solid #2F6FDB; }
   .pl-empty{ padding:30px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:16px; }
@@ -4152,7 +4155,12 @@
   .pl-sech td.pl-job{ padding:7px 10px 7px 6px !important; }
   .pl-sr{ display:flex; align-items:center; gap:7px; font:800 13.5px Sora,sans-serif; color:var(--ink); }
   .pl-sr em{ font:700 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); margin-right:auto; white-space:nowrap; }
-  .pl-tab td.pl-job .pl-secname{ cursor:text; border-radius:6px; font:800 14px Sora,sans-serif; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
+  .pl-tab td.pl-job .pl-secname{ cursor:text; border-radius:6px; font:800 14px/1.25 Sora,sans-serif; color:var(--ink); white-space:normal; overflow-wrap:break-word; min-width:0; flex:0 1 auto; }   /* wraps instead of "Pr…" on phones */
+  @media (max-width:760px){   /* phones: the count goes under the section name so the name isn't squeezed */
+    .pl-sr{ flex-wrap:wrap; row-gap:2px; }
+    .pl-tab td.pl-job .pl-sr .pl-secname{ flex:1 1 0; }
+    .pl-sr em{ order:5; flex-basis:100%; padding-left:21px; margin-right:0; }
+  }
   .pl-sr em, .pl-sr .pl-mini, .pl-sr .pl-sd, .pl-sr .pl-fold, .pl-sr .pl-grip{ flex-shrink:0; }
   .pl-secname:hover{ background:var(--surface); }
   .pl-fold{ all:unset; cursor:pointer; width:22px; height:22px; border-radius:6px; display:grid; place-items:center; color:var(--muted); flex:none; }
@@ -4195,7 +4203,8 @@
   .pl-mi.info{ cursor:default; color:var(--muted); font-weight:500; }
   .pl-mi.dan{ color:#B42318; } body.theme-dark .pl-mi.dan{ color:#FF9C8A; }
   .pl-mi em{ margin-left:auto; font:600 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); }
-  .pl-mic{ width:18px; text-align:center; flex:none; }
+  .pl-mic{ width:18px; height:18px; display:grid; place-items:center; flex:none; font-size:14px; line-height:1; }
+  .pl-mic svg{ width:16px; height:16px; display:block; }
   .pl-menu hr{ border:0; border-top:1px solid var(--line); margin:4px 0; }
 
   /* ── Planner: open a whole day (2026-10-24) ── */
@@ -4347,6 +4356,11 @@
   .pl-cbx{ all:unset; cursor:pointer; box-sizing:border-box; width:26px; height:26px; border-radius:8px; border:2px solid #F0A21A; background:var(--surface); display:inline-grid; place-items:center; font:900 13px Inter,sans-serif; color:#241A08; vertical-align:middle; }
   .pl-cbx.on{ background:#F0A21A; }
   .pl-cbx.dis{ cursor:default; border-color:var(--line); opacity:.5; }
+  @media (min-width:761px){ #mlogPage .mlog-main, #mlogPage .prep-main{ padding-bottom:88px !important; } }   /* the Production | Tasks switch floats over the bottom 80 px */
+  /* Make a task › Who: the + matches the box (was 38 px beside 46 px), same text size as the window */
+  #prepTaskModal .ai-icon-row{ align-items:stretch; }
+  #prepTaskModal #prepTaskWho{ font-size:14px; }
+  #prepTaskModal #prepWhoAdd{ height:auto; min-height:44px; width:46px; font-size:20px; display:grid; place-items:center; padding:0; }
   .pl-pickbar{ position:sticky; bottom:0; left:0; z-index:4; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; background:#16191B; color:#fff; }
   body.theme-dark .pl-pickbar{ background:#0A111F; border-top:1px solid var(--line); }
   .pl-pickbar b{ font:800 14px Sora,sans-serif; }
@@ -4712,7 +4726,7 @@
     <button class="fab-add" data-label="Add tasks" id="quickAddFabBtn" title="Add" aria-label="Add">+</button>
     <button class="fab-report" data-label="New report" id="fabReportBtn" title="New report" aria-label="New report"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M12.5 7v4"/><path d="M12.5 14h.01"/></svg></button>
     <button class="fab-notif" data-label="Notifications" id="fabNotifBtn" title="Past due tasks" aria-label="Past due tasks">🔔<span class="notif-badge hidden" id="fabNotifBadge">0</span></button>
-    <button class="fab-viewer" data-label="Viewer mode" id="fabViewerBtn" title="Open Viewer Mode" aria-label="Open Viewer Mode">👁️</button>
+    <button class="fab-viewer" data-label="Crew app" id="fabViewerBtn" title="Open the Crew app" aria-label="Open the Crew app">👁️</button>
     <button class="fab-delete" data-label="Bulk delete" id="bulkDeleteModalBtn" title="Bulk delete tasks" aria-label="Bulk delete tasks">🗑️</button>
   </div>
   <button type="button" class="fab-toggle" id="fabToggle" aria-expanded="false" aria-label="Quick actions" title="Quick actions"><svg class="ft-open" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg><svg class="ft-close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span class="ft-dot" aria-hidden="true"></span></button>
@@ -4783,7 +4797,7 @@
     <label class="prep-tm-k" for="prepTaskWho">Who</label>
     <div class="prep-who">
       <div class="assignee-chips" id="prepWhoChips"></div>
-      <div class="ai-icon-row"><input type="text" id="prepTaskWho" class="st-input" list="assigneeList" placeholder="Type a name, press Enter — or tap below" maxlength="40" autocomplete="off"><button class="btn-ghost-ai" id="prepWhoAdd" title="Add this person" type="button">+</button></div>
+      <div class="ai-icon-row"><input type="text" id="prepTaskWho" class="st-input" list="assigneeList" placeholder="Type a name or tap one below" maxlength="40" autocomplete="off"><button class="btn-ghost-ai" id="prepWhoAdd" title="Add this person (or press Enter)" aria-label="Add this person" type="button">+</button></div>
       <div class="assignee-picks" id="prepWhoPicks" aria-label="Tap a name to add"></div>
     </div>
     <label class="prep-tm-k prep-only-task">Repeat</label>
@@ -4897,7 +4911,7 @@
       <button class="menu-tile" id="moreHistoryBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span>History</span></button>
       <button class="menu-tile" id="moreMlogBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>Routines</span></button>
       <button class="menu-tile" id="morePrepBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3 11.5 10.5"/><path d="M9.5 9.5 14.5 14.5"/><path d="M9.5 9.5 5 14c-1.2 1.2-1.6 3.3-1 5l.4 1 1-.4c1.7-.6 3.8-.2 5-1.4l4.1-3.7"/><path d="M7.5 16.5 6 18"/></svg><span>Prep</span></button>
-      <button class="menu-tile" id="moreViewerBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Viewer mode</span></button>
+      <button class="menu-tile" id="moreViewerBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Crew app</span></button>
       <button class="menu-tile danger" id="moreBulkDeleteBtn"><svg class="mi-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg><span>Bulk delete</span></button>
     </div>
     <div class="menu-rows">
@@ -4971,7 +4985,7 @@
 <div class="form-modal pt-modal" id="ptypesModal" role="dialog" aria-modal="true" aria-labelledby="ptypesTitle">
   <div class="form-modal-head"><h2 id="ptypesTitle">Problem types</h2><button type="button" class="pt-x" id="closePtypes" aria-label="Close" title="Close">✕</button></div>
   <div class="form-modal-body pt-body">
-    <p class="pt-help">What workers can pick under “What's the problem?” in the Viewer. “Other” (type your own) is always there.</p>
+    <p class="pt-help">What workers can pick under “What's the problem?” in the Crew app. “Other” (type your own) is always there.</p>
     <div class="pt-list" id="ptypesList"></div>
     <div class="pt-add"><input type="text" id="ptypesNewInput" maxlength="40" placeholder="New problem type" aria-label="New problem type"><button type="button" class="pt-add-btn" id="ptypesAddBtn">Add</button></div>
     <button type="button" class="pt-reset" id="ptypesResetBtn" title="Put back the original list">Restore the original list</button>
@@ -5051,9 +5065,9 @@
 
     <section class="st-section" id="stAlerts">
       <div class="cs-pw-only"><span class="cs2-seck">Production</span>
-      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair's silos will drop below the safety stock within 8 days, and when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifEmpty"><div class="st-row-text"><span class="st-label">Empty shed</span><span class="st-hint">When a shed's clean-out is done but the shed isn't closed yet</span></div><span class="st-switch"><input type="checkbox" id="csNotifEmpty" checked><span class="st-slider"></span></span></label></div></div>
+      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair’s silos will drop below the safety stock within 8 days, and when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifEmpty"><div class="st-row-text"><span class="st-label">Empty shed</span><span class="st-hint">When a shed’s clean-out is done but the shed isn’t closed yet</span></div><span class="st-switch"><input type="checkbox" id="csNotifEmpty" checked><span class="st-slider"></span></span></label></div></div>
       <span class="cs2-seck">Tasks</span>
-      <div class="st-card"><label class="st-row st-row-switch" for="csNotifOverdue"><div class="st-row-text"><span class="st-label">Past-due tasks</span><span class="st-hint">Tasks still open after their day, counted on the bell</span></div><span class="st-switch"><input type="checkbox" id="csNotifOverdue" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifReports"><div class="st-row-text"><span class="st-label">New problem reports</span><span class="st-hint">A pop-up when a worker reports a problem in the Crew app</span></div><span class="st-switch"><input type="checkbox" id="csNotifReports" checked><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Open the notifications list</span><span class="st-hint">Everything overdue, reported and fixed</span></div><button type="button" class="st-btn" id="csOpenNotif2">Open</button></div></div>
+      <div class="st-card"><label class="st-row st-row-switch" for="csNotifOverdue"><div class="st-row-text"><span class="st-label">Past-due tasks</span><span class="st-hint">Tasks still open after their day, counted on the bell</span></div><span class="st-switch"><input type="checkbox" id="csNotifOverdue" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifReports"><div class="st-row-text"><span class="st-label">New problem reports</span><span class="st-hint">A pop-up when a worker reports a problem in the Crew app</span></div><span class="st-switch"><input type="checkbox" id="csNotifReports" checked><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Open the alerts list</span><span class="st-hint">Everything overdue, reported and fixed</span></div><button type="button" class="st-btn" id="csOpenNotif2">Open</button></div></div>
     </section>
     <section class="st-section" id="stBackup">
       <span class="cs2-seck">Backup</span>
@@ -5071,7 +5085,7 @@
       <div class="cs2-seck cs2-seck-row"><div class="access-head"><span>Joined workers</span><span class="sb-count" id="accessCount"></span><button class="st-btn st-btn-ghost st-btn-sm" id="accessRefreshBtn" type="button" aria-label="Refresh worker list">↻ Refresh</button></div></div>
       <div class="st-card"><div class="access-list" id="accessMembers"><p class="st-hint">No workers have joined yet.</p></div></div>
       <div hidden><div class="st-row st-row-stack">
-          <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>Production › Settings › Account</b>. Tasks assigned only to the manager stay here — workers don't see them in the Viewer.</span></div>
+          <div class="st-row-text"><span class="st-label">Manager</span><span class="mgr-name" id="managerNameShow">Not set</span><span class="st-hint">Set in <b>Settings › Account › Profile</b>. Tasks assigned only to the manager stay here — workers don't see them in the Crew app.</span></div>
         </div>
         </div>
     </section>
@@ -5196,7 +5210,7 @@
   <div class="form-modal-body">
     <div class="name-label-row">
       <label for="editTaskNameInput">Task name</label>
-      <span class="name-checks"><label class="priority-inline-check" for="editTaskMaintInput" title="Workers see it on the Maintenance for today page in the Viewer, not in their main list"><input type="checkbox" id="editTaskMaintInput"> Maintenance</label><label class="priority-inline-check" for="editTaskPriorityInput"><input type="checkbox" id="editTaskPriorityInput"> 🔥 High priority</label></span>
+      <span class="name-checks"><label class="priority-inline-check" for="editTaskMaintInput" title="Workers see it on the Maintenance for today page in the Crew app, not in their main list"><input type="checkbox" id="editTaskMaintInput"> Maintenance</label><label class="priority-inline-check" for="editTaskPriorityInput"><input type="checkbox" id="editTaskPriorityInput"> 🔥 High priority</label></span>
     </div>
     <input type="text" id="editTaskNameInput" maxlength="50">
     <div class="char-count" id="editTaskNameCharCount">0 / 50</div>
@@ -5521,11 +5535,11 @@
 </div>
 
 <div class="form-modal" id="guideModal">
-  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Viewer's Guide — targets and checks by batch age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
+  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Crew app's Guide — targets and checks by batch age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
   <div class="g-page-wrap">
     <div class="form-modal-body" id="guideModalBody"></div>
     <aside class="g-side" id="guideSide" aria-label="Guide targets">
-      <div class="g-side-head"><b>Guide targets</b><span>Shown to workers in the Viewer's Guide. Starts from Ross 308 — set them to your integrator's numbers. The card text on the left can be edited too.</span></div>
+      <div class="g-side-head"><b>Guide targets</b><span>Shown to workers in the Crew app's Guide. Starts from Ross 308 — set them to your integrator's numbers. The card text on the left can be edited too.</span></div>
       <div class="st-card gs-card" id="guideSettings"></div>
     </aside>
   </div>
@@ -6815,7 +6829,7 @@
     // The maintenance check is done only once every repair job in progress is fixed
     if(t.status !== 'done' && isMaintCheckTask(t)){
       const n = repairsInProgress().length;
-      if(n){ showToast(`${n} repair job${n === 1 ? ' is' : 's are'} still in progress — fix ${n === 1 ? 'it' : 'them'} first (Maintenance board or the Viewer).`, true); return; }
+      if(n){ showToast(`${n} repair job${n === 1 ? ' is' : 's are'} still in progress — fix ${n === 1 ? 'it' : 'them'} first (Maintenance board or the Crew app).`, true); return; }
     }
     t.status = t.status==='done' ? 'open' : 'done';
     stampDone(t);
@@ -8234,7 +8248,7 @@
     }
     const day = tasks.filter(x=> x.date && x.date === task.date && isMaintTask(x));
     const left = day.filter(x=> x.status !== 'done').length;
-    const tip = day.length ? `${left} of ${day.length} maintenance task${day.length === 1 ? '' : 's'} left on this day — workers see them, with photos, when they open this task in the Viewer` : 'No maintenance tasks on this day. Tick "Maintenance" on a task to add it.';
+    const tip = day.length ? `${left} of ${day.length} maintenance task${day.length === 1 ? '' : 's'} left on this day — workers see them, with photos, when they open this task in the Crew app` : 'No maintenance tasks on this day. Tick "Maintenance" on a task to add it.';
     return `<span class="mc-chip${left ? '' : ' none'}" title="${tip}">${day.length ? (left ? left + ' to do' : 'All done') : 'None'}</span>`;
   }
   function buildTaskCard(task, selectable, opts){
@@ -12757,7 +12771,7 @@
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
       const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : 'Shed ' + escapeHtml(sh) + ' · ' + pr.done + '/' + pr.total}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : pr.done + ' of ' + pr.total + ' done'}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
       const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
@@ -12785,7 +12799,7 @@
       let tot = 0, dn = 0, due = null;
       cols.forEach(col=>{ if(!col.c) return; S.rows.forEach(R=>{ const u = unitFor(col, S, R); if(u){ tot++; if(u.done) dn++; } }); const sec = prepSecOf(col.c, S.t); if(sec && sec.due && (!due || sec.due < due)) due = sec.due; });
       const own = S.rows.length === 1 && S.rows[0].own;
-      body += `<tbody class="pl-sec${folded ? ' folded' : ''}${tot && dn === tot ? ' alldone' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr">${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t)}</span><em>${tot ? (dn === tot ? '<span class="pl-donechip">✓ Done</span> ' : '') + dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
+      body += `<tbody class="pl-sec${folded ? ' folded' : ''}${tot && dn === tot ? ' alldone' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr">${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t).replace(/\//g, '/<wbr>')}</span><em>${tot ? (dn === tot ? '<span class="pl-donechip">✓ Done</span> ' : '') + dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
         const us = col.c ? S.rows.map(R=> unitFor(col, S, R)).filter(u=> u && !u.done && !u.taskId) : [];
         const all = us.length && us.every(u=> prepPick.sel.has(u.id));
         return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
@@ -12867,10 +12881,18 @@
   }
   // small menus (shed, job, cell, section)
   function plCloseMenu(){ const m = document.getElementById('plMenu'); if(m) m.remove(); document.querySelectorAll('.pl-menu-on').forEach(x=> x.classList.remove('pl-menu-on')); }
+  // One line-icon set for the Shed prep / Routine menus (was ✓ ☑ 📝 glyphs and emoji of different sizes, 2026-10-26)
+  const PL_IC = { '✓':'<path d="M5 12.5l4.5 4.5L19 7"/>', '☑':'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    '📝':'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>', '✎':'<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
+    '＋':'<path d="M12 5v14M5 12h14"/>', '✕':'<path d="M6 6l12 12M18 6L6 18"/>', '↺':'<path d="M4 4v6h6"/><path d="M20 13a8 8 0 1 1-2.6-6.4"/>',
+    '↧':'<path d="M4 5h16l-6 7v6l-4 2v-8z"/>', '↓':'<path d="M12 5v14M6 13l6 6 6-6"/>', '↑':'<path d="M12 19V5M6 11l6-6 6 6"/>',
+    '📅':'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>', '☰':'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    '▣':'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16"/>' };
+  function plIc(ic){ return PL_IC[ic] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PL_IC[ic]}</svg>` : escapeHtml(ic || ''); }
   function plMenu(anchor, title, sub, items){
     plCloseMenu();
     const m = document.createElement('div'); m.id = 'plMenu'; m.className = 'pl-menu'; m.setAttribute('role', 'menu');
-    m.innerHTML = `<div class="pl-mh"><b>${escapeHtml(title)}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>` + items.map((it, i)=> it === '-' ? '<hr>' : it.info ? `<div class="pl-mi info"><span class="pl-mic">${it.ic || ''}</span>${escapeHtml(it.label)}</div>` : `<button type="button" role="menuitem" class="pl-mi${it.danger ? ' dan' : ''}" data-i="${i}"${it.disabled ? ' disabled' : ''}><span class="pl-mic">${it.ic || ''}</span><span>${escapeHtml(it.label)}</span>${it.note ? `<em>${escapeHtml(it.note)}</em>` : ''}</button>`).join('');
+    m.innerHTML = `<div class="pl-mh"><b>${escapeHtml(title)}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>` + items.map((it, i)=> it === '-' ? '<hr>' : it.info ? `<div class="pl-mi info"><span class="pl-mic">${plIc(it.ic)}</span>${escapeHtml(it.label)}</div>` : `<button type="button" role="menuitem" class="pl-mi${it.danger ? ' dan' : ''}" data-i="${i}"${it.disabled ? ' disabled' : ''}><span class="pl-mic">${plIc(it.ic)}</span><span>${escapeHtml(it.label)}</span>${it.note ? `<em>${escapeHtml(it.note)}</em>` : ''}</button>`).join('');
     document.body.appendChild(m); anchor.classList.add('pl-menu-on');
     const r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
     let x = Math.min(Math.max(8, r.left), innerWidth - w - 8), y = r.bottom + 6; if(y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
@@ -13089,7 +13111,7 @@
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
     if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Make a task'; }
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
-    $('#prepTaskWho').placeholder = 'Type a name, press Enter — or tap below';
+    $('#prepTaskWho').placeholder = 'Type a name or tap one below';
     $('#prepTaskSave').textContent = 'Make task'; $('#prepTaskUndate').hidden = true;
   }
   function savePrepTaskOne(quiet){
@@ -13832,7 +13854,7 @@
     if(!accessData){ list.innerHTML = failed ? '<p class="st-hint">Could not load. Check your connection.</p>' : ''; cnt.textContent = ''; return; }
     const members = accessData.members.slice().sort((a,b)=> (b.joinedAt || 0) - (a.joinedAt || 0));
     cnt.textContent = members.length || '';
-    if(!members.length){ list.innerHTML = '<p class="st-hint">No workers have joined yet. Share the viewer link, the farm name and the password.</p>'; return; }
+    if(!members.length){ list.innerHTML = '<p class="st-hint">No workers have joined yet. Send them the invite (Copy invite above) and the farm password.</p>'; return; }
     list.innerHTML = members.map(m=>{
       const name = m.name || 'Worker';
       const when = m.joinedAt ? `Joined ${formatFull(dateKey(new Date(m.joinedAt)))}` : 'Joined';
@@ -13878,7 +13900,7 @@
   function renderFkPanel(){
     const panel = $('#fkPanel');
     if(!panel) return;
-    const where = '<b>Production › Settings › Security</b>';
+    const where = '<b>Settings › Account › Security</b>';
     let chips = '', hint, btn = '';
     if(!ghPath) hint = 'Connect to a farm first (Settings › Farm &amp; manager).';
     else if(fkInfo && fkInfo.setup){
@@ -13889,7 +13911,7 @@
     } else {
       const has = !!(accessData && accessData.password);
       chips = `<span class="fk-chip${has ? ' on' : ''}">${has ? 'Set' : 'Not set'}</span>`;
-      hint = `${has ? 'Workers type it once to join the Viewer.' : 'Anyone with the farm name can join the Viewer.'} Set it in ${where}.`;
+      hint = `${has ? 'Workers type it once to join the Crew app.' : 'Anyone with the farm name can join the Crew app.'} Set it in ${where}.`;
     }
     panel.innerHTML = `<div class="st-row-text"><span class="st-label">${fkInfo && fkInfo.setup ? 'Passwords' : 'Farm password'}</span>${chips ? `<span class="fk-state">${chips}</span>` : ''}<span class="st-hint">${hint}</span></div>${btn}`;
     const sb = $('#fkSignInBtn'); if(sb) sb.addEventListener('click', ()=> fkPromptSignIn(null));
@@ -14789,7 +14811,7 @@
   });
   $('#closeGuideModal').addEventListener('click', closeOverlays);
   $('#guideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; openGuide(); });
-  $('#guideEditBtn').addEventListener('click', ()=>{ mainGuideEdit = !mainGuideEdit; renderMainGuide(); if(!mainGuideEdit) showToast('Guide saved — workers see it next time they open the Viewer.'); });
+  $('#guideEditBtn').addEventListener('click', ()=>{ mainGuideEdit = !mainGuideEdit; renderMainGuide(); if(!mainGuideEdit) showToast('Guide saved — workers see it next time they open the Crew app.'); });
   // Edit mode: card text, show/hide quick checks, your own cards (all saved in settings.guide)
   function patchGuide(fn){ const g = Object.assign({}, settings.guide || {}); fn(g); settings.guide = g; persist(); }
   $('#guideModalBody').addEventListener('change', (e)=>{
@@ -15539,7 +15561,7 @@
         if(!onPage && sbMode === a && !collapsed) setSidebarCollapsed(true);
         else { setSbMode(a); openPanel(); }
       }
-      else if(a === 'maint'){ if(isOpen('#mlogPage')) closeMlog(); if(!isOpen('#reportsDrawer')) $('#reportsBtn').click(); }
+      else if(a === 'maint'){ if(isOpen('#mlogPage')) closeMlog(); if(isOpen('#settingsDrawer')) closeOverlays(); if(!isOpen('#reportsDrawer')) $('#reportsBtn').click(); }   // Settings stayed on top of Maintenance (2026-10-26)
       else if(a === 'routine'){ if(!isOpen('#mlogPage')) openMlog('routine'); else if(mlogMode !== 'routine'){ mlogMode = 'routine'; renderMlog(); } }
       else if(a === 'prep'){ const o = prepOpenList(); if(!isOpen('#mlogPage') || mlogMode !== 'prep') openPrepBoard(o.length ? o[0].shed : null); }
       else if(a === 'guide'){ if(isOpen('#mlogPage')) closeMlog(); if(!isOpen('#guideModal')) $('#guideBtn').click(); }

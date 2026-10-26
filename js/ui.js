@@ -190,12 +190,13 @@ function renderSettingsFarmHistoryCard(){
       ${f('fhFinalKg','Last pickup avg weight (kg, optional)','number','3.40','min="0" step="0.01" inputmode="decimal"')}
       <div class="settings-actions"><button class="settings-btn settings-btn-primary" type="button" data-fh-save>${ed?'Save changes':'Save batch'}</button><button class="settings-btn" type="button" data-fh-cancel>Cancel</button></div>
     </div>`:`<button class="fh-add-link" type="button" data-fh-add>＋ Enter a past batch by hand</button>`;
+  const cloudHtml=fhCloudBatchesHtml();   // while it looks, don't also say there are none
   return `<div class="settings-section">
     <div class="settings-section-head"><span class="settings-icon">${settingsIcon('archive')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">Farm history</h4></div></div>
-    <p class="settings-section-desc">Finished batches, for "vs last batch" and pickup-planning suggestions. Saved automatically when you start a new batch.</p>
+    <p class="settings-section-desc">Finished batches, for “vs last batch” and pickup-planning suggestions. Saved automatically when you start a new batch.</p>
     ${fhSaveLoadedHtml()}
-    ${fhCloudBatchesHtml()}
-    ${rows?`<div class="fh-list">${rows}</div>`:'<p class="fh-empty">No finished batches yet.</p>'}
+    ${cloudHtml}
+    ${rows?`<div class="fh-list">${rows}</div>`:/Looking for finished/.test(cloudHtml)?'':'<p class="fh-empty">No finished batches yet.</p>'}
     ${form}
   </div>`;
 }
@@ -273,6 +274,7 @@ async function findCloudBatchesForHistory(){
     fhCloud={state:'done',items,farm:syncFarmName};
   }catch(e){fhCloud={state:'error',items:[],farm:syncFarmName};}
   if(settingsDrawerOpen)renderSettingsDrawerBody();
+  if(typeof activeTab!=='undefined'&&activeTab==='farmsettings'&&typeof setTab!=='undefined'&&setTab==='batches'&&typeof renderSettingsTabBody==='function')renderSettingsTabBody();   // the Settings page stayed on "Looking…"
 }
 function fhCloudBatchesHtml(){
   if(!syncFarmName)return '';
@@ -361,7 +363,7 @@ function renderSettingsSyncCard(){
   const isError=syncState==='error';
   const excelName=syncExcelMeta?(syncExcelMeta.name||'sheds.xlsx'):'';
   const excelWhen=syncExcelMeta&&syncExcelMeta.uploadedAt?fmtRelativeTime(new Date(syncExcelMeta.uploadedAt).getTime()):'';
-  const statusRows=`<div class="settings-status-row"><span class="lbl">Batch</span><span class="val">${escapeHtml(batch||'—')}</span></div>
+  const statusRows=`<div class="settings-status-row"><span class="lbl">Batch</span><span class="val">${escapeHtml((farmData&&(predState.batchNumber||farmData.batchNumber))||batch||'—')}</span></div>
     <div class="settings-status-row"><span class="lbl">Last sync</span><span class="val${isError?' err':''}">${isError?'Last attempt failed':(syncLastSyncAt?fmtRelativeTime(syncLastSyncAt):'Never')}</span></div>
     <div class="settings-status-row"><span class="lbl">Backup file</span><span class="val file" title="${escapeAttr(fileName)}">${escapeHtml(fileName)}</span></div>${farmKeyStatusRow()}`;
   // List-style actions: icon · label + detail · chevron
