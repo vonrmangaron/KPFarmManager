@@ -394,6 +394,11 @@ function computeSiloForecastInner(group,range,realOnly){
   // The safety stock is the pair's normal use: the biggest day among this one and the next two, so a
   // day before a pickup (or clean-out) isn't judged against a tiny next-day figure.
   rows.forEach((r,i)=>{const use=Math.max(r.consumption||0,...rows.slice(i+1,i+3).map(x=>x.consumption||0));r.safety=safeDays*use;});
+  // Near clean-out the silos are meant to run down: the safety stock is never more than the feed still needed
+  // before the last feeding day, so a pair with enough feed to clean-out isn't told to book a load (2026-10-26).
+  // Only when this forecast reaches that day (a short window that ends mid-batch keeps the full safety stock).
+  let lastFeed=-1;rows.forEach((r,i)=>{if((r.consumption||0)>0)lastFeed=i;});
+  if(lastFeed>=0&&lastFeed<rows.length-1){let after=0;for(let i=lastFeed;i>=0;i--){rows[i].safety=Math.min(rows[i].safety,after);after+=rows[i].consumption||0;}}
   // Colour level for each day: between deliveries the silo only empties, so the level never gets
   // better again until a load arrives (ok → low → empty).
   const RANK={ok:0,low:1,empty:2};let carry=null;
