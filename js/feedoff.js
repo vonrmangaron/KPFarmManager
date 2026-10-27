@@ -67,6 +67,7 @@ function foSetDone(date,on){
   // keep only the last month
   const cut=iso(addDays(mgrToday(),-31));Object.keys(farmData.feedOffDone).forEach(k=>{if(k<cut)delete farmData.feedOffDone[k];});
   saveState();schedulePush();render();foSync(true);
+  if(on)foCloseNotes([date]);
   if(on&&typeof pwActivity==='function')pwActivity('feed','Feed off '+foLabel((foToday()||{sheds:[]}).sheds));
 }
 document.addEventListener('click',e=>{
@@ -76,6 +77,13 @@ document.addEventListener('click',e=>{
 });
 // Back on screen at the reminder time: show it again
 setInterval(()=>{if(document.visibilityState==='visible'&&farmData&&(foToday()||foTomorrow()))foInject();},60e3);
+
+// The sticky phone notification for a feed-off day that's done: close it on this device
+function foCloseNotes(dates){
+  if(!('serviceWorker' in navigator)||!dates.length)return;
+  navigator.serviceWorker.getRegistration().then(r=>r&&r.getNotifications?Promise.all(dates.map(d=>r.getNotifications({tag:'feedoff-'+d}).then(ns=>ns.forEach(n=>n.close())))):null).catch(()=>{});
+}
+window.addEventListener('load',()=>setTimeout(()=>{try{foCloseNotes(Object.keys(foDoneMap()));}catch(e){}},2500));
 
 // ── Tell the notification server (it sends the 7:00 and 11:00 alerts) ──
 let foTimer=null;

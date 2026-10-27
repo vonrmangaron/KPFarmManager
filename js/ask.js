@@ -125,7 +125,7 @@ function rsData(){
 }
 function rsContext(d){
   const L=[];
-  L.push('FACTS (red = act today, amber = watch, blue = info, green = fine):',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}] ${f.grp}: ${f.text}`));
+  L.push('FACTS (red = act today, amber = watch — only these can be plan items; blue = info and green = fine are NOT jobs, never turn them into a plan item):',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}] ${f.grp}: ${f.text}`));
   L.push('KEY NUMBERS:',...d.kpi.map(k=>`- ${k.k}: ${String(k.v).replace(/<[^>]+>/g,'')} (${String(k.s).replace(/<[^>]+>/g,'')})`));
   L.push('SHEDS:',...d.sheds.map(s=>`- Shed ${s.id}: ${s.fact}`));
   if(d.crew.length)L.push('CREW TODAY:',...d.crew.map(c=>`- ${c.who||'Not assigned'}: ${c.list.map(x=>x.name+(x.od?' (overdue)':'')+(x.done?' (done)':'')).join(', ')}`));
@@ -148,9 +148,18 @@ function rsSaveTicks(t){try{localStorage.setItem(rsTicksKey(),JSON.stringify([..
 function rsModel(st,d){
   const M=st.main,S=st.sheds&&st.sheds.sheds?st.sheds.sheds:{};
   const byId=Object.fromEntries(d.facts.map(f=>[f.id,f]));
-  let plan=(M&&Array.isArray(M.plan)?M.plan:[]).map(p=>({f:byId[String(p.fact||'')]||null,title:String(p.title||''),why:String(p.why||'')})).filter(p=>p.title).slice(0,5);
-  const aiPlan=plan.length>0;
-  if(!aiPlan)plan=d.facts.filter(f=>f.tone==='r').concat(d.facts.filter(f=>f.tone==='a')).slice(0,5).map(f=>({f,title:f.text,why:''}));
+  // Today's plan (2026-10-28): only red/amber facts become jobs — info lines ("load arriving", "10 tasks today") and
+  // made-up items are dropped, one item per fact, red first, and any red fact the AI skipped is added back.
+  const doable=f=>f&&(f.tone==='r'||f.tone==='a');
+  const fixedTitle=f=>{const m=/^Feed off today · (.+?) · /.exec(f.text);return m?'Turn the feed off · '+m[1]:'';};
+  const seenF=new Set();
+  let plan=(M&&Array.isArray(M.plan)?M.plan:[]).map(p=>({f:byId[String(p.fact||'').trim().toUpperCase()]||null,title:String(p.title||'').trim(),why:String(p.why||'').trim()}))
+    .filter(p=>p.title&&doable(p.f)&&!seenF.has(p.f.id)&&seenF.add(p.f.id))
+    .map(p=>({...p,title:fixedTitle(p.f)||p.title}));
+  d.facts.filter(f=>f.tone==='r'&&!seenF.has(f.id)).forEach(f=>plan.push({f,title:fixedTitle(f)||f.text,why:''}));
+  plan=plan.map((p,i)=>({p,i})).sort((a,b)=>((a.p.f.tone==='r'?0:1)-(b.p.f.tone==='r'?0:1))||a.i-b.i).map(x=>x.p).slice(0,5);
+  const aiPlan=plan.some(p=>p.why);
+  if(!plan.length)plan=d.facts.filter(f=>f.tone==='a').slice(0,5).map(f=>({f,title:f.text,why:''}));
   const warns=M&&Array.isArray(M.warnings)&&M.warnings.length?M.warnings.slice(0,4).map(t=>({tone:'a',html:rsInl(t),text:String(t)})):d.trends.map(t=>({tone:t.tone,html:escapeHtml(t.text),text:t.text}));
   const red=d.facts.some(f=>f.tone==='r'),amber=d.facts.some(f=>f.tone==='a');
   const ticks=rsTicks(),allDone=plan.length>0&&plan.every((p,i)=>ticks.has(i));

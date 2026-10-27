@@ -4480,12 +4480,17 @@
   .pl-tab td.pl-job, .task-card, .kcard, .mtb-card{ -webkit-user-select:none; user-select:none; }
   .pl-tab td.pl-job input, .pl-tab td.pl-job .pl-addin, .pl-tab td.pl-job .pl-renin{ -webkit-user-select:text; user-select:text; }
   /* ＋ Add a job / ＋ Add a section: compact pills, not full width */
-  .pl-addj{ display:inline-flex !important; align-items:center; gap:6px; width:auto !important; padding:6px 14px 6px 10px !important; border:1.5px dashed var(--line) !important; border-radius:99px !important; font:700 12.5px Inter,sans-serif !important; color:var(--muted); background:transparent; }
-  .pl-addj:hover{ border-color:#F0A21A !important; border-style:solid !important; color:#8A5300; background:#FFF8EA; }
-  body.theme-dark .pl-addj:hover{ color:#FFC876; background:rgba(240,162,26,.1); }
-  .pl-addj.sec{ border-style:solid !important; color:var(--ink); background:var(--surface); box-shadow:0 1px 0 var(--line); }
-  .pl-addrow td.pl-job{ padding:4px 10px 12px 16px !important; }
-  .pl-end .pl-addrow td.pl-job{ padding:12px 10px 14px 16px !important; }
+  /* (2026-10-28) quiet text buttons with a round +, lined up with the job names — no dashed or outlined pills */
+  .pl-addj{ display:inline-flex !important; align-items:center; gap:8px; width:auto !important; margin-left:-8px; padding:6px 10px 6px 8px !important; border:0 !important; border-radius:9px !important; background:transparent !important; box-shadow:none !important; font:700 13px Inter,sans-serif !important; color:var(--muted) !important; }
+  .pl-addj .pl-addi{ flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font:800 14px/1 Inter,sans-serif; background:var(--surface-soft); color:var(--muted); border:1px solid var(--line); }
+  .pl-addj:hover, .pl-addj:focus-visible{ color:#8A5300 !important; background:#FFF8EA !important; }
+  .pl-addj:hover .pl-addi, .pl-addj:focus-visible .pl-addi{ background:#F0A21A; color:#16191B; border-color:#F0A21A; }
+  body.theme-dark .pl-addj:hover, body.theme-dark .pl-addj:focus-visible{ color:#FFC876 !important; background:rgba(240,162,26,.1) !important; }
+  .pl-addj.sec{ color:var(--ink) !important; }
+  .pl-addj.sec .pl-addi{ background:#FFF3DC; color:#8A5300; border-color:#F3D9A6; }
+  body.theme-dark .pl-addj.sec .pl-addi{ background:rgba(240,162,26,.16); color:#FFC876; border-color:rgba(240,162,26,.3); }
+  .pl-addrow td.pl-job{ padding:2px 10px 10px 16px !important; }
+  .pl-end .pl-addrow td.pl-job{ padding:10px 10px 12px 16px !important; border-top:1px solid var(--line); }
   .pl-addin{ max-width:260px; }
   /* completed sections and sheds go green (most visible with Collapse all) */
   .pl-tab td.pl-job .pl-donechip, .pl-donechip{ display:inline-block; font:800 10.5px Inter,sans-serif; border-radius:99px; padding:2px 8px; background:#0F8A75; color:#fff; margin-right:4px; }
@@ -12803,14 +12808,14 @@
       body += `<tbody class="pl-sec${folded ? ' folded' : ''}${tot && dn === tot ? ' alldone' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr">${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t).replace(/\//g, '/<wbr>')}</span><em>${tot ? (dn === tot ? '<span class="pl-donechip">✓ Done</span> ' : '') + dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
         const us = col.c ? S.rows.map(R=> unitFor(col, S, R)).filter(u=> u && !u.done && !u.taskId) : [];
         const all = us.length && us.every(u=> prepPick.sel.has(u.id));
-        return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}">＋ Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
+        return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}"><span class="pl-addi" aria-hidden="true">+</span>Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
     });
     const foot = `<tfoot><tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
       if(!c) return `<td><button type="button" class="pl-rdy st" data-prep-start="${enc(sh)}" title="Start Shed ${enc(sh)}'s checklist early">＋ Start</button></td>`;
       if(c.status === 'ready') return `<td><button type="button" class="pl-rdy ok" data-prep-unready="${enc(c.id)}" title="${enc('Ready' + (c.readyBy ? ' — signed off by ' + c.readyBy : '') + '. Click to reopen')}">✓ Ready</button></td>`;
       const pr = prepProgress(c), left = pr.total - pr.done;
       return `<td>${left ? `<button type="button" class="pl-rdy" disabled title="${left} job${left === 1 ? '' : 's'} still open">${left} left</button>` : `<button type="button" class="pl-rdy go" data-prep-ready="${enc(c.id)}">Mark ready</button>`}</td>`; }).join('')}</tr></tfoot>`;
-    const addSec = `<tbody class="pl-end"><tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj sec" data-pl-addsec>＋ Add a section</button></td><td colspan="${cols.length}"></td></tr></tbody>`;
+    const addSec = `<tbody class="pl-end"><tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj sec" data-pl-addsec><span class="pl-addi" aria-hidden="true">+</span>Add a section</button></td><td colspan="${cols.length}"></td></tr></tbody>`;
     const pickBar = prepPick ? (()=>{ const c = prepActiveFor(prepPick.shed), n = prepPick.sel.size;
       const secN = c ? new Set(prepUnits(c).filter(x=> prepPick.sel.has(x.u.id)).map(x=> x.sec.id)).size : 0;
       return `<div class="pl-pickbar"><b>${n ? n + ' job' + (n === 1 ? '' : 's') + ' picked' : 'Pick the jobs'}</b><span>Shed ${escapeHtml(prepPick.shed)}${n ? ' · ' + secN + ' section' + (secN === 1 ? '' : 's') : ' · tick the boxes in its column'}</span><span class="pl-pb-sp"></span><button type="button" class="pl-pbtn ghost" data-pl-pickcancel>Cancel</button><button type="button" class="pl-pbtn" data-pl-pickmake${n ? '' : ' disabled'}>Make a task</button></div>`; })() : '';
