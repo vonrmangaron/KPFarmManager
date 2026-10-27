@@ -3521,7 +3521,8 @@
   .tsub{ all:unset; cursor:pointer; display:flex; align-items:flex-start; gap:8px; padding:4px 0; font:500 12.5px Inter,system-ui,sans-serif; color:var(--ink); }
   .tsub-cb{ all:unset; cursor:pointer; flex:0 0 16px; width:16px; height:16px; border-radius:5px; border:2px solid var(--line); display:grid; place-items:center; font:800 10px Inter; color:#fff; background:var(--surface); box-sizing:border-box; }
   .tsub.done .tsub-cb, .ds-row.done .tsub-cb{ background:#0F8A75; border-color:#0F8A75; }
-  .tsub.done .tsub-t, .ds-row.done .ds-t{ color:var(--muted); text-decoration:line-through; }
+  .tsub.done .tsub-t, .ds-row.done .ds-t{ color:var(--muted); }
+  .tsub.done .tsub-nm, .ds-row.done .tsub-nm{ text-decoration:line-through; }
   .st-edit{ display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
   .st-edit:empty{ display:none; }
   .sub-row{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:6px; align-items:center; }   /* own class: "st-row" is the Settings row and squeezed the step box to 14 px on phones (2026-10-26) */
@@ -4375,6 +4376,31 @@
   .prep-tprev-i{ display:flex; gap:9px; align-items:center; font:500 13.5px Inter,sans-serif; padding:3px 0; color:var(--ink); }
   .prep-tprev-i::before{ content:""; width:15px; height:15px; border-radius:5px; border:2px solid var(--line); flex:none; }
   .tsubs-h{ font:800 12px Sora,sans-serif; color:var(--muted); margin:8px 2px 2px; }
+  /* Steps v2 (2026-10-28, mockup M9P9KFQpGDfR7ZmZZ62GZm): number · name (who/when) · a bigger box on the right — same as the Crew app */
+  .tsubs-list{ border-top:1px solid var(--line) !important; padding-top:0 !important; gap:0 !important; }
+  .tsubs-h{ font:800 10.5px Inter,sans-serif !important; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:0 !important; padding:12px 2px 4px; }
+  .tsub{ display:flex !important; align-items:center !important; gap:10px !important; padding:9px 2px !important; border-bottom:1px solid var(--line); font:600 13.5px/1.35 Inter,system-ui,sans-serif !important; width:100%; box-sizing:border-box; }
+  .tsubs-list .tsub:last-child{ border-bottom:0; }
+  .tsub-n{ flex:none; width:20px; text-align:right; font:700 11.5px Inter,sans-serif; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .tsub-t{ flex:1; min-width:0; }
+  .tsub-t small{ display:block; font:500 11.5px Inter,sans-serif; color:var(--muted); text-decoration:none; margin-top:1px; }
+  .tsub.done .tsub-t small{ text-decoration:none; }
+  .tsub .tsub-cb, .ds-row .tsub-cb{ all:unset; box-sizing:border-box; cursor:pointer; flex:none; width:28px !important; height:28px !important; border-radius:9px; border:2px solid #CFC8B8; background:var(--surface); display:grid; place-items:center; color:#fff; transition:background .15s, border-color .15s, transform .15s; }
+  .tsub .tsub-cb svg, .ds-row .tsub-cb svg{ width:16px; height:16px; }
+  .tsub.done .tsub-cb, .ds-row.done .tsub-cb{ background:#0F8A75; border-color:#0F8A75; }
+  .tsub:hover .tsub-cb, .ds-row .tsub-cb:hover{ border-color:#0F8A75; }
+  .tsub:active .tsub-cb, .ds-row .tsub-cb:active{ transform:scale(.92); }
+  body.theme-dark .tsub .tsub-cb, body.theme-dark .ds-row .tsub-cb{ border-color:#3C4869; }
+  body.theme-dark .tsub.done .tsub-cb, body.theme-dark .ds-row.done .tsub-cb{ border-color:#0F8A75; }
+  .ds-row{ grid-template-columns:20px minmax(0,1fr) auto auto !important; gap:10px !important; padding:10px 0 !important; }
+  .ds-row .ds-t{ font:600 14px/1.35 Inter,system-ui,sans-serif; }
+  .task-complete-btn.sr-hide{ display:none !important; }
+  #detailDoneBtn[hidden]{ display:none !important; }
+  @media (hover:hover){ .task-card:has(.sr-hide):hover .task-icon-slot .task-icon, .kcard:has(.sr-hide):hover .kicon-slot .kicon{ opacity:1 !important; } }
+  .dm-tick.sub-ring{ background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; width:44px !important; height:44px !important; display:grid; place-items:center; }
+  .sr-svg{ width:42px; height:42px; display:block; }
+  .sr-svg .sr-tr{ stroke:var(--surface-soft); }
+  .sr-svg .sr-tx{ font:800 11px Inter,system-ui,sans-serif; fill:var(--ink); }
   .tsubs-list .tsubs-h:first-child, .ds-list .tsubs-h:first-child{ margin-top:2px; }
 
   /* bigger fold arrow on steps (2026-10-24) */
@@ -4481,6 +4507,20 @@
   .pl-tab td.pl-job input, .pl-tab td.pl-job .pl-addin, .pl-tab td.pl-job .pl-renin{ -webkit-user-select:text; user-select:text; }
   /* ＋ Add a job / ＋ Add a section: compact pills, not full width */
   /* (2026-10-28) quiet text buttons with a round +, lined up with the job names — no dashed or outlined pills */
+  /* one-tap section task (2026-10-28) */
+  .pl-sfc{ text-align:center; padding:6px 4px !important; }
+  .pl-mk{ all:unset; box-sizing:border-box; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:9px; border:1px solid #F3D9A6; background:#FFF3DC; color:#8A5300; font:700 12px Inter,sans-serif; white-space:nowrap; }
+  .pl-mk svg{ width:14px; height:14px; }
+  .pl-mk:hover, .pl-mk:focus-visible{ background:#F0A21A; border-color:#F0A21A; color:#16191B; }
+  .pl-mk.on{ border-color:transparent; background:#DFF4EF; color:#0F6E5D; }
+  .pl-mk.on:hover{ background:#C9EDE4; color:#0F6E5D; }
+  body.theme-dark .pl-mk{ background:rgba(240,162,26,.16); border-color:rgba(240,162,26,.3); color:#FFC876; }
+  body.theme-dark .pl-mk.on{ background:rgba(19,128,109,.24); border-color:transparent; color:#8FD9B5; }
+  .prep-act-toast{ position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom, 0px)); transform:translate(-50%, 20px); z-index:2000; display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:min(560px, calc(100vw - 24px)); padding:10px 12px 10px 16px; border-radius:14px; background:#16191B; color:#fff; font:500 13px/1.4 Inter,sans-serif; box-shadow:0 12px 30px rgba(0,0,0,.28); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; }
+  .prep-act-toast.show{ opacity:1; pointer-events:auto; transform:translate(-50%, 0); }
+  .prep-act-toast .pat-msg{ flex:1 1 220px; }
+  .prep-act-toast button{ all:unset; cursor:pointer; padding:7px 11px; border-radius:9px; font:800 12.5px Inter,sans-serif; background:#F0A21A; color:#16191B; white-space:nowrap; }
+  .prep-act-toast .pat-undo{ background:transparent; color:#FFD452; }
   .pl-addj{ display:inline-flex !important; align-items:center; gap:8px; width:auto !important; margin-left:-8px; padding:6px 10px 6px 8px !important; border:0 !important; border-radius:9px !important; background:transparent !important; box-shadow:none !important; font:700 13px Inter,sans-serif !important; color:var(--muted) !important; }
   .pl-addj .pl-addi{ flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font:800 14px/1 Inter,sans-serif; background:var(--surface-soft); color:var(--muted); border:1px solid var(--line); }
   .pl-addj:hover, .pl-addj:focus-visible{ color:#8A5300 !important; background:#FFF8EA !important; }
@@ -6747,12 +6787,34 @@
     else { persist(); renderAll(); }
     if($('#taskDetailModal').classList.contains('open') && detailTaskId === t.id){ renderDetailSubs(t); if(typeof openTaskDetailModal === 'function') openTaskDetailModal(t.id); }
   }
+  // Tasks with steps (2026-10-28, mockup M9P9KFQpGDfR7ZmZZ62GZm): no tick box of their own — the last step ticks the
+  // task (toggleSub). Card tick boxes are hidden; the day view's ✓ becomes a progress ring that opens the steps.
+  function cwRingSvg(d, n, all){
+    if(all) return '<svg class="sr-svg" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#0F8A75"/><path d="M13 20.5l4.5 4.5L27 15" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const r = 16, c = 2 * Math.PI * r, off = c * (1 - (n ? d / n : 0));
+    return `<svg class="sr-svg" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="${r}" fill="none" class="sr-tr" stroke-width="4"/><circle cx="20" cy="20" r="${r}" fill="none" stroke="#0F8A75" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 20 20)"/><text x="20" y="24" text-anchor="middle" class="sr-tx">${d}/${n}</text></svg>`;
+  }
+  function applySubRings(){
+    document.querySelectorAll('.task-complete-btn').forEach(b=>{ const c = b.closest('[data-id]'), t = c && tasks.find(x=> x.id === c.dataset.id); b.classList.toggle('sr-hide', !!(t && (t.subs || []).length)); });
+    document.querySelectorAll('.dm-tick[data-dm-tick]').forEach(b=>{
+      const t = tasks.find(x=> x.id === b.dataset.dmTick); if(!t || !(t.subs || []).length) return;
+      const p = subProgress(t), all = t.status === 'done', key = p.done + '/' + p.total + (all ? 'd' : '');
+      if(b.dataset.sr === key) return; b.dataset.sr = key;
+      b.classList.add('sub-ring'); b.innerHTML = cwRingSvg(p.done, p.total, all);
+      b.title = all ? 'All steps done' : `${p.done} of ${p.total} steps — open the steps`; b.setAttribute('aria-label', b.title);
+    });
+  }
+  { let raf = 0; new MutationObserver(()=>{ if(raf) return; raf = requestAnimationFrame(()=>{ raf = 0; applySubRings(); }); }).observe(document.documentElement, { childList:true, subtree:true }); }
+  document.addEventListener('click', (e)=>{
+    const b = e.target.closest && e.target.closest('.dm-tick.sub-ring'); if(!b) return;
+    e.stopPropagation(); e.preventDefault(); openTaskDetailModal(b.dataset.dmTick);
+  }, true);
   function subsBlockHtml(task, cls){
     const p = subProgress(task); if(!p.total) return '';
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
       <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
-      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}</span></button>`).join('')}</div>` : ''}
+      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}"><span class="tsub-n">${i + 1}</span><span class="tsub-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small class="tsub-by">${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><span class="tsub-cb" aria-hidden="true">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
   // steps editor in the Add/Edit window
@@ -11499,6 +11561,7 @@
       seriesNote.textContent = `🔁 Part of a repeating series — through ${formatFull(lastDate)}`;
     } else { seriesNote.style.display = 'none'; }
     $('#detailDoneBtn').innerHTML = t.status==='done' ? UNDO_ICON_SVG+' Reopen' : CHECK_ICON_SVG+' Mark Done';
+    $('#detailDoneBtn').hidden = !!(t.subs || []).length;   // steps tick the task (2026-10-28): no Mark Done of its own
     // look C (2026-10-25): colour bar by state, the day under the name, status / who / batch as chips
     { const today = dateKey(new Date()), st = t.status==='done' ? 'done' : (t.date && t.date < today ? 'late' : 'open');
       const m = $('#taskDetailModal'); m.classList.remove('st-open','st-late','st-done'); m.classList.add('st-' + st);
@@ -11523,7 +11586,7 @@
     box.hidden = false;
     box.innerHTML = `<div class="ds-head"><span class="dlabel">Steps</span>${p.total ? `<span class="ds-n">${p.done} of ${p.total} done</span>` : ''}</div>
       ${p.total ? `<div class="tsubs-pb ds-pb"><i style="width:${Math.round(p.done / p.total * 100)}%"></i></div>` : ''}
-      <div class="ds-list">${(t.subs || []).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<div class="ds-row${x.done ? ' done' : ''}"><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '✓' : ''}</button><span class="ds-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
+      <div class="ds-list">${(t.subs || []).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<div class="ds-row${x.done ? ' done' : ''}"><span class="tsub-n">${i + 1}</span><span class="ds-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</button><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
         <div class="ds-add"><span aria-hidden="true">＋</span><input type="text" id="detailSubInput" data-sub-add="${escapeHtmlAttr(t.id)}" maxlength="80" placeholder="Add a step" autocomplete="off"></div></div>
       ${p.total ? '<p class="ds-hint">Ticking the last step ticks the task. Unticking a step re-opens it.</p>' : ''}`;
   }
@@ -12808,7 +12871,13 @@
       body += `<tbody class="pl-sec${folded ? ' folded' : ''}${tot && dn === tot ? ' alldone' : ''}" data-pl-sec="${sk}"><tr class="pl-sech"><td class="pl-job"><div class="pl-sr">${own ? '' : `<button type="button" class="pl-fold" data-pl-fold="${sk}" aria-expanded="${!folded}" title="${folded ? 'Show this section' : 'Fold this section'}">${PL_CHEV}</button>`}<span class="pl-secname" role="button" tabindex="0" data-pl-rensec="${sk}" title="Click to rename">${escapeHtml(S.t).replace(/\//g, '/<wbr>')}</span><em>${tot ? (dn === tot ? '<span class="pl-donechip">✓ Done</span> ' : '') + dn + ' of ' + tot + ' done' : ''}</em><button type="button" class="pl-mini" data-pl-secmenu="${sk}" aria-label="${enc('More for ' + S.t)}" title="Rename, add a job, move, delete…">${PL_DOTS}</button></div></td>${prepPick ? cols.map(col=>{ if(col.sh !== prepPick.sh && col.sh !== prepPick.shed) return '<td class="pl-secfill"></td>';
         const us = col.c ? S.rows.map(R=> unitFor(col, S, R)).filter(u=> u && !u.done && !u.taskId) : [];
         const all = us.length && us.every(u=> prepPick.sel.has(u.id));
-        return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : `<td class="pl-secfill" colspan="${cols.length}"></td>`}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}"><span class="pl-addi" aria-hidden="true">+</span>Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
+        return `<td class="pl-secfill pk">${us.length ? `<button type="button" class="pl-cbx${all ? ' on' : ''}" data-pl-picksec="${sk}" aria-pressed="${!!all}" title="${all ? 'Unpick' : 'Pick'} every open job in ${enc(S.t)}">${all ? '✓' : ''}</button>` : ''}</td>`; }).join('') : cols.map(col=>{
+          if(!col.c) return '<td class="pl-secfill"></td>';
+          const us = S.rows.map(R=> unitFor(col, S, R)).filter(Boolean), open = us.filter(u=> !u.done && !u.taskId);
+          const onList = us.map(u=> u.taskId && tasks.find(t=> t.id === u.taskId && t.prep && t.prep.bundle)).find(Boolean);
+          if(open.length) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk" data-pl-sectask="${enc(col.c.id + '|' + S.t)}" title="${enc(`Make a task: Shed ${col.sh} – ${S.t} (${open.length} open job${open.length === 1 ? '' : 's'} as steps)`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Task</button></td>`;
+          if(onList) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk on" data-pl-opentask="${enc(onList.id)}" title="${enc('On the task list: ' + onList.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>On list</button></td>`;
+          return '<td class="pl-secfill"></td>'; }).join('')}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}"><span class="pl-addi" aria-hidden="true">+</span>Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
     });
     const foot = `<tfoot><tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
       if(!c) return `<td><button type="button" class="pl-rdy st" data-prep-start="${enc(sh)}" title="Start Shed ${enc(sh)}'s checklist early">＋ Start</button></td>`;
@@ -12922,6 +12991,8 @@
   function plClick(e){
     const g = sel=> e.target.closest(sel); let b;
     if((b = g('[data-pl-pick]'))){ const id = b.dataset.plPick; if(prepPick.sel.has(id)) prepPick.sel.delete(id); else prepPick.sel.add(id); keepScroll(renderPrepBoard); return true; }
+    if((b = g('[data-pl-sectask]'))){ const v = b.dataset.plSectask, i = v.indexOf('|'); prepMakeSectionTask(v.slice(0, i), v.slice(i + 1)); return true; }
+    if((b = g('[data-pl-opentask]'))){ openTaskDetailModal(b.dataset.plOpentask); return true; }
     if((b = g('[data-pl-picksec]'))){ const c = prepActiveFor(prepPick.shed), sec = c && prepSecOf(c, b.dataset.plPicksec); if(!sec) return true;
       const us = prepUnits({ sections:[sec] }).map(x=> x.u).filter(u=> !u.done && !u.taskId), all = us.every(u=> prepPick.sel.has(u.id));
       us.forEach(u=> all ? prepPick.sel.delete(u.id) : prepPick.sel.add(u.id)); keepScroll(renderPrepBoard); return true; }
@@ -12947,7 +13018,6 @@
       plMenu(b, `Shed ${sh}`, [c.closedAt ? 'Closed ' + prepFmt(c.closedAt) : 'Started early', c.nextPlacement ? 'chicks ' + prepFmt(c.nextPlacement) : ''].filter(Boolean).join(' · '), [
         c.status === 'ready' ? { ic:'↺', label:'Reopen', act: ()=> plAct('unready', c.id) }
           : { ic:'✓', label:'Mark shed ready', note: left ? left + ' job' + (left === 1 ? '' : 's') + ' left' : '', disabled: !!left, act: ()=> plAct('ready', c.id) },
-        { ic:'☰', label:'Make a task from several jobs', disabled: c.status === 'ready' || !prepUnits(c).some(x=> !x.u.done && !x.u.taskId), act: ()=>{ prepPick = { shed: sh, sel: new Set() }; prepOnlyShed = null; keepScroll(renderPrepBoard); } },
         { info:true, ic:'📅', label: c.nextPlacement ? 'Chicks ' + prepFmt(c.nextPlacement) + ' (from Production)' : 'Chicks date comes from Production' },
         { ic:'↧', label: prepOnlyShed === sh ? 'Show every shed' : 'Show only this shed', act: ()=>{ prepOnlyShed = prepOnlyShed === sh ? null : sh; keepScroll(renderPrepBoard); } },
         '-',
@@ -13071,6 +13141,32 @@
     try{ refreshAssigneeDatalist(); }catch(e){}
     prepSyncTaskModal();
     $('#prepTaskModal').classList.add('open');
+  }
+  // One tap per section and shed (2026-10-28, mockup M9P9KFQpGDfR7ZmZZ62GZm): every open job of that section becomes a
+  // step of one task, "Shed 1 – Pre Cleaning", for the section's date (or today) and its people; a message offers the rest
+  function prepMakeSectionTask(cid, secT){
+    const c = prepFind(cid), sec = c && prepSecOf(c, secT); if(!sec) return;
+    const picked = prepUnits(c).filter(x=> x.sec === sec && !x.u.done && !x.u.taskId);
+    if(!picked.length){ showToast('Nothing open in this section.'); return; }
+    const snap = captureUndo(), today = dateKey(new Date());
+    const date = sec.due && sec.due >= today ? sec.due : today;
+    const who = sec.dueWho ? String(sec.dueWho).split(/\s*,\s*/).filter(Boolean) : [];
+    const title = `Shed ${c.shed} – ${sec.t}`;
+    const t = addTask(title, '🧹', date, { assignees: who, prep: { cid: c.id, uid: picked[0].u.id, uids: picked.map(x=> x.u.id), shed: c.shed, bundle: true, daily: false },
+      subs: picked.map(x=> ({ id: uid(), t: x.u === x.sec ? x.sec.t : x.u.t, prepUid: x.u.id })) });
+    picked.forEach(x=>{ x.u.taskId = t.id; x.u.taskDate = date; x.u.taskWho = who.join(', '); });
+    prepHist(c, `Shed ${c.shed}: section "${sec.t}" made into the task "${title}" (${picked.length} step${picked.length === 1 ? '' : 's'})`);
+    offerUndo(`Task "${title}"`, snap, { quiet:true });
+    persist(); renderAll();
+    prepActToast(`<b>${escapeHtml(title)}</b> · ${picked.length} step${picked.length === 1 ? '' : 's'}, ${date === today ? 'today' : escapeHtml(formatFull(date))}${who.length ? ' · ' + escapeHtml(who.join(', ')) : ''}`, t.id);
+  }
+  function prepActToast(html, taskId){
+    let el = $('#prepActToast');
+    if(!el){ el = document.createElement('div'); el.id = 'prepActToast'; el.className = 'prep-act-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el);
+      el.addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; el.classList.remove('show');
+        if(b.dataset.act === 'edit') openEditTaskModal(b.dataset.task); else if(b.dataset.act === 'undo') performUndo(); }); }
+    el.innerHTML = `<span class="pat-msg">✓ Task made: ${html}</span><button type="button" data-act="edit" data-task="${escapeHtmlAttr(taskId)}">Set day &amp; people</button><button type="button" data-act="undo" class="pat-undo">Undo</button>`;
+    el.classList.add('show'); clearTimeout(prepActToast.tm); prepActToast.tm = setTimeout(()=> el.classList.remove('show'), 9000);
   }
   // several jobs from one shed → one task whose steps are the jobs, under their section names
   function openPrepBundleModal(c, ids){
