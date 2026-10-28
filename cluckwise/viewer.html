@@ -2778,8 +2778,10 @@
     else if(viewerSubsOpen.has(tk.id)) viewerSubsOpen.delete(tk.id); else viewerSubsOpen.add(tk.id);
     renderAll();
   }
+  // ticked steps are shown at the bottom (2026-10-28); the saved order stays, so unticking puts a step back
+  function subsShown(a){ a = Array.isArray(a) ? a : []; return a.filter(x=> !x.done).concat(a.filter(x=> x.done)); }
   function subsBlockEl(tk){
-    const a = Array.isArray(tk.subs) ? tk.subs : []; if(!a.length) return null;
+    const a = subsShown(tk.subs); if(!a.length) return null;
     const done = a.filter(x=> x.done).length, open = viewerSubsIsOpen(tk);
     const box = document.createElement('div'); box.className = 'tsubs' + (open ? ' open' : '');
     box.innerHTML = `<button type="button" class="tsubs-bar" aria-expanded="${open}"><span class="tsubs-pb"><i style="width:${Math.round(done / a.length * 100)}%"></i></span><span class="tsubs-n">${done}/${a.length} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>${open ? `<div class="tsubs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sid="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="tsub-cb" aria-hidden="true">${x.done ? '✓' : ''}</span><span class="tsub-t">${escapeHtml(x.t)}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}</small>` : ''}${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}</span></button>`).join('')}</div>` : ''}`;
@@ -2824,7 +2826,7 @@
   function vsRender(){
     const ov = $('#vsSheet'); if(!ov || !vsId) return;
     const tk = tasks.find(x=> x.id === vsId); if(!tk || !(tk.subs || []).length){ vsClose(); return; }
-    const a = tk.subs, d = a.filter(x=> x.done).length, all = tk.status === 'done';
+    const a = subsShown(tk.subs), d = a.filter(x=> x.done).length, all = tk.status === 'done';
     const keep = ov.querySelector('.vs-list') ? ov.querySelector('.vs-list').scrollTop : 0;
     const meta = [tk.prep ? `Shed ${tk.prep.shed} · Preparation` : '', (tk.assignees || []).join(', ')].filter(Boolean).join(' · ');
     ov.innerHTML = `<div class="vs-sheet"><div class="vs-grab" aria-hidden="true"></div>

@@ -6773,6 +6773,8 @@
   const HOLD_DRAG = { delay:180, delayOnTouchOnly:true, touchStartThreshold:5, chosenClass:'drag-chosen', fallbackTolerance:4, easing:'cubic-bezier(.2,.8,.2,1)' };
   let editingSubs = [];
   const subsOpen = new Set();   // cards whose steps are showing
+  // ticked steps are shown at the bottom (2026-10-28); the saved order stays, so unticking puts a step back
+  function subsShown(a){ a = Array.isArray(a) ? a : []; return a.filter(x=> !x.done).concat(a.filter(x=> x.done)); }
   function subProgress(t){ const a = Array.isArray(t && t.subs) ? t.subs : []; return { done: a.filter(x=> x.done).length, total: a.length }; }
   function freshSubs(list){ return (list || []).map(x=> ({ id: uid(), t: x.t })); }
   function toggleSub(taskId, subId){
@@ -6813,7 +6815,7 @@
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
       <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
-      ${open ? `<div class="tsubs-list">${task.subs.map((x, i)=> `${x.sec && x.sec !== (task.subs[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}"><span class="tsub-n">${i + 1}</span><span class="tsub-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small class="tsub-by">${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><span class="tsub-cb" aria-hidden="true">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</span></button>`).join('')}</div>` : ''}
+      ${open ? `<div class="tsubs-list">${subsShown(task.subs).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}"><span class="tsub-n">${i + 1}</span><span class="tsub-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small class="tsub-by">${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><span class="tsub-cb" aria-hidden="true">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
   // steps editor in the Add/Edit window
@@ -11585,7 +11587,7 @@
     box.hidden = false;
     box.innerHTML = `<div class="ds-head"><span class="dlabel">Steps</span>${p.total ? `<span class="ds-n">${p.done} of ${p.total} done</span>` : ''}</div>
       ${p.total ? `<div class="tsubs-pb ds-pb"><i style="width:${Math.round(p.done / p.total * 100)}%"></i></div>` : ''}
-      <div class="ds-list">${(t.subs || []).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<div class="ds-row${x.done ? ' done' : ''}"><span class="tsub-n">${i + 1}</span><span class="ds-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</button><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
+      <div class="ds-list">${subsShown(t.subs).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<div class="ds-row${x.done ? ' done' : ''}"><span class="tsub-n">${i + 1}</span><span class="ds-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><button type="button" class="tsub-cb" data-sub-tick="${escapeHtmlAttr(t.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</button><button type="button" class="ds-x" data-sub-del="${escapeHtmlAttr(t.id + '|' + x.id)}" title="Remove this step" aria-label="Remove ${escapeHtmlAttr(x.t)}">✕</button></div>`).join('')}
         <div class="ds-add"><span aria-hidden="true">＋</span><input type="text" id="detailSubInput" data-sub-add="${escapeHtmlAttr(t.id)}" maxlength="80" placeholder="Add a step" autocomplete="off"></div></div>
       ${p.total ? '<p class="ds-hint">Ticking the last step ticks the task. Unticking a step re-opens it.</p>' : ''}`;
   }
@@ -12835,10 +12837,6 @@
     secs.forEach(S=>{ if(S.rows.length > 1) S.rows = S.rows.filter(R=> !R.own); });   // a section that has jobs isn't ticked on its own
     const shortD = k=> k ? toDateObj(k).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
     const unitFor = (col, S, R)=> col.c ? prepUnitByName(col.c, S.t, R.own ? null : R.t) : null;
-    // finished goes to the bottom (2026-10-28): a job done in every shed sinks in its section, a finished section sinks on the board
-    const rowDone = (S, R)=>{ const us = cols.map(col=> unitFor(col, S, R)).filter(Boolean); return us.length > 0 && us.every(u=> u.done); };
-    secs.forEach(S=>{ S.rows = S.rows.filter(R=> !rowDone(S, R)).concat(S.rows.filter(R=> rowDone(S, R))); S.done = S.rows.every(R=> rowDone(S, R)); });
-    secs.splice(0, secs.length, ...secs.filter(S=> !S.done), ...secs.filter(S=> S.done));
     const head = `<tr><th class="pl-job">Job</th>${cols.map(({ sh, c, run })=>{
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
@@ -12921,26 +12919,20 @@
     prepListSort(box);
     if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = box.querySelector(`[data-pl-addjob="${CSS.escape(k)}"]`); if(btn) plStartAddJob(btn); }
   }
-  // finished rows/sections sit at the bottom and can't be dragged: re-order only the open ones, in the slots they already hold
-  function prepSlotSort(arr, key, order){
-    const at = []; arr.forEach((x, i)=>{ if(order.includes(key(x))) at.push(i); });
-    const moved = at.map(i=> arr[i]).sort((a, b)=> order.indexOf(key(a)) - order.indexOf(key(b)));
-    at.forEach((i, j)=>{ arr[i] = moved[j]; });
-  }
   // drag ⋮⋮ to move a job inside its section, or a whole section
   function prepListSort(box){
     prepSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); prepSortables = [];
     if(typeof Sortable === 'undefined') return;
     const tab = box.querySelector('.pl-tab'); if(!tab) return;
     // hold a section's row (not its name or buttons) to move the whole section; hold a job's name cell to move the job
-    prepSortables.push(Sortable.create(tab, Object.assign({}, HOLD_DRAG, { draggable:'tbody.pl-sec:not(.alldone)', handle:'.pl-sech td.pl-job', filter:'button, input, [data-pl-rensec]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
-      onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec:not(.alldone)')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
-        prepSlotSort(m, S=> prepNorm(S.t), order); prepSaveMaster(m); prepStructDone(); } })));
+    prepSortables.push(Sortable.create(tab, Object.assign({}, HOLD_DRAG, { draggable:'tbody.pl-sec', handle:'.pl-sech td.pl-job', filter:'button, input, [data-pl-rensec]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
+        m.sort((a, b)=> order.indexOf(prepNorm(a.t)) - order.indexOf(prepNorm(b.t))); prepSaveMaster(m); prepStructDone(); } })));
     tab.querySelectorAll('tbody.pl-sec').forEach(tb=>{
-      prepSortables.push(Sortable.create(tb, Object.assign({}, HOLD_DRAG, { draggable:'tr.pl-row:not(.all)', handle:'.pl-row td.pl-job', filter:'button, input, [data-pl-renjob]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      prepSortables.push(Sortable.create(tb, Object.assign({}, HOLD_DRAG, { draggable:'tr.pl-row', handle:'.pl-row td.pl-job', filter:'button, input, [data-pl-renjob]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
         onEnd: ()=>{ const secT = tb.dataset.plSec, m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
-          const order = [...tb.querySelectorAll('tr.pl-row:not(.all)')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
-          prepSlotSort(S.items, prepNorm, order); prepSaveMaster(m); prepStructDone(); } })));
+          const order = [...tb.querySelectorAll('tr.pl-row')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
+          S.items.sort((a, b)=> order.indexOf(prepNorm(a)) - order.indexOf(prepNorm(b))); prepSaveMaster(m); prepStructDone(); } })));
     });
   }
   // inline add and rename, like ＋ Add task
