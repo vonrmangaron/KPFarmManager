@@ -5642,8 +5642,9 @@
   ];
 
   let tasks = [];
-  let orderCounter = Date.now();
-  function nextOrder(){ return orderCounter++; }
+  // a new task goes on top of the ones already there (2026-10-28): one below the lowest order on the farm
+  let orderCounter = 0;
+  function nextOrder(){ orderCounter = Math.min(orderCounter, tasks.reduce((m,t)=> Math.min(m, typeof t.order === 'number' ? t.order : 0), 0)) - 1; return orderCounter; }
   // Duplicate: an exact twin just below the original, same day — then drag it anywhere.
   // The twin is a fresh open task, not linked to the original's repeat series or report.
   function duplicateTask(id){
@@ -5668,7 +5669,7 @@
     const aDone = a.status==='done' ? 1 : 0;
     const bDone = b.status==='done' ? 1 : 0;
     if(aDone !== bDone) return aDone - bDone;
-    return (a.order||0) - (b.order||0);
+    return (a.order||0) - (b.order||0) || (b.createdAt||0) - (a.createdAt||0);
   }
   // Daily maintenance check: one built-in frequent task (fixed id, so devices never add it twice).
   // Added once per farm; if the manager deletes it, it stays deleted (settings.mcheckTpl).
@@ -5718,8 +5719,6 @@
     let needsOrder = false;
     tasks.forEach(t=>{ if(typeof t.order !== 'number') needsOrder = true; });
     if(needsOrder){ tasks.forEach((t,i)=>{ if(typeof t.order !== 'number') t.order = i; }); }
-    const maxOrder = tasks.reduce((m,t)=> Math.max(m, t.order||0), 0);
-    orderCounter = Math.max(orderCounter, maxOrder+1);
     tasks.forEach(t=>{
       if(!Array.isArray(t.assignees)){ t.assignees = t.assignee ? [t.assignee] : []; }
       delete t.assignee;
@@ -11772,7 +11771,7 @@
       if(!toKey){ showToast('Pick a target date.', true); return; }
       const src = tasks.filter(t=>t.date===copySourceDayKey && t.status!=='done');
       if(src.length === 0){ showToast('Nothing to copy.', true); closeOverlays(); return; }
-      const copies = src.map(t=> buildCopiedTask(t, toKey));
+      const copies = src.slice().sort(taskSortCompare).reverse().map(t=> buildCopiedTask(t, toKey));   // built last-first, so they keep the day's order on top
       copies.forEach(c=> tasks.push(c));
       addHistory('Copied', `${copies.length} task(s) copied from ${formatFull(copySourceDayKey)} to ${formatFull(toKey)}`);
       persist(); renderAll();
@@ -12836,6 +12835,10 @@
     secs.forEach(S=>{ if(S.rows.length > 1) S.rows = S.rows.filter(R=> !R.own); });   // a section that has jobs isn't ticked on its own
     const shortD = k=> k ? toDateObj(k).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
     const unitFor = (col, S, R)=> col.c ? prepUnitByName(col.c, S.t, R.own ? null : R.t) : null;
+    // finished goes to the bottom (2026-10-28): a job done in every shed sinks in its section, a finished section sinks on the board
+    const rowDone = (S, R)=>{ const us = cols.map(col=> unitFor(col, S, R)).filter(Boolean); return us.length > 0 && us.every(u=> u.done); };
+    secs.forEach(S=>{ S.rows = S.rows.filter(R=> !rowDone(S, R)).concat(S.rows.filter(R=> rowDone(S, R))); S.done = S.rows.every(R=> rowDone(S, R)); });
+    secs.splice(0, secs.length, ...secs.filter(S=> !S.done), ...secs.filter(S=> S.done));
     const head = `<tr><th class="pl-job">Job</th>${cols.map(({ sh, c, run })=>{
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
@@ -12918,20 +12921,26 @@
     prepListSort(box);
     if(prepAddAgain){ const k = prepAddAgain; prepAddAgain = null; const btn = box.querySelector(`[data-pl-addjob="${CSS.escape(k)}"]`); if(btn) plStartAddJob(btn); }
   }
+  // finished rows/sections sit at the bottom and can't be dragged: re-order only the open ones, in the slots they already hold
+  function prepSlotSort(arr, key, order){
+    const at = []; arr.forEach((x, i)=>{ if(order.includes(key(x))) at.push(i); });
+    const moved = at.map(i=> arr[i]).sort((a, b)=> order.indexOf(key(a)) - order.indexOf(key(b)));
+    at.forEach((i, j)=>{ arr[i] = moved[j]; });
+  }
   // drag ⋮⋮ to move a job inside its section, or a whole section
   function prepListSort(box){
     prepSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); prepSortables = [];
     if(typeof Sortable === 'undefined') return;
     const tab = box.querySelector('.pl-tab'); if(!tab) return;
     // hold a section's row (not its name or buttons) to move the whole section; hold a job's name cell to move the job
-    prepSortables.push(Sortable.create(tab, Object.assign({}, HOLD_DRAG, { draggable:'tbody.pl-sec', handle:'.pl-sech td.pl-job', filter:'button, input, [data-pl-rensec]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
-      onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
-        m.sort((a, b)=> order.indexOf(prepNorm(a.t)) - order.indexOf(prepNorm(b.t))); prepSaveMaster(m); prepStructDone(); } })));
+    prepSortables.push(Sortable.create(tab, Object.assign({}, HOLD_DRAG, { draggable:'tbody.pl-sec:not(.alldone)', handle:'.pl-sech td.pl-job', filter:'button, input, [data-pl-rensec]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      onEnd: ()=>{ const order = [...tab.querySelectorAll('tbody.pl-sec:not(.alldone)')].map(b=> prepNorm(b.dataset.plSec)); const m = prepMaster();
+        prepSlotSort(m, S=> prepNorm(S.t), order); prepSaveMaster(m); prepStructDone(); } })));
     tab.querySelectorAll('tbody.pl-sec').forEach(tb=>{
-      prepSortables.push(Sortable.create(tb, Object.assign({}, HOLD_DRAG, { draggable:'tr.pl-row', handle:'.pl-row td.pl-job', filter:'button, input, [data-pl-renjob]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
+      prepSortables.push(Sortable.create(tb, Object.assign({}, HOLD_DRAG, { draggable:'tr.pl-row:not(.all)', handle:'.pl-row td.pl-job', filter:'button, input, [data-pl-renjob]', preventOnFilter:false, animation:150, forceFallback:true, fallbackOnBody:true, ghostClass:'prep-ghost',
         onEnd: ()=>{ const secT = tb.dataset.plSec, m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return;
-          const order = [...tb.querySelectorAll('tr.pl-row')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
-          S.items.sort((a, b)=> order.indexOf(prepNorm(a)) - order.indexOf(prepNorm(b))); prepSaveMaster(m); prepStructDone(); } })));
+          const order = [...tb.querySelectorAll('tr.pl-row:not(.all)')].map(r=> prepNorm(r.dataset.plJob.split('|').slice(1).join('|')));
+          prepSlotSort(S.items, prepNorm, order); prepSaveMaster(m); prepStructDone(); } })));
     });
   }
   // inline add and rename, like ＋ Add task

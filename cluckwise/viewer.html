@@ -3429,7 +3429,7 @@
     const pa = (a.priority === 'high' && a.status !== 'done') ? 0 : 1, pb = (b.priority === 'high' && b.status !== 'done') ? 0 : 1;
     if(pa !== pb) return pa - pb;
     if(taskSort === 'name') return String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity:'base', numeric:true });
-    return (a.order || 0) - (b.order || 0);
+    return (a.order || 0) - (b.order || 0) || (b.createdAt || 0) - (a.createdAt || 0);
   }
   function getAgendaTasks(){
     const todayKey=dateKey(new Date());
