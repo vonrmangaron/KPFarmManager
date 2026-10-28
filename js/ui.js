@@ -2827,11 +2827,13 @@ function pickupSummaryData(){
     const all=(sh.pickups||[]).filter(p=>p.date).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
     const w=all.filter(pkWeighed),last=w[w.length-1]||null;
     const birds=w.reduce((s,p)=>s+Number(p.birds),0),kg=w.reduce((s,p)=>s+Number(p.totalWeightKg),0);
+    const ageB=w.reduce((s,p)=>s+pickupAge(sh,p)*Number(p.birds),0);   // bird-weighted age at pickup (2026-10-28)
     const waiting=all.filter(p=>!pkWeighed(p)&&dateOnly(p.date)<=today).length;
-    return {id:sh.id,last,lastAge:last?pickupAge(sh,last):null,lastBirds:last?Number(last.birds):0,lastKg:last?Number(last.totalWeightKg):0,n:w.length,birds,kg,waiting};
+    return {id:sh.id,last,lastAge:last?pickupAge(sh,last):null,lastBirds:last?Number(last.birds):0,lastKg:last?Number(last.totalWeightKg):0,n:w.length,birds,kg,waiting,ageB,lastAgeB:last?pickupAge(sh,last)*Number(last.birds):0,avgAge:birds?ageB/birds:null};
   });
   const sum=(k)=>rows.reduce((s,r)=>s+r[k],0);
-  return {rows,latest:{birds:sum('lastBirds'),kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length},todate:{birds:sum('birds'),kg:sum('kg'),n:sum('n')},waiting:sum('waiting')};
+  const lb=sum('lastBirds'),tb=sum('birds');
+  return {rows,latest:{birds:lb,kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length,age:lb?sum('lastAgeB')/lb:null},todate:{birds:tb,kg:sum('kg'),n:sum('n'),age:tb?sum('ageB')/tb:null},waiting:sum('waiting')};
 }
 // Estimate (kept apart from the plant weights): each shed's total live weight by its clean-out — the
 // same per-shed projection as Result detail (logged + planned + auto-planned pickups at estimated weights,
@@ -2849,13 +2851,14 @@ function pickupEstimateData(){
 function pkSumAvg(kg,b){return b>0?kg/b:null;}
 function pkSumFmtKg(v){return Math.round(v).toLocaleString('en-US')+' kg';}
 function pkSumFmtAvg(v){return v!=null?v.toFixed(3)+' kg':'—';}
+function pkSumFmtAge(v){return v!=null?'day '+v.toFixed(1):'—';}
 function pickupSummaryText(){
   const d=pickupSummaryData(),batch=(farmData&&farmData.batchNumber)?`Batch ${farmData.batchNumber} · `:'';
   const L=[`Pickup summary · ${batch}${fmtShort(new Date())}`,'Plant weights (kill sheets) only',''];
-  d.rows.forEach(r=>{L.push(r.last?`Shed ${r.id}: latest ${fmtShortNoYear(r.last.date)} · ${r.lastBirds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))} · ${pkSumFmtKg(r.lastKg)} | to date ${r.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))} · ${pkSumFmtKg(r.kg)}`:`Shed ${r.id}: no kill-sheet weights yet`);});
+  d.rows.forEach(r=>{L.push(r.last?`Shed ${r.id}: latest ${fmtShortNoYear(r.last.date)} · ${r.lastBirds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))} · ${pkSumFmtKg(r.lastKg)} | to date ${r.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))} · ${pkSumFmtKg(r.kg)} · avg age ${pkSumFmtAge(r.avgAge)}`:`Shed ${r.id}: no kill-sheet weights yet`);});
   L.push('');
-  L.push(`Farm latest pickups (${d.latest.sheds} sheds): ${d.latest.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))} · ${pkSumFmtKg(d.latest.kg)}`);
-  L.push(`Farm batch to date (8 sheds): ${d.todate.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))} · ${pkSumFmtKg(d.todate.kg)}`);
+  L.push(`Farm latest pickups (${d.latest.sheds} sheds): ${d.latest.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))} · ${pkSumFmtKg(d.latest.kg)} · avg age ${pkSumFmtAge(d.latest.age)}`);
+  L.push(`Farm batch to date (8 sheds): ${d.todate.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))} · ${pkSumFmtKg(d.todate.kg)} · avg age ${pkSumFmtAge(d.todate.age)}`);
   if(d.waiting)L.push(`${d.waiting} pickup${d.waiting===1?'':'s'} still waiting for the plant's weights (not included)`);
   const e=pickupEstimateData();
   L.push('','ESTIMATE — total live weight by clean-out (not plant weights)');
@@ -2870,17 +2873,18 @@ function openPickupSummary(){
   const d=pickupSummaryData(),batch=(farmData.batchNumber)?`Batch ${escapeHtml(String(farmData.batchNumber))} · `:'';
   const n=v=>v.toLocaleString('en-US');
   const rows=d.rows.map(r=>r.last
-    ?`<tr><td><b>Shed ${r.id}</b></td><td class="pks-when">${escapeHtml(fmtShortNoYear(r.last.date))}${r.lastAge!=null?` · day ${r.lastAge}`:''}${r.last.isFinal?' · final':''}<span class="pks-sub">${n(r.lastBirds)} birds</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</td><td class="num">${pkSumFmtKg(r.lastKg)}</td><td class="num">${n(r.birds)}<span class="pks-sub">${r.n} pickup${r.n===1?'':'s'}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))}</td><td class="num">${pkSumFmtKg(r.kg)}</td></tr>`
+    ?`<tr><td><b>Shed ${r.id}</b></td><td class="pks-when">${escapeHtml(fmtShortNoYear(r.last.date))}${r.lastAge!=null?` · day ${r.lastAge}`:''}${r.last.isFinal?' · final':''}<span class="pks-sub">${n(r.lastBirds)} birds</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</td><td class="num">${pkSumFmtKg(r.lastKg)}</td><td class="num">${n(r.birds)}<span class="pks-sub">${r.n} pickup${r.n===1?'':'s'}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(r.kg,r.birds))}<span class="pks-sub">avg ${pkSumFmtAge(r.avgAge)}</span></td><td class="num">${pkSumFmtKg(r.kg)}</td></tr>`
     :`<tr class="pks-none"><td><b>Shed ${r.id}</b></td><td colspan="6">No kill-sheet weights yet${r.waiting?` · ${r.waiting} waiting`:''}</td></tr>`).join('');
   const cards=d.rows.map(r=>r.last
-    ?`<div class="pks-card"><b>Shed ${r.id} · ${escapeHtml(fmtShortNoYear(r.last.date))}</b><span class="r"><b>${pkSumFmtKg(r.lastKg)}</b></span><span class="m">${n(r.lastBirds)} birds · to date ${pkSumFmtKg(r.kg)}</span><span class="r">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</span></div>`
+    ?`<div class="pks-card"><b>Shed ${r.id} · ${escapeHtml(fmtShortNoYear(r.last.date))}${r.lastAge!=null?` · day ${r.lastAge}`:''}</b><span class="r"><b>${pkSumFmtKg(r.lastKg)}</b></span><span class="m">${n(r.lastBirds)} birds · to date ${pkSumFmtKg(r.kg)}</span><span class="r">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</span></div>`
     :`<div class="pks-card none"><b>Shed ${r.id}</b><span class="r m">no weights yet</span></div>`).join('');
   body.innerHTML=`<div class="ls-sub">${batch}as of ${fmtShort(new Date())} · plant weights (kill sheets) only</div>
+    ${d.latest.age!=null?`<div class="pks-age"><span>Current average age</span><b>${pkSumFmtAge(d.latest.age)}</b><em>latest pickups · batch to date ${pkSumFmtAge(d.todate.age)}</em></div>`:''}
     <section class="ls-sec pks-sec"><div class="ls-h"><span class="ls-dot"></span><b>Pickups</b><span class="ls-n">latest + batch to date</span></div>
-      <div class="pks-tw"><table class="ls-table pks-table"><thead><tr><th>Shed</th><th>Latest pickup</th><th class="num">Avg live weight</th><th class="num">Total weight</th><th class="num">To date · birds</th><th class="num">To date · avg</th><th class="num">To date · total</th></tr></thead>
+      <div class="pks-tw"><table class="ls-table pks-table"><thead><tr><th>Shed</th><th>Latest pickup</th><th class="num">Avg live weight</th><th class="num">Total weight</th><th class="num">To date · birds</th><th class="num">To date · avg · age</th><th class="num">To date · total</th></tr></thead>
         <tbody>${rows}</tbody>
-        <tfoot><tr><td>Farm · 8 sheds</td><td class="pks-when">latest pickups<span class="pks-sub">${n(d.latest.birds)} birds · ${d.latest.sheds} shed${d.latest.sheds===1?'':'s'}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</td><td class="num">${pkSumFmtKg(d.latest.kg)}</td><td class="num">${n(d.todate.birds)}<span class="pks-sub">${d.todate.n} pickups</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</td><td class="num">${pkSumFmtKg(d.todate.kg)}</td></tr></tfoot></table></div>
-      <div class="pks-cards">${cards}<div class="pks-card tot"><b>Farm · latest</b><span class="r"><b>${pkSumFmtKg(d.latest.kg)}</b></span><span class="m">${n(d.latest.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</span></div><div class="pks-card tot"><b>Farm · batch to date</b><span class="r"><b>${pkSumFmtKg(d.todate.kg)}</b></span><span class="m">${n(d.todate.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</span></div></div>
+        <tfoot><tr><td>Farm · 8 sheds</td><td class="pks-when">latest pickups<span class="pks-sub">${n(d.latest.birds)} birds · ${d.latest.sheds} shed${d.latest.sheds===1?'':'s'} · avg ${pkSumFmtAge(d.latest.age)}</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</td><td class="num">${pkSumFmtKg(d.latest.kg)}</td><td class="num">${n(d.todate.birds)}<span class="pks-sub">${d.todate.n} pickups</span></td><td class="num">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}<span class="pks-sub">avg ${pkSumFmtAge(d.todate.age)}</span></td><td class="num">${pkSumFmtKg(d.todate.kg)}</td></tr></tfoot></table></div>
+      <div class="pks-cards">${cards}<div class="pks-card tot"><b>Farm · latest</b><span class="r"><b>${pkSumFmtKg(d.latest.kg)}</b></span><span class="m">${n(d.latest.birds)} birds · avg ${pkSumFmtAge(d.latest.age)}</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))}</span></div><div class="pks-card tot"><b>Farm · batch to date</b><span class="r"><b>${pkSumFmtKg(d.todate.kg)}</b></span><span class="m">${n(d.todate.birds)} birds</span><span class="r">${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))}</span></div></div>
       <p class="pks-note">Only pickups with the plant's kill-sheet weight are counted.${d.waiting?` <b>${d.waiting} pickup${d.waiting===1?' is':'s are'} still waiting for weights</b> and not included.`:''} Averages are total weight ÷ birds.</p>
     </section>
     ${(()=>{const e=pickupEstimateData();if(!e.rows.length)return '';

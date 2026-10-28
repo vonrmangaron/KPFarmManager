@@ -4770,6 +4770,17 @@
   .mts-more{ font-size:12px; color:var(--muted); padding-top:4px; }
   .mts-empty{ margin:0; color:var(--muted); font-size:13px; }
   @media (max-width:760px){ .form-modal.ev-wide, .form-modal.mts-modal{ width:100%; max-width:100%; } .mts-per{ align-self:stretch; flex-wrap:nowrap; } .mts-per button{ flex:1; padding:0 4px; font-size:12px; white-space:nowrap; } .mts-tiles{ grid-template-columns:repeat(2, minmax(0,1fr)); } .rp-head-btn.mts-btn span{ display:none; } .rp-head-btn.mts-btn{ width:38px; justify-content:center; padding:0; } }
+  /* Checklist shed headers: just the number inside a progress ring (2026-10-28); the counts and chicks date are in the tooltip */
+  .pl-tab thead th.pl-sh{ padding:8px 4px !important; vertical-align:middle; }
+  .pl-tab thead .pl-shh{ min-width:56px; gap:0; }
+  .pl-ring{ --p:0; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#F0A21A calc(var(--p) * 1%), var(--line) 0); }
+  .pl-ring .prep-sn{ width:32px !important; height:32px !important; border-radius:50% !important; background:var(--surface-soft); border:0; }
+  .pl-sh.ready .pl-ring{ background:conic-gradient(#0F8A75 100%, #0F8A75 0); }
+  .pl-sh.late .pl-ring{ background:conic-gradient(#D9473A calc(var(--p) * 1%), var(--line) 0); }
+  .pl-ring.off{ background:none; } .pl-ring.off .prep-sn{ border:1.5px dashed var(--line) !important; background:var(--surface); }
+  .pl-shh .pl-dots{ top:0 !important; right:-4px !important; }
+  /* Planner board card names: 14px (was 16) */
+  body #calendarWrap .kcard .kc-name .kname{ font-size:14px; }
   /* with the floating switch gone on computers, pages no longer keep ~90px free at the bottom for it — just enough room for the round ⋯ button's edge (2026-10-28) */
   @media (min-width:1025px){
     body .calendar-wrap{ padding-bottom:36px !important; }
@@ -13231,10 +13242,10 @@
     const shortD = k=> k ? toDateObj(k).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
     const unitFor = (col, S, R)=> col.c ? prepUnitByName(col.c, S.t, R.own ? null : R.t) : null;
     const head = `<tr><th class="pl-job">Job</th>${cols.map(({ sh, c, run })=>{
-      if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)}"><span class="prep-sn">${escapeHtml(sh)}</span><small>${run ? 'Running' : 'Empty'}</small></button></th>`;
+      if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — ${run ? 'running (birds in)' : 'empty'}"><span class="pl-ring off"><span class="prep-sn">${escapeHtml(sh)}</span></span></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
       const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — tap for its menu"><span class="pl-dots">⋯</span><span class="prep-sn">${escapeHtml(sh)}</span><small>${c.status === 'ready' ? 'Ready' : pr.done + ' of ' + pr.total + ' done'}</small><span class="pl-pb"><i style="width:${pr.total ? Math.round(pr.done / pr.total * 100) : 0}%"></i></span>${cd ? `<span class="pl-cd">${escapeHtml(cd)}</span>` : ''}</button></th>`; }).join('')}</tr>`;
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="${enc(`Shed ${sh} — ${c.status === 'ready' ? 'Ready' : pr.done + ' of ' + pr.total + ' done'}${cd ? ' · ' + cd : ''} — tap for its menu`)}"><span class="pl-dots">⋯</span><span class="pl-ring" style="--p:${c.status === 'ready' ? 100 : pr.total ? Math.round(pr.done / pr.total * 100) : 0}"><span class="prep-sn">${escapeHtml(sh)}</span></span></button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
       const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
