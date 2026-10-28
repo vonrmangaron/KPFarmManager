@@ -4580,7 +4580,7 @@
   #reportsDrawer .rp-view-seg{ display:none !important; }
   #rpSubLine b{ color:var(--ink); font-weight:700; }
   .rp-head-btn.mts-btn{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
-  #mtBoard .mtb-card.mt4{ flex-direction:column; align-items:stretch; gap:0; padding:0; overflow:hidden; cursor:pointer; border-radius:12px; }
+  #mtBoard .mtb-card.mt4{ flex-shrink:0; flex-direction:column; align-items:stretch; gap:0; padding:0; overflow:hidden; cursor:pointer; border-radius:12px; }
   #mtBoard .mtb-card.mt4:not(.mtb-locked){ cursor:grab; }
   #mtBoard .mtb-list{ gap:10px; }
   .mt4-strip{ display:block; height:84px; background:var(--surface-soft); }
@@ -4605,6 +4605,9 @@
   /* narrower columns + summary at a glance (option 2, mockup H6uUDyL2qRz2uqb5swTHdS) */
   @media (min-width:1025px){
     #reportsDrawer.view-board #mtBoard{ grid-template-columns:repeat(3, minmax(250px, 300px)); justify-content:start; gap:22px; }
+    #reportsDrawer.view-board #mtBoard{ align-self:stretch; max-height:100%; overflow-y:auto; padding-bottom:90px; box-sizing:border-box; }
+    #reportsDrawer.view-board #mtBoard .mtb-col{ max-height:none; } #reportsDrawer.view-board #mtBoard .mtb-list{ overflow:visible; }   /* the whole board scrolls, not each column */
+    /* fill the page and scroll (it grew with its cards, so the bottom ones were out of reach) */
     .mt-glance{ display:none; }
     .mt4-strip{ height:72px; }
   }
