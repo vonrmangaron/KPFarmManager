@@ -319,3 +319,24 @@ function parseBatchFileInfo(farmName,fileName){
   return {batchKey:key,label:`Batch ${key}`,isLegacy:false};
 }
 function compareBatchKeys(a,b){const na=parseFloat(String(a).replace(/[^0-9.]/g,''));const nb=parseFloat(String(b).replace(/[^0-9.]/g,''));if(Number.isFinite(na)&&Number.isFinite(nb)&&na!==nb)return nb-na;return String(b).localeCompare(String(a));}
+
+// ── Idle refresh (2026-10-28) ──
+// While Production is on screen and nobody is using it, check the farm file every minute. Only when it changed
+// is it pulled (the same merge as always), so a desk screen never sits on old numbers and nothing is overwritten.
+let syncLastInputAt=0;
+['pointerdown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,()=>{syncLastInputAt=Date.now();},{capture:true,passive:true}));
+function syncIdleBusy(){
+  if(document.visibilityState!=='visible'||!syncFarmName||!syncConnectedAt||!syncLastSyncAt||!navigator.onLine)return true;
+  if(pushPending||pushInFlight||syncState==='pulling'||syncState==='pushing'||Date.now()-syncLastInputAt<20000)return true;   // an earlier error doesn't stop it
+  const ae=document.activeElement;if(ae&&(/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)||ae.isContentEditable))return true;
+  if(document.getElementById('setApply')||(typeof adjIsDirty==='function'&&adjIsDirty()))return true;   // unapplied Settings / adjustments
+  return !!document.querySelector('#scrim.open, .scrim.open, .open[role="dialog"], [id$="Modal"].open, [id$="Drawer"].open');
+}
+setInterval(async()=>{
+  if(syncIdleBusy())return;
+  const r=await fetchFromCloud();if(!r.ok||r.notFound||!r.sha||r.sha===syncSha)return;
+  if(syncIdleBusy())return;
+  const snap=()=>{try{return JSON.stringify(localSyncPayload());}catch(e){return '';}};
+  const before=snap();
+  if(await pullFromCloud(true).catch(()=>false)&&snap()!==before)showToast('Updated from another device');
+},60000);

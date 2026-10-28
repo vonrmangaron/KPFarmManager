@@ -2613,13 +2613,14 @@
   function cacheKey(){ return 'prodplan-viewer-last-data-' + (ghPath || 'none'); }
   function cacheData(d){ try{ localStorage.setItem(cacheKey(), JSON.stringify(d)); }catch(e){} }
   function loadCachedData(){ try{ const raw = localStorage.getItem(cacheKey()); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
-  async function pullFromGithub(silent){
+  async function pullFromGithub(silent, onlyIfChanged){
     if(!ghPath) return false;
     try{
       const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
       if(!res.ok && res.status!==404) throw new Error('Sync server responded '+res.status);
       const result = await res.json();
       if(res.status===404 || result.notFound){ if(!silent) showToast(t('noDataYet'), true); return false; }
+      if(onlyIfChanged && result.sha && result.sha === ghSha){ markSynced(); return true; }   // idle check: nothing new, leave the screen alone
       ghSha = result.sha;
       cacheData(result.data);
       applyData(JSON.stringify(result.data), silent);
@@ -4518,6 +4519,17 @@
     renderSyncStatus();
     if(ghPath && pendingTicks.size && !tickFlushInFlight && navigator.onLine) flushTicks();
   }, 30000);
+  // Idle refresh (2026-10-28): while Crew is on screen and nobody is using it, check the farm file every minute
+  // and apply it only when it changed — a phone left on Today shows a new task without being reopened
+  let idleLastInput = 0;
+  ['pointerdown','keydown','touchstart','wheel'].forEach(ev=> document.addEventListener(ev, ()=>{ idleLastInput = Date.now(); }, { capture:true, passive:true }));
+  setInterval(()=>{
+    if(document.visibilityState !== 'visible' || !ghPath || !navigator.onLine || Date.now() - idleLastInput < 20000) return;
+    if(pendingTicks.size || tickFlushInFlight) return;
+    const ae = document.activeElement; if(ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) return;
+    if(document.querySelector('.sheet-overlay:not(.hidden), #vsSheet.open, .open[role="dialog"]')) return;
+    pullFromGithub(true, true);
+  }, 60000);
   $('#syncIndicator').addEventListener('click', ()=>{
     renderSyncStatus();
     showToast($('#syncLabel').textContent);
