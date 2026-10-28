@@ -4575,6 +4575,62 @@
   #taskDetailModal .dbtn.done{ background:linear-gradient(160deg,#21A88F,#0F8A75); color:#fff; border-radius:14px; padding:14px; font-size:15px; box-shadow:0 8px 20px rgba(15,138,117,.3); }
   #taskDetailModal.st-done .dbtn.done{ background:var(--surface-soft); color:var(--ink); box-shadow:none; }
   body:has(#taskDetailModal.open) .scrim{ background:rgba(14,18,24,.55) !important; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+
+  /* ===== Maintenance v4 (2026-10-28, option B "Clean board", mockup 8SjHbZda5DBe225emGhoCZ) ===== */
+  #reportsDrawer .rp-view-seg{ display:none !important; }
+  #rpSubLine b{ color:var(--ink); font-weight:700; }
+  .rp-head-btn.mts-btn{ display:inline-flex; align-items:center; gap:6px; color:var(--ink); }
+  #mtBoard .mtb-card.mt4{ flex-direction:column; align-items:stretch; gap:0; padding:0; overflow:hidden; cursor:pointer; border-radius:12px; }
+  #mtBoard .mtb-card.mt4:not(.mtb-locked){ cursor:grab; }
+  #mtBoard .mtb-list{ gap:10px; }
+  .mt4-strip{ display:block; height:84px; background:var(--surface-soft); }
+  .mt4-strip img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .mt4-in{ padding:10px 12px 11px; display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .mt4-t{ display:flex; align-items:center; gap:8px; font:700 14px 'Inter',sans-serif; color:var(--ink); min-width:0; }
+  .mt4-urg{ font:800 10px 'Inter',sans-serif; font-style:normal; letter-spacing:.04em; text-transform:uppercase; padding:2px 7px; border-radius:5px; background:var(--danger-soft); color:var(--danger); }
+  .mt4-ok{ margin-left:auto; color:var(--success); font-weight:800; }
+  .mt4-sub{ font-size:12.5px; color:var(--muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+  .mt4-ft{ display:flex; align-items:center; gap:8px; margin-top:4px; font-size:12px; color:var(--muted); min-height:30px; }
+  .mt4-ft .task-avatar{ width:22px; height:22px; font-size:9.5px; margin:0; border:none; flex-shrink:0; }
+  .mt4-who{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mt4-age{ font:700 11.5px 'Inter',sans-serif; padding:2px 8px; border-radius:99px; background:var(--surface-soft); color:var(--muted); white-space:nowrap; }
+  .mt4-age.warn{ background:color-mix(in srgb, var(--primary) 16%, transparent); color:var(--primary-dark); }
+  .mt4-ft .rp-tasktag{ margin-left:auto; }
+  .mt4-btn{ margin-left:auto; height:30px; padding:0 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .mt4-btn.pri{ background:var(--primary); border-color:var(--primary); color:#241A08; }
+  .mt4-btn:hover{ filter:brightness(.96); }
+  #mtBoard .mtb-card.mt4.done .mt4-in{ padding-block:9px; }
+  #mtBoard .mtb-card.mt4.done .mt4-ft{ min-height:0; margin-top:0; }
+  .mtb-head .mt4-old{ border:none; background:transparent; cursor:pointer; color:var(--primary-dark); font-weight:700; padding:0; font-family:inherit; }
+  /* summary window */
+  @media (min-width:761px){ .form-modal.mts-modal{ width:760px; } #reportsDrawer #rpSubLine{ display:block; } }
+  .mts-body{ display:flex; flex-direction:column; gap:16px; }
+  .mts-per{ display:flex; flex-wrap:wrap; gap:2px; padding:3px; border-radius:10px; background:var(--surface-soft); border:1px solid var(--line); align-self:flex-start; max-width:100%; }
+  .mts-per button{ height:30px; padding:0 12px; border:none; border-radius:8px; background:transparent; color:var(--muted); font:700 12.5px 'Inter',sans-serif; cursor:pointer; }
+  .mts-per button.on{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-sm); }
+  #mtsContent{ display:flex; flex-direction:column; gap:18px; }
+  .mts-tiles{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+  .mts-tile{ background:var(--surface-soft); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .mts-tile b{ font:800 22px 'Sora',sans-serif; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .mts-tile.ok b{ color:var(--success); } .mts-tile.bad b{ color:var(--danger); }
+  .mts-tile span{ font-size:12px; color:var(--muted); }
+  .mts-cols{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:18px; }
+  .mts-cols:empty{ display:none; }
+  .mts-sec{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .mts-sec h3{ margin:0 0 2px; font:700 12px 'Inter',sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .mts-bar{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(40px,1fr) 24px; align-items:center; gap:8px; font-size:12.5px; color:var(--ink); }
+  .mts-bl{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mts-bt{ height:8px; border-radius:99px; background:var(--surface-soft); overflow:hidden; }
+  .mts-bt i{ display:block; height:100%; border-radius:99px; background:var(--primary); }
+  .mts-bar b{ text-align:right; font-variant-numeric:tabular-nums; }
+  .mts-row{ display:flex; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--line); }
+  .mts-rt{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .mts-rt b{ font-size:13px; color:var(--ink); display:flex; gap:6px; align-items:center; }
+  .mts-rt small{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mts-rr{ font-size:12px; color:var(--muted); white-space:nowrap; }
+  .mts-more{ font-size:12px; color:var(--muted); padding-top:4px; }
+  .mts-empty{ margin:0; color:var(--muted); font-size:13px; }
+  @media (max-width:760px){ .form-modal.ev-wide, .form-modal.mts-modal{ width:100%; max-width:100%; } .mts-per{ align-self:stretch; flex-wrap:nowrap; } .mts-per button{ flex:1; padding:0 4px; font-size:12px; white-space:nowrap; } .mts-tiles{ grid-template-columns:repeat(2, minmax(0,1fr)); } .rp-head-btn.mts-btn span{ display:none; } .rp-head-btn.mts-btn{ width:38px; justify-content:center; padding:0; } }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -4985,13 +5041,14 @@
   <div class="rp-head">
     <div class="rp-head-text">
       <h2 id="rpTitle">Maintenance</h2>
-      <div class="rp-sub">Problems reported on the farm, and how they were fixed</div>
+      <div class="rp-sub" id="rpSubLine">Problems reported on the farm, and how they were fixed</div>
     </div>
     <label class="rp-search" title="Search by shed, problem, note or name">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" id="reportsSearchInput" placeholder="Search shed, problem, note, name" aria-label="Search reports">
     </label>
     <button type="button" class="rp-head-btn rp-ic" id="rpSearchToggle" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+    <button type="button" class="rp-head-btn mts-btn" id="rpSumBtn" title="See the numbers for a period and download them as a PDF"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Summary</span></button>
     <button type="button" class="rp-head-btn primary" id="rpNewBtn" title="Report a problem yourself — a photo is optional">＋ New report</button>
     <div class="rp-more"><button type="button" class="rp-head-btn rp-ic" id="rpMoreBtn" aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More">⋯</button>
       <div class="rp-more-menu" id="rpMoreMenu" role="menu" hidden><button type="button" role="menuitem" id="rpTypesBtn" title="Choose what workers can pick under “What's the problem?”">Problem types</button><button type="button" role="menuitem" class="rp-alert-btn" id="rpAlertBtn" hidden>Turn on alerts</button></div></div>
@@ -5507,6 +5564,15 @@
     </div>
     <button class="btn-app" id="confirmCopyBtn" style="margin-top:10px;">Copy</button>
   </div>
+</div>
+
+<div class="form-modal ev-wide mts-modal" id="mtSumModal" role="dialog" aria-modal="true" aria-labelledby="mtsTitle">
+  <div class="form-modal-head"><span class="ev-head-ic sr-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><div class="bm-head-text"><h2 id="mtsTitle">Maintenance summary</h2><div class="bm-head-sub" id="mtsSub"></div></div><button id="closeMtSum" aria-label="Close">✕</button></div>
+  <div class="form-modal-body mts-body">
+    <div class="mts-per" id="mtsPeriod" role="group" aria-label="Period"><button type="button" data-p="30">Last 30 days</button><button type="button" data-p="month">This month</button><button type="button" data-p="90">Last 3 months</button><button type="button" data-p="all">All time</button></div>
+    <div id="mtsContent"></div>
+  </div>
+  <div class="bm-foot"><button type="button" class="bm-cancel" id="mtsCloseBtn">Close</button><button class="btn-app" id="mtsPdfBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download PDF</button></div>
 </div>
 
 <div class="form-modal ev-wide" id="startRepairModal" role="dialog" aria-modal="true" aria-labelledby="srTitle">
@@ -7587,27 +7653,29 @@
     const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
   }
   // ----- Maintenance board: Open → In progress → Fixed (drag cards between columns) -----
-  let rpView = (()=>{ try{ return localStorage.getItem('cluckwise-mt-view') === 'list' ? 'list' : 'board'; }catch(e){ return 'board'; } })();
+  let rpView = 'board';   // 2026-10-28 (option B, mockup 8SjHbZda5DBe225emGhoCZ): the board is the only view; the List switch is gone
+  let mtShowOld = false;  // Fixed column: also show jobs fixed more than 30 days ago
   let mtSortables = [];
-  // Slim board card: one line — photo, problem, place · who · when, then the next step
+  // Board card (2026-10-28, option B): photo strip, problem + urgent, place · note, then who/when and one button
   function mtCardHtml(r, col){
     const task = rpHasTask(r) ? tasks.find(t=> t.id === r.linkedTaskId) : null;
     const urgent = r.urgent && col !== 'fixed';
-    let sub, rt;
+    const ph = rpPhoto(r);
+    const sub = [reportPlace(r), r.notes].filter(Boolean).join(' · ');
+    let ft;
     if(col === 'open'){
       const sug = typeRoute(r.problemType);
-      sub = [reportPlace(r), r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · ');
-      rt = `<button type="button" class="mtb-mini${sug === 'task' ? ' pri' : ''}" data-mtb-task title="Make a task (with the photo)">Task</button><button type="button" class="mtb-mini${sug === 'repair' ? ' pri' : ''}" data-mtb-start title="Start a repair job">Start</button>`;
+      ft = `<span class="mt4-who">${escapeHtml([r.createdBy, r.createdAt ? formatTimeAgo(new Date(r.createdAt)) : ''].filter(Boolean).join(' · '))}</span>`
+        + (sug === 'task' ? `<button type="button" class="mt4-btn pri" data-mtb-task title="Make a task (with the photo)">Make a task</button>` : `<button type="button" class="mt4-btn pri" data-mtb-start title="Start a repair job">Start repair</button>`);
     } else if(col === 'prog'){
-      const d = rpAgeDays(r);
-      sub = reportPlace(r);
-      rt = task ? rpTaskTag(task) : `<span class="mtb-age${d >= 3 ? ' warn' : ''}" title="In progress since ${escapeHtmlAttr(rpShortDate(r.startedAt || r.createdAt))}">${d < 1 ? 'today' : d + ' d'}</span>${rpWhoHtml(r.assignee)}`;
+      const d = rpAgeDays(r), who = task ? (task.assignees || [])[0] : r.assignee;
+      ft = `${rpWhoHtml(who)}<span class="mt4-who">${escapeHtml(who || 'Anyone')}</span>`
+        + (task ? rpTaskTag(task) : `<span class="mt4-age${d >= 3 ? ' warn' : ''}" title="Being fixed since ${escapeHtmlAttr(rpShortDate(r.startedAt || r.createdAt))}">${d == null ? '' : d < 1 ? 'today' : d + (d === 1 ? ' day' : ' days')}</span><button type="button" class="mt4-btn pri" data-mtb-fix title="Tap when this repair is done — it moves to Fixed">Mark fixed</button>`);
     } else {
-      sub = [reportPlace(r), r.resolvedBy, rpShortDate(r.resolvedAt)].filter(Boolean).join(' · ');
-      rt = '<span class="mtb-ok" aria-label="Fixed">✓</span>';
+      ft = `<span class="mt4-who">${escapeHtml(['Fixed' + (r.resolvedBy ? ' by ' + r.resolvedBy : ''), rpShortDate(r.resolvedAt)].filter(Boolean).join(' · '))}</span>`;
     }
-    return `<div class="mtb-card${col === 'prog' && task ? ' mtb-locked' : ''}${urgent ? ' urgent' : ''}${col === 'fixed' ? ' done' : ''}${r.id === currentReportId ? ' selected' : ''}" data-id="${escapeHtmlAttr(r.id)}" title="${escapeHtmlAttr(rpTypeName(r) + (urgent ? ' · urgent' : ''))}">
-      ${rpThumbHtml(r, 'mtb-th')}<span class="mtb-txt"><b class="mtb-title">${escapeHtml(rpTypeName(r))}</b><span class="mtb-sub">${escapeHtml(sub)}</span></span><span class="mtb-rt">${rt}</span>
+    return `<div class="mtb-card mt4${col === 'prog' && task ? ' mtb-locked' : ''}${urgent ? ' urgent' : ''}${col === 'fixed' ? ' done' : ''}${r.id === currentReportId ? ' selected' : ''}" data-id="${escapeHtmlAttr(r.id)}" title="${escapeHtmlAttr(rpTypeName(r) + (urgent ? ' · urgent' : '') + ' — tap for details')}">
+      ${ph && col !== 'fixed' ? `<span class="mt4-strip"><img alt="" loading="lazy" src="${escapeHtmlAttr(ph)}"></span>` : ''}<div class="mt4-in"><b class="mt4-t">${escapeHtml(rpTypeName(r))}${urgent ? '<span class="mt4-urg">Urgent</span>' : ''}${col === 'fixed' ? '<span class="mt4-ok" aria-label="Fixed">✓</span>' : ''}</b>${sub ? `<span class="mt4-sub">${escapeHtml(sub)}</span>` : ''}<div class="mt4-ft">${ft}</div></div>
     </div>`;
   }
   function renderMtBoard(){
@@ -7623,18 +7691,20 @@
     const byNew = (a,b)=> String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
     const open = reports.filter(r=> r.status === 'Open' && match(r)).sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
     const prog = reports.filter(r=> r.status === 'In Progress' && match(r)).sort((a,b)=> (rpHasTask(a)?1:0)-(rpHasTask(b)?1:0) || (b.urgent?1:0)-(a.urgent?1:0) || byNew(a,b));
-    const fixed = reports.filter(r=> r.status === 'Resolved' && !rpArchived(r) && match(r)).sort((a,b)=> String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || '')));
+    const fixed = reports.filter(r=> r.status === 'Resolved' && (mtShowOld || !rpArchived(r)) && match(r)).sort((a,b)=> String(b.resolvedAt || '').localeCompare(String(a.resolvedAt || '')));
     const archived = reports.filter(rpArchived).length;
+    renderMtSubLine();
     const col = (key, title, list, hint, extra)=> `<div class="mtb-col mtb-${key}"><div class="mtb-head"><b>${title}</b><span class="mtb-count">${list.length}</span>${hint ? `<span class="mtb-hint">${hint}</span>` : ''}${extra || ''}</div><div class="mtb-list" data-col="${key}">${list.map(r=> mtCardHtml(r, key)).join('') || '<div class="mtb-empty">Nothing here</div>'}</div></div>`;
-    const stages = [['open','Open',open],['prog','In progress',prog],['fixed','Fixed',fixed]];
-    $('#rpStages').innerHTML = wide ? '' : stages.map(([k,l,list])=> `<button type="button" role="tab" data-mts="${k}" aria-selected="${mtStage === k}" class="${mtStage === k ? 'on' : ''}"><span class="mts-l">${k === 'prog' && window.innerWidth <= 760 ? 'Working' : l}</span> <b>${list.length}</b></button>`).join('');
+    const stages = [['open','To decide',open],['prog','Being fixed',prog],['fixed','Fixed',fixed]];
+    $('#rpStages').innerHTML = wide ? '' : stages.map(([k,l,list])=> `<button type="button" role="tab" data-mts="${k}" aria-selected="${mtStage === k}" class="${mtStage === k ? 'on' : ''}"><span class="mts-l">${l}</span> <b>${list.length}</b></button>`).join('');
     const colHtml = {
-      open: ()=> col('open', 'Open', open, wide ? 'drag right to start' : ''),
-      prog: ()=> col('prog', 'In progress', prog, wide ? 'shown in “Check maintenance”' : ''),
-      fixed: ()=> col('fixed', 'Fixed', fixed, '', `<span class="mtb-arch" title="Fixed jobs older than ${RP_ARCHIVE_DAYS} days move to the archive (List view, “Fixed”)">${RP_ARCHIVE_DAYS}-day archive${archived ? ' · ' + archived : ''}</span>`)
+      open: ()=> col('open', 'Needs a decision', open, ''),
+      prog: ()=> col('prog', 'Being fixed', prog, ''),
+      fixed: ()=> col('fixed', 'Fixed', fixed, '', archived ? `<button type="button" class="mtb-arch mt4-old" data-mtb-old title="${mtShowOld ? 'Show only the last ' + RP_ARCHIVE_DAYS + ' days' : 'Also show jobs fixed more than ' + RP_ARCHIVE_DAYS + ' days ago'}">${mtShowOld ? 'Hide older' : 'Older · ' + archived}</button>` : `<span class="mtb-arch">last ${RP_ARCHIVE_DAYS} days</span>`)
     };
     box.innerHTML = wide ? colHtml.open() + colHtml.prog() + colHtml.fixed() : colHtml[mtStage]();
     box.querySelectorAll('.mtb-th img').forEach(im=> im.addEventListener('error', ()=>{ const p = im.parentElement; p.classList.add('none'); p.innerHTML = RP_WRENCH; }));
+    box.querySelectorAll('.mt4-strip img').forEach(im=> im.addEventListener('error', ()=> im.parentElement.remove()));
     mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
     if(typeof Sortable !== 'undefined'){
       box.querySelectorAll('.mtb-list').forEach(list=>{
@@ -7650,6 +7720,118 @@
     if(to === 'prog'){ askStartRepair(id); return; }
     if(to === 'open'){ r.status = 'Open'; delete r.assignee; r.resolvedAt = null; r.autoResolved = false; delete r.resolvedBy; touchReport(r, 'moved back to Open'); return; }
     if(to === 'fixed'){ r.status = 'Resolved'; r.resolvedAt = new Date().toISOString(); r.autoResolved = false; r.resolvedBy = 'Manager'; markResolvedSeen(r); touchReport(r, 'fixed'); showToast('Moved to Fixed.'); }
+  }
+  // ---- Maintenance summary + PDF (2026-10-28) ----
+  function mtFmtSpan(days){ return days == null ? '—' : days < 1 ? Math.max(1, Math.round(days * 24)) + ' h' : (Math.round(days * 10) / 10) + (days < 1.05 ? ' day' : ' days'); }
+  function renderMtSubLine(){
+    const el = $('#rpSubLine'); if(!el) return;
+    const open = reports.filter(r=> r.status === 'Open').length, prog = reports.filter(r=> r.status === 'In Progress').length;
+    const fixed = reports.filter(r=> r.status === 'Resolved' && Date.parse(r.resolvedAt || '') >= Date.now() - 30 * 864e5).length;
+    el.innerHTML = `<b>${open}</b> to decide · <b>${prog}</b> being fixed · <b>${fixed}</b> fixed in the last 30 days`;
+  }
+  let mtsPeriod = (()=>{ try{ const v = localStorage.getItem('cw-mts-period'); return ['30','month','90','all'].includes(v) ? v : '30'; }catch(e){ return '30'; } })();
+  function mtSummaryData(per){
+    const now = new Date(); let from = null, label;
+    if(per === 'month'){ from = new Date(now.getFullYear(), now.getMonth(), 1); label = now.toLocaleDateString(undefined, { month:'long', year:'numeric' }); }
+    else if(per === '90'){ from = new Date(Date.now() - 90 * 864e5); label = 'Last 3 months'; }
+    else if(per === 'all'){ label = 'All time'; }
+    else { from = new Date(Date.now() - 30 * 864e5); label = 'Last 30 days'; }
+    const t0 = from ? from.getTime() : -Infinity;
+    const inP = iso=> { const t = Date.parse(iso || ''); return !!t && t >= t0; };
+    const reported = reports.filter(r=> inP(r.createdAt));
+    const fixed = reports.filter(r=> r.status === 'Resolved' && inP(r.resolvedAt)).sort((a,b)=> String(b.resolvedAt).localeCompare(String(a.resolvedAt)));
+    const open = reports.filter(r=> r.status !== 'Resolved').sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    const spanOf = r=> { const a = Date.parse(r.createdAt || ''), b = Date.parse(r.resolvedAt || ''); return a && b && b >= a ? (b - a) / 864e5 : null; };
+    const spans = fixed.map(spanOf).filter(x=> x != null);
+    const avg = spans.length ? spans.reduce((x, y)=> x + y, 0) / spans.length : null;
+    const group = (list, key)=>{ const m = new Map(); list.forEach(r=>{ const k = key(r); if(!k) return; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([name, n])=> ({ name, n })).sort((a,b)=> b.n - a.n || a.name.localeCompare(b.name, undefined, { numeric:true })); };
+    const byType = group(reported, rpTypeName).map(x=> Object.assign(x, { fixed: reported.filter(r=> rpTypeName(r) === x.name && r.status === 'Resolved').length }));
+    return { label, from, reported, fixed, open, avg, spanOf,
+      urgent: open.filter(r=> r.urgent).length,
+      byType, byPlace: group(reported, reportPlace), byFixer: group(fixed, r=> r.resolvedBy || 'Manager') };
+  }
+  function openMtSummary(){ renderMtSummary(); $('#mtSumModal').classList.add('open'); }
+  function closeMtSummary(){ $('#mtSumModal').classList.remove('open'); }
+  function renderMtSummary(){
+    const D = mtSummaryData(mtsPeriod);
+    document.querySelectorAll('#mtsPeriod [data-p]').forEach(b=> b.classList.toggle('on', b.dataset.p === mtsPeriod));
+    $('#mtsSub').textContent = [ghFarmName, D.label].filter(Boolean).join(' · ');
+    const tile = (v, l, cls)=> `<div class="mts-tile${cls ? ' ' + cls : ''}"><b>${v}</b><span>${l}</span></div>`;
+    const bars = (title, list, max)=>{ if(!list.length) return ''; const top = list[0].n || 1;
+      return `<section class="mts-sec"><h3>${title}</h3>${list.slice(0, max || 6).map(x=> `<div class="mts-bar"><span class="mts-bl">${escapeHtml(x.name)}</span><span class="mts-bt"><i style="width:${Math.round(x.n / top * 100)}%"></i></span><b>${x.n}</b></div>`).join('')}${list.length > (max || 6) ? `<div class="mts-more">and ${list.length - (max || 6)} more in the PDF</div>` : ''}</section>`; };
+    const row = (r, right)=> `<div class="mts-row"><span class="mts-rt"><b>${escapeHtml(rpTypeName(r))}${r.urgent && r.status !== 'Resolved' ? ' <em class="mt4-urg">Urgent</em>' : ''}</b><small>${escapeHtml([reportPlace(r), r.notes].filter(Boolean).join(' · '))}</small></span><span class="mts-rr">${right}</span></div>`;
+    const age = r=> { const d = rpAgeDays(r); return d == null ? '' : d < 1 ? 'today' : d + (d === 1 ? ' day' : ' days'); };
+    $('#mtsContent').innerHTML = `<div class="mts-tiles">${tile(D.reported.length, 'reported')}${tile(D.fixed.length, 'fixed', 'ok')}${tile(D.open.length, 'still open now' + (D.urgent ? ` · ${D.urgent} urgent` : ''), D.open.length ? 'bad' : '')}${tile(mtFmtSpan(D.avg), 'average to fix')}</div>
+      ${!D.reported.length && !D.fixed.length && !D.open.length ? '<p class="mts-empty">Nothing was reported or fixed in this period.</p>' : ''}
+      <div class="mts-cols">${bars('Most reported', D.byType)}${bars('By place', D.byPlace)}${bars('Fixed by', D.byFixer)}</div>
+      ${D.open.length ? `<section class="mts-sec"><h3>Still to fix · ${D.open.length}</h3>${D.open.slice(0, 8).map(r=> row(r, `${escapeHtml(r.status === 'Open' ? 'To decide' : 'Being fixed')} · ${escapeHtml(age(r))}`)).join('')}${D.open.length > 8 ? `<div class="mts-more">and ${D.open.length - 8} more in the PDF</div>` : ''}</section>` : ''}
+      ${D.fixed.length ? `<section class="mts-sec"><h3>Fixed · ${D.fixed.length}</h3>${D.fixed.slice(0, 8).map(r=> row(r, escapeHtml(['by ' + (r.resolvedBy || 'Manager'), rpShortDate(r.resolvedAt)].join(' · ')))).join('')}${D.fixed.length > 8 ? `<div class="mts-more">and ${D.fixed.length - 8} more in the PDF</div>` : ''}</section>` : ''}`;
+  }
+  function mtSummaryPdf(){
+    try{
+      if(!window.jspdf){ showToast('PDF library failed to load — check your connection.', true); return; }
+      const D = mtSummaryData(mtsPeriod);
+      const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'pt', format:'a4' });
+      const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40, CW = W - M * 2;
+      const C = { ink:'#1F2328', muted:'#6B6F76', line:'#E4E0D6', amber:'#E0A339', brown:'#8A5A12', soft:'#F7F4EC', red:'#C8433A', green:'#2E8B5E' };
+      const col = h=> hexToRgbArr(h);
+      let y = 0, page = 1;
+      const foot = ()=>{ doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...col(C.muted)); doc.text(`${ghFarmName || 'Farm'} · Maintenance summary · ${D.label}`, M, H - 24); doc.text('Page ' + page, W - M, H - 24, { align:'right' }); };
+      const newPage = ()=>{ foot(); doc.addPage(); page++; y = 50; };
+      const need = h=>{ if(y + h > H - 50) { newPage(); return true; } return false; };
+      const fit = (t, w)=>{ t = String(t == null ? '' : t); if(doc.getTextWidth(t) <= w) return t; while(t.length > 1 && doc.getTextWidth(t + '…') > w) t = t.slice(0, -1); return t + '…'; };
+      // header
+      doc.setFillColor(...col(C.amber)); doc.rect(0, 0, W, 8, 'F');
+      y = 52; doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(...col(C.ink)); doc.text('Maintenance summary', M, y);
+      y += 20; doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...col(C.brown));
+      doc.text([ghFarmName, D.label + (D.from ? ' (' + D.from.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }) + ' – ' + new Date().toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }) + ')' : '')].filter(Boolean).join(' · '), M, y);
+      doc.setFontSize(9); doc.setTextColor(...col(C.muted)); doc.text('Made ' + new Date().toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' }), W - M, y, { align:'right' });
+      y += 22;
+      // tiles
+      const tiles = [[String(D.reported.length), 'Reported', C.ink], [String(D.fixed.length), 'Fixed', C.green], [String(D.open.length), 'Still open now' + (D.urgent ? ` (${D.urgent} urgent)` : ''), D.open.length ? C.red : C.ink], [mtFmtSpan(D.avg), 'Average to fix', C.ink]];
+      const tw = (CW - 3 * 10) / 4;
+      tiles.forEach(([v, l, c], i)=>{ const x = M + i * (tw + 10); doc.setFillColor(...col(C.soft)); doc.roundedRect(x, y, tw, 58, 6, 6, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...col(c)); doc.text(v, x + 12, y + 28);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...col(C.muted)); doc.text(fit(l, tw - 20), x + 12, y + 45); });
+      y += 82;
+      const title = t=>{ need(40); doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...col(C.ink)); doc.text(t, M, y); y += 8; doc.setDrawColor(...col(C.amber)); doc.setLineWidth(1.2); doc.line(M, y, M + 28, y); y += 16; };
+      // table: cols = [{h, w, al}] widths as fractions of CW
+      const table = (cols, rows)=>{
+        const xs = []; let x = M; cols.forEach(c=>{ xs.push(x); x += c.w * CW; });
+        const head = ()=>{ doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...col(C.muted)); cols.forEach((c, i)=> doc.text(c.h.toUpperCase(), c.al === 'r' ? xs[i] + c.w * CW - 6 : xs[i] + 6, y, c.al === 'r' ? { align:'right' } : undefined)); y += 6; doc.setDrawColor(...col(C.line)); doc.setLineWidth(.7); doc.line(M, y, M + CW, y); y += 13; };
+        head();
+        rows.forEach((r, ri)=>{
+          if(need(20)) head();
+          if(ri % 2){ doc.setFillColor(...col(C.soft)); doc.rect(M, y - 11, CW, 18, 'F'); }
+          r.forEach((v, i)=>{ const c = cols[i]; const cell = typeof v === 'object' && v ? v : { t: v };
+            doc.setFont('helvetica', cell.b ? 'bold' : 'normal'); doc.setFontSize(9.5); doc.setTextColor(...col(cell.c || C.ink));
+            const t = fit(cell.t, c.w * CW - 12); doc.text(t, c.al === 'r' ? xs[i] + c.w * CW - 6 : xs[i] + 6, y, c.al === 'r' ? { align:'right' } : undefined); });
+          y += 18; });
+        y += 14;
+      };
+      const short = iso=> iso ? new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short' }) : '';
+      if(D.byType.length){ title('Most reported problems'); table([{h:'Problem',w:.52},{h:'Reported',w:.16,al:'r'},{h:'Fixed',w:.16,al:'r'},{h:'Still open',w:.16,al:'r'}], D.byType.map(x=> [{ t:x.name, b:true }, x.n, x.fixed, x.n - x.fixed || '—'])); }
+      if(D.byPlace.length || D.byFixer.length){
+        const half = (CW - 20) / 2, y0 = y;
+        title('By place');
+        const mini = (list, x0)=>{ let yy = y; list.slice(0, 12).forEach((x, i)=>{ if(i % 2){ doc.setFillColor(...col(C.soft)); doc.rect(x0, yy - 11, half, 18, 'F'); } doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...col(C.ink)); doc.text(fit(x.name, half - 50), x0 + 6, yy); doc.setFont('helvetica','bold'); doc.text(String(x.n), x0 + half - 6, yy, { align:'right' }); yy += 18; }); return yy; };
+        need(18 * Math.min(12, Math.max(D.byPlace.length, D.byFixer.length)) + 10);
+        const yA = mini(D.byPlace, M);
+        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...col(C.ink)); doc.text('Fixed by', M + half + 20, y - 24); doc.setDrawColor(...col(C.amber)); doc.setLineWidth(1.2); doc.line(M + half + 20, y - 16, M + half + 48, y - 16);
+        const yB = D.byFixer.length ? mini(D.byFixer, M + half + 20) : (doc.setFont('helvetica','normal'), doc.setFontSize(9.5), doc.setTextColor(...col(C.muted)), doc.text('Nothing fixed in this period', M + half + 26, y), y + 18);
+        y = Math.max(yA, yB) + 14;
+      }
+      if(D.open.length){ title(`Still to fix · ${D.open.length}`);
+        table([{h:'Problem',w:.2},{h:'Place',w:.1},{h:'Note',w:.26},{h:'Reported',w:.17},{h:'Status',w:.18},{h:'Age',w:.09,al:'r'}],
+          D.open.map(r=>{ const d = rpAgeDays(r); return [{ t: rpTypeName(r) + (r.urgent ? ' (urgent)' : ''), b:true, c: r.urgent ? C.red : C.ink }, reportPlace(r), r.notes || '', [short(r.createdAt), r.createdBy].filter(Boolean).join(' · '), r.status === 'Open' ? 'To decide' : (r.assignee ? 'Fixing: ' + r.assignee : 'Being fixed'), d == null ? '' : d < 1 ? 'today' : d + ' d']; })); }
+      if(D.fixed.length){ title(`Fixed · ${D.fixed.length}`);
+        table([{h:'Problem',w:.2},{h:'Place',w:.1},{h:'Note',w:.25},{h:'Reported',w:.1},{h:'Fixed',w:.23},{h:'Took',w:.12,al:'r'}],
+          D.fixed.map(r=> [{ t: rpTypeName(r), b:true }, reportPlace(r), r.notes || '', short(r.createdAt), [short(r.resolvedAt), r.resolvedBy].filter(Boolean).join(' · '), mtFmtSpan(D.spanOf(r))])); }
+      if(!D.reported.length && !D.fixed.length && !D.open.length){ doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...col(C.muted)); doc.text('Nothing was reported or fixed in this period.', M, y); }
+      foot();
+      doc.save(`Maintenance-summary-${String(ghFarmName || 'farm').replace(/[^\w-]+/g, '-')}-${dateKey(new Date())}.pdf`);
+      showToast('PDF downloaded.');
+    }catch(e){ console.error(e); showToast('Could not make the PDF: ' + e.message, true); }
   }
   let srReportId = null;
   function askStartRepair(id){
@@ -14057,6 +14239,7 @@
     document.querySelectorAll('.prep-modal.open').forEach(x=> x.classList.remove('open'));
     $('#reportsDrawer').classList.remove('open');
     $('#ptypesModal').classList.remove('open');
+    $('#mtSumModal').classList.remove('open');
     document.body.classList.remove('mt-open');
     $('#mlogHistDrawer').classList.remove('open');
     $('#mlogTaskModal').classList.remove('open');
@@ -15583,11 +15766,18 @@
   }
   $('#fabReportBtn').addEventListener('click', openNewReport);
   $('#topReportBtn').addEventListener('click', openNewReport);
+  $('#rpSumBtn').addEventListener('click', ()=> openMtSummary());
+  $('#closeMtSum').addEventListener('click', closeMtSummary);
+  $('#mtsCloseBtn').addEventListener('click', closeMtSummary);
+  $('#mtsPeriod').addEventListener('click', (e)=>{ const b = e.target.closest('[data-p]'); if(!b) return; mtsPeriod = b.dataset.p; try{ localStorage.setItem('cw-mts-period', mtsPeriod); }catch(err){} renderMtSummary(); });
+  $('#mtsPdfBtn').addEventListener('click', ()=> mtSummaryPdf());
   $('#rpViewSeg').addEventListener('click', (e)=>{ const b = e.target.closest('[data-rpv]'); if(!b) return; rpView = b.dataset.rpv; try{ localStorage.setItem('cluckwise-mt-view', rpView); }catch(err){} renderReportsView(); });
   $('#reportsList').addEventListener('click', (e)=>{ if(e.target.closest('[data-tr-fold]')){ rpListShowFixed = !rpListShowFixed; renderReportsList(); } });
   $('#mtBoard').addEventListener('click', (e)=>{
+    if(e.target.closest('[data-mtb-old]')){ mtShowOld = !mtShowOld; renderMtBoard(); return; }
     const card = e.target.closest('.mtb-card'); if(!card) return;
     const id = card.dataset.id;
+    if(e.target.closest('[data-mtb-fix]')){ mtMove(id, 'fixed'); return; }
     if(e.target.closest('[data-mtb-start]')){ askStartRepair(id); return; }
     if(e.target.closest('[data-mtb-task]')){ openAssignTaskFromReport(id); return; }
     openReportDetailModal(id);
