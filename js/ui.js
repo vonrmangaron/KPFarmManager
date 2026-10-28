@@ -2828,12 +2828,14 @@ function pickupSummaryData(){
     const w=all.filter(pkWeighed),last=w[w.length-1]||null;
     const birds=w.reduce((s,p)=>s+Number(p.birds),0),kg=w.reduce((s,p)=>s+Number(p.totalWeightKg),0);
     const ageB=w.reduce((s,p)=>s+pickupAge(sh,p)*Number(p.birds),0);   // bird-weighted age at pickup (2026-10-28)
+    // every pickup so far, weighed or not — for the farm's current average age
+    const gone=all.filter(p=>dateOnly(p.date)<=today&&Number(p.birds)>0),allB=gone.reduce((s,p)=>s+Number(p.birds),0),allAgeB=gone.reduce((s,p)=>s+pickupAge(sh,p)*Number(p.birds),0);
     const waiting=all.filter(p=>!pkWeighed(p)&&dateOnly(p.date)<=today).length;
-    return {id:sh.id,last,lastAge:last?pickupAge(sh,last):null,lastBirds:last?Number(last.birds):0,lastKg:last?Number(last.totalWeightKg):0,n:w.length,birds,kg,waiting,ageB,lastAgeB:last?pickupAge(sh,last)*Number(last.birds):0,avgAge:birds?ageB/birds:null};
+    return {id:sh.id,last,lastAge:last?pickupAge(sh,last):null,lastBirds:last?Number(last.birds):0,lastKg:last?Number(last.totalWeightKg):0,n:w.length,birds,kg,waiting,ageB,allB,allAgeB,allN:gone.length,lastAgeB:last?pickupAge(sh,last)*Number(last.birds):0,avgAge:birds?ageB/birds:null};
   });
   const sum=(k)=>rows.reduce((s,r)=>s+r[k],0);
   const lb=sum('lastBirds'),tb=sum('birds');
-  return {rows,latest:{birds:lb,kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length,age:lb?sum('lastAgeB')/lb:null},todate:{birds:tb,kg:sum('kg'),n:sum('n'),age:tb?sum('ageB')/tb:null},waiting:sum('waiting')};
+  return {rows,latest:{birds:lb,kg:sum('lastKg'),sheds:rows.filter(r=>r.last).length,age:lb?sum('lastAgeB')/lb:null},todate:{birds:tb,kg:sum('kg'),n:sum('n'),age:tb?sum('ageB')/tb:null},waiting:sum('waiting'),all:{birds:sum('allB'),n:sum('allN'),age:sum('allB')?sum('allAgeB')/sum('allB'):null}};
 }
 // Estimate (kept apart from the plant weights): each shed's total live weight by its clean-out — the
 // same per-shed projection as Result detail (logged + planned + auto-planned pickups at estimated weights,
@@ -2859,6 +2861,7 @@ function pickupSummaryText(){
   L.push('');
   L.push(`Farm latest pickups (${d.latest.sheds} sheds): ${d.latest.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.latest.kg,d.latest.birds))} · ${pkSumFmtKg(d.latest.kg)} · avg age ${pkSumFmtAge(d.latest.age)}`);
   L.push(`Farm batch to date (8 sheds): ${d.todate.birds.toLocaleString('en-US')} birds · ${pkSumFmtAvg(pkSumAvg(d.todate.kg,d.todate.birds))} · ${pkSumFmtKg(d.todate.kg)} · avg age ${pkSumFmtAge(d.todate.age)}`);
+  if(d.all.age!=null)L.push(`Current average age: ${pkSumFmtAge(d.all.age)} (all ${d.all.n} pickups so far · ${d.all.birds.toLocaleString('en-US')} birds)`);
   if(d.waiting)L.push(`${d.waiting} pickup${d.waiting===1?'':'s'} still waiting for the plant's weights (not included)`);
   const e=pickupEstimateData();
   L.push('','ESTIMATE — total live weight by clean-out (not plant weights)');
@@ -2879,7 +2882,7 @@ function openPickupSummary(){
     ?`<div class="pks-card"><b>Shed ${r.id} · ${escapeHtml(fmtShortNoYear(r.last.date))}${r.lastAge!=null?` · day ${r.lastAge}`:''}</b><span class="r"><b>${pkSumFmtKg(r.lastKg)}</b></span><span class="m">${n(r.lastBirds)} birds · to date ${pkSumFmtKg(r.kg)}</span><span class="r">${pkSumFmtAvg(pkSumAvg(r.lastKg,r.lastBirds))}</span></div>`
     :`<div class="pks-card none"><b>Shed ${r.id}</b><span class="r m">no weights yet</span></div>`).join('');
   body.innerHTML=`<div class="ls-sub">${batch}as of ${fmtShort(new Date())} · plant weights (kill sheets) only</div>
-    ${d.latest.age!=null?`<div class="pks-age"><span>Current average age</span><b>${pkSumFmtAge(d.latest.age)}</b><em>latest pickups · batch to date ${pkSumFmtAge(d.todate.age)}</em></div>`:''}
+    ${d.all.age!=null?`<div class="pks-age"><span>Current average age</span><b>${pkSumFmtAge(d.all.age)}</b><em>all ${n(d.all.n)} pickup${d.all.n===1?'':'s'} on the farm so far · ${n(d.all.birds)} birds</em></div>`:''}
     <section class="ls-sec pks-sec"><div class="ls-h"><span class="ls-dot"></span><b>Pickups</b><span class="ls-n">latest + batch to date</span></div>
       <div class="pks-tw"><table class="ls-table pks-table"><thead><tr><th>Shed</th><th>Latest pickup</th><th class="num">Avg live weight</th><th class="num">Total weight</th><th class="num">To date · birds</th><th class="num">To date · avg · age</th><th class="num">To date · total</th></tr></thead>
         <tbody>${rows}</tbody>

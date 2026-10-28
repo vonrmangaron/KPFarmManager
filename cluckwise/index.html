@@ -4773,13 +4773,30 @@
   /* Checklist shed headers: just the number inside a progress ring (2026-10-28); the counts and chicks date are in the tooltip */
   .pl-tab thead th.pl-sh{ padding:8px 4px !important; vertical-align:middle; }
   .pl-tab thead .pl-shh{ min-width:56px; gap:0; }
-  .pl-ring{ --p:0; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#F0A21A calc(var(--p) * 1%), var(--line) 0); }
+  .pl-ring{ --p:0; --c:#F0A21A; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--c) calc(var(--p) * 1%), var(--line) 0); }
   .pl-ring .prep-sn{ width:32px !important; height:32px !important; border-radius:50% !important; background:var(--surface-soft); border:0; }
   .pl-sh.ready .pl-ring{ background:conic-gradient(#0F8A75 100%, #0F8A75 0); }
   .pl-sh.late .pl-ring{ background:conic-gradient(#D9473A calc(var(--p) * 1%), var(--line) 0); }
   .pl-ring.off{ background:none; } .pl-ring.off .prep-sn{ border:1.5px dashed var(--line) !important; background:var(--surface); }
   .pl-shh .pl-dots{ top:0 !important; right:-4px !important; }
   /* Planner board card names: 14px (was 16) */
+  /* board card pills 10px (was 12) — 2026-10-28 */
+  body #calendarWrap .kcard .kp, body #calendarWrap .kcard .kc-pills .prep-lab{ font-size:10px; padding:5px 9px; gap:4px; }
+  body #calendarWrap .kcard .kp svg{ width:11px; height:11px; }
+  /* task steps: a progress ring instead of the long bar (2026-10-28) */
+  .tsubs-ring{ --p:0; flex:none; width:22px; height:22px; border-radius:50%; display:block; background:conic-gradient(#F0A21A calc(var(--p) * 1%), var(--line) 0);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); mask:radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px)); }
+  .tsubs-ring.all{ background:#0F8A75; }
+  .tsubs-bar .tsubs-n{ margin-right:auto; }
+  /* board card: the steps ring sits right of the task name; the steps row only shows the list once opened */
+  body #calendarWrap .kcard .kc-name{ display:flex; align-items:center; gap:10px; }
+  body #calendarWrap .kcard .kc-name .kname{ flex:1; min-width:0; }
+  body #calendarWrap .kcard .kc-ring{ all:unset; cursor:pointer; flex:none; width:36px; height:36px; border-radius:50%; display:grid; place-items:center; }
+  body #calendarWrap .kcard .kc-ring .sr-svg{ width:36px; height:36px; }
+  body #calendarWrap .kcard .kc-ring .sr-tr{ stroke:var(--line); }
+  body #calendarWrap .kcard .kc-ring:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  body #calendarWrap .kcard .tsubs.k .tsubs-bar{ display:none; }
+  body #calendarWrap .kcard .tsubs.k:not(.open){ display:none; }
   body #calendarWrap .kcard .kc-name .kname{ font-size:14px; }
   /* with the floating switch gone on computers, pages no longer keep ~90px free at the bottom for it — just enough room for the round ⋯ button's edge (2026-10-28) */
   @media (min-width:1025px){
@@ -7038,7 +7055,7 @@
     const p = subProgress(task); if(!p.total) return '';
     const open = subsOpen.has(task.id), pct = Math.round(p.done / p.total * 100);
     return `<div class="tsubs${open ? ' open' : ''}${cls ? ' ' + cls : ''}" data-subs-for="${escapeHtmlAttr(task.id)}">
-      <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-pb"><i style="width:${pct}%"></i></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+      <button type="button" class="tsubs-bar" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${open ? 'Hide the steps' : 'Show the steps'}"><span class="tsubs-ring${p.done === p.total ? ' all' : ''}" style="--p:${pct}" aria-hidden="true"></span><span class="tsubs-n">${p.done}/${p.total} steps</span><span class="tsubs-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
       ${open ? `<div class="tsubs-list">${subsShown(task.subs).map((x, i, a)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="tsubs-h">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="tsub${x.done ? ' done' : ''}" data-sub-tick="${escapeHtmlAttr(task.id + '|' + x.id)}" aria-pressed="${!!x.done}" aria-label="${escapeHtmlAttr((x.done ? 'Untick ' : 'Tick ') + x.t)}"><span class="tsub-n">${i + 1}</span><span class="tsub-t"><span class="tsub-nm">${escapeHtml(x.t)}</span>${x.note ? `<small class="tsub-note">📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small class="tsub-by">${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><span class="tsub-cb" aria-hidden="true">${x.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>' : ''}</span></button>`).join('')}</div>` : ''}
     </div>`;
   }
@@ -10652,7 +10669,7 @@
         <button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>
         <button class="task-complete-btn kbig" type="button" aria-label="${task.status==='done'?'Reopen task':'Complete task'}" title="${task.status==='done'?'Reopen':'Mark done'}">${CHECK_ICON_SVG}</button>
       </div>
-      <div class="kc-name"><span class="kname"></span></div>
+      <div class="kc-name"><span class="kname"></span>${(task.subs || []).length ? (()=>{ const sp = subProgress(task), open = subsOpen.has(task.id); return `<button type="button" class="kc-ring" data-subs-toggle="${escapeHtmlAttr(task.id)}" aria-expanded="${open}" title="${sp.done} of ${sp.total} steps — ${open ? 'hide' : 'show'} the steps" aria-label="${sp.done} of ${sp.total} steps, ${open ? 'hide' : 'show'} the steps">${cwRingSvg(sp.done, sp.total, sp.done === sp.total)}</button>`; })() : ''}</div>
       ${subsBlockHtml(task, 'k')}
       <div class="kc-foot">${avatarsHtml}${task.notes ? `<span class="knote" title="${escapeHtmlAttr(task.notes)}" aria-label="Has a note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span>` : ''}<span class="kc-st kc-st-${kSt[0]}" title="${escapeHtmlAttr(kSt[2])}"><i aria-hidden="true">${KST_ICON[kSt[0]]}</i>${escapeHtml(kSt[1])}</span></div>
       <div class="task-menu-popup">
@@ -13228,6 +13245,8 @@
   const PL_DOTS = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   const PL_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
   const PL_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  // Checklist shed ring: the colour moves from orange to green as the jobs get ticked (2026-10-28)
+  function plRingStyle(pct){ const c = pct >= 100 ? '#0F8A75' : pct >= 75 ? '#7DB342' : pct >= 50 ? '#C9B12E' : pct >= 25 ? '#F0A21A' : '#E8875A'; return `--p:${pct};--c:${c}`; }
   function prepListHtml(sheds){
     const enc = x=> escapeHtmlAttr(x);
     if(prepPick && !prepActiveFor(prepPick.shed)) prepPick = null;
@@ -13245,7 +13264,7 @@
       if(!c) return `<th class="pl-sh off"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="Shed ${enc(sh)} — ${run ? 'running (birds in)' : 'empty'}"><span class="pl-ring off"><span class="prep-sn">${escapeHtml(sh)}</span></span></button></th>`;
       const pr = prepProgress(c), late = prepUnits(c).some(x=> prepUnitFlags(c, x.u).late);
       const cd = c.nextPlacement ? 'chicks ' + toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
-      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="${enc(`Shed ${sh} — ${c.status === 'ready' ? 'Ready' : pr.done + ' of ' + pr.total + ' done'}${cd ? ' · ' + cd : ''} — tap for its menu`)}"><span class="pl-dots">⋯</span><span class="pl-ring" style="--p:${c.status === 'ready' ? 100 : pr.total ? Math.round(pr.done / pr.total * 100) : 0}"><span class="prep-sn">${escapeHtml(sh)}</span></span></button></th>`; }).join('')}</tr>`;
+      return `<th class="pl-sh${late ? ' late' : ''}${c.status === 'ready' ? ' ready' : ''}${pr.total && pr.done === pr.total ? ' alldone' : ''}${prepPick && prepPick.shed === sh ? ' pk' : ''}"><button type="button" class="pl-shh" data-pl-shmenu="${enc(sh)}" title="${enc(`Shed ${sh} — ${c.status === 'ready' ? 'Ready' : pr.done + ' of ' + pr.total + ' done'}${cd ? ' · ' + cd : ''} — tap for its menu`)}"><span class="pl-ring" style="${plRingStyle(c.status === 'ready' ? 100 : pr.total ? Math.round(pr.done / pr.total * 100) : 0)}"><span class="prep-sn">${escapeHtml(sh)}</span></span></button></th>`; }).join('')}</tr>`;
     let body = '';
     secs.forEach(S=>{
       const sk = enc(S.t), folded = prepSecFold.has(prepNorm(S.t)) && prepFilter === 'all';
