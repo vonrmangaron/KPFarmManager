@@ -588,6 +588,8 @@ function buildPwRail(){
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
     +'<span class="pwr-gap"></span>'
+    // Production / Tasks switch on the rail, above Sync (2026-10-28, option B of mockup VGSsMoqwzwtL1ZTGJojqZk with the swap arrows); the floating pill is gone on computers
+    +`<button type="button" class="pwr-btn pwr-ws" data-ws="tasks" title="Switch to Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/></svg><span>Tasks</span></button>`
     +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
     +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Account" aria-haspopup="menu" aria-expanded="false"><span class="pwr-badge" id="pwrFarmBadge" hidden></span><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Account</span></button>`;
   lay.insertBefore(nav,lay.firstChild);
