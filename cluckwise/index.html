@@ -4602,6 +4602,28 @@
   #mtBoard .mtb-card.mt4.done .mt4-in{ padding-block:9px; }
   #mtBoard .mtb-card.mt4.done .mt4-ft{ min-height:0; margin-top:0; }
   .mtb-head .mt4-old{ border:none; background:transparent; cursor:pointer; color:var(--primary-dark); font-weight:700; padding:0; font-family:inherit; }
+  /* narrower columns + summary at a glance (option 2, mockup H6uUDyL2qRz2uqb5swTHdS) */
+  @media (min-width:1025px){
+    #reportsDrawer.view-board #mtBoard{ grid-template-columns:repeat(3, minmax(250px, 300px)); justify-content:start; gap:22px; }
+    .mt-glance{ display:none; }
+    .mt4-strip{ height:72px; }
+  }
+  @media (min-width:1360px){ #reportsDrawer.view-board #mtBoard{ grid-template-columns:repeat(3, 300px) minmax(240px, 290px); } .mt-glance{ display:flex; } }
+  .mt-glance{ flex-direction:column; gap:8px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-left:6px; position:sticky; top:0; }
+  .mt-glance h4{ margin:4px 0 0; font:700 11.5px 'Inter',sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .mt-glance h4:first-child{ margin-top:0; }
+  .mtg-tiles{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .mtg-tiles div{ background:var(--surface-soft); border-radius:9px; padding:8px 10px; display:flex; flex-direction:column; min-width:0; }
+  .mtg-tiles b{ font:800 18px 'Sora',sans-serif; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .mtg-tiles b.ok{ color:var(--success); } .mtg-tiles b.bad{ color:var(--danger); }
+  .mtg-tiles span{ font-size:11.5px; color:var(--muted); }
+  .mtg-bar{ display:grid; grid-template-columns:minmax(0,1.2fr) minmax(30px,1fr) 18px; gap:8px; align-items:center; font-size:12px; color:var(--ink); }
+  .mtg-bar span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mtg-bar i{ height:7px; border-radius:99px; background:var(--surface-soft); overflow:hidden; }
+  .mtg-bar em{ display:block; height:100%; border-radius:99px; background:var(--primary); }
+  .mtg-bar b{ text-align:right; font-variant-numeric:tabular-nums; }
+  .mtg-btn{ margin-top:6px; height:34px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px 'Inter',sans-serif; cursor:pointer; }
+  .mtg-btn:hover{ background:var(--surface-soft); }
   /* summary window */
   @media (min-width:761px){ .form-modal.mts-modal{ width:760px; } #reportsDrawer #rpSubLine{ display:block; } }
   .mts-body{ display:flex; flex-direction:column; gap:16px; }
@@ -7702,7 +7724,7 @@
       prog: ()=> col('prog', 'Being fixed', prog, ''),
       fixed: ()=> col('fixed', 'Fixed', fixed, '', archived ? `<button type="button" class="mtb-arch mt4-old" data-mtb-old title="${mtShowOld ? 'Show only the last ' + RP_ARCHIVE_DAYS + ' days' : 'Also show jobs fixed more than ' + RP_ARCHIVE_DAYS + ' days ago'}">${mtShowOld ? 'Hide older' : 'Older · ' + archived}</button>` : `<span class="mtb-arch">last ${RP_ARCHIVE_DAYS} days</span>`)
     };
-    box.innerHTML = wide ? colHtml.open() + colHtml.prog() + colHtml.fixed() : colHtml[mtStage]();
+    box.innerHTML = wide ? colHtml.open() + colHtml.prog() + colHtml.fixed() + mtGlanceHtml() : colHtml[mtStage]();
     box.querySelectorAll('.mtb-th img').forEach(im=> im.addEventListener('error', ()=>{ const p = im.parentElement; p.classList.add('none'); p.innerHTML = RP_WRENCH; }));
     box.querySelectorAll('.mt4-strip img').forEach(im=> im.addEventListener('error', ()=> im.parentElement.remove()));
     mtSortables.forEach(x=>{ try{ x.destroy(); }catch(e){} }); mtSortables = [];
@@ -7749,6 +7771,16 @@
     return { label, from, reported, fixed, open, avg, spanOf,
       urgent: open.filter(r=> r.urgent).length,
       byType, byPlace: group(reported, reportPlace), byFixer: group(fixed, r=> r.resolvedBy || 'Manager') };
+  }
+  // Summary at a glance (2026-10-28, option 2 of mockup H6uUDyL2qRz2uqb5swTHdS): the spare space right of the board, wide screens only
+  function mtGlanceHtml(){
+    const D = mtSummaryData('30');
+    const bars = (title, list)=>{ if(!list.length) return ''; const top = list[0].n || 1;
+      return `<h4>${title}</h4>${list.slice(0, 3).map(x=> `<div class="mtg-bar"><span>${escapeHtml(x.name)}</span><i><em style="width:${Math.round(x.n / top * 100)}%"></em></i><b>${x.n}</b></div>`).join('')}`; };
+    return `<aside class="mt-glance" aria-label="Last 30 days"><h4>Last 30 days</h4>
+      <div class="mtg-tiles"><div><b>${D.reported.length}</b><span>reported</span></div><div><b class="ok">${D.fixed.length}</b><span>fixed</span></div><div><b class="${D.open.length ? 'bad' : ''}">${D.open.length}</b><span>still open</span></div><div><b>${mtFmtSpan(D.avg).replace(' days', ' d').replace(' day', ' d')}</b><span>avg to fix</span></div></div>
+      ${bars('Most reported', D.byType)}${bars('By place', D.byPlace)}
+      <button type="button" class="mtg-btn" data-mtg-sum>Full summary · PDF</button></aside>`;
   }
   function openMtSummary(){ renderMtSummary(); $('#mtSumModal').classList.add('open'); }
   function closeMtSummary(){ $('#mtSumModal').classList.remove('open'); }
@@ -15775,6 +15807,7 @@
   $('#reportsList').addEventListener('click', (e)=>{ if(e.target.closest('[data-tr-fold]')){ rpListShowFixed = !rpListShowFixed; renderReportsList(); } });
   $('#mtBoard').addEventListener('click', (e)=>{
     if(e.target.closest('[data-mtb-old]')){ mtShowOld = !mtShowOld; renderMtBoard(); return; }
+    if(e.target.closest('[data-mtg-sum]')){ mtsPeriod = '30'; openMtSummary(); return; }
     const card = e.target.closest('.mtb-card'); if(!card) return;
     const id = card.dataset.id;
     if(e.target.closest('[data-mtb-fix]')){ mtMove(id, 'fixed'); return; }
