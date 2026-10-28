@@ -379,6 +379,17 @@
   .freq-edit-confirm{ background:var(--primary); color:#241A08; }
   .freq-edit-cancel{ background:var(--surface-soft); color:var(--muted); border:1px solid var(--line); }
   .task-menu-popup{ display:none; position:fixed; z-index:80; width:190px; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow-lg); padding:6px; }
+  .task-menu-popup.mv-pop{ width:252px; padding:10px; }
+  .mv-h{ font:600 12.5px Inter,sans-serif; color:var(--muted); margin:0 2px 8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .mv-h b{ color:var(--ink); }
+  .mv-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  .mv-day{ all:unset; box-sizing:border-box; cursor:pointer; text-align:center; padding:9px 6px; border-radius:10px; border:1px solid var(--line); background:var(--surface-soft); font:700 13px Inter,sans-serif; color:var(--ink); }
+  .mv-day:hover, .mv-day:focus-visible{ border-color:#F0A21A; background:rgba(240,162,26,.12); outline:none; }
+  .mv-day.on{ cursor:default; opacity:.5; }
+  .mv-grid .mv-day:first-child{ grid-column:1 / -1; background:#F0A21A; border-color:#F0A21A; color:#1E2320; }
+  .mv-grid .mv-day.on:first-child{ background:var(--surface-soft); border-color:var(--line); color:var(--muted); }
+  .mv-pick{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; font:600 12.5px Inter,sans-serif; color:var(--muted); }
+  .mv-pick input{ font:600 13px Inter,sans-serif; padding:6px 8px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); min-width:0; }
+  .mv-pop .mv-bl{ margin-top:6px; width:100%; }
   .task-menu-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent; color:var(--ink); font-family:'Sora',sans-serif; font-size:13px; font-weight:600; padding:9px 10px; border-radius:10px; cursor:pointer; }
   .task-menu-item:hover{ background:var(--surface-soft); }
   .task-menu-item.danger{ color:var(--danger); }
@@ -1543,6 +1554,19 @@
   /* clickable weather → hourly forecast */
   .wx-clickable{ cursor:pointer; transition:transform .1s ease, box-shadow .15s ease, filter .15s ease; }
   .wx-card.wx-clickable:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); }
+  /* Board column weather: one slim 38px line — icon · high / low | RH · label (2026-10-28, option 1 of mockup 8CsJjEoYaALdar1JQLHMcE) */
+  .wx-card.wx-card-col{ height:38px; box-sizing:border-box; padding:0 12px; border-radius:12px; border-width:1px; justify-content:center; }
+  .wx-card.wx-card-col .wxc-main{ gap:8px; min-width:0; font:700 13.5px Inter,sans-serif; }
+  .wx-card.wx-card-col .wxc-ic{ font-size:19px; }
+  .wx-card.wx-card-col .wxc-temps{ font-family:Inter,sans-serif; gap:4px; }
+  .wx-card.wx-card-col .wxc-hi{ font-size:15px; }
+  .wx-card.wx-card-col .wxc-lo{ font-size:13.5px; opacity:.65; }
+  .wx-card.wx-card-col .wxc-rh{ margin-left:0; flex-direction:row; align-items:baseline; gap:4px; padding-left:8px; border-left:1px solid rgba(22,25,27,.18); line-height:1; }
+  .wx-card.wx-card-col .wxc-rh-label{ font-size:13px; letter-spacing:0; font-weight:700; opacity:.65; }
+  .wx-card.wx-card-col .wxc-rh-val{ font:700 13.5px Inter,sans-serif; }
+  .wx-card.wx-card-col .wxc-slab{ margin-left:auto; min-width:0; font-size:12px; font-weight:600; opacity:.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wx-card.wx-card-col.wx-clickable:hover{ transform:none; }
+  body.theme-dark .wx-card.wx-card-col .wxc-rh{ border-left-color:rgba(255,255,255,.2); }
   .wx.wx-clickable:hover{ filter:brightness(0.96); text-decoration:underline dotted; text-underline-offset:3px; }
   .wx-clickable:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   #wxModal{ width:600px; }
@@ -8554,6 +8578,28 @@
     card.classList.add('menu-open');
     lastMenuOpenAt = Date.now();
   }
+  // Move to another day (2026-10-28, mockup 8CsJjEoYaALdar1JQLHMcE): the next 7 days as buttons, any date, or the Backlog
+  function openMoveDayMenu(id, r){
+    const t = tasks.find(x=> x.id === id); if(!t) return;
+    const today = dateKey(new Date());
+    const days = Array.from({ length: 7 }, (_, i)=> addDaysStr(today, i));
+    const lab = (k, i)=> i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : toDateObj(k).toLocaleDateString('en-GB', { weekday:'short', day:'numeric' });
+    const pop = document.createElement('div'); pop.className = 'task-menu-popup mv-pop'; pop.dataset.taskId = id;
+    pop.innerHTML = `<div class="mv-h">Move <b>${escapeHtml(t.name || 'task')}</b> to…</div>
+      <div class="mv-grid">${days.map((k, i)=> `<button type="button" class="mv-day${t.date === k ? ' on' : ''}" data-mv="${k}"${t.date === k ? ' disabled aria-current="date" title="It is on this day now"' : ''}>${escapeHtml(lab(k, i))}</button>`).join('')}</div>
+      <label class="mv-pick"><span>Other date</span><input type="date" value="${escapeHtmlAttr(t.date || today)}"></label>
+      ${t.date ? '<button type="button" class="task-menu-item mv-bl" data-mv="backlog">No day yet (Backlog)</button>' : ''}`;
+    const go = k=>{ if(!k) return; closeAllTaskMenus(); moveTask(id, k); };
+    pop.addEventListener('click', (e)=>{ e.stopPropagation(); const b = e.target.closest('[data-mv]'); if(b && !b.disabled) go(b.dataset.mv); });
+    pop.querySelector('.mv-pick input').addEventListener('change', (e)=>{ if(e.target.value && e.target.value !== t.date) go(e.target.value); });
+    closeAllTaskMenus();
+    document.body.appendChild(pop); pop.style.display = 'block';
+    activeMenuPopup = pop; activeMenuHome = null; activeMenuCard = null; lastMenuOpenAt = Date.now();
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.top, innerHeight - h - 8)) + 'px';
+    const first = pop.querySelector('.mv-day:not([disabled])'); if(first) first.focus({ preventScroll:true });
+  }
   function positionTaskMenuPopup(btn, popup){
     const btnRect = btn.getBoundingClientRect();
     const popupW = 190, popupH = popup.offsetHeight || 180;
@@ -8628,6 +8674,7 @@
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-move" type="button" title="Pick a day for this task"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M10 15h6M13 12l3 3-3 3"/></svg></span>Move to another day</button>
         <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
         <button class="task-menu-item btn-duplicate" type="button" title="Make a twin just below — drag it anywhere"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></span>Duplicate</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
@@ -8976,6 +9023,7 @@
       rh.appendChild(mk('span', 'wxc-rh-val', Math.round(hum) + '%'));
       main.appendChild(rh);
     }
+    if(variant === 'col') main.appendChild(mk('span', 'wxc-slab', dayLabel));   // slim strip (option 1 of mockup 8CsJjEoYaALdar1JQLHMcE): the forecast word at the end
     card.appendChild(main);
     card.title = `${dayLabel} · High ${wxT(w.max)} · Low ${wxT(w.min)}`
       + (w.rain != null ? ` · Rain ${Math.round(w.rain)}%` : '')
@@ -10528,6 +10576,7 @@
         ${isOverdue ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (isHighPriority ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
         <button class="task-menu-item btn-open-card" type="button"><span class="tmi-ic">▣</span>Open card</button>
         <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-move" type="button" title="Pick a day for this task"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M10 15h6M13 12l3 3-3 3"/></svg></span>Move to another day</button>
         <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
         <button class="task-menu-item btn-duplicate" type="button" title="Make a twin just below — drag it anywhere"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></span>Duplicate</button>
         <button class="task-menu-item btn-done" type="button"><span class="tmi-ic">${task.status==='done'?UNDO_ICON_SVG:CHECK_ICON_SVG}</span>${task.status==='done'?'Reopen':'Mark done'}</button>
@@ -11180,6 +11229,7 @@
     pop.innerHTML = `${late ? '<div class="task-menu-flag overdue-flag">⚠ Overdue</div>' : (t.priority === 'high' && t.status !== 'done' ? '<div class="task-menu-flag priority-flag">🔥 High priority</div>' : '')}
       <button class="task-menu-item dm-open" type="button"><span class="tmi-ic">▣</span>Open card</button>
       <button class="task-menu-item btn-edit" type="button"><span class="tmi-ic">✎</span>Edit</button>
+        <button class="task-menu-item btn-move" type="button" title="Pick a day for this task"><span class="tmi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M10 15h6M13 12l3 3-3 3"/></svg></span>Move to another day</button>
       ${t.date && t.status !== 'done' ? `<button class="task-menu-item dm-tomorrow" type="button"><span class="tmi-ic">→</span>Move to ${t.date < today ? 'today' : 'the next day'}</button>` : ''}
       <button class="task-menu-item btn-copy" type="button"><span class="tmi-ic">📄</span>Copy</button>
       <button class="task-menu-item btn-duplicate" type="button"><span class="tmi-ic">⧉</span>Duplicate</button>
@@ -12062,6 +12112,8 @@
     const delBtn = e.target.closest('.btn-delete');
     if(editBtn){ const id = taskIdFromEl(editBtn); closeAllTaskMenus(); if(id) openEditTaskModal(id); return; }
     if(copyBtn){ const id = taskIdFromEl(copyBtn); closeAllTaskMenus(); if(id) openCopyTaskModal(id); return; }
+    const moveBtn = e.target.closest('.btn-move');
+    if(moveBtn){ const id = taskIdFromEl(moveBtn), r = moveBtn.getBoundingClientRect(); closeAllTaskMenus(); if(id) openMoveDayMenu(id, r); return; }
     if(dupBtn){ const id = taskIdFromEl(dupBtn); closeAllTaskMenus(); if(id) duplicateTask(id); return; }
     if(doneBtn){ toggleDone(taskIdFromEl(doneBtn)); return; }
     if(delBtn){
