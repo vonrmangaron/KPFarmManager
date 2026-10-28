@@ -4175,6 +4175,14 @@
   @media (max-width:760px){ .pl-wrap{ flex:0 0 auto !important; } .pl-tab td.pl-job{ min-width:170px; max-width:190px; padding:9px 12px; } .pl-shh{ min-width:64px; } }
 
   /* ── Prep: one list, List only (2026-10-24) ── */
+  /* one or two sheds shown (e.g. "Shed 1 only"): the table fits its content instead of stretching the job column across the page (2026-10-28) */
+  .pl-tab thead .pl-shh{ margin:0 auto; }
+  @media (min-width:761px){
+    .pl-wrap.pl-few{ width:fit-content; max-width:100%; flex:0 1 auto !important; }
+    .pl-wrap.pl-few .pl-tab{ width:auto; }
+    .pl-wrap.pl-few .pl-tab td.pl-job{ width:420px; min-width:420px; max-width:420px; }
+    .pl-wrap.pl-few .pl-tab th.pl-sh, .pl-wrap.pl-few .pl-tab td.pl-c{ min-width:150px; }
+  }
   .pl-tab td.pl-job{ padding:8px 10px 8px 6px; }
   .pl-jr{ display:flex; align-items:center; gap:6px; }
   .pl-jn{ min-width:0; flex:1; }
@@ -13143,7 +13151,7 @@
     const pickBar = prepPick ? (()=>{ const c = prepActiveFor(prepPick.shed), n = prepPick.sel.size;
       const secN = c ? new Set(prepUnits(c).filter(x=> prepPick.sel.has(x.u.id)).map(x=> x.sec.id)).size : 0;
       return `<div class="pl-pickbar"><b>${n ? n + ' job' + (n === 1 ? '' : 's') + ' picked' : 'Pick the jobs'}</b><span>Shed ${escapeHtml(prepPick.shed)}${n ? ' · ' + secN + ' section' + (secN === 1 ? '' : 's') : ' · tick the boxes in its column'}</span><span class="pl-pb-sp"></span><button type="button" class="pl-pbtn ghost" data-pl-pickcancel>Cancel</button><button type="button" class="pl-pbtn" data-pl-pickmake${n ? '' : ' disabled'}>Make a task</button></div>`; })() : '';
-    return `<div class="pl-wrap${prepPick ? ' picking' : ''}" data-filter="${prepFilter}" data-pick-shed="${prepPick ? enc(prepPick.shed) : ''}"><table class="pl-tab"><thead>${head}</thead>${body}${prepPick ? '' : addSec + foot}</table>${pickBar}</div>
+    return `<div class="pl-wrap${prepPick ? ' picking' : ''}${cols.length <= 2 ? ' pl-few' : ''}" data-filter="${prepFilter}" data-pick-shed="${prepPick ? enc(prepPick.shed) : ''}"><table class="pl-tab"><thead>${head}</thead>${body}${prepPick ? '' : addSec + foot}</table>${pickBar}</div>
       <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="task"></i>Task (its day under it)</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · ≡ several jobs in one task</span></div>`;
   }
   let prepTickFx = null, prepTickAt = 0;
