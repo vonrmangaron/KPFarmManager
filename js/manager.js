@@ -639,8 +639,8 @@ function syncPwRail(){
     sd.className='pwr-sdot '+cls;
     const sd2=document.getElementById('pwrSyncDot2'),st=document.getElementById('pwrSyncTime');
     if(sd2)sd2.className='pwr-sdot '+cls;
-    if(st)st.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':syncLastSyncAt?new Date(syncLastSyncAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M$/i,''):'Synced';
-    const s2=r.querySelector('.pwr-synct');if(s2)s2.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' at '+new Date(syncLastSyncAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'')+' — tap to sync now';
+    if(st)st.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':syncLastSyncAt?fmtClock(syncLastSyncAt).replace(/\s?[AP]M$/i,''):'Synced';
+    const s2=r.querySelector('.pwr-synct');if(s2)s2.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' at '+fmtClock(syncLastSyncAt):'')+' — tap to sync now';
     sl.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':'Synced';
     const sb=r.querySelector('.pwr-sync');if(sb)sb.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' · '+fmtRelativeTime(syncLastSyncAt):'')+' — tap to sync now';
   }
@@ -1223,7 +1223,7 @@ function mgrBriefInner(){
       ${grp('🌾','Feed',G.feed,'All good')}
       ${grp('🔁','Changeover &amp; prep',G.co,'Nothing this week')}
     </div>
-    <div class="bf-foot"><span>Made from today's numbers · updated ${now.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}${cw?'':' · tasks and weather appear once Tasks has loaded'}</span><span>Tap a line to open it</span></div>`}`;
+    <div class="bf-foot"><span>Made from today's numbers · updated ${fmtClock(now)}${cw?'':' · tasks and weather appear once Tasks has loaded'}</span><span>Tap a line to open it</span></div>`}`;
 }
 function mgrBriefHtml(){if(!farmData)return '';return `<section class="mgr-card bf-card${mgrBriefFold?' folded':''}" id="mgrBrief" aria-label="Morning briefing">${mgrBriefInner()}</section>`;}
 function mgrBriefRefresh(){const el=document.getElementById('mgrBrief');if(!el)return;el.classList.toggle('folded',mgrBriefFold);el.innerHTML=mgrBriefInner();}

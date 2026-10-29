@@ -29,13 +29,13 @@ function foSnoozed(){try{const t=Number(localStorage.getItem(foSnoozeKey()))||0;
 function foRemindAt(){const t=(typeof pnCfg!=='undefined'&&pnCfg&&pnCfg.foRemindTime)||'11:00';const [h,m]=t.split(':').map(Number);const d=new Date();d.setHours(h||11,m||0,0,0);return d;}
 // "Later": until the reminder time, or an hour when that has passed
 function foLaterAt(){const r=foRemindAt();return r.getTime()>Date.now()+5*60e3?r:new Date(Date.now()+60*60e3);}
-function foLaterLabel(){const r=foRemindAt();return r.getTime()>Date.now()+5*60e3?'Later · '+r.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'Later · 1 hour';}
+function foLaterLabel(){const r=foRemindAt();return r.getTime()>Date.now()+5*60e3?'Later · '+fmtClock(r):'Later · 1 hour';}
 
 // The banner on top of Production
 function foBannerHtml(){
   if(!farmData)return '';
   const ev=foToday();
-  if(ev&&ev.done){const d=foDoneMap()[ev.date]||{};const at=d.at?new Date(d.at).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'';
+  if(ev&&ev.done){const d=foDoneMap()[ev.date]||{};const at=d.at?fmtClock(d.at):'';
     return `<div class="fo-ok" id="foBanner"><span class="fo-okface">${typeof rsFace==='function'?rsFace('happy'):''}</span><span>Cluck: thanks — feed off ${escapeHtml(foLabel(ev.sheds))}${d.by?' by '+escapeHtml(d.by):''}${at?' at '+escapeHtml(at):''}.</span><button type="button" class="fo-undo" data-fo-undo="${ev.date}" title="Not done after all">Undo</button></div>`;}
   if(ev&&!foSnoozed()){
     const nm=typeof aiName==='function'?aiName():'';
@@ -73,7 +73,7 @@ function foSetDone(date,on){
 document.addEventListener('click',e=>{
   const d=e.target.closest&&e.target.closest('[data-fo-done]');if(d){foSetDone(d.dataset.foDone,true);showToast('Feed off — Cluck has it noted.');return;}
   const u=e.target.closest&&e.target.closest('[data-fo-undo]');if(u){foSetDone(u.dataset.foUndo,false);return;}
-  if(e.target.closest&&e.target.closest('[data-fo-later]')){const at=foLaterAt();try{localStorage.setItem(foSnoozeKey(),String(at.getTime()));}catch(er){}foInject();showToast('Cluck will remind you at '+at.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+'.');}
+  if(e.target.closest&&e.target.closest('[data-fo-later]')){const at=foLaterAt();try{localStorage.setItem(foSnoozeKey(),String(at.getTime()));}catch(er){}foInject();showToast('Cluck will remind you at '+fmtClock(at)+'.');}
 });
 // Back on screen at the reminder time: show it again
 setInterval(()=>{if(document.visibilityState==='visible'&&farmData&&(foToday()||foTomorrow()))foInject();},60e3);

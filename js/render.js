@@ -213,7 +213,7 @@ async function historyPopulatePage() {
   const todayIso=iso(new Date()),yIso=iso(addDays(new Date(),-1));
   const groups=[];let cur=null;
   shown.slice(0,hxLimit).forEach(x=>{const d=new Date(x.ts),k=iso(d);if(!cur||cur.k!==k){cur={k,d,items:[]};groups.push(cur);}cur.items.push(x);});
-  const t2=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const t2=d=>fmtClock(d);
   const DOT={copies:['v','⟲'],tasks:['t','✓'],reports:['r','!'],settings:['s','⚙']};
   const row=x=>{
     const tm=t2(new Date(x.ts));
@@ -257,7 +257,7 @@ const HR_ICONS={
 };
 function historyRowHtml(s) {
   const when = new Date(s.timestamp);
-  const time = String(when.getHours()).padStart(2,'0') + ':' + String(when.getMinutes()).padStart(2,'0');
+  const time = fmtClock(when);
   const sum = s.summary || { sheds: 0, pickups: 0, siloReadings: 0, loads: 0, batch: '' };
   const sourceLabels = {
     'manual': 'Manual save',

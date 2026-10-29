@@ -2126,7 +2126,7 @@ function buildBatchReportHTML(){
   const now=new Date();
   const batchLabel=(predState.batchNumber||(farmData&&farmData.batchNumber)||'').trim()||'—';
   const farmLabel=syncFarmName||'—';
-  const dateStr=fmtShort(now)+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const dateStr=fmtShort(now)+' · '+fmtClock(now);
   let html=`<div class="rpt-header">
     <div class="rpt-brand">ProdWise.VM — Batch Report</div>
     <div class="rpt-meta">Batch ${escapeHtml(batchLabel)} · Farm ${escapeHtml(farmLabel)}</div>

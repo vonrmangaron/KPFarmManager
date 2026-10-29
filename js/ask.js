@@ -21,7 +21,7 @@ async function aiCall(body){
   return j;
 }
 function aiJson(t){t=String(t||'');const a=t.indexOf('{'),z=t.lastIndexOf('}');if(a<0||z<=a)return null;try{return JSON.parse(t.slice(a,z+1));}catch(e){return null;}}
-function aiResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
+function aiResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return fmtClock(u);}
 function aiErrText(e){
   if(!navigator.onLine)return 'Cluck is offline — the AI needs the internet.';
   if(e&&e.limit)return `Cluck is resting until ${aiResetTime()} (free AI allowance used up).`;
@@ -249,7 +249,7 @@ function rsModel(st,d){
 function rsDetHtml(p){const f=p.f&&p.f.text&&p.f.text!==p.title?p.f.text:'';if(!f&&!p.why)return '';
   return `<span class="rs-det">${f?`<span class="rs-det-f"><i>Farm</i>${escapeHtml(f)}</span>`:''}${p.why?`<span class="rs-det-w"><i>Cluck</i>${rsInl(p.why)}</span>`:''}</span>`;}
 function rsHtml(st,d,R){
-  const now=new Date(),who=aiName(),w0=d.wx[0],tm=new Date(st.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  const now=new Date(),who=aiName(),w0=d.wx[0],tm=fmtClock(st.at||Date.now());
   let bd='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);bd=`Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · day ${Math.max(0,mgrDays(first,mgrToday()))}`;}}catch(e){}
   const meta=[bd,w0?`${escapeHtml(w0.maxT)} / ${escapeHtml(w0.minT)}`:'',`prepared${who?' for '+escapeHtml(who):''} at ${tm}`].filter(Boolean).join(' · ');
   const tag='<span class="rs-tag">Cluck</span>',loading='<div class="rs-load"><i></i><i></i><i></i></div>';

@@ -2835,7 +2835,7 @@
       <div class="vs-prog"><span class="vs-bar"><i style="width:${Math.round(d / a.length * 100)}%"></i></span><small>${escapeHtml(t('vsOf').replace('{d}', d).replace('{n}', a.length))}</small></div>
       ${tk.notes ? `<div class="vs-note">📝 ${escapeHtml(tk.notes)}</div>` : ''}${tk.prepNote ? `<div class="vs-note">📝 ${escapeHtml(tk.prepNote)}</div>` : ''}
       ${all ? `<div class="vs-alldone">✓ ${escapeHtml(t('vsDoneNote'))}</div>` : ''}
-      <div class="vs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="vs-sec">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="vs-step${x.done ? ' done' : ''}" data-vs-tick="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="vs-n">${i + 1}</span><span class="vs-t"><span class="vs-nm">${escapeHtml(x.t)}</span>${x.note ? `<small>📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })) : ''}</small>` : ''}</span><span class="vs-box" aria-hidden="true">${x.done ? VS_TICK : ''}</span></button>`).join('')}</div></div>`;
+      <div class="vs-list">${a.map((x, i)=> `${x.sec && x.sec !== (a[i - 1] || {}).sec ? `<div class="vs-sec">${escapeHtml(x.sec)}</div>` : ''}<button type="button" class="vs-step${x.done ? ' done' : ''}" data-vs-tick="${escapeHtml(x.id)}" aria-pressed="${!!x.done}"><span class="vs-n">${i + 1}</span><span class="vs-t"><span class="vs-nm">${escapeHtml(x.t)}</span>${x.note ? `<small>📝 ${escapeHtml(x.note)}</small>` : ''}${x.done && x.doneBy ? `<small>${escapeHtml(x.doneBy)}${x.doneAt ? ' · ' + escapeHtml(new Date(x.doneAt).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit', hour12:true })) : ''}</small>` : ''}</span><span class="vs-box" aria-hidden="true">${x.done ? VS_TICK : ''}</span></button>`).join('')}</div></div>`;
     const l = ov.querySelector('.vs-list'); if(l) l.scrollTop = keep;
   }
   function toggleTaskDoneInViewer(id){
@@ -3351,7 +3351,7 @@
     if(tk.status === 'done' && tk.doneBy){
       const db = document.createElement('span'); db.className = 'task-doneby';
       const d = tk.doneAt ? new Date(tk.doneAt) : null;
-      db.textContent = '✓ ' + tk.doneBy + (d && !isNaN(d) ? ' · ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' }) : '');
+      db.textContent = '✓ ' + tk.doneBy + (d && !isNaN(d) ? ' · ' + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit', hour12:true }) : '');
       card.querySelector('.task-name').after(db);
     }
     // A task with steps (2026-10-24): stands out, the whole card opens/closes its steps, and the steps sit under the

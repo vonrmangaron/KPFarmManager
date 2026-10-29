@@ -501,7 +501,8 @@ function deleteReadingSession(g,id){
   saveSiloData();schedulePush();render();
   showUndoToast(`🗑️ Deleted the reading from ${when}.`,()=>{siloData[g].log=snap.log;siloData[g].readings=snap.readings;saveSiloData();schedulePush();render();showToast('↩ Restored.');});
 }
-function fmtClock(at){const d=new Date(at);return isNaN(d)?'':d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
+// 12-hour clock on every device (2026-10-29), same as Tasks: "3:05 PM"
+function fmtClock(at){const d=new Date(at);if(isNaN(d))return '';const h=d.getHours();return `${h%12||12}:${String(d.getMinutes()).padStart(2,'0')} ${h<12?'AM':'PM'}`;}
 function setSiloRingsForToday(group,siloNum,rings){
   if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
   const s=siloData[group];const todayIso=iso(new Date());
