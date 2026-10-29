@@ -162,7 +162,7 @@ function pnFeedCheck(){
   let sent={};try{sent=JSON.parse(localStorage.getItem(k)||'{}')||{};}catch(e){}
   if(sent.day!==day)sent={day,ids:[]};
   const ev=[];
-  silos.filter(x=>x.dep&&x.days<=3).forEach(x=>{const id='g'+x.g;if(sent.ids.includes(id))return;sent.ids.push(id);
+  silos.filter(x=>x.dep&&x.days<=3&&x.feeding.length).forEach(x=>{const id='g'+x.g;if(sent.ids.includes(id))return;sent.ids.push(id);
     ev.push({type:'feed',id:id+'-'+day,title:`Feed: ${pairLabel(x.g)} run low ${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}`,body:x.days<=1?'Book a load today.':`In ${x.days} days. Book a load.`});});
   if(!ev.length)return;
   try{localStorage.setItem(k,JSON.stringify(sent));}catch(e){}

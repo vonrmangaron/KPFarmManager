@@ -123,9 +123,71 @@ function rsData(){
     return {date:x.date,ev,busy:ev.length>=3||nt>=10};});
   return {T,cw,facts,kpi,sheds,crew,since,trends,week,wx:cw&&cw.wx||[]};
 }
+// Everything Ross reads besides the alert lines (2026-10-29): batches, feed and silos per pair, next batch's Starter,
+// loads, clean-outs and placements, mortality and performance per shed. Plain text, kept short (the worker clips at 16k).
+function rsFarmSheet(d){
+  const today=mgrToday(),L=[],t1=kg=>((Number(kg)||0)/1000).toFixed(1)+' t',D=x=>x?fmtShortNoYear(x):'—',safe=f=>{try{f();}catch(e){}};
+  const cur=String(currentBatchKey()||''),list=typeof pwRunningList==='function'?pwRunningList():[];
+  const nb=(typeof pwRunOthers!=='undefined'&&Array.isArray(pwRunOthers)?pwRunOthers:[]).find(o=>o&&o.newest&&String(o.key).toLowerCase()!==cur.toLowerCase());
+  safe(()=>{L.push('BATCHES:');list.forEach(b=>L.push(`- ${b.key}${b.key===cur?' (open in the app)':''}: ${b.placedNow} of ${b.planned} sheds placed${b.firstPlace?', placements '+D(b.firstPlace)+(b.lastPlace&&+b.lastPlace!==+b.firstPlace?'–'+D(b.lastPlace):''):''}${b.firstOut?', clean-outs '+D(b.firstOut)+(b.lastOut&&+b.lastOut!==+b.firstOut?'–'+D(b.lastOut):''):''}${b.day!=null?', day '+b.day:''}`));
+    if(!list.length)L.push('- '+(cur||'current batch'));if(!nb)L.push('- Next batch file: not found in the cloud yet (Starter orders for it cannot be checked)');});
+  // Feed per pair
+  safe(()=>{L.push('FEED AND SILOS (per pair of sheds, 3 silos each):');
+    [1,2,3,4].forEach(g=>{const sh=shedsForGroup(g).filter(s=>s.placementDate);if(!sh.length)return;
+      if(typeof pairAllClosed==='function'&&pairAllClosed(g)){L.push(`- ${pairLabel(g)}: both sheds closed, batch finished here`);return;}
+      const r=latestReading(g),out=[];
+      if(r){let now=null;safe(()=>{const pl=siloLevelPlan(g,{until:addDays(today,1)});now=pl?siloPlanOn(pl,today)||pl.start:null;});
+        const kg=now?now.kg:[r.silo1Rings,r.silo2Rings,r.silo3Rings].map(ringsToKg),op=now&&now.open||[];
+        out.push(`read ${D(dateOnly(r.date))} ${readingIsMorning(r)?'am':'pm'}; now about `+[0,1,2].map(i=>`Silo ${siloNumber(g,i+1)} ${t1(kg[i])}${op.includes(i+1)?' (open)':''}${starterSiloOf(g)===i+1?' (starter silo)':''}`).join(', ')+` = ${t1(kg[0]+kg[1]+kg[2])}`);}
+      else out.push('no silo reading this batch');
+      out.push(`eating ${t1(groupDailyFeedOn(sh,today))}/day`);
+      const o=mgrSiloOutlook().find(x=>x.g===g);
+      if(o&&o.dep)out.push(`runs low ${D(o.dep)} (in ${o.days} d) with the loads booked; still feeding then: ${o.feeding.length?o.feeding.map(i=>'Shed '+i).join(', '):'none — birds out for clean-out'}`);else out.push('covered for 60+ days');
+      const f=typeof feedToOrderForGroup==='function'?feedToOrderForGroup(g):null;if(f)out.push(`to clean-out ${D(f.end)}: need ${t1(f.needExp)}, have ${t1(f.stock)} + booked ${t1(f.booked)} → ${f.expected>0?'order '+t1(f.expected)+' more':'left over '+t1(f.leftoverExp)}`);
+      const st=typeof starterSiloStatus==='function'?starterSiloStatus(g):null;
+      if(st)out.push(`starter silo: ${st.silo?'Silo '+siloNumber(g,st.silo):'not chosen'} — ${({pick:'not chosen yet',ready:'empty and ready',ontrack:'on track to be empty '+D(st.emptyOn),action:(st.late?'too full, open it now':'open it by '+D(st.openBy))+' ('+t1(st.kg)+' in it)',noreading:'no reading to check',watch:'empty but other feed is booked into it'})[st.state]||st.state}${st.inWin?'':' (checked from '+D(st.win)+')'}`);
+      const nbs=nb?(nb.starter||[]).filter(l=>Number(l.splitKg&&l.splitKg[g])>0):[];
+      if(nb)out.push(nbs.length?`next batch ${nb.key} Starter ordered: `+nbs.map(l=>`${D(dateOnly(l.date))} ${t1(l.splitKg[g])}`).join(', '):`next batch ${nb.key} Starter: NOT ordered yet`);
+      L.push(`- ${pairLabel(g)}: `+out.join('; '));});});
+  // Loads
+  safe(()=>{const up=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&dateOnly(l.date)<=addDays(today,21)).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+    L.push('FEED LOADS BOOKED (next 3 weeks):',...(up.length?up.map(l=>`- ${D(dateOnly(l.date))}: ${feedTypeLabel(l.feedType)} ${t1(l.actualKg!=null?l.actualKg:l.plannedKg)} → `+[1,2,3,4].filter(g=>Number(l.splitKg&&l.splitKg[g])>0).map(g=>`${pairLabel(g)} ${t1(l.splitKg[g])}${loadSilosFor(l,g).length?' into '+loadSilosFor(l,g).map(n=>'Silo '+siloNumber(g,n)).join('+'):''}`).join(', ')):['- none']));
+    const sm=farmLoadsSummary();L.push(`- this batch so far: ${sm.total} loads, ${t1(sm.deliveryKg)}; ${sm.needsActual} past load(s) without docket weight`);
+    const fo=farmFeedToOrder();if(fo)L.push(`- farm feed still to order to the last clean-out: ${t1(fo.expected)} (safe: ${t1(fo.safe)})`);});
+  // Sheds
+  safe(()=>{const hist=rsHist(),ks=Object.keys(hist).filter(k=>k<d.T).sort();
+    L.push('SHEDS IN DETAIL (age, birds, mortality, weight vs the standard, feed conversion, pickups, clean-out, next placement):');
+    const nrow=id=>{const n=list.length>1?list[list.length-1]:null;return n&&n.key!==cur?(n.rows||[]).find(r=>r.id===id):null;};
+    (farmData.sheds||[]).forEach(s=>{const p=[],g=Math.ceil(s.id/2);
+      if(!s.placementDate){p.push('not placed');}
+      else{const age=ageInDays(s,today),pop=Number(s.initialPopulation)||0,m=Math.max(0,Number(s.mortality)||0),out=typeof shedOutDate==='function'?shedOutDate(s):null;
+        if(s.closed)p.push(`closed (out ${D(out)})`);
+        else if(dateOnly(s.placementDate)>today)p.push(`placement ${D(dateOnly(s.placementDate))}, ${pop.toLocaleString('en-US')} birds`);
+        else{let pr=null;safe(()=>{pr=computePredictions(s,g);});
+          p.push(`day ${age}, placed ${pop.toLocaleString('en-US')} on ${D(dateOnly(s.placementDate))}`);
+          if(pr)p.push(`${Math.round(pr.liveNow).toLocaleString('en-US')} birds in now`);
+          const daily=ks.slice(-6).map((k,i,a)=>{const nx=i<a.length-1?hist[a[i+1]].mort[s.id]:m;const v=hist[k].mort[s.id];return v==null||nx==null?null:nx-v;}).filter(x=>x!=null);
+          p.push(`mortality ${m.toLocaleString('en-US')} (${pop?(m/pop*100).toFixed(2):'0'}%)${daily.length?', daily last days: '+daily.join(', '):''}${s.mortalityUpdatedAt?', entered '+D(dateOnly(s.mortalityUpdatedAt)):''}`);
+          safe(()=>{const f=forecastWeightModeAware(s,today);if(f&&f.kg!=null){const dv=daysVsTarget(age,f.kg);p.push(`weight ${f.kg.toFixed(2)} kg vs ${stdName()} ${stdWeightKg(age).toFixed(2)} kg${dv!=null?' ('+(Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' d ahead':(-dv).toFixed(1)+' d behind')+')':''}${f.mode==='standard'?' (no weights yet, standard assumed)':' (estimated from pickups)'}`);}});
+          if(pr&&pr.fcr)p.push(`FCR ${Number(pr.fcr).toFixed(3)}, cFCR ${Number(pr.cfcr).toFixed(3)}, finish about day ${Math.round(pr.finalAge||0)} at ${Number(pr.estFinalALW||0).toFixed(2)} kg`);
+          const done=(s.pickups||[]).filter(x=>x.date&&dateOnly(x.date)<=today&&Number(x.birds)>0);if(done.length)p.push(`${done.length} pickup(s) done, ${done.reduce((a,x)=>a+Number(x.birds),0).toLocaleString('en-US')} birds`);
+          const nx=mgrComingPickups(s);if(nx.length)p.push('coming pickups '+nx.slice(0,3).map(x=>`${D(x.date)} ${x.birds.toLocaleString('en-US')}${x.planned?' (planned)':''}`).join(', '));
+          if(out)p.push(`last birds out ${D(out)}${s.cleanoutDate?', clean-out '+D(dateOnly(s.cleanoutDate)):''}`);}}
+      const n=nrow(s.id);if(n&&n.place){const out=s.placementDate&&typeof shedOutDate==='function'?shedOutDate(s):null;p.push(`next batch placement ${D(n.place)}${out?' ('+mgrDays(out,n.place)+' days after birds out)':''}`);}
+      const pr=(d.cw&&d.cw.prep||[]).find(x=>String(x.shed)===String(s.id));if(pr)p.push(`shed prep ${pr.done} of ${pr.total} jobs${pr.left&&pr.left.length?' (left: '+pr.left.slice(0,4).join(', ')+')':''}`);
+      L.push(`- Shed ${s.id}: `+p.join('; '));});});
+  // Farm performance
+  safe(()=>{const t=computeFarmTotals();if(!t||!t.hasData)return;
+    L.push('FARM PERFORMANCE (this batch, projected to finish):',`- average weight ${Number(t.avgWeight).toFixed(2)} kg at day ${Number(t.weightedAge).toFixed(1)}, FCR ${Number(t.fcr).toFixed(3)}, cFCR2.45 ${Number(t.cfcr).toFixed(3)}, livability ${Number(t.livability).toFixed(1)}%, PEF ${Math.round(t.pif)}`);
+    const lr=typeof lastHistoryRec==='function'?lastHistoryRec():null,lk=lr&&typeof historyKpis==='function'?historyKpis(lr):null;
+    if(lk)L.push(`- last batch ${lr.batch||''}: average weight ${Number(lk.alw).toFixed(2)} kg, FCR ${Number(lk.fcr).toFixed(3)}, cFCR2.45 ${Number(lk.cfcr).toFixed(3)}, livability ${Number(lk.livability).toFixed(1)}%`);});
+  return L.join('\n');
+}
 function rsContext(d){
   const L=[];
+  L.push('PLAN TITLES: say plainly what to do about that FACT, naming the same shed numbers it names (a pair stays "Sheds 5–6" unless the fact names one shed). Never invent a different job such as "review the feeding plan". Never book feed for a shed that cleans out before its silos run low. Use FARM DATA for the numbers in each "why": feed, silos, the next batch Starter and starter silo, clean-outs, placements, mortality and performance.');
   L.push('FACTS (red = act today, amber = watch — only these can be plan items; blue = info and green = fine are NOT jobs, never turn them into a plan item):',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}] ${f.grp}: ${f.text}`));
+  const sheet=rsFarmSheet(d);if(sheet)L.push('FARM DATA (check every plan item against this before you write it):',sheet);
   L.push('KEY NUMBERS:',...d.kpi.map(k=>`- ${k.k}: ${String(k.v).replace(/<[^>]+>/g,'')} (${String(k.s).replace(/<[^>]+>/g,'')})`));
   L.push('SHEDS:',...d.sheds.map(s=>`- Shed ${s.id}: ${s.fact}`));
   if(d.crew.length)L.push('CREW TODAY:',...d.crew.map(c=>`- ${c.who||'Not assigned'}: ${c.list.map(x=>x.name+(x.od?' (overdue)':'')+(x.done?' (done)':'')).join(', ')}`));
@@ -182,6 +244,9 @@ function rsModel(st,d){
   const say=M&&M.overview?rsFirst(M.overview)+(rsFirst(M.overview)!==M.overview.trim()?' '+rsFirst(M.overview.slice(rsFirst(M.overview).length)):''):lines.ov;
   return {M,plan,aiPlan,warns,mood,sheds,lines,tone,stepMood,ticks,say,hot};
 }
+// Detail bar under a plan item (2026-10-29): the farm fact it comes from, then Ross's reason — always shown, no Why? tap
+function rsDetHtml(p){const f=p.f&&p.f.text&&p.f.text!==p.title?p.f.text:'';if(!f&&!p.why)return '';
+  return `<span class="rs-det">${f?`<span class="rs-det-f"><i>Farm</i>${escapeHtml(f)}</span>`:''}${p.why?`<span class="rs-det-w"><i>Ross</i>${rsInl(p.why)}</span>`:''}</span>`;}
 function rsHtml(st,d,R){
   const now=new Date(),who=aiName(),w0=d.wx[0],tm=new Date(st.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
   let bd='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);bd=`Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · day ${Math.max(0,mgrDays(first,mgrToday()))}`;}}catch(e){}
@@ -190,7 +255,7 @@ function rsHtml(st,d,R){
   const M=R.M;
   const ov=M&&M.overview?`<p class="rs-ovp">${rsInl(M.overview)}</p>`:st.busy?loading:`<p class="rs-muted">${escapeHtml(st.err||'Ross isn\'t available right now.')} The numbers and lists below are all from your apps.</p>`;
   const planHtml=R.plan.length?R.plan.map((p,i)=>{const tone=p.f?p.f.tone:'r',go=p.f?rsGo(p.f.act):'',dn=R.ticks.has(i);
-    return `<div class="rs-act${dn?' done':''}" data-rs-i="${i}"><button type="button" class="rs-tick" data-rs-tick="${i}" aria-pressed="${dn}" aria-label="${dn?'Not done':'Done'}" title="Tick it off (just for you, today)">✓</button><span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span class="rs-at"><b>${rsInl(p.title)}</b>${p.why?`<button type="button" class="rs-whyb" data-rs-why="${i}">Why? ›</button>`:''}</span>${go&&p.f.act?`<button type="button" class="rs-go" data-rs-go ${p.f.act}>${escapeHtml(go)} ›</button>`:'<span></span>'}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
+    return `<div class="rs-act${dn?' done':''}" data-rs-i="${i}"><button type="button" class="rs-tick" data-rs-tick="${i}" aria-pressed="${dn}" aria-label="${dn?'Not done':'Done'}" title="Tick it off (just for you, today)">✓</button><span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span class="rs-at"><b>${rsInl(p.title)}</b>${rsDetHtml(p)}</span>${go&&p.f.act?`<button type="button" class="rs-go" data-rs-go ${p.f.act}>${escapeHtml(go)} ›</button>`:'<span></span>'}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
   const C={r:'#C8443A',a:'#E2A13A',g:'#13806D',b:'#2F6BD8'};
   const shedHtml=R.sheds.map(s=>`<button type="button" class="rs-sh ${s.tone}" data-rs-shed="${s.id}"><span class="rs-sht"><span class="rs-no">${s.id}</span><b>${escapeHtml(s.head)}</b></span><span class="rs-bar"><i style="width:${Math.round((s.pct||0)*100)}%;background:${C[s.tone]}"></i></span><small>${s.note?'tap for Ross\'s note':'tap for details'}</small></button>`).join('');
   const crewHtml=d.cw?(d.crew.length?`<div class="rs-crew">${d.crew.map(c=>{const n=c.list.length,dn=c.list.filter(x=>x.done).length,heavy=c.open>=6;

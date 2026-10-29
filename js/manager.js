@@ -31,9 +31,13 @@ function mgrSiloOutlook(){
   return [1,2,3,4].filter(g=>shedsForGroup(g).some(s=>s.placementDate)).map(g=>{
     let dep=null;try{const f=computeSiloForecast(g,{start:0,end:60},{});dep=f&&f.depletedDate?dateOnly(f.depletedDate):null;}catch(e){}
     const r=latestReading(g);
-    return {g,dep,days:dep?mgrDays(mgrToday(),dep):null,reading:r,stock:r?readingTotalKg(r):null,readAge:r?mgrDays(dateOnly(r.date),mgrToday()):null};
+    // Sheds still holding birds more than a day after the silos run low — the rest are being run down for clean-out (2026-10-29)
+    const out=s=>typeof shedOutDate==='function'?shedOutDate(s):s.cleanoutDate?dateOnly(s.cleanoutDate):null;
+    const feeding=dep?shedsForGroup(g).filter(s=>s.placementDate&&!s.closed&&!(out(s)&&mgrDays(dep,out(s))<=1)).map(s=>s.id):[];
+    return {g,dep,days:dep?mgrDays(mgrToday(),dep):null,feeding,reading:r,stock:r?readingTotalKg(r):null,readAge:r?mgrDays(dateOnly(r.date),mgrToday()):null};
   }).sort((a,b)=>(a.dep?a.dep.getTime():Infinity)-(b.dep?b.dep.getTime():Infinity));
 }
+function mgrFeedingLabel(x){const f=x.feeding||[];return f.length&&f.length<shedsForGroup(x.g).filter(s=>s.placementDate&&!s.closed).length?'Shed'+(f.length===1?' ':'s ')+f.join(' & '):pairLabel(x.g);}
 // Up to 4 things to do now; growth notes stay in the bell
 function mgrNeeds(silos){
   const out=typeof closeNeeds==='function'?closeNeeds():[],today=mgrToday(),hour=new Date().getHours();
@@ -41,7 +45,7 @@ function mgrNeeds(silos){
   // Sheds with no placement date or no birds yet: one row to the Set up sheds page
   const unset=farmData?farmData.sheds.filter(s=>!s.placementDate||!(Number(s.initialPopulation)>0)):[];
   if(unset.length)out.push({tone:'warn',title:`Set up ${unset.length===farmData.sheds.length?'the sheds':unset.length+' shed'+(unset.length===1?'':'s')}`,sub:'Placement date and birds placed still missing',act:'data-tab="shedsetup"'});
-  silos.filter(x=>x.dep&&x.days<=10).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${pairLabel(x.g)}`,sub:`Silos run low ${/^(today|tomorrow)$/i.test(mgrWhen(x.dep))?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
+  silos.filter(x=>x.dep&&x.days<=10&&x.feeding.length).forEach(x=>out.push({tone:x.days<=3?'bad':'warn',title:`Book a load for ${mgrFeedingLabel(x)}`,sub:`Silos run low ${/^(today|tomorrow)$/i.test(mgrWhen(x.dep))?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?`, in ${x.days} days`:''}`,act:`data-tab="g${x.g}"`}));
   // Mortality not entered since before yesterday (sheds that still have birds)
   const late=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
   if(late.length)out.push({tone:'warn',title:`Enter mortality for ${late.length===mgrPlaced().length?'all sheds':late.length+' shed'+(late.length===1?'':'s')}`,sub:'Not updated for 2 days or more',act:'data-mgr-mort'});
@@ -414,7 +418,7 @@ function pairNeeds(g){
   const sheds=shedsForGroup(g).filter(s=>s.placementDate&&!s.closed);if(!sheds.length)return out;
   const done=typeof pairAllClosed==='function'&&pairAllClosed(g);
   const silo=done?null:mgrSiloOutlook().find(x=>x.g===g);
-  if(silo&&silo.dep&&silo.days<=10){
+  if(silo&&silo.dep&&silo.days<=10&&silo.feeding.length){
     const next=farmLoads.filter(l=>l.date&&dateOnly(l.date)>=today&&Number(l.splitKg&&l.splitKg[g])>0).sort((a,b)=>dateOnly(a.date)-dateOnly(b.date))[0];
     const late=next&&dateOnly(next.date)>silo.dep;
     out.push({tone:silo.days<=3?'bad':'warn',title:`Silos run low ${/^(today|tomorrow)$/i.test(mgrWhen(silo.dep))?mgrWhen(silo.dep).toLowerCase():mgrWhen(silo.dep)}`,
@@ -1124,7 +1128,9 @@ function mgrBriefData(){
   // Feed
   let silos=[];try{silos=mgrSiloOutlook();}catch(e){}
   if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));
-  silos.filter(x=>x.dep&&x.days<=7).forEach(x=>G.feed.push(L(x.days<=3?'r':'a',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run low ${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?' (in '+x.days+' days)':''} · book a load`,`data-tab="g${x.g}"`)));
+  silos.filter(x=>x.dep&&x.days<=7).forEach(x=>{const when=`${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?' (in '+x.days+' days)':''}`;
+    if(!x.feeding.length)G.feed.push(L('b',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run down ${when} · birds out for clean-out, no load needed`,`data-tab="g${x.g}"`));
+    else G.feed.push(L(x.days<=3?'r':'a',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run low ${when} · book a load for ${escapeHtml(mgrFeedingLabel(x))}${x.feeding.length<shedsForGroup(x.g).filter(s=>s.placementDate&&!s.closed).length?' (the other shed cleans out first)':''}`,`data-tab="g${x.g}"`));});
   let sum=null;try{sum=farmLoadsSummary();}catch(e){}
   if(sum&&sum.needsActual>0)G.feed.push(L('a',`<b>${sum.needsActual} load${sum.needsActual===1?'':'s'}</b> still need${sum.needsActual===1?'s':''} the docket weight`,'data-mgr-loads'));
   if(!G.feed.length&&silos.length){const nx=silos.filter(x=>x.dep).sort((a,b)=>a.dep-b.dep)[0];
@@ -1134,6 +1140,15 @@ function mgrBriefData(){
     if(n===0||n===1)G.co.push(L('b',`<b>Shed ${s.id}</b> cleans out ${n===0?'today':'tomorrow'}`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
   try{const rl=typeof pwRunningList==='function'?pwRunningList():[];if(rl.length>1){const nu=rl[rl.length-1];
     (nu.rows||[]).forEach(r=>{if(!r.place)return;const n=mgrDays(today,dateOnly(r.place));if(n>=0&&n<=3)G.co.push(L('b',`<b>Shed ${r.id}</b> chicks arrive ${n===0?'today':n===1?'tomorrow':fmtShortNoYear(r.place)} (${escapeHtml(nu.key)})`));});}}catch(e){}
+  // Next batch's Starter (2026-10-29): starter silo must be empty for it, and the Starter must be on order
+  try{const nb=(typeof pwRunOthers!=='undefined'&&Array.isArray(pwRunOthers)?pwRunOthers:[]).find(o=>o&&o.newest&&String(o.key).toLowerCase()!==String(currentBatchKey()||'').toLowerCase());
+    [1,2,3,4].forEach(g=>{if(typeof starterSiloStatus!=='function')return;const st=starterSiloStatus(g);if(!st)return;const P=pairLabel(g),co=fmtShortNoYear(st.co);
+      const sn=st.silo?siloNumber(g,st.silo):null;
+      if(st.inWin&&st.state==='pick')G.co.push(L('a',`<b>${P}</b> · choose the starter silo for the next batch (clean-out ${co})`,`data-tab="g${g}"`));
+      else if(st.inWin&&st.state==='action')G.co.push(L(st.late?'r':'a',`<b>${P}</b> · starter silo ${sn} still holds ${(st.kg/1000).toFixed(1)} t — ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)} so it is empty by clean-out (${co})`,`data-tab="g${g}"`));
+      (st.inWin?st.wrong||[]:[]).forEach(l=>G.co.push(L('a',`<b>${P}</b> · move the ${fmtShortNoYear(l.date)} ${escapeHtml(feedTypeLabel(l.feedType))} load out of starter silo ${sn} — keep it for the next batch`,`data-tab="g${g}"`)));
+      if(nb&&st.daysToCo<=21&&!(nb.starter||[]).some(l=>Number(l.splitKg&&l.splitKg[g])>0))
+        G.co.push(L(st.daysToCo<=7?'r':'a',`<b>${P}</b> · no Starter ordered yet for batch ${escapeHtml(String(nb.key))} — clean-out ${co}`,'data-mgr-loads'));});}catch(e){}
   if(cw&&cw.prep){const p=cw.prep,left=p.total-p.done,dn=p.chicks?mgrDays(today,dateOnly(p.chicks)):null;
     const sh=p.sheds.length>2&&p.sheds.every((x,i)=>i===0||Number(x)===Number(p.sheds[i-1])+1)?`Sheds ${p.sheds[0]}–${p.sheds[p.sheds.length-1]}`:`Shed${p.sheds.length===1?'':'s'} ${p.sheds.join(', ')}`;
     G.co.push(L(!left?'g':dn!=null&&dn<=7?'a':'b',`${sh} prep · ${p.done} of ${p.total} jobs done${dn!=null?' · chicks '+(dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days'):''}`,'data-brief-cw="prep"'));}
