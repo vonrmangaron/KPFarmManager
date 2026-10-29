@@ -474,7 +474,7 @@ function pairOverviewHtml(g){
     const row=(k,v)=>`<div class="pair-row"><span>${k}</span><b>${v}</b></div>`;
     const closed=!!s.closed;
     return `<section class="mgr-card pair-shed pov-shed${closed?' is-closed':''}" id="pair-shed-${s.id}">
-      <div class="pair-shed-head"><span class="mgr-title">Shed ${s.id}</span>${closed?'<span class="cs-chip">Closed</span>':pairGrowthChip(s,today)}</div>
+      <div class="pair-shed-head"><span class="mgr-title">Shed ${s.id}</span>${closed?csChipHtml(s.id):pairGrowthChip(s,today)}</div>
       ${typeof closeBannerHtml==='function'?closeBannerHtml(s):''}
       <div class="pov-big3">
         <div><span>Birds now</span><b>${live.toLocaleString('en-US')}</b><em>day ${age}</em></div>
@@ -1093,6 +1093,9 @@ function pwActivity(kind,text){if(!text)return;try{const l=pwActivityList();l.un
 // Dots: r act today · a keep an eye on · b just so you know · g fine. Tap a line to open its page.
 let mgrBriefFold=false;try{mgrBriefFold=localStorage.getItem('pw-brief-fold')==='1';}catch(e){}
 let mgrBriefAsked=false;
+// Closed shed whose prep Tasks signed off (Mark ready): show it as ready for chicks, not just closed (2026-10-29)
+function pwPrepReady(id){const cw=mgrBriefCw();return !!(cw&&Array.isArray(cw.prepReady)&&cw.prepReady.includes(String(id)));}
+function csChipHtml(id){return pwPrepReady(id)?'<span class="cs-chip rdy" title="Shed prep signed off in Tasks">✓ Ready for chicks</span>':'<span class="cs-chip">Closed</span>';}
 function mgrBriefCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__cwBrief==='function'?w.__cwBrief():null;}catch(e){return null;}}
 function mgrBriefData(){
   const today=mgrToday(),days=mgrWeekDays(),cw=mgrBriefCw();

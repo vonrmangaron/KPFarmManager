@@ -92,7 +92,7 @@ function growthChartSvg(shed){
 }
 function growthTabCardHtml(shed,g){
   const today=dateOnly(new Date());
-  const head=`<div class="pk2-head"><b>Shed ${shed.id}</b>${shed.closed?'<span class="cs-chip">Closed</span>':pairGrowthChip(shed,today)}</div>`;
+  const head=`<div class="pk2-head"><b>Shed ${shed.id}</b>${shed.closed?(typeof csChipHtml==='function'?csChipHtml(shed.id):'<span class="cs-chip">Closed</span>'):pairGrowthChip(shed,today)}</div>`;
   if(!shed.placementDate)return `<article class="pred-shed-card gr2-card" id="pred-shed-card-${shed.id}">${head}<p class="pk2-empty">Not placed yet.</p></article>`;
   const age=ageInDays(shed,today);
   let now=null;try{const f=forecastWeightModeAware(shed,today);now=f&&f.kg!=null?f.kg:null;}catch(e){}

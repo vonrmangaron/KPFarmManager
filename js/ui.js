@@ -2781,13 +2781,13 @@ function refreshPickupsModal(){
     const avgAll=wBirds>0?kg/wBirds:null;
     const canAdd=ps.length<MAX_LOGGED_PICKUPS_PER_SHED;
     if(pkPhone())return `<section class="pkm-shed">
-      <div class="pkm-head"><b>Shed ${shed.id}</b>${shed.closed?'<span class="pkm-closed">Closed</span>':typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}">Close shed</button>`:''}<button type="button" class="pkm-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>+ Add</button></div>
+      <div class="pkm-head"><b>Shed ${shed.id}</b>${shed.closed?`<span class="pkm-closed">${typeof pwPrepReady==='function'&&pwPrepReady(shed.id)?'✓ Ready for chicks':'Closed'}</span>`:typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}">Close shed</button>`:''}<button type="button" class="pkm-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>+ Add</button></div>
       <div class="pkm-sum"><span>${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span><button type="button" class="pkm-go" data-pk-goto-shed="${shed.id}">Shed page ›</button></div>
       ${ps.length?rows:'<div class="pkm-empty">No pickups yet.</div>'}
     </section>`;
     return `<section class="pk-shed">
       <div class="pk-shed-head"><b>Shed ${shed.id}</b><span class="pk-sum">${ps.length} pickup${ps.length===1?'':'s'} · ${birds.toLocaleString()} birds${avgAll!=null?` · avg ${avgAll.toFixed(3)} kg`:''}</span>
-        ${shed.closed?'<span class="cs-chip">Closed</span>':typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}" title="Enter the birds taken out and the final mortality for Shed ${shed.id}">Close shed</button>`:''}
+        ${shed.closed?(typeof csChipHtml==='function'?csChipHtml(shed.id):'<span class="cs-chip">Closed</span>'):typeof shedNeedsClosing==='function'&&shedNeedsClosing(shed)?`<button type="button" class="pk-close" data-cs-open="${shed.id}" title="Enter the birds taken out and the final mortality for Shed ${shed.id}">Close shed</button>`:''}
         <button type="button" class="pk-go" data-pk-goto-shed="${shed.id}" title="Open Shed ${shed.id}'s pickup list on its shed page">Shed ${shed.id} list<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <button type="button" class="pk-add" data-pickup-add="${shed.id}" ${canAdd?'':'disabled'}>＋ Add</button></div>
       ${ps.length?`<div class="pk-scroll"><table class="pk-table"><thead><tr><th>Date</th><th class="num">Age</th><th class="num">Birds</th><th class="num">Total kg</th><th class="num">Avg kg</th><th class="num" title="Days vs the growth standard (Settings › Predictions) at that weight: −2 = 2 days behind, +1 = 1 day ahead">vs std</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="pk-empty">No pickups yet.</div>'}

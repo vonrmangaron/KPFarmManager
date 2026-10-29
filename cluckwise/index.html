@@ -13346,14 +13346,15 @@
     return { cls:'on', t:'On track' };
   }
   function prepTrackHtml(sheds){
-    const list = sheds.map(sh=> prepActiveFor(sh)).filter(Boolean)
-      .sort((a, b)=> (a.nextPlacement || '9999').localeCompare(b.nextPlacement || '9999') || a.shed.localeCompare(b.shed, undefined, { numeric:true }));
+    const byNum = (a, b)=> String(a).localeCompare(String(b), undefined, { numeric:true });
+    sheds = sheds.slice().sort(byNum);   // shed order, every shed in its place (2026-10-29)
+    const list = sheds.map(sh=> prepActiveFor(sh)).filter(Boolean);
     const today = dateKey(new Date());
     const birds = sheds.filter(sh=> !prepActiveFor(sh)).map(sh=> ({ sh, run: prepShedRun(sh) })).filter(x=> x.run);
     if(!list.length && !birds.length) return `<div class="ptk-empty"><b>No shed is being prepared</b><span>A checklist starts by itself when Production closes a shed — or start one early from Checklist.</span></div>`;
     const secs = prepMaster().map(S=> S.t), cols = `--ptk-n:${Math.max(1, secs.length)};grid-template-columns:var(--ptk-shed) repeat(${Math.max(1, secs.length)},minmax(0,1fr)) var(--ptk-pct) var(--ptk-place)`;
     const head = `<div class="ptk-row ptk-head" style="${cols}" aria-hidden="true"><span>Shed</span>${secs.map((t, i)=> `<span title="${escapeHtmlAttr(t)}">${i + 1} · ${escapeHtml(t)}</span>`).join('')}<span class="r">Done</span><span class="r">Placement</span></div>`;
-    const rows = list.map(c=>{
+    const rowOf = c=>{
       const p = prepProgress(c), st = prepTrackStatus(c), n = prepDaysTo(c.nextPlacement);
       const info = secs.map(t=> prepSecInfo(prepSecOf(c, t)));
       const k = info.findIndex(i=> !i.all);
@@ -13366,9 +13367,10 @@
         <span class="ptk-sh"><b>Shed ${escapeHtml(c.shed)}</b><small>${escapeHtml(now)}</small></span>${bars}
         <b class="ptk-pct">${p.total ? Math.round(p.done / p.total * 100) : 0}%</b>
         <span class="ptk-pl"><b>${place}</b><span class="ptk-pl2">${c.status === 'ready' ? '' : `<span class="ptk-chip ${st.cls}">${escapeHtml(st.t)}</span>`}${rdy}</span></span></div>`;
-    }).join('');
-    const brows = birds.map(x=> `<div class="ptk-row birds"><span class="ptk-sh"><b>Shed ${escapeHtml(x.sh)}</b></span><span class="ptk-bt">Birds in · prep starts by itself when Production closes the shed</span><span class="ptk-pl"><b>#${escapeHtml(String(x.run.batch))} · Day ${mlogDaysBetween(x.run.placement, today)}</b></span></div>`).join('');
-    return `<div class="ptk-legend" aria-hidden="true"><span><i class="d"></i>Done</span><span><i class="p"></i>In progress</span><span><i></i>Not started</span></div><div class="ptk-tab">${head}${rows}${brows}</div>`;
+    };
+    const birdOf = x=> `<div class="ptk-row birds"><span class="ptk-sh"><b>Shed ${escapeHtml(x.sh)}</b></span><span class="ptk-bt">Birds in · prep starts by itself when Production closes the shed</span><span class="ptk-pl"><b>#${escapeHtml(String(x.run.batch))} · Day ${mlogDaysBetween(x.run.placement, today)}</b></span></div>`;
+    const rowsAll = sheds.map(sh=>{ const c = prepActiveFor(sh); if(c) return rowOf(c); const b = birds.find(x=> x.sh === sh); return b ? birdOf(b) : ''; }).join('');
+    return `<div class="ptk-legend" aria-hidden="true"><span><i class="d"></i>Done</span><span><i class="p"></i>In progress</span><span><i></i>Not started</span></div><div class="ptk-tab">${head}${rowsAll}</div>`;
   }
   function renderPrepBoard(){
     const box = $('#prepMain'); if(!box) return;
@@ -15478,7 +15480,8 @@
     try{ const w = wxForDate(today); if(w){ const [icon, label] = wxIconLabel(w.code);
       wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]) }; } }catch(e){}
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
-      prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx };
+      prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx,
+      prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)) };
   };
   // Cluck (2026-10-25): the morning report lives in ProdWise; this button opens it, and __cwRoss hands over Tasks' part
   (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
