@@ -1183,6 +1183,9 @@ function mgrBriefData(){
     if(n===0||n===1)G.co.push(L('b',`<b>Shed ${s.id}</b> cleans out ${n===0?'today':'tomorrow'}`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
   try{const rl=typeof pwRunningList==='function'?pwRunningList():[];if(rl.length>1){const nu=rl[rl.length-1];
     (nu.rows||[]).forEach(r=>{if(!r.place)return;const n=mgrDays(today,dateOnly(r.place));if(n>=0&&n<=3)G.co.push(L('b',`<b>Shed ${r.id}</b> chicks arrive ${n===0?'today':n===1?'tomorrow':fmtShortNoYear(r.place)} (${escapeHtml(nu.key)})`));});}}catch(e){}
+  // Shed prep not marked ready a day after the chicks went in (2026-10-29)
+  (cw&&cw.prepLate||[]).forEach(x=>{const dd=mgrDays(dateOnly(new Date(x.placed+'T00:00:00')),today);
+    G.co.push(L('r',`<b>Shed ${escapeHtml(x.shed)} prep not marked ready</b> · chicks${x.batch?' for '+escapeHtml(String(x.batch)):''} in since ${fmtShortNoYear(new Date(x.placed+'T00:00:00'))}${dd>0?' ('+dd+' day'+(dd===1?'':'s')+')':''} · ${x.left} job${x.left===1?'':'s'} still open — finish them or mark it ready`,'data-brief-cw="prep"',true));});
   // Next batch's Starter (2026-10-29): starter silo must be empty for it, and the Starter must be on order
   try{const nb=(typeof pwRunOthers!=='undefined'&&Array.isArray(pwRunOthers)?pwRunOthers:[]).find(o=>o&&o.newest&&String(o.key).toLowerCase()!==String(currentBatchKey()||'').toLowerCase());
     [1,2,3,4].forEach(g=>{if(typeof starterSiloStatus!=='function')return;const st=starterSiloStatus(g);if(!st)return;const P=pairLabel(g),co=fmtShortNoYear(st.co);

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>/* One menu (2026-10-29): inside ProdWise on a wide computer, hide this rail before the first paint */
+try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && window.parent.matchMedia('(min-width:1109px)').matches) document.documentElement.classList.add('cw-onerail'); }catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="icons/icon-192.png?v=3">
 <title>ProdWise.vm · Tasks</title>
@@ -12667,7 +12669,17 @@
   function prepHist(c, msg){ if(c && c.isTpl) return; addHistory('Shed preparation', msg); }
   function prepUnit(cl, id){ for(const sec of (cl.sections || [])){ if(sec.id === id) return sec; const it = (sec.items || []).find(i=> i.id === id); if(it) return it; } return null; }
   function prepNextBatchOf(c){ let nb = null; if(c && c.nextPlacement) batches.forEach(b=> (b.sheds || []).forEach(sh=>{ if(String(sh.shed) === String(c.shed) && sh.placement === c.nextPlacement) nb = b.number; })); return nb; }
-  function prepPlaced(c){ return !!(c.nextPlacement && c.nextPlacement <= dateKey(new Date())); }
+  // A checklist ends when the shed is marked ready and its chicks are in — not by the date alone (2026-10-29): jobs left
+  // on placement day keep it open (Cluck flags it from the next day). After 14 days, or once a newer checklist exists, it ends anyway.
+  const PREP_KEEP_DAYS = 14;
+  function prepPlaced(c){
+    const t = dateKey(new Date());
+    if(!(c.nextPlacement && c.nextPlacement <= t)) return false;
+    if(c.status === 'ready' || mlogDaysBetween(c.nextPlacement, t) > PREP_KEEP_DAYS) return true;
+    return shedPrep.some(x=> x !== c && x.shed === c.shed && !x.isTpl && (x.createdAt || 0) > (c.createdAt || 0));
+  }
+  // chicks placed at least a day ago but the checklist not marked ready
+  function prepLateReady(){ const t = dateKey(new Date()); return shedPrep.filter(c=> !c.archived && !c.isTpl && c.status !== 'ready' && c.nextPlacement && c.nextPlacement < t && !prepPlaced(c)); }
   // The checklist shown for a shed: the newest one not yet followed by its next placement
   function prepActiveFor(shed){ return shedPrep.filter(c=> c.shed === String(shed) && !c.archived && !prepPlaced(c)).sort((a,b)=> (b.createdAt || 0) - (a.createdAt || 0))[0] || null; }
   function prepOpenList(){ return shedPrep.filter(c=> !c.archived && c.status === 'preparing' && !prepPlaced(c)).sort((a,b)=> a.shed.localeCompare(b.shed, undefined, { numeric:true })); }
@@ -13349,6 +13361,7 @@
     const p = prepProgress(c), left = p.total - p.done, n = prepDaysTo(c.nextPlacement);
     if(c.status === 'ready') return { cls:'ok', t:'Ready' };
     if(!left) return { cls:'ok', t:'All jobs done' };
+    if(n != null && n < 0) return { cls:'warn', t:`Chicks in · ${left} job${left === 1 ? '' : 's'} left` };
     if(n != null && n <= 1) return { cls:'warn', t:`Watch · ${left} job${left === 1 ? '' : 's'}, ${n <= 0 ? 'today' : '1 day'}` };
     if(!p.done) return { cls:'none', t:'Not started' };
     return { cls:'on', t:'On track' };
@@ -15492,7 +15505,8 @@
       wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]) }; } }catch(e){}
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx,
-      prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)) };
+      prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)),
+      prepLate: prepLateReady().map(c=> ({ shed: String(c.shed), placed: c.nextPlacement, left: prepProgress(c).total - prepProgress(c).done, batch: prepNextBatchOf(c) })) };
   };
   // Cluck (2026-10-25): the morning report lives in ProdWise; this button opens it, and __cwRoss hands over Tasks' part
   (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
