@@ -25,7 +25,7 @@ function pwPlaceSwitches(){
 function pwEnsureTasksFrame(onReady){
   const farm=syncFarmName||'';
   if(!cwFrame){cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';document.body.appendChild(cwFrame);}
-  if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
+  if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');cwFrame.addEventListener('load',()=>{if(typeof pwOneRailApply==='function')pwOneRailApply();},{once:true});}
   let ready=false;try{ready=!!(cwFrame.contentWindow&&cwFrame.contentWindow.__cwHistory);}catch(e){}
   if(ready){if(onReady)onReady();}else if(onReady)cwFrame.addEventListener('load',()=>setTimeout(onReady,400),{once:true});
 }
@@ -43,6 +43,7 @@ function openTasksSection(opts){
   pwSyncSwitch();
   try{cwFrame.contentWindow.__wsSlide&&cwFrame.contentWindow.__wsSlide('tasks');}catch(e){}
   pwTasksTopColour();cwFrame.addEventListener('load',pwTasksTopColour,{once:true});
+  pwOneRailApply();cwFrame.addEventListener('load',pwOneRailApply,{once:true});
   try{cwFrame.focus();}catch(e){}
 }
 // The status-bar strip above the frame takes the colour of Tasks' header (light or dark theme)
@@ -52,7 +53,8 @@ function pwTasksTopColour(){
     if(!c||c==='transparent'||(a&&+a[1]<0.5))c=d.body.classList.contains('theme-dark')?'#111827':'#FFF8EC';
     document.documentElement.style.setProperty('--cw-top',c);}catch(e){}
 }
-setInterval(()=>{if(pwSection==='tasks')pwTasksTopColour();},2000);   // follows a theme change made inside Tasks
+setInterval(()=>{if(pwSection==='tasks')pwTasksTopColour();},2000);
+setInterval(()=>{if(cwFrame&&typeof syncPwRail==='function')syncPwRail();},1500);   // Tasks page lit + Prep/Maintenance counts on the one menu   // follows a theme change made inside Tasks
 function openProductionSection(opts){
   opts=opts||{};
   if(pwSection!=='tasks')return;
@@ -61,7 +63,7 @@ function openProductionSection(opts){
     if(pwTasksPushed){pwTasksPushed=false;history.back();}           // the entry we added: step back over it
     else history.replaceState(null,'',location.pathname+location.search);   // opened straight at #tasks
   }
-  pwSyncSwitch();pwSlide('production');
+  pwSyncSwitch();pwSlide('production');if(typeof syncPwRail==='function')syncPwRail();
   if(typeof render==='function')render();
 }
 // the switch slides its highlight across to the section that just opened
@@ -89,13 +91,41 @@ window.addEventListener('message',e=>{
   if(e.data.pwSection==='production'){openProductionSection();if(e.data.settingsPage&&typeof goSettings==='function')goSettings(e.data.settingsPage);else pwOpenTab(e.data.tab);}
   if(e.data.pwSection==='tasks')openTasksSection();
 });
+// ── One menu (2026-10-29): wide enough for Tasks' computer layout beside the 84 px rail → one rail for both apps ──
+const PW_ONERAIL_MQ=window.matchMedia?window.matchMedia('(min-width:1109px)'):null;
+function pwOneRailOn(){return !!(PW_ONERAIL_MQ&&PW_ONERAIL_MQ.matches);}
+function pwOneRailApply(){
+  const on=pwOneRailOn();document.body.classList.toggle('pw-onerail',on);
+  try{const d=cwFrame&&cwFrame.contentDocument;if(d&&d.documentElement)d.documentElement.classList.toggle('cw-onerail',on);}catch(e){}
+  if(typeof syncPwRail==='function')syncPwRail();
+}
+if(PW_ONERAIL_MQ)PW_ONERAIL_MQ.addEventListener('change',pwOneRailApply);
+// open Tasks on one of its pages: the hidden Tasks rail button does the work, so Tasks behaves exactly as before
+function pwTasksGo(k){
+  const was=pwSection==='tasks';openTasksSection();
+  const go=()=>{try{const d=cwFrame.contentDocument;d.documentElement.classList.toggle('cw-onerail',pwOneRailOn());
+    const b=d.querySelector('#appRail .ar-btn[data-ar="'+k+'"]');if(!b)return false;
+    // Planner / Audits: a second press of the open one hides Tasks' side panel; coming from Production it should just open
+    if(!was&&(k==='tasks'||k==='batch')&&b.classList.contains('active')){if(typeof syncPwRail==='function')syncPwRail();return true;}
+    b.click();if(typeof syncPwRail==='function')setTimeout(syncPwRail,60);return true;}catch(e){return false;}};
+  if(!go())cwFrame.addEventListener('load',()=>setTimeout(go,300),{once:true});
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('[data-pwt]');if(t){e.preventDefault();pwTasksGo(t.dataset.pwt);return;}
+  if(e.target.closest&&e.target.closest('[data-pwr-theme]')){e.preventDefault();if(typeof toggleTheme==='function')toggleTheme();if(typeof syncPwRail==='function')syncPwRail();return;}
+});
+// a Production button on the rail while Tasks is open: back to Production first, then the button does its usual job
+document.addEventListener('click',e=>{
+  if(pwSection!=='tasks'||!e.target.closest)return;
+  const b=e.target.closest('#pwRail [data-tab],#pwRail [data-pw-panel]');if(b)openProductionSection();
+},true);
 document.addEventListener('click',e=>{
   const w=e.target.closest('[data-ws]');
   if(w){e.preventDefault();w.dataset.ws==='tasks'?openTasksSection():openProductionSection();return;}
 });
 document.addEventListener('DOMContentLoaded',()=>{
   // the rail is built a moment after start; the page header re-renders — keep the switches in place
-  setTimeout(pwPlaceSwitches,0);
+  setTimeout(pwPlaceSwitches,0);setTimeout(pwOneRailApply,50);
   const hdr=document.getElementById('pageHeader');if(hdr)new MutationObserver(()=>{if(!hdr.querySelector('.ws-pill'))pwPlaceSwitches();}).observe(hdr,{childList:true,subtree:true});
   if(location.hash==='#tasks')setTimeout(()=>openTasksSection({push:false}),300);
   // Tasks on its own links here for Production's Settings pages: #settings-feed, #settings-profile…

@@ -586,18 +586,42 @@ function buildPwRail(){
   const b=(attrs,icon,label,extra)=>`<button type="button" class="pwr-btn" ${attrs} title="${label}">${extra||''}${navIcon(icon)}<span>${label}</span></button>`;
   const nav=document.createElement('nav');nav.className='pw-rail';nav.id='pwRail';nav.setAttribute('aria-label','ProdWise');
   // No Home button: the logo goes home (Home is still the start page)
+  // One menu (2026-10-29, option C of mockup U7zGDYEtmcCRhrP5jc5agf): on a wide computer the Tasks pages sit on this rail
+  // under a thin line, Theme takes Sync's place and sync shows as a dot + time under the logo; no ⇄ switch
+  const tsvg=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const tb=(k,icon,label,title,badge)=>`<button type="button" class="pwr-btn pwr-t" data-pwt="${k}" title="${title}">${badge||''}${tsvg(icon)}<span>${label}</span></button>`;
   nav.innerHTML=`<button type="button" class="pwr-logo" data-tab="home" title="Home" aria-label="Home">${logo}</button>`
+    +`<button type="button" class="pwr-synct" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot2"></span><span id="pwrSyncTime">Sync</span></button>`
     +b('data-pw-panel="batch"','grid','Batch')
     +b('data-pw-panel="sheds"','shed','Sheds','<span class="pwr-badge" id="pwrShedBadge" hidden></span>')
     +b('data-pw-panel="tools"','loads','Tools')
     +b('data-tab="history"','history','History')
+    +'<span class="pwr-sep" aria-hidden="true"></span>'
+    +tb('tasks','<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>','Planner','Planner: calendar, list and board')
+    +tb('batch','<path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>','Audits','Batches and audits')
+    +tb('maint','<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>','Maintenance','Maintenance: problems reported on the farm','<span class="pwr-badge" id="pwrMaintBadge" hidden></span>')
+    +tb('routine','<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>','Routine','Routine Tracker: recurring farm jobs')
+    +tb('prep','<path d="M19 3l-8.5 8.5"/><path d="M10 12c-3 0-5 2-5 5v4h4c3 0 5-2 5-5z"/>','Prep','Shed preparation checklists','<span class="pwr-badge prep" id="pwrPrepBadge" hidden></span>')
+    +tb('guide','<path d="M2 5a2 2 0 0 1 2-2h6v18H4a2 2 0 0 1-2-2z"/><path d="M22 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 0 2-2z"/>','Guide','Farm guide: targets for the batch age')
     +'<span class="pwr-gap"></span>'
+    +`<button type="button" class="pwr-btn pwr-theme" data-pwr-theme title="Light or dark mode">${tsvg('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>')}<span>Theme</span></button>`
     // Production / Tasks switch on the rail, above Sync (2026-10-28, option B of mockup VGSsMoqwzwtL1ZTGJojqZk with the swap arrows); the floating pill is gone on computers
     +`<button type="button" class="pwr-btn pwr-ws" data-ws="tasks" title="Switch to Tasks: planner, maintenance, routine and guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/></svg><span>Tasks</span></button>`
     +`<button type="button" class="pwr-btn pwr-sync" data-pwr-sync title="Sync"><span class="pwr-sdot" id="pwrSyncDot"></span>${navIcon('cloud')}<span id="pwrSyncLbl">Sync</span></button>`
     +`<button type="button" class="pwr-btn pwr-farm" data-pwr-farm title="Account" aria-haspopup="menu" aria-expanded="false"><span class="pwr-badge" id="pwrFarmBadge" hidden></span><span class="pwr-av" id="pwrFarmAv">–</span><span id="pwrFarmLbl">Account</span></button>`;
   lay.insertBefore(nav,lay.firstChild);
   const nv=document.getElementById('sidebarNav');if(nv)new MutationObserver(syncPwRail).observe(nv,{childList:true});
+}
+// One menu: which Tasks page is open, and its Prep / Maintenance counts, read from the Tasks frame
+function pwOneRailSync(r){
+  const inT=typeof pwSection!=='undefined'&&pwSection==='tasks';
+  let cur='',prep='',maint='';
+  try{const d=cwFrame&&cwFrame.contentDocument;if(d){const a=d.querySelector('#appRail .ar-btn.active');cur=a?a.dataset.ar:'';
+    const pb=d.querySelector('#appRail .ar-btn[data-ar="prep"] .ar-badge');if(pb&&!pb.hidden)prep=pb.textContent.trim();
+    const mb=d.getElementById('arMaintBadge');if(mb&&!mb.hidden)maint=mb.textContent.trim();}}catch(e){}
+  r.querySelectorAll('.pwr-t').forEach(b=>b.classList.toggle('on',inT&&b.dataset.pwt===cur));
+  if(inT)r.querySelectorAll('[data-tab],[data-pw-panel],[data-pwr-farm]').forEach(b=>b.classList.remove('on','cur'));
+  const set=(id,v)=>{const e=document.getElementById(id);if(e){e.hidden=!v||v==='0';e.textContent=v;}};set('pwrPrepBadge',prep);set('pwrMaintBadge',maint);
 }
 function syncPwRail(){
   const r=document.getElementById('pwRail');if(!r)return;
@@ -613,8 +637,12 @@ function syncPwRail(){
     const busy=syncState==='pulling'||syncState==='pushing';
     const cls=!syncFarmName?'off':syncState==='error'?'err':busy?'busy':syncConnectedAt?'ok':'busy';
     sd.className='pwr-sdot '+cls;
+    const sd2=document.getElementById('pwrSyncDot2'),st=document.getElementById('pwrSyncTime');
+    if(sd2)sd2.className='pwr-sdot '+cls;
+    if(st)st.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':syncLastSyncAt?new Date(syncLastSyncAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M$/i,''):'Synced';
+    const s2=r.querySelector('.pwr-synct');if(s2)s2.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' at '+new Date(syncLastSyncAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'')+' — tap to sync now';
     sl.textContent=!syncFarmName?'Offline':syncState==='error'?'Error':busy?'Syncing':'Synced';
-    const sb=r.querySelector('[data-pwr-sync]');if(sb)sb.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' · '+fmtRelativeTime(syncLastSyncAt):'')+' — tap to sync now';
+    const sb=r.querySelector('.pwr-sync');if(sb)sb.title=!syncFarmName?'Not connected — tap to connect':busy?'Syncing…':syncState==='error'?'Sync error — tap to retry':'Synced'+(syncLastSyncAt?' · '+fmtRelativeTime(syncLastSyncAt):'')+' — tap to sync now';
   }
   const av=document.getElementById('pwrFarmAv'),fl=document.getElementById('pwrFarmLbl');
   if(av&&typeof displayFarmName==='function'){
@@ -625,6 +653,7 @@ function syncPwRail(){
   }
   let n=0;document.querySelectorAll('#sidebarNav .sb-link[data-tab^="g"] .sb-count').forEach(c=>n+=Number(c.textContent)||0);
   const sb=document.getElementById('pwrShedBadge');if(sb){sb.hidden=!n;sb.textContent=n>99?'99+':String(n);sb.title=n+' open alert'+(n===1?'':'s');}
+  pwOneRailSync(r);
   const fc=document.querySelector('#sidebarNav .sb-link[data-tab="farmsettings"] .sb-count');const fb=document.getElementById('pwrFarmBadge');if(fb){fb.hidden=!fc;fb.textContent=fc?fc.textContent:'';}
 }
 document.addEventListener('click',e=>{
@@ -976,6 +1005,7 @@ function pwMenuHtml(){
     <button type="button" role="menuitem" data-pwm="settings">Settings${off?`<span class="pwm-bd" title="${off} not at normal">${off}</span>`:''}</button>
     <div class="pwm-theme" data-pwm="theme"><span>Theme</span><span class="pwm-seg" role="group" aria-label="Theme"><button type="button" data-pwm-th="light" aria-pressed="${!dark}" class="${dark?'':'on'}">Light</button><button type="button" data-pwm-th="dark" aria-pressed="${dark}" class="${dark?'on':''}">Dark</button></span></div>
     <button type="button" role="menuitem" data-pwm="batch">Batch list</button>
+    ${document.body.classList.contains('pw-onerail')?'<button type="button" role="menuitem" data-pwm="tasksettings">Tasks settings</button>':''}
     <hr>
     <button type="button" role="menuitem" data-pwm="switch">${syncFarmName?'Switch farm':'Connect farm'}</button>`;
 }
@@ -998,6 +1028,7 @@ document.addEventListener('click',e=>{
   const it=e.target.closest('[data-pwm]');
   if(it&&it.dataset.pwm!=='theme'){
     pwMenuToggle(false);const k=it.dataset.pwm;
+    if(k==='tasksettings'){pwTasksGo('settings');return;}
     if(typeof openProductionSection==='function')openProductionSection();
     if(k==='profile')goAccount('profile');
     else if(k==='settings')goSettings(setTab&&setTab!=='profile'&&setTab!=='security'?setTab:'feed');

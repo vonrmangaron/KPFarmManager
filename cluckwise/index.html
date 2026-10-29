@@ -2983,6 +2983,13 @@
     #guideModal{ left:84px !important; }
     /* full pages: the side panel steps aside */
     body.rail-page .shell{ grid-template-columns:84px 0 minmax(0,1fr) !important; }
+    /* One menu (2026-10-29): inside ProdWise on a wide computer the rail lives in ProdWise — no rail here, no 84 px gap */
+    html.cw-onerail .app-rail{ display:none !important; }
+    html.cw-onerail .shell{ grid-template-columns:0 280px minmax(0,1fr) !important; }
+    html.cw-onerail body.sb-collapsed .shell, html.cw-onerail body.rail-page .shell{ grid-template-columns:0 0 minmax(0,1fr) !important; }
+    html.cw-onerail body.sb-collapsed .reports-modal.mt-page, html.cw-onerail .mlog-page, html.cw-onerail #guideModal{ left:0 !important; }
+    html.cw-onerail body.sb-collapsed::before, html.cw-onerail body.rail-page::before{ background:var(--surface) !important; }
+    html.cw-onerail body.theme-dark.sb-collapsed::before, html.cw-onerail body.theme-dark.rail-page::before{ background:#111A2B !important; }
     body.rail-page .sidebar{ display:none !important; }
     body.rail-page .reports-modal.mt-page{ left:84px; }
   }
@@ -12659,6 +12666,7 @@
   function prepFind(cid){ return shedPrep.find(c=> c.id === cid) || (prepTplDraft && prepTplDraft.id === cid ? prepTplDraft : null); }
   function prepHist(c, msg){ if(c && c.isTpl) return; addHistory('Shed preparation', msg); }
   function prepUnit(cl, id){ for(const sec of (cl.sections || [])){ if(sec.id === id) return sec; const it = (sec.items || []).find(i=> i.id === id); if(it) return it; } return null; }
+  function prepNextBatchOf(c){ let nb = null; if(c && c.nextPlacement) batches.forEach(b=> (b.sheds || []).forEach(sh=>{ if(String(sh.shed) === String(c.shed) && sh.placement === c.nextPlacement) nb = b.number; })); return nb; }
   function prepPlaced(c){ return !!(c.nextPlacement && c.nextPlacement <= dateKey(new Date())); }
   // The checklist shown for a shed: the newest one not yet followed by its next placement
   function prepActiveFor(shed){ return shedPrep.filter(c=> c.shed === String(shed) && !c.archived && !prepPlaced(c)).sort((a,b)=> (b.createdAt || 0) - (a.createdAt || 0))[0] || null; }
@@ -13354,6 +13362,9 @@
     if(!list.length && !birds.length) return `<div class="ptk-empty"><b>No shed is being prepared</b><span>A checklist starts by itself when Production closes a shed — or start one early from Checklist.</span></div>`;
     const secs = prepMaster().map(S=> S.t), cols = `--ptk-n:${Math.max(1, secs.length)};grid-template-columns:var(--ptk-shed) repeat(${Math.max(1, secs.length)},minmax(0,1fr)) var(--ptk-pct) var(--ptk-place)`;
     const head = `<div class="ptk-row ptk-head" style="${cols}" aria-hidden="true"><span>Shed</span>${secs.map((t, i)=> `<span title="${escapeHtmlAttr(t)}">${i + 1} · ${escapeHtml(t)}</span>`).join('')}<span class="r">Done</span><span class="r">Placement</span></div>`;
+    // Marked ready (2026-10-29): the shed moves on to the next batch — one line, waiting for chicks; ✓ Ready reopens it
+    const readyOf = c=>{ const n = prepDaysTo(c.nextPlacement), nb = prepNextBatchOf(c);
+      return `<div class="ptk-row birds nextb"><span class="ptk-sh"><b>Shed ${escapeHtml(c.shed)}</b><small>Ready for chicks</small></span><span class="ptk-bt">${nb ? '#' + escapeHtml(String(nb)) + ' · ' : 'Next batch · '}${c.nextPlacement ? 'chicks ' + escapeHtml(prepFmt(c.nextPlacement)) + (n != null && n >= 0 ? ' · ' + (n === 0 ? 'today' : 'in ' + n + (n === 1 ? ' day' : ' days')) : '') : 'no chicks date yet'}${c.readyBy ? ' · signed off by ' + escapeHtml(c.readyBy) : ''}</span><span class="ptk-pl"><button type="button" class="ptk-rdy ok" data-prep-unready="${escapeHtmlAttr(c.id)}" title="Marked ready by mistake? Click to reopen the checklist">✓ Ready</button></span></div>`; };
     const rowOf = c=>{
       const p = prepProgress(c), st = prepTrackStatus(c), n = prepDaysTo(c.nextPlacement);
       const info = secs.map(t=> prepSecInfo(prepSecOf(c, t)));
@@ -13369,7 +13380,7 @@
         <span class="ptk-pl"><b>${place}</b><span class="ptk-pl2">${c.status === 'ready' ? '' : `<span class="ptk-chip ${st.cls}">${escapeHtml(st.t)}</span>`}${rdy}</span></span></div>`;
     };
     const birdOf = x=> `<div class="ptk-row birds"><span class="ptk-sh"><b>Shed ${escapeHtml(x.sh)}</b></span><span class="ptk-bt">Birds in · prep starts by itself when Production closes the shed</span><span class="ptk-pl"><b>#${escapeHtml(String(x.run.batch))} · Day ${mlogDaysBetween(x.run.placement, today)}</b></span></div>`;
-    const rowsAll = sheds.map(sh=>{ const c = prepActiveFor(sh); if(c) return rowOf(c); const b = birds.find(x=> x.sh === sh); return b ? birdOf(b) : ''; }).join('');
+    const rowsAll = sheds.map(sh=>{ const c = prepActiveFor(sh); if(c) return c.status === 'ready' ? readyOf(c) : rowOf(c); const b = birds.find(x=> x.sh === sh); return b ? birdOf(b) : ''; }).join('');
     return `<div class="ptk-legend" aria-hidden="true"><span><i class="d"></i>Done</span><span><i class="p"></i>In progress</span><span><i></i>Not started</span></div><div class="ptk-tab">${head}${rowsAll}</div>`;
   }
   function renderPrepBoard(){
@@ -13386,7 +13397,7 @@
     let done = 0, total = 0, late = 0, week = 0; list.forEach(c=>{ const p = prepProgress(c); done += p.done; total += p.total; prepUnits(c).forEach(x=>{ const f = prepUnitFlags(c, x.u); if(f.late) late++; if(f.week) week++; }); });
     const firstChicks = list.map(c=> c.nextPlacement).filter(Boolean).sort()[0];
     const toFirst = firstChicks ? Math.round((toDateObj(firstChicks) - toDateObj(dateKey(new Date()))) / 86400000) : null;
-    const sum = list.length ? `<div class="prep-sum2"><div><h3>${list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : list.length + ' sheds are'} being prepared</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
+    const sum = list.length ? `<div class="prep-sum2"><div><h3>${(()=>{ const pl = list.filter(c=> c.status !== 'ready'); return !pl.length ? (list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : 'Every shed is') + ' ready for chicks' : (pl.length === 1 ? `Shed ${escapeHtml(pl[0].shed)} is` : pl.length + ' sheds are') + ' being prepared'; })()}</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
         <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
     const allF = prepMaster().every(S=> prepSecFold.has(prepNorm(S.t)));
