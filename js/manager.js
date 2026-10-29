@@ -1021,6 +1021,8 @@ function pwMenuToggle(force){
   const b=document.querySelector('[data-pwr-farm]');if(b)b.setAttribute('aria-expanded',String(open));
   if(open){const f=m.querySelector('[data-pwm]');if(f&&f.focus)f.focus({preventScroll:true});}
 }
+// a click inside the Tasks frame never reaches this page, but it takes focus away — close the menu then
+window.addEventListener('blur',()=>{const m=document.getElementById('pwMenu');if(m&&!m.hidden&&document.activeElement&&document.activeElement.id==='cwFrame')pwMenuToggle(false);});
 document.addEventListener('click',e=>{
   const m=document.getElementById('pwMenu');if(!m||m.hidden)return;
   const th=e.target.closest('[data-pwm-th]');
