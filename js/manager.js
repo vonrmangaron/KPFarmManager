@@ -1097,7 +1097,7 @@ function mgrBriefCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeo
 function mgrBriefData(){
   const today=mgrToday(),days=mgrWeekDays(),cw=mgrBriefCw();
   if(!cw&&!mgrBriefAsked&&syncFarmName&&typeof pwEnsureTasksFrame==='function'){mgrBriefAsked=true;pwEnsureTasksFrame(()=>mgrBriefRefresh());}
-  // job: something the manager can do today (feed, tasks, records, prep) — only these go on Ross's Today's plan;
+  // job: something the manager can do today (feed, tasks, records, prep) — only these go on Cluck's Today's plan;
   // growth, mortality % and weather are watch items: shown, never a job (2026-10-29)
   const L=(tone,html,act,job)=>({tone,html,act:act||'',job:!!job});
   const G={today:[],watch:[],feed:[],co:[]};

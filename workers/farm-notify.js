@@ -12,7 +12,7 @@
 //   test        { farm, target? }     manager: send a test to one phone (default: the one asking)
 //   feedoff     { farm, events:[{ date, kill, sheds:[ids], birds, done }] }   manager: the feed-off days (ProdWise)
 //
-// FEED OFF (2026-10-26): the kill sheet date is the pickup; birds are caught the evening before, so Ross tells the
+// FEED OFF (2026-10-26): the kill sheet date is the pickup; birds are caught the evening before, so Cluck tells the
 // managers at foTime (7:00) on that day to turn the feed off, again at foRemindTime (11:00) if nobody tapped
 // "Feed is off". It ignores quiet hours and stays on screen (requireInteraction) where the phone allows it.
 //
@@ -51,7 +51,7 @@ const DEFAULTS = {
   remindOn: false, remindTime: '15:00',
   wNew: true, wMoved: true,
   mReports: true, mDone: true, mFeed: false,
-  foOn: true, foTime: '07:00', foRemindOn: true, foRemindTime: '11:00',   // Ross: feed off the morning of the catch
+  foOn: true, foTime: '07:00', foRemindOn: true, foRemindTime: '11:00',   // Cluck: feed off the morning of the catch
 };
 
 // ---------- small helpers ----------
@@ -285,8 +285,8 @@ async function feedOffTick(env, farm, cfg, subs, now) {
   if (!kind) return;
   const label = shedsLabel(ev.sheds), birds = ev.birds ? ` · ${Number(ev.birds).toLocaleString('en-US')} birds` : '';
   const msg = kind === 1
-    ? { title: `Feed off today: ${label}`, body: `Ross: they’re caught tonight (kill sheet ${fmtDay(ev.kill)}${birds}). Tap when the feed is off.` }
-    : { title: `Still to do: feed off ${label}`, body: `Ross: nobody has marked the feed off yet. Catch tonight, kill sheet ${fmtDay(ev.kill)}.` };
+    ? { title: `Feed off today: ${label}`, body: `Cluck: they’re caught tonight (kill sheet ${fmtDay(ev.kill)}${birds}). Tap when the feed is off.` }
+    : { title: `Still to do: feed off ${label}`, body: `Cluck: nobody has marked the feed off yet. Catch tonight, kill sheet ${fmtDay(ev.kill)}.` };
   const msgs = Object.entries(subs).filter(([, s]) => s.role === 'manager')
     .map(([id]) => ({ id, msg: { ...msg, tag: 'feedoff-' + ev.date, sticky: true, url: `${MGR_URL}?nt=${encodeURIComponent('feedoff:' + ev.date)}`, app: 'manager' }, urgent: true }));
   Object.keys(sent).forEach(k => { if (k < now.day) delete sent[k]; });

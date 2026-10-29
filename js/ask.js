@@ -1,10 +1,10 @@
-// ── Ross — the farm's AI and its morning report (2026-10-25, mockup G9Akjz37VWHJTHyL9g2MTL) ────────────────
-// Named after the Ross 308. One detailed report covering Production and Tasks pops up once a day from 7:00 and
-// reopens from the Ross button in the header (and in Tasks). The numbers, lists, week strip and "since yesterday"
-// come straight from the apps; Ross (free AI on the farm's Cloudflare account, workers/prodwise-ai.js) writes the
+// ── Cluck — the farm's AI and its morning report (2026-10-25, mockup G9Akjz37VWHJTHyL9g2MTL) ────────────────
+// Called Ross until 2026-10-29, now Cluck. One detailed report covering Production and Tasks pops up once a day from 7:00 and
+// reopens from the Cluck button in the header (and in Tasks). The numbers, lists, week strip and "since yesterday"
+// come straight from the apps; Cluck (free AI on the farm's Cloudflare account, workers/prodwise-ai.js) writes the
 // overview, the ranked plan with reasons, a note per shed, the crew note, warnings and weather advice — two AI
 // requests a morning, saved for the day. With no AI (offline, not set up, allowance used) every section still
-// shows its facts; only Ross's sentences are missing. Replaces the Daily report and the per-page Summarise.
+// shows its facts; only Cluck's sentences are missing. Replaces the Daily report and the per-page Summarise.
 const AI_WORKER_URL='https://prodwise-ai.vonrmangaron.workers.dev';
 const ROSS_SVG='<svg viewBox="0 0 140 156" aria-hidden="true"> <ellipse class="rz-shadow" cx="70" cy="148" rx="36" ry="6" fill="#000"/> <g class="rz-float"> <g class="rz-comb"> <path d="M44 34C36 18 48 4 66 6c-4-6 4-8 10-4 10-4 24 2 30 12 8-2 16 4 16 12-8-4-16-2-22 4-8-6-20-8-30-4-10-4-20 0-26 8z" fill="#E8392F" stroke="#1D2240" stroke-width="3.4" stroke-linejoin="round"/> <path d="M58 16c8-6 22-6 30 0M92 12c8 0 14 4 18 10" stroke="#FF8478" stroke-width="3.4" fill="none" stroke-linecap="round"/></g> <path d="M20 74c0-32 22-50 50-50s50 18 50 50c0 30-22 54-50 54S20 104 20 74z" fill="#FFFFFF" stroke="#1D2240" stroke-width="3.8"/> <path d="M32 100c9 15 22 23 38 23s30-8 38-23" stroke="#DCE8F5" stroke-width="7" fill="none" stroke-linecap="round"/> <path d="M104 44c6 6 10 14 11 24" stroke="#E8F0FA" stroke-width="5" fill="none" stroke-linecap="round"/> <path class="rz-visor" d="M8 54c0-4 3-7 7-7l116-6c5 0 8 4 7 8l-7 26c-1 5-5 8-10 8l-98 2c-6 0-10-4-11-9z" fill="#22284F" stroke="#1D2240" stroke-width="3.6" stroke-linejoin="round"/> <path class="rz-vglow" d="M14 56c0-3 2-5 5-5l108-5c3 0 5 2 4 5l-5 20c-1 3-3 5-6 5l-92 2c-3 0-6-2-7-5z" fill="#4FD1FF" opacity=".16"/> <path d="M28 51l16-1-12 32-10 0zM50 50l7 0-12 31-7 0z" fill="#fff" opacity=".13"/> <g class="rz-e rz-eCalm"><g class="rz-look"><rect class="rz-eye" x="36" y="56" width="18" height="17" rx="8.5" fill="#7FE3FF"/><rect class="rz-eye" x="88" y="54" width="18" height="17" rx="8.5" fill="#7FE3FF"/> <circle cx="41.5" cy="60.5" r="3" fill="#fff"/><circle cx="93.5" cy="58.5" r="3" fill="#fff"/></g></g> <g class="rz-e rz-eHappy" fill="none" stroke="#5CF0B5" stroke-width="5" stroke-linecap="round"><path d="M36 70q9-13 18 0"/><path d="M88 68q9-13 18 0"/></g> <g class="rz-e rz-eWorry" fill="#FF8A95"><path d="M34 58l21 6v9H34z"/><path d="M108 56l-21 6v9h21z"/></g> <g class="rz-e rz-eSleep" stroke="#5E6A8C" stroke-width="5" stroke-linecap="round"><path d="M36 65h18M88 63h18"/></g> <g class="rz-load"><rect x="52" y="76" width="38" height="3.5" rx="1.75" fill="#2C3566"/><rect class="rz-bar" x="63" y="76" width="16" height="3.5" rx="1.75" fill="#7FE3FF"/></g> <path d="M58 82c5-5 19-5 24 0l-12 14z" fill="#FF9A2E" stroke="#1D2240" stroke-width="3.2" stroke-linejoin="round"/> <path class="rz-bLow" d="M62 93h16l-8 8z" fill="#E77A16" stroke="#1D2240" stroke-width="2.8" stroke-linejoin="round"/> <path d="M61 99c-5 11-2 22 7 24 2-6 2-10 2-13 0 3 0 7 2 13 9-2 12-13 7-24z" fill="#E8392F" stroke="#1D2240" stroke-width="3.2" stroke-linejoin="round"/> <g class="rz-zz"><text x="118" y="34" style="font:800 15px Sora,sans-serif;fill:#C9D2E3">z</text><text x="130" y="18" style="font:800 12px Sora,sans-serif;fill:#C9D2E3">z</text></g> </g></svg>';   // the robot-chicken face (mockup 1siPonVecvHoJadyWNYaTM); moods are classes on .rossR
 let aiLeft=null;
@@ -23,11 +23,11 @@ async function aiCall(body){
 function aiJson(t){t=String(t||'');const a=t.indexOf('{'),z=t.lastIndexOf('}');if(a<0||z<=a)return null;try{return JSON.parse(t.slice(a,z+1));}catch(e){return null;}}
 function aiResetTime(){const n=new Date(),u=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1));return u.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
 function aiErrText(e){
-  if(!navigator.onLine)return 'Ross is offline — the AI needs the internet.';
-  if(e&&e.limit)return `Ross is resting until ${aiResetTime()} (free AI allowance used up).`;
-  if(e&&(e.setup||e.status===404||e.status===undefined))return 'Ross isn\'t set up on Cloudflare yet (prodwise-ai worker).';
-  if(e&&e.status===403)return 'Only the manager can use Ross on this farm.';
-  return 'Ross didn\'t answer just now.';
+  if(!navigator.onLine)return 'Cluck is offline — the AI needs the internet.';
+  if(e&&e.limit)return `Cluck is resting until ${aiResetTime()} (free AI allowance used up).`;
+  if(e&&(e.setup||e.status===404||e.status===undefined))return 'Cluck isn\'t set up on Cloudflare yet (prodwise-ai worker).';
+  if(e&&e.status===403)return 'Only the manager can use Cluck on this farm.';
+  return 'Cluck didn\'t answer just now.';
 }
 function rsColor(n){const P=['#5E7A3A','#2F7D6E','#7A5C9E','#B0603A','#3E6FB0','#9E4F6E'];let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return P[h%P.length];}
 const rsInl=x=>escapeHtml(String(x||'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
@@ -45,7 +45,7 @@ function rsSnap(){   // today's figures, kept a week, so tomorrow can say what c
   try{localStorage.setItem(rsHistKey(),JSON.stringify(h));}catch(e){}
 }
 function rsOn(){try{return localStorage.getItem('pw-greet-on')!=='0';}catch(e){return true;}}
-// Wait (up to ms) until Tasks has its farm data in, so Ross never writes the day's report without the tasks
+// Wait (up to ms) until Tasks has its farm data in, so Cluck never writes the day's report without the tasks
 function rsTasksReady(){try{const w=cwFrame&&cwFrame.contentWindow;return !!(w&&w.__cwRoss&&w.__cwReady);}catch(e){return false;}}
 function rsWaitTasks(ms){return new Promise(res=>{const t0=Date.now();const tick=()=>{if(rsTasksReady()||Date.now()-t0>ms)res(rsTasksReady());else setTimeout(tick,250);};tick();});}
 function rsCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__cwRoss==='function'?w.__cwRoss():null;}catch(e){return null;}}
@@ -106,7 +106,7 @@ function rsData(){
   (cw&&cw.newReports||[]).slice(0,3).forEach(r=>since.push({tone:r.urgent?'r':'a',html:`New problem report: <b>${escapeHtml(r.label)}</b>${r.by?' ('+escapeHtml(r.by)+')':''}`}));
   farmLoads.filter(l=>l.date&&iso(dateOnly(l.date))===iso(addDays(today,-1))).forEach(l=>{const gs=[1,2,3,4].filter(g=>Number(l.splitKg&&l.splitKg[g])>0).map(g=>pairLabel(g)).join(', ');
     since.push({tone:'g',html:`Load ${mgrT(l.actualKg!=null?Number(l.actualKg):Number(l.plannedKg)||0)} delivered${gs?' → '+escapeHtml(gs):''}${l.actualKg==null?' (docket weight still to enter)':''}`});});
-  // trends (Ross words them into warnings; shown as they are without AI)
+  // trends (Cluck words them into warnings; shown as they are without AI)
   const trends=[];
   sh.forEach(s=>{const ks=Object.keys(hist).sort().slice(-4);if(ks.length<4)return;const v=ks.map(k=>hist[k].mort[s.id]).concat([Math.max(0,Number(s.mortality)||0)]);if(v.some(x=>x==null))return;
     const d=v.slice(1).map((x,i)=>x-v[i]);if(d.length>=3&&d.slice(-3).every((x,i,a)=>i===0||x>a[i-1]))trends.push({tone:'a',text:`Shed ${s.id} daily mortality up three days running`});});
@@ -123,7 +123,7 @@ function rsData(){
     return {date:x.date,ev,busy:ev.length>=3||nt>=10};});
   return {T,cw,facts,kpi,sheds,crew,since,trends,week,wx:cw&&cw.wx||[]};
 }
-// Everything Ross reads besides the alert lines (2026-10-29): batches, feed and silos per pair, next batch's Starter,
+// Everything Cluck reads besides the alert lines (2026-10-29): batches, feed and silos per pair, next batch's Starter,
 // loads, clean-outs and placements, mortality and performance per shed. Plain text, kept short (the worker clips at 16k).
 function rsFarmSheet(d){
   const today=mgrToday(),L=[],t1=kg=>((Number(kg)||0)/1000).toFixed(1)+' t',D=x=>x?fmtShortNoYear(x):'—',safe=f=>{try{f();}catch(e){}};
@@ -185,6 +185,7 @@ function rsFarmSheet(d){
 }
 function rsContext(d){
   const L=[];
+  L.push('YOUR NAME: you are Cluck, the farm AI (not Ross — Ross 308 is only the breed standard). Never call yourself Ross.');
   L.push('PLAN TITLES: say plainly what to do about that FACT, naming the same shed numbers it names (a pair stays "Sheds 5–6" unless the fact names one shed). Never invent a different job such as "review the feeding plan". Never book feed for a shed that cleans out before its silos run low. Use FARM DATA for the numbers in each "why": feed, silos, the next batch Starter and starter silo, clean-outs, placements, mortality and performance.');
   L.push('FACTS (red = urgent, amber = soon, blue = info, green = fine). ONLY facts marked JOB can be plan items: feed ordering, the next batch Starter, tasks, records to enter (mortality, silo readings, dockets, kill sheets), shed prep, feed off. Growth vs target, mortality % and weather are never plan items — mention them in warnings or the overview only:',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}${f.job?', JOB':''}] ${f.grp}: ${f.text}`));
   const sheet=rsFarmSheet(d);if(sheet)L.push('FARM DATA (check every plan item against this before you write it):',sheet);
@@ -244,32 +245,32 @@ function rsModel(st,d){
   const say=M&&M.overview?rsFirst(M.overview)+(rsFirst(M.overview)!==M.overview.trim()?' '+rsFirst(M.overview.slice(rsFirst(M.overview).length)):''):lines.ov;
   return {M,plan,aiPlan,warns,mood,sheds,lines,tone,stepMood,ticks,say,hot};
 }
-// Detail bar under a plan item (2026-10-29): the farm fact it comes from, then Ross's reason — always shown, no Why? tap
+// Detail bar under a plan item (2026-10-29): the farm fact it comes from, then Cluck's reason — always shown, no Why? tap
 function rsDetHtml(p){const f=p.f&&p.f.text&&p.f.text!==p.title?p.f.text:'';if(!f&&!p.why)return '';
-  return `<span class="rs-det">${f?`<span class="rs-det-f"><i>Farm</i>${escapeHtml(f)}</span>`:''}${p.why?`<span class="rs-det-w"><i>Ross</i>${rsInl(p.why)}</span>`:''}</span>`;}
+  return `<span class="rs-det">${f?`<span class="rs-det-f"><i>Farm</i>${escapeHtml(f)}</span>`:''}${p.why?`<span class="rs-det-w"><i>Cluck</i>${rsInl(p.why)}</span>`:''}</span>`;}
 function rsHtml(st,d,R){
   const now=new Date(),who=aiName(),w0=d.wx[0],tm=new Date(st.at||Date.now()).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
   let bd='';try{const pl=mgrPlaced();if(pl.length){const first=pl.map(s=>dateOnly(s.placementDate)).reduce((a,b)=>b<a?b:a);bd=`Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · day ${Math.max(0,mgrDays(first,mgrToday()))}`;}}catch(e){}
   const meta=[bd,w0?`${escapeHtml(w0.maxT)} / ${escapeHtml(w0.minT)}`:'',`prepared${who?' for '+escapeHtml(who):''} at ${tm}`].filter(Boolean).join(' · ');
-  const tag='<span class="rs-tag">Ross</span>',loading='<div class="rs-load"><i></i><i></i><i></i></div>';
+  const tag='<span class="rs-tag">Cluck</span>',loading='<div class="rs-load"><i></i><i></i><i></i></div>';
   const M=R.M;
-  const ov=M&&M.overview?`<p class="rs-ovp">${rsInl(M.overview)}</p>`:st.busy?loading:`<p class="rs-muted">${escapeHtml(st.err||'Ross isn\'t available right now.')} The numbers and lists below are all from your apps.</p>`;
+  const ov=M&&M.overview?`<p class="rs-ovp">${rsInl(M.overview)}</p>`:st.busy?loading:`<p class="rs-muted">${escapeHtml(st.err||'Cluck isn\'t available right now.')} The numbers and lists below are all from your apps.</p>`;
   const planHtml=R.plan.length?R.plan.map((p,i)=>{const tone=p.f?p.f.tone:'r',go=p.f?rsGo(p.f.act):'',dn=R.ticks.has(i);
     return `<div class="rs-act${dn?' done':''}" data-rs-i="${i}"><button type="button" class="rs-tick" data-rs-tick="${i}" aria-pressed="${dn}" aria-label="${dn?'Not done':'Done'}" title="Tick it off (just for you, today)">✓</button><span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span class="rs-at"><b>${rsInl(p.title)}</b>${rsDetHtml(p)}</span>${go&&p.f.act?`<button type="button" class="rs-go" data-rs-go ${p.f.act}>${escapeHtml(go)} ›</button>`:'<span></span>'}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
   const C={r:'#C8443A',a:'#E2A13A',g:'#13806D',b:'#2F6BD8'};
-  const shedHtml=R.sheds.map(s=>`<button type="button" class="rs-sh ${s.tone}" data-rs-shed="${s.id}"><span class="rs-sht"><span class="rs-no">${s.id}</span><b>${escapeHtml(s.head)}</b></span><span class="rs-bar"><i style="width:${Math.round((s.pct||0)*100)}%;background:${C[s.tone]}"></i></span><small>${s.note?'tap for Ross\'s note':'tap for details'}</small></button>`).join('');
+  const shedHtml=R.sheds.map(s=>`<button type="button" class="rs-sh ${s.tone}" data-rs-shed="${s.id}"><span class="rs-sht"><span class="rs-no">${s.id}</span><b>${escapeHtml(s.head)}</b></span><span class="rs-bar"><i style="width:${Math.round((s.pct||0)*100)}%;background:${C[s.tone]}"></i></span><small>${s.note?'tap for Cluck\'s note':'tap for details'}</small></button>`).join('');
   const crewHtml=d.cw?(d.crew.length?`<div class="rs-crew">${d.crew.map(c=>{const n=c.list.length,dn=c.list.filter(x=>x.done).length,heavy=c.open>=6;
       return `<div class="rs-cw${c.who?'':' none'}"><div class="rs-who">${c.who?`<i style="background:${rsColor(c.who)}">${escapeHtml(c.who.slice(0,1).toUpperCase())}</i>`:''}<b>${c.who?escapeHtml(c.who):'Not assigned'}</b>${c.who?`<span class="rs-blocks" title="${dn} done · ${c.open} open">${Array.from({length:Math.min(n,8)},(_,k)=>`<span class="${k<dn?'f':heavy?'h':'o'}"></span>`).join('')}</span>`:`<em>${n} job${n===1?'':'s'}</em>`}</div><ul>${c.list.slice(0,6).map(x=>`<li class="${x.done?'done':''}">${escapeHtml(x.name)}${x.od?' <span class="rs-od">overdue</span>':''}</li>`).join('')}${n>6?`<li class="rs-muted">+${n-6} more</li>`:''}</ul></div>`;}).join('')}</div>`:'<p class="rs-muted">No tasks on today.</p>')+(M&&M.crew?`<p class="rs-note">${rsFace('thinking','rs-nf')}<span>${rsInl(M.crew)}</span></p>`:''):'<p class="rs-muted">Tasks hasn\'t loaded yet.</p>';
   const li=(x)=>`<div class="rs-li"><span class="rs-d ${x.tone}"></span><span>${x.html}</span></div>`;
-  const sinceHtml=d.since.length?d.since.map(li).join(''):'<p class="rs-muted">Ross compares from tomorrow — today\'s figures are saved on this device.</p>';
+  const sinceHtml=d.since.length?d.since.map(li).join(''):'<p class="rs-muted">Cluck compares from tomorrow — today\'s figures are saved on this device.</p>';
   const warnHtml=R.warns.length?R.warns.map(li).join(''):'<p class="rs-muted">No risks building up.</p>';
   const weekHtml=`<div class="rs-week">${d.week.map(w=>`<div class="rs-wd${w.busy?' busy':''}"><b>${RS_WD[w.date.getDay()]} ${w.date.getDate()}</b>${w.ev.map(e=>`<div class="rs-ev ${e.k}">${escapeHtml(e.t)}</div>`).join('')||'<div class="rs-ev">—</div>'}</div>`).join('')}</div>`;
   const wxHtml=(M&&M.weather?`<p class="rs-ovp" style="font-size:13.5px">${rsInl(M.weather)}</p>`:'')+(d.wx.length?`<div class="rs-wxrow">${d.wx.map(w=>`<span class="${w.alerts.length?'al':''}" title="${escapeAttr(w.label+(w.alerts.length?' — '+w.alerts.join(', '):''))}"><b>${RS_WD[new Date(w.date+'T00:00:00').getDay()]}</b>${escapeHtml(w.icon)}<i>${escapeHtml(w.maxT)}</i></span>`).join('')}</div>`:'<p class="rs-muted">No weather location set (Tasks › Settings › Weather).</p>');
   const sec=(id,title,ai,body,extra)=>`<section class="rs-sec" id="rs-${id}"><h3>${title}${ai?tag:''}${extra||''}</h3>${body}</section>`;
   const nDone=R.plan.filter((p,i)=>R.ticks.has(i)).length;
-  return `<div class="rs-h"><div class="rs-ht"><div class="rs-face" id="rsFace" role="button" tabindex="0" title="Tap Ross for today's top job" aria-label="Ross">${rsFace(R.mood)}</div>
-        <div class="rs-t"><small>Ross · morning report</small><h2 id="rsTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rs-m">${meta}</div><div class="rs-say" id="rsSay">${st.busy?'<span class="rs-muted2">Ross is reading the farm…</span>':escapeHtml(R.say)}</div></div>
-        <div class="rs-hb"><button type="button" class="rs-x rs-redo" data-rs-redo aria-label="Refresh the report with the latest farm data" title="Refresh: Ross reads the farm again"${st.busy?' disabled':''}>↻</button><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div></div>
+  return `<div class="rs-h"><div class="rs-ht"><div class="rs-face" id="rsFace" role="button" tabindex="0" title="Tap Cluck for today's top job" aria-label="Cluck">${rsFace(R.mood)}</div>
+        <div class="rs-t"><small>Cluck · morning report</small><h2 id="rsTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rs-m">${meta}</div><div class="rs-say" id="rsSay">${st.busy?'<span class="rs-muted2">Cluck is reading the farm…</span>':escapeHtml(R.say)}</div></div>
+        <div class="rs-hb"><button type="button" class="rs-x rs-redo" data-rs-redo aria-label="Refresh the report with the latest farm data" title="Refresh: Cluck reads the farm again"${st.busy?' disabled':''}>↻</button><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div></div>
       <nav class="rs-nav" aria-label="Sections">${RS_TABS.map(([k,l],i)=>`<button type="button" data-rs-tab="${k}" class="${i===0?'on':''}">${l}${R.tone[k]?`<i class="${R.tone[k]}"></i>`:''}</button>`).join('')}</nav></div>
     <div class="rs-scroll" id="rsScroll">
       <div class="rs-kpi">${d.kpi.map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('')}</div>
@@ -281,14 +282,14 @@ function rsHtml(st,d,R){
         <div class="rs-two">${sec('since','Since yesterday',false,sinceHtml)}${sec('warn','Warnings',!!(M&&M.warnings&&M.warnings.length),warnHtml)}</div>
         ${sec('week','Week ahead',false,weekHtml)}
         ${sec('wx','Weather',!!(M&&M.weather),wxHtml)}
-        <div class="rs-endnote"><span>Numbers from ProdWise${d.cw?' and Tasks':''} at ${tm} · Ross is AI — check before acting${aiLeft!=null?' · '+aiLeft+' AI requests left today':''}</span><label class="rs-on"><input type="checkbox" data-rs-on ${rsOn()?'checked':''}> Show at 7:00</label></div>
+        <div class="rs-endnote"><span>Numbers from ProdWise${d.cw?' and Tasks':''} at ${tm} · Cluck is AI — check before acting${aiLeft!=null?' · '+aiLeft+' AI requests left today':''}</span><label class="rs-on"><input type="checkbox" data-rs-on ${rsOn()?'checked':''}> Show at 7:00</label></div>
       </div></div>
-    <div class="rs-dock"><span class="rs-dface" id="rsDockFace">${rsFace(R.mood)}</span><div class="rs-msg" id="rsMsg" aria-live="polite"><b>Ross:</b> ${st.busy?'One moment — I\'m reading the sheds and the jobs…':'Want me to walk you through this morning?'}</div>
+    <div class="rs-dock"><span class="rs-dface" id="rsDockFace">${rsFace(R.mood)}</span><div class="rs-msg" id="rsMsg" aria-live="polite"><b>Cluck:</b> ${st.busy?'One moment — I\'m reading the sheds and the jobs…':'Want me to walk you through this morning?'}</div>
       <span class="rs-dots" id="rsDots">${RS_TABS.map(()=>'<i></i>').join('')}</span><button type="button" class="rs-db" id="rsPrev" aria-label="Previous section">‹</button><button type="button" class="rs-db p" id="rsNext">Walk me through it</button></div>`;
 }
 let rsTabLock=0,rsStep=-1,rsCur=null;   // walk-through step; the model the open report shows
 function rsSetMood(m){document.querySelectorAll('#rsModal .rossR').forEach(el=>{if(el.closest('.rs-nf'))return;el.classList.remove('calm','thinking','happy','alert','rest');el.classList.add(m);});}
-function rsTell(html,mood,ms){const el=document.getElementById('rsMsg');if(el)el.innerHTML='<b>Ross:</b> '+html;if(mood){rsSetMood(mood);if(ms)setTimeout(()=>rsSetMood(rsStep>=0&&rsCur?rsCur.R.stepMood[RS_TABS[rsStep][0]]:rsCur?rsCur.R.mood:'calm'),ms);}}
+function rsTell(html,mood,ms){const el=document.getElementById('rsMsg');if(el)el.innerHTML='<b>Cluck:</b> '+html;if(mood){rsSetMood(mood);if(ms)setTimeout(()=>rsSetMood(rsStep>=0&&rsCur?rsCur.R.stepMood[RS_TABS[rsStep][0]]:rsCur?rsCur.R.mood:'calm'),ms);}}
 function rsScrollTo(k){const sc=document.getElementById('rsScroll'),el=document.getElementById('rs-'+k);if(!sc||!el)return;rsTabLock=Date.now();
   document.querySelectorAll('#rsModal [data-rs-tab]').forEach(b=>b.classList.toggle('on',b.dataset.rsTab===k));
   sc.scrollTo({top:sc.scrollTop+el.getBoundingClientRect().top-sc.getBoundingClientRect().top-8,behavior:'smooth'});}
@@ -307,7 +308,7 @@ function rsEnsureDom(){
   const m=document.getElementById('rsModal');
   m.addEventListener('click',e=>{
     if(e.target===m||e.target.closest('[data-rs-close]')){rsClose();return;}
-    // ↻ (2026-10-26): Ross reads the farm again — after a change, the report shouldn't wait until tomorrow
+    // ↻ (2026-10-26): Cluck reads the farm again — after a change, the report shouldn't wait until tomorrow
     const redo=e.target.closest('[data-rs-redo]');if(redo){if(redo.disabled)return;const st=rsLoad();delete st.main;delete st.err;delete st.sheds;rsSave(st);rsOpen();return;}
     const t=e.target.closest('[data-rs-tab]');if(t){const i=RS_TABS.findIndex(x=>x[0]===t.dataset.rsTab);if(rsStep>=0)rsGoStep(i);else rsScrollTo(t.dataset.rsTab);return;}
     if(e.target.closest('#rsNext')){if(rsStep===RS_TABS.length-1)rsEndWalk();else rsGoStep(rsStep+1);return;}
@@ -351,17 +352,17 @@ async function rsOpen(){
     aiCall({mode:'ross',part:'main',name:aiName(),context:ctx}).then(j=>({ok:aiJson(j.text)})).catch(e=>({err:aiErrText(e)})),
     aiCall({mode:'ross',part:'sheds',context:d.sheds.map(s=>`Shed ${s.id}: ${s.fact}`).join('\n')}).then(j=>({ok:aiJson(j.text)})).catch(e=>({err:aiErrText(e)}))]);
   st=rsLoad();st.busy=false;
-  if(a.ok&&(a.ok.overview||a.ok.plan))st.main=a.ok;else st.err=a.err||'Ross\'s notes didn\'t come through today';
+  if(a.ok&&(a.ok.overview||a.ok.plan))st.main=a.ok;else st.err=a.err||'Cluck\'s notes didn\'t come through today';
   if(b.ok&&b.ok.sheds)st.sheds=b.ok;
   rsSave(st);
   if(m.classList.contains('open')){rsPaint(st,rsData(),true);const f=document.querySelector('#rsFace .rossR');if(f&&st.main){f.classList.add('crow');setTimeout(()=>f.classList.remove('crow'),950);}}
 }
 function rsClose(){const m=document.getElementById('rsModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');rsStep=-1;}
 function rsDot(){const on=!!farmData&&new Date().getHours()>=7&&!rsLoad().seen;const d=document.getElementById('rossDot');if(d)d.hidden=!on;try{cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwRossDot&&cwFrame.contentWindow.__cwRossDot(on);}catch(e){}}
-// The header Ross wears today's mood: worried with a red item, sleepy with no AI, happy when the plan is cleared
+// The header Cluck wears today's mood: worried with a red item, sleepy with no AI, happy when the plan is cleared
 function rsBtnMood(m){const f=document.querySelector('#rossBtn .rossR');if(f){f.classList.remove('calm','thinking','happy','alert','rest');f.classList.add(m);}}
 function rsMoodNow(){try{if(!farmData)return 'calm';const st=rsLoad();if(st.main||st.err){const R=rsModel(st,rsData());return R.mood;}const b=mgrBriefData();return b.G.today.concat(b.G.watch,b.G.feed,b.G.co).some(x=>x.tone==='r')?'alert':'calm';}catch(e){return 'calm';}}
-// Phones: Ross floats at the bottom right above the bottom bar; computers: beside the bell (2026-10-26)
+// Phones: Cluck floats at the bottom right above the bottom bar; computers: beside the bell (2026-10-26)
 const RS_PHONE=window.matchMedia?matchMedia('(max-width:768px)'):{matches:false};
 function rsDockBtn(){
   const b=document.getElementById('rossBtn');if(!b)return;
@@ -373,12 +374,12 @@ function rsDockBtn(){
 function rsPlaceButton(){
   if(document.getElementById('rossBtn')){rsDockBtn();return;}
   const bell=document.querySelector('#pageHeader .alerts-bell-wrap');if(!bell)return;
-  bell.insertAdjacentHTML('beforebegin',`<button type="button" class="ross-btn" id="rossBtn" title="Ross · morning report" aria-label="Ross · morning report"><span class="ross-mk">${rsFace('calm')}</span><span class="ross-l">Ross</span><span class="ross-dot" id="rossDot" hidden></span></button>`);
+  bell.insertAdjacentHTML('beforebegin',`<button type="button" class="ross-btn" id="rossBtn" title="Cluck · morning report" aria-label="Cluck · morning report"><span class="ross-mk">${rsFace('calm')}</span><span class="ross-l">Cluck</span><span class="ross-dot" id="rossDot" hidden></span></button>`);
   document.getElementById('rossBtn').addEventListener('click',rsOpen);
   rsDockBtn();
 }
 if(RS_PHONE.addEventListener)RS_PHONE.addEventListener('change',rsDockBtn);
-window.pwOpenRoss=()=>rsOpen();   // Tasks' Ross button
+window.pwOpenRoss=()=>rsOpen();   // Tasks' Cluck button
 let rsTried=false;
 function rsMaybeShow(){
   if(rsTried||!farmData||!aiFarm()||!rsOn()||new Date().getHours()<7)return;

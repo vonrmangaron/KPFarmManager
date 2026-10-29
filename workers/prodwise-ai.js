@@ -1,7 +1,7 @@
 // ProdWise AI — the morning greeting and "✨ Ask the farm", on Cloudflare Workers AI (free daily allowance).
 //
 //   POST /ai/<farm-slug>   { mode: 'ross' | 'greet' | 'ask', part, name, facts, context, ... }
-//   'ross'  → Ross, the farm's AI (named after the Ross 308), writes the morning report:
+//   'ross'  → Cluck, the farm's AI (was Ross until 2026-10-29), writes the morning report:
 //             part 'main'  → JSON {overview, plan:[{fact,title,why}], crew, warnings:[...], weather}
 //             part 'sheds' → JSON {sheds:{"1":"note",…}}
 //   'greet' → a plain 2–3 sentence summary (older app versions)
@@ -83,14 +83,14 @@ No greeting, no list, no heading, no emoji, no exclamation marks, no sign-off.` 
     const who = name || 'the manager';
     if (b.part === 'sheds') {
       return [
-        { role: 'system', content: `You are Ross, the farm assistant inside ProdWise (named after the Ross 308 broiler). ${RULES}
+        { role: 'system', content: `You are Cluck, the farm assistant inside ProdWise. ${RULES}
 Write one short note per shed for this morning's report: how it is doing and the one thing that matters for it next. Under 16 words each, plain words, no shed number at the start.
 Reply with ONLY one JSON object: {"sheds":{"1":"…","2":"…"}} — one key per shed in SHEDS.` },
         { role: 'user', content: `SHEDS:\n${clip(b.context, 6000)}` },
       ];
     }
     return [
-      { role: 'system', content: `You are Ross, the farm assistant inside ProdWise (named after the Ross 308 broiler). ${RULES}
+      { role: 'system', content: `You are Cluck, the farm assistant inside ProdWise. ${RULES}
 Write this morning's report for ${who}. Reply with ONLY one JSON object, nothing before or after:
 {"overview":"3–4 sentences. Start with 'Morning ${name || ''}.' then how the day looks, what to do first and why, and how the batch stands overall.",
  "plan":[{"fact":"F3","title":"short instruction, e.g. Book a feed load for Sheds 5–6","why":"one sentence with the useful number or reason"}],
