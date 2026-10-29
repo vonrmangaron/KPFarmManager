@@ -739,9 +739,9 @@ function computeFarmAlerts() {
       const est = currentShedWeightEstimate(shed, today);
       if (!est) return;
       const daysVar = daysVsTarget(age, est.kg);
-      // Amber, not red; skipped in the last 7 days before clean-out (too late to act on growth)
+      // Amber (soft): nothing to do today, but the manager keeps seeing it until the birds are out (2026-10-29)
       const out = rdOutDate(shed);
-      if (out && daysBetween(today, out) <= 7) return;
+      if (out && dateOnly(out) < dateOnly(today)) return;
       if (daysBehindSeverity(daysVar) === 'bad') {
         const g = Math.ceil(shed.id / 2);
         alerts.push({ kind: 'warn', msg: `<strong>Shed ${shed.id}</strong> — Growing slowly: ${Math.abs(daysVar).toFixed(1)} days behind ${stdName()}.`, tab: 'g'+g, shedId: shed.id });

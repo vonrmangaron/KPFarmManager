@@ -62,7 +62,7 @@ if(al)ok(Array.isArray(al)&&al.every(a=>!/NaN|undefined|Infinity/.test(a.msg)),'
 const gs=run('growing slowly alert',`(()=>{const sev=daysBehindSeverity;daysBehindSeverity=()=>'bad';notifPrefs.shedPerformance=true;const s8=farmData.sheds[7],co=s8.cleanoutDate;
   const a=computeFarmAlerts().filter(x=>/Growing slowly/.test(x.msg));s8.cleanoutDate=addDays(T,5);
   const b=computeFarmAlerts().filter(x=>/Growing slowly/.test(x.msg));s8.cleanoutDate=co;daysBehindSeverity=sev;return {a:a.map(x=>x.kind+':'+x.shedId),b:b.map(x=>x.shedId)};})()`);
-if(gs){ok(gs.a.length>0&&gs.a.every(x=>x.startsWith('warn:')),'growing-slowly alert is amber');ok(gs.a.some(x=>x==='warn:8')&&!gs.b.includes(8),'growing-slowly alert hidden in the last 7 days before clean-out');}
+if(gs){ok(gs.a.length>0&&gs.a.every(x=>x.startsWith('warn:')),'growing-slowly alert is amber');ok(gs.a.some(x=>x==='warn:8')&&gs.b.includes(8),'growing-slowly alert still shown in the last 7 days before clean-out (soft alarm, 2026-10-29)');}
 run('readings confidence',`(()=>{const r=siloData[1].readings[siloData[1].readings.length-1];return readingEndOfDayKg(1,r,deliveriesKgOn);})()`);
 
 console.log('5. Rendered cards have no NaN / undefined');

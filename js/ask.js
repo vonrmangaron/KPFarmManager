@@ -53,7 +53,7 @@ function rsCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__
 // ---------- the facts (straight from the apps) ----------
 function rsGo(act){
   const a=String(act||'');
-  if(/data-mgr-loads/.test(a))return 'Feed loads';if(/data-mgr-pickups/.test(a))return 'Pickups';if(/data-mgr-mort/.test(a))return 'Mortality';
+  if(/data-mgr-loads/.test(a))return 'Feed loads';if(/data-mgr-silo/.test(a))return 'Silo reading';if(/data-mgr-pickups/.test(a))return 'Pickups';if(/data-mgr-mort/.test(a))return 'Mortality';
   if(/data-brief-cw="prep"/.test(a))return 'Shed prep';if(/data-brief-cw/.test(a))return 'Tasks';
   let m=a.match(/data-brief-pair="\d+:(\d+)"/);if(m)return 'Shed '+m[1];
   m=a.match(/data-tab="g(\d)"/);if(m)return pairLabel(Number(m[1]));return '';
@@ -62,7 +62,7 @@ function rsData(){
   const today=mgrToday(),T=iso(today),cw=rsCw();
   const b=typeof mgrBriefData==='function'?mgrBriefData():{G:{today:[],watch:[],feed:[],co:[]},cw:null};
   const facts=[];let n=0;
-  [['Today',b.G.today],['Watch',b.G.watch],['Feed',b.G.feed],['Changeover & prep',b.G.co]].forEach(([g,a])=>a.forEach(x=>facts.push({id:'F'+(++n),grp:g,tone:x.tone,html:x.html,act:x.act,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')})));
+  [['Today',b.G.today],['Watch',b.G.watch],['Feed',b.G.feed],['Changeover & prep',b.G.co]].forEach(([g,a])=>a.forEach(x=>facts.push({id:'F'+(++n),grp:g,tone:x.tone,html:x.html,act:x.act,job:!!x.job,text:x.html.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&')})));
   // key numbers
   const sh=mgrPlaced(),placed=sh.reduce((s,x)=>s+(Number(x.initialPopulation)||0),0),live=sh.reduce((s,x)=>s+Math.max(0,liveAtStartOfDay(x,today)),0);
   const mort=sh.reduce((s,x)=>s+Math.max(0,Number(x.mortality)||0),0);
@@ -85,11 +85,11 @@ function rsData(){
     if(empty){const dn=pr&&pr.chicks?mgrDays(today,dateOnly(new Date(pr.chicks+'T00:00:00'))):null;
       return {id,tone:'b',pct:pr&&pr.total?pr.done/pr.total:0,head:pr?`Empty · prep ${pr.done} of ${pr.total}`:'Empty',fact:pr?`Empty, prep ${pr.done} of ${pr.total} jobs${dn!=null?', chicks in '+dn+' days':''}${pr.left.length?', left: '+pr.left.join(', '):''}`:'Empty'};}
     const age=ageInDays(s,today),pop=Number(s.initialPopulation)||0,m=Math.max(0,Number(s.mortality)||0),pc=pop?m/pop*100:0;
-    let dv=null;try{const f=forecastWeightModeAware(s,today);if(f&&f.kg!=null)dv=daysVsTarget(age,f.kg);}catch(e){}
+    let dv=null;try{const f=currentShedWeightEstimate(s,today);if(f&&f.kg!=null)dv=daysVsTarget(age,f.kg);}catch(e){}
     const dvt=dv==null?'':Math.abs(dv)<0.5?'on target':dv>0?`${dv.toFixed(1)} d ahead`:`${(-dv).toFixed(1)} d behind`;
     const out1=clean?mgrDays(today,clean):null,nx=mgrComingPickups(s)[0],sev=dv==null?'ok':daysBehindSeverity(dv);
     const mDay=yd&&yd.mort[id]!=null?m-yd.mort[id]:null;
-    const tone=pickToday.has(id)?'r':sev==='bad'||(dv!=null&&dv<=-2)?'a':out1!=null&&out1<=1?'b':'g';
+    const tone=pickToday.has(id)?'r':sev==='bad'?'a':out1!=null&&out1<=1?'b':'g';
     const head=`Day ${age}${dvt?' · '+dvt:''}${pickToday.has(id)?' · pickup today':out1===0?' · clean-out today':out1===1?' · out tomorrow':''}`;
     const span=clean?mgrDays(placedD,clean):0;
     return {id,tone,head,pct:span>0?Math.min(1,age/span):0,fact:`Day ${age}, ${dvt||'no weight yet'}, mortality ${pc.toFixed(2)}%${mDay!=null?' ('+(mDay>=0?'+':'')+mDay+' since yesterday)':''}${pickToday.has(id)?', pickup today':''}${nx&&!pickToday.has(id)?', next pickup '+fmtShortNoYear(nx.date)+' '+nx.birds.toLocaleString('en-US')+' birds':''}${clean?', clean-out '+fmtShortNoYear(clean):''}`};
@@ -168,7 +168,7 @@ function rsFarmSheet(d){
           if(pr)p.push(`${Math.round(pr.liveNow).toLocaleString('en-US')} birds in now`);
           const daily=ks.slice(-6).map((k,i,a)=>{const nx=i<a.length-1?hist[a[i+1]].mort[s.id]:m;const v=hist[k].mort[s.id];return v==null||nx==null?null:nx-v;}).filter(x=>x!=null);
           p.push(`mortality ${m.toLocaleString('en-US')} (${pop?(m/pop*100).toFixed(2):'0'}%)${daily.length?', daily last days: '+daily.join(', '):''}${s.mortalityUpdatedAt?', entered '+D(dateOnly(s.mortalityUpdatedAt)):''}`);
-          safe(()=>{const f=forecastWeightModeAware(s,today);if(f&&f.kg!=null){const dv=daysVsTarget(age,f.kg);p.push(`weight ${f.kg.toFixed(2)} kg vs ${stdName()} ${stdWeightKg(age).toFixed(2)} kg${dv!=null?' ('+(Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' d ahead':(-dv).toFixed(1)+' d behind')+')':''}${f.mode==='standard'?' (no weights yet, standard assumed)':' (estimated from pickups)'}`);}});
+          safe(()=>{const f=currentShedWeightEstimate(s,today);if(f&&f.kg!=null){const dv=daysVsTarget(age,f.kg);p.push(`weight ${f.kg.toFixed(2)} kg vs ${stdName()} ${stdWeightKg(age).toFixed(2)} kg${dv!=null?' ('+(Math.abs(dv)<0.5?'on target':dv>0?dv.toFixed(1)+' d ahead':(-dv).toFixed(1)+' d behind')+')':''}${f.isEstimate?f.basis==='curve'?' (estimated from the growth curve)':' (projected from the last pickup weighing)':' (weighed today)'}`);}});
           if(pr&&pr.fcr)p.push(`FCR ${Number(pr.fcr).toFixed(3)}, cFCR ${Number(pr.cfcr).toFixed(3)}, finish about day ${Math.round(pr.finalAge||0)} at ${Number(pr.estFinalALW||0).toFixed(2)} kg`);
           const done=(s.pickups||[]).filter(x=>x.date&&dateOnly(x.date)<=today&&Number(x.birds)>0);if(done.length)p.push(`${done.length} pickup(s) done, ${done.reduce((a,x)=>a+Number(x.birds),0).toLocaleString('en-US')} birds`);
           const nx=mgrComingPickups(s);if(nx.length)p.push('coming pickups '+nx.slice(0,3).map(x=>`${D(x.date)} ${x.birds.toLocaleString('en-US')}${x.planned?' (planned)':''}`).join(', '));
@@ -186,7 +186,7 @@ function rsFarmSheet(d){
 function rsContext(d){
   const L=[];
   L.push('PLAN TITLES: say plainly what to do about that FACT, naming the same shed numbers it names (a pair stays "Sheds 5–6" unless the fact names one shed). Never invent a different job such as "review the feeding plan". Never book feed for a shed that cleans out before its silos run low. Use FARM DATA for the numbers in each "why": feed, silos, the next batch Starter and starter silo, clean-outs, placements, mortality and performance.');
-  L.push('FACTS (red = act today, amber = watch — only these can be plan items; blue = info and green = fine are NOT jobs, never turn them into a plan item):',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}] ${f.grp}: ${f.text}`));
+  L.push('FACTS (red = urgent, amber = soon, blue = info, green = fine). ONLY facts marked JOB can be plan items: feed ordering, the next batch Starter, tasks, records to enter (mortality, silo readings, dockets, kill sheets), shed prep, feed off. Growth vs target, mortality % and weather are never plan items — mention them in warnings or the overview only:',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}${f.job?', JOB':''}] ${f.grp}: ${f.text}`));
   const sheet=rsFarmSheet(d);if(sheet)L.push('FARM DATA (check every plan item against this before you write it):',sheet);
   L.push('KEY NUMBERS:',...d.kpi.map(k=>`- ${k.k}: ${String(k.v).replace(/<[^>]+>/g,'')} (${String(k.s).replace(/<[^>]+>/g,'')})`));
   L.push('SHEDS:',...d.sheds.map(s=>`- Shed ${s.id}: ${s.fact}`));
@@ -210,18 +210,18 @@ function rsSaveTicks(t){try{localStorage.setItem(rsTicksKey(),JSON.stringify([..
 function rsModel(st,d){
   const M=st.main,S=st.sheds&&st.sheds.sheds?st.sheds.sheds:{};
   const byId=Object.fromEntries(d.facts.map(f=>[f.id,f]));
-  // Today's plan (2026-10-28): only red/amber facts become jobs — info lines ("load arriving", "10 tasks today") and
-  // made-up items are dropped, one item per fact, red first, and any red fact the AI skipped is added back.
-  const doable=f=>f&&(f.tone==='r'||f.tone==='a');
+  // Today's plan: only job facts (feed ordering, starter, tasks, records, shed prep, feed off — 2026-10-29) become items;
+  // growth, mortality % and weather stay watch items. One item per fact, red first, red/amber jobs the AI skipped are added back.
+  const doable=f=>f&&f.job;
   const fixedTitle=f=>{const m=/^Feed off today · (.+?) · /.exec(f.text);return m?'Turn the feed off · '+m[1]:'';};
   const seenF=new Set();
   let plan=(M&&Array.isArray(M.plan)?M.plan:[]).map(p=>({f:byId[String(p.fact||'').trim().toUpperCase()]||null,title:String(p.title||'').trim(),why:String(p.why||'').trim()}))
     .filter(p=>p.title&&doable(p.f)&&!seenF.has(p.f.id)&&seenF.add(p.f.id))
     .map(p=>({...p,title:fixedTitle(p.f)||p.title}));
-  d.facts.filter(f=>f.tone==='r'&&!seenF.has(f.id)).forEach(f=>plan.push({f,title:fixedTitle(f)||f.text,why:''}));
-  plan=plan.map((p,i)=>({p,i})).sort((a,b)=>((a.p.f.tone==='r'?0:1)-(b.p.f.tone==='r'?0:1))||a.i-b.i).map(x=>x.p).slice(0,5);
+  d.facts.filter(f=>f.job&&(f.tone==='r'||f.tone==='a')&&!seenF.has(f.id)).forEach(f=>plan.push({f,title:fixedTitle(f)||f.text,why:''}));
+  plan=plan.map((p,i)=>({p,i})).sort((a,b)=>(({r:0,a:1}[a.p.f.tone]??2)-({r:0,a:1}[b.p.f.tone]??2))||a.i-b.i).map(x=>x.p).slice(0,5);
   const aiPlan=plan.some(p=>p.why);
-  if(!plan.length)plan=d.facts.filter(f=>f.tone==='a').slice(0,5).map(f=>({f,title:f.text,why:''}));
+  if(!plan.length)plan=d.facts.filter(f=>f.job).slice(0,5).map(f=>({f,title:f.text,why:''}));
   const warns=M&&Array.isArray(M.warnings)&&M.warnings.length?M.warnings.slice(0,4).map(t=>({tone:'a',html:rsInl(t),text:String(t)})):d.trends.map(t=>({tone:t.tone,html:escapeHtml(t.text),text:t.text}));
   const red=d.facts.some(f=>f.tone==='r'),amber=d.facts.some(f=>f.tone==='a');
   const ticks=rsTicks(),allDone=plan.length>0&&plan.every((p,i)=>ticks.has(i));

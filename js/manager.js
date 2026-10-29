@@ -1097,27 +1097,35 @@ function mgrBriefCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeo
 function mgrBriefData(){
   const today=mgrToday(),days=mgrWeekDays(),cw=mgrBriefCw();
   if(!cw&&!mgrBriefAsked&&syncFarmName&&typeof pwEnsureTasksFrame==='function'){mgrBriefAsked=true;pwEnsureTasksFrame(()=>mgrBriefRefresh());}
-  const L=(tone,html,act)=>({tone,html,act:act||''});
+  // job: something the manager can do today (feed, tasks, records, prep) — only these go on Ross's Today's plan;
+  // growth, mortality % and weather are watch items: shown, never a job (2026-10-29)
+  const L=(tone,html,act,job)=>({tone,html,act:act||'',job:!!job});
   const G={today:[],watch:[],feed:[],co:[]};
   // Feed off before the catch (js/feedoff.js): first thing today, a heads-up the day before
   if(typeof foToday==='function'){const fo=foToday(),ft=foTomorrow();
-    if(fo&&!fo.done)G.today.push(L('r',`<b>Feed off today · ${escapeHtml(foLabel(fo.sheds))}</b> · catch tonight, kill sheet ${escapeHtml(foDay(fo.kill))}`));
+    if(fo&&!fo.done)G.today.push(L('r',`<b>Feed off today · ${escapeHtml(foLabel(fo.sheds))}</b> · catch tonight, kill sheet ${escapeHtml(foDay(fo.kill))}`,'',true));
     else if(fo&&fo.done)G.today.push(L('g',`Feed off · ${escapeHtml(foLabel(fo.sheds))} · done`));
-    if(ft&&!ft.done)G.today.push(L('a',`<b>Feed off tomorrow morning · ${escapeHtml(foLabel(ft.sheds))}</b> · kill sheet ${escapeHtml(foDay(ft.kill))}`));}
+    if(ft&&!ft.done)G.today.push(L('a',`<b>Feed off tomorrow morning · ${escapeHtml(foLabel(ft.sheds))}</b> · kill sheet ${escapeHtml(foDay(ft.kill))}`,'',true));}
   // Today
   const d0=days[0];
   d0.pick.forEach(p=>G.today.push(L('r',p.final?`<b>Final pickup · Shed ${p.shed}</b> · clean-out`:`<b>Pickup Shed ${p.shed}</b> · about ${p.birds.toLocaleString('en-US')} birds${p.planned?' (planned)':''}`,'data-mgr-pickups')));
   if(d0.loads.length){const kg=d0.loads.reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
     G.today.push(L('b',`<b>Feed ${d0.loads.length>1?d0.loads.length+' loads':'load'}</b> arriving today · ${mgrT(kg)}`,'data-mgr-loads'));}
   if(cw){
-    if(cw.overdue.length)G.today.push(L('r',`<b>${cw.overdue.length} task${cw.overdue.length===1?'':'s'} overdue</b> · ${escapeHtml(cw.overdue.slice(0,2).join(', '))}${cw.overdue.length>2?' …':''}`,'data-brief-cw="overdue"'));
+    if(cw.overdue.length)G.today.push(L('r',`<b>${cw.overdue.length} task${cw.overdue.length===1?'':'s'} overdue</b> · ${escapeHtml(cw.overdue.slice(0,2).join(', '))}${cw.overdue.length>2?' …':''}`,'data-brief-cw="overdue"',true));
     if(cw.today)G.today.push(L(cw.done===cw.today?'g':'b',`${cw.today} task${cw.today===1?'':'s'} today · ${cw.done===cw.today?'all done':cw.done+' done'}`,'data-brief-cw="today"'));
   }
+  // Records the manager has to keep up
+  const lateM=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;if(dateOnly(s.placementDate)>today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
+  if(lateM.length){const dd=lateM.map(s=>s.mortalityUpdatedAt?mgrDays(dateOnly(s.mortalityUpdatedAt),today):null),mx=dd.some(x=>x==null)?null:Math.max(...dd);
+    G.today.push(L(mx==null||mx>=3?'r':'a',`<b>Mortality not entered</b> · Shed${lateM.length===1?'':'s'} ${lateM.map(s=>s.id).join(', ')}${mx!=null?' · last '+mx+' days ago':''}`,'data-mgr-mort',true));}
+  const est=mgrPlaced().reduce((n,s)=>n+(s.pickups||[]).filter(p=>p.date&&dateOnly(p.date)<today&&p.weightEstimated).length,0);
+  if(est)G.today.push(L('a',`<b>${est} kill sheet${est===1?'':'s'}</b> still to enter · pickup weights are estimates`,'data-mgr-pickups',true));
   // Watch: growth, mortality, weather
   const live=mgrPlaced().filter(s=>!s.closed&&!(s.cleanoutDate&&dateOnly(s.cleanoutDate)<today));
-  live.forEach(s=>{const age=ageInDays(s,today);if(age<=0)return;let f=null;try{f=forecastWeightModeAware(s,today);}catch(e){}
-    if(!f||f.kg==null)return;const dv=daysVsTarget(age,f.kg);if(dv==null)return;const sev=daysBehindSeverity(dv);
-    if(sev==='bad'||(sev==='warn'&&dv<=-2))G.watch.push(L(sev==='bad'?'r':'a',`<b>Shed ${s.id}</b> is ${(-dv).toFixed(1)} days behind target weight`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
+  live.forEach(s=>{const age=ageInDays(s,today);if(age<=0)return;let f=null;try{f=typeof currentShedWeightEstimate==='function'?currentShedWeightEstimate(s,today):null;}catch(e){}
+    if(!f||f.kg==null)return;const dv=daysVsTarget(age,f.kg);if(dv==null)return;
+    if(daysBehindSeverity(dv)==='bad')G.watch.push(L('a',`<b>Shed ${s.id}</b> is ${(-dv).toFixed(1)} days behind target weight`,`data-brief-pair="${Math.ceil(s.id/2)}:${s.id}"`));});
   const placed=mgrPlaced().reduce((n,s)=>n+(Number(s.initialPopulation)||0),0),mortAll=mgrPlaced().reduce((n,s)=>n+Math.max(0,Number(s.mortality)||0),0);
   const avg=placed?mortAll/placed*100:0;
   live.forEach(s=>{const pop=Number(s.initialPopulation)||0;if(!pop)return;const pc=Math.max(0,Number(s.mortality)||0)/pop*100;
@@ -1130,9 +1138,10 @@ function mgrBriefData(){
   if(typeof pairAllClosed==='function')silos=silos.filter(x=>!pairAllClosed(x.g));
   silos.filter(x=>x.dep&&x.days<=7).forEach(x=>{const when=`${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}${x.days>1?' (in '+x.days+' days)':''}`;
     if(!x.feeding.length)G.feed.push(L('b',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run down ${when} · birds out for clean-out, no load needed`,`data-tab="g${x.g}"`));
-    else G.feed.push(L(x.days<=3?'r':'a',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run low ${when} · book a load for ${escapeHtml(mgrFeedingLabel(x))}${x.feeding.length<shedsForGroup(x.g).filter(s=>s.placementDate&&!s.closed).length?' (the other shed cleans out first)':''}`,`data-tab="g${x.g}"`));});
+    else G.feed.push(L(x.days<=3?'r':'a',`<b>${escapeHtml(pairLabel(x.g))}</b> silos run low ${when} · book a load for ${escapeHtml(mgrFeedingLabel(x))}${x.feeding.length<shedsForGroup(x.g).filter(s=>s.placementDate&&!s.closed).length?' (the other shed cleans out first)':''}`,`data-tab="g${x.g}"`,true));});
+  silos.filter(x=>!x.reading||x.readAge>=(typeof FEED_READING_STALE_DAYS!=='undefined'?FEED_READING_STALE_DAYS:3)).forEach(x=>G.feed.push(L('a',`<b>Read the silos · ${escapeHtml(pairLabel(x.g))}</b> · ${x.reading?'last reading '+x.readAge+' days ago':'no reading this batch'}`,'data-mgr-silo',true)));
   let sum=null;try{sum=farmLoadsSummary();}catch(e){}
-  if(sum&&sum.needsActual>0)G.feed.push(L('a',`<b>${sum.needsActual} load${sum.needsActual===1?'':'s'}</b> still need${sum.needsActual===1?'s':''} the docket weight`,'data-mgr-loads'));
+  if(sum&&sum.needsActual>0)G.feed.push(L('a',`<b>${sum.needsActual} load${sum.needsActual===1?'':'s'}</b> still need${sum.needsActual===1?'s':''} the docket weight`,'data-mgr-loads',true));
   if(!G.feed.length&&silos.length){const nx=silos.filter(x=>x.dep).sort((a,b)=>a.dep-b.dep)[0];
     G.feed.push(L('g',nx?`Every silo covered to ${fmtShortNoYear(nx.dep)}`:'Every silo covered for the next 60 days','data-mgr-loads'));}
   // Changeover & prep
@@ -1144,14 +1153,15 @@ function mgrBriefData(){
   try{const nb=(typeof pwRunOthers!=='undefined'&&Array.isArray(pwRunOthers)?pwRunOthers:[]).find(o=>o&&o.newest&&String(o.key).toLowerCase()!==String(currentBatchKey()||'').toLowerCase());
     [1,2,3,4].forEach(g=>{if(typeof starterSiloStatus!=='function')return;const st=starterSiloStatus(g);if(!st)return;const P=pairLabel(g),co=fmtShortNoYear(st.co);
       const sn=st.silo?siloNumber(g,st.silo):null;
-      if(st.inWin&&st.state==='pick')G.co.push(L('a',`<b>${P}</b> · choose the starter silo for the next batch (clean-out ${co})`,`data-tab="g${g}"`));
-      else if(st.inWin&&st.state==='action')G.co.push(L(st.late?'r':'a',`<b>${P}</b> · starter silo ${sn} still holds ${(st.kg/1000).toFixed(1)} t — ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)} so it is empty by clean-out (${co})`,`data-tab="g${g}"`));
-      (st.inWin?st.wrong||[]:[]).forEach(l=>G.co.push(L('a',`<b>${P}</b> · move the ${fmtShortNoYear(l.date)} ${escapeHtml(feedTypeLabel(l.feedType))} load out of starter silo ${sn} — keep it for the next batch`,`data-tab="g${g}"`)));
+      if(st.inWin&&st.state==='pick')G.co.push(L('a',`<b>${P}</b> · choose the starter silo for the next batch (clean-out ${co})`,`data-tab="g${g}"`,true));
+      else if(st.inWin&&st.state==='action')G.co.push(L(st.late?'r':'a',`<b>${P}</b> · starter silo ${sn} still holds ${(st.kg/1000).toFixed(1)} t — ${st.late?'open it now':'open it by '+fmtShortNoYear(st.openBy)} so it is empty by clean-out (${co})`,`data-tab="g${g}"`,true));
+      (st.inWin?st.wrong||[]:[]).forEach(l=>G.co.push(L('a',`<b>${P}</b> · move the ${fmtShortNoYear(l.date)} ${escapeHtml(feedTypeLabel(l.feedType))} load out of starter silo ${sn} — keep it for the next batch`,`data-tab="g${g}"`,true)));
       if(nb&&st.daysToCo<=21&&!(nb.starter||[]).some(l=>Number(l.splitKg&&l.splitKg[g])>0))
-        G.co.push(L(st.daysToCo<=7?'r':'a',`<b>${P}</b> · no Starter ordered yet for batch ${escapeHtml(String(nb.key))} — clean-out ${co}`,'data-mgr-loads'));});}catch(e){}
+        G.co.push(L(st.daysToCo<=7?'r':'a',`<b>${P}</b> · no Starter ordered yet for batch ${escapeHtml(String(nb.key))} — clean-out ${co}`,'data-mgr-loads',true));});}catch(e){}
   if(cw&&cw.prep){const p=cw.prep,left=p.total-p.done,dn=p.chicks?mgrDays(today,dateOnly(p.chicks)):null;
     const sh=p.sheds.length>2&&p.sheds.every((x,i)=>i===0||Number(x)===Number(p.sheds[i-1])+1)?`Sheds ${p.sheds[0]}–${p.sheds[p.sheds.length-1]}`:`Shed${p.sheds.length===1?'':'s'} ${p.sheds.join(', ')}`;
-    G.co.push(L(!left?'g':dn!=null&&dn<=7?'a':'b',`${sh} prep · ${p.done} of ${p.total} jobs done${dn!=null?' · chicks '+(dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days'):''}`,'data-brief-cw="prep"'));}
+    const pace=left&&dn!=null&&dn>0?left/dn:null,behind=left>0&&(dn!=null&&dn<=0||pace!=null&&pace>1);
+    G.co.push(L(!left?'g':behind?(dn!=null&&dn<=3?'r':'a'):'b',`<b>${sh} prep</b> · ${p.done} of ${p.total} jobs done${dn!=null?' · chicks '+(dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days'):''}${left?behind?` · behind${pace?', needs about '+Math.ceil(pace)+' jobs a day':''}`:' · on track':''}`,'data-brief-cw="prep"',left>0));}
   return {G,cw,today};
 }
 function mgrBriefInner(){
