@@ -70,7 +70,7 @@ function pnInner(){
       stRow('Hold notifications overnight','Nothing is sent during these hours. Held notifications are delivered when they end.',pnSw('quietOn','Quiet hours'))
      +(pnDraft.quietOn?`<div class="st2-row pn-qrow"><div class="pn-q"><span>From</span>${pnTime('quietFrom','Quiet from')}<span>to</span>${pnTime('quietTo','Quiet until')}<span class="st2-chip">Every day</span></div>${pnBar()}</div>`
        +stRow('Urgent reports override quiet hours','Sent to managers only.',pnSw('urgentBreak','Urgent reports override quiet hours')):''))
-   +stSec('Cluck: feed-off alert',
+   +stSec('Plumo: feed-off alert',
       stRow('Feed-off alert','The day before each pickup (kill sheet date), to managers. Sent even in quiet hours.',`${pnDraft.foOn?pnTime('foTime','Feed-off alert time'):''}${pnSw('foOn','Feed-off alert')}`)
      +(pnDraft.foOn?stRow('Reminder if not done','A second alert when nobody has tapped “Feed is off”.',`${pnDraft.foRemindOn?pnTime('foRemindTime','Feed-off reminder time'):''}${pnSw('foRemindOn','Feed-off reminder')}`):''))
    +stSec('Schedule',
