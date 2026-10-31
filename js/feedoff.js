@@ -97,6 +97,38 @@ function foSync(now){
     if(last===s)return;
     FarmNotify.feedoff(syncFarmName,events).then(()=>{try{localStorage.setItem(k,s);}catch(er){}}).catch(()=>{});
   },now?300:6000);
+  foCrewShare(now);
+}
+
+// ── Crew phones (2026-11-01): they can only read the Tasks file, so today's and tomorrow's feed-off days are
+// copied into its settings (settings.feedOff). Tasks merges settings key by key, so its own saves keep this.
+let foCrewTimer=null;
+function foCrewDays(){
+  const done=foDoneMap();
+  return foEvents(2).map(e=>{const birds={};e.sheds.forEach(id=>{const s=farmData.sheds[id-1];const b=s?mgrComingPickups(s).filter(p=>iso(p.date)===e.kill).reduce((n,p)=>n+(Number(p.birds)||0),0):0;if(b)birds[id]=b;});
+    const d=done[e.date]||{};return Object.assign({date:e.date,kill:e.kill,sheds:e.sheds,birds},e.done?{done:true,by:d.by||'',at:d.at||0}:{});});
+}
+function foCrewShare(now){
+  clearTimeout(foCrewTimer);
+  foCrewTimer=setTimeout(async()=>{
+    if(!syncFarmName||!farmData||!navigator.onLine)return;
+    const farm=sanitizeUserFarmName(syncFarmName),days=foCrewDays(),s=JSON.stringify(days),k='pw-fo-crew-'+farm;
+    let last=null;try{last=localStorage.getItem(k);}catch(er){}
+    if(last===s)return;
+    const url=`${SYNC_WORKER_URL}/?farm=${encodeURIComponent(farm)}&repo=${encodeURIComponent(SYNC_REPO)}`;
+    for(let i=0;i<4;i++){
+      try{
+        const res=await fetch(url,{cache:'no-store'});if(!res.ok)return;
+        const j=await res.json();if(!j||j.notFound||!j.data)return;   // this farm doesn't use Tasks
+        const st=j.data.settings||{};
+        if(JSON.stringify((st.feedOff||{}).days||[])===s){try{localStorage.setItem(k,s);}catch(er){}return;}
+        const put=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:j.sha,data:Object.assign({},j.data,{settings:Object.assign({},st,{feedOff:{days,at:Date.now()}})})})});
+        if(put.ok){try{localStorage.setItem(k,s);}catch(er){}return;}
+        if(put.status!==409&&put.status!==422)return;
+      }catch(er){return;}
+      await new Promise(r=>setTimeout(r,500*(i+1)));
+    }
+  },now?800:8000);
 }
 if(typeof saveState==='function'){const foSave0=saveState;saveState=function(){const r=foSave0.apply(this,arguments);foSync(false);return r;};}
 window.addEventListener('load',()=>setTimeout(()=>foSync(true),3000));
