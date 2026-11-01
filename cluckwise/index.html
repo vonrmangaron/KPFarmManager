@@ -15699,6 +15699,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx,
       prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)),
       prepLate: prepLateReady().map(c=> ({ shed: String(c.shed), placed: c.nextPlacement, left: prepProgress(c).total - prepProgress(c).done, batch: prepNextBatchOf(c) })),
+      // each shed's prep on its own (2026-11-01: Plumo only flags the urgent and nearly urgent ones)
+      prepSheds: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && !c.isTpl).map(c=>{ const p = prepProgress(c); return { shed: String(c.shed), done: p.done, total: p.total, chicks: c.nextPlacement || null, ready: c.status === 'ready' }; }),
       // weigh-ins due today or overdue, not ticked (2026-11-01: Plumo checks which sheds are due for weighing)
       weighs: tasks.filter(t=> t.source === 'auto-weight' && t.status !== 'done' && t.date && t.date <= today)
         .map(t=> ({ shed: String(t.shedNum || ''), day: weighDayAge(t), date: t.date, batch: t.batchNumber || '' })) };

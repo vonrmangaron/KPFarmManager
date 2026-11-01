@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v287';
+const CACHE_NAME = 'prodwise-v288';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,7 @@ const CORE_ASSETS = [
   './js/plumo-face.js',
   './js/ask.js',
   './js/bev.js',
+  './js/plumo-moves.js',
   './js/plumo-hero.js',
   './js/pwnotify.js',
   './js/feedoff.js',

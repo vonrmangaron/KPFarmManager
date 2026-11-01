@@ -161,12 +161,34 @@ function phBubbleHtml(D){
   return `<span class="ph-k">Plumo · morning report · ${escapeHtml(day)}</span><h2>${escapeHtml(D.say)}</h2>`
     +(D.items.length?`<ul class="ph-items">${D.items.map(i=>`<li class="t-${i.tone||'n'}">${escapeHtml(i.t)}</li>`).join('')}</ul>`:'');
 }
+// Minimised hero (2026-11-01): the scene folds away and Plumo's head sits on the right of the batch banner with a
+// greeting that fits his mood. Remembered on this device.
+function phMinOn(){try{return localStorage.getItem('pw-hero-min')==='1';}catch(e){return false;}}
+function phGreet(D){
+  const h=new Date().getHours(),hi=h<12?'Morning!':h<18?'Afternoon!':'Evening!';
+  if(D.mood==='alert')return `${D.red||1} red item${D.red===1?'':'s'} today — tap me.`;
+  if(D.mood==='thinking')return 'Reading the farm…';
+  if(D.mood==='rest')return 'Resting — the report has it all.';
+  if(D.mood==='happy')return D.unread?`${hi} Report's ready.`:`${hi} All on track.`;
+  return D.unread?`${hi} Report's ready — tap me.`:`${hi} Every shed is on track.`;
+}
+function phMiniHtml(D){return `<div class="ph-mini" id="phMini"><span class="ph-mbub" id="phMiniBub">${escapeHtml(phGreet(D))}</span>`
+  +`<button type="button" class="ph-mhead" id="phMiniHead" title="Plumo · open the morning report" aria-label="Plumo · open the morning report">${PlumoFace.html(D.mood)}</button>`
+  +`<button type="button" class="ph-mexp" data-ph-expand title="Show Plumo's farm again" aria-label="Show Plumo's farm again"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>`;}
+function phSetMin(on){try{localStorage.setItem('pw-hero-min',on?'1':'0');}catch(e){}const h=document.getElementById('plumoHero');if(h)h.classList.toggle('ph-min',on);
+  if(on&&window.PlumoFX){const f=document.getElementById('phFace');if(f&&f.__pfxRun)PlumoFX.cancel(f.__pfxRun);}}
+document.addEventListener('click',e=>{
+  if(e.target.closest&&e.target.closest('[data-ph-min]')){phSetMin(true);return;}
+  if(e.target.closest&&e.target.closest('[data-ph-expand]')){phSetMin(false);return;}
+  const m=e.target.closest&&e.target.closest('#phMiniHead');if(m){if(window.PlumoFace)PlumoFace.fly(m.querySelector('.plumoF'));setTimeout(()=>{if(typeof rsOpen==='function')rsOpen();},500);}});
 // Home's batch banner goes in as the hero's batch panel
 function plumoHeroWrap(headHtml){
   const D=phData();
-  return `<section class="ph-hero" id="plumoHero" aria-label="Plumo">
+  return `<section class="ph-hero${phMinOn()?' ph-min':''}" id="plumoHero" aria-label="Plumo">
     <div class="phs" data-m="${phSceneMood()}" aria-hidden="true">${phSceneHtml()}</div>
     <span class="ph-chip" id="phChip">${phChip(D)}</span>
+    <button type="button" class="ph-minbtn" data-ph-min title="Minimise Plumo — keep just his head" aria-label="Minimise Plumo"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+    ${phMiniHtml(D)}
     <button type="button" class="ph-face" id="phFace" title="Plumo — tap me" aria-label="Plumo">${PlumoFace.html(D.mood)}</button>
     <div class="ph-mid"><div class="ph-bub" id="phBub">${phBubbleHtml(D)}</div>
       <div class="ph-acts"><button type="button" class="ph-btn primary" data-ph-report>Open morning report</button><button type="button" class="ph-btn" data-bev-open><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Birds Eye View</button></div></div>
@@ -183,6 +205,8 @@ function phRefresh(){
     const f=document.getElementById('phFace');if(f&&!f.querySelector('.pf-'+D.mood))f.innerHTML=PlumoFace.html(D.mood);
     const c=document.getElementById('phChip');if(c){const x=phChip(D);if(c.innerHTML!==x)c.innerHTML=x;}
     const b=document.getElementById('phBub');if(b){const x=phBubbleHtml(D);if(b.innerHTML!==x)b.innerHTML=x;}
+    const mb=document.getElementById('phMiniBub');if(mb){const x=phGreet(D);if(mb.textContent!==x)mb.textContent=x;}
+    const mh=document.getElementById('phMiniHead');if(mh&&!mh.querySelector('.pf-'+D.mood))mh.innerHTML=PlumoFace.html(D.mood);
   }
   const t=document.getElementById('rossBtn');
   if(t){
@@ -195,50 +219,44 @@ function phRefresh(){
   }
 }
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-ph-report]')&&typeof rsOpen==='function')rsOpen();});
-// Plumo flies (2026-11-01): now and then on his own, and whenever he's tapped. The phone tile flies, then opens the report.
-// On the hero he flies away to the shed and back (2026-11-01, ≈6.5 s): crouch and take off in a puff of dust with
-// speed lines, turn his back to us and fly off toward the shed getting smaller (far away), circle over it, turn
-// round and come back growing, land with a squash. A sparkle trail follows him. A copy flies; the real face waits.
-const PH_FLY_MS=6500;
-function phFx(h,cls,x,y,size){const e=document.createElement('span');e.className='ph-fx '+cls;e.style.left=x+'px';e.style.top=y+'px';if(size)e.style.setProperty('--s',size);h.appendChild(e);setTimeout(()=>e.remove(),1200);}
+// Plumo's moves (2026-11-01, js/plumo-moves.js): one tap flies him to the shed and back (crouch, burst, cruise, dash,
+// land); a double-tap does the Kawarimi teleport — poof, a log drops where he stood, he pops in elsewhere on the hero
+// and teleports home a few seconds later. Now and then he does one of them on his own. The phone tile poofs into the
+// report; ticking a red item in the report makes him dodge.
+function phShedPoint(h){const H=h.getBoundingClientRect(),s=H.width/1080,crop=Math.max(0,350*s-H.height);return {x:985*s,y:(250-50)*s-crop};}   // the shed in the 1080-wide scene
 function phFlyAcross(){
   const f=document.getElementById('phFace'),h=document.getElementById('plumoHero');
-  if(!f||!h||h.querySelector('.ph-flyer')||!window.PlumoFace)return;
-  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  if(!f||!h||!window.PlumoFX||!window.PlumoFace)return;
   const pf=f.querySelector('.plumoF');if(!pf)return;
-  const H=h.getBoundingClientRect(),F=pf.getBoundingClientRect();
-  const x0=F.left-H.left,y0=F.top-H.top,cx=x0+F.width/2,cy=y0+F.height/2;
-  // the shed in the scene (drawn 1080 wide, bottom-anchored): map its spot to the hero
-  const s=H.width/1080,crop=Math.max(0,350*s-H.height),tx=985*s,ty=(250-50)*s-crop;
-  const dx=tx-cx,dy=ty-cy;
   const mood=(pf.className.match(/pf-(\w+)/)||[])[1]||'calm';
-  const fl=document.createElement('div');fl.className='ph-flyer';fl.setAttribute('aria-hidden','true');
-  fl.style.cssText=`left:${x0}px;top:${y0}px;width:${F.width}px;height:${F.height}px`;
-  fl.innerHTML=`<span class="ph-fv">${PlumoFace.html(mood)}</span><span class="ph-bv"><span class="plumoF pf-${mood}">${PlumoFace.back()}</span></span>`;
-  h.appendChild(fl);f.classList.add('ph-away');
-  fl.querySelectorAll('.plumoF').forEach(x=>PlumoFace.fly(x,PH_FLY_MS));
-  const K=(o,x,y,sc,r)=>({offset:o,easing:'ease-in-out',transform:`translate(${x}px,${y}px) scale(${sc}) rotate(${r||0}deg)`});
-  const path=[K(0,0,0,1),K(.06,0,10,1.06),K(.13,dx*.08,-80,1,-6),K(.22,dx*.3,-110+dy*.2,.78,4),K(.38,dx*.7,dy-70,.45,-3),K(.5,dx,dy-6,.24,0),
-    K(.56,dx+40*s,dy-26,.22,8),K(.62,dx-20*s,dy-40,.24,-8),K(.7,dx*.62,dy*.4-90,.5,-6),K(.82,dx*.22,-80,.86,4),K(.92,0,-18,1.04,0),K(.96,0,6,1.08),K(1,0,0,1)];
-  const anim=fl.animate(path,{duration:PH_FLY_MS});   // easing per leg, not over the whole trip
-  // front → back on the way out, back → front on the way home
-  fl.querySelector('.ph-fv').animate([{opacity:1,offset:0},{opacity:1,offset:.17},{opacity:0,offset:.2},{opacity:0,offset:.62},{opacity:1,offset:.66},{opacity:1,offset:1}],{duration:PH_FLY_MS});
-  fl.querySelector('.ph-bv').animate([{opacity:0,offset:0},{opacity:0,offset:.17},{opacity:1,offset:.2},{opacity:1,offset:.62},{opacity:0,offset:.66},{opacity:0,offset:1}],{duration:PH_FLY_MS});
-  // take-off: dust and speed lines; a sparkle trail; landing dust
-  phFx(h,'ph-dust',cx,y0+F.height-10,1);phFx(h,'ph-burst',cx,cy,1);
-  const t0=performance.now();let last=0;
-  (function trail(t){if(!fl.isConnected)return;const el=t-t0;if(el>PH_FLY_MS)return;
-    if(t-last>70&&el>500&&el<PH_FLY_MS-500){last=t;const r=fl.getBoundingClientRect();
-      phFx(h,'ph-spark',r.left-H.left+r.width/2+(Math.random()-.5)*r.width*.5,r.top-H.top+r.height*.62+(Math.random()-.5)*r.height*.3,(r.width/F.width).toFixed(2));}
-    requestAnimationFrame(trail);})(t0);
-  setTimeout(()=>phFx(h,'ph-dust',cx,y0+F.height-10,1),PH_FLY_MS*.95);
-  anim.onfinish=()=>{fl.remove();f.classList.remove('ph-away');};
+  PlumoFX.playFly({host:h,face:f,measure:pf,target:phShedPoint(h),front:PlumoFace.html(mood),back:`<span class="plumoF pf-${mood}">${PlumoFace.back()}</span>`});
 }
-document.addEventListener('click',e=>{const f=e.target.closest&&e.target.closest('#phFace');if(f)phFlyAcross();});
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#rossBtn.ross-float');if(!t||!window.PlumoFace)return;
-  e.stopImmediatePropagation();e.preventDefault();PlumoFace.fly(t.querySelector('.rossR'));setTimeout(()=>{if(typeof rsOpen==='function')rsOpen();},900);},true);
+let phAwayTimer=null;
+function phKawarimi(home){
+  const f=document.getElementById('phFace'),h=document.getElementById('plumoHero');if(!f||!h||!window.PlumoFX)return;
+  clearTimeout(phAwayTimer);
+  if(home||+(f.dataset.pfxDx||0)||+(f.dataset.pfxDy||0)){PlumoFX.playKawarimi({face:f,host:h,to:{dx:0,dy:0}});return;}
+  const H=h.getBoundingClientRect(),F=f.getBoundingClientRect(),hx=F.left-H.left+F.width/2,sp=phShedPoint(h);
+  const spots=[{dx:sp.x-110-hx,dy:0},{dx:H.width*.46-hx,dy:4},{dx:H.width-300-hx,dy:4}].filter(t=>t.dx>80);
+  const to=spots[Math.floor(Math.random()*spots.length)]||{dx:H.width*.4,dy:10};
+  PlumoFX.playKawarimi({face:f,host:h,to,onEnd:()=>{phAwayTimer=setTimeout(()=>phKawarimi(true),2600+Math.random()*1400);}});
+}
+let phTapTimer=null;
+document.addEventListener('click',e=>{const f=e.target.closest&&e.target.closest('#phFace');if(!f)return;
+  if(phTapTimer){clearTimeout(phTapTimer);phTapTimer=null;phKawarimi();return;}            // double-tap: teleport
+  phTapTimer=setTimeout(()=>{phTapTimer=null;if(+(f.dataset.pfxDx||0))phKawarimi(true);else phFlyAcross();},260);});
+// the phone tile: he poofs out of the tile and pops into the report as it opens
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#rossBtn.ross-float');if(!t||!window.PlumoFX)return;
+  e.stopImmediatePropagation();e.preventDefault();
+  const face=t.querySelector('.ross-mk')||t;
+  const r=PlumoFX.playKawarimi({face,host:null,toEl:()=>document.querySelector('#rsModal.open #rsFace'),events:[{t:150,fn:()=>{if(typeof rsOpen==='function')rsOpen();}}]});
+  if(!r&&typeof rsOpen==='function')rsOpen();},true);
+// a red item ticked off in the report: Plumo dodges to the side and back
+function plumoDodge(){const f=document.querySelector('#rsModal.open #rsFace');if(!f||!window.PlumoFX)return;
+  PlumoFX.playKawarimi({face:f,host:null,to:{dx:76,dy:-6},onEnd:()=>setTimeout(()=>{const g=document.querySelector('#rsModal.open #rsFace');if(g)PlumoFX.playKawarimi({face:g,host:null,to:{dx:0,dy:0}});},1200)});}
 (function phAutoFly(){setTimeout(()=>{if(document.visibilityState==='visible'&&window.PlumoFace){
-  const hf=document.getElementById('phFace');if(hf&&hf.offsetParent)phFlyAcross();
+  const hf=document.getElementById('phFace');if(hf&&hf.offsetParent&&!hf.__pfxRun){if(Math.random()<.65)phFlyAcross();else phKawarimi();}
+  const mh=document.querySelector('#phMiniHead .plumoF');if(mh&&mh.offsetParent)PlumoFace.fly(mh);
   const tile=document.querySelector('#rossBtn.ross-float .rossR');if(tile&&tile.offsetParent)PlumoFace.fly(tile);}
   phAutoFly();},35000+Math.random()*30000);})();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(phRefresh,4200));

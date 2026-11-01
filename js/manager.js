@@ -1209,12 +1209,36 @@ function mgrBriefData(){
       (st.inWin?st.wrong||[]:[]).forEach(l=>G.co.push(L('a',`<b>${P}</b> · move the ${fmtShortNoYear(l.date)} ${escapeHtml(feedTypeLabel(l.feedType))} load out of starter silo ${sn} — keep it for the next batch`,`data-tab="g${g}"`,true)));
       if(nb&&st.daysToCo<=21&&!(nb.starter||[]).some(l=>Number(l.splitKg&&l.splitKg[g])>0))
         G.co.push(L(st.daysToCo<=7?'r':'a',`<b>${P}</b> · no Starter ordered yet for batch ${escapeHtml(String(nb.key))} — clean-out ${co}`,'data-mgr-loads',true));});}catch(e){}
-  if(cw&&cw.prep){const p=cw.prep,left=p.total-p.done,dn=p.chicks?mgrDays(today,dateOnly(p.chicks)):null;
+  // Shed prep, one shed at a time (2026-11-01). Plumo only raises the urgent and the nearly urgent:
+  //  • under half done with chicks in ≤ 2 days → red, a job for today
+  //  • half done or more with chicks in ≤ 2 days, or under half with chicks in 3–4 days → a soft note
+  //  • a shed finished early → a soft tip to start on the next shed to get chicks
+  // Soft notes have "Got it": snoozed until tomorrow. Everything further off stays quiet.
+  if(cw&&Array.isArray(cw.prepSheds)){
+    const T=iso(today),sn=mgrPrepSnoozed(),days=x=>x.chicks?mgrDays(today,dateOnly(new Date(x.chicks+'T00:00:00'))):null,whenTx=dn=>dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days';
+    const open=cw.prepSheds.filter(x=>!x.ready&&x.total>0&&x.done<x.total);
+    open.forEach(x=>{const dn=days(x);if(dn==null||dn<0)return;const pct=x.done/x.total,left=x.total-x.done;
+      if(pct<.5&&dn<=2)G.co.push(L('r',`<b>Shed ${escapeHtml(x.shed)} prep is behind</b> · ${x.done} of ${x.total} jobs done (${Math.round(pct*100)}%) · chicks ${whenTx(dn)} — ${left} job${left===1?'':'s'} to go`,'data-brief-cw="prep"',true));
+      else if((dn<=2||(pct<.5&&dn<=4))&&sn[x.shed]!==T)
+        G.co.push(L('b',`<b>Shed ${escapeHtml(x.shed)} prep</b> · ${Math.round(pct*100)}% done · chicks ${whenTx(dn)} · ${left} job${left===1?'':'s'} left <span class="bf-ack">Got it · remind me tomorrow</span>`,`data-prep-ack="${escapeAttr(x.shed)}"`));});
+    const early=cw.prepSheds.filter(x=>(x.ready||x.total>0&&x.done>=x.total)&&days(x)!=null&&days(x)>1);
+    if(early.length){const next=open.filter(x=>days(x)!=null&&days(x)>=0).sort((a,c)=>days(a)-days(c))[0];
+      if(next&&sn['next-'+next.shed]!==T)G.co.push(L('g',`<b>Shed ${escapeHtml(early[0].shed)} is ready early</b> · next up: Shed ${escapeHtml(next.shed)} (chicks ${whenTx(days(next))}, ${Math.round(next.done/next.total*100)}% done) <span class="bf-ack">Got it</span>`,`data-prep-ack="next-${escapeAttr(next.shed)}"`));}
+  }
+  else if(cw&&cw.prep){
+const p=cw.prep,left=p.total-p.done,dn=p.chicks?mgrDays(today,dateOnly(p.chicks)):null;
     const sh=p.sheds.length>2&&p.sheds.every((x,i)=>i===0||Number(x)===Number(p.sheds[i-1])+1)?`Sheds ${p.sheds[0]}–${p.sheds[p.sheds.length-1]}`:`Shed${p.sheds.length===1?'':'s'} ${p.sheds.join(', ')}`;
     const pace=left&&dn!=null&&dn>0?left/dn:null,behind=left>0&&(dn!=null&&dn<=0||pace!=null&&pace>1);
     G.co.push(L(!left?'g':behind?(dn!=null&&dn<=3?'r':'a'):'b',`<b>${sh} prep</b> · ${p.done} of ${p.total} jobs done${dn!=null?' · chicks '+(dn<=0?'today':dn===1?'tomorrow':'in '+dn+' days'):''}${left?behind?` · behind${pace?', needs about '+Math.ceil(pace)+' jobs a day':''}`:' · on track':''}`,'data-brief-cw="prep"',left>0));}
   return {G,cw,today};
 }
+// Shed prep soft notes: "Got it" snoozes one until tomorrow (per farm, kept on this device)
+function mgrPrepSnoozeKey(){return 'pw-prep-snooze-'+(syncFarmName||'local');}
+function mgrPrepSnoozed(){try{return JSON.parse(localStorage.getItem(mgrPrepSnoozeKey())||'{}')||{};}catch(e){return {};}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-prep-ack]');if(!b)return;e.preventDefault();e.stopPropagation();
+  const m=mgrPrepSnoozed(),T=iso(mgrToday());Object.keys(m).forEach(k=>{if(m[k]<T)delete m[k];});m[b.dataset.prepAck]=T;
+  try{localStorage.setItem(mgrPrepSnoozeKey(),JSON.stringify(m));}catch(er){}
+  if(typeof showToast==='function')showToast('Got it — Plumo will check again tomorrow.');if(typeof render==='function')render();},true);
 function mgrBriefInner(){
   if(!farmData)return '';
   const {G,cw}=mgrBriefData(),now=new Date(),h=now.getHours();

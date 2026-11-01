@@ -113,7 +113,7 @@ function rsData(){
   silos.filter(x=>x.dep&&x.days<=4).forEach(x=>trends.push({tone:x.days<=2?'r':'a',text:`${pairLabel(x.g)} feed runs low ${fmtShortNoYear(x.dep)} (${x.days} days of cover)`}));
   (cw&&cw.recurring||[]).slice(0,2).forEach(r=>trends.push({tone:'a',text:`${r.label} reported ${r.n} times this month`}));
   (cw&&cw.urgent||[]).filter(r=>r.days>=3).slice(0,2).forEach(r=>trends.push({tone:r.urgent?'r':'a',text:`${r.label} — ${r.status.toLowerCase()} for ${r.days} days`}));
-  (cw&&cw.prep||[]).forEach(p=>{if(!p.chicks)return;const dn=mgrDays(today,dateOnly(new Date(p.chicks+'T00:00:00'))),left=p.total-p.done;if(left>0&&dn>0&&left/dn>1)trends.push({tone:'a',text:`Shed ${p.shed} prep needs about ${Math.ceil(left/dn)} jobs a day to be ready for chicks`});});
+  (cw&&cw.prep||[]).forEach(p=>{if(!p.chicks)return;const dn=mgrDays(today,dateOnly(new Date(p.chicks+'T00:00:00'))),left=p.total-p.done;if(left>0&&dn>0&&dn<=4&&p.done/p.total<.5&&left/dn>1)trends.push({tone:'a',text:`Shed ${p.shed} prep needs about ${Math.ceil(left/dn)} jobs a day to be ready for chicks`});});   // only under half done and chicks within 4 days (2026-11-01)
   // week ahead
   const week=days.map((x,i)=>{const ev=[];x.pick.forEach(p=>ev.push({k:'p',t:`${p.final?'Final ':''}Pickup S${p.shed}`}));
     x.loads.forEach(l=>ev.push({k:'f',t:`Load ${mgrT(l.actualKg!=null?Number(l.actualKg):Number(l.plannedKg)||0)}`}));
@@ -317,6 +317,8 @@ function rsEnsureDom(){
     if(e.target.closest('#rsNext')){if(rsStep===RS_TABS.length-1)rsEndWalk();else rsGoStep(rsStep+1);return;}
     if(e.target.closest('#rsPrev')){rsGoStep(rsStep<=0?0:rsStep-1);return;}
     const tk=e.target.closest('[data-rs-tick]');if(tk&&rsCur){const i=+tk.dataset.rsTick,T=rsTicks();T.has(i)?T.delete(i):T.add(i);rsSaveTicks(T);rsCur.R.ticks=T;
+      {const it=rsCur.R.plan&&rsCur.R.plan[i];if(T.has(i)&&it&&it.f&&it.f.tone==='r'&&typeof plumoDodge==='function')setTimeout(plumoDodge,60);}   // a red one cleared: Plumo dodges (2026-11-01)
+      
       const row=tk.closest('.rs-act');row.classList.toggle('done',T.has(i));tk.setAttribute('aria-pressed',String(T.has(i)));
       const P=rsCur.R.plan,n=P.filter((p,j)=>T.has(j)).length,pr=document.getElementById('rsProg');if(pr)pr.textContent=`${n} of ${P.length} done`;
       if(n===P.length){rsCur.R.mood='happy';rsTell('That\'s the plan cleared — nice work.','happy');}

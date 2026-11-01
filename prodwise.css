@@ -6818,10 +6818,10 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
 .ph-btn.primary{border:0;background:#FF7A1A;color:#141824;font-weight:800;box-shadow:0 6px 16px rgba(255,122,26,.4)}
 .ph-btn:hover{filter:brightness(1.08)}.ph-btn:focus-visible{outline:3px solid #FFD452;outline-offset:2px}
 @media (min-width:769px){
-  .mgr-home .ph-hero .mgr-head{position:relative;z-index:1;flex:0 1 270px;min-width:230px;align-self:flex-start;margin:18px;padding:14px 16px;border-radius:16px;background:rgba(8,12,22,.6);border:1px solid rgba(255,255,255,.18);box-shadow:none;backdrop-filter:blur(2px)}
-  .mgr-home .ph-hero .mgr-head::after{display:none}
-  .mgr-home .ph-hero .mgr-batch b{font-size:19px;line-height:1.2}
-  .mgr-home .ph-hero .mgr-batch span{font-size:12.5px}
+  .mgr-home .ph-hero:not(.ph-min) .mgr-head{position:relative;z-index:1;flex:0 1 270px;min-width:230px;align-self:flex-start;margin:18px;padding:14px 16px;border-radius:16px;background:rgba(8,12,22,.6);border:1px solid rgba(255,255,255,.18);box-shadow:none;backdrop-filter:blur(2px)}
+  .mgr-home .ph-hero:not(.ph-min) .mgr-head::after{display:none}
+  .mgr-home .ph-hero:not(.ph-min) .mgr-batch b{font-size:19px;line-height:1.2}
+  .mgr-home .ph-hero:not(.ph-min) .mgr-batch span{font-size:12.5px}
 }
 @media (min-width:769px){body:has(#plumoHero) #rossBtn{display:none}}
 /* phones: no hero, the batch banner shows as before */
@@ -6851,17 +6851,22 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
 @media (max-width:768px){.ross-btn.ross-float,.ross-btn.ross-float .ross-mk{overflow:visible}}
 .ph-face .plumoF{overflow:visible}
 
-/* Plumo flies away to the shed and back (2026-11-01, js/plumo-hero.js phFlyAcross): a flying copy, front and back
-   views, dust, anime speed lines and a sparkle trail. The real face hides while he's away. */
-.ph-face.ph-away{opacity:0}
-.ph-flyer{position:absolute;z-index:5;pointer-events:none;transform-origin:50% 60%;will-change:transform}
-.ph-flyer .ph-fv,.ph-flyer .ph-bv{position:absolute;inset:0}.ph-flyer .ph-bv{opacity:0}
-.ph-flyer .plumoF{width:100%;height:100%;filter:drop-shadow(0 12px 14px rgba(0,0,0,.35))}
-.ph-fx{position:absolute;z-index:4;pointer-events:none;transform:translate(-50%,-50%)}
-.ph-dust{width:180px;height:44px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,250,240,.95),rgba(232,220,196,.7) 45%,rgba(232,220,196,0));animation:phDust .9s ease-out forwards}
-@keyframes phDust{0%{opacity:.95;transform:translate(-50%,-50%) scale(.3,.5)}100%{opacity:0;transform:translate(-50%,-70%) scale(1.5,1.1)}}
-.ph-burst{width:340px;height:340px;border-radius:50%;background:repeating-conic-gradient(rgba(255,255,255,.95) 0 1.4deg,transparent 1.4deg 11deg);-webkit-mask:radial-gradient(circle,transparent 26%,#000 34%,#000 52%,transparent 60%);mask:radial-gradient(circle,transparent 26%,#000 34%,#000 52%,transparent 60%);animation:phBurst .55s ease-out forwards}
-@keyframes phBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.45) rotate(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.25) rotate(12deg)}}
-.ph-spark{width:calc(14px * var(--s,1));height:calc(14px * var(--s,1));background:#FFF6C8;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 4px rgba(255,236,150,.9));animation:phSpark .8s ease-out forwards}
-@keyframes phSpark{0%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(-50%,-10%) scale(.2) rotate(140deg)}}
-@media (prefers-reduced-motion:reduce){.ph-fx{display:none}}
+/* Plumo's flight and Kawarimi teleport: styles live in js/plumo-moves.js (2026-11-01) */
+
+/* minimise the hero (2026-11-01): the scene folds away; Plumo's head + a greeting sit on the right of the batch banner */
+.ph-minbtn{position:absolute;right:300px;top:16px;z-index:3;width:30px;height:30px;border-radius:9px;border:0;background:rgba(8,12,22,.55);color:#fff;display:grid;place-items:center;cursor:pointer}
+.ph-minbtn:hover{background:rgba(8,12,22,.75)}.ph-minbtn:focus-visible,.ph-mexp:focus-visible,.ph-mhead:focus-visible{outline:3px solid #FFD452;outline-offset:2px}
+.ph-mini{display:none}
+.ph-mhead{width:74px;height:82px;border:0;padding:0;background:none;cursor:pointer}.ph-mhead .plumoF{width:100%;height:100%;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35))}
+.ph-mbub{position:relative;max-width:260px;background:#fff;color:#141824;border:2px solid #141824;border-radius:12px;padding:7px 11px;font:800 13px/1.3 Sora,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.ph-mbub::after{content:"";position:absolute;right:-9px;top:50%;transform:translateY(-50%);border:6px solid transparent;border-left:8px solid #141824;border-right:0}
+.ph-mexp{width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;cursor:pointer;align-self:flex-start}
+@media (min-width:769px){
+  .mgr-home{position:relative}
+  .ph-hero.ph-min{display:contents}
+  .ph-hero.ph-min>.phs,.ph-hero.ph-min>.ph-chip,.ph-hero.ph-min>.ph-face,.ph-hero.ph-min>.ph-mid,.ph-hero.ph-min>.ph-minbtn{display:none}
+  .ph-hero.ph-min>.ph-mini{display:flex;align-items:center;gap:10px;position:absolute;right:20px;top:6px;z-index:3}
+  .ph-hero.ph-min .mgr-head{padding-right:400px}
+}
+@media (min-width:769px) and (max-width:1100px){.ph-hero.ph-min .mgr-head{padding-right:22px;padding-bottom:96px}.ph-hero.ph-min>.ph-mini{top:auto;bottom:0}}
+.bf-ack{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--surface-soft);border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap}
