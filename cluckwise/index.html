@@ -12927,13 +12927,16 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let done = false;
     const add = ()=>{ const v = inp.value.trim().replace(/\s+/g, ' '); if(!v) return false;
       (sec.items = sec.items || []).push(prepMarkNew({ id: uid(), t: v, added: true })); delete sec.done; delete sec.taskId;
-      prepHist(c, `Shed ${c.shed}: added "${v}" to ${sec.t}`); persist(); return true; };
+      prepHist(c, `Shed ${c.shed}: added "${v}" to ${sec.t}`); prepReopenOne(c, `"${v}"`); persist(); return true; };
     inp.addEventListener('keydown', (e)=>{
       if(e.key === 'Enter'){ e.preventDefault(); if(add()){ done = true; prepAddAgain = cid + '|' + sid; renderAll(); } }
       else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done = true; renderAll(); }
     });
     inp.addEventListener('blur', ()=>{ if(done) return; done = true; add(); renderAll(); });
   }
+  // a job added to one ready shed reopens it (it isn't ready any more)
+  function prepReopenOne(c, what){ if(!c || c.isTpl || c.status !== 'ready') return; c.status = 'preparing'; delete c.readyAt; delete c.readyBy;
+    addHistory('Shed preparation', `Shed ${c.shed} reopened for ${what}`); setTimeout(()=> showToast(`Shed ${c.shed} reopened for ${what}.`), 0); }
   // the Add a section window: name and its items in one go
   let prepSecFor = null;
   function prepSecRow(val){
@@ -12960,7 +12963,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const items = [...document.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
     if(prepSecFor === '__list'){ if(prepAddSection(name, items)){ $('#prepSecModal').classList.remove('open'); prepSecFor = null; showToast(`Section "${name}" added for every shed.`); } return; }
     c.sections.push({ id: uid(), t: name, items: items.map(t=> prepMarkNew({ id: uid(), t, added: true })), added: true });
-    prepHist(c, `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`);
+    prepHist(c, `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`); prepReopenOne(c, `the "${name}" section`);
     $('#prepSecModal').classList.remove('open'); prepSecFor = null;
     persist(); renderAll();
     showToast(`Section "${name}" added${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}.`);
@@ -13229,15 +13232,28 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     return ch;
   }
   function prepStructDone(msg){ prepSyncStructure(); if(msg) addHistory('Shed preparation', msg); persist(); renderAll(); }
+  // A new job or section goes on every shed still waiting for chicks (2026-11-01): a shed already marked ready is
+  // reopened so it gets it too ("Put lime" never reached a ready Shed 1). Jobs it had signed off stay ticked.
+  function prepReopenReady(what){
+    const sheds = [];
+    prepShedList().forEach(sh=>{ const c = prepActiveFor(sh); if(!c || c.isTpl || c.status !== 'ready') return;
+      c.status = 'preparing'; delete c.readyAt; delete c.readyBy; sheds.push(c.shed); });
+    if(sheds.length){
+      const lbl = (sheds.length === 1 ? 'Shed ' : 'Sheds ') + sheds.join(', ');
+      addHistory('Shed preparation', `${lbl} reopened for ${what}`);
+      setTimeout(()=> showToast(`${lbl} reopened — ${sheds.length === 1 ? 'it gets' : 'they get'} ${what} too.`), 0);
+    }
+    return sheds;
+  }
   function prepAddJob(secT, t){
     t = String(t || '').trim().replace(/\s+/g, ' '); if(!t) return false;
     const m = prepMaster(), S = prepMasterSec(m, secT); if(!S) return false;
     if(S.items.some(x=> prepNorm(x) === prepNorm(t))){ showToast(`"${t}" is already in ${S.t}.`, true); return false; }
-    S.items.push(t); prepSaveMaster(m); prepStructDone(`Checklist: added "${t}" to ${S.t}`); return true;
+    S.items.push(t); prepSaveMaster(m); prepReopenReady(`"${t}"`); prepStructDone(`Checklist: added "${t}" to ${S.t}`); return true;
   }
   function prepAddSection(name, items){
     const m = prepMaster(); if(prepMasterSec(m, name)){ showToast(`There is already a section called "${name}".`, true); return false; }
-    m.push({ t: name, items: [...new Set(items)] }); prepSaveMaster(m); prepStructDone(`Checklist: added section "${name}"`); return true;
+    m.push({ t: name, items: [...new Set(items)] }); prepSaveMaster(m); prepReopenReady(`the "${name}" section`); prepStructDone(`Checklist: added section "${name}"`); return true;
   }
   function prepRenameJob(secT, oldT, newT){
     newT = String(newT || '').trim().replace(/\s+/g, ' '); if(!newT || newT === oldT) return;
