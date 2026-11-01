@@ -18,6 +18,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
+<script src="../js/plumo-face.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1509,6 +1510,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     border:3px solid var(--surface); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#16191B; font-family:'Inter',sans-serif; line-height:1;
   }
   .col-now-badge .cnb-ic{ font-size:28px; }
+  .col-now-badge.cnb-plumo .cnb-ic{ width:44px; height:48px; margin-top:-8px; }
+  .col-now-badge.cnb-plumo .cnb-ic .plumoF{ width:100%; height:100%; }
+  .col-now-badge.cnb-plumo .cnb-t{ font-size:17px; margin-top:-2px; }
   .col-now-badge .cnb-t{ font-family:'Sora',sans-serif; font-size:19px; font-weight:800; margin-top:1px; }
   .col-now-badge .cnb-l{ font-size:9px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; opacity:0.65; }
   body.theme-dark .col-now-badge{ color:var(--ink); border-color:var(--bg); }
@@ -9100,6 +9104,18 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(w.wind != null && w.wind >= (F ? 25 : 40)) a.push(['wind', '💨 Windy']);
     return a;
   }
+  // Plumo's mood for a day's weather (2026-11-01): storm → battle, heat → stressed, frost → sleepy, wet → thinking,
+  // clear → fired up, anything else calm. The tip goes in the tooltip.
+  function plumoWxMood(w){
+    const a = wxAlerts(w).map(x=> x[0]), tone = wxTone(w.code);
+    if(a.includes('storm')) return ['alert', 'Storm coming — secure the doors and test the generator.'];
+    if(a.includes('heat')) return ['stress', 'Heat today — fans and water first, no outside jobs in the middle of the day.'];
+    if(a.includes('frost')) return ['rest', 'Cold night — brooder heat on early, check the curtains.'];
+    if(a.includes('rain') || tone === 'rain' || tone === 'snow') return ['thinking', 'Wet day — plan the inside jobs and check the roof for leaks.'];
+    if(a.includes('wind')) return ['thinking', 'Windy — check the curtains and anything loose outside.'];
+    if(tone === 'sun') return ['happy', 'Great day for outside jobs.'];
+    return ['calm', 'A normal day — everything on track.'];
+  }
   // variant: 'col' (Board column) | 'wide' (Day view / day popup)
   function buildWxCard(key, variant){
     const w = wxForDate(key);
@@ -10814,9 +10830,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
           const [nIc, nLabel] = wxIconLabel(wNow.current.code, wNow.current.isDay);
           const nb = document.createElement('span');
           nb.className = 'col-now-badge wx-tone-' + wxTone(wNow.current.code);
-          nb.title = `Now: ${nLabel} · ${wxT(wNow.current.temp)}` + (wNow.current.hum != null ? ` · RH ${Math.round(wNow.current.hum)}%` : '');
+          // Plumo's head in place of the weather icon (2026-11-01): his mood follows today's forecast
+          const [pm, pTip] = plumoWxMood(wNow);
+          nb.title = `Now: ${nLabel} · ${wxT(wNow.current.temp)}` + (wNow.current.hum != null ? ` · RH ${Math.round(wNow.current.hum)}%` : '') + ` — Plumo: ${pTip}`;
           nb.innerHTML = `<span class="cnb-ic"></span><span class="cnb-t"></span><span class="cnb-l">Now</span>`;
-          nb.querySelector('.cnb-ic').textContent = nIc;
+          if(window.PlumoFace){ nb.classList.add('cnb-plumo'); nb.querySelector('.cnb-ic').innerHTML = PlumoFace.html(pm); }
+          else nb.querySelector('.cnb-ic').textContent = nIc;
           nb.querySelector('.cnb-t').textContent = wxT(wNow.current.temp);
           col.classList.add('has-now');
           col.appendChild(nb);
