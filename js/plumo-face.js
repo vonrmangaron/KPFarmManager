@@ -24,14 +24,21 @@
   const AURA = { calm:['#3FD0FF', .24, '#3FD0FF'], thinking:['#6C8CFF', .3, '#8FA8FF'], happy:['#FF8A1F', .55, '#FFD23F'],
     alert:['#FF2E45', .6, '#FF3B4E'], stress:['#FFB020', .42, '#FFB020'], rest:['#5D6577', 0, '#5D6577'] };
   const FLAME = 'M70 4L81 22 97 7 99 28 119 19 113 40 135 40 123 58 139 70 125 82 137 100 119 104 125 124 103 118 97 140 70 128 43 140 37 118 15 124 21 104 3 100 15 82 1 70 17 58 5 40 27 40 21 19 41 28 43 7 59 22Z';
+  // chicken wings, folded away until he flies (2026-11-01); the right one is the left one mirrored
+  const WING = `<path class="pf-wing" d="M27 90C10 66-18 66-34 80C-22 82-25 88-30 95C-17 95-18 101-21 108C-7 104 9 103 27 104Z" fill="#FFFFFF" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/>`
+    + `<path class="pf-wing" d="M-14 86C-2 86 10 90 22 96M-12 98C0 97 12 99 22 101" stroke="#C9D2E0" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  let seq = 0;
   function svg(mood){
-    const m = EYES[mood] ? mood : 'calm', a = AURA[m];
-    return `<svg viewBox="0 0 140 156" aria-hidden="true"><defs>`
+    const m = EYES[mood] ? mood : 'calm', a = AURA[m], u = (++seq).toString(36);
+    // every face gets its own gradient ids: a gradient inside a hidden copy (the header button on Home) can't be
+    // used by the others, which left the head see-through
+    return (`<svg viewBox="0 0 140 156" aria-hidden="true"><defs>`
       + `<linearGradient id="pfIris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B2B4A"/><stop offset="1" stop-color="#35C8FF"/></linearGradient>`
       + `<linearGradient id="pfHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4E9F1"/></linearGradient>`
       + `<linearGradient id="pfPlate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6ECF4"/><stop offset="1" stop-color="#8E99AC"/></linearGradient></defs>`
       + `<g class="pf-float"><path class="pf-aura" d="${FLAME}" fill="${a[0]}" opacity="${a[1]}"/>`
       + `<g class="pf-tails"${m === 'rest' ? ' transform="rotate(30 115 60)"' : ''}><path d="M114 58C128 54 140 58 150 68L144 73C136 65 126 62 115 64Z" fill="#232B3E" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/><path d="M115 62C127 66 134 76 137 90L130 91C128 80 123 72 115 68Z" fill="#1A2030" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/></g>`
+      + `<g class="pf-wings"><g>${WING}</g><g transform="matrix(-1 0 0 1 140 0)">${WING}</g></g>`
       + `<path d="M42 38L30 12 52 26 52 2 69 22 82 0 86 25 108 9 102 36 116 30 104 44Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M52 26L55 34M69 22L68 32M86 25L82 34M102 36L95 40" stroke="#9E1219" stroke-width="2.4" stroke-linecap="round"/>`
       + `<path d="M18 80C18 46 40 26 70 26s52 20 52 54c0 22-10 36-24 44l-28 10-28-10C28 116 18 102 18 80z" fill="url(#pfHead)" stroke="${O}" stroke-width="3.2"/>`
       + `<path d="M22 54Q70 28 118 54L119 65Q70 40 21 65Z" fill="#232B3E" stroke="${O}" stroke-width="2.8" stroke-linejoin="round"/>`
@@ -40,18 +47,36 @@
       + EYES[m]
       + `<path d="M63 99L79 99 71 107Z" fill="#D9711A" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"${m === 'happy' ? ' transform="rotate(26 66 99)"' : ''}/>`
       + `<path d="M57 91Q70 85 83 91L80 96 71 103 62 96Z" fill="#FF9A2E" stroke="${O}" stroke-width="2.8" stroke-linejoin="round"/>`
-      + `<path d="M65 106c-2 6 0 11 5 11s6-5 4-11z" fill="#E3262E" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/></g></svg>`;
+      + `<path d="M65 106c-2 6 0 11 5 11s6-5 4-11z" fill="#E3262E" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/></g></svg>`)
+      .replace(/pf(Iris|Head|Plate)/g, 'pf$1' + u);
+  }
+  // a short flight: wings out and flapping, up, a little loop, and back down (≈1.7 s). With ms (a longer trip the
+  // page moves him on) he just bobs while flapping, for that long.
+  function fly(el, ms){
+    const f = el && (el.matches && el.matches('.plumoF,.rossR') ? el : el.querySelector && el.querySelector('.plumoF,.rossR'));   // .rossR: the report's own wrapper
+    if(!f || f.classList.contains('pf-fly')) return;
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const long = ms > 1800;
+    f.classList.add('pf-fly'); if(long) f.classList.add('pf-cruise');
+    setTimeout(()=> f.classList.remove('pf-fly', 'pf-cruise'), long ? ms : 1750);
   }
   function html(mood, cls){ return `<span class="plumoF pf-${EYES[mood] ? mood : 'calm'}${cls ? ' ' + cls : ''}">${svg(mood)}</span>`; }
   if(!document.getElementById('plumoFaceCss')){
     const st = document.createElement('style'); st.id = 'plumoFaceCss';
     st.textContent = '.plumoF{display:inline-block;line-height:0}.plumoF svg{width:100%;height:100%;overflow:visible;display:block}'
-      + '.plumoF .pf-float{transform-box:fill-box;transform-origin:50% 50%;animation:pfHover 3.2s ease-in-out infinite}'
-      + '.plumoF .pf-aura{transform-box:fill-box;transform-origin:50% 60%;animation:pfFlick 1.4s ease-in-out infinite}'
-      + '.plumoF.pf-alert .pf-aura{animation-duration:.5s}.plumoF.pf-stress .pf-aura{animation-duration:.3s}.plumoF.pf-rest .pf-float{animation-duration:6s}'
+      + ':is(.plumoF,.rossR) .pf-float{transform-box:fill-box;transform-origin:50% 50%;animation:pfHover 3.2s ease-in-out infinite}'
+      + ':is(.plumoF,.rossR) .pf-aura{transform-box:fill-box;transform-origin:50% 60%;animation:pfFlick 1.4s ease-in-out infinite}'
+      + '.plumoF.pf-alert .pf-aura,.rossR.alert .pf-aura{animation-duration:.5s}.plumoF.pf-stress .pf-aura,.rossR.stress .pf-aura{animation-duration:.3s}.plumoF.pf-rest .pf-float,.rossR.rest .pf-float{animation-duration:6s}'
       + '@keyframes pfHover{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes pfFlick{0%,100%{transform:scale(1)}50%{transform:scale(1.05,1.09)}}'
-      + '@media (prefers-reduced-motion:reduce){.plumoF *{animation:none!important}}';
+      + ':is(.plumoF,.rossR) .pf-wings{opacity:0;transition:opacity .15s}.plumoF .pf-wing{transform-box:fill-box;transform-origin:100% 45%}'
+      + ':is(.plumoF,.rossR).pf-fly .pf-wings{opacity:1}:is(.plumoF,.rossR).pf-fly .pf-wing{animation:pfFlap .16s ease-in-out infinite alternate}'
+      + ':is(.plumoF,.rossR).pf-fly .pf-float{animation:pfFly 1.7s cubic-bezier(.4,0,.3,1)}'
+      + ':is(.plumoF,.rossR).pf-fly.pf-cruise .pf-float{animation:pfCruise .45s ease-in-out infinite alternate}'
+      + '@keyframes pfCruise{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-7px) rotate(4deg)}}'
+      + '@keyframes pfFlap{from{transform:rotate(-28deg) scaleY(1.05)}to{transform:rotate(26deg) scaleY(.8)}}'
+      + '@keyframes pfFly{0%{transform:translate(0,0)}12%{transform:translate(0,5px) scale(1.06,.94)}30%{transform:translate(-8px,-30px) rotate(-8deg)}50%{transform:translate(4px,-44px) rotate(4deg)}68%{transform:translate(10px,-30px) rotate(9deg)}86%{transform:translate(0,-6px) rotate(-2deg)}93%{transform:translate(0,3px) scale(1.05,.95)}100%{transform:translate(0,0)}}'
+      + '@media (prefers-reduced-motion:reduce){.plumoF *,.rossR *{animation:none!important}}';
     (document.head || document.documentElement).appendChild(st);
   }
-  window.PlumoFace = { svg, html, moods: Object.keys(EYES) };
+  window.PlumoFace = { svg, html, fly, moods: Object.keys(EYES) };
 })();

@@ -15555,11 +15555,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const chicks = live.map(c=> c.nextPlacement).filter(Boolean).sort()[0] || null;
     let wx = null;
     try{ const w = wxForDate(today); if(w){ const [icon, label] = wxIconLabel(w.code);
-      wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]) }; } }catch(e){}
+      wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]),
+        tone: wxTone(w.current ? w.current.code : w.code), night: !!(w.current && w.current.isDay === 0) }; } }catch(e){}   // tone/night: the sky on ProdWise's Plumo hero
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx,
       prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)),
-      prepLate: prepLateReady().map(c=> ({ shed: String(c.shed), placed: c.nextPlacement, left: prepProgress(c).total - prepProgress(c).done, batch: prepNextBatchOf(c) })) };
+      prepLate: prepLateReady().map(c=> ({ shed: String(c.shed), placed: c.nextPlacement, left: prepProgress(c).total - prepProgress(c).done, batch: prepNextBatchOf(c) })),
+      // weigh-ins due today or overdue, not ticked (2026-11-01: Plumo checks which sheds are due for weighing)
+      weighs: tasks.filter(t=> t.source === 'auto-weight' && t.status !== 'done' && t.date && t.date <= today)
+        .map(t=> ({ shed: String(t.shedNum || ''), day: weighDayAge(t), date: t.date, batch: t.batchNumber || '' })) };
   };
   // Plumo (2026-10-25): the morning report lives in ProdWise; this button opens it, and __cwRoss hands over Tasks' part
   (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}

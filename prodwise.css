@@ -6589,8 +6589,8 @@ body.theme-dark .mp-delete{color:#FF9C8A}
 .fo-pre{background:#FFF3DC;color:#7A4E10;border:1px solid #F3D9A6}
 body.theme-dark .fo-ok{background:rgba(19,128,109,.24);color:#8FD9B5}
 body.theme-dark .fo-pre{background:rgba(240,162,26,.14);color:#FFD164;border-color:rgba(240,162,26,.3)}
-.fo-okface{flex:none;width:32px;height:32px;border-radius:9px;background:linear-gradient(160deg,#16233A,#22365A);display:grid;place-items:center;overflow:hidden}
-.fo-okface .rossR{display:block;width:32px;height:36px;margin-top:3px}
+.fo-okface{flex:none;width:52px;height:52px;border-radius:13px;background:linear-gradient(160deg,#16233A,#22365A);display:grid;place-items:center;overflow:hidden}
+.fo-okface .rossR{display:block;width:48px;height:54px;margin-top:5px}   /* 52 px (was 32): Plumo reads at a glance */
 .fo-undo{margin-left:auto;border:0;background:none;cursor:pointer;font:700 12.5px Inter,sans-serif;color:inherit;text-decoration:underline;opacity:.8}
 @media (max-width:520px){.fo-ban{padding:14px}.fo-ban h3{font-size:18px}.fo-face{width:50px;height:50px}.fo-face .rossR{width:50px;height:56px}}
 
@@ -6784,16 +6784,16 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
 .phs .blades{transform-box:fill-box;transform-origin:50% 50%;animation:phSpin var(--fan) linear infinite}@keyframes phSpin{to{transform:rotate(360deg)}}
 .phs .tuft{transform-box:fill-box;transform-origin:50% 100%;animation:phSway var(--sway) ease-in-out infinite alternate}@keyframes phSway{from{transform:rotate(-5deg)}to{transform:rotate(6deg)}}
 .phs[data-m=stress] .tuft,.phs[data-m=alert] .tuft{animation-name:phSwayHard}@keyframes phSwayHard{from{transform:rotate(-2deg)}to{transform:rotate(-20deg)}}
-.phs .birds{animation:phFly 24s linear infinite}@keyframes phFly{0%{transform:translate(-80px,0)}50%{transform:translate(300px,-14px)}100%{transform:translate(640px,0)}}
+.phs .birds{animation:phFly 24s linear infinite}@keyframes phFly{0%{transform:translate(-80px,60px)}50%{transform:translate(560px,40px)}100%{transform:translate(1180px,60px)}}
 .phs .bird path{transform-box:fill-box;transform-origin:50% 100%;animation:phFlap .45s ease-in-out infinite alternate}@keyframes phFlap{to{transform:scaleY(-.4)}}
-.phs .rays{transform-box:view-box;transform-origin:440px 78px;animation:phSpin 40s linear infinite}
+.phs .rays{transform-box:view-box;transform-origin:940px 78px;animation:phSpin 40s linear infinite}
 .phs .stars circle{animation:phTwk 2.6s ease-in-out infinite}@keyframes phTwk{0%,100%{opacity:1}50%{opacity:.2}}
-.phs .wind path{animation:phWind 1.4s linear infinite}@keyframes phWind{from{transform:translateX(-140px)}to{transform:translateX(640px)}}
+.phs .wind path{animation:phWind 1.4s linear infinite}@keyframes phWind{from{transform:translateX(-140px)}to{transform:translateX(1220px)}}
 .phs .fly{animation:phFlyF 3.6s ease-in-out infinite alternate}@keyframes phFlyF{0%{transform:translate(0,0);opacity:.15}50%{opacity:1}100%{transform:translate(14px,-12px);opacity:.25}}
 .phs[data-m=alert] .drop{animation:phDrop .55s linear infinite}@keyframes phDrop{from{transform:translate(40px,-420px)}to{transform:translate(0,0)}}
 .phs .beams path{animation:phBeam 5s ease-in-out infinite}@keyframes phBeam{0%,100%{opacity:.55}50%{opacity:1}}
 .phs .mote{animation:phMote 8s ease-in-out infinite}@keyframes phMote{0%{transform:translate(0,0);opacity:0}20%{opacity:1}100%{transform:translate(18px,-70px);opacity:0}}
-.phs .petal{animation:phPetal 10s linear infinite}@keyframes phPetal{0%{transform:translate(0,-20px) rotate(0)}100%{transform:translate(-170px,420px) rotate(540deg)}}
+.phs .petal{animation:phPetal 10s linear infinite}@keyframes phPetal{0%{transform:translate(0,-20px) rotate(0)}100%{transform:translate(-170px,380px) rotate(540deg)}}
 @media (prefers-reduced-motion:reduce){.phs *{animation:none!important}}
 
 /* the hero (computers) */
@@ -6839,3 +6839,21 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
 }
 .ph-count[hidden],.ph-tbub[hidden]{display:none!important}
 @media (min-width:769px){.ross-btn .ph-count,.ross-btn .ph-tbub{display:none}}
+
+/* today's weather on the hero's sky (2026-11-01): rain and overcast, beside the mood skies */
+.phs[data-m=rain] .sky-rain,.phs[data-m=cloud] .sky-cloud{opacity:1}
+.phs[data-m=rain] .land{filter:brightness(.8) saturate(.8)}.phs[data-m=cloud] .land{filter:brightness(.92) saturate(.9)}
+.phs[data-m=rain] .rainG{opacity:1}.phs[data-m=rain] .drop{animation:phDrop .6s linear infinite}
+.phs[data-m=rain] .cA{fill:#DCE1E9}.phs[data-m=rain] .cB{fill:#8E9AAE}.phs[data-m=rain] .cC{fill:#EEF1F5}
+.phs[data-m=cloud] .cA{fill:#F2F4F7}.phs[data-m=cloud] .cB{fill:#B4BECD}.phs[data-m=cloud] .cC{fill:#FFFFFF}
+.phs[data-m=rain]{--cloud:30s;--fan:.6s;--sway:1.4s}
+/* Plumo's wings stick out of the phone tile while he flies */
+@media (max-width:768px){.ross-btn.ross-float,.ross-btn.ross-float .ross-mk{overflow:visible}}
+.ph-face .plumoF{overflow:visible}
+
+/* Plumo's trip across the hero (2026-11-01): up, over the bubble to the batch panel, turn, back, land */
+.ph-face.ph-cross{z-index:4;animation:phCross 3.6s cubic-bezier(.45,0,.4,1)}
+@keyframes phCross{0%{transform:translate(0,0) scaleX(1)}8%{transform:translate(14px,-34px) scaleX(1)}26%{transform:translate(calc(var(--ph-fx) * .45),-56px) scaleX(1)}
+  44%{transform:translate(var(--ph-fx),-40px) scaleX(1)}52%{transform:translate(var(--ph-fx),-46px) scaleX(-1)}72%{transform:translate(calc(var(--ph-fx) * .5),-62px) scaleX(-1)}
+  90%{transform:translate(12px,-22px) scaleX(-1)}96%{transform:translate(0,2px) scaleX(-1)}100%{transform:translate(0,0) scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.ph-face.ph-cross{animation:none}}

@@ -1148,9 +1148,21 @@ function mgrBriefData(){
   if(d0.loads.length){const kg=d0.loads.reduce((n,l)=>n+(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0),0);
     G.today.push(L('b',`<b>Feed ${d0.loads.length>1?d0.loads.length+' loads':'load'}</b> arriving today · ${mgrT(kg)}`,'data-mgr-loads'));}
   if(cw){
-    if(cw.overdue.length)G.today.push(L('r',`<b>${cw.overdue.length} task${cw.overdue.length===1?'':'s'} overdue</b> · ${escapeHtml(cw.overdue.slice(0,2).join(', '))}${cw.overdue.length>2?' …':''}`,'data-brief-cw="overdue"',true));
+    const od=Array.isArray(cw.weighs)?cw.overdue.filter(n=>!/^\s*Weight Shed \S+ - \(Day \d+\)\s*$/.test(n)):cw.overdue;   // weigh-ins have their own line below
+    if(od.length)G.today.push(L('r',`<b>${od.length} task${od.length===1?'':'s'} overdue</b> · ${escapeHtml(od.slice(0,2).join(', '))}${od.length>2?' …':''}`,'data-brief-cw="overdue"',true));
     if(cw.today)G.today.push(L(cw.done===cw.today?'g':'b',`${cw.today} task${cw.today===1?'':'s'} today · ${cw.done===cw.today?'all done':cw.done+' done'}`,'data-brief-cw="today"'));
   }
+  // Weigh-ins (2026-11-01): Tasks' weigh-in jobs due today or overdue, not ticked. Before Tasks has loaded, a shed on
+  // a whole week of age (day 7, 14, 21 …) counts as due today, the same weeks Tasks plans.
+  {const T=iso(today),fmtD=k=>fmtShortNoYear(new Date(k+'T00:00:00'));
+    let due=[],late=[];
+    if(cw&&Array.isArray(cw.weighs)){due=cw.weighs.filter(w=>w.date===T);late=cw.weighs.filter(w=>w.date<T);}
+    else mgrPlaced().forEach(s=>{if(s.closed)return;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return;const a=ageInDays(s,today);if(a>0&&a%7===0)due.push({shed:String(s.id),day:a,date:T});});
+    const sheds=a=>[...new Set(a.map(w=>w.shed))].sort((x,y)=>Number(x)-Number(y));
+    if(late.length){const old=late.slice().sort((x,y)=>x.date<y.date?-1:1)[0];
+      G.today.push(L('r',`<b>Weigh-in overdue · Shed${sheds(late).length===1?'':'s'} ${sheds(late).join(', ')}</b> · ${late.length===1?`day ${old.day}, due ${escapeHtml(fmtD(old.date))}`:`${late.length} weigh-ins, oldest due ${escapeHtml(fmtD(old.date))}`}`,'data-brief-cw="overdue"',true));}
+    if(due.length){const ds=[...new Set(due.map(w=>w.day).filter(Boolean))];
+      G.today.push(L('a',`<b>Weigh Shed${sheds(due).length===1?'':'s'} ${sheds(due).join(', ')} today</b>${ds.length===1?` · day ${ds[0]}`:''}`,'data-brief-cw="today"',true));}}
   // Records the manager has to keep up
   const lateM=mgrPlaced().filter(s=>{if(s.closed)return false;const c=s.cleanoutDate?dateOnly(s.cleanoutDate):null;if(c&&c<today)return false;if(dateOnly(s.placementDate)>today)return false;const u=s.mortalityUpdatedAt?dateOnly(s.mortalityUpdatedAt):null;return !u||mgrDays(u,today)>=2;});
   if(lateM.length){const dd=lateM.map(s=>s.mortalityUpdatedAt?mgrDays(dateOnly(s.mortalityUpdatedAt),today):null),mx=dd.some(x=>x==null)?null:Math.max(...dd);
