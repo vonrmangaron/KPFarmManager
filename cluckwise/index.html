@@ -1850,6 +1850,20 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .sb-sec-toggle.collapsed .sb-chev{ transform:rotate(-90deg); }
   .sb-count{ font-size:11px; font-weight:600; letter-spacing:0; text-transform:none; background:var(--surface-soft); color:var(--muted); padding:1px 7px; border-radius:999px; }
   .sb-count:empty{ display:none; }
+  /* Repeat tasks + batch chips (2026-11-01) */
+  .repeat-list{ display:flex; flex-direction:column; gap:6px; }
+  .rp-row{ text-align:left; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:12px; padding:9px 11px; display:flex; flex-direction:column; gap:4px; cursor:pointer; font:inherit; }
+  .rp-row:hover{ border-color:var(--primary); }
+  .sidebar .repeat-list .rp-row{ display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:100%; height:auto; min-height:0; white-space:normal; text-align:left; }
+  .sidebar .repeat-list .rp-row > span{ display:flex; width:100%; min-width:0; }
+  .sidebar .repeat-list .rp-sub{ display:block; white-space:normal; line-height:1.35; }
+  .rp-top{ display:flex; align-items:baseline; gap:8px; } .rp-top b{ flex:1; min-width:0; font-size:13.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rp-top em{ font-style:normal; font-size:11px; font-weight:800; color:#B07400; white-space:nowrap; } .rp-top em.rp-late{ color:var(--danger); }
+  .rp-sub{ font-size:12px; font-weight:600; color:var(--muted); }
+  .rp-meta{ display:flex; flex-wrap:wrap; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--muted); }
+  .bchip{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; border-radius:999px; padding:2px 8px; background:var(--surface-soft); color:var(--ink); white-space:nowrap; }
+  .bchip i{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .task-body .bchip{ margin-left:4px; vertical-align:middle; }
   .sb-icon-btn{ width:30px; height:30px; flex-shrink:0; border:none; border-radius:10px; background:none; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .sb-icon-btn:hover{ background:var(--surface-soft); color:var(--ink); }
   .sidebar .sb-more, .sidebar .view-all-backlog-btn{ display:block; width:100%; height:30px; padding:0 8px; border:none; border-radius:10px; background:none; color:var(--muted); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; text-align:left; cursor:pointer; }
@@ -4959,6 +4973,16 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
       <div class="sb-panel-title" id="sbPanelTitle" aria-hidden="true"></div>
       <label class="sb-find" id="sbFind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="sbFindInput" placeholder="Find a task" autocomplete="off" aria-label="Find a frequent or backlog task"></label>
+      <section class="sb-sec" id="repeatSec">
+        <div class="sb-sec-h">
+          <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="repeatCollapseBtn" aria-controls="repeatSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>Repeat tasks</span><span class="sb-count" id="repeatCount"></span></button></h2>
+        </div>
+        <div class="collapsible-section" id="repeatSectionBody">
+          <div class="collapsible-inner">
+          <div class="repeat-list" id="repeatList"></div>
+          </div>
+        </div>
+      </section>
       <section class="sb-sec">
         <div class="sb-sec-h">
           <h2 class="sb-sec-heading"><button type="button" class="sb-sec-toggle" id="frequentCollapseBtn" aria-controls="frequentSectionBody"><svg class="sb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span id="frequentTasksHeader">Frequent tasks</span><span class="sb-count" id="frequentCount"></span></button></h2>
@@ -8779,7 +8803,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
-        <span class="task-body"><span class="task-name"></span>${prepLabelHtml(task)}${isMaintCheckTask(task) ? mcheckChipHtml(task) : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' : ''}</span>
+        <span class="task-body"><span class="task-name"></span>${prepLabelHtml(task)}${isMaintCheckTask(task) ? mcheckChipHtml(task) : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' + (task.date ? batchChipsHtml(task.date) : '') : ''}</span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
@@ -9545,6 +9569,63 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Side panel search: narrows Frequent tasks and Backlog
   var sbFindQ = '';
   function sbFindMatch(name){ return !sbFindQ || String(name || '').toLowerCase().includes(sbFindQ); }
+  // ── Repeat tasks (2026-11-01, mockup C7hA6LUcuRzmZUGftc9gG4) ──
+  // Every repeating series once, above Frequent tasks: next date (or how many are late), how often and until when,
+  // who, how many are done, and the batch(es) running on its next date. Tasks don't keep the rule, so it's read from
+  // the gaps between the dates.
+  // A batch runs on a day while any of its sheds is placed, not closed yet and before its clean-out
+  function batchesOnDate(key){
+    return batches.filter(b=>{ const sh = b.sheds || [];
+      if(!sh.length) return b.start && b.end && key >= b.start && key <= b.end;
+      return sh.some(x=> x.placement && x.placement <= key && !(x.closed && x.closed < key) && (!x.cleanout || x.cleanout >= key)); })
+      .sort((a, b)=> String(a.number).localeCompare(String(b.number), undefined, { numeric:true }));
+  }
+  function batchChipsHtml(key){
+    return batchesOnDate(key).map(b=> `<span class="bchip" title="Batch ${escapeHtmlAttr(b.number)}"><i style="background:${colorForBatchNumber(b.number)}"></i>${escapeHtml(b.number)}</span>`).join('');
+  }
+  let repeatMemo = { list: null, n: -1, map: null };
+  function repeatSeriesMap(){
+    if(repeatMemo.list === tasks && repeatMemo.n === tasks.length && repeatMemo.map) return repeatMemo.map;
+    const m = new Map();
+    tasks.forEach(t=>{ if(!t.seriesId || !t.date) return; let g = m.get(t.seriesId); if(!g){ g = []; m.set(t.seriesId, g); } g.push(t); });
+    m.forEach((g, id)=>{ g.sort((a, b)=> a.date.localeCompare(b.date)); g.rule = repeatRuleOf(g.map(t=> t.date)); });
+    repeatMemo = { list: tasks, n: tasks.length, map: m };
+    return m;
+  }
+  function repeatRuleOf(dates){
+    const d = [...new Set(dates)].sort(); if(d.length < 2) return 'Repeats';
+    const gaps = d.slice(1).map((k, i)=> Math.round((toDateObj(k) - toDateObj(d[i])) / 86400000));
+    const all = n=> gaps.every(g=> g === n);
+    if(all(1)) return 'Every day';
+    if(gaps.every(g=> g >= 1 && g <= 3) && gaps.some(g=> g > 1) && !d.slice(1).some(isWeekendKey)) return 'Every weekday';   // the first day may be a weekend
+    if(all(2)) return 'Every 2 days'; if(all(7)) return 'Every week'; if(all(14)) return 'Every 2 weeks';
+    if(gaps.every(g=> g >= 28 && g <= 31)) return 'Every month';
+    return 'Repeats';
+  }
+  function repeatRuleFor(t){ const g = t && t.seriesId ? repeatSeriesMap().get(t.seriesId) : null; return g ? g.rule : 'Repeats'; }
+  function renderRepeatTasks(){
+    const box = $('#repeatList'); if(!box) return;
+    const today = dateKey(new Date()), out = [];
+    repeatSeriesMap().forEach(g=>{
+      const open = g.filter(t=> t.status !== 'done'); if(!open.length) return;
+      const late = open.filter(t=> t.date < today), next = open.find(t=> t.date >= today) || open[open.length - 1];
+      const done = g.length - open.length, last = g[g.length - 1];
+      if(!sbFindMatch(next.name)) return;
+      out.push({ next, late: late.length, done, total: g.length, rule: g.rule, until: last.date, sortKey: late.length ? '0' + late[0].date : '1' + next.date });
+    });
+    out.sort((a, b)=> a.sortKey.localeCompare(b.sortKey));
+    $('#repeatCount').textContent = out.length || '';
+    $('#repeatSec').hidden = !out.length && !sbFindQ;
+    if(!out.length){ box.innerHTML = '<div class="empty-note">No repeating tasks.</div>'; return; }
+    box.innerHTML = out.map(r=>{
+      const when = r.late ? `<em class="rp-late">${r.late} late</em>` : `<em>${r.next.date === today ? 'Today' : escapeHtml(formatShort(r.next.date))}</em>`;
+      const who = (r.next.assignees || []).join(', ') || 'nobody yet';
+      return `<button type="button" class="rp-row" data-rp-open="${escapeHtmlAttr(r.next.id)}" title="Open the next one">
+        <span class="rp-top"><b>${escapeHtml(r.next.name)}</b>${when}</span>
+        <span class="rp-sub">${escapeHtml(r.rule)} · until ${escapeHtml(formatShort(r.until))} · ${escapeHtml(who)}</span>
+        <span class="rp-meta">${batchChipsHtml(r.next.date)}<span>${r.done} of ${r.total} done</span></span></button>`; }).join('');
+  }
+  document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-rp-open]'); if(b) openTaskDetailModal(b.dataset.rpOpen); });
   function renderFrequentTasks(){
     const box = $('#frequentList');
     box.innerHTML = '';
@@ -10707,7 +10788,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(task.prep) pills.push(prepLabelHtml(task));
     if(isHighPriority) pills.push('<span class="kp kp-hi">High</span>');
     if(typeof isMaintTask === 'function' && isMaintTask(task)) pills.push('<span class="kp">Maintenance</span>');
-    if(task.seriesId) pills.push('<span class="kp kp-rep" title="Part of a repeating series">Repeats</span>');
+    if(task.seriesId) pills.push(`<span class="kp kp-rep" title="Part of a repeating series">Repeats · ${escapeHtml(repeatRuleFor(task).replace(/^Every /, 'every ').replace(/^Repeats$/, 'series'))}</span>`, task.date ? batchChipsHtml(task.date).replace(/class="bchip"/g, 'class="kp bchip"') : '');
     const kPhotos = kReport ? Math.max((kReport.photoUrls || []).length, kPhoto ? 1 : 0) : 0;
     let kSt;
     if(task.status === 'done'){ const d = task.doneAt ? new Date(task.doneAt) : null;
@@ -11486,6 +11567,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     renderManagerFields();
     try{ renderPrepPill(); }catch(e){ console.warn('Shed prep pill', e); }
     renderBacklog();
+    renderRepeatTasks();
     renderFrequentTasks();
     renderBatches();
     renderActiveBatchCard();
@@ -12351,6 +12433,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       saveCollapsedSidebarSections();
     });
   }
+  wireSectionCollapse('#repeatCollapseBtn', '#repeatSectionBody', 'repeat');
   wireSectionCollapse('#frequentCollapseBtn', '#frequentSectionBody', 'frequent');
   wireSectionCollapse('#backlogCollapseBtn', '#backlogSectionBody', 'backlog');
   wireSectionCollapse('#batchesCollapseBtn', '#batchesSectionBody', 'batches');
@@ -16242,7 +16325,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#srCancelBtn').addEventListener('click', closeStartRepair);
   $('#srStartBtn').addEventListener('click', ()=>{ const id = srReportId; const who = $('#srWhoInput').value; $('#startRepairModal').classList.remove('open'); srReportId = null; if(id) startRepair(id, who); });
   $('#srWhoInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); $('#srStartBtn').click(); } });
-  $('#sbFindInput').addEventListener('input', (e)=>{ sbFindQ = e.target.value.trim().toLowerCase(); renderFrequentTasks(); renderBacklog(); try{ initSortables(); }catch(err){} });
+  $('#sbFindInput').addEventListener('input', (e)=>{ sbFindQ = e.target.value.trim().toLowerCase(); renderRepeatTasks(); renderFrequentTasks(); renderBacklog(); try{ initSortables(); }catch(err){} });
   // ===== Desktop icon rail + Calendar/List/Board tabs in the header (2026-10-10, board redesign) =====
   (function(){
     const rail = $('#appRail'); if(!rail) return;
