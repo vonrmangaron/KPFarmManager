@@ -1852,10 +1852,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .sb-count:empty{ display:none; }
   /* Repeat tasks + batch chips (2026-11-01) */
   .repeat-list{ display:flex; flex-direction:column; gap:6px; }
-  .rp-row{ text-align:left; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:12px; padding:9px 11px; display:flex; flex-direction:column; gap:4px; cursor:pointer; font:inherit; }
+  .rp-row{ border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:12px; padding:9px 11px; display:flex; flex-direction:column; gap:6px; }
   .rp-row:hover{ border-color:var(--primary); }
-  .sidebar .repeat-list .rp-row{ display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:100%; height:auto; min-height:0; white-space:normal; text-align:left; }
-  .sidebar .repeat-list .rp-row > span{ display:flex; width:100%; min-width:0; }
+  .rp-main{ all:unset; cursor:pointer; display:flex; flex-direction:column; gap:4px; text-align:left; border-radius:8px; }
+  .rp-main:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; }
+  .rp-acts{ display:flex; gap:6px; }
+  .rp-acts button{ flex:1; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); font:700 12px Inter,sans-serif; cursor:pointer; }
+  .rp-acts button:hover{ border-color:var(--primary); }
+  .sidebar .repeat-list .rp-row{ display:flex; flex-direction:column; align-items:stretch; width:100%; box-sizing:border-box; }
+  .sidebar .repeat-list .rp-acts{ display:flex; flex-direction:row; width:100%; }
+  .sidebar .repeat-list .rp-main{ display:flex; flex-direction:column; align-items:stretch; width:100%; height:auto; min-height:0; white-space:normal; text-align:left; }
+  .sidebar .repeat-list .rp-main > span{ display:flex; width:100%; min-width:0; }
   .sidebar .repeat-list .rp-sub{ display:block; white-space:normal; line-height:1.35; }
   .rp-top{ display:flex; align-items:baseline; gap:8px; } .rp-top b{ flex:1; min-width:0; font-size:13.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rp-top em{ font-style:normal; font-size:11px; font-weight:800; color:#B07400; white-space:nowrap; } .rp-top em.rp-late{ color:var(--danger); }
@@ -4609,6 +4616,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .cw-ross-btn:hover{ border-color:var(--primary); } .cw-ross-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
   .cw-ross-mk{ width:28px; height:28px; border-radius:8px; background:linear-gradient(160deg,#16233A,#22365A); display:grid; place-items:center; overflow:hidden; }
   .cw-ross-mk svg{ width:28px; height:31px; margin-top:3px; overflow:visible; }
+  .cw-ross-mk .plumoF{ width:28px; height:31px; margin-top:3px; } .cw-ross-mk .plumoF svg{ margin-top:0; }
   .cw-ross-mk .rz-eHappy, .cw-ross-mk .rz-eWorry, .cw-ross-mk .rz-eSleep, .cw-ross-mk .rz-load, .cw-ross-mk .rz-zz, .cw-ross-mk .rz-shadow{ opacity:0; }
   .cw-ross-btn[hidden]{ display:none; }
   .cw-ross-dot{ position:absolute; top:-3px; right:-3px; width:11px; height:11px; border-radius:50%; background:#E2A13A; border:2px solid var(--surface); }
@@ -9600,7 +9608,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(gaps.every(g=> g >= 1 && g <= 3) && gaps.some(g=> g > 1) && !d.slice(1).some(isWeekendKey)) return 'Every weekday';   // the first day may be a weekend
     if(all(2)) return 'Every 2 days'; if(all(7)) return 'Every week'; if(all(14)) return 'Every 2 weeks';
     if(gaps.every(g=> g >= 28 && g <= 31)) return 'Every month';
-    return 'Repeats';
+    // no standard pattern: say its usual gap
+    const cnt = {}; gaps.forEach(g=> cnt[g] = (cnt[g] || 0) + 1); const mode = +Object.keys(cnt).sort((a, b)=> cnt[b] - cnt[a])[0];
+    return mode === 1 ? 'Most days' : mode === 7 ? 'About weekly' : `About every ${mode} days`;
   }
   function repeatRuleFor(t){ const g = t && t.seriesId ? repeatSeriesMap().get(t.seriesId) : null; return g ? g.rule : 'Repeats'; }
   function renderRepeatTasks(){
@@ -9620,12 +9630,50 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     box.innerHTML = out.map(r=>{
       const when = r.late ? `<em class="rp-late">${r.late} late</em>` : `<em>${r.next.date === today ? 'Today' : escapeHtml(formatShort(r.next.date))}</em>`;
       const who = (r.next.assignees || []).join(', ') || 'nobody yet';
-      return `<button type="button" class="rp-row" data-rp-open="${escapeHtmlAttr(r.next.id)}" title="Open the next one">
+      return `<div class="rp-row"><button type="button" class="rp-main" data-rp-open="${escapeHtmlAttr(r.next.id)}" title="Open the next one">
         <span class="rp-top"><b>${escapeHtml(r.next.name)}</b>${when}</span>
         <span class="rp-sub">${escapeHtml(r.rule)} · until ${escapeHtml(formatShort(r.until))} · ${escapeHtml(who)}</span>
-        <span class="rp-meta">${batchChipsHtml(r.next.date)}<span>${r.done} of ${r.total} done</span></span></button>`; }).join('');
+        <span class="rp-meta">${batchChipsHtml(r.next.date)}<span>${r.done} of ${r.total} done</span></span></button>
+        <span class="rp-acts"><button type="button" data-rp-edit="${escapeHtmlAttr(r.next.id)}" title="Edit this repeating task (name, people, notes) for every day still to come">Edit</button><button type="button" data-rp-extend="${escapeHtmlAttr(r.next.seriesId)}" title="Add more days to this repeating task">Extend</button></span></div>`; }).join('');
   }
   document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-rp-open]'); if(b) openTaskDetailModal(b.dataset.rpOpen); });
+  // Edit: the next one, with "apply to the rest of the series" ticked
+  document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-rp-edit]'); if(!b) return;
+    openEditTaskModal(b.dataset.rpEdit); const c = $('#editTaskApplySeriesInput'); if(c) c.checked = true; });
+  // Extend: more days on the same pattern (2026-11-01)
+  const REPEAT_STEP = { 'Every day':'daily', 'Every weekday':'weekdays', 'Every 2 days':'every2days', 'Every week':'weekly', 'Every 2 weeks':'biweekly', 'Every month':'monthly' };
+  function repeatExtend(seriesId, until){
+    const g = repeatSeriesMap().get(seriesId); if(!g || !g.length) return;
+    const last = g[g.length - 1], rule = REPEAT_STEP[g.rule];
+    // no standard pattern: use the most common gap between its days
+    let gap = 1; if(!rule){ const d = [...new Set(g.map(t=> t.date))].sort(), cnt = {};
+      d.slice(1).forEach((k, i)=>{ const n = Math.round((toDateObj(k) - toDateObj(d[i])) / 86400000); cnt[n] = (cnt[n] || 0) + 1; });
+      gap = +Object.keys(cnt).sort((a, b)=> cnt[b] - cnt[a])[0] || 1; }
+    const snap = captureUndo(); let cur = last.date, n = 0;
+    while(n < 366){
+      if(rule === 'monthly') cur = addMonthsStr(last.date, n + 1);
+      else if(rule === 'daily' || rule === 'weekdays'){ cur = addDaysStr(cur, 1); if(rule === 'weekdays') while(isWeekendKey(cur)) cur = addDaysStr(cur, 1); }
+      else if(rule === 'every2days') cur = addDaysStr(cur, 2); else if(rule === 'weekly') cur = addDaysStr(cur, 7); else if(rule === 'biweekly') cur = addDaysStr(cur, 14);
+      else cur = addDaysStr(cur, gap);
+      if(cur > until) break;
+      const meta = { seriesId, assignees: (last.assignees || []).slice() };
+      ['cat', 'notes', 'priority', 'shedNum'].forEach(k=>{ if(last[k] != null) meta[k] = last[k]; });
+      if((last.subs || []).length) meta.subs = freshSubs(last.subs);
+      addTask(last.name, last.icon, cur, meta); n++;
+    }
+    if(!n){ showToast('Nothing to add — it already runs that far.'); return; }
+    addHistory('Recurring task extended', `"${last.name}" — ${n} more day${n === 1 ? '' : 's'}, now until ${formatFull(until)}`);
+    offerUndo(`"${last.name}" extended by ${n} day${n === 1 ? '' : 's'} to ${formatShort(until)}`, snap);
+    persist(); renderAll();
+  }
+  document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-rp-extend]'); if(!b) return;
+    const g = repeatSeriesMap().get(b.dataset.rpExtend); if(!g) return; const last = g[g.length - 1].date, sid = b.dataset.rpExtend;
+    const nb = batches.filter(x=> x.end && x.end > last).sort((a, c)=> c.end.localeCompare(a.end))[0];
+    plMenu(b, `Extend "${g[0].name}"`, `${g.rule} · now until ${formatShort(last)}`, [
+      { ic:'＋', label:'1 more week', note: formatShort(addDaysStr(last, 7)), act: ()=> repeatExtend(sid, addDaysStr(last, 7)) },
+      { ic:'＋', label:'2 more weeks', note: formatShort(addDaysStr(last, 14)), act: ()=> repeatExtend(sid, addDaysStr(last, 14)) },
+      { ic:'＋', label:'4 more weeks', note: formatShort(addDaysStr(last, 28)), act: ()=> repeatExtend(sid, addDaysStr(last, 28)) },
+      ...(nb ? [{ ic:'⟶', label:`Until batch ${nb.number}'s clean-out`, note: formatShort(nb.end), act: ()=> repeatExtend(sid, nb.end) }] : [])]); });
   function renderFrequentTasks(){
     const box = $('#frequentList');
     box.innerHTML = '';
@@ -15709,7 +15757,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
     const b = $('#cwRossBtn'); if(!b || !ok) return; b.hidden = false;
     b.addEventListener('click', ()=>{ try{ window.parent.pwOpenRoss(); }catch(e){} });
-    window.__cwRossDot = on=>{ const d = $('#cwRossDot'); if(d) d.hidden = !on; }; })();
+    window.__cwRossDot = on=>{ const d = $('#cwRossDot'); if(d) d.hidden = !on; };
+    // the new face (2026-11-01, ../js/plumo-face.js), in the mood Plumo has in Production
+    const mk = b.querySelector('.cw-ross-mk'), mood = ()=>{ try{ return window.parent.rsMoodNow ? window.parent.rsMoodNow() : 'calm'; }catch(e){ return 'calm'; } };
+    const paint = ()=>{ if(!mk || !window.PlumoFace) return; const m = mood(); if(mk.dataset.m !== m){ mk.innerHTML = PlumoFace.html(m); mk.dataset.m = m; } };
+    paint(); setInterval(paint, 60000); })();
   window.__cwRoss = ()=>{
     const today = dateKey(new Date()), yd = addDaysStr(today, -1), now = Date.now();
     const lite = t=> ({ name: t.name, who: (t.assignees || []).slice(), done: t.status === 'done', date: t.date || null, high: t.priority === 'high' });
