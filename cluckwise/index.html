@@ -2775,16 +2775,21 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   @media (display-mode: window-controls-overlay){
     :root{ --wco-h: env(titlebar-area-height, 0px); }
     body{ padding-top:var(--wco-h); box-sizing:border-box; }
-    body::before{ content:''; position:fixed; top:0; left:0; right:0; height:var(--wco-h); z-index:10000;
+    body::after{ content:''; position:fixed; top:0; left:0; right:0; height:var(--wco-h); z-index:10000;
       background:var(--surface); -webkit-app-region:drag; app-region:drag; }
     .shell{ height:calc(100vh - var(--wco-h)) !important; }
     .history-drawer{ top:var(--wco-h); height:calc(100% - var(--wco-h)); }
     .reports-modal.mt-page{ top:var(--wco-h); }
     button, a, input, select, textarea, [role="button"]{ -webkit-app-region:no-drag; app-region:no-drag; }
   }
+  /* the title-bar strip is body::after (2026-11-01): body::before is the page glow, and sharing it gave the installed
+     app a plain white page. Inside ProdWise, ProdWise draws the title bar, so Tasks has none. */
+  @media (display-mode: window-controls-overlay){
+    body.cw-embed{ padding-top:0; } body.cw-embed::after{ display:none; } body.cw-embed .shell{ height:100vh !important; }
+  }
   @media (display-mode: window-controls-overlay) and (min-width: 1025px){
-    body::before{ background:linear-gradient(to right, #16191B 0, #16191B 280px, var(--surface) 280px); }
-    body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 76px, var(--surface) 76px); }
+    body::after{ background:linear-gradient(to right, #16191B 0, #16191B 280px, var(--surface) 280px); }
+    body.sb-collapsed::after{ background:linear-gradient(to right, #16191B 0, #16191B 76px, var(--surface) 76px); }
     .sidebar{ height:calc(100vh - var(--wco-h)) !important; }
   }
 
@@ -2819,8 +2824,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   body.theme-dark .topbar{ background:#111A2B; }
   @media (display-mode: window-controls-overlay) and (min-width: 1025px){
-    body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 280px, #111A2B 280px); }
-    body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 76px, #111A2B 76px); }
+    body.theme-dark::after{ background:linear-gradient(to right, #0A101C 0, #0A101C 280px, #111A2B 280px); }
+    body.theme-dark.sb-collapsed::after{ background:linear-gradient(to right, #0A101C 0, #0A101C 76px, #111A2B 76px); }
   }
 
   /* navy dark: day columns and highlights as accents, not fills */
@@ -2926,12 +2931,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   @media (display-mode: window-controls-overlay) and (min-width: 1025px){
     .app-rail{ height:calc(100vh - var(--wco-h)); }
-    body::before{ background:linear-gradient(to right, #16191B 0, #16191B 364px, var(--surface) 364px) !important; }
-    body.sb-collapsed::before{ background:linear-gradient(to right, #16191B 0, #16191B 84px, var(--surface) 84px) !important; }
-    body.theme-dark::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 364px, #111A2B 364px) !important; }
-    body.theme-dark.sb-collapsed::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
-    body.rail-page::before{ background:linear-gradient(to right, #16191B 0, #16191B 84px, var(--surface) 84px) !important; }
-    body.theme-dark.rail-page::before{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
+    body::after{ background:linear-gradient(to right, #16191B 0, #16191B 364px, var(--surface) 364px) !important; }
+    body.sb-collapsed::after{ background:linear-gradient(to right, #16191B 0, #16191B 84px, var(--surface) 84px) !important; }
+    body.theme-dark::after{ background:linear-gradient(to right, #0A101C 0, #0A101C 364px, #111A2B 364px) !important; }
+    body.theme-dark.sb-collapsed::after{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
+    body.rail-page::after{ background:linear-gradient(to right, #16191B 0, #16191B 84px, var(--surface) 84px) !important; }
+    body.theme-dark.rail-page::after{ background:linear-gradient(to right, #0A101C 0, #0A101C 84px, #111A2B 84px) !important; }
   }
 
   /* ===== Batch + audit windows (2026-10-10): wide, two parts, Cancel, no colour pickers ===== */
