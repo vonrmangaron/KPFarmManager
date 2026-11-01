@@ -166,6 +166,7 @@ function phBubbleHtml(D){
 function phMinOn(){try{return localStorage.getItem('pw-hero-min')==='1';}catch(e){return false;}}
 function phGreet(D){
   const h=new Date().getHours(),hi=h<12?'Morning!':h<18?'Afternoon!':'Evening!';
+  try{const fo=typeof foToday==='function'?foToday():null;if(fo&&!fo.done&&!foSnoozed())return `Feed off today · ${foLabel(fo.sheds).replace(/\u00a0/g,' ')} — tap me.`;}catch(e){}
   if(D.mood==='alert')return `${D.red||1} red item${D.red===1?'':'s'} today — tap me.`;
   if(D.mood==='thinking')return 'Reading the farm…';
   if(D.mood==='rest')return 'Resting — the report has it all.';
@@ -173,14 +174,14 @@ function phGreet(D){
   return D.unread?`${hi} Report's ready — tap me.`:`${hi} Every shed is on track.`;
 }
 function phMiniHtml(D){return `<div class="ph-mini" id="phMini"><span class="ph-mbub" id="phMiniBub">${escapeHtml(phGreet(D))}</span>`
-  +`<button type="button" class="ph-mhead" id="phMiniHead" title="Plumo · open the morning report" aria-label="Plumo · open the morning report">${PlumoFace.html(D.mood)}</button>`
+  +`<button type="button" class="ph-mhead" id="phMiniHead" title="Plumo · show his farm" aria-label="Plumo · show his farm">${PlumoFace.html(D.mood)}</button>`
   +`<button type="button" class="ph-mexp" data-ph-expand title="Show Plumo's farm again" aria-label="Show Plumo's farm again"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>`;}
 function phSetMin(on){try{localStorage.setItem('pw-hero-min',on?'1':'0');}catch(e){}const h=document.getElementById('plumoHero');if(h)h.classList.toggle('ph-min',on);
   if(on&&window.PlumoFX){const f=document.getElementById('phFace');if(f&&f.__pfxRun)PlumoFX.cancel(f.__pfxRun);}}
 document.addEventListener('click',e=>{
   if(e.target.closest&&e.target.closest('[data-ph-min]')){phSetMin(true);return;}
   if(e.target.closest&&e.target.closest('[data-ph-expand]')){phSetMin(false);return;}
-  const m=e.target.closest&&e.target.closest('#phMiniHead');if(m){if(window.PlumoFace)PlumoFace.fly(m.querySelector('.plumoF'));setTimeout(()=>{if(typeof rsOpen==='function')rsOpen();},500);}});
+  const m=e.target.closest&&e.target.closest('#phMiniHead');if(m){if(window.PlumoFace)PlumoFace.fly(m.querySelector('.plumoF'));setTimeout(()=>phSetMin(false),380);}});   // his head opens the hero again
 // Home's batch banner goes in as the hero's batch panel
 function plumoHeroWrap(headHtml){
   const D=phData();
@@ -190,7 +191,7 @@ function plumoHeroWrap(headHtml){
     <button type="button" class="ph-minbtn" data-ph-min title="Minimise Plumo — keep just his head" aria-label="Minimise Plumo"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
     ${phMiniHtml(D)}
     <button type="button" class="ph-face" id="phFace" title="Plumo — tap me" aria-label="Plumo">${PlumoFace.html(D.mood)}</button>
-    <div class="ph-mid"><div class="ph-bub" id="phBub">${phBubbleHtml(D)}</div>
+    <div class="ph-mid"><div id="phFoWrap">${typeof foHeroHtml==='function'?foHeroHtml():''}</div><div class="ph-bub" id="phBub">${phBubbleHtml(D)}</div>
       <div class="ph-acts"><button type="button" class="ph-btn primary" data-ph-report>Open morning report</button><button type="button" class="ph-btn" data-bev-open><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Birds Eye View</button></div></div>
     ${headHtml}
   </section>`;
@@ -205,6 +206,7 @@ function phRefresh(){
     const f=document.getElementById('phFace');if(f&&!f.querySelector('.pf-'+D.mood))f.innerHTML=PlumoFace.html(D.mood);
     const c=document.getElementById('phChip');if(c){const x=phChip(D);if(c.innerHTML!==x)c.innerHTML=x;}
     const b=document.getElementById('phBub');if(b){const x=phBubbleHtml(D);if(b.innerHTML!==x)b.innerHTML=x;}
+    const fw=document.getElementById('phFoWrap');if(fw&&typeof foHeroHtml==='function'){const x=foHeroHtml();if(fw.innerHTML!==x)fw.innerHTML=x;}
     const mb=document.getElementById('phMiniBub');if(mb){const x=phGreet(D);if(mb.textContent!==x)mb.textContent=x;}
     const mh=document.getElementById('phMiniHead');if(mh&&!mh.querySelector('.pf-'+D.mood))mh.innerHTML=PlumoFace.html(D.mood);
   }

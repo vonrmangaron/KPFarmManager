@@ -4627,6 +4627,16 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .cw-ross-dot{ position:absolute; top:-3px; right:-3px; width:11px; height:11px; border-radius:50%; background:#E2A13A; border:2px solid var(--surface); }
   .cw-ross-dot[hidden]{ display:none; }
   @media (max-width:760px){ .cw-ross-btn{ padding:0 6px 0 5px; } .cw-ross-btn span{ display:none; } }
+  /* Plumo floats at the bottom right above the quick-actions button, his head only (2026-11-01, like the phone) */
+  .cw-ross-btn.cw-ross-float{ position:fixed; right:20px; bottom:96px; z-index:46; width:78px; height:86px; padding:0; border:0; border-radius:0; background:none; box-shadow:none; display:block; }
+  .cw-ross-btn.cw-ross-float > span:not(.cw-ross-mk){ display:none; }
+  .cw-ross-btn.cw-ross-float .cw-ross-mk{ display:block !important; width:100%; height:100%; background:none; border-radius:0; overflow:visible; }
+  .cw-ross-btn.cw-ross-float .cw-ross-mk svg{ width:100%; height:100%; margin:0; }
+  .cw-ross-btn.cw-ross-float .cw-ross-mk .plumoF{ width:100%; height:100%; margin:0; filter:drop-shadow(0 10px 12px rgba(0,0,0,.35)); transition:transform .15s; }
+  .cw-ross-btn.cw-ross-float:hover .plumoF{ transform:translateY(-3px) scale(1.04); }
+  .cw-ross-btn.cw-ross-float .cw-ross-dot{ top:6px; right:6px; width:14px; height:14px; }
+  .cw-ross-btn.cw-ross-float[hidden]{ display:none; }
+  @media (max-width:760px){ .cw-ross-btn.cw-ross-float{ right:10px; bottom:calc(140px + env(safe-area-inset-bottom, 0px)); width:64px; height:71px; } }
   /* Tick animation (2026-10-26) */
   .tick-pop{ animation:tickPop .5s cubic-bezier(.2,1.6,.4,1); position:relative; }
   .tick-pop::after{ content:""; position:absolute; inset:-2px; border-radius:inherit; box-shadow:0 0 0 0 rgba(15,138,117,.55); animation:tickRing .6s ease-out; pointer-events:none; }
@@ -15761,7 +15771,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Plumo (2026-10-25): the morning report lives in ProdWise; this button opens it, and __cwRoss hands over Tasks' part
   (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
     const b = $('#cwRossBtn'); if(!b || !ok) return; b.hidden = false;
-    b.addEventListener('click', ()=>{ try{ window.parent.pwOpenRoss(); }catch(e){} });
+    b.classList.add('cw-ross-float'); document.body.appendChild(b);   // out of the top bar: a floating head, bottom right (2026-11-01)
+    b.addEventListener('click', ()=>{ try{ if(window.PlumoFace) PlumoFace.fly(b.querySelector('.plumoF')); }catch(e){} setTimeout(()=>{ try{ window.parent.pwOpenRoss(); }catch(e){} }, 450); });
     window.__cwRossDot = on=>{ const d = $('#cwRossDot'); if(d) d.hidden = !on; };
     // the new face (2026-11-01, ../js/plumo-face.js), in the mood Plumo has in Production
     const mk = b.querySelector('.cw-ross-mk'), mood = ()=>{ try{ return window.parent.rsMoodNow ? window.parent.rsMoodNow() : 'calm'; }catch(e){ return 'calm'; } };

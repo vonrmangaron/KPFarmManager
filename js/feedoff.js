@@ -49,8 +49,23 @@ function foBannerHtml(){
   if(tm&&!tm.done)return `<div class="fo-pre" id="foBanner"><span class="fo-okface">${typeof rsFace==='function'?rsFace('calm'):''}</span><span><b>Feed off tomorrow morning · ${escapeHtml(foLabel(tm.sheds))}</b> — Plumo will remind you at ${escapeHtml(((typeof pnCfg!=='undefined'&&pnCfg&&pnCfg.foTime)||'07:00').replace(/^0/,''))}. Kill sheet ${escapeHtml(foDay(tm.kill))}.</span></div>`;
   return '';
 }
+// On computers the feed-off alert sits in Plumo's hero on Home (2026-11-01) instead of a banner on every page;
+// phones keep the banner (they have no hero)
+const FO_DESK=window.matchMedia?matchMedia('(min-width:769px)'):{matches:false};
+function foHeroHtml(){
+  if(!farmData)return '';
+  const ev=foToday();
+  if(ev&&ev.done){const d=foDoneMap()[ev.date]||{};const at=d.at?fmtClock(d.at):'';
+    return `<div class="ph-fo ok"><span>✓ Feed off ${escapeHtml(foLabel(ev.sheds))}${d.by?' by '+escapeHtml(d.by):''}${at?' at '+escapeHtml(at):''}</span><button type="button" class="ph-fo-undo" data-fo-undo="${ev.date}" title="Not done after all">Undo</button></div>`;}
+  if(ev&&!foSnoozed())return `<div class="ph-fo red" role="alert"><div class="ph-fo-t"><b>Turn the feed off · ${escapeHtml(foLabel(ev.sheds))}</b><span>Caught tonight for the ${escapeHtml(foDay(ev.kill))} kill sheet — the feed comes off this morning.</span></div>`
+    +`<div class="ph-fo-acts"><button type="button" class="ph-fo-done" data-fo-done="${ev.date}">✓ Feed is off</button><button type="button" class="ph-fo-later" data-fo-later>${escapeHtml(foLaterLabel())}</button></div></div>`;
+  const tm=foTomorrow();
+  if(tm&&!tm.done)return `<div class="ph-fo pre"><span><b>Feed off tomorrow morning · ${escapeHtml(foLabel(tm.sheds))}</b> · kill sheet ${escapeHtml(foDay(tm.kill))}</span></div>`;
+  return '';
+}
 function foInject(){
   const old=document.getElementById('foBanner');if(old)old.remove();
+  if(FO_DESK.matches)return;   // computers: it's in the hero
   if(typeof pwSection!=='undefined'&&pwSection!=='production')return;
   if(typeof activeTab!=='undefined'&&(activeTab==='farmsettings'||activeTab==='account'))return;
   const app=document.getElementById('app');if(!app)return;
@@ -73,7 +88,7 @@ function foSetDone(date,on){
 document.addEventListener('click',e=>{
   const d=e.target.closest&&e.target.closest('[data-fo-done]');if(d){foSetDone(d.dataset.foDone,true);showToast('Feed off — Plumo has it noted.');return;}
   const u=e.target.closest&&e.target.closest('[data-fo-undo]');if(u){foSetDone(u.dataset.foUndo,false);return;}
-  if(e.target.closest&&e.target.closest('[data-fo-later]')){const at=foLaterAt();try{localStorage.setItem(foSnoozeKey(),String(at.getTime()));}catch(er){}foInject();showToast('Plumo will remind you at '+fmtClock(at)+'.');}
+  if(e.target.closest&&e.target.closest('[data-fo-later]')){const at=foLaterAt();try{localStorage.setItem(foSnoozeKey(),String(at.getTime()));}catch(er){}foInject();if(typeof phRefresh==='function')phRefresh();showToast('Plumo will remind you at '+fmtClock(at)+'.');}
 });
 // Back on screen at the reminder time: show it again
 setInterval(()=>{if(document.visibilityState==='visible'&&farmData&&(foToday()||foTomorrow()))foInject();},60e3);
@@ -133,3 +148,5 @@ function foCrewShare(now){
 if(typeof saveState==='function'){const foSave0=saveState;saveState=function(){const r=foSave0.apply(this,arguments);foSync(false);return r;};}
 window.addEventListener('load',()=>setTimeout(()=>foSync(true),3000));
 setInterval(()=>{if(document.visibilityState==='visible')foSync(false);},15*60e3);
+
+if(FO_DESK.addEventListener)FO_DESK.addEventListener('change',()=>{try{foInject();}catch(e){}});
