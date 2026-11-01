@@ -6536,7 +6536,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         ? mergeSnapshots(lastSyncedSnapshot || EMPTY_SNAPSHOT, localAtStart, server.data)
         : localAtStart;
       // Never write duplicate weigh-ins back to the cloud.
-      const weighPlan = planWeighIns(merged.tasks || [], merged.batches || [], {});
+      const weighPlan = planWeighIns(merged.tasks || [], merged.batches || [], { trim:true });
       if(weighPlan.changes) merged.tasks = applyWeighInPlan(merged.tasks, weighPlan);
       const res = await fetch(mainFileUrl(), {
         method:'PUT',
@@ -6800,14 +6800,19 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   // ==================== WEIGH-IN RECHECK ====================
-  // Every shed gets a weigh-in each 7 days from placement up to its own cleanout date.
+  // Every shed gets a weigh-in each 7 days from placement up to its own cleanout date — or the day Production
+  // closed it, when that comes first (2026-11-01: a shed closed early kept its weigh-ins up to the cleanout).
   // planWeighIns() is pure: it compares what should exist with what does and returns a plan.
   //  - always: collapses duplicates (same batch + shed + day) and tags legacy "Weight Shed N - (Day D)" tasks
   //  - full (batch saved): also removes open weigh-ins past cleanout / for removed sheds, adds missing weeks,
   //    and moves open weigh-ins when a shed's placement date changed (same ids, so sync can't double them)
+  //  - trim (every save and Production check): only removes open weigh-ins after the shed's last day — never adds,
+  //    so a weigh-in the manager deleted doesn't come back
   const WEIGH_NAME_RE = /^\s*Weight Shed (\S+?) - \(Day (\d+)\)\s*$/;
   function weighDayAge(t){ if(t.dayAge) return Number(t.dayAge); const m = /\(Day (\d+)\)/.exec(t.name||''); return m ? Number(m[1]) : null; }
   function shedCleanout(b, sh){ return sh.cleanout || b.end; }
+  // the shed's last weigh-in day: closed in Production, or the cleanout
+  function shedWeighEnd(b, sh){ const c = shedCleanout(b, sh); return sh.closed && (!c || sh.closed < c) ? sh.closed : c; }
   function weighWeeks(placement, cleanout){ return placement && cleanout && cleanout >= placement ? Math.floor((toDateObj(cleanout) - toDateObj(placement)) / (7*86400000)) : 0; }
   // Which copy survives a duplicate: ticked, then assigned, then oldest, then id — fixed order so every device agrees.
   function weighKeeperCompare(a, b){
@@ -6841,18 +6846,23 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         list.sort(weighKeeperCompare);
         const keep = list[0];
         list.slice(1).forEach(t=>{ plan.remove.add(t.id); plan.dupes++; });
-        if(!opts.full) return;
         const sh = shedMap.get(String(keep.shedNum)), d = weighDayAge(keep);
+        if(opts.trim && sh && keep.status!=='done'){
+          const due = d ? addDaysStr(sh.placement, d) : keep.date, end = shedWeighEnd(b, sh);
+          if(end && (due > end || (keep.date && keep.date > end))) plan.remove.add(keep.id);
+          return;
+        }
+        if(!opts.full) return;
         if(!sh){ if(keep.status!=='done') plan.remove.add(keep.id); return; }
         if(!d) return;
         const due = addDaysStr(sh.placement, d);
-        if(due > shedCleanout(b, sh)){ if(keep.status!=='done') plan.remove.add(keep.id); return; }
+        if(due > shedWeighEnd(b, sh)){ if(keep.status!=='done') plan.remove.add(keep.id); return; }
         const was = oldPlacement.get(String(sh.shed));
         if(was && was !== sh.placement && keep.status!=='done' && keep.date!==due) plan.move.set(keep.id, due);
       });
       if(!opts.full) return;
       shedMap.forEach(sh=>{
-        const end = shedCleanout(b, sh);
+        const end = shedWeighEnd(b, sh);
         for(let w=1; addDaysStr(sh.placement, w*7) <= end; w++){
           const d = w*7;
           if(groups.has(String(sh.shed) + '|' + d)) continue;
@@ -14984,6 +14994,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       recheckWeighIns({ full:true, batchNumber: b.number, oldSheds, fromDate: today }, `Batch #${b.number} from Production`);
       changed++;
     }
+    // sheds closed (or cleaned out) since: their open weigh-ins come off, even when Production didn't change
+    if(planWeighIns(tasks, batches, { trim:true }).changes){ recheckWeighIns({ trim:true }, 'Sheds closed or cleaned out'); changed++; }
     if(changed){ reconcileShedPrep(); persist(); renderAll(); }
   }
   // "Set up in Production": inside ProdWise, switch to Production's Set up sheds page; on its own, open ProdWise there
