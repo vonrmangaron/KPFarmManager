@@ -202,7 +202,10 @@ function rsContext(d){
 // ---------- the report (interactive, mockup V6iLPtGMo1DzNn2DiFgVkT) ----------
 const RS_TABS=[['ov','Overview'],['plan',"Today's plan"],['sheds','Sheds'],['crew','Crew'],['since','Since yesterday'],['warn','Warnings'],['week','Week ahead'],['wx','Weather']];
 const RS_WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-function rsFace(mood,cls){return `<span class="rossR ${mood||'calm'}${cls?' '+cls:''}">${ROSS_SVG}</span>`;}
+// The new action-hero face (2026-11-01, js/plumo-face.js); the old robot-chicken drawing stays as the fallback.
+// The mood is drawn into the face, so changing mood redraws it (rsFaceMood).
+function rsFace(mood,cls){const m=mood||'calm';return `<span class="rossR ${m}${cls?' '+cls:''}" data-m="${m}">${window.PlumoFace?PlumoFace.svg(m):ROSS_SVG}</span>`;}
+function rsFaceMood(el,m){el.classList.remove('calm','thinking','happy','alert','rest','stress');el.classList.add(m);if(window.PlumoFace&&el.dataset.m!==m){el.innerHTML=PlumoFace.svg(m);el.dataset.m=m;}}
 function rsFirst(t){t=String(t||'').trim();const m=t.match(/^.*?[.!?](\s|$)/);return (m?m[0]:t).trim();}
 function rsTicksKey(){return 'pw-ross-ticks-'+aiSlug()+'-'+aiDay();}
 function rsTicks(){try{return new Set(JSON.parse(localStorage.getItem(rsTicksKey())||'[]'));}catch(e){return new Set();}}
@@ -288,7 +291,7 @@ function rsHtml(st,d,R){
       <span class="rs-dots" id="rsDots">${RS_TABS.map(()=>'<i></i>').join('')}</span><button type="button" class="rs-db" id="rsPrev" aria-label="Previous section">‹</button><button type="button" class="rs-db p" id="rsNext">Walk me through it</button></div>`;
 }
 let rsTabLock=0,rsStep=-1,rsCur=null;   // walk-through step; the model the open report shows
-function rsSetMood(m){document.querySelectorAll('#rsModal .rossR').forEach(el=>{if(el.closest('.rs-nf'))return;el.classList.remove('calm','thinking','happy','alert','rest');el.classList.add(m);});}
+function rsSetMood(m){document.querySelectorAll('#rsModal .rossR').forEach(el=>{if(el.closest('.rs-nf'))return;rsFaceMood(el,m);});}
 function rsTell(html,mood,ms){const el=document.getElementById('rsMsg');if(el)el.innerHTML='<b>Plumo:</b> '+html;if(mood){rsSetMood(mood);if(ms)setTimeout(()=>rsSetMood(rsStep>=0&&rsCur?rsCur.R.stepMood[RS_TABS[rsStep][0]]:rsCur?rsCur.R.mood:'calm'),ms);}}
 function rsScrollTo(k){const sc=document.getElementById('rsScroll'),el=document.getElementById('rs-'+k);if(!sc||!el)return;rsTabLock=Date.now();
   document.querySelectorAll('#rsModal [data-rs-tab]').forEach(b=>b.classList.toggle('on',b.dataset.rsTab===k));
@@ -357,10 +360,10 @@ async function rsOpen(){
   rsSave(st);
   if(m.classList.contains('open')){rsPaint(st,rsData(),true);const f=document.querySelector('#rsFace .rossR');if(f&&st.main){f.classList.add('crow');setTimeout(()=>f.classList.remove('crow'),950);}}
 }
-function rsClose(){const m=document.getElementById('rsModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');rsStep=-1;}
+function rsClose(){const m=document.getElementById('rsModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');rsStep=-1;if(typeof phRefresh==='function')phRefresh();}
 function rsDot(){const on=!!farmData&&new Date().getHours()>=7&&!rsLoad().seen;const d=document.getElementById('rossDot');if(d)d.hidden=!on;try{cwFrame&&cwFrame.contentWindow&&cwFrame.contentWindow.__cwRossDot&&cwFrame.contentWindow.__cwRossDot(on);}catch(e){}}
 // The header Plumo wears today's mood: worried with a red item, sleepy with no AI, happy when the plan is cleared
-function rsBtnMood(m){const f=document.querySelector('#rossBtn .rossR');if(f){f.classList.remove('calm','thinking','happy','alert','rest');f.classList.add(m);}}
+function rsBtnMood(m){const f=document.querySelector('#rossBtn .rossR');if(f)rsFaceMood(f,m);if(typeof phRefresh==='function')phRefresh();}
 function rsMoodNow(){try{if(!farmData)return 'calm';const st=rsLoad();if(st.main||st.err){const R=rsModel(st,rsData());return R.mood;}const b=mgrBriefData();return b.G.today.concat(b.G.watch,b.G.feed,b.G.co).some(x=>x.tone==='r')?'alert':'calm';}catch(e){return 'calm';}}
 // Phones: Plumo floats at the bottom right above the bottom bar; computers: beside the bell (2026-10-26)
 const RS_PHONE=window.matchMedia?matchMedia('(max-width:768px)'):{matches:false};

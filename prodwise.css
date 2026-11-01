@@ -6743,3 +6743,99 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
   .bev-tt h2{font-size:17px}
   .bev-meta{display:none}
 }
+
+/* ── Plumo stands out (2026-11-01, js/plumo-hero.js): the anime farm scene, the Home hero (computers) and the big
+   floating Plumo (phones). Scene classes are scoped under .phs so they can't touch the rest of the app. ── */
+.phs{position:absolute;inset:0;overflow:hidden;--fan:.7s;--cloud:70s;--sway:2.4s}
+.phs[data-m=thinking]{--fan:.9s;--cloud:90s;--sway:3s}.phs[data-m=happy]{--fan:.35s;--cloud:40s;--sway:1.6s}
+.phs[data-m=alert]{--fan:.2s;--cloud:16s;--sway:.5s}.phs[data-m=stress]{--fan:.3s;--cloud:14s;--sway:.6s}.phs[data-m=rest]{--fan:1.6s;--cloud:140s;--sway:4s}
+.phs .L,.phs .land,.phs .land svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.phs .sky{opacity:0;transition:opacity .8s}
+.phs[data-m=calm] .sky-calm,.phs[data-m=thinking] .sky-thinking,.phs[data-m=happy] .sky-happy,.phs[data-m=alert] .sky-alert,.phs[data-m=stress] .sky-stress,.phs[data-m=rest] .sky-rest{opacity:1}
+.phs .land{transition:filter .8s}
+.phs[data-m=thinking] .land{filter:brightness(.78) saturate(.85) hue-rotate(12deg)}
+.phs[data-m=happy] .land{filter:brightness(1.05) saturate(1.15) sepia(.12)}
+.phs[data-m=alert] .land{filter:brightness(.5) saturate(1.2) sepia(.4) hue-rotate(-25deg)}
+.phs[data-m=stress] .land{filter:brightness(.85) sepia(.35) saturate(1.1)}
+.phs[data-m=rest] .land{filter:brightness(.36) saturate(.6) hue-rotate(15deg)}
+.phs .sunG,.phs .moonG,.phs .stars,.phs .rays,.phs .storm,.phs .sbolt,.phs .birds,.phs .wind,.phs .lit,.phs .flies,.phs .rainG,.phs .skyflash,.phs .beams,.phs .lflare,.phs .motes,.phs .petals{opacity:0;transition:opacity .6s}
+.phs .clouds{transition:opacity .6s}
+.phs[data-m=calm] .sunG,.phs[data-m=happy] .sunG{opacity:1}.phs[data-m=stress] .sunG{opacity:.5}
+.phs[data-m=rest] .moonG,.phs[data-m=rest] .stars{opacity:1}
+.phs[data-m=thinking] .moonG{opacity:.55}.phs[data-m=thinking] .stars{opacity:.45}.phs[data-m=thinking] .clouds{opacity:.5}
+.phs[data-m=happy] .rays{opacity:1}
+.phs[data-m=calm] .birds,.phs[data-m=happy] .birds{opacity:1}
+.phs[data-m=alert] .storm,.phs[data-m=alert] .rainG{opacity:1}.phs[data-m=alert] .clouds{opacity:0}
+.phs[data-m=rest] .clouds{opacity:.15}
+.phs[data-m=stress] .wind{opacity:1}
+.phs[data-m=rest] .lit,.phs[data-m=rest] .flies{opacity:1}
+.phs[data-m=calm] .beams,.phs[data-m=happy] .beams,.phs[data-m=calm] .lflare,.phs[data-m=happy] .lflare,.phs[data-m=calm] .motes,.phs[data-m=happy] .motes,.phs[data-m=calm] .petals,.phs[data-m=happy] .petals{opacity:1}
+.phs[data-m=thinking] .motes{opacity:.6}
+.phs .skyflash{position:absolute;inset:0;background:#fff}
+.phs[data-m=alert] .sbolt{animation:phStrike 3.2s linear infinite}.phs[data-m=alert] .skyflash{animation:phSkyF 3.2s linear infinite}
+@keyframes phStrike{0%,86%,89.9%,92%,95%,100%{opacity:0}87%,89%,93%,94%{opacity:1}}
+@keyframes phSkyF{0%,86%,90%,92%,95%,100%{opacity:0}87%{opacity:.4}93%{opacity:.25}}
+.phs .cA{fill:#FFFFFF}.phs .cB{fill:#AFC6E8}.phs .cC{fill:#FFFFFF}.phs .cA,.phs .cB,.phs .cC{transition:fill .8s}
+.phs[data-m=happy] .cA{fill:#FFF1DC}.phs[data-m=happy] .cB{fill:#EFA77A}.phs[data-m=happy] .cC{fill:#FFFCF0}
+.phs[data-m=thinking] .cA{fill:#C7B9EA}.phs[data-m=thinking] .cB{fill:#6E6AB0}.phs[data-m=thinking] .cC{fill:#FFC4DA}
+.phs[data-m=stress] .cA{fill:#F6D2A0}.phs[data-m=stress] .cB{fill:#BE7E45}.phs[data-m=stress] .cC{fill:#FFEFCF}
+.phs[data-m=rest] .cA{fill:#353E6C}.phs[data-m=rest] .cB{fill:#1B224C}.phs[data-m=rest] .cC{fill:#6671AE}
+.phs .cl{animation:phCloud var(--cloud) linear infinite}@keyframes phCloud{to{transform:translateX(-540px)}}
+.phs .blades{transform-box:fill-box;transform-origin:50% 50%;animation:phSpin var(--fan) linear infinite}@keyframes phSpin{to{transform:rotate(360deg)}}
+.phs .tuft{transform-box:fill-box;transform-origin:50% 100%;animation:phSway var(--sway) ease-in-out infinite alternate}@keyframes phSway{from{transform:rotate(-5deg)}to{transform:rotate(6deg)}}
+.phs[data-m=stress] .tuft,.phs[data-m=alert] .tuft{animation-name:phSwayHard}@keyframes phSwayHard{from{transform:rotate(-2deg)}to{transform:rotate(-20deg)}}
+.phs .birds{animation:phFly 24s linear infinite}@keyframes phFly{0%{transform:translate(-80px,0)}50%{transform:translate(300px,-14px)}100%{transform:translate(640px,0)}}
+.phs .bird path{transform-box:fill-box;transform-origin:50% 100%;animation:phFlap .45s ease-in-out infinite alternate}@keyframes phFlap{to{transform:scaleY(-.4)}}
+.phs .rays{transform-box:view-box;transform-origin:440px 78px;animation:phSpin 40s linear infinite}
+.phs .stars circle{animation:phTwk 2.6s ease-in-out infinite}@keyframes phTwk{0%,100%{opacity:1}50%{opacity:.2}}
+.phs .wind path{animation:phWind 1.4s linear infinite}@keyframes phWind{from{transform:translateX(-140px)}to{transform:translateX(640px)}}
+.phs .fly{animation:phFlyF 3.6s ease-in-out infinite alternate}@keyframes phFlyF{0%{transform:translate(0,0);opacity:.15}50%{opacity:1}100%{transform:translate(14px,-12px);opacity:.25}}
+.phs[data-m=alert] .drop{animation:phDrop .55s linear infinite}@keyframes phDrop{from{transform:translate(40px,-420px)}to{transform:translate(0,0)}}
+.phs .beams path{animation:phBeam 5s ease-in-out infinite}@keyframes phBeam{0%,100%{opacity:.55}50%{opacity:1}}
+.phs .mote{animation:phMote 8s ease-in-out infinite}@keyframes phMote{0%{transform:translate(0,0);opacity:0}20%{opacity:1}100%{transform:translate(18px,-70px);opacity:0}}
+.phs .petal{animation:phPetal 10s linear infinite}@keyframes phPetal{0%{transform:translate(0,-20px) rotate(0)}100%{transform:translate(-170px,420px) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.phs *{animation:none!important}}
+
+/* the hero (computers) */
+.ph-hero{position:relative;display:flex;flex-wrap:wrap;align-items:stretch;min-height:290px;border-radius:22px;overflow:hidden;background:#3F86DC;box-shadow:0 14px 34px rgba(22,35,58,.22)}
+.ph-chip{position:absolute;left:16px;top:16px;z-index:2;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:99px;background:rgba(8,12,22,.62);color:#F2F4F8;font:700 12px Inter,sans-serif}
+.ph-chip i{width:9px;height:9px;border-radius:50%}
+.ph-face{position:relative;z-index:1;flex:0 0 220px;align-self:flex-end;display:flex;justify-content:center;padding:44px 0 4px;border:0;background:none;cursor:pointer}
+.ph-face .plumoF{width:190px;height:212px;filter:drop-shadow(0 14px 18px rgba(0,0,0,.4))}
+.ph-face:focus-visible{outline:3px solid #FFD452;outline-offset:-6px;border-radius:18px}
+.ph-mid{position:relative;z-index:1;flex:1 1 360px;min-width:0;padding:22px 8px 22px 0;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.ph-bub{position:relative;max-width:580px;background:#fff;color:#141824;border:2.5px solid #141824;border-radius:16px;padding:13px 18px 14px;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.ph-bub::before{content:"";position:absolute;left:-12px;top:30px;border:9px solid transparent;border-right:12px solid #141824;border-left:0}
+.ph-bub::after{content:"";position:absolute;left:-8px;top:32px;border:7px solid transparent;border-right:9px solid #fff;border-left:0}
+.ph-k{font:800 11px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#8A5A00}
+.ph-bub h2{margin:4px 0 0;font:800 20px/1.25 Sora,sans-serif;color:#141824;text-wrap:balance}
+.ph-items{list-style:none;margin:9px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.ph-items li{display:flex;gap:9px;align-items:baseline;font:600 14px/1.4 Inter,sans-serif;color:#2B313A}
+.ph-items li::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#9AA3B0;transform:translateY(-1px)}
+.ph-items li.t-r::before{background:#E5383B}.ph-items li.t-a::before{background:#F0A21A}
+.ph-acts{display:flex;flex-wrap:wrap;gap:10px}
+.ph-btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 16px;border-radius:12px;border:1.5px solid rgba(255,255,255,.6);background:rgba(10,14,24,.55);color:#fff;font:700 14px Inter,sans-serif;cursor:pointer}
+.ph-btn.primary{border:0;background:#FF7A1A;color:#141824;font-weight:800;box-shadow:0 6px 16px rgba(255,122,26,.4)}
+.ph-btn:hover{filter:brightness(1.08)}.ph-btn:focus-visible{outline:3px solid #FFD452;outline-offset:2px}
+@media (min-width:769px){
+  .mgr-home .ph-hero .mgr-head{position:relative;z-index:1;flex:0 1 270px;min-width:230px;align-self:flex-start;margin:18px;padding:14px 16px;border-radius:16px;background:rgba(8,12,22,.6);border:1px solid rgba(255,255,255,.18);box-shadow:none;backdrop-filter:blur(2px)}
+  .mgr-home .ph-hero .mgr-head::after{display:none}
+  .mgr-home .ph-hero .mgr-batch b{font-size:19px;line-height:1.2}
+  .mgr-home .ph-hero .mgr-batch span{font-size:12.5px}
+}
+@media (min-width:769px){body:has(#plumoHero) #rossBtn{display:none}}
+/* phones: no hero, the batch banner shows as before */
+@media (max-width:768px){.ph-hero{display:contents}.ph-hero>.phs,.ph-hero>.ph-chip,.ph-hero>.ph-face,.ph-hero>.ph-mid{display:none}}
+
+/* the big floating Plumo (phones) */
+@media (max-width:768px){
+  .ross-btn.ross-float{width:84px;height:84px;border-radius:24px;border:3px solid var(--ph-ring,#18A57A);background:linear-gradient(160deg,#25324F,#111726);box-shadow:0 0 0 5px color-mix(in srgb,var(--ph-ring,#18A57A) 22%,transparent),0 12px 26px rgba(17,23,38,.45)}
+  .ross-btn.ross-float .ross-mk{width:72px;height:72px;border-radius:18px;background:none}
+  .ross-btn.ross-float .ross-mk .rossR{width:66px;height:74px;margin-top:2px}
+  .ross-btn.ross-float .ross-dot{display:none}
+  .ross-btn.ross-float .ph-count{position:absolute;top:-8px;right:-8px;min-width:24px;height:24px;padding:0 6px;box-sizing:border-box;border-radius:99px;background:#E5383B;border:2px solid var(--bg,#FBF6EC);color:#fff;font:800 12px/20px Inter,sans-serif;text-align:center}
+  .ross-btn.ross-float .ph-tbub{position:absolute;right:96px;bottom:14px;width:max-content;max-width:190px;white-space:normal;text-align:left;background:#fff;color:#141824;border:2.5px solid #141824;border-radius:14px;padding:9px 12px;font:800 13px/1.3 Sora,sans-serif;box-shadow:0 10px 24px rgba(20,24,36,.25)}
+  .ross-btn.ross-float .ph-tbub::after{content:"";position:absolute;right:-10px;bottom:16px;border:7px solid transparent;border-left:9px solid #141824;border-right:0}
+}
+.ph-count[hidden],.ph-tbub[hidden]{display:none!important}
+@media (min-width:769px){.ross-btn .ph-count,.ross-btn .ph-tbub{display:none}}
