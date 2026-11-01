@@ -12754,6 +12754,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
           c.nextPlacement = np; changed = true;
           maintenance.forEach(m=>{ if(m.resetAt === c.closedAt && prepJobShed(m, c.shed)) m.resumeOn = np; });
         }
+      } else if(!c.isTpl && !c.archived && c.createdAt){
+        // started by hand or copied before Production closed the shed (2026-11-01): chicks = the shed's first
+        // placement from the day the checklist was made (Shed 2 had none, so "First chicks" skipped it)
+        const np = prepNextPlacement(c.shed, addDaysStr(dateKey(new Date(c.createdAt)), -1)) || null;
+        if(np !== (c.nextPlacement || null)){ c.nextPlacement = np; changed = true; }
       }
       prepUnits(c).forEach(({ u })=>{
         if(!u.taskId) return;
