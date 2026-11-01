@@ -196,15 +196,43 @@ function phRefresh(){
 }
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-ph-report]')&&typeof rsOpen==='function')rsOpen();});
 // Plumo flies (2026-11-01): now and then on his own, and whenever he's tapped. The phone tile flies, then opens the report.
-// On the hero he flies right across it — over the bubble to the batch panel, turns round, and back to his spot
+// On the hero he flies away to the shed and back (2026-11-01, ≈6.5 s): crouch and take off in a puff of dust with
+// speed lines, turn his back to us and fly off toward the shed getting smaller (far away), circle over it, turn
+// round and come back growing, land with a squash. A sparkle trail follows him. A copy flies; the real face waits.
+const PH_FLY_MS=6500;
+function phFx(h,cls,x,y,size){const e=document.createElement('span');e.className='ph-fx '+cls;e.style.left=x+'px';e.style.top=y+'px';if(size)e.style.setProperty('--s',size);h.appendChild(e);setTimeout(()=>e.remove(),1200);}
 function phFlyAcross(){
   const f=document.getElementById('phFace'),h=document.getElementById('plumoHero');
-  if(!f||!h||f.classList.contains('ph-cross'))return;
+  if(!f||!h||h.querySelector('.ph-flyer')||!window.PlumoFace)return;
   if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const dist=Math.max(0,h.clientWidth-f.offsetLeft-f.offsetWidth-60);
-  f.style.setProperty('--ph-fx',dist+'px');
-  f.classList.add('ph-cross');PlumoFace.fly(f,3600);
-  setTimeout(()=>f.classList.remove('ph-cross'),3650);
+  const pf=f.querySelector('.plumoF');if(!pf)return;
+  const H=h.getBoundingClientRect(),F=pf.getBoundingClientRect();
+  const x0=F.left-H.left,y0=F.top-H.top,cx=x0+F.width/2,cy=y0+F.height/2;
+  // the shed in the scene (drawn 1080 wide, bottom-anchored): map its spot to the hero
+  const s=H.width/1080,crop=Math.max(0,350*s-H.height),tx=985*s,ty=(250-50)*s-crop;
+  const dx=tx-cx,dy=ty-cy;
+  const mood=(pf.className.match(/pf-(\w+)/)||[])[1]||'calm';
+  const fl=document.createElement('div');fl.className='ph-flyer';fl.setAttribute('aria-hidden','true');
+  fl.style.cssText=`left:${x0}px;top:${y0}px;width:${F.width}px;height:${F.height}px`;
+  fl.innerHTML=`<span class="ph-fv">${PlumoFace.html(mood)}</span><span class="ph-bv"><span class="plumoF pf-${mood}">${PlumoFace.back()}</span></span>`;
+  h.appendChild(fl);f.classList.add('ph-away');
+  fl.querySelectorAll('.plumoF').forEach(x=>PlumoFace.fly(x,PH_FLY_MS));
+  const K=(o,x,y,sc,r)=>({offset:o,easing:'ease-in-out',transform:`translate(${x}px,${y}px) scale(${sc}) rotate(${r||0}deg)`});
+  const path=[K(0,0,0,1),K(.06,0,10,1.06),K(.13,dx*.08,-80,1,-6),K(.22,dx*.3,-110+dy*.2,.78,4),K(.38,dx*.7,dy-70,.45,-3),K(.5,dx,dy-6,.24,0),
+    K(.56,dx+40*s,dy-26,.22,8),K(.62,dx-20*s,dy-40,.24,-8),K(.7,dx*.62,dy*.4-90,.5,-6),K(.82,dx*.22,-80,.86,4),K(.92,0,-18,1.04,0),K(.96,0,6,1.08),K(1,0,0,1)];
+  const anim=fl.animate(path,{duration:PH_FLY_MS});   // easing per leg, not over the whole trip
+  // front → back on the way out, back → front on the way home
+  fl.querySelector('.ph-fv').animate([{opacity:1,offset:0},{opacity:1,offset:.17},{opacity:0,offset:.2},{opacity:0,offset:.62},{opacity:1,offset:.66},{opacity:1,offset:1}],{duration:PH_FLY_MS});
+  fl.querySelector('.ph-bv').animate([{opacity:0,offset:0},{opacity:0,offset:.17},{opacity:1,offset:.2},{opacity:1,offset:.62},{opacity:0,offset:.66},{opacity:0,offset:1}],{duration:PH_FLY_MS});
+  // take-off: dust and speed lines; a sparkle trail; landing dust
+  phFx(h,'ph-dust',cx,y0+F.height-10,1);phFx(h,'ph-burst',cx,cy,1);
+  const t0=performance.now();let last=0;
+  (function trail(t){if(!fl.isConnected)return;const el=t-t0;if(el>PH_FLY_MS)return;
+    if(t-last>70&&el>500&&el<PH_FLY_MS-500){last=t;const r=fl.getBoundingClientRect();
+      phFx(h,'ph-spark',r.left-H.left+r.width/2+(Math.random()-.5)*r.width*.5,r.top-H.top+r.height*.62+(Math.random()-.5)*r.height*.3,(r.width/F.width).toFixed(2));}
+    requestAnimationFrame(trail);})(t0);
+  setTimeout(()=>phFx(h,'ph-dust',cx,y0+F.height-10,1),PH_FLY_MS*.95);
+  anim.onfinish=()=>{fl.remove();f.classList.remove('ph-away');};
 }
 document.addEventListener('click',e=>{const f=e.target.closest&&e.target.closest('#phFace');if(f)phFlyAcross();});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#rossBtn.ross-float');if(!t||!window.PlumoFace)return;
@@ -212,6 +240,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 (function phAutoFly(){setTimeout(()=>{if(document.visibilityState==='visible'&&window.PlumoFace){
   const hf=document.getElementById('phFace');if(hf&&hf.offsetParent)phFlyAcross();
   const tile=document.querySelector('#rossBtn.ross-float .rossR');if(tile&&tile.offsetParent)PlumoFace.fly(tile);}
-  phAutoFly();},25000+Math.random()*20000);})();
+  phAutoFly();},35000+Math.random()*30000);})();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(phRefresh,4200));
 setInterval(()=>{if(document.visibilityState==='visible')phRefresh();},60000);

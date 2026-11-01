@@ -3976,7 +3976,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .prep-tm{ display:flex; flex-direction:column; gap:8px; }
   .prep-tm-name{ font:800 17px Sora,sans-serif; color:var(--ink); }
   .prep-tm .prep-lab{ align-self:flex-start; cursor:default; }
-  #prepTaskLab{ display:none !important; }   /* the Shed N · Preparation label shows on the task itself, not in the Make a task window */
+  #prepTaskLab{ display:none !important; }
+  /* the shed already has a task list (2026-11-01) */
+  .prep-listbox{ border:2px solid #F0A21A; border-radius:14px; background:#FFF6E2; color:#3A2A08; padding:11px 13px; display:flex; flex-direction:column; gap:4px; font-size:13px; }
+  .prep-listbox b{ font-size:14px; } .prep-listbox span{ font-weight:600; color:#5A4A20; }
+  .prep-listbox ul{ margin:4px 0 0; padding:0 0 0 2px; list-style:none; display:flex; flex-direction:column; gap:2px; font-weight:600; color:#2B313A; }
+  .prep-listbox em{ font-style:normal; font-size:12px; color:#6E5A2A; margin-top:2px; }
+  body.theme-dark .prep-listbox{ background:rgba(240,162,26,.14); color:var(--ink); } body.theme-dark .prep-listbox span,body.theme-dark .prep-listbox ul,body.theme-dark .prep-listbox em{ color:var(--ink); }
+  .pl-mk.add{ border:1.5px solid #F0A21A !important; background:#FFF1D6 !important; color:#7A4E10 !important; font-weight:800; white-space:nowrap; }
+  body.theme-dark .pl-mk.add{ background:rgba(240,162,26,.18) !important; color:#FFD164 !important; }   /* the Shed N · Preparation label shows on the task itself, not in the Make a task window */
   .prep-tm-k{ font:800 11px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
   .prep-tm-hint{ font-size:13px; color:var(--muted); margin:0; }
   .prep-chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
@@ -5086,6 +5094,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   <div class="form-modal-head"><h2 id="prepTaskTitle">Plan this item</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
     <div class="prep-tm-name" id="prepTaskName"></div><span class="prep-lab" id="prepTaskLab"></span>
+    <div class="prep-listbox" id="prepTaskListBox" hidden></div>
     <label class="prep-tm-k" for="prepTaskTitleIn" id="prepTaskTitleK" hidden>Title</label>
     <input type="text" id="prepTaskTitleIn" class="st-input" maxlength="80" hidden autocomplete="off">
     <label class="prep-tm-k" id="prepTaskPrevK" hidden>Checklist</label>
@@ -5103,7 +5112,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     </div>
     <label class="prep-tm-k prep-only-task">Repeat</label>
     <div class="prep-chips prep-only-task" id="prepTaskRepeat"><button type="button" data-prep-rep="0" class="on">Once</button><button type="button" data-prep-rep="1">Every day until done</button></div>
-    <div class="prep-tm-btns"><button type="button" class="btn-ghost prep-undate" id="prepTaskUndate" hidden>Remove date</button><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
+    <div class="prep-tm-btns"><button type="button" class="btn-ghost prep-undate" id="prepTaskUndate" hidden>Remove date</button><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-ghost prep-sep" id="prepTaskSep" hidden>Make a separate task</button><button type="button" class="btn-app" id="prepTaskSave">Add to the task list</button></div>
   </div>
 </div>
 <div class="form-modal prep-modal" id="prepSecModal" role="dialog" aria-modal="true" aria-labelledby="prepSecTitle">
@@ -13380,6 +13389,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
           if(!col.c) return '<td class="pl-secfill"></td>';
           const us = S.rows.map(R=> unitFor(col, S, R)).filter(Boolean), open = us.filter(u=> !u.done && !u.taskId);
           const onList = us.map(u=> u.taskId && tasks.find(t=> t.id === u.taskId && t.prep && t.prep.bundle)).find(Boolean);
+          const lst = open.length ? prepOpenTaskList(col.c) : null;
+          if(lst) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk add" data-pl-sectask="${enc(col.c.id + '|' + S.t)}" title="${enc(`Add ${open.length} open job${open.length === 1 ? '' : 's'} to "${lst.name}" (${prepFmt(lst.date)}); its ticked steps come off`)}">＋ Add to list</button></td>`;
           if(open.length) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk" data-pl-sectask="${enc(col.c.id + '|' + S.t)}" title="${enc(`Make a task: Shed ${col.sh} – ${S.t} (${open.length} open job${open.length === 1 ? '' : 's'} as steps)`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Task</button></td>`;
           if(onList) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk on" data-pl-opentask="${enc(onList.id)}" title="${enc('On the task list: ' + onList.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>On list</button></td>`;
           return '<td class="pl-secfill"></td>'; }).join('')}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}"><span class="pl-addi" aria-hidden="true">+</span>Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
@@ -13588,7 +13599,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const tk = u.taskId ? tasks.find(t=> t.id === u.taskId) : null;
       plMenu(b, `${u.t} · Shed ${c.shed}`, u.done ? 'Done' + (u.doneBy ? ' by ' + u.doneBy : '') : tk ? (tk.prep && tk.prep.bundle ? `In "${tk.name}" · ` : 'Task · ') + prepFmt(tk.date) : 'Not started', [
         { ic: u.done ? '↺' : '✓', label: u.done ? 'Untick it' : 'Tick it', act: ()=> prepToggleUnit(cid, id) },
-        tk ? { ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } } : { ic:'☑', label:'Make a task', disabled: u.done, act: ()=> openPrepTaskModal(cid, id) },
+        ...(tk ? [{ ic:'▣', label:'Open the task', act: ()=>{ closeOverlays(); openTaskDetailModal(tk.id); } }] : (()=>{ const lst = !u.done && prepOpenTaskList(c);
+          return lst ? [{ ic:'＋', label:`Add to "${lst.name}" (${prepFmt(lst.date)})`, act: ()=>{ const picked = prepUnits(c).filter(x=> x.u.id === id); if(!picked.length) return;
+              const snap = captureUndo(), r = prepUpdateTaskList(lst, c, picked); offerUndo(`Task list "${lst.name}"`, snap, { quiet:true }); persist(); renderAll(); prepListToast(lst, r); } },
+            { ic:'☑', label:'Make a separate task', act: ()=> openPrepTaskModal(cid, id, true) }]
+            : [{ ic:'☑', label:'Make a task', disabled: u.done, act: ()=> openPrepTaskModal(cid, id) }]; })()),
         { ic:'📝', label: u.note ? 'Edit the note' : `Note for Shed ${c.shed}…`, act: ()=> openPrepNote({ cid, id }) }]);
       return true; }
     if((b = g('[data-pl-jobmenu]'))){ const [s, j] = b.dataset.plJobmenu.split('|'); const own = !j, jobT = own ? null : j;
@@ -13683,9 +13698,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     box.innerHTML = knownPeople().filter(n=> !taken.has(n.toLowerCase())).map(n=> `<button type="button" class="assignee-pick" data-prep-pick="${escapeHtmlAttr(n)}"><span class="ap-dot" style="background:${colorForAssignee(n)}"></span>${escapeHtml(n)}</button>`).join('');
   }
   function prepWhoAdd(name){ name = String(name || '').trim(); if(!name) return; if(!prepWho.some(n=> n.toLowerCase() === name.toLowerCase())) prepWho.push(name); $('#prepTaskWho').value = ''; prepWhoRender(); }
-  function openPrepTaskModal(cid, id){
+  function openPrepTaskModal(cid, id, separate){
     const c = prepFind(cid), u = c && prepUnit(c, id); if(!u) return;
-    prepTaskFor = { cid, id }; prepTaskRep = false;
+    prepTaskFor = { cid, id, separate: !!separate }; prepTaskRep = false;
     prepTaskKind = 'task';   // always a task now (2026-10-24)
     $('#prepTaskTitle').textContent = 'Make a task';
     $('#prepTaskName').textContent = u.t; $('#prepTaskName').hidden = false;
@@ -13695,7 +13710,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     prepWhoSet(u.due ? (u.dueWho || '') : '');
     $('#prepTaskUndate').hidden = !u.due;
     try{ refreshAssigneeDatalist(); }catch(e){}
-    prepSyncTaskModal();
+    prepSyncTaskModal(); prepListModalSetup(c);
     $('#prepTaskModal').classList.add('open');
   }
   // One tap per section and shed (2026-10-28, mockup M9P9KFQpGDfR7ZmZZ62GZm): every open job of that section becomes a
@@ -13704,6 +13719,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const c = prepFind(cid), sec = c && prepSecOf(c, secT); if(!sec) return;
     const picked = prepUnits(c).filter(x=> x.sec === sec && !x.u.done && !x.u.taskId);
     if(!picked.length){ showToast('Nothing open in this section.'); return; }
+    const lst = prepOpenTaskList(c);
+    if(lst){ const snap = captureUndo(), r = prepUpdateTaskList(lst, c, picked); offerUndo(`Task list "${lst.name}"`, snap, { quiet:true }); persist(); renderAll(); prepListToast(lst, r); return; }
     const snap = captureUndo(), today = dateKey(new Date());
     const date = sec.due && sec.due >= today ? sec.due : today;
     const who = sec.dueWho ? String(sec.dueWho).split(/\s*,\s*/).filter(Boolean) : [];
@@ -13716,12 +13733,40 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     persist(); renderAll();
     prepActToast(`<b>${escapeHtml(title)}</b> · ${picked.length} step${picked.length === 1 ? '' : 's'}, ${date === today ? 'today' : escapeHtml(formatFull(date))}${who.length ? ' · ' + escapeHtml(who.join(', ')) : ''}`, t.id);
   }
-  function prepActToast(html, taskId){
+  // One task list per shed (2026-11-01, mockup YU1GuiU41z8a2CxPFev2m2): a new job for a shed whose task list is still
+  // on the planner goes onto that list — ticked steps come off (they stay done on the checklist), the new jobs go on,
+  // same day and people. "Make a separate task" still makes a new card.
+  function prepOpenTaskList(c){
+    return c ? tasks.filter(t=> t.status !== 'done' && t.prep && t.prep.bundle && t.prep.cid === c.id).sort((a, b)=> (b.date || '').localeCompare(a.date || ''))[0] || null : null;
+  }
+  function prepUpdateTaskList(t, c, picked){
+    const subs = t.subs || [], off = subs.filter(x=> x.done).length, who = (t.assignees || []).join(', ');
+    t.subs = subs.filter(x=> !x.done).concat(picked.map(x=> ({ id: uid(), t: x.u === x.sec ? x.sec.t : x.u.t, sec: x.sec.t, prepUid: x.u.id })));
+    t.prep.uids = t.subs.map(x=> x.prepUid).filter(Boolean); if(t.prep.uids.length) t.prep.uid = t.prep.uids[0];
+    picked.forEach(x=>{ x.u.taskId = t.id; x.u.taskDate = t.date; x.u.taskWho = who; delete x.u.due; delete x.u.dueWho; });
+    prepHist(c, `Shed ${c.shed}: "${t.name}" updated — ${picked.length} added${off ? `, ${off} done step${off === 1 ? '' : 's'} taken off` : ''}`);
+    return { added: picked.length, off, total: t.subs.length };
+  }
+  function prepListToast(t, r){
+    prepActToast(`<b>${escapeHtml(t.name)}</b> · +${r.added}${r.off ? `, ${r.off} done off` : ''} → ${r.total} step${r.total === 1 ? '' : 's'}, ${escapeHtml(formatFull(t.date))}`, t.id, 'Task list updated');
+  }
+  // the Make a task window: offer the shed's list when it has one
+  function prepListModalSetup(c){
+    const f = prepTaskFor, t = f && !f.multi && !f.separate ? prepOpenTaskList(c) : null;
+    if(f) f.list = t ? t.id : null;
+    const box = $('#prepTaskListBox');
+    if(t){ const n = (t.subs || []).length, d = (t.subs || []).filter(x=> x.done).length, add = f.bundle ? f.bundle.length : 1;
+      box.innerHTML = `<b>Shed ${escapeHtml(c.shed)} already has a task list on the planner</b><span>"${escapeHtml(t.name)}" · ${escapeHtml(formatFull(t.date))}${(t.assignees || []).length ? ' · ' + escapeHtml(t.assignees.join(', ')) : ''} · ${n} step${n === 1 ? '' : 's'}${d ? `, ${d} done` : ''}</span>`
+        + `<ul><li>＋ Adds ${add === 1 ? 'this job' : add + ' jobs'} as ${add === 1 ? 'a step' : 'steps'}</li>${d ? `<li>− Takes off the ${d} ticked step${d === 1 ? '' : 's'} (they stay done on the checklist)</li>` : ''}<li>= ${n - d + add} step${n - d + add === 1 ? '' : 's'}, same day and people</li></ul><em>Day and people below are only for a separate task.</em>`; }
+    box.hidden = !t; $('#prepTaskSep').hidden = !t;
+    if(t) $('#prepTaskSave').textContent = 'Update task list';
+  }
+  function prepActToast(html, taskId, lead){
     let el = $('#prepActToast');
     if(!el){ el = document.createElement('div'); el.id = 'prepActToast'; el.className = 'prep-act-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el);
       el.addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; el.classList.remove('show');
         if(b.dataset.act === 'edit') openEditTaskModal(b.dataset.task); else if(b.dataset.act === 'undo') performUndo(); }); }
-    el.innerHTML = `<span class="pat-msg">✓ Task made: ${html}</span><button type="button" data-act="edit" data-task="${escapeHtmlAttr(taskId)}">Set day &amp; people</button><button type="button" data-act="undo" class="pat-undo">Undo</button>`;
+    el.innerHTML = `<span class="pat-msg">✓ ${lead || 'Task made'}: ${html}</span><button type="button" data-act="edit" data-task="${escapeHtmlAttr(taskId)}">Set day &amp; people</button><button type="button" data-act="undo" class="pat-undo">Undo</button>`;
     el.classList.add('show'); clearTimeout(prepActToast.tm); prepActToast.tm = setTimeout(()=> el.classList.remove('show'), 9000);
   }
   // several jobs from one shed → one task whose steps are the jobs, under their section names
@@ -13738,7 +13783,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#prepTaskLab').textContent = `🧹 Shed ${c.shed} · Preparation`;
     $('#prepTaskDate').value = addDaysStr(dateKey(new Date()), 1); prepWhoSet('');
     try{ refreshAssigneeDatalist(); }catch(e){}
-    prepSyncTaskModal();
+    prepSyncTaskModal(); prepListModalSetup(c);
     $('#prepTaskModal').classList.add('open');
     setTimeout(()=> $('#prepTaskTitleIn').select(), 60);
   }
@@ -13770,7 +13815,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Make a task'; }
     document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
     $('#prepTaskWho').placeholder = 'Type a name or tap one below';
-    $('#prepTaskSave').textContent = 'Make task'; $('#prepTaskUndate').hidden = true;
+    $('#prepTaskSave').textContent = prepTaskFor && prepTaskFor.list && !prepTaskFor.separate ? 'Update task list' : 'Make task'; $('#prepTaskUndate').hidden = true;
+    if(!(prepTaskFor && prepTaskFor.list)){ const b = $('#prepTaskListBox'); if(b) b.hidden = true; const sp = $('#prepTaskSep'); if(sp) sp.hidden = true; }
   }
   function savePrepTaskOne(quiet){
     const f = prepTaskFor; const c = f && prepFind(f.cid), u = c && prepUnit(c, f.id); if(!u) return;
@@ -13788,6 +13834,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       return;
     }
     prepTaskKindLast = prepTaskKind;
+    const lst = f.list && !f.separate ? tasks.find(t=> t.id === f.list && t.status !== 'done') : null;
+    if(lst){
+      const ids = f.bundle || [f.id], picked = prepUnits(c).filter(x=> ids.includes(x.u.id) && !x.u.done && !x.u.taskId);
+      $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; prepPick = null;
+      if(!picked.length){ renderAll(); return; }
+      const snap = captureUndo(), r = prepUpdateTaskList(lst, c, picked);
+      offerUndo(`Task list "${lst.name}"`, snap, { quiet:true }); persist(); renderAll(); prepListToast(lst, r);
+      return;
+    }
     if(f.bundle){
       const picked = prepUnits(c).filter(x=> f.bundle.includes(x.u.id) && !x.u.done && !x.u.taskId);
       if(!picked.length){ $('#prepTaskModal').classList.remove('open'); prepTaskFor = null; renderAll(); return; }
@@ -15723,6 +15778,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#prepTaskUndate').addEventListener('click', undatePrepItem);
   $('#prepTaskRepeat').addEventListener('click', (e)=>{ const b = e.target.closest('[data-prep-rep]'); if(!b) return; prepTaskRep = b.dataset.prepRep === '1'; prepSyncTaskModal(); });
   $('#prepTaskSave').addEventListener('click', savePrepTask);
+  $('#prepTaskSep').addEventListener('click', ()=>{ if(!prepTaskFor) return; prepTaskFor.separate = true; savePrepTask(); });
   $('#prepSecSave').addEventListener('click', savePrepSec);
   $('#prepCopySheds').addEventListener('click', (e)=>{
     if(e.target.closest('[data-copy-all]')){ const c = prepFind(prepCopyFrom); const all = prepShedList().filter(sh=> c && sh !== c.shed); prepCopyTo = prepCopyTo.size === all.length ? new Set() : new Set(all); renderPrepCopy(); return; }

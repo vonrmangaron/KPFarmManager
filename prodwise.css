@@ -6851,9 +6851,17 @@ body.theme-dark .bev-mv.g{color:#6FD3BD}body.theme-dark .bev-mv.a{color:#F5C76A}
 @media (max-width:768px){.ross-btn.ross-float,.ross-btn.ross-float .ross-mk{overflow:visible}}
 .ph-face .plumoF{overflow:visible}
 
-/* Plumo's trip across the hero (2026-11-01): up, over the bubble to the batch panel, turn, back, land */
-.ph-face.ph-cross{z-index:4;animation:phCross 3.6s cubic-bezier(.45,0,.4,1)}
-@keyframes phCross{0%{transform:translate(0,0) scaleX(1)}8%{transform:translate(14px,-34px) scaleX(1)}26%{transform:translate(calc(var(--ph-fx) * .45),-56px) scaleX(1)}
-  44%{transform:translate(var(--ph-fx),-40px) scaleX(1)}52%{transform:translate(var(--ph-fx),-46px) scaleX(-1)}72%{transform:translate(calc(var(--ph-fx) * .5),-62px) scaleX(-1)}
-  90%{transform:translate(12px,-22px) scaleX(-1)}96%{transform:translate(0,2px) scaleX(-1)}100%{transform:translate(0,0) scaleX(1)}}
-@media (prefers-reduced-motion:reduce){.ph-face.ph-cross{animation:none}}
+/* Plumo flies away to the shed and back (2026-11-01, js/plumo-hero.js phFlyAcross): a flying copy, front and back
+   views, dust, anime speed lines and a sparkle trail. The real face hides while he's away. */
+.ph-face.ph-away{opacity:0}
+.ph-flyer{position:absolute;z-index:5;pointer-events:none;transform-origin:50% 60%;will-change:transform}
+.ph-flyer .ph-fv,.ph-flyer .ph-bv{position:absolute;inset:0}.ph-flyer .ph-bv{opacity:0}
+.ph-flyer .plumoF{width:100%;height:100%;filter:drop-shadow(0 12px 14px rgba(0,0,0,.35))}
+.ph-fx{position:absolute;z-index:4;pointer-events:none;transform:translate(-50%,-50%)}
+.ph-dust{width:180px;height:44px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,250,240,.95),rgba(232,220,196,.7) 45%,rgba(232,220,196,0));animation:phDust .9s ease-out forwards}
+@keyframes phDust{0%{opacity:.95;transform:translate(-50%,-50%) scale(.3,.5)}100%{opacity:0;transform:translate(-50%,-70%) scale(1.5,1.1)}}
+.ph-burst{width:340px;height:340px;border-radius:50%;background:repeating-conic-gradient(rgba(255,255,255,.95) 0 1.4deg,transparent 1.4deg 11deg);-webkit-mask:radial-gradient(circle,transparent 26%,#000 34%,#000 52%,transparent 60%);mask:radial-gradient(circle,transparent 26%,#000 34%,#000 52%,transparent 60%);animation:phBurst .55s ease-out forwards}
+@keyframes phBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.45) rotate(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.25) rotate(12deg)}}
+.ph-spark{width:calc(14px * var(--s,1));height:calc(14px * var(--s,1));background:#FFF6C8;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 4px rgba(255,236,150,.9));animation:phSpark .8s ease-out forwards}
+@keyframes phSpark{0%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(-50%,-10%) scale(.2) rotate(140deg)}}
+@media (prefers-reduced-motion:reduce){.ph-fx{display:none}}
