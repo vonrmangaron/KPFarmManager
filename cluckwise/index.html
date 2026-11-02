@@ -1499,29 +1499,30 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .wxc-rh{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; line-height:1.05; }
   .wxc-rh-label{ font-size:9.5px; font-weight:800; letter-spacing:0.06em; opacity:0.65; }
   .wxc-rh-val{ font-family:'Sora',sans-serif; font-size:16px; font-weight:800; }
-  /* Weather badge on every day column (2026-11-02, option 3 of mockup KnxVpT4PC14mqLSDtxkp1e): the round badge over the
-     column's top-left corner, no sky or ground — only that day's weather moves inside it (drops, rays, a drifting cloud,
-     shimmer, lightning, snow, gusts, fog) and a small Plumo in that day's gear reacts. Today: the temperature now; other
-     days: the high over /low. The ring takes the weather's colour. Pops in when the board opens, then every 8–20 s. */
+  /* Weather badge on every day column (2026-11-02, Porthole — option A of the new looks in mockup KnxVpT4PC14mqLSDtxkp1e):
+     a riveted window onto that day's sky over the column's top-left corner; the weather moves inside it (drops, rays, a
+     drifting cloud, shimmer, lightning, snow, gusts, fog) and Plumo in that day's gear peeks up from the bottom edge.
+     The temperature hangs on a tab under the circle (today: now; other days: the high over /low), its border in the
+     weather's colour. Pops in when the board opens, then every 8–20 s. */
   .kanban-column.has-plumo{ position:relative; overflow:visible; }
-  .kanban-column.has-plumo .col-head-top{ padding-left:74px; min-height:58px; }
+  .kanban-column.has-plumo .col-head-top{ padding-left:74px; min-height:66px; }
   .kanban-column.has-plumo .wx-card-col .wxc-ic{ display:none; }
   @media (min-width:761px){ #calendarWrap .kanban-board:has(.kanban-column.has-plumo){ padding-left:24px !important; padding-top:30px !important; scroll-padding-left:24px; } }
   @media (max-width:760px){ #calendarWrap .kanban-board:has(.kanban-column.has-plumo){ padding-top:30px !important; } }
-  .col-wxb{ position:absolute; left:-20px; top:-22px; z-index:3; width:92px; height:92px; border-radius:50%; overflow:hidden; box-sizing:border-box;
-    border:3px solid var(--wxb, #9AA9BD); background:var(--surface); box-shadow:0 6px 16px rgba(0,0,0,.3); }
-  body.theme-dark .col-wxb{ background:#1D2232; }
-  .col-wxb > svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-  .col-wxb .wxb-fig{ position:absolute; left:50%; top:2px; width:50px; height:53px; margin-left:-25px; z-index:1; }
+  .col-wxb{ position:absolute; left:-20px; top:-22px; z-index:3; width:92px; height:92px; }
+  .col-wxb .wxb-win{ position:absolute; inset:0; border-radius:50%; overflow:hidden; background:linear-gradient(180deg, var(--sky1, #8FA3BC), var(--sky2, #D3DCE7));
+    box-shadow:0 6px 16px rgba(0,0,0,.32); }
+  .col-wxb .wxb-win > svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .col-wxb .wxb-fig{ position:absolute; left:50%; bottom:3px; width:61px; height:64px; margin-left:-30px; z-index:1; }
   .col-wxb .wxb-fig .plumoF{ width:100%; height:100%; }
   .col-wxb .pf-aura{ display:none; }
   .col-wxb .wxb-front{ z-index:2; }
-  .col-wxb .wxb-t{ position:absolute; left:0; right:0; bottom:5px; z-index:3; display:flex; flex-direction:column; align-items:center; line-height:1;
-    color:#16191B; text-shadow:0 0 3px rgba(255,255,255,.9); }
-  body.theme-dark .col-wxb .wxb-t{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); }
+  .col-wxb .wxb-rim{ z-index:3; }
+  .col-wxb .wxb-t{ position:absolute; left:50%; bottom:-11px; transform:translateX(-50%); z-index:4; display:inline-flex; align-items:baseline; gap:2px; white-space:nowrap;
+    background:#141824; color:#fff; border:2px solid var(--wxb, #9AA9BD); border-radius:999px; padding:2px 7px; line-height:1.1; box-shadow:0 3px 8px rgba(0,0,0,.25); }
   .col-wxb .wxb-t b{ font:800 14px 'Sora',sans-serif; }
-  .col-wxb.wxb-now .wxb-t b{ font-size:17px; }
-  .col-wxb .wxb-t span{ font:800 9px 'Inter',sans-serif; letter-spacing:.06em; opacity:.85; }
+  .col-wxb.wxb-now .wxb-t b{ font-size:15px; }
+  .col-wxb .wxb-t span{ font:800 8px 'Inter',sans-serif; letter-spacing:.06em; opacity:.75; }
   .col-wxb.cp-pop .wxb-fig{ animation:cpPop .52s cubic-bezier(.22,1,.36,1); }
   @keyframes cpPop{ 0%{ transform:translateY(10px) scale(.55); opacity:0 } 55%{ transform:translateY(-4px) scale(1.12,.92); opacity:1 } 78%{ transform:scale(.96,1.05) } 100%{ transform:none } }
   .wxb-dz{ animation:wxbFallS 1.3s linear infinite } @keyframes wxbFallS{ from{ transform:translate(6px,-104px) } to{ transform:translate(0,0) } }
@@ -9200,16 +9201,22 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   const wxbDrops = (n, slant, len, cls)=>{ let s = ''; for(let i = 0; i < n; i++){ const x = (i * 47) % 110, y = (i * 31) % 100; s += `<path class="${cls}" d="M${x} ${y}l${-slant} ${len}" style="animation-delay:-${((i * .37) % 1.3).toFixed(2)}s"/>`; } return s; };
   const wxbCloud = (x, y, k, c)=> `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 30C-16 30-18 10-2 8C0-6 22-10 30 2C38-8 60-4 60 12C76 12 78 30 62 30Z" fill="${c}"/></g>`;
   const WXB = {
-    drizzle: ['#7FA6D6', 'calm', '', `<g stroke="#9CC4F0" stroke-width="1.4" stroke-linecap="round">${wxbDrops(12, 2, 5, 'wxb-dz')}</g>`],
-    rain: ['#4F7FD0', 'happy', '', `<g stroke="#8DB6F2" stroke-width="1.4" stroke-linecap="round">${wxbDrops(22, 3, 8, 'wxb-rn')}</g><ellipse class="wxb-rip" cx="50" cy="90" rx="14" ry="3" fill="none" stroke="#8DB6F2" stroke-width="1.4"/>`],
-    sun: ['#F5B524', 'calm', `<g class="wxb-rays"><path d="M50 46L100 36 100 56ZM50 46L74 0 90 12ZM50 46L10 0 26 -8ZM50 46L0 56 0 36ZM50 46L20 100 6 88ZM50 46L92 96 78 104Z" fill="#FFD84A" opacity=".4"/></g>`, ''],
-    cloud: ['#9AA9BD', 'rest', `<g class="wxb-drift">${wxbCloud(-6, 14, .55, '#B9C4D3')}${wxbCloud(60, 30, .45, '#A3B0C2')}<g transform="translate(110 0)">${wxbCloud(-6, 14, .55, '#B9C4D3')}${wxbCloud(60, 30, .45, '#A3B0C2')}</g></g>`, ''],
-    heat: ['#F07A2E', '', `<g class="wxb-shim" stroke="#FFB070" stroke-width="1.6" fill="none"><path d="M8 30q6-4 12 0t12 0t12 0"/><path d="M60 24q6-4 12 0t12 0t12 0"/></g>`, ''],
-    storm: ['#8A6FE0', 'dizzy', `<path class="wxb-bolt" d="M70 2L58 34H68L58 60L84 24H72L80 2Z" fill="#FFE45C"/>`, `<g stroke="#A99FE0" stroke-width="1.4" stroke-linecap="round">${wxbDrops(14, 5, 9, 'wxb-rn')}</g><rect class="wxb-flash" width="100" height="100" fill="#fff"/>`],
+    drizzle: ['#7FA6D6', 'calm', '', `<g stroke="#EEF4FB" stroke-width="1.4" stroke-linecap="round">${wxbDrops(12, 2, 5, 'wxb-dz')}</g>`],
+    rain: ['#4F7FD0', 'happy', '', `<g stroke="#E3EEFB" stroke-width="1.4" stroke-linecap="round">${wxbDrops(22, 3, 8, 'wxb-rn')}</g><ellipse class="wxb-rip" cx="50" cy="90" rx="14" ry="3" fill="none" stroke="#E3EEFB" stroke-width="1.4"/>`],
+    sun: ['#F5B524', 'calm', `<g class="wxb-rays"><path d="M50 46L100 36 100 56ZM50 46L74 0 90 12ZM50 46L10 0 26 -8ZM50 46L0 56 0 36ZM50 46L20 100 6 88ZM50 46L92 96 78 104Z" fill="#FFE07A" opacity=".45"/></g>`, ''],
+    cloud: ['#9AA9BD', 'rest', `<g class="wxb-drift">${wxbCloud(-6, 14, .55, '#FFFFFF')}${wxbCloud(60, 30, .45, '#EEF2F7')}<g transform="translate(110 0)">${wxbCloud(-6, 14, .55, '#FFFFFF')}${wxbCloud(60, 30, .45, '#EEF2F7')}</g></g>`, ''],
+    heat: ['#E5383B', '', `<g class="wxb-shim" stroke="#FFF1C9" stroke-width="1.6" fill="none"><path d="M8 30q6-4 12 0t12 0t12 0"/><path d="M60 24q6-4 12 0t12 0t12 0"/></g>`, ''],
+    storm: ['#8A6FE0', 'dizzy', `<path class="wxb-bolt" d="M70 2L58 34H68L58 60L84 24H72L80 2Z" fill="#FFE45C"/>`, `<g stroke="#C9C0F5" stroke-width="1.4" stroke-linecap="round">${wxbDrops(14, 5, 9, 'wxb-rn')}</g><rect class="wxb-flash" width="100" height="100" fill="#fff"/>`],
     frost: ['#9CC8F5', 'wide', [8, 22, 38, 54, 70, 86, 14, 46, 78, 30, 62, 94].map((x, i)=> `<g transform="translate(${x} 0)"><circle class="wxb-snow" cy="${(i * 29) % 100}" r="${1 + (i % 3) * .4}" fill="#fff" stroke="#9CC8F5" stroke-width=".6" style="animation-delay:-${(i * .43).toFixed(2)}s"/></g>`).join(''), `<g class="wxb-puff"><circle cx="62" cy="58" r="3.5" fill="#fff" opacity=".85"/><circle cx="68" cy="53" r="2.6" fill="#fff" opacity=".65"/></g>`],
-    wind: ['#7DBFA8', 'wide', `<g stroke="#9FD3F0" stroke-width="1.8" stroke-linecap="round" fill="none">${[[30, 30, 0], [52, 40, .45], [72, 26, .9]].map(([y, l, d])=> `<path class="wxb-gust" d="M0 ${y}h${l}q7 0 7-6" style="animation-delay:-${d}s"/>`).join('')}</g>`, `<path class="wxb-leaf" d="M0 0q4-4 8 0q-4 4-8 0z" fill="#6FBF4A"/>`],
-    fog: ['#A9B4C0', 'calm', '', `<g class="wxb-fog" opacity=".8"><rect x="-60" y="44" width="220" height="10" rx="5" fill="#C9D2DC"/><rect x="-40" y="66" width="220" height="8" rx="4" fill="#B9C3CF"/></g>`]
+    wind: ['#7DBFA8', 'wide', `<g stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" fill="none">${[[30, 30, 0], [52, 40, .45], [72, 26, .9]].map(([y, l, d])=> `<path class="wxb-gust" d="M0 ${y}h${l}q7 0 7-6" style="animation-delay:-${d}s"/>`).join('')}</g>`, `<path class="wxb-leaf" d="M0 0q4-4 8 0q-4 4-8 0z" fill="#6FBF4A"/>`],
+    fog: ['#A9B4C0', 'calm', '', `<g class="wxb-fog" opacity=".8"><rect x="-60" y="44" width="220" height="10" rx="5" fill="#F1F4F7"/><rect x="-40" y="66" width="220" height="8" rx="4" fill="#E4E9EE"/></g>`]
   };
+  // the porthole's sky for each weather [top, bottom]
+  const WXB_SKY = { drizzle: ['#8FA7C4', '#C9D6E4'], rain: ['#5F7FA8', '#A7BCD6'], sun: ['#3E9BEA', '#A9DBFF'], cloud: ['#8FA3BC', '#D3DCE7'],
+    heat: ['#F27B2E', '#FFD28A'], storm: ['#221B3D', '#4B3D73'], frost: ['#0E1A3C', '#34508A'], wind: ['#5FA8D8', '#BFE3F2'], fog: ['#A9B4C0', '#DDE3EA'] };
+  const WXB_RIM = `<svg class="wxb-rim" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46.7" fill="none" stroke="#2A3550" stroke-width="6.6"/><circle cx="50" cy="50" r="42.9" fill="none" stroke="#141824" stroke-width="1.2"/>${[0, 1, 2, 3, 4, 5, 6, 7].map(i=> `<circle cx="${(50 + 46.5 * Math.cos(i * Math.PI / 4)).toFixed(1)}" cy="${(50 + 46.5 * Math.sin(i * Math.PI / 4)).toFixed(1)}" r="1.3" fill="#8E99AC"/>`).join('')}<path d="M20 22Q34 10 52 9" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".35"/></svg>`;
+  // Porthole (option A of mockup KnxVpT4PC14mqLSDtxkp1e): a window onto the day's sky, Plumo peeks up from the bottom,
+  // the temperature on a tab under the circle
   function buildWxBadge(key, w, now){
     const kind = plumoWxKind(w, now), [ring, eyes, back, front] = WXB[kind], [pm, pTip] = plumoWxMood(w);
     const [, label] = now ? wxIconLabel(w.current.code, w.current.isDay) : wxIconLabel(w.code);
@@ -9220,8 +9227,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     el.setAttribute('role', 'img');
     el.setAttribute('aria-label', `${label}, ${now ? 'now ' + wxT(w.current.temp) : 'high ' + wxT(w.max) + ', low ' + wxT(w.min)}`);
     el.title = (now ? `Now: ${label} · ${wxT(w.current.temp)}` + (w.current.hum != null ? ` · RH ${Math.round(w.current.hum)}%` : '') : `${label} · High ${wxT(w.max)} · Low ${wxT(w.min)}`) + ` — Plumo: ${pTip}`;
-    el.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${back}</svg><span class="wxb-fig">${PlumoFace.html(pm, '', { gear: kind, eyes, fx: false, wide: true })}</span>`
-      + `<svg class="wxb-front" viewBox="0 0 100 100" aria-hidden="true">${front}</svg><span class="wxb-t"><b></b><span></span></span>`;
+    el.style.setProperty('--sky1', WXB_SKY[kind][0]); el.style.setProperty('--sky2', WXB_SKY[kind][1]);
+    el.innerHTML = `<span class="wxb-win"><svg viewBox="0 0 100 100" aria-hidden="true">${back}</svg><span class="wxb-fig">${PlumoFace.html(pm, '', { gear: kind, eyes, fx: false, wide: true })}</span>`
+      + `<svg class="wxb-front" viewBox="0 0 100 100" aria-hidden="true">${front}</svg>${WXB_RIM}</span><span class="wxb-t"><b></b><span></span></span>`;
     el.querySelector('.wxb-t b').textContent = now ? wxT(w.current.temp) : wxT(w.max);
     el.querySelector('.wxb-t span').textContent = now ? 'NOW' : '/' + wxT(w.min);
     return el;
