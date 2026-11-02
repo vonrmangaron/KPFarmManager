@@ -369,8 +369,10 @@ function rsBtnMood(m){const f=document.querySelector('#rossBtn .rossR');if(f)rsF
 function rsMoodNow(){try{if(!farmData)return 'calm';const st=rsLoad();if(st.main||st.err){const R=rsModel(st,rsData());return R.mood;}const b=mgrBriefData();return b.G.today.concat(b.G.watch,b.G.feed,b.G.co).some(x=>x.tone==='r')?'alert':'calm';}catch(e){return 'calm';}}
 // Phones: Plumo floats at the bottom right above the bottom bar; computers: beside the bell (2026-10-26)
 const RS_PHONE=window.matchMedia?matchMedia('(max-width:768px)'):{matches:false};
+// No Plumo button in the header on a computer (2026-11-02): Home's hero has him; phones keep the floating head
 function rsDockBtn(){
   const b=document.getElementById('rossBtn');if(!b)return;
+  b.hidden=!RS_PHONE.matches;
   if(RS_PHONE.matches){b.classList.add('ross-float');if(b.parentNode!==document.body)document.body.appendChild(b);return;}
   b.classList.remove('ross-float');
   const bell=document.querySelector('#pageHeader .alerts-bell-wrap');

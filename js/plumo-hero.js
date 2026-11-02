@@ -199,6 +199,8 @@ function plumoHeroWrap(headHtml){
 // Keep the hero and the phone tile in step with the report (mood, headline, red count, unread)
 function phRefresh(){
   const D=phData();
+  // Plumo dresses for today's weather from Tasks (2026-11-02): umbrella, sunglasses, beanie, frizzed comb…
+  try{const cw=typeof mgrBriefCw==='function'?mgrBriefCw():null;if(cw&&window.PlumoFace&&PlumoFace.setWeather)PlumoFace.setWeather(cw.wx&&cw.wx.gear||'');}catch(e){}   // Tasks not loaded yet: keep what he has
   const h=document.getElementById('plumoHero');
   if(h){
     const sc=h.querySelector('.phs'),sm=phSceneMood();if(sc&&sc.dataset.m!==sm)sc.dataset.m=sm;

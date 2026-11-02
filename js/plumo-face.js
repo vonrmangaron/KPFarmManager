@@ -30,28 +30,69 @@
   const WING = `<g class="pf-wing"><path d="M28 90C16 72-4 66-22 72C-34 76-42 86-40 94C-46 98-46 106-38 108C-42 114-38 120-29 119C-27 125-17 127-10 122C0 120 14 112 28 104Z" fill="#FFFFFF" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/>`
     + `<path d="M-40 94C-46 98-46 106-38 108C-34 104-30 100-28 97ZM-38 108C-42 114-38 120-29 119C-27 114-26 110-26 107ZM-29 119C-27 125-17 127-10 122C-12 118-14 115-15 112Z" fill="#DDE3EC"/>`
     + `<path d="M-28 97C-16 96-2 98 12 102M-26 107C-14 107 0 106 12 106M-15 112C-6 113 4 111 14 108M-8 84C2 82 12 85 22 92" stroke="#B9C3D2" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+  // Weather gear (2026-11-02, mockup KnxVpT4PC14mqLSDtxkp1e option 3): Plumo dresses for today's weather wherever
+  // he is — a leaf in drizzle, a red umbrella in rain, sunglasses in the sun, melting in a heatwave, zapped with a
+  // frizzed comb in a storm, beanie and scarf in frost, blown about in wind, a torch in fog — with a few drops,
+  // flakes or gusts round him and a reaction to match (bounce, lean back, melt, jolt, shiver, hang on, peer).
+  // PlumoFace.setWeather(kind) sets it for every face on the page; svg/html take {gear, eyes, fx} to set one face.
+  const WX = ['drizzle', 'rain', 'sun', 'cloud', 'heat', 'storm', 'frost', 'wind', 'fog'];
+  let curWx = '';
+  const WX_EYES = {
+    hot: `<g><path d="M34 82h24q-2 8-12 8t-12-8z" fill="#fff" stroke="${O}" stroke-width="2"/><circle cx="46" cy="85" r="2.6" fill="#0B2B4A"/><path d="M30 81h32" stroke="${O}" stroke-width="4.5" stroke-linecap="round"/></g>${M(`<g><path d="M34 82h24q-2 8-12 8t-12-8z" fill="#fff" stroke="${O}" stroke-width="2"/><circle cx="46" cy="85" r="2.6" fill="#0B2B4A"/><path d="M30 81h32" stroke="${O}" stroke-width="4.5" stroke-linecap="round"/></g>`)}`,
+    dizzy: `<g fill="none" stroke="${O}" stroke-width="3" stroke-linecap="round"><path d="M46 84a6 6 0 1 1 6-6a3.5 3.5 0 1 1-3.5-3.5"/><path d="M94 84a6 6 0 1 1 6-6a3.5 3.5 0 1 1-3.5-3.5"/></g>`,
+    wide: (w => w + M(w))(`<ellipse cx="46" cy="83" rx="10" ry="11" fill="#fff" stroke="${O}" stroke-width="2.4"/><circle cx="47" cy="84" r="2.6" fill="#0B2B4A"/><path d="M31 66L59 62 59.5 66.5 32 70Z" fill="${O}"/>`)
+  };
+  // drawn behind the head (handles, stems, the frizzed comb) and in front of it (canopies, hats, glasses)
+  const GEAR_BACK = {
+    drizzle: `<path d="M118 -2C130 30 132 80 126 128" stroke="#2E7D3A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+    rain: `<path d="M70 2V120q0 12 12 12" stroke="${O}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+    storm: `<g class="pf-smoke"><circle cx="40" cy="-14" r="9" fill="#7C8496" opacity=".7"/><circle cx="56" cy="-26" r="11" fill="#9097A8" opacity=".6"/><circle cx="76" cy="-34" r="8" fill="#AAB0BE" opacity=".5"/></g><path d="M28 42L14 6 34 20 30 -12 50 12 56 -18 70 8 84 -16 88 12 108 -8 104 22 126 8 112 42Z" fill="#B01E24" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`
+  };
+  const GEAR_FRONT = {
+    drizzle: `<path d="M-14 6Q50 -60 152 -6Q80 18 -14 6Z" fill="#3FA34D" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M-4 4Q70 -18 146 -6M30 -6l-8-14M60 -12l-6-18M90 -12l-2-20M118 -8l4-16" stroke="#2E7D3A" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    rain: `<path d="M-10 10Q70 -64 150 10Q130 -2 110 10Q90 -2 70 10Q50 -2 30 10Q10 -2 -10 10Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M70 -28Q50 -20 30 10M70 -28Q90 -20 110 10" stroke="#9E1219" stroke-width="2.4" fill="none"/><path d="M70 -28v-12" stroke="${O}" stroke-width="4" stroke-linecap="round"/>`,
+    sun: `<path d="M22 74L32 74M108 74L118 74" stroke="${O}" stroke-width="3" stroke-linecap="round"/><rect x="28" y="72" width="36" height="20" rx="8" fill="#141824"/><rect x="76" y="72" width="36" height="20" rx="8" fill="#141824"/><path d="M64 79Q70 75 76 79" stroke="${O}" stroke-width="3" fill="none"/><path class="pf-glint" d="M34 77l8 0-6 9-8 0z" fill="#fff" opacity=".85"/>`,
+    heat: `<ellipse cx="30" cy="100" rx="7" ry="4" fill="#FF6B6B" opacity=".55"/><ellipse cx="110" cy="100" rx="7" ry="4" fill="#FF6B6B" opacity=".55"/><path class="pf-drip" d="M14 64c-3 5-4 7-4 9a4 4 0 0 0 8 0c0-2-1-4-4-9z" fill="#9BE3FF" stroke="${O}" stroke-width="1.6"/><path class="pf-drip pf-d2" d="M126 52c-4 6-6 9-6 12a6 6 0 0 0 12 0c0-3-2-6-6-12z" fill="#9BE3FF" stroke="${O}" stroke-width="1.6"/><path d="M66 103q3 14 11 4z" fill="#FF6B8A" stroke="${O}" stroke-width="2"/>`,
+    frost: `<path d="M14 62C14 22 40 2 70 2s56 20 56 60Z" fill="#3B6FD8" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M12 50h116v14H12z" fill="#2A55B0" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M26 50v14M40 50v14M54 50v14M68 50v14M82 50v14M96 50v14M110 50v14" stroke="#1E3F8A" stroke-width="2"/><circle cx="70" cy="-4" r="11" fill="#fff" stroke="${O}" stroke-width="2.6"/><path d="M24 112Q70 136 116 112L120 126Q70 150 20 126Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M44 120l-3 14M62 124l-2 15M80 124l2 15M98 120l3 14" stroke="#fff" stroke-width="3"/><path d="M92 128L104 160 90 162 84 132Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`,
+    fog: `<g transform="rotate(-24 128 112)"><rect x="112" y="104" width="34" height="14" rx="3" fill="#F0A840" stroke="${O}" stroke-width="2.6"/><path d="M146 100l12-6v34l-12-6z" fill="#FFE08A" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/></g><path class="pf-beam" d="M158 104L230 60V150Z" fill="#FFF4B8" opacity=".35"/>`
+  };
+  // a few drops, flakes or gusts round him (left out where the page draws its own weather, like the board badges)
+  const drops = (n, x0, x1, y0, cls) => { let s = ''; for(let i = 0; i < n; i++){ const x = x0 + (x1 - x0) * ((i * 37) % n) / n, y = y0 + (i * 23) % 30; s += `<path class="${cls}" d="M${x.toFixed(0)} ${y}l-2 7" style="animation-delay:-${((i * .29) % 1).toFixed(2)}s"/>`; } return s; };
+  const GEAR_FX = {
+    drizzle: `<g stroke="#9CC4F0" stroke-width="2" stroke-linecap="round">${drops(7, -10, 150, -70, 'pf-dz')}</g>`,
+    rain: `<g stroke="#8DB6F2" stroke-width="2.2" stroke-linecap="round">${drops(10, -14, 154, -80, 'pf-rn')}</g>`,
+    storm: `<path class="pf-bolt" d="M150 -30L136 6H148L138 34L166 -6H152L160 -30Z" fill="#FFE45C" stroke="#141824" stroke-width="2" stroke-linejoin="round"/>`,
+    frost: [[-14, 20], [150, 40], [8, 140], [140, 120], [-6, 80], [156, 0]].map(([x, y], i)=> `<circle class="pf-snow" cx="${x}" cy="${y}" r="3" fill="#fff" stroke="#9CC8F5" stroke-width="1" style="animation-delay:-${i * .7}s"/>`).join(''),
+    wind: `<g stroke="#9FD3F0" stroke-width="2.6" stroke-linecap="round" fill="none">${[[30, 0], [66, .5], [104, 1]].map(([y, d])=> `<path class="pf-gust" d="M-40 ${y}h30q8 0 8-7" style="animation-delay:-${d}s"/>`).join('')}</g>`
+  };
   let seq = 0;
-  function svg(mood){
+  function svg(mood, opts){
+    opts = opts || {};
+    const g = opts.gear === undefined ? curWx : opts.gear, gw = WX.includes(g) ? g : '';
+    const eyes = opts.eyes && (EYES[opts.eyes] || WX_EYES[opts.eyes]);
     const m = EYES[mood] ? mood : 'calm', a = AURA[m], u = (++seq).toString(36);
     // every face gets its own gradient ids: a gradient inside a hidden copy (the header button on Home) can't be
     // used by the others, which left the head see-through
-    return (`<svg viewBox="0 0 140 156" aria-hidden="true"><defs>`
+    // opts.wide: framed with room for the gear above and beside him (small badges that clip, like the board's)
+    return (`<svg viewBox="${opts.wide ? '-30 -50 200 210' : '0 0 140 156'}" aria-hidden="true"${gw ? ` class="pf-g-${gw}"` : ''}><defs>`
       + `<linearGradient id="pfIris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B2B4A"/><stop offset="1" stop-color="#35C8FF"/></linearGradient>`
       + `<linearGradient id="pfHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4E9F1"/></linearGradient>`
       + `<linearGradient id="pfPlate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6ECF4"/><stop offset="1" stop-color="#8E99AC"/></linearGradient></defs>`
       + `<circle class="pf-ring" cx="70" cy="80" r="52" fill="none" stroke="${m === 'calm' ? '#9FE6FF' : a[2]}" stroke-width="5" opacity="0"/>`
-      + `<g class="pf-float"><path class="pf-aura" d="${FLAME}" fill="${a[0]}" opacity="${a[1]}"/>`
+      + `<g class="pf-act"><g class="pf-float"><path class="pf-aura" d="${FLAME}" fill="${a[0]}" opacity="${a[1]}"/>`
       + `<g class="pf-tails"${m === 'rest' ? ' transform="rotate(30 115 60)"' : ''}><path d="M114 58C128 54 140 58 150 68L144 73C136 65 126 62 115 64Z" fill="#232B3E" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/><path d="M115 62C127 66 134 76 137 90L130 91C128 80 123 72 115 68Z" fill="#1A2030" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/></g>`
       + `<g class="pf-wings"><g>${WING}</g><g transform="matrix(-1 0 0 1 140 0)">${WING}</g></g>`
-      + `<path d="M42 38L30 12 52 26 52 2 69 22 82 0 86 25 108 9 102 36 116 30 104 44Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M52 26L55 34M69 22L68 32M86 25L82 34M102 36L95 40" stroke="#9E1219" stroke-width="2.4" stroke-linecap="round"/>`
+      + (GEAR_BACK[gw] || '')
+      + (gw === 'storm' || gw === 'frost' ? '' : `<g class="pf-comb"><path d="M42 38L30 12 52 26 52 2 69 22 82 0 86 25 108 9 102 36 116 30 104 44Z" fill="#E3262E" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M52 26L55 34M69 22L68 32M86 25L82 34M102 36L95 40" stroke="#9E1219" stroke-width="2.4" stroke-linecap="round"/></g>`)
       + `<path d="M18 80C18 46 40 26 70 26s52 20 52 54c0 22-10 36-24 44l-28 10-28-10C28 116 18 102 18 80z" fill="url(#pfHead)" stroke="${O}" stroke-width="3.2"/>`
       + `<path d="M22 54Q70 28 118 54L119 65Q70 40 21 65Z" fill="#232B3E" stroke="${O}" stroke-width="2.8" stroke-linejoin="round"/>`
       + `<rect x="55" y="38" width="30" height="16" rx="3" fill="url(#pfPlate)" stroke="${O}" stroke-width="2.4"/><path d="M63 51.5L67.5 41h2.2L65.2 51.5zM68.6 52L73.1 40.5h2.2L70.8 52zM74.2 51.5L78.7 41h2.2L76.4 51.5z" fill="${a[2]}"/>`
       + `<path d="M29 92L40 104" stroke="#B4424A" stroke-width="2.4" stroke-linecap="round"/><path d="M30.5 97.5l4-4M34.5 101.5l4-4" stroke="#B4424A" stroke-width="1.6" stroke-linecap="round"/>`
-      + `<g class="pf-eyes">${EYES[m]}</g>`
+      + `<g class="pf-eyes">${eyes || EYES[m]}</g>`
       + `<path d="M63 99L79 99 71 107Z" fill="#D9711A" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"${m === 'happy' ? ' transform="rotate(26 66 99)"' : ''}/>`
       + `<path d="M57 91Q70 85 83 91L80 96 71 103 62 96Z" fill="#FF9A2E" stroke="${O}" stroke-width="2.8" stroke-linejoin="round"/>`
-      + `<path d="M65 106c-2 6 0 11 5 11s6-5 4-11z" fill="#E3262E" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/></g></svg>`)
+      + `<path d="M65 106c-2 6 0 11 5 11s6-5 4-11z" fill="#E3262E" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/>`
+      + (GEAR_FRONT[gw] || '') + '</g>' + (opts.fx === false ? '' : (GEAR_FX[gw] || '')) + '</g></svg>')
       .replace(/pf(Iris|Head|Plate)/g, 'pf$1' + u);
   }
   // Plumo from behind (2026-11-01: seen flying away toward the shed): the back of his head, the comb, the headband
@@ -121,7 +162,16 @@
   (function emoTick(){ setTimeout(()=>{ if(document.visibilityState === 'visible'){ const a = shown(); if(a.length) emote(a[Math.floor(Math.random() * a.length)]); } emoTick(); }, 7000 + Math.random() * 6000); })();
   (function enterTick(first){ setTimeout(()=>{ if(document.visibilityState === 'visible') shown().forEach((f, i)=> setTimeout(()=> enter(f), i * 180)); enterTick(false); },
     first ? 2500 : 55000 + Math.random() * 30000); })(true);
-  function html(mood, cls){ return `<span class="plumoF pf-${EYES[mood] ? mood : 'calm'}${cls ? ' ' + cls : ''}">${svg(mood)}</span>`; }
+  function html(mood, cls, opts){ return `<span class="plumoF pf-${EYES[mood] ? mood : 'calm'}${cls ? ' ' + cls : ''}"${opts && opts.gear !== undefined ? ' data-pfgear="' + opts.gear + '"' : ''}>${svg(mood, opts)}</span>`; }
+  // today's weather for every Plumo on the page; faces drawn with their own gear (data-pfgear) keep it
+  function setWeather(kind){
+    const k = WX.includes(kind) ? kind : '';
+    if(k === curWx) return; curWx = k;
+    document.querySelectorAll('.plumoF:not([data-pfgear]),.rossR').forEach(f=>{
+      if(f.classList.contains('pf-fly') || f.closest('[data-pfx-busy]')) return;
+      f.innerHTML = svg(moodOf(f));
+    });
+  }
   if(!document.getElementById('plumoFaceCss')){
     const st = document.createElement('style'); st.id = 'plumoFaceCss';
     st.textContent = '.plumoF{display:inline-block;line-height:0}.plumoF svg{width:100%;height:100%;overflow:visible;display:block}'
@@ -162,8 +212,26 @@
       + '@keyframes pfBop{0%,100%{transform:none}40%{transform:translateY(-7px) scale(.97,1.04)}80%{transform:translateY(1px) scale(1.03,.97)}}'
       + '@keyframes pfStartle{0%{transform:none}20%{transform:translateY(-9px) scale(.95,1.07)}50%{transform:translateY(1px) scale(1.04,.96)}100%{transform:none}}'
       + '@keyframes pfLook{0%,100%{transform:none}20%,80%{transform:rotate(-4deg) translateX(-2px)}}@keyframes pfLookR{0%,100%{transform:none}20%,80%{transform:rotate(4deg) translateX(2px)}}'
+      + '.pf-act{transform-box:fill-box;transform-origin:50% 100%}'
+      + '.pf-g-rain .pf-act{animation:pfgHop 1.4s cubic-bezier(.3,.6,.4,1) infinite}@keyframes pfgHop{0%,60%,100%{transform:none}20%{transform:translateY(-6px) scale(.97,1.04)}40%{transform:translateY(0) scale(1.06,.94)}}'
+      + '.pf-g-sun .pf-act{animation:pfgLean 4s ease-in-out infinite}@keyframes pfgLean{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(-2deg) translateY(-2px)}}'
+      + '.pf-g-heat .pf-act{animation:pfgMelt 1.6s ease-in-out infinite alternate}@keyframes pfgMelt{from{transform:none}to{transform:scale(1.12,.86)}}'
+      + '.pf-g-storm .pf-act{animation:pfgZap 3.2s linear infinite}@keyframes pfgZap{0%,84%,100%{transform:none}86%{transform:translateY(-8px) rotate(-6deg)}89%{transform:translateY(-5px) rotate(6deg)}93%{transform:translateY(-6px) rotate(-3deg)}97%{transform:scale(1.06,.94)}}'
+      + '.pf-g-frost .pf-act{animation:pfgShiver .14s linear infinite}@keyframes pfgShiver{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}'
+      + '.pf-g-wind .pf-act{animation:pfgCling .5s ease-in-out infinite alternate}@keyframes pfgCling{from{transform:rotate(-4deg)}to{transform:rotate(-11deg) translateX(3px)}}'
+      + '.pf-g-wind .pf-comb{transform-box:fill-box;transform-origin:50% 100%;transform:rotate(-24deg)}.pf-g-wind .pf-tails{transform:rotate(-30deg);transform-box:fill-box;transform-origin:0% 20%}'
+      + '.pf-g-fog .pf-act{animation:pfgPeer 3s ease-in-out infinite alternate}@keyframes pfgPeer{from{transform:translateX(-3px)}to{transform:translateX(3px)}}'
+      + '.pf-g-fog .pf-beam{transform-box:fill-box;transform-origin:0% 50%;animation:pfgBeam 3s ease-in-out infinite alternate}@keyframes pfgBeam{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}'
+      + '.pf-glint{animation:pfgGlint 3s ease-in-out infinite}@keyframes pfgGlint{0%,60%,100%{transform:translateX(0);opacity:0}70%{opacity:.9}85%{transform:translateX(22px);opacity:0}}'
+      + '.pf-drip{animation:pfgDrip 1.2s ease-in infinite}.pf-d2{animation-delay:-.6s}@keyframes pfgDrip{from{transform:translateY(0);opacity:1}to{transform:translateY(16px);opacity:0}}'
+      + '.pf-dz{animation:pfgFallS 1.2s linear infinite}@keyframes pfgFallS{from{transform:translateY(-20px);opacity:0}30%{opacity:1}to{transform:translateY(46px);opacity:0}}'
+      + '.pf-rn{animation:pfgFall .6s linear infinite}@keyframes pfgFall{from{transform:translateY(-24px);opacity:0}30%{opacity:1}to{transform:translateY(52px);opacity:0}}'
+      + '.pf-bolt{opacity:0;animation:pfgStrike 3.2s linear infinite}@keyframes pfgStrike{0%,84%,88%,90%,94%,100%{opacity:0}85%,87%,91%,93%{opacity:1}}'
+      + '.pf-smoke{animation:pfgSmoke 2.4s ease-in-out infinite alternate}@keyframes pfgSmoke{from{transform:translateY(0);opacity:.6}to{transform:translateY(-6px);opacity:1}}'
+      + '.pf-snow{animation:pfgSnow 4s linear infinite}@keyframes pfgSnow{from{transform:translate(0,-30px);opacity:0}20%{opacity:1}to{transform:translate(6px,40px);opacity:0}}'
+      + '.pf-gust{animation:pfgGust 1.4s linear infinite}@keyframes pfgGust{from{transform:translateX(0);opacity:0}20%{opacity:1}to{transform:translateX(210px);opacity:0}}'
       + '@media (prefers-reduced-motion:reduce){.plumoF *,.rossR *{animation:none!important}}';
     (document.head || document.documentElement).appendChild(st);
   }
-  window.PlumoFace = { svg, html, back, fly, enter, emote, moods: Object.keys(EYES) };
+  window.PlumoFace = { svg, html, back, fly, enter, emote, setWeather, weather: ()=> curWx, moods: Object.keys(EYES) };
 })();
