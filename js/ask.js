@@ -187,7 +187,8 @@ function rsContext(d){
   const L=[];
   L.push('YOUR NAME: you are Plumo, the farm AI (not Cluck, not Ross — Ross 308 is only the breed standard). Never call yourself Cluck or Ross.');
   L.push('PLAN TITLES: say plainly what to do about that FACT, naming the same shed numbers it names (a pair stays "Sheds 5–6" unless the fact names one shed). Never invent a different job such as "review the feeding plan". Never book feed for a shed that cleans out before its silos run low. Use FARM DATA for the numbers in each "why": feed, silos, the next batch Starter and starter silo, clean-outs, placements, mortality and performance.');
-  L.push('FACTS (red = urgent, amber = soon, blue = info, green = fine). ONLY facts marked JOB can be plan items: feed ordering, the next batch Starter, tasks, records to enter (mortality, silo readings, dockets, kill sheets), shed prep, feed off. Growth vs target, mortality % and weather are never plan items — mention them in warnings or the overview only:',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}${f.job?', JOB':''}] ${f.grp}: ${f.text}`));
+  L.push('FACTS (red = urgent, amber = soon, blue = info, green = fine). ONLY facts marked JOB can be plan items: feed ordering, the next batch Starter, tasks, records to enter (mortality, silo readings, dockets, kill sheets), shed prep, feed off, pop doors (ranging). Growth vs target, mortality % and weather are never plan items — mention them in warnings or the overview only:',...d.facts.map(f=>`${f.id} [${{r:'red',a:'amber',b:'blue',g:'green'}[f.tone]}${f.job?', JOB':''}] ${f.grp}: ${f.text}`));
+  L.push('FREE RANGE: this is a free-range farm. The manager does not range the birds (pop doors stay shut) in drizzle or rain, in a storm, or at 27°C and up. The ranging FACT ("Range …", "No ranging today" or "Good ranging day") is that call, worked out from today\'s hourly forecast: use its exact words and times, never decide ranging yourself from the weather. Mention it in the overview.');
   const sheet=rsFarmSheet(d);if(sheet)L.push('FARM DATA (check every plan item against this before you write it):',sheet);
   L.push('KEY NUMBERS:',...d.kpi.map(k=>`- ${k.k}: ${String(k.v).replace(/<[^>]+>/g,'')} (${String(k.s).replace(/<[^>]+>/g,'')})`));
   L.push('SHEDS:',...d.sheds.map(s=>`- Shed ${s.id}: ${s.fact}`));
@@ -208,8 +209,25 @@ function rsFace(mood,cls){const m=mood||'calm';return `<span class="rossR ${m}${
 function rsFaceMood(el,m){el.classList.remove('calm','thinking','happy','alert','rest','stress');el.classList.add(m);if(window.PlumoFace&&el.dataset.m!==m){el.innerHTML=PlumoFace.svg(m);el.dataset.m=m;if(PlumoFace.enter)PlumoFace.enter(el);}}
 function rsFirst(t){t=String(t||'').trim();const m=t.match(/^.*?[.!?](\s|$)/);return (m?m[0]:t).trim();}
 function rsTicksKey(){return 'pw-ross-ticks-'+aiSlug()+'-'+aiDay();}
-function rsTicks(){try{return new Set(JSON.parse(localStorage.getItem(rsTicksKey())||'[]'));}catch(e){return new Set();}}
-function rsSaveTicks(t){try{localStorage.setItem(rsTicksKey(),JSON.stringify([...t]));}catch(e){}}
+// Plan ticks ride with the farm (farmData.plumoTicks, 2026-11-02), so a tick on one computer shows on the others:
+// {day: {item key: {on, by, at}}}, the newest tick or untick wins when two devices meet (mergePlumoTicks in sync.js).
+// The key is the item's own words, not its place in the list, so a plan in another order still matches.
+function rsTickKey(p){return String((p&&p.f&&(p.f.id&&p.f.text?p.f.text:p.f.id))||(p&&p.title)||'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim().toLowerCase().slice(0,160);}
+function rsTickDay(){const m=farmData&&farmData.plumoTicks&&farmData.plumoTicks[aiDay()];return m&&typeof m==='object'?m:{};}
+function rsTicks(plan){
+  plan=plan||(rsCur&&rsCur.R&&rsCur.R.plan)||[];
+  // ticks this device kept before they synced: move them into the farm once
+  let old=null;try{old=JSON.parse(localStorage.getItem(rsTicksKey())||'null');}catch(e){}
+  if(Array.isArray(old)&&plan.length){try{localStorage.removeItem(rsTicksKey());}catch(e){}old.forEach(i=>{if(plan[i])rsSetTick(plan[i],true,true);});}
+  const m=rsTickDay(),t=new Set();plan.forEach((p,i)=>{const x=m[rsTickKey(p)];if(x&&x.on)t.add(i);});return t;
+}
+function rsSetTick(p,on,quiet){
+  if(!farmData)return;const d=aiDay(),k=rsTickKey(p);if(!k)return;
+  const all=Object.assign({},farmData.plumoTicks&&typeof farmData.plumoTicks==='object'?farmData.plumoTicks:{});
+  all[d]=Object.assign({},all[d]||{},{[k]:{on:!!on,by:(typeof cachedManager==='function'&&cachedManager())||'Manager',at:Date.now()}});
+  const cut=iso(addDays(mgrToday(),-3));Object.keys(all).forEach(x=>{if(x<cut)delete all[x];});   // a few days is plenty
+  farmData.plumoTicks=all;saveState();if(!quiet)schedulePush();
+}
 // The report as data the UI and the walk-through both use
 function rsModel(st,d){
   const M=st.main,S=st.sheds&&st.sheds.sheds?st.sheds.sheds:{};
@@ -228,7 +246,7 @@ function rsModel(st,d){
   if(!plan.length)plan=d.facts.filter(f=>f.job).slice(0,5).map(f=>({f,title:f.text,why:''}));
   const warns=M&&Array.isArray(M.warnings)&&M.warnings.length?M.warnings.slice(0,4).map(t=>({tone:'a',html:rsInl(t),text:String(t)})):d.trends.map(t=>({tone:t.tone,html:escapeHtml(t.text),text:t.text}));
   const red=d.facts.some(f=>f.tone==='r'),amber=d.facts.some(f=>f.tone==='a');
-  const ticks=rsTicks(),allDone=plan.length>0&&plan.every((p,i)=>ticks.has(i));
+  const ticks=rsTicks(plan),allDone=plan.length>0&&plan.every((p,i)=>ticks.has(i));
   const mood=st.busy?'thinking':allDone?'happy':red?'alert':(!M&&st.err)?'rest':amber?'calm':'happy';
   const busiest=d.week.slice().sort((x,y)=>y.ev.length-x.ev.length)[0];
   const sheds=d.sheds.map(s=>({...s,note:S[String(s.id)]||''}));
@@ -259,7 +277,7 @@ function rsHtml(st,d,R){
   const M=R.M;
   const ov=M&&M.overview?`<p class="rs-ovp">${rsInl(M.overview)}</p>`:st.busy?loading:`<p class="rs-muted">${escapeHtml(st.err||'Plumo isn\'t available right now.')} The numbers and lists below are all from your apps.</p>`;
   const planHtml=R.plan.length?R.plan.map((p,i)=>{const tone=p.f?p.f.tone:'r',go=p.f?rsGo(p.f.act):'',dn=R.ticks.has(i);
-    return `<div class="rs-act${dn?' done':''}" data-rs-i="${i}"><button type="button" class="rs-tick" data-rs-tick="${i}" aria-pressed="${dn}" aria-label="${dn?'Not done':'Done'}" title="Tick it off (just for you, today)">✓</button><span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span class="rs-at"><b>${rsInl(p.title)}</b>${rsDetHtml(p)}</span>${go&&p.f.act?`<button type="button" class="rs-go" data-rs-go ${p.f.act}>${escapeHtml(go)} ›</button>`:'<span></span>'}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
+    return `<div class="rs-act${dn?' done':''}" data-rs-i="${i}"><button type="button" class="rs-tick" data-rs-tick="${i}" aria-pressed="${dn}" aria-label="${dn?'Not done':'Done'}" title="Tick it off (every manager sees it)">✓</button><span class="rs-n ${tone==='a'?'a':tone==='b'||tone==='g'?'b':''}">${i+1}</span><span class="rs-at"><b>${rsInl(p.title)}</b>${rsDetHtml(p)}</span>${go&&p.f.act?`<button type="button" class="rs-go" data-rs-go ${p.f.act}>${escapeHtml(go)} ›</button>`:'<span></span>'}</div>`;}).join(''):'<p class="rs-muted">Nothing urgent today — every shed, silo and task is on track.</p>';
   const C={r:'#C8443A',a:'#E2A13A',g:'#13806D',b:'#2F6BD8'};
   const shedHtml=R.sheds.map(s=>`<button type="button" class="rs-sh ${s.tone}" data-rs-shed="${s.id}"><span class="rs-sht"><span class="rs-no">${s.id}</span><b>${escapeHtml(s.head)}</b></span><span class="rs-bar"><i style="width:${Math.round((s.pct||0)*100)}%;background:${C[s.tone]}"></i></span><small>${s.note?'tap for Plumo\'s note':'tap for details'}</small></button>`).join('');
   const crewHtml=d.cw?(d.crew.length?`<div class="rs-crew">${d.crew.map(c=>{const n=c.list.length,dn=c.list.filter(x=>x.done).length,heavy=c.open>=6;
@@ -268,7 +286,10 @@ function rsHtml(st,d,R){
   const sinceHtml=d.since.length?d.since.map(li).join(''):'<p class="rs-muted">Plumo compares from tomorrow — today\'s figures are saved on this device.</p>';
   const warnHtml=R.warns.length?R.warns.map(li).join(''):'<p class="rs-muted">No risks building up.</p>';
   const weekHtml=`<div class="rs-week">${d.week.map(w=>`<div class="rs-wd${w.busy?' busy':''}"><b>${RS_WD[w.date.getDay()]} ${w.date.getDate()}</b>${w.ev.map(e=>`<div class="rs-ev ${e.k}">${escapeHtml(e.t)}</div>`).join('')||'<div class="rs-ev">—</div>'}</div>`).join('')}</div>`;
-  const wxHtml=(M&&M.weather?`<p class="rs-ovp" style="font-size:13.5px">${rsInl(M.weather)}</p>`:'')+(d.wx.length?`<div class="rs-wxrow">${d.wx.map(w=>`<span class="${w.alerts.length?'al':''}" title="${escapeAttr(w.label+(w.alerts.length?' — '+w.alerts.join(', '):''))}"><b>${RS_WD[new Date(w.date+'T00:00:00').getDay()]}</b>${escapeHtml(w.icon)}<i>${escapeHtml(w.maxT)}</i></span>`).join('')}</div>`:'<p class="rs-muted">No weather location set (Tasks › Settings › Weather).</p>');
+  // free-range call for today (2026-11-02): always on top of the weather, whatever the plan says
+  const rg=(()=>{try{return typeof mgrRangeCall==='function'?mgrRangeCall():null;}catch(e){return null;}})();
+  const rangeHtml=rg?`<p class="rs-range ${rg.call}"><b>Pop doors</b> ${escapeHtml(rg.text)}</p>`:'';
+  const wxHtml=rangeHtml+(M&&M.weather?`<p class="rs-ovp" style="font-size:13.5px">${rsInl(M.weather)}</p>`:'')+(d.wx.length?`<div class="rs-wxrow">${d.wx.map(w=>`<span class="${w.alerts.length?'al':''}" title="${escapeAttr(w.label+(w.alerts.length?' — '+w.alerts.join(', '):''))}"><b>${RS_WD[new Date(w.date+'T00:00:00').getDay()]}</b>${escapeHtml(w.icon)}<i>${escapeHtml(w.maxT)}</i></span>`).join('')}</div>`:'<p class="rs-muted">No weather location set (Tasks › Settings › Weather).</p>');
   const sec=(id,title,ai,body,extra)=>`<section class="rs-sec" id="rs-${id}"><h3>${title}${ai?tag:''}${extra||''}</h3>${body}</section>`;
   const nDone=R.plan.filter((p,i)=>R.ticks.has(i)).length;
   return `<div class="rs-h"><div class="rs-ht"><div class="rs-face" id="rsFace" role="button" tabindex="0" title="Tap Plumo for today's top job" aria-label="Plumo">${rsFace(R.mood)}</div>
@@ -316,7 +337,7 @@ function rsEnsureDom(){
     const t=e.target.closest('[data-rs-tab]');if(t){const i=RS_TABS.findIndex(x=>x[0]===t.dataset.rsTab);if(rsStep>=0)rsGoStep(i);else rsScrollTo(t.dataset.rsTab);return;}
     if(e.target.closest('#rsNext')){if(rsStep===RS_TABS.length-1)rsEndWalk();else rsGoStep(rsStep+1);return;}
     if(e.target.closest('#rsPrev')){rsGoStep(rsStep<=0?0:rsStep-1);return;}
-    const tk=e.target.closest('[data-rs-tick]');if(tk&&rsCur){const i=+tk.dataset.rsTick,T=rsTicks();T.has(i)?T.delete(i):T.add(i);rsSaveTicks(T);rsCur.R.ticks=T;
+    const tk=e.target.closest('[data-rs-tick]');if(tk&&rsCur){const i=+tk.dataset.rsTick,P0=rsCur.R.plan,T=rsTicks(P0);rsSetTick(P0[i],!T.has(i));T.has(i)?T.delete(i):T.add(i);rsCur.R.ticks=T;
       {const it=rsCur.R.plan&&rsCur.R.plan[i];if(T.has(i)&&it&&it.f&&it.f.tone==='r'&&typeof plumoDodge==='function')setTimeout(plumoDodge,60);}   // a red one cleared: Plumo dodges (2026-11-01)
       
       const row=tk.closest('.rs-act');row.classList.toggle('done',T.has(i));tk.setAttribute('aria-pressed',String(T.has(i)));

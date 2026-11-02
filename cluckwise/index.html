@@ -4643,6 +4643,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .cw-ross-btn.cw-ross-float:hover .plumoF{ transform:translateY(-3px) scale(1.04); }
   .cw-ross-btn.cw-ross-float .cw-ross-dot{ top:6px; right:6px; width:14px; height:14px; }
   .cw-ross-btn.cw-ross-float[hidden]{ display:none; }
+  /* the + menu open: Plumo steps out of the way so its labels can be read (2026-11-02) */
+  body:has(#fabDock.open) .cw-ross-btn.cw-ross-float{ opacity:0; transform:scale(.6); pointer-events:none; }
+  .cw-ross-btn.cw-ross-float{ transition:opacity .15s, transform .15s; }
   @media (max-width:760px){ .cw-ross-btn.cw-ross-float{ right:10px; bottom:calc(140px + env(safe-area-inset-bottom, 0px)); width:64px; height:71px; } }
   /* Tick animation (2026-10-26) */
   .tick-pop{ animation:tickPop .5s cubic-bezier(.2,1.6,.4,1); position:relative; }
@@ -8833,7 +8836,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <div class="task-card-top">
         ${checkboxSelect ? `<input type="checkbox" class="bulk-select-cb" ${selectedIds.has(task.id)?'checked':''}>` : ''}
         ${iconSlotHtml}
-        <span class="task-body"><span class="task-name"></span>${prepLabelHtml(task)}${isMaintCheckTask(task) ? mcheckChipHtml(task) : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' + (task.date ? batchChipsHtml(task.date) : '') : ''}</span>
+        <span class="task-body"><span class="task-name"></span>${prepLabelHtml(task)}${isMaintCheckTask(task) ? mcheckChipHtml(task) : ''}${task.seriesId ? '<span class="recur-pill" title="Part of a repeating series">🔁</span>' + (task.date ? batchChipsHtml(task.date) : '') : ''}${taskBatchChipHtml(task)}</span>
         ${buildAssigneeAvatarsHtml(task.assignees)}
         ${task.notes ? '<span class="task-note-dot" title="Has a note"></span>' : ''}
         ${showMenu ? '<button class="task-menu-btn" type="button" aria-label="Task menu" title="More options">⋯</button>' : ''}
@@ -9160,7 +9163,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function wxAlerts(w){
     const F = settings.weatherUnit === 'fahrenheit';
     const a = [];
-    if(w.max != null && w.max >= (F ? 95 : 35)) a.push(['heat', '🔥 Heat']);
+    if(w.max != null && w.max >= (F ? 90 : 32)) a.push(['heat', '🔥 Heat']);   // 32° and up (2026-11-02, was 35°)
     if(w.min != null && w.min <= (F ? 36 : 2)) a.push(['frost', '🥶 Frost']);
     if(wxKindForCode(w.code) === 'thunderstorm') a.push(['storm', '⛈️ Storm']);
     else if(w.rain != null && w.rain >= 60) a.push(['rain', '☔ Rain likely']);
@@ -9172,7 +9175,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function plumoWxMood(w){
     const a = wxAlerts(w).map(x=> x[0]), tone = wxTone(w.code);
     if(a.includes('storm')) return ['alert', 'Storm coming — secure the doors and test the generator.'];
-    if(a.includes('heat')) return ['stress', 'Heat today — fans and water first, no outside jobs in the middle of the day.'];
+    if(a.includes('heat')) return ['alert', 'Heat today — fans and water first, pop doors shut, no outside jobs in the middle of the day.'];   // battle mode from 32° (2026-11-02)
     if(a.includes('frost')) return ['rest', 'Cold night — brooder heat on early, check the curtains.'];
     if(a.includes('rain') || tone === 'rain' || tone === 'snow') return ['thinking', 'Wet day — plan the inside jobs and check the roof for leaks.'];
     if(a.includes('wind')) return ['thinking', 'Windy — check the curtains and anything loose outside.'];
@@ -9201,7 +9204,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     rain: ['#4F7FD0', 'happy', '', `<g stroke="#8DB6F2" stroke-width="1.4" stroke-linecap="round">${wxbDrops(22, 3, 8, 'wxb-rn')}</g><ellipse class="wxb-rip" cx="50" cy="90" rx="14" ry="3" fill="none" stroke="#8DB6F2" stroke-width="1.4"/>`],
     sun: ['#F5B524', 'calm', `<g class="wxb-rays"><path d="M50 46L100 36 100 56ZM50 46L74 0 90 12ZM50 46L10 0 26 -8ZM50 46L0 56 0 36ZM50 46L20 100 6 88ZM50 46L92 96 78 104Z" fill="#FFD84A" opacity=".4"/></g>`, ''],
     cloud: ['#9AA9BD', 'rest', `<g class="wxb-drift">${wxbCloud(-6, 14, .55, '#B9C4D3')}${wxbCloud(60, 30, .45, '#A3B0C2')}<g transform="translate(110 0)">${wxbCloud(-6, 14, .55, '#B9C4D3')}${wxbCloud(60, 30, .45, '#A3B0C2')}</g></g>`, ''],
-    heat: ['#F07A2E', 'hot', `<g class="wxb-shim" stroke="#FFB070" stroke-width="1.6" fill="none"><path d="M8 30q6-4 12 0t12 0t12 0"/><path d="M60 24q6-4 12 0t12 0t12 0"/></g>`, ''],
+    heat: ['#F07A2E', '', `<g class="wxb-shim" stroke="#FFB070" stroke-width="1.6" fill="none"><path d="M8 30q6-4 12 0t12 0t12 0"/><path d="M60 24q6-4 12 0t12 0t12 0"/></g>`, ''],
     storm: ['#8A6FE0', 'dizzy', `<path class="wxb-bolt" d="M70 2L58 34H68L58 60L84 24H72L80 2Z" fill="#FFE45C"/>`, `<g stroke="#A99FE0" stroke-width="1.4" stroke-linecap="round">${wxbDrops(14, 5, 9, 'wxb-rn')}</g><rect class="wxb-flash" width="100" height="100" fill="#fff"/>`],
     frost: ['#9CC8F5', 'wide', [8, 22, 38, 54, 70, 86, 14, 46, 78, 30, 62, 94].map((x, i)=> `<g transform="translate(${x} 0)"><circle class="wxb-snow" cy="${(i * 29) % 100}" r="${1 + (i % 3) * .4}" fill="#fff" stroke="#9CC8F5" stroke-width=".6" style="animation-delay:-${(i * .43).toFixed(2)}s"/></g>`).join(''), `<g class="wxb-puff"><circle cx="62" cy="58" r="3.5" fill="#fff" opacity=".85"/><circle cx="68" cy="53" r="2.6" fill="#fff" opacity=".65"/></g>`],
     wind: ['#7DBFA8', 'wide', `<g stroke="#9FD3F0" stroke-width="1.8" stroke-linecap="round" fill="none">${[[30, 30, 0], [52, 40, .45], [72, 26, .9]].map(([y, l, d])=> `<path class="wxb-gust" d="M0 ${y}h${l}q7 0 7-6" style="animation-delay:-${d}s"/>`).join('')}</g>`, `<path class="wxb-leaf" d="M0 0q4-4 8 0q-4 4-8 0z" fill="#6FBF4A"/>`],
@@ -9223,8 +9226,47 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     el.querySelector('.wxb-t span').textContent = now ? 'NOW' : '/' + wxT(w.min);
     return el;
   }
-  // Plumo dresses for today's weather on this page too (the floating head)
-  function plumoSyncWeather(){ try{ const w = wxForDate(dateKey(new Date())); if(window.PlumoFace) PlumoFace.setWeather(w ? plumoWxKind(w, true) : ''); }catch(e){} }
+  // Plumo dresses for today's weather on this page too (the floating head); today's hours load in the background
+  // so the morning report can say when the birds can range
+  let wxHourBusy = false;
+  function plumoSyncWeather(){
+    try{ const w = wxForDate(dateKey(new Date())); if(window.PlumoFace) PlumoFace.setWeather(w ? plumoWxKind(w, true) : ''); }catch(e){}
+    try{ const k = dateKey(new Date()), hit = wxHourlyCache.get(`${wxKey()}|${k}`);
+      if(!wxHourBusy && settings.weatherLocation && navigator.onLine !== false && (!hit || Date.now() - hit.fetchedAt > WX_HOURLY_TTL)){
+        wxHourBusy = true; fetchHourly(k).catch(()=>{}).finally(()=>{ wxHourBusy = false; }); } }catch(e){}
+  }
+  // Free-range call for today (2026-11-02, the manager's rule): no ranging in drizzle or rain, in a storm, or at 27° and
+  // up. With today's hours it finds the longest daylight stretch from now to 6 pm that is under 27° and dry, so the
+  // report can say "range 7–11 am"; without them it judges the whole day.
+  const RANGE_HOT_C = 27;
+  const wxWetCode = c=> c != null && ((c >= 51 && c <= 67) || (c >= 80 && c <= 82));
+  function rangeAdvice(fromHour){
+    const k = dateKey(new Date()), w = wxForDate(k); if(!w) return null;
+    const F = settings.weatherUnit === 'fahrenheit', hot = F ? Math.round(RANGE_HOT_C * 9 / 5 + 32) : RANGE_HOT_C, hotT = wxT(hot);
+    const kind = wxKindForCode(w.code), storm = kind === 'thunderstorm' || wxAlerts(w).some(x=> x[0] === 'storm');
+    const wetDay = ['drizzle', 'rain', 'heavyRain', 'showers', 'freezingRain'].includes(kind) || (w.rain != null && w.rain >= 60);
+    const hit = wxHourlyCache.get(`${wxKey()}|${k}`), now = fromHour != null ? fromHour : new Date().getHours();
+    const hrs = hit ? hit.hours.filter(x=> x.hour >= Math.max(6, now) && x.hour <= 18 && x.isDay !== 0 && x.temp != null) : [];
+    const why = x=> x.code >= 95 ? 'storm' : (wxWetCode(x.code) || isRainHour(x)) ? (x.code >= 51 && x.code <= 55 ? 'drizzle' : 'rain') : x.temp >= hot ? 'heat' : '';
+    if(hrs.length){
+      let best = null, run = null;
+      hrs.forEach(x=>{ if(!why(x)){ if(!run) run = { from: x.hour, to: x.hour }; else run.to = x.hour; if(!best || run.to - run.from > best.to - best.from) best = { ...run }; } else run = null; });
+      const bad = hrs.map(why).filter(Boolean), first = hrs.find(x=> why(x)), top = Math.max(...hrs.map(x=> x.temp));
+      const reason = bad.includes('storm') ? 'storm' : bad.includes('rain') ? 'rain' : bad.includes('drizzle') ? 'drizzle' : bad.includes('heat') ? 'heat' : '';
+      const say = r=>{ const fh = hrs.find(x=> x.temp >= hot); return r === 'heat' ? `${wxT(fh.temp)} by ${wxHourLabel(fh.hour)}${top > fh.temp + 1 ? `, up to ${wxT(top)}` : ''}` : r === 'storm' ? 'storm forecast' : r === 'rain' ? 'rain forecast' : 'drizzle forecast'; };
+      if(!reason) return { call: 'yes', text: `Good ranging day — under ${hotT} and dry until ${wxHourLabel(18)}, pop doors can open`, reason: '' };
+      if(best && best.to - best.from >= 1){
+        const end = best.to + 1;
+        return { call: 'part', reason, from: best.from, to: end,
+          text: `Range ${wxHourLabel(best.from)}–${wxHourLabel(end)} only · pop doors shut by ${wxHourLabel(end)} (${first && first.hour > best.to ? say(why(first)) : say(reason)})` };
+      }
+      return { call: 'no', reason, text: `No ranging today · keep the pop doors shut (${say(reason)})` };
+    }
+    if(storm) return { call: 'no', reason: 'storm', text: 'No ranging today · keep the pop doors shut (storm forecast)' };
+    if(wetDay) return { call: 'no', reason: kind === 'drizzle' ? 'drizzle' : 'rain', text: `No ranging today · keep the pop doors shut (${kind === 'drizzle' ? 'drizzle' : 'rain'} forecast)` };
+    if(w.max != null && w.max >= hot) return { call: 'part', reason: 'heat', text: `Too hot to range most of the day · up to ${wxT(w.max)}; early morning only, shut the pop doors before ${hotT}` };
+    return { call: 'yes', reason: '', text: `Good ranging day — under ${hotT} and dry, pop doors can open` };
+  }
   // The board's Plumos pop in when the board opens (not on every redraw: once a column has popped it waits its turn)
   // and then each again every 8–20 s, a new wait every time; not while the page is hidden or motion is reduced.
   const cpDue = {};
@@ -9672,6 +9714,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function batchChipsHtml(key){
     return batchesOnDate(key).map(b=> `<span class="bchip" title="Batch ${escapeHtmlAttr(b.number)}"><i style="background:${colorForBatchNumber(b.number)}"></i>${escapeHtml(b.number)}</span>`).join('');
+  }
+  // a one-off task that belongs to a batch (weigh-ins, prep, pickups: task.batchNumber) shows that batch too (2026-11-02)
+  function taskBatchChipHtml(task){
+    if(task.seriesId || !task.batchNumber) return '';
+    const n = String(task.batchNumber);
+    return `<span class="bchip" title="Batch ${escapeHtmlAttr(n)}"><i style="background:${colorForBatchNumber(n)}"></i>${escapeHtml(n)}</span>`;
   }
   let repeatMemo = { list: null, n: -1, map: null };
   function repeatSeriesMap(){
@@ -10919,6 +10967,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(isHighPriority) pills.push('<span class="kp kp-hi">High</span>');
     if(typeof isMaintTask === 'function' && isMaintTask(task)) pills.push('<span class="kp">Maintenance</span>');
     if(task.seriesId) pills.push(`<span class="kp kp-rep" title="Part of a repeating series">Repeats · ${escapeHtml(repeatRuleFor(task).replace(/^Every /, 'every ').replace(/^Repeats$/, 'series'))}</span>`, task.date ? batchChipsHtml(task.date).replace(/class="bchip"/g, 'class="kp bchip"') : '');
+    { const bc = taskBatchChipHtml(task); if(bc) pills.push(bc.replace('class="bchip"', 'class="kp bchip"')); }
     const kPhotos = kReport ? Math.max((kReport.photoUrls || []).length, kPhoto ? 1 : 0) : 0;
     let kSt;
     if(task.status === 'done'){ const d = task.doneAt ? new Date(task.doneAt) : null;
@@ -15809,7 +15858,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let wx = null;
     try{ const w = wxForDate(today); if(w){ const [icon, label] = wxIconLabel(w.code);
       wx = { max: w.max, min: w.min, maxT: wxT(w.max), minT: wxT(w.min), icon, label, f: settings.weatherUnit === 'fahrenheit', alerts: wxAlerts(w).map(x=> x[1]),
-        tone: wxTone(w.current ? w.current.code : w.code), night: !!(w.current && w.current.isDay === 0), gear: plumoWxKind(w, true) }; } }catch(e){}   // tone/night: the sky on ProdWise's Plumo hero
+        tone: wxTone(w.current ? w.current.code : w.code), night: !!(w.current && w.current.isDay === 0), gear: plumoWxKind(w, true), range: rangeAdvice() }; } }catch(e){}   // tone/night: the sky on ProdWise's Plumo hero
     return { ready: true, today: day.length, done: day.filter(t=> t.status === 'done').length, overdue: over.map(t=> t.name),
       prep: live.length ? { sheds: live.map(c=> c.shed).sort((a, b)=> Number(a) - Number(b)), done: pd, total: pt, chicks } : null, wx,
       prepReady: prepShedList().map(sh=> prepActiveFor(sh)).filter(c=> c && c.status === 'ready').map(c=> String(c.shed)),

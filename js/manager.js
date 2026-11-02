@@ -1130,6 +1130,11 @@ let mgrBriefAsked=false;
 function pwPrepReady(id){const cw=mgrBriefCw();return !!(cw&&Array.isArray(cw.prepReady)&&cw.prepReady.includes(String(id)));}
 function csChipHtml(id){return pwPrepReady(id)?'<span class="cs-chip rdy" title="Shed prep signed off in Tasks">✓ Ready for chicks</span>':'<span class="cs-chip">Closed</span>';}
 function mgrBriefCw(){try{const w=cwFrame&&cwFrame.contentWindow;return w&&typeof w.__cwBrief==='function'?w.__cwBrief():null;}catch(e){return null;}}
+// today's free-range call from Tasks, while there are birds old enough to range (day 21+) — js/ask.js shows it too
+function mgrRangeCall(cw){
+  cw=cw===undefined?mgrBriefCw():cw;const r=cw&&cw.wx&&cw.wx.range;if(!r)return null;const today=mgrToday();
+  return mgrPlaced().some(s=>!s.closed&&!(s.cleanoutDate&&dateOnly(s.cleanoutDate)<today)&&ageInDays(s,today)>=21)?r:null;
+}
 function mgrBriefData(){
   const today=mgrToday(),days=mgrWeekDays(),cw=mgrBriefCw();
   if(!cw&&!mgrBriefAsked&&syncFarmName&&typeof pwEnsureTasksFrame==='function'){mgrBriefAsked=true;pwEnsureTasksFrame(()=>mgrBriefRefresh());}
@@ -1142,6 +1147,10 @@ function mgrBriefData(){
     if(fo&&!fo.done)G.today.push(L('r',`<b>Feed off today · ${escapeHtml(foLabel(fo.sheds))}</b> · catch tonight, kill sheet ${escapeHtml(foDay(fo.kill))}`,'',true));
     else if(fo&&fo.done)G.today.push(L('g',`Feed off · ${escapeHtml(foLabel(fo.sheds))} · done`));
     if(ft&&!ft.done)G.today.push(L('a',`<b>Feed off tomorrow morning · ${escapeHtml(foLabel(ft.sheds))}</b> · kill sheet ${escapeHtml(foDay(ft.kill))}`,'',true));}
+  // Free range (2026-11-02): Tasks' weather decides the pop doors — no ranging in drizzle or rain, a storm, or 27°+;
+  // with today's hours it gives the window. Only while birds are old enough to range (day 21+).
+  {const r=mgrRangeCall(cw);if(r){const t=escapeHtml(r.text).replace(/^([^·—]+)/,'<b>$1</b>');
+    G.today.push(L(r.call==='yes'?'g':r.call==='part'?'a':'r',t,'',r.call!=='yes'));}}
   // Today
   const d0=days[0];
   d0.pick.forEach(p=>G.today.push(L('r',p.final?`<b>Final pickup · Shed ${p.shed}</b> · clean-out`:`<b>Pickup Shed ${p.shed}</b> · about ${p.birds.toLocaleString('en-US')} birds${p.planned?' (planned)':''}`,'data-mgr-pickups')));
