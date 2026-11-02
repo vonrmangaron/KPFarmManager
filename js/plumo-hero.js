@@ -203,12 +203,12 @@ function phRefresh(){
   if(h){
     const sc=h.querySelector('.phs'),sm=phSceneMood();if(sc&&sc.dataset.m!==sm)sc.dataset.m=sm;
     const st=phSceneTitle();if(h.title!==st)h.title=st;
-    const f=document.getElementById('phFace');if(f&&!f.querySelector('.pf-'+D.mood))f.innerHTML=PlumoFace.html(D.mood);
+    const f=document.getElementById('phFace');if(f&&!f.querySelector('.pf-'+D.mood)){f.innerHTML=PlumoFace.html(D.mood);if(PlumoFace.enter)PlumoFace.enter(f);}   // a new mood comes in with its entrance
     const c=document.getElementById('phChip');if(c){const x=phChip(D);if(c.innerHTML!==x)c.innerHTML=x;}
     const b=document.getElementById('phBub');if(b){const x=phBubbleHtml(D);if(b.innerHTML!==x)b.innerHTML=x;}
     const fw=document.getElementById('phFoWrap');if(fw&&typeof foHeroHtml==='function'){const x=foHeroHtml();if(fw.innerHTML!==x)fw.innerHTML=x;}
     const mb=document.getElementById('phMiniBub');if(mb){const x=phGreet(D);if(mb.textContent!==x)mb.textContent=x;}
-    const mh=document.getElementById('phMiniHead');if(mh&&!mh.querySelector('.pf-'+D.mood))mh.innerHTML=PlumoFace.html(D.mood);
+    const mh=document.getElementById('phMiniHead');if(mh&&!mh.querySelector('.pf-'+D.mood)){mh.innerHTML=PlumoFace.html(D.mood);if(PlumoFace.enter)PlumoFace.enter(mh);}
   }
   const t=document.getElementById('rossBtn');
   if(t){

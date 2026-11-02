@@ -205,7 +205,7 @@ const RS_WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The new action-hero face (2026-11-01, js/plumo-face.js); the old robot-chicken drawing stays as the fallback.
 // The mood is drawn into the face, so changing mood redraws it (rsFaceMood).
 function rsFace(mood,cls){const m=mood||'calm';return `<span class="rossR ${m}${cls?' '+cls:''}" data-m="${m}">${window.PlumoFace?PlumoFace.svg(m):ROSS_SVG}</span>`;}
-function rsFaceMood(el,m){el.classList.remove('calm','thinking','happy','alert','rest','stress');el.classList.add(m);if(window.PlumoFace&&el.dataset.m!==m){el.innerHTML=PlumoFace.svg(m);el.dataset.m=m;}}
+function rsFaceMood(el,m){el.classList.remove('calm','thinking','happy','alert','rest','stress');el.classList.add(m);if(window.PlumoFace&&el.dataset.m!==m){el.innerHTML=PlumoFace.svg(m);el.dataset.m=m;if(PlumoFace.enter)PlumoFace.enter(el);}}
 function rsFirst(t){t=String(t||'').trim();const m=t.match(/^.*?[.!?](\s|$)/);return (m?m[0]:t).trim();}
 function rsTicksKey(){return 'pw-ross-ticks-'+aiSlug()+'-'+aiDay();}
 function rsTicks(){try{return new Set(JSON.parse(localStorage.getItem(rsTicksKey())||'[]'));}catch(e){return new Set();}}
@@ -273,7 +273,7 @@ function rsHtml(st,d,R){
   const nDone=R.plan.filter((p,i)=>R.ticks.has(i)).length;
   return `<div class="rs-h"><div class="rs-ht"><div class="rs-face" id="rsFace" role="button" tabindex="0" title="Tap Plumo for today's top job" aria-label="Plumo">${rsFace(R.mood)}</div>
         <div class="rs-t"><small>Plumo · morning report</small><h2 id="rsTitle">${escapeHtml(now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</h2><div class="rs-m">${meta}</div><div class="rs-say" id="rsSay">${st.busy?'<span class="rs-muted2">Plumo is reading the farm…</span>':escapeHtml(R.say)}</div></div>
-        <div class="rs-hb"><button type="button" class="rs-bev" data-bev-open title="Birds Eye View: the batch result now and at clean-out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Birds Eye View</button><button type="button" class="rs-x rs-redo" data-rs-redo aria-label="Refresh the report with the latest farm data" title="Refresh: Plumo reads the farm again"${st.busy?' disabled':''}>↻</button><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div></div>
+        <div class="rs-hb"><button type="button" class="rs-x rs-redo" data-rs-redo aria-label="Refresh the report with the latest farm data" title="Refresh: Plumo reads the farm again"${st.busy?' disabled':''}>↻</button><button type="button" class="rs-x" data-rs-close aria-label="Close" title="Close">✕</button></div></div>
       <nav class="rs-nav" aria-label="Sections">${RS_TABS.map(([k,l],i)=>`<button type="button" data-rs-tab="${k}" class="${i===0?'on':''}">${l}${R.tone[k]?`<i class="${R.tone[k]}"></i>`:''}</button>`).join('')}</nav></div>
     <div class="rs-scroll" id="rsScroll">
       <div class="rs-kpi">${d.kpi.map(k=>`<div><span>${escapeHtml(k.k)}</span><b>${k.v}</b><em class="${k.tone||''}">${k.s}</em></div>`).join('')}</div>
