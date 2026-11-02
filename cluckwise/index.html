@@ -1499,38 +1499,29 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .wxc-rh{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; line-height:1.05; }
   .wxc-rh-label{ font-size:9.5px; font-weight:800; letter-spacing:0.06em; opacity:0.65; }
   .wxc-rh-val{ font-family:'Sora',sans-serif; font-size:16px; font-weight:800; }
-  /* Today's column: round "now" badge overlapping the top-left corner */
-  /* bigger badge that sits over the column's top-left corner */
-  .kanban-column.has-now{ position:relative; overflow:visible; }
-  .kanban-board:has(.kanban-column.has-now){ padding-top:20px; padding-left:20px; }
-  .kanban-column.has-now .col-head-top{ padding-left:58px; min-height:58px; }
-  .col-now-badge{
-    position:absolute; top:-18px; left:-18px; z-index:3; width:78px; height:78px; border-radius:50%;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
-    border:3px solid var(--surface); box-shadow:0 6px 18px rgba(0,0,0,0.28); color:#16191B; font-family:'Inter',sans-serif; line-height:1;
-  }
-  .col-now-badge .cnb-ic{ font-size:28px; }
-  .col-now-badge.cnb-plumo .cnb-ic{ width:44px; height:48px; margin-top:-8px; }
-  .col-now-badge.cnb-plumo .cnb-ic .plumoF{ width:100%; height:100%; }
-  .col-now-badge.cnb-plumo .cnb-t{ font-size:17px; margin-top:-2px; }
-  .col-now-badge .cnb-t{ font-family:'Sora',sans-serif; font-size:19px; font-weight:800; margin-top:1px; }
-  .col-now-badge .cnb-l{ font-size:9px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; opacity:0.65; }
-  body.theme-dark .col-now-badge{ color:var(--ink); border-color:var(--bg); }
-  /* the round Now badge sits 18px outside today's column: keep room for it on the board's left and top (the
-     #calendarWrap board padding is stronger than the rule above, and the board clips what sticks out) */
-  #calendarWrap .kanban-board:has(.kanban-column.has-now){ padding-left:24px !important; padding-top:24px !important; scroll-padding-left:24px; }
-  .col-now-badge.wx-tone-sun{ background:linear-gradient(135deg,#FFF4C7,#FFD35C); }
-  .col-now-badge.wx-tone-partly{ background:linear-gradient(135deg,#FFF3CF,#DCE5F0); }
-  .col-now-badge.wx-tone-cloud{ background:linear-gradient(135deg,#F0F2F5,#CBD3DD); }
-  .col-now-badge.wx-tone-rain{ background:linear-gradient(135deg,#DDEBFF,#A9C8F0); }
-  .col-now-badge.wx-tone-snow{ background:linear-gradient(135deg,#F4F9FF,#D4E5F7); }
-  .col-now-badge.wx-tone-storm{ background:linear-gradient(135deg,#EDE3FB,#C7B0EE); }
-  body.theme-dark .col-now-badge.wx-tone-sun{ background:linear-gradient(135deg,#5A4A1A,#7A5F16); }
-  body.theme-dark .col-now-badge.wx-tone-partly{ background:linear-gradient(135deg,#4A4630,#3A4660); }
-  body.theme-dark .col-now-badge.wx-tone-cloud{ background:#3C4659; }
-  body.theme-dark .col-now-badge.wx-tone-rain{ background:linear-gradient(135deg,#23406B,#2D5690); }
-  body.theme-dark .col-now-badge.wx-tone-snow{ background:#3A4D66; }
-  body.theme-dark .col-now-badge.wx-tone-storm{ background:linear-gradient(135deg,#3E2D66,#533C8A); }
+  /* Plumo on every day column (2026-11-02, mockup KnxVpT4PC14mqLSDtxkp1e): he stands over the column's top-left
+     corner with a bubble — today the temperature now, other days high / low — and his face follows that day's
+     weather (plumoWxMood). He pops in when the board opens and again every 8–20 s. Replaces the round Now badge. */
+  .kanban-column.has-plumo{ position:relative; overflow:visible; }
+  .kanban-column.has-plumo .col-head-top{ padding-left:70px; min-height:60px; }
+  .kanban-column.has-plumo .wx-card-col .wxc-ic{ display:none; }
+  @media (min-width:761px){ #calendarWrap .kanban-board:has(.kanban-column.has-plumo){ padding-left:22px !important; padding-top:38px !important; scroll-padding-left:22px; } }
+  @media (max-width:760px){ #calendarWrap .kanban-board:has(.kanban-column.has-plumo){ padding-top:34px !important; } }
+  .col-plumo{ position:absolute; left:-16px; top:-34px; z-index:3; width:84px; height:94px; pointer-events:none; }
+  .col-plumo .cp-fig{ position:absolute; inset:0; display:block; filter:drop-shadow(0 8px 12px rgba(0,0,0,.4)); }
+  .col-plumo .cp-fig .plumoF{ width:100%; height:100%; }
+  .col-plumo .cp-bub{ position:absolute; left:76px; top:-2px; padding:4px 10px; border-radius:11px; background:#fff; color:#0B111D; border:2px solid #141824;
+    font:800 15px/1.15 'Sora',sans-serif; white-space:nowrap; box-shadow:0 6px 14px rgba(0,0,0,.3); }
+  .col-plumo.cp-now .cp-bub{ font-size:19px; padding:3px 10px; }
+  .col-plumo .cp-bub::before{ content:""; position:absolute; left:-7px; bottom:5px; border:6px solid transparent; border-right:8px solid #141824; border-left:0; }
+  .col-plumo .cp-bub::after{ content:""; position:absolute; left:-3px; bottom:7px; border:4px solid transparent; border-right:5px solid #fff; border-left:0; }
+  .col-plumo.cp-pop .cp-fig{ animation:cpPop .52s cubic-bezier(.22,1,.36,1); }
+  .col-plumo.cp-pop .cp-bub{ animation:cpBub .42s .12s cubic-bezier(.22,1,.36,1) backwards; }
+  @keyframes cpPop{ 0%{ transform:translateY(10px) scale(.55); opacity:0 } 55%{ transform:translateY(-6px) scale(1.12,.92); opacity:1 } 78%{ transform:scale(.96,1.05) } 100%{ transform:none } }
+  @keyframes cpBub{ 0%{ transform:scale(.6); opacity:0 } 60%{ transform:scale(1.08); opacity:1 } 100%{ transform:none } }
+  @media (prefers-reduced-motion: reduce){ .col-plumo.cp-pop .cp-fig, .col-plumo.cp-pop .cp-bub{ animation:none; } }
+  @media (max-width:760px){ .col-plumo{ left:2px; top:-30px; width:74px; height:83px; } .col-plumo .cp-bub{ left:66px; }
+    .kanban-column.has-plumo .col-head-top{ padding-left:62px; } }
   .dtitle .dtoday{ display:inline-block; margin-left:6px; padding:2px 7px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; vertical-align:middle; background:var(--primary); color:#241A08; }
   .wx-card-col .wxc-ic{ font-size:32px; }
   .wx-card-wide{ margin-top:0; margin-left:auto; min-width:260px; max-width:420px; }
@@ -9171,6 +9162,20 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(tone === 'sun') return ['happy', 'Great day for outside jobs.'];
     return ['calm', 'A normal day — everything on track.'];
   }
+  // The board's Plumos pop in when the board opens (not on every redraw: once a column has popped it waits its turn)
+  // and then each again every 8–20 s, a new wait every time; not while the page is hidden or motion is reduced.
+  const cpDue = {};
+  function cpPop(el){ el.classList.remove('cp-pop'); void el.offsetWidth; el.classList.add('cp-pop'); cpDue[el.dataset.key] = Date.now() + 8000 + Math.random() * 12000; }
+  setInterval(()=>{
+    if(document.hidden || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const t = Date.now();
+    document.querySelectorAll('.col-plumo').forEach((el, i)=>{
+      if(!el.offsetParent) return;
+      const due = cpDue[el.dataset.key];
+      if(due == null){ cpDue[el.dataset.key] = 0; setTimeout(()=> cpPop(el), i * 140); }
+      else if(due && t >= due) cpPop(el);
+    });
+  }, 1000);
   // variant: 'col' (Board column) | 'wide' (Day view / day popup)
   function buildWxCard(key, variant){
     const w = wxForDate(key);
@@ -10974,24 +10979,23 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         }
       }
       col.appendChild(head);
-      // Today: round "now" badge over the column's top-left — live icon + temp
       if(kbPhone){ kbChips.push({ key, label: dayNames[i], date: d.getDate(), isToday, open: openCount, total: dayTasks.length }); }
-      if(!kbPhone && !isCollapsed && isToday){
-        const wNow = wxForDate(key);
-        if(wNow && wNow.current){
-          const [nIc, nLabel] = wxIconLabel(wNow.current.code, wNow.current.isDay);
-          const nb = document.createElement('span');
-          nb.className = 'col-now-badge wx-tone-' + wxTone(wNow.current.code);
-          // Plumo's head in place of the weather icon (2026-11-01): his mood follows today's forecast
-          const [pm, pTip] = plumoWxMood(wNow);
-          nb.title = `Now: ${nLabel} · ${wxT(wNow.current.temp)}` + (wNow.current.hum != null ? ` · RH ${Math.round(wNow.current.hum)}%` : '') + ` — Plumo: ${pTip}`;
-          nb.innerHTML = `<span class="cnb-ic"></span><span class="cnb-t"></span><span class="cnb-l">Now</span>`;
-          if(window.PlumoFace){ nb.classList.add('cnb-plumo'); nb.querySelector('.cnb-ic').innerHTML = PlumoFace.html(pm); }
-          else nb.querySelector('.cnb-ic').textContent = nIc;
-          nb.querySelector('.cnb-t').textContent = wxT(wNow.current.temp);
-          col.classList.add('has-now');
-          col.appendChild(nb);
-        }
+      // Plumo over the column's top-left corner (mockup KnxVpT4PC14mqLSDtxkp1e): today the temperature now, other days high / low
+      const wP = !isCollapsed && window.PlumoFace ? wxForDate(key) : null;
+      if(wP){
+        const [pm, pTip] = plumoWxMood(wP), now = isToday && wP.current;
+        const [, pLabel] = now ? wxIconLabel(wP.current.code, wP.current.isDay) : wxIconLabel(wP.code);
+        const txt = now ? wxT(wP.current.temp) : `${wxT(wP.max)} / ${wxT(wP.min)}`;
+        const cp = document.createElement('span');
+        cp.className = 'col-plumo' + (now ? ' cp-now' : '');
+        cp.dataset.key = key;
+        cp.setAttribute('role', 'img');
+        cp.setAttribute('aria-label', `Plumo: ${pLabel}, ${now ? 'now ' + txt : 'high ' + wxT(wP.max) + ', low ' + wxT(wP.min)}`);
+        cp.title = (now ? `Now: ${pLabel} · ${txt}` + (wP.current.hum != null ? ` · RH ${Math.round(wP.current.hum)}%` : '') : `${pLabel} · ${txt}`) + ` — Plumo: ${pTip}`;
+        cp.innerHTML = `<span class="cp-fig">${PlumoFace.html(pm)}</span><span class="cp-bub"></span>`;
+        cp.querySelector('.cp-bub').textContent = txt;
+        col.classList.add('has-plumo');
+        col.appendChild(cp);
       }
       head.querySelector('.col-toggle-btn').addEventListener('click', (e)=>{
         e.stopPropagation();
