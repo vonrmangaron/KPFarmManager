@@ -238,7 +238,7 @@
     if(o.board && v.v === 'home') return '<div class="g2 g2-wide">' + boardHtml(o, tt) + '</div>';
     let h;
     if(!o.sheds.length) h = shedHtml(o, tt, { n: null, age: v.age, birds: 0 }) + checksHtml(o, tt);
-    else if(v.v === 'shed'){ const sh = o.sheds.find(s=> s.n === v.shed) || o.sheds[0]; h = sh.age == null ? emptyHtml(o, tt, sh) : shedHtml(o, tt, sh); }
+    else if(v.v === 'shed'){ const sh = o.sheds.find(s=> s.n === v.shed) || o.sheds[0]; h = (sh.age == null ? emptyHtml(o, tt, sh) : shedHtml(o, tt, sh)) + checksHtml(o, tt); }
     else if(v.v === 'check') h = checkHtml(o, tt, v.check);
     else h = homeHtml(o, tt);
     return `<div class="g2">${h}</div>`;
@@ -408,10 +408,14 @@
     lanes.filter(l=> l.age != null && l.age <= 2).forEach(l=> says.push('New chicks in ' + l.sheds.map(s=> 'Shed ' + s.n).join(' & ') + ' — check crops are full.'));
     if(!says.length) says.push(o.sheds.length ? 'All sheds on track. Click a shed to see what the crew sees.' : 'No batch running. The crew sees the guide by age.');
     const totals = tb ? [['Birds', fmt(tb), ''], ['Feed today', fmt(tf), 'kg'], ['Water today', fmt(tw), 'L']].map(([k, v, u])=> `<span><small>${k}</small><b>${v}${u ? ' <i>' + u + '</i>' : ''}</b></span>`).join('') : '';
+    const c2 = o.checks.filter(([k])=> !c.hidden.includes(k)).map(([k])=>{ const [i, tone] = CHECK_LOOK[k] || ['good', 'g2-teal'];
+      return `<button type="button" class="g2-qc" data-g2-check="${k}"><span class="g2-ico ${tone}">${ic(ICON[i], 16)}</span>${esc(o.X('g_' + k + '_t'))}</button>`; })
+      .concat(c.custom.filter(x=> x.title).map(x=> `<button type="button" class="g2-qc" data-g2-check="own:${esc(x.id)}"><span class="g2-ico g2-grey g2-emo">${esc(x.icon || '📌')}</span>${esc(x.title)}</button>`)).join('');
     return `<div class="g2-sb">
       <div class="g2-sb-h"><div><span class="g2-ln-cap">${esc(now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' }))}</span><h2>Today in every shed</h2></div>
         <div class="g2-sb-tot">${totals}</div></div>
       ${o.sheds.length ? `<div class="g2-lanes">${body}</div>` : `<button type="button" class="g2-row" data-g2-shed="0"><span class="g2-row-t">Open the guide by age</span>${ic(ICON.chev, 18)}</button>`}
+      ${c2 ? `<div class="g2-sb-qc"><span class="g2-ln-cap">${esc(tt('checks'))} · ${esc(tt('every'))}</span>${c2}</div>` : ''}
       <div class="g2-sb-f">${plumo('thinking')}<span><span class="g2-ln-mute">Plumo · </span>${esc(says.join(' '))}</span><small>Ross 308 · weight from 44 g day-old · water ≈ 1.8 × feed</small></div></div>`;
   }
 
@@ -419,7 +423,8 @@
   const CSS = `
   .g2{ --g2-card:var(--surface,#fff); --g2-ink:var(--ink,#16191B); --g2-line:var(--line,#E2E5DF); --g2-muted:var(--muted,#5E666A); --g2-page:var(--bg,#F4F5F2);
     --g2-teal:#0F8A75; --g2-teal-s:#DFF4EF; --g2-blue:#2F6BD8; --g2-blue-s:#E6EEFD; --g2-coral:#C9402D; --g2-coral-s:#FDE8E4; --g2-amber:#8A5300; --g2-amber-s:#FFF3DC; --g2-violet:#5B44C2; --g2-violet-s:#EEEAFC; --g2-night:#2B3566; --g2-night-s:#E8EAF4; --g2-grey-s:#F1F3EF;
-    max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:12px; color:var(--g2-ink); font-family:'Inter',sans-serif; }
+    max-width:560px; width:100%; min-width:0; box-sizing:border-box; margin:0 auto; display:flex; flex-direction:column; gap:12px; color:var(--g2-ink); font-family:'Inter',sans-serif; }
+  .g2 > *, .g2-head, .g2-body, .g2-card{ min-width:0; }
   body.theme-dark .g2{ --g2-teal:#3CC9A8; --g2-teal-s:rgba(60,201,168,.14); --g2-blue:#7AA7FF; --g2-blue-s:rgba(122,167,255,.14); --g2-coral:#FF8270; --g2-coral-s:rgba(255,130,112,.15); --g2-amber:#F5B524; --g2-amber-s:rgba(245,181,36,.14); --g2-violet:#A893FF; --g2-violet-s:rgba(168,147,255,.15); --g2-night:#AEB8FF; --g2-night-s:rgba(174,184,255,.14); --g2-grey-s:rgba(255,255,255,.06); }
   .g2-wide{ max-width:none; min-width:0; width:100%; }
   .g2 button{ font-family:inherit; color:var(--g2-ink); cursor:pointer; }
@@ -553,6 +558,12 @@
   .g2-ln-next .g2-ln-cap{ color:var(--g2-amber); }
   .g2-ln-nr{ display:flex; gap:10px; font-size:13px; line-height:1.35; }
   .g2-ln-nr b{ width:34px; flex-shrink:0; font-weight:800; } .g2-ln-nr span{ font-weight:600; }
+  .g2-sb-qc{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .g2-sb-qc .g2-ln-cap{ margin-right:4px; }
+  .g2-qc{ display:flex; align-items:center; gap:8px; padding:4px 12px 4px 4px; border-radius:999px; border:1px solid var(--g2-line); background:var(--g2-card); font-size:13px; font-weight:700; }
+  .g2-qc:hover{ border-color:var(--g2-muted); }
+  .g2-qc .g2-ico{ width:26px; height:26px; border-radius:50%; }
+  .g2-qc .g2-emo{ font-size:14px; }
   .g2-sb-f{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; flex-wrap:wrap; }
   .g2-sb-f .g2-plumo{ width:34px; height:34px; flex:0 0 34px; }
   .g2-sb-f > span:not(.g2-plumo){ flex:1; min-width:240px; }
