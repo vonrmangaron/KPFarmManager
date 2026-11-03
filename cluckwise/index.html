@@ -15559,14 +15559,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     return v;
   }
   function guideEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
-  // Ross 308 standards (as-hatched) — the same tables ProdWise uses: weekly weights (kg,
-  // straight line between weeks) and daily feed per bird (g). Water ≈ 1.8 × feed at 21 °C.
-  const GUIDE_ROSS_KG = {0:0.044,7:0.2135,14:0.533,21:1.012,28:1.6165,35:2.2955,42:2.998,49:3.6815,56:4.318};
+  // Ross 308 standards (as-hatched, 2022 objectives): daily body weight (g) from the 44 g
+  // day-old chick, and daily feed per bird (g) — the table ProdWise uses. Water ≈ 1.8 × feed at 21 °C.
+  const GUIDE_ROSS_G = [44,62,81,102,125,151,181,213,249,288,330,376,425,477,533,592,655,720,789,860,935,1012,1092,1174,1258,1345,1434,1524,1616,1710,1805,1901,1999,2097,2196,2296,2396,2496,2597,2697,2798,2898,2998,3097,3197,3295,3393,3490,3586,3681,3776,3869,3961,4052,4142,4230,4318];
   const GUIDE_ROSS_FEED = [0,11,15,19,24,28,33,37,42,47,51,56,60,65,69,74,78,83,88,92,97,101,106,110,115,119,124,129,133,138,142,147,151,156,160,165,170,174,179,183,188,192,197,201,206,211,215,220,223,225,227,229,230,231,233,233,234,234,234,234,234];
   const GUIDE_WATER_RATIO = 1.8;
   function guideRossKg(age){
-    const a = Math.max(0, Math.min(56, age)), w0 = Math.floor(a / 7) * 7, w1 = Math.min(56, w0 + 7);
-    return w1 === w0 ? GUIDE_ROSS_KG[w0] : GUIDE_ROSS_KG[w0] + (a - w0) / 7 * (GUIDE_ROSS_KG[w1] - GUIDE_ROSS_KG[w0]);
+    const a = Math.max(0, Math.min(56, age)), d = Math.floor(a), n = Math.min(56, d + 1);
+    return (GUIDE_ROSS_G[d] + (a - d) * (GUIDE_ROSS_G[n] - GUIDE_ROSS_G[d])) / 1000;
   }
   function guideFeedG(age){ return age <= 0 ? 0 : GUIDE_ROSS_FEED[Math.min(60, Math.floor(age))]; }
   function guideWaterMl(age){ return Math.round(guideFeedG(age) * GUIDE_WATER_RATIO); }

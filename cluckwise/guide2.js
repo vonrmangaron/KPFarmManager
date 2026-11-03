@@ -328,45 +328,91 @@
         <div class="g2-card"><span class="g2-cap">${esc(tt('doit'))}</span><p>${esc(o.X('g_' + k + '_a'))}</p></div>
         ${o.report ? `<button type="button" class="g2-tell" data-g2-report>${ic(ICON.msg, 22)}${esc(tt('tell'))}</button>` : ''}</div>`;
   }
-  // Manager on a computer: every shed side by side, plus the targets the crew sees
+  // Manager on a computer: a shed board. One lane per age (sheds the same age share a lane), each with the
+  // same cards in the same order: climate, drinkers and pans, today's targets, and what changes this week.
   function boardHtml(o, tt){
-    const c = o.cfg, live = o.sheds.filter(s=> s.age != null);
-    const says = [];
-    const old = live.filter(s=> s.age >= 21);
-    if(old.length) says.push(`<b>${old.length > 1 ? 'Sheds ' + old.map(s=> s.n).join(', ') : 'Shed ' + old[0].n} at day ${old[0].age}${old.length > 1 && old.some(s=> s.age !== old[0].age) ? '+' : ''}</b> — watch for heat; panting birds need more air.`);
-    o.sheds.filter(s=> s.age == null && s.chicks).forEach(s=>{ const pre = new Date(s.chicks + 'T00:00:00'); pre.setDate(pre.getDate() - 2);
-      says.push(`<b>Shed ${s.n} gets chicks ${esc(o.dateLabel(s.chicks))}</b> — heat on from ${esc(o.dateLabel(pre.toISOString().slice(0, 10)))}.`); });
-    live.filter(s=> s.age <= 2).forEach(s=> says.push(`<b>Shed ${s.n} has new chicks</b> — check crops are full.`));
-    if(!says.length) says.push(o.sheds.length ? 'All sheds on track. Click a shed to see what the crew sees.' : 'No batch running. The crew sees the guide by age — use the shed page to look at any day.');
-    const card = s=>{
-      const top = `<div class="g2-bc-h"><b>Shed ${s.n}</b><span class="${s.age == null ? 'g2-violet-t' : ''}">${s.age == null ? (s.chicks ? 'Empty · chicks ' + esc(o.dateLabel(s.chicks)) : 'Empty') : 'Day ' + s.age}</span><small>${s.birds ? fmt(s.birds) + ' birds' : ''}</small></div>`;
-      if(s.age == null) return `<button type="button" class="g2-bc" data-g2-shed="${s.n}"><span class="g2-bar-top" style="background:${PAIR[(s.n - 1) % 8]}"></span>${top}
-        <div class="g2-bc-empty"><b>${esc(tt('ready'))}</b><span>Heat on 1–2 days before · floor 28–30° · lines flushed · pans down · paper and feed · lights 30–40 lux</span></div></button>`;
-      const a = s.age, temp = o.at(c.temp, a), rh = o.at(c.rh, a), dark = o.at(c.dark, a), kg = o.kg(a), fg = o.feedG(a), wm = o.waterMl(a);
-      return `<button type="button" class="g2-bc" data-g2-shed="${s.n}"><span class="g2-bar-top" style="background:${PAIR[(s.n - 1) % 8]}"></span>${top}
-        <div class="g2-bc-pic">${scene('drink', a, o.kg)}</div>
-        <div class="g2-chips"><span class="g2-coral">${esc(String(temp))}° · RH ${esc(String(rh))}</span><span class="g2-night-c">${esc(String(dark))} h dark</span><span class="g2-blue">${esc(tt('dtag' + (a <= 2 ? 0 : a <= 10 ? 1 : 2)))}</span><span class="g2-amber">Pans ${a <= 7 ? 'on floor' : 'back height'}</span></div>
-        <div class="g2-bc-stats"><span class="g2-teal">${ic(ICON.weight, 13)}<b>${kg < 1 ? Math.round(kg * 1000) + ' g' : kg.toFixed(2) + ' kg'}</b><small>target</small></span>
-          <span class="g2-amber">${ic(ICON.feed, 13)}<b>${fg} g</b><small>${s.birds ? fmt(s.birds * fg / 1000) + ' kg' : 'a day'}</small></span>
-          <span class="g2-blue">${ic(ICON.water, 13)}<b>${wm} ml</b><small>${s.birds ? fmt(s.birds * wm / 1000) + ' L' : 'a day'}</small></span></div></button>`;
+    const c = o.cfg, now = new Date(); now.setHours(0, 0, 0, 0);
+    const iso = d=> d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const wd = i=> { const d = new Date(now); d.setDate(d.getDate() + i); return d.toLocaleDateString('en-AU', { weekday: 'short' }); };
+    const drink = a=> tt('dtag' + (a <= 2 ? 0 : a <= 10 ? 1 : 2));
+    const pans = a=> a <= 3 ? 'Floor + paper' : a <= 7 ? 'On the floor' : 'Back height';
+    const stage = a=> a <= 7 ? 'Brooding' : a <= 14 ? 'Starter' : a <= 28 ? 'Grower' : 'Finisher';
+    const kgTxt = kg=> kg < 1 ? Math.round(kg * 1000) + ' g' : kg.toFixed(2) + ' kg';
+    // what changes for a shed of age a over the next 7 days
+    const changes = a=>{
+      const out = [];
+      for(let i = 1; i <= 7 && out.length < 3; i++){
+        const d = a + i, t = [];
+        if(String(o.at(c.temp, d)) !== String(o.at(c.temp, d - 1))) t.push(o.at(c.temp, d) + '°');
+        if(String(o.at(c.dark, d)) !== String(o.at(c.dark, d - 1))) t.push(o.at(c.dark, d) + ' h dark');
+        if(d === 7) t.push('lights 5–10 lux');
+        if(d === 3 || d === 11) t.push('drinkers ' + drink(d).toLowerCase());
+        if(d === 4) t.push('paper away');
+        if(d === 8) t.push('pans to back height');
+        if(t.length) out.push({ d: wd(i), t: 'Day ' + d + ' · ' + t.join(', ') });
+      }
+      return out;
     };
-    const temps = c.temp.slice().sort((a, b)=> a[0] - b[0]).map(r=> `<span><small>d${esc(String(r[0]))}</small><b>${esc(String(r[1]))}°</b></span>`).join('');
-    const rows = (rs, u)=> rs.slice().sort((a, b)=> a[0] - b[0]).map((r, i, all)=> `<span class="g2-kv"><span>Day ${esc(String(r[0]))}${all[i + 1] ? '–' + (all[i + 1][0] - 1) : ' on'}</span><b>${esc(String(r[1]))} ${u}</b></span>`).join('');
-    const checks = o.checks.map(([k])=> `<span class="g2-kv"><span><i class="g2-dotc ${(CHECK_LOOK[k] || ['', 'g2-teal'])[1]}"></i>${esc(o.X('g_' + k + '_t'))}</span><b>${c.hidden.includes(k) ? 'hidden' : 'shown'}</b></span>`).join('')
-      + c.custom.filter(x=> x.title).map(x=> `<span class="g2-kv"><span><i class="g2-dotc g2-grey"></i>${esc(x.title)}</span><b>your card</b></span>`).join('');
-    return `<div class="g2-board"><div class="g2-board-main">
-        <div class="g2-say g2-say-board">${plumo('thinking')}<div class="g2-bubble">${says.join(' ')}</div></div>
-        <div class="g2-bgrid">${o.sheds.length ? o.sheds.map(card).join('') : ''}</div>
-        ${o.sheds.length ? '' : `<button type="button" class="g2-row" data-g2-shed="0"><span class="g2-row-t">Open the guide by age</span>${ic(ICON.chev, 18)}</button>`}
-      </div>
-      <aside class="g2-board-side"><b class="g2-side-t">Targets the crew sees</b>
-        <span class="g2-cap g2-coral-t">Temperature by age</span><div class="g2-temps">${temps}</div>
-        <span class="g2-cap g2-teal-t">Humidity</span>${rows(c.rh, '%')}
-        <span class="g2-cap g2-night-t">Hours of dark</span>${rows(c.dark, 'h')}
-        <span class="g2-small">Lights 30–40 lux the first week, then 5–10 lux.</span>
-        <span class="g2-cap">Drinkers and pans</span><span class="g2-small">Drawn from each shed's age (Ross 308 weight). Big Dutchman one-arm drip cups. Pans on the floor to day 7, then at back height.</span>
-        <span class="g2-cap">Quick checks · every shed</span>${checks}
-        <span class="g2-small">Change targets and card text with ✎ Edit guide.</span></aside></div>`;
+    // lanes: live sheds grouped by age, empty sheds grouped by chicks day
+    const lanes = [];
+    o.sheds.forEach(s=>{ const key = s.age != null ? 'a' + s.age : 'e' + (s.chicks || ''); const l = lanes.find(x=> x.key === key);
+      if(l) l.sheds.push(s); else lanes.push({ key, age: s.age, chicks: s.chicks, sheds: [s] }); });
+    let tb = 0, tf = 0, tw = 0;
+    const lane = l=>{
+      const ns = l.sheds.map(s=> s.n), birds = l.sheds.reduce((t, s)=> t + (s.birds || 0), 0);
+      const title = (ns.length > 1 ? 'Sheds ' : 'Shed ') + ns.join(' & ');
+      const dots = l.sheds.map(s=> `<i style="background:${PAIR[(s.n - 1) % 8]}"></i>`).join('');
+      const nextCard = rows=> `<div class="g2-ln-next"><span class="g2-ln-cap">Next</span>${rows.length ? rows.map(r=> `<span class="g2-ln-nr"><b>${esc(r.d)}</b><span>${esc(r.t)}</span></span>`).join('') : '<span class="g2-ln-nr"><b>—</b><span>No changes this week</span></span>'}</div>`;
+      if(l.age == null){
+        const t0 = o.at(c.temp, 0), d0 = Number(o.at(c.dark, 0)) || 0;
+        const left = l.chicks ? Math.round((new Date(l.chicks + 'T00:00:00') - now) / 86400000) : null;
+        const pre = l.chicks ? new Date(l.chicks + 'T00:00:00') : null; if(pre) pre.setDate(pre.getDate() - 2);
+        const rows = [];
+        if(pre && pre >= now) rows.push({ d: pre.getTime() === now.getTime() ? 'Today' : pre.toLocaleDateString('en-AU', { weekday: 'short' }), t: 'Heat on — floor ' + t0 + '°' });
+        if(l.chicks) rows.push({ d: left === 0 ? 'Today' : new Date(l.chicks + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short' }), t: 'Chicks in · crop check 8 h' });
+        const ready = [['r1', { t: t0 }], ['r2', { rh: o.at(c.rh, 0) }], ['r3'], ['r4'], ['r5'], ['r6', { lh: 24 - d0, dh: d0 }]];
+        return `<section class="g2-lane">
+          <button type="button" class="g2-ln-h" data-g2-shed="${ns[0]}"><span class="g2-ln-st">${dots}Ready for chicks</span>
+            <span class="g2-ln-t"><b>${esc(title)}</b><b>${l.chicks ? esc(new Date(l.chicks + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short' })) : 'Empty'}</b></span>
+            <span class="g2-ln-bar"><i style="width:${l.chicks ? 100 : 0}%"></i></span>
+            <span class="g2-ln-sub">${l.chicks ? 'Chicks arrive ' + esc(o.dateLabel(l.chicks)) + (left > 0 ? ' · in ' + left + (left > 1 ? ' days' : ' day') : '') : 'No chicks booked yet'}</span></button>
+          <div class="g2-ln-card g2-ln-list"><span class="g2-ln-cap">Before the chicks</span>${ready.map(([k, v])=> `<span class="g2-ln-chk"><i></i>${esc(tt(k + 't', v))}</span>`).join('')}</div>
+          <div class="g2-ln-card"><span class="g2-ln-cap">When they land</span><span class="g2-ln-p">${esc(tt('crop8'))} — <b>${esc(tt('of10', { a: 8 }))}</b> ${esc(tt('full'))}. ${esc(tt('cropAm'))} — <b>${esc(tt('of10', { a: 10 }))}</b>.</span></div>
+          ${nextCard(rows)}</section>`;
+      }
+      const a = l.age, temp = o.at(c.temp, a), rh = o.at(c.rh, a), dark = o.at(c.dark, a), fg = o.feedG(a), wm = o.waterMl(a), hot = a >= 28;
+      tb += birds; tf += birds * fg / 1000; tw += birds * wm / 1000;
+      const tot = (v, u)=> birds ? fmt(v) + ' ' + u + ' total' : 'per bird';
+      return `<section class="g2-lane">
+        <button type="button" class="g2-ln-h" data-g2-shed="${ns[0]}" title="See what the crew sees for ${esc(title)}"><span class="g2-ln-st">${dots}${stage(a)}</span>
+          <span class="g2-ln-t"><b>${esc(title)}</b><b>Day ${a}</b></span>
+          <span class="g2-ln-bar"><i style="width:${Math.min(100, Math.round(a / 42 * 100))}%"></i></span>
+          <span class="g2-ln-sub">${birds ? fmt(birds) + ' birds' + (ns.length > 1 ? ' in ' + ns.length + ' sheds' : '') : ''}</span></button>
+        <div class="g2-ln-card g2-ln-clim"><span><b class="g2-ln-temp${hot ? ' g2-ln-hot' : ''}">${esc(String(temp))}°</b><span class="g2-ln-cap">At bird height</span></span>
+          <span class="g2-ln-env"><span>RH ${esc(String(rh))} %</span><span>${esc(String(dark))} h dark</span><span class="g2-ln-mute">${a < 7 ? '30–40' : '5–10'} lux</span></span></div>
+        ${hot ? '<div class="g2-ln-heat">Heat watch · panting birds need more air</div>' : ''}
+        <div class="g2-ln-card g2-ln-eq"><div class="g2-ln-pic">${scene('drink', a, o.kg)}</div>
+          <span class="g2-ln-kv"><span>Drinkers</span><b>${esc(drink(a))}</b></span><span class="g2-ln-kv"><span>Pans</span><b>${pans(a)}</b></span></div>
+        <div class="g2-ln-card g2-ln-tg">
+          <span class="g2-ln-row"><span>Weight</span><b>${kgTxt(o.kg(a))}</b><small>per bird</small></span>
+          <span class="g2-ln-row"><span>Feed</span><b>${fg} g</b><small>${tot(birds * fg / 1000, 'kg')}</small></span>
+          <span class="g2-ln-row"><span>Water</span><b>${wm} ml</b><small>${tot(birds * wm / 1000, 'L')}</small></span></div>
+        ${nextCard(changes(a))}</section>`;
+    };
+    const body = lanes.map(lane).join('');
+    const says = [];
+    const old = lanes.filter(l=> l.age != null && l.age >= 28);
+    if(old.length) says.push(old.map(l=> (l.sheds.length > 1 ? 'Sheds ' : 'Shed ') + l.sheds.map(s=> s.n).join(' & ')).join(', ') + (old.reduce((t, l)=> t + l.sheds.length, 0) > 1 ? ' are' : ' is') + ' the ones to watch for heat.');
+    lanes.filter(l=> l.age == null && l.chicks).forEach(l=>{ const pre = new Date(l.chicks + 'T00:00:00'); pre.setDate(pre.getDate() - 2);
+      says.push((l.sheds.length > 1 ? 'Sheds ' : 'Shed ') + l.sheds.map(s=> s.n).join(' & ') + ' heat goes on ' + (iso(pre) <= iso(now) ? 'now' : o.dateLabel(iso(pre))) + '.'); });
+    lanes.filter(l=> l.age != null && l.age <= 2).forEach(l=> says.push('New chicks in ' + l.sheds.map(s=> 'Shed ' + s.n).join(' & ') + ' — check crops are full.'));
+    if(!says.length) says.push(o.sheds.length ? 'All sheds on track. Click a shed to see what the crew sees.' : 'No batch running. The crew sees the guide by age.');
+    const totals = tb ? [['Birds', fmt(tb), ''], ['Feed today', fmt(tf), 'kg'], ['Water today', fmt(tw), 'L']].map(([k, v, u])=> `<span><small>${k}</small><b>${v}${u ? ' <i>' + u + '</i>' : ''}</b></span>`).join('') : '';
+    return `<div class="g2-sb">
+      <div class="g2-sb-h"><div><span class="g2-ln-cap">${esc(now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' }))}</span><h2>Today in every shed</h2></div>
+        <div class="g2-sb-tot">${totals}</div></div>
+      ${o.sheds.length ? `<div class="g2-lanes">${body}</div>` : `<button type="button" class="g2-row" data-g2-shed="0"><span class="g2-row-t">Open the guide by age</span>${ic(ICON.chev, 18)}</button>`}
+      <div class="g2-sb-f">${plumo('thinking')}<span><span class="g2-ln-mute">Plumo · </span>${esc(says.join(' '))}</span><small>Ross 308 · weight from 44 g day-old · water ≈ 1.8 × feed</small></div></div>`;
   }
 
   // ---------- look (both apps; colours follow light / dark) ----------
@@ -375,7 +421,7 @@
     --g2-teal:#0F8A75; --g2-teal-s:#DFF4EF; --g2-blue:#2F6BD8; --g2-blue-s:#E6EEFD; --g2-coral:#C9402D; --g2-coral-s:#FDE8E4; --g2-amber:#8A5300; --g2-amber-s:#FFF3DC; --g2-violet:#5B44C2; --g2-violet-s:#EEEAFC; --g2-night:#2B3566; --g2-night-s:#E8EAF4; --g2-grey-s:#F1F3EF;
     max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:12px; color:var(--g2-ink); font-family:'Inter',sans-serif; }
   body.theme-dark .g2{ --g2-teal:#3CC9A8; --g2-teal-s:rgba(60,201,168,.14); --g2-blue:#7AA7FF; --g2-blue-s:rgba(122,167,255,.14); --g2-coral:#FF8270; --g2-coral-s:rgba(255,130,112,.15); --g2-amber:#F5B524; --g2-amber-s:rgba(245,181,36,.14); --g2-violet:#A893FF; --g2-violet-s:rgba(168,147,255,.15); --g2-night:#AEB8FF; --g2-night-s:rgba(174,184,255,.14); --g2-grey-s:rgba(255,255,255,.06); }
-  .g2-wide{ max-width:none; }
+  .g2-wide{ max-width:none; min-width:0; width:100%; }
   .g2 button{ font-family:inherit; color:var(--g2-ink); cursor:pointer; }
   .g2 p{ margin:0; font-size:16px; line-height:1.45; font-weight:600; }
   .g2-plumo{ display:block; width:58px; height:58px; flex-shrink:0; }
@@ -460,41 +506,57 @@
   .g2-plan svg{ width:100%; height:auto; display:block; }
   .g2-pre{ white-space:pre-line; }
   .g2-tell{ height:60px; border-radius:16px; border:0; background:#DC4A36; color:#fff !important; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px; }
-  .g2-board{ display:flex; gap:20px; align-items:flex-start; }
-  .g2-board-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
-  .g2-say-board .g2-plumo{ width:52px; height:52px; }
-  .g2-say-board .g2-bubble{ font-size:15px; }
-  .g2-bgrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-  @container (max-width:1100px){ .g2-bgrid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
-  @container (max-width:820px){ .g2-bgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); } .g2-board{ flex-direction:column; } .g2-board-side{ width:auto !important; } }
-  .g2-bc{ position:relative; border:1px solid var(--g2-line); background:var(--g2-card); border-radius:16px; padding:5px 0 0; overflow:hidden; display:flex; flex-direction:column; text-align:left; }
-  .g2-bc:hover{ border-color:var(--g2-muted); }
-  .g2-bar-top{ position:absolute; left:0; right:0; top:0; height:5px; }
-  .g2-bc-h{ padding:10px 12px 8px; display:flex; align-items:baseline; gap:8px; }
-  .g2-bc-h b{ font-family:'Sora',sans-serif; font-size:16px; white-space:nowrap; }
-  .g2-bc-h span{ font-size:13px; font-weight:800; }
-  .g2-bc-h small{ margin-left:auto; font-size:12px; color:var(--g2-muted); font-weight:600; }
-  .g2-bc-pic{ margin:0 12px; border-radius:10px; overflow:hidden; }
-  .g2-chips{ padding:8px 12px 0; display:flex; flex-wrap:wrap; gap:5px; }
-  .g2-chips span{ padding:3px 8px; border-radius:999px; font-size:12px; font-weight:800; }
-  .g2-bc-stats{ padding:10px 12px 12px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
-  .g2-bc-stats > span{ border-radius:10px; padding:6px 7px; display:flex; flex-direction:column; gap:1px; }
-  .g2-bc-stats b{ font-family:'Sora',sans-serif; font-size:14px; color:var(--g2-ink); }
-  .g2-bc-stats small{ font-size:11px; color:var(--g2-ink); opacity:.8; font-variant-numeric:tabular-nums; }
-  .g2-bc-empty{ margin:0 12px 12px; border-radius:10px; background:var(--g2-violet-s); padding:14px; display:flex; flex-direction:column; gap:6px; min-height:110px; justify-content:center; }
-  .g2-bc-empty b{ color:var(--g2-violet); font-size:14px; }
-  .g2-bc-empty span{ font-size:13px; line-height:1.4; font-weight:600; }
-  .g2-board-side{ width:300px; flex-shrink:0; background:var(--g2-card); border:1px solid var(--g2-line); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:8px; }
-  .g2-side-t{ font-family:'Sora',sans-serif; font-size:17px; margin-bottom:4px; }
-  .g2-board-side .g2-cap{ font-size:12px; margin-top:8px; }
-  .g2-temps{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
-  .g2-temps span{ display:flex; flex-direction:column; align-items:center; padding:5px 0; border-radius:8px; background:var(--g2-grey-s); font-variant-numeric:tabular-nums; }
-  .g2-temps small{ font-size:11px; color:var(--g2-muted); font-weight:700; }
-  .g2-temps b{ font-size:14px; }
-  .g2-kv{ display:flex; justify-content:space-between; gap:8px; font-size:14px; font-weight:700; }
-  .g2-kv b{ font-size:12px; color:var(--g2-muted); font-weight:600; white-space:nowrap; }
-  .g2-dotc{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:middle; }
-  .g2-dotc.g2-teal{ background:var(--g2-teal); } .g2-dotc.g2-coral{ background:var(--g2-coral); } .g2-dotc.g2-blue{ background:var(--g2-blue); } .g2-dotc.g2-amber{ background:var(--g2-amber); } .g2-dotc.g2-violet{ background:var(--g2-violet); } .g2-dotc.g2-grey{ background:var(--g2-muted); }
+  .g2-sb{ display:flex; flex-direction:column; gap:18px; width:100%; min-width:0; }
+  .g2-sb-h{ display:flex; align-items:flex-end; gap:24px; flex-wrap:wrap; }
+  .g2-sb-h h2{ margin:4px 0 0; font-family:'Sora',sans-serif; font-size:28px; font-weight:700; letter-spacing:-.01em; }
+  .g2-sb-tot{ margin-left:auto; display:flex; gap:28px; font-variant-numeric:tabular-nums; }
+  .g2-sb-tot span{ display:flex; flex-direction:column; gap:1px; }
+  .g2-sb-tot small{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--g2-muted); }
+  .g2-sb-tot b{ font-family:'Sora',sans-serif; font-size:22px; font-weight:700; }
+  .g2-sb-tot i{ font-style:normal; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:var(--g2-muted); }
+  .g2-lanes{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(230px,1fr); gap:14px; overflow-x:auto; padding-bottom:4px; align-items:stretch; }
+  .g2-lane{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .g2-ln-h{ border:0; background:none; padding:0 2px 4px; display:flex; flex-direction:column; gap:7px; text-align:left; border-radius:10px; }
+  .g2-ln-h:hover .g2-ln-t b:first-child{ text-decoration:underline; text-underline-offset:3px; }
+  .g2-ln-st{ display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--g2-muted); }
+  .g2-ln-st i{ width:8px; height:8px; border-radius:50%; }
+  .g2-ln-st i:last-of-type{ margin-right:3px; }
+  .g2-ln-t{ display:flex; align-items:baseline; gap:8px; font-family:'Sora',sans-serif; font-size:19px; }
+  .g2-ln-t b{ font-weight:700; } .g2-ln-t b:last-child{ margin-left:auto; white-space:nowrap; }
+  .g2-ln-bar{ height:4px; border-radius:2px; background:var(--g2-line); position:relative; overflow:hidden; }
+  .g2-ln-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:2px; background:var(--g2-ink); }
+  .g2-ln-sub{ font-size:12px; font-weight:600; color:var(--g2-muted); font-variant-numeric:tabular-nums; min-height:15px; }
+  .g2-ln-card{ background:var(--g2-card); border:1px solid var(--g2-line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .g2-ln-cap{ font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--g2-muted); }
+  .g2-ln-mute{ color:var(--g2-muted); }
+  .g2-ln-clim{ flex-direction:row; align-items:center; gap:12px; }
+  .g2-ln-clim > span:first-child{ display:flex; flex-direction:column; gap:5px; }
+  .g2-ln-temp{ font-family:'Sora',sans-serif; font-size:38px; font-weight:700; line-height:1; letter-spacing:-.02em; }
+  .g2-ln-hot{ color:var(--g2-coral); }
+  .g2-ln-env{ margin-left:auto; display:flex; flex-direction:column; gap:4px; text-align:right; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .g2-ln-heat{ margin-top:-4px; padding:7px 12px; border-radius:10px; background:var(--g2-coral-s); color:var(--g2-coral); font-size:12.5px; font-weight:700; }
+  .g2-ln-eq{ padding:0 0 10px; overflow:hidden; gap:4px; }
+  .g2-ln-pic{ margin-bottom:5px; }
+  .g2-ln-kv{ display:flex; justify-content:space-between; gap:8px; padding:0 14px; font-size:13px; }
+  .g2-ln-kv span{ color:var(--g2-muted); font-weight:600; } .g2-ln-kv b{ text-align:right; }
+  .g2-ln-tg{ padding:4px 14px; gap:0; font-variant-numeric:tabular-nums; }
+  .g2-ln-row{ display:flex; align-items:baseline; gap:8px; padding:8px 0; border-bottom:1px solid var(--g2-line); }
+  .g2-ln-row:last-child{ border-bottom:0; }
+  .g2-ln-row > span{ width:52px; font-size:13px; font-weight:600; color:var(--g2-muted); }
+  .g2-ln-row b{ font-size:15px; font-weight:800; white-space:nowrap; }
+  .g2-ln-row small{ margin-left:auto; font-size:12.5px; font-weight:600; color:var(--g2-muted); white-space:nowrap; }
+  .g2-ln-list{ gap:9px; }
+  .g2-ln-chk{ display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600; }
+  .g2-ln-chk i{ width:16px; height:16px; border-radius:5px; border:1.5px solid var(--g2-muted); opacity:.6; flex-shrink:0; }
+  .g2-ln-p{ font-size:13.5px; font-weight:600; line-height:1.45; }
+  .g2-ln-next{ margin-top:auto; border-radius:14px; padding:10px 14px; background:var(--g2-amber-s); border:1px dashed color-mix(in srgb, var(--g2-amber) 45%, transparent); display:flex; flex-direction:column; gap:6px; }
+  .g2-ln-next .g2-ln-cap{ color:var(--g2-amber); }
+  .g2-ln-nr{ display:flex; gap:10px; font-size:13px; line-height:1.35; }
+  .g2-ln-nr b{ width:34px; flex-shrink:0; font-weight:800; } .g2-ln-nr span{ font-weight:600; }
+  .g2-sb-f{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; flex-wrap:wrap; }
+  .g2-sb-f .g2-plumo{ width:34px; height:34px; flex:0 0 34px; }
+  .g2-sb-f > span:not(.g2-plumo){ flex:1; min-width:240px; }
+  .g2-sb-f small{ font-size:12px; color:var(--g2-muted); }
   @media (max-width:380px){ .g2-two{ grid-template-columns:1fr; } .g2-stat b{ font-size:17px; } }
   `;
   (function(){ const st = document.createElement('style'); st.id = 'cwGuide2Css'; st.textContent = CSS; (document.head || document.documentElement).appendChild(st); })();
