@@ -1093,6 +1093,8 @@
 </script>
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
+<script src="../js/plumo-face.js"></script>
+<script src="guide2.js"></script>
 </head>
 <body>
 
@@ -3748,7 +3750,7 @@
     $('#guidePage').hidden = tab !== 'guide';
     document.querySelectorAll('#vTabbar button').forEach(b=> b.classList.toggle('active', b.dataset.tab === tab));
     if(tab === 'batch') renderBatchPage();
-    if(tab === 'guide') renderGuidePage();
+    if(tab === 'guide'){ guideView = { v: 'home' }; renderGuidePage(); }
     window.scrollTo(0, 0);
   }
   function batchDayLeft(b, todayKey){ return Math.max(0, Math.round((toDateObj(b.end) - toDateObj(todayKey)) / 86400000)); }
@@ -4160,18 +4162,39 @@
     const b = batches.filter(x=> x.start && x.end && td >= x.start && td <= x.end).sort((x,y)=> y.start.localeCompare(x.start))[0];
     return b ? Math.max(0, Math.round((toDateObj(td) - toDateObj(b.start)) / 86400000)) : null;
   }
+  // Guide per shed (2026-11-03, cluckwise/guide2.js): home = shed tiles + quick checks; each shed shows its own age
+  let guideView = { v: 'home' };
+  function guideOpts(){
+    const lang = settings.lang || 'en', c = guideCfg(syncedDisplay.guide);
+    const T = (k, v)=> guideT(lang, k, v);
+    return { lang, view: guideView, cfg: c, at: guideAt, kg: guideRossKg, feedG: guideFeedG, waterMl: guideWaterMl, T,
+      X: k=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); },
+      checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: true,
+      dateLabel: dk=> toDateObj(dk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }),
+      sheds: window.CWGuide2 ? CWGuide2.shedList(batches, dateKey(new Date())) : [] };
+  }
   function renderGuidePage(){
     const box = $('#guideBody'); if(!box) return;
     const cur = currentBatchAge();
     if(guideAge == null) guideAge = cur == null ? 21 : cur;
-    const td = dateKey(new Date());
-    const rb = batches.filter(x=> x.start && x.end && td >= x.start && td <= x.end).sort((x,y)=> y.start.localeCompare(x.start))[0];
-    box.innerHTML = guideHtml(guideAge, syncedDisplay.guide, settings.lang || 'en', { noBatch: cur == null, sheds: guideSheds(rb, guideAge) });
+    if(!window.CWGuide2){
+      const td = dateKey(new Date());
+      const rb = batches.filter(x=> x.start && x.end && td >= x.start && td <= x.end).sort((x,y)=> y.start.localeCompare(x.start))[0];
+      box.innerHTML = guideHtml(guideAge, syncedDisplay.guide, settings.lang || 'en', { noBatch: cur == null, sheds: guideSheds(rb, guideAge) });
+      return;
+    }
+    guideView.age = guideAge;
+    box.innerHTML = CWGuide2.html(guideOpts());
   }
+  function guideGo(view){ guideView = view; renderGuidePage(); window.scrollTo(0, 0); }
   document.addEventListener('click', (e)=>{
-    const b = e.target.closest('#guideBody [data-g-age]'); if(!b) return;
-    guideAge = Math.max(0, Math.min(70, (guideAge || 0) + Number(b.dataset.gAge)));
-    renderGuidePage();
+    const old = e.target.closest('#guideBody [data-g-age]');
+    if(old){ guideAge = Math.max(0, Math.min(70, (guideAge || 0) + Number(old.dataset.gAge))); renderGuidePage(); return; }
+    const b = e.target.closest('#guideBody [data-g2-shed], #guideBody [data-g2-check], #guideBody [data-g2-back], #guideBody [data-g2-report]'); if(!b) return;
+    if(b.dataset.g2Shed != null) guideGo({ v: 'shed', shed: Number(b.dataset.g2Shed) });
+    else if(b.dataset.g2Check != null) guideGo({ v: 'check', check: b.dataset.g2Check });
+    else if(b.hasAttribute('data-g2-back')) guideGo({ v: 'home' });
+    else if(b.hasAttribute('data-g2-report')){ const r = document.querySelector('.v-tabbar [data-tab="report"]'); if(r) r.click(); }
   });
 
   // ---------- Issues (in the Menu): workers see reports and how they were fixed ----------

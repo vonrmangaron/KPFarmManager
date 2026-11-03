@@ -19,6 +19,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
 <script src="../js/plumo-face.js"></script>
+<script src="guide2.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2461,6 +2462,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .g-hint-in{ margin:0; }
   /* Wide screens: two pictures per row, weight and feed side by side */
   #guideBody, #guideModalBody{ container-type:inline-size; }
+  #guideModalBody.g2-wide-body{ max-width:none !important; }
   .g-chart{ max-height:240px; }
   @container (min-width: 720px){
     .g-grid .g-drink, .g-grid .g-feed{ grid-column:auto; }
@@ -5913,7 +5915,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 </div>
 
 <div class="form-modal" id="guideModal">
-  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Crew app's Guide — targets and checks by batch age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
+  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Crew app's Guide — every shed by its own age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
   <div class="g-page-wrap">
     <div class="form-modal-body" id="guideModalBody"></div>
     <aside class="g-side" id="guideSide" aria-label="Guide targets">
@@ -15777,19 +15779,37 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#scrim').classList.remove('show');
     try{ renderGuideSettings(); }catch(e){}
   }
+  // Guide per shed (2026-11-03, guide2.js): a board of every shed on a computer, the crew's phone pages
+  // on a phone; ✎ Edit guide keeps the card editor by age
+  let mainGuideView = { v: 'home' };
   function renderMainGuide(){
     const cb = currentOrNextBatch(), td = dateKey(new Date());
-    $('#guideModalBody').innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit, sheds: cb && td >= cb.start ? guideSheds(cb, mainGuideAge) : [] });
+    const body = $('#guideModalBody'), useNew = !mainGuideEdit && window.CWGuide2;
+    body.classList.toggle('g2-wide-body', !!useNew);
+    if(useNew){
+      const c = guideCfg(settings.guide), T = (k, v)=> guideT('en', k, v);
+      mainGuideView.age = mainGuideAge;
+      body.innerHTML = CWGuide2.html({ lang: 'en', view: mainGuideView, cfg: c, at: guideAt, kg: guideRossKg, feedG: guideFeedG, waterMl: guideWaterMl, T,
+        X: k=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); },
+        checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: false, board: window.innerWidth >= 900,
+        dateLabel: dk=> toDateObj(dk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }),
+        sheds: CWGuide2.shedList(batches, td) });
+    } else body.innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit, sheds: cb && td >= cb.start ? guideSheds(cb, mainGuideAge) : [] });
     const eb = $('#guideEditBtn'); eb.textContent = mainGuideEdit ? '✓ Done' : '✎ Edit guide'; eb.classList.toggle('on', mainGuideEdit);
     $('#guideModal').classList.toggle('editing', mainGuideEdit);
   }
   $('#guideModalBody').addEventListener('click', (e)=>{
+    const g = e.target.closest('[data-g2-shed], [data-g2-check], [data-g2-back]');
+    if(g){
+      mainGuideView = g.dataset.g2Shed != null ? { v: 'shed', shed: Number(g.dataset.g2Shed) } : g.dataset.g2Check != null ? { v: 'check', check: g.dataset.g2Check } : { v: 'home' };
+      renderMainGuide(); const w = $('#guideModal .g-page-wrap'); if(w) w.scrollTop = 0; return;
+    }
     const b = e.target.closest('[data-g-age]'); if(!b) return;
     mainGuideAge = Math.max(0, Math.min(70, mainGuideAge + Number(b.dataset.gAge)));
     renderMainGuide();
   });
   $('#closeGuideModal').addEventListener('click', closeOverlays);
-  $('#guideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; openGuide(); });
+  $('#guideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; mainGuideView = { v: 'home' }; openGuide(); });
   $('#guideEditBtn').addEventListener('click', ()=>{ mainGuideEdit = !mainGuideEdit; renderMainGuide(); if(!mainGuideEdit) showToast('Guide saved — workers see it next time they open the Crew app.'); });
   // Edit mode: card text, show/hide quick checks, your own cards (all saved in settings.guide)
   function patchGuide(fn){ const g = Object.assign({}, settings.guide || {}); fn(g); settings.guide = g; persist(); }
@@ -15804,7 +15824,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const del = e.target.closest('[data-gc-del]');
     if(del){ const id = del.dataset.gcDel; patchGuide(g=>{ g.custom = (g.custom || []).filter(o=> o.id !== id); }); renderMainGuide(); }
   });
-  $('#moreGuideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; openGuide(); });
+  $('#moreGuideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; mainGuideView = { v: 'home' }; openGuide(); });
   // Settings: edit the guide's targets (rows of "from day → value")
   const GUIDE_FIELDS = [['temp', 'Shed temperature', '°C', 'number'], ['rh', 'Humidity', '%', 'text'], ['dark', 'Hours of dark', 'h', 'number']];
   const guideSetOpen = new Set();

@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.11.02-c168';
+const CACHE_VERSION = 'cluckwise-2026.11.03-c169';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
@@ -35,7 +35,8 @@ const APP_SHELL = [
   'icons/icon-512.png',
   '../js/farmkey.js',
   '../js/notify.js',
-  '../js/plumo-face.js'
+  '../js/plumo-face.js',
+  'guide2.js'
 ];
 
 // Third-party hosts that are safe to keep a copy of.
