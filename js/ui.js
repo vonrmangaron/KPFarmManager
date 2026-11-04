@@ -500,15 +500,24 @@ async function loadFarmBatchFromCloud(farmName,batchKey){
   // Same farm: Farm history stays (and any pending upload finishes first)
   const sameFarm=!!syncFarmName&&sanitizeUserFarmName(syncFarmName)===sanitizeUserFarmName(farmName);
   if(sameFarm&&historyPushTimer){clearTimeout(historyPushTimer);historyPushTimer=null;try{await pushFarmHistory();}catch(e){}}
-  resetAllToDefaults(batchKey,{keepHistory:sameFarm});
-  syncFarmName=farmName;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
-  closeFarmBatchPickerModal();closeSyncModal();closeSettingsDrawer();
-  syncState='pulling';renderSettingsDrawerBody();
-  let payload=null,sha=null;
-  try{const res=await fetch(buildBatchUrl(farmName,batchKey));if(res.ok){const result=await res.json();if(!result.notFound&&result.data){payload=result.data;sha=result.sha||null;}}}catch(e){}
-  if(payload){applyCloudPayload(payload,{isFirstPull:true});syncSha=sha;syncLastSyncAt=Date.now();showToast(`✅ Loaded ${batchKey?'batch '+batchKey:'legacy batch'}.`);}
-  else showToast('No data found — starting with default sheds.');
-  saveSyncState();syncState='idle';renderSettingsDrawerBody();render();
+  // 2026-11-04: nothing else saves or checks the cloud during the switch, and the new batch is fetched BEFORE
+  // this one is cleared — no signal means we stay where we are (it used to start blank sheds and save them over it)
+  batchSwitching=true;
+  try{
+    await syncChain;   // a save or check already on its way finishes first
+    syncState='pulling';renderSettingsDrawerBody();
+    let payload=null,sha=null,got=false;
+    try{const res=await fetch(buildBatchUrl(farmName,batchKey),{cache:'no-store'});if(res.status===404)got=true;else if(res.ok){const result=await res.json();got=true;if(!result.notFound&&result.data){payload=result.data;sha=result.sha||null;}}}catch(e){}
+    if(!got){syncState='idle';renderSettingsDrawerBody();showToast(`Could not load ${batchKey?'batch '+batchKey:'the legacy batch'} — check the connection. Nothing changed${farmData&&currentBatchKey()?`, still on Batch ${currentBatchKey()}`:''}.`,true);return;}
+    clearTimeout(pushDebounceTimer);pushDebounceTimer=null;clearTimeout(pushMaxWaitTimer);pushMaxWaitTimer=null;pushPending=false;
+    resetAllToDefaults(batchKey,{keepHistory:sameFarm});
+    syncFarmName=farmName;syncSha=null;syncExcelSha=null;syncExcelMeta=null;syncConnectedAt=Date.now();syncLastSyncAt=null;
+    closeFarmBatchPickerModal();closeSyncModal();closeSettingsDrawer();
+    if(payload){applyCloudPayload(payload,{isFirstPull:true});syncSha=sha;syncLastSyncAt=Date.now();saveSyncBase(localSyncPayload());showToast(`✅ Loaded ${batchKey?'batch '+batchKey:'legacy batch'}.`);}
+    else showToast('No data found — starting with default sheds.');
+    saveSyncState();syncState='idle';renderSettingsDrawerBody();
+  }finally{batchSwitching=false;}
+  render();
   historySha=null;pullFarmHistory();
   if(typeof refreshRunningBatches==='function')refreshRunningBatches(true);   // the other running batch (Batch Change Over)
 }

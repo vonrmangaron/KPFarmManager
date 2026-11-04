@@ -1,6 +1,7 @@
 function buildDefaultShed(id){return {id,placementDate:null,initialPopulation:DEFAULT_SHED_POPULATION,cleanoutDate:null,mortality:0,mortalityUpdatedAt:null,customFeedKg:null,pickups:[],targetCurve:{7:null,14:null,21:null,28:null},mortalityRatePercent:DEFAULT_MORT_RATE_PCT,chickWeightKg:DEFAULT_CHICK_WEIGHT_KG,inYardSamples:[],predictedPickups:[],targetPickups:null,densitySettings:{useGlobal:true,maxDensity:null,triggerDensity:null,targetDensity:null}};}
 function buildDefaultFarmData(batchNumber){return {batchNumber:batchNumber||'',importDate:new Date().toISOString(),fileName:null,biasFactor:DEFAULT_BIAS_FACTOR,sheds:Array.from({length:SHED_COUNT},(_,i)=>buildDefaultShed(i+1))};}
 function resetAllToDefaults(batchNumber,opts){
+  if(typeof syncGen==='number')syncGen++;   // answers for the batch being left are now ignored (js/sync.js)
   farmData=buildDefaultFarmData(batchNumber);
   // Farm history stays only for a new batch on the same farm
   if(!(opts&&opts.keepHistory)){predState.farmHistory=[];predState.farmHistoryDeleted=[];}

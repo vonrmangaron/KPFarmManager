@@ -134,9 +134,14 @@ function applyCloudPayload(payload,options){
   migrateDeliveriesToLoads();
   return true;
 }
-async function fetchFromCloud(){
+// ── One batch at a time (2026-11-04): saves and cloud checks take turns (syncSerial), a batch switch waits for
+// any already on its way and blocks new ones (batchSwitching), and an answer that arrives after the batch changed
+// (syncGen moves on every reset) is thrown away — before, a late save or check could land on the new batch.
+let syncGen=0,batchSwitching=false,syncChain=Promise.resolve();
+function syncSerial(fn){const p=syncChain.then(fn,fn);syncChain=p.then(()=>{},()=>{});return p;}
+async function fetchFromCloud(url){
   if(!syncFarmName)return {ok:false,reason:'no-farm'};
-  try{const res=await fetch(buildSyncUrl(syncFarmName));if(res.status===404)return {ok:true,notFound:true};if(!res.ok)return {ok:false,reason:'http-'+res.status};const result=await res.json();if(result.notFound)return {ok:true,notFound:true};return {ok:true,data:result.data,sha:result.sha};}catch(e){return {ok:false,reason:e.message||'network-error'};}
+  try{const res=await fetch(url||buildSyncUrl(syncFarmName));if(res.status===404)return {ok:true,notFound:true};if(!res.ok)return {ok:false,reason:'http-'+res.status};const result=await res.json();if(result.notFound)return {ok:true,notFound:true};return {ok:true,data:result.data,sha:result.sha};}catch(e){return {ok:false,reason:e.message||'network-error'};}
 }
 // ── Farm history: its own cloud file per farm (not inside a batch file),
 // so New batch, switching batches and other devices can't lose it.
@@ -213,14 +218,17 @@ function syncMerge(base,ours,theirs){
   }
   return ours;   // same value changed on both devices: this device's edit wins
 }
-async function pullFromCloud(silent){
-  if(!syncFarmName)return false;
+function pullFromCloud(silent){if(batchSwitching)return Promise.resolve(false);return syncSerial(()=>pullFromCloudNow(silent));}
+async function pullFromCloudNow(silent){
+  if(!syncFarmName||batchSwitching)return false;
+  const gen=syncGen,url=buildSyncUrl(syncFarmName);
   syncState='pulling';renderSettingsDrawerBody();
-  const r=await fetchFromCloud();
+  const r=await fetchFromCloud(url);
+  if(gen!==syncGen)return false;   // the batch changed while we waited: this answer is for the old one
   if(!r.ok){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Could not sync — check your connection.',true);return false;}
   // No file in the cloud: upload this device's batch if it has one. With nothing loaded (e.g. the farm was
   // removed from the cloud) don't recreate it — Home offers Start a batch / Switch farm / Disconnect.
-  if(r.notFound){syncState='idle';renderSettingsDrawerBody();if(!farmData){if(!silent)showToast('Nothing for this farm in the cloud yet — start a batch or switch farm.');render();return true;}await pushToCloud();if(!silent)showToast('Connected — created a new file for this farm.');return true;}
+  if(r.notFound){syncState='idle';renderSettingsDrawerBody();if(!farmData){if(!silent)showToast('Nothing for this farm in the cloud yet — start a batch or switch farm.');render();return true;}await pushToCloudNow();if(!silent)showToast('Connected — created a new file for this farm.');return true;}
   syncSha=r.sha||null;
   if(r.data&&r.data.app&&r.data.app!==SYNC_APP_TAG){syncState='error';renderSettingsDrawerBody();if(!silent)showToast('Cloud file is not a ProdWise backup.',true);return false;}
   // Local changes not yet in the cloud? Merge them in rather than lose them.
@@ -229,6 +237,7 @@ async function pullFromCloud(silent){
   let toApply=r.data,needPush=false;
   if(localEdits&&!syncEq(ours,theirs)){
     try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
+    if(gen!==syncGen)return false;
     toApply=syncMerge(base||undefined,ours,theirs);needPush=!syncEq(toApply,theirs);
   }
   const ok=applyCloudPayload(toApply);
@@ -242,27 +251,33 @@ async function pullFromCloud(silent){
   if(!silent)showToast('Synced ✓');
   return true;
 }
-async function pushToCloud(){
-  if(!syncFarmName)return false;
+function pushToCloud(){if(batchSwitching)return Promise.resolve(false);return syncSerial(pushToCloudNow);}
+async function pushToCloudNow(){
+  if(!syncFarmName||batchSwitching)return false;
+  const gen=syncGen,url=buildSyncUrl(syncFarmName);   // this batch's file, fixed for the whole save
   // No batch loaded on this device: nothing to upload (and never recreate a farm removed from the cloud)
   if(!farmData)return false;
   syncState='pushing';renderSettingsDrawerBody();
   try{
-    const put=(sha,data)=>fetch(buildSyncUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:{...data,lastUpdated:new Date().toISOString()}})});
+    const put=(sha,data)=>fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:{...data,lastUpdated:new Date().toISOString()}})});
     let data=localSyncPayload();
     let res=await put(syncSha,data);
+    if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}
     for(let tries=0;res.status===409&&tries<3;tries++){
       // The cloud changed since this device last synced (another device saved):
       // merge both sides' changes, show them here, then save the merge.
-      const fresh=await fetch(buildSyncUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
+      const fresh=await fetch(url,{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
+      if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}   // switched batch meanwhile: never merge into the new one
       if(!fresh||!fresh.sha)throw new Error('Sync conflict: could not read the cloud');
       syncSha=fresh.sha;const theirs=syncNorm(fresh.data);
       const base=loadSyncBase();
       try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
+      if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}
       const merged=syncMerge(base||undefined,localSyncPayload(),theirs);
       applyCloudPayload(merged);data=localSyncPayload();
       try{render();}catch(e){}
       res=await put(syncSha,data);
+      if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}
     }
     if(!res.ok)throw new Error('Sync server responded '+res.status);
     const result=await res.json().catch(()=>null);if(result&&result.sha)syncSha=result.sha;
