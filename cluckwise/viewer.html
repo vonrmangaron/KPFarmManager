@@ -3949,9 +3949,10 @@
   }
   function guideEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
   // Ross 308 standards (as-hatched, 2022 objectives): daily body weight (g) from the 44 g
-  // day-old chick, and daily feed per bird (g) — the table ProdWise uses. Water ≈ 1.8 × feed at 21 °C.
+  // day-old chick, and daily feed per bird (g) from the same table (2026-11-04; ProdWise forecasts keep their own
+  // table in js/constants.js). Water ≈ 1.8 × feed at 21 °C.
   const GUIDE_ROSS_G = [44,62,81,102,125,151,181,213,249,288,330,376,425,477,533,592,655,720,789,860,935,1012,1092,1174,1258,1345,1434,1524,1616,1710,1805,1901,1999,2097,2196,2296,2396,2496,2597,2697,2798,2898,2998,3097,3197,3295,3393,3490,3586,3681,3776,3869,3961,4052,4142,4230,4318];
-  const GUIDE_ROSS_FEED = [0,11,15,19,24,28,33,37,42,47,51,56,60,65,69,74,78,83,88,92,97,101,106,110,115,119,124,129,133,138,142,147,151,156,160,165,170,174,179,183,188,192,197,201,206,211,215,220,223,225,227,229,230,231,233,233,234,234,234,234,234];
+  const GUIDE_ROSS_FEED = [0,12,16,20,24,27,31,35,39,44,48,52,57,62,67,72,77,83,88,94,100,105,111,117,122,128,134,139,145,150,156,161,166,171,176,180,185,189,193,197,201,204,207,211,213,216,219,221,223,225,227,229,230,231,233,233,234,234,234,234,234];
   const GUIDE_WATER_RATIO = 1.8;
   function guideRossKg(age){
     const a = Math.max(0, Math.min(56, age)), d = Math.floor(a), n = Math.min(56, d + 1);

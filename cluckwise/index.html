@@ -3655,7 +3655,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .ptk-legend{ display:flex; gap:14px; flex-wrap:wrap; font:600 12px Inter,sans-serif; color:var(--muted); }
   .ptk-legend span{ display:flex; align-items:center; gap:6px; } .ptk-legend i{ width:12px; height:12px; border-radius:4px; background:var(--line); }
   .ptk-legend i.d{ background:#0F8A75; } .ptk-legend i.p{ background:#E8A33D; }
-  .ptk-tab{ --ptk-shed:130px; --ptk-pct:56px; --ptk-place:170px; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; }
+  .ptk-tab{ --ptk-shed:130px; --ptk-mt:170px; --ptk-pct:56px; --ptk-place:170px; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; }
   .ptk-row{ all:unset; box-sizing:border-box; display:grid; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); }
   .ptk-tab > :last-child{ border-bottom:0; }
   .ptk-row[data-ptk-open]{ cursor:pointer; } .ptk-row[data-ptk-open]:hover{ background:var(--surface-soft); } .ptk-row[data-ptk-open]:focus-visible{ outline:2px solid var(--primary); outline-offset:-2px; }
@@ -3679,6 +3679,37 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .ptk-row.birds .ptk-sh b, .ptk-row.birds .ptk-pl b{ color:var(--muted); font-weight:600; } .ptk-row.birds .ptk-sh b{ font-weight:700; }
   .ptk-bt{ font:500 13px Inter,sans-serif; color:var(--muted); }
   .ptk-empty{ background:var(--surface); border:1px dashed var(--line); border-radius:16px; padding:28px 18px; display:flex; flex-direction:column; gap:4px; text-align:center; font:500 13px Inter,sans-serif; color:var(--muted); }
+  /* maintenance during prep (2026-11-04) */
+  .ptk-mtc{ all:unset; box-sizing:border-box; display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:99px; font:800 12.5px Inter,sans-serif; white-space:nowrap; cursor:pointer; }
+  .ptk-mtc svg{ width:13px; height:13px; flex-shrink:0; } .ptk-mtc .ptk-mtv{ width:14px; height:14px; margin-left:2px; opacity:.7; }
+  .ptk-mtc:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .ptk-mtc.red{ background:#FDE8E4; color:#B3321F; } .ptk-mtc.amb{ background:#FFF3DC; color:#8A5300; } .ptk-mtc.blue{ background:#E6EEFD; color:#2F5FC0; } .ptk-mtc.ok{ background:#DFF4EF; color:#0B6B5B; }
+  .ptk-mtc.none{ cursor:default; font-weight:600; color:var(--muted); padding:0; }
+  body.theme-dark .ptk-mtc.red{ background:rgba(220,74,54,.2); color:#FF9C8A; } body.theme-dark .ptk-mtc.amb{ background:rgba(245,181,36,.16); color:#F5C463; } body.theme-dark .ptk-mtc.blue{ background:rgba(122,167,255,.16); color:#9DBDFF; } body.theme-dark .ptk-mtc.ok{ background:rgba(15,138,117,.22); color:#6FD8C3; }
+  .ptk-mt{ background:color-mix(in srgb, #FFF3DC 45%, var(--surface)); border-bottom:1px solid var(--line); border-top:1px dashed #E8C98A; padding:12px 18px 14px; display:flex; flex-direction:column; gap:10px; }
+  body.theme-dark .ptk-mt{ background:rgba(245,181,36,.05); border-top-color:rgba(245,181,36,.3); }
+  .pmt-h{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; font:600 12.5px Inter,sans-serif; color:var(--muted); }
+  .pmt-h b{ font:800 11.5px Inter,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#8A5300; } body.theme-dark .pmt-h b{ color:#F5C463; }
+  .pmt-h .pmt-link{ margin-left:auto; }
+  .pmt-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+  .pmt-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .pmt-card.ack{ border-color:#E8C98A; } .pmt-card.fixed{ opacity:.75; }
+  .pmt-t{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; } .pmt-t b{ font:700 14.5px Inter,sans-serif; color:var(--ink); margin-right:auto; }
+  .pmt-card p{ margin:0; font:600 13.5px/1.4 Inter,sans-serif; color:var(--ink); }
+  .pmt-m{ font:600 12px Inter,sans-serif; color:var(--muted); } .pmt-m.pmt-task{ color:#2F5FC0; } .pmt-m.pmt-ackl{ color:#8A5300; }
+  body.theme-dark .pmt-m.pmt-task{ color:#9DBDFF; } body.theme-dark .pmt-m.pmt-ackl{ color:#F5C463; }
+  .pmt-pill{ font:800 11.5px Inter,sans-serif; padding:3px 9px; border-radius:99px; white-space:nowrap; }
+  .pmt-pill.new{ background:#FDE8E4; color:#B3321F; } .pmt-pill.urg{ background:#C9402D; color:#fff; } .pmt-pill.ack{ background:#FFF3DC; color:#8A5300; } .pmt-pill.task{ background:#E6EEFD; color:#2F5FC0; } .pmt-pill.ok{ background:#DFF4EF; color:#0B6B5B; }
+  .pmt-acts{ display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; }
+  .pmt-b{ all:unset; box-sizing:border-box; cursor:pointer; height:32px; padding:0 11px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,sans-serif; display:inline-flex; align-items:center; white-space:nowrap; }
+  .pmt-b:hover{ border-color:var(--muted); } .pmt-b:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+  .pmt-b.pri{ background:var(--ink); border-color:var(--ink); color:var(--surface); } .pmt-b.amb{ background:#FFF3DC; border-color:#E8C98A; color:#8A5300; } .pmt-b.q{ border-color:transparent; color:var(--muted); }
+  .pmt-link{ all:unset; cursor:pointer; align-self:flex-start; font:700 12px Inter,sans-serif; color:var(--muted); } .pmt-link:hover{ color:var(--ink); text-decoration:underline; }
+  .pmt-ign{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font:600 12px Inter,sans-serif; color:var(--muted); }
+  .pmt-ig{ display:inline-flex; align-items:center; gap:6px; padding:3px 4px 3px 10px; border-radius:99px; background:var(--surface-soft); color:var(--ink); }
+  .pmt-ig button{ all:unset; cursor:pointer; font:700 11.5px Inter,sans-serif; color:var(--muted); padding:2px 6px; border-radius:99px; } .pmt-ig button:hover{ color:var(--ink); background:var(--surface); }
+  .pmt-none{ margin:0; font:600 13px Inter,sans-serif; color:var(--muted); }
+  .pl-mtrow td{ padding-block:8px; }
   .ptk-empty b{ font:700 15px Inter,sans-serif; color:var(--ink); }
   /* phones: each shed is a small card — name + placement on top, one bar per section underneath */
   @media (max-width:760px){
@@ -3688,6 +3719,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     .ptk-row:not(.birds) .ptk-pl{ grid-row:1; grid-column:1 / -1; justify-self:end; align-self:start; max-width:150px; }
     .ptk-row:not(.birds) .ptk-st{ grid-row:2; } .ptk-bar{ height:9px; }
     .ptk-row:not(.birds) .ptk-pct{ display:none; }
+    .ptk-row:not(.birds) .ptk-mtcell{ grid-row:3; grid-column:1 / -1; } .ptk-row:not(.birds) .ptk-mtc.none{ display:none; }
+    .ptk-mt{ padding:10px; } .pmt-grid{ grid-template-columns:1fr; }
     .ptk-row.birds{ grid-template-columns:minmax(0,1fr) auto; padding:12px 14px; } .ptk-row.birds .ptk-bt{ grid-column:1 / -1; grid-row:2; font-size:12px; } .ptk-row.birds .ptk-pl{ grid-row:1; grid-column:2; }
   }
   body.theme-dark .ptk-chip:not(.none){ background:rgba(15,138,117,.22); color:#6FD8C3; } body.theme-dark .ptk-chip.warn{ background:rgba(220,74,54,.22); color:#FF9C8A; }
@@ -8297,7 +8330,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   // "Assign as task": the New task form opens filled in from the report (no day = Backlog).
   // Nothing is created until Add task; then the task and report are linked.
-  var pendingReportTask = null;
+  var pendingReportTask = null, prepTaskReturn = false;   // prepTaskReturn: made from Shed prep → go back there after saving
   function openAssignTaskFromReport(reportId){
     const r = reports.find(x => x.id === reportId);
     if(!r) return;
@@ -13656,7 +13689,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
           if(onList) return `<td class="pl-secfill pl-sfc"><button type="button" class="pl-mk on" data-pl-opentask="${enc(onList.id)}" title="${enc('On the task list: ' + onList.name)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>On list</button></td>`;
           return '<td class="pl-secfill"></td>'; }).join('')}</tr>${own ? '' : rowsHtml}${own ? rowsHtml : `<tr class="pl-addrow"><td class="pl-job"><button type="button" class="pl-addj" data-pl-addjob="${sk}"><span class="pl-addi" aria-hidden="true">+</span>Add a job</button></td><td colspan="${cols.length}"></td></tr>`}</tbody>`;
     });
-    const foot = `<tfoot><tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
+    const mtRow = cols.some(({ c })=> c && c.status !== 'ready' && prepMt(c).L.length) ? `<tr class="pl-mtrow"><td class="pl-job"><b>Maintenance before chicks</b></td>${cols.map(({ c })=> `<td>${c && c.status !== 'ready' ? prepMtChip(c) : ''}</td>`).join('')}</tr>` : '';
+    const foot = `<tfoot>${mtRow}<tr><td class="pl-job"><b>Mark ready</b></td>${cols.map(({ sh, c })=>{
       if(!c) return `<td><button type="button" class="pl-rdy st" data-prep-start="${enc(sh)}" title="Start Shed ${enc(sh)}'s checklist early">＋ Start</button></td>`;
       if(c.status === 'ready') return `<td><button type="button" class="pl-rdy ok" data-prep-unready="${enc(c.id)}" title="${enc('Ready' + (c.readyBy ? ' — signed off by ' + c.readyBy : '') + '. Click to reopen')}">✓ Ready</button></td>`;
       const pr = prepProgress(c), left = pr.total - pr.done;
@@ -13689,6 +13723,60 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!p.done) return { cls:'none', t:'Not started' };
     return { cls:'on', t:'On track' };
   }
+  // ── Maintenance during shed prep (2026-11-04, mockup ViWzSdhrP1k25BreTgncQM option A) ──
+  // A shed being prepared shows its maintenance reports that aren't fixed. The manager decides each one:
+  // Ignore (not needed before chicks — the report stays open in Maintenance), Acknowledge (fix before chicks — it
+  // shows on the checklist and counts as done once the report is fixed) or Make a task (the usual report → task).
+  // The decision is kept on the checklist: c.mt = { reportId: 'ign' | 'ack' }, so it syncs with the checklist.
+  let prepMtOpen = new Set();   // sheds whose reports are opened under their Progress row
+  const prepShedNo = s=> { const m = String(s == null ? '' : s).match(/\d+/); return m ? String(Number(m[0])) : ''; };
+  function prepMtState(c, r){
+    const d = (c.mt || {})[r.id];
+    if(r.status === 'Resolved') return 'fixed';
+    if(d === 'ign') return 'ign';
+    if(r.linkedTaskId && tasks.some(t=> t.id === r.linkedTaskId)) return 'task';
+    return d === 'ack' ? 'ack' : 'open';
+  }
+  function prepMt(c){
+    const n = prepShedNo(c.shed), mt = c.mt || {};
+    const L = (reports || []).filter(r=> r && n && prepShedNo(r.shed) === n && (r.status !== 'Resolved' || mt[r.id] === 'ack'))
+      .map(r=> ({ r, st: prepMtState(c, r) }))
+      .sort((a, b)=> (b.r.urgent ? 1 : 0) - (a.r.urgent ? 1 : 0) || String(b.r.createdAt || '').localeCompare(String(a.r.createdAt || '')));
+    const of = st=> L.filter(x=> x.st === st);
+    return { L, open: of('open'), ack: of('ack'), task: of('task'), fixed: of('fixed'), ign: of('ign'), urgent: of('open').filter(x=> x.r.urgent) };
+  }
+  // the chip in the Maintenance column (and the Checklist's maintenance row)
+  function prepMtChip(c){
+    const m = prepMt(c), on = prepMtOpen.has(String(c.shed)), wr = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>';
+    let cls = 'none', t = 'None open';
+    if(m.open.length){ cls = 'red'; t = m.open.length + ' to decide' + (m.urgent.length ? ' · ' + m.urgent.length + ' urgent' : ''); }
+    else if(m.ack.length){ cls = 'amb'; t = m.ack.length + ' before chicks'; }
+    else if(m.task.length){ cls = 'blue'; t = m.task.length + ' task' + (m.task.length === 1 ? '' : 's') + ' given'; }
+    else if(m.fixed.length){ cls = 'ok'; t = '✓ ' + m.fixed.length + ' fixed'; }
+    if(!m.L.length) return `<span class="ptk-mtc none">${t}</span>`;
+    return `<button type="button" class="ptk-mtc ${cls}" data-ptk-mt="${escapeHtmlAttr(c.shed)}" aria-expanded="${on}" title="${on ? 'Hide' : 'Show'} Shed ${escapeHtmlAttr(c.shed)}'s maintenance reports">${wr}${escapeHtml(t)}<svg class="ptk-mtv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${on ? 'm18 15-6-6-6 6' : 'm6 9 6 6 6-6'}"/></svg></button>`;
+  }
+  function prepMtPanel(c){
+    const m = prepMt(c), ago = iso=>{ const d = Math.round((Date.now() - Date.parse(iso || '')) / 864e5); return !isFinite(d) ? '' : d <= 0 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
+    const id = enc=> escapeHtmlAttr(c.id + '|' + enc);
+    const pill = { open: '<span class="pmt-pill new">New</span>', ack: '<span class="pmt-pill ack">Fix before chicks</span>', task: '<span class="pmt-pill task">Task given</span>', fixed: '<span class="pmt-pill ok">✓ Fixed</span>' };
+    const card = ({ r, st })=>{
+      const t = st === 'task' ? tasks.find(x=> x.id === r.linkedTaskId) : null;
+      const line = t ? `<span class="pmt-m pmt-task">📅 ${escapeHtml(t.name)}${t.assignee ? ' · ' + escapeHtml(t.assignee) : ''}${t.date ? ' · ' + escapeHtml(prepFmt(t.date)) : ' · no day yet'}</span>`
+        : st === 'ack' ? `<span class="pmt-m pmt-ackl">On Shed ${escapeHtml(c.shed)}'s checklist · counts as done when the report is fixed</span>`
+        : st === 'fixed' ? `<span class="pmt-m">Fixed${r.resolvedBy ? ' by ' + escapeHtml(r.resolvedBy) : ''} ${escapeHtml(ago(r.resolvedAt))}</span>` : '';
+      const acts = st === 'open' ? `<button type="button" class="pmt-b q" data-pmt-ign="${id(r.id)}">✕ Ignore</button><button type="button" class="pmt-b amb" data-pmt-ack="${id(r.id)}">✓ Acknowledge</button><button type="button" class="pmt-b pri" data-pmt-task="${escapeHtmlAttr(r.id)}">＋ Make a task</button>`
+        : st === 'ack' ? `<button type="button" class="pmt-b pri" data-pmt-task="${escapeHtmlAttr(r.id)}">＋ Make a task</button><button type="button" class="pmt-b q" data-pmt-undo="${id(r.id)}">Undo</button>`
+        : st === 'task' ? `<button type="button" class="pmt-b" data-pmt-opentask="${escapeHtmlAttr(r.linkedTaskId)}">Open task</button><button type="button" class="pmt-b q" data-pmt-ign="${id(r.id)}">Ignore</button>` : '';
+      return `<div class="pmt-card ${st}"><span class="pmt-t"><b>${escapeHtml(rpTypeName(r))}</b>${r.urgent && st === 'open' ? '<span class="pmt-pill urg">Urgent</span>' : ''}${pill[st] || ''}</span>
+        ${r.notes ? `<p>${escapeHtml(r.notes)}</p>` : ''}<span class="pmt-m">Reported${r.createdBy ? ' by ' + escapeHtml(r.createdBy) : ''} · ${escapeHtml(ago(r.createdAt))}${r.location ? ' · ' + escapeHtml(r.location) : ''}</span>${line}
+        ${acts ? `<span class="pmt-acts">${acts}</span>` : ''}<button type="button" class="pmt-link" data-pmt-report="${escapeHtmlAttr(r.id)}">See the report ›</button></div>`;
+    };
+    const shown = m.L.filter(x=> x.st !== 'ign');
+    const ign = m.ign.length ? `<div class="pmt-ign"><span>Ignored for this prep:</span>${m.ign.map(({ r })=> `<span class="pmt-ig">${escapeHtml(rpTypeName(r))}<button type="button" data-pmt-undo="${id(r.id)}" title="Bring it back">Undo</button></span>`).join('')}</div>` : '';
+    return `<div class="ptk-mt"><div class="pmt-h"><b>Open maintenance in Shed ${escapeHtml(c.shed)}</b><span>${c.nextPlacement ? 'Check these before the chicks come in on ' + escapeHtml(prepFmt(c.nextPlacement)) + '.' : 'Check these before the chicks come in.'}</span>
+      <button type="button" class="pmt-link" data-pmt-all>Open Maintenance ›</button></div>${shown.length ? `<div class="pmt-grid">${shown.map(card).join('')}</div>` : '<p class="pmt-none">Nothing left to decide.</p>'}${ign}</div>`;
+  }
   function prepTrackHtml(sheds){
     const byNum = (a, b)=> String(a).localeCompare(String(b), undefined, { numeric:true });
     sheds = sheds.slice().sort(byNum);   // shed order, every shed in its place (2026-10-29)
@@ -13696,8 +13784,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const today = dateKey(new Date());
     const birds = sheds.filter(sh=> !prepActiveFor(sh)).map(sh=> ({ sh, run: prepShedRun(sh) })).filter(x=> x.run);
     if(!list.length && !birds.length) return `<div class="ptk-empty"><b>No shed is being prepared</b><span>A checklist starts by itself when Production closes a shed — or start one early from Checklist.</span></div>`;
-    const secs = prepMaster().map(S=> S.t), cols = `--ptk-n:${Math.max(1, secs.length)};grid-template-columns:var(--ptk-shed) repeat(${Math.max(1, secs.length)},minmax(0,1fr)) var(--ptk-pct) var(--ptk-place)`;
-    const head = `<div class="ptk-row ptk-head" style="${cols}" aria-hidden="true"><span>Shed</span>${secs.map((t, i)=> `<span title="${escapeHtmlAttr(t)}">${i + 1} · ${escapeHtml(t)}</span>`).join('')}<span class="r">Done</span><span class="r">Placement</span></div>`;
+    const secs = prepMaster().map(S=> S.t), cols = `--ptk-n:${Math.max(1, secs.length)};grid-template-columns:var(--ptk-shed) repeat(${Math.max(1, secs.length)},minmax(0,1fr)) var(--ptk-mt) var(--ptk-pct) var(--ptk-place)`;
+    const head = `<div class="ptk-row ptk-head" style="${cols}" aria-hidden="true"><span>Shed</span>${secs.map((t, i)=> `<span title="${escapeHtmlAttr(t)}">${i + 1} · ${escapeHtml(t)}</span>`).join('')}<span>Maintenance</span><span class="r">Done</span><span class="r">Placement</span></div>`;
     // Marked ready (2026-10-29): the shed moves on to the next batch — one line, waiting for chicks; ✓ Ready reopens it
     const readyOf = c=>{ const n = prepDaysTo(c.nextPlacement), nb = prepNextBatchOf(c);
       return `<div class="ptk-row birds nextb"><span class="ptk-sh"><b>Shed ${escapeHtml(c.shed)}</b><small>Ready for chicks</small></span><span class="ptk-bt">${nb ? '#' + escapeHtml(String(nb)) + ' · ' : 'Next batch · '}${c.nextPlacement ? 'chicks ' + escapeHtml(prepFmt(c.nextPlacement)) + (n != null && n >= 0 ? ' · ' + (n === 0 ? 'today' : 'in ' + n + (n === 1 ? ' day' : ' days')) : '') : 'no chicks date yet'}${c.readyBy ? ' · signed off by ' + escapeHtml(c.readyBy) : ''}</span><span class="ptk-pl"><button type="button" class="ptk-rdy ok" data-prep-unready="${escapeHtmlAttr(c.id)}" title="Marked ready by mistake? Click to reopen the checklist">✓ Ready</button></span></div>`; };
@@ -13712,11 +13800,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const rdy = c.status === 'ready' ? `<button type="button" class="ptk-rdy ok" data-prep-unready="${escapeHtmlAttr(c.id)}" title="${escapeHtmlAttr('Ready' + (c.readyBy ? ' — signed off by ' + c.readyBy : '') + '. Click to reopen')}">✓ Ready</button>` : `<button type="button" class="ptk-rdy" data-prep-ready="${escapeHtmlAttr(c.id)}" title="Mark Shed ${escapeHtmlAttr(c.shed)} ready for chicks">Mark ready</button>`;
       return `<div role="button" tabindex="0" class="ptk-row ${c.status === 'ready' ? 'is-ready' : ''}" style="${cols}" data-ptk-open="${escapeHtmlAttr(c.shed)}" title="Open Shed ${escapeHtmlAttr(c.shed)}'s checklist">
         <span class="ptk-sh"><b>Shed ${escapeHtml(c.shed)}</b><small>${escapeHtml(now)}</small></span>${bars}
-        <b class="ptk-pct">${p.total ? Math.round(p.done / p.total * 100) : 0}%</b>
+        <span class="ptk-mtcell">${prepMtChip(c)}</span><b class="ptk-pct">${p.total ? Math.round(p.done / p.total * 100) : 0}%</b>
         <span class="ptk-pl"><b>${place}</b><span class="ptk-pl2">${c.status === 'ready' ? '' : `<span class="ptk-chip ${st.cls}">${escapeHtml(st.t)}</span>`}${rdy}</span></span></div>`;
     };
     const birdOf = x=> `<div class="ptk-row birds"><span class="ptk-sh"><b>Shed ${escapeHtml(x.sh)}</b></span><span class="ptk-bt">Birds in · prep starts by itself when Production closes the shed</span><span class="ptk-pl"><b>#${escapeHtml(String(x.run.batch))} · Day ${mlogDaysBetween(x.run.placement, today)}</b></span></div>`;
-    const rowsAll = sheds.map(sh=>{ const c = prepActiveFor(sh); if(c) return c.status === 'ready' ? readyOf(c) : rowOf(c); const b = birds.find(x=> x.sh === sh); return b ? birdOf(b) : ''; }).join('');
+    const rowsAll = sheds.map(sh=>{ const c = prepActiveFor(sh); if(c) return c.status === 'ready' ? readyOf(c) : rowOf(c) + (prepMtOpen.has(String(c.shed)) && prepMt(c).L.length ? prepMtPanel(c) : ''); const b = birds.find(x=> x.sh === sh); return b ? birdOf(b) : ''; }).join('');
     return `<div class="ptk-legend" aria-hidden="true"><span><i class="d"></i>Done</span><span><i class="p"></i>In progress</span><span><i></i>Not started</span></div><div class="ptk-tab">${head}${rowsAll}</div>`;
   }
   function renderPrepBoard(){
@@ -13734,7 +13822,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const firstChicks = list.map(c=> c.nextPlacement).filter(Boolean).sort()[0];
     const toFirst = firstChicks ? Math.round((toDateObj(firstChicks) - toDateObj(dateKey(new Date()))) / 86400000) : null;
     const sum = list.length ? `<div class="prep-sum2"><div><h3>${(()=>{ const pl = list.filter(c=> c.status !== 'ready'); return !pl.length ? (list.length === 1 ? `Shed ${escapeHtml(list[0].shed)} is` : 'Every shed is') + ' ready for chicks' : (pl.length === 1 ? `Shed ${escapeHtml(pl[0].shed)} is` : pl.length + ' sheds are') + ' being prepared'; })()}</h3><span>${firstChicks ? 'First chicks ' + escapeHtml(prepFmt(firstChicks)) : 'Chicks dates come from the next batch in Production'}</span></div>
-        <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div><div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
+        <div class="prep-sum2-st"><div><b>${done}/${total}</b><small>jobs done</small></div>${toFirst != null ? `<div><b>${toFirst} d</b><small>to first chicks</small></div>` : ''}<div><b class="${late ? 'bad' : ''}">${late}</b><small>overdue</small></div><div><b>${week}</b><small>due this week</small></div>${(()=>{ let o = 0, a = 0; list.filter(c=> c.status !== 'ready').forEach(c=>{ const m = prepMt(c); o += m.open.length; a += m.ack.length; }); return o + a ? `<div><b class="${o ? 'bad' : ''}">${o + a}</b><small>maintenance open</small></div>` : ''; })()}<div><b>${ready} of ${list.length}</b><small>ready</small></div></div></div>` : '';
     const F = [['all','All jobs'],['todo','To do'],['late','Overdue' + (late ? ' · ' + late : '')],['week','This week'],['task','Has a task']];
     const allF = prepMaster().every(S=> prepSecFold.has(prepNorm(S.t)));
     const foldAll = `<button type="button" class="prep-foldall pl-foldall" data-pl-foldall="${allF ? '0' : '1'}" title="${allF ? 'Unfold all sections' : 'Fold all sections'}" aria-label="${allF ? 'Unfold all sections' : 'Fold all sections'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${allF ? 'm7 15 5 5 5-5M7 9l5-5 5 5' : 'm7 20 5-5 5 5M7 4l5 5 5-5'}"/></svg></button>`;
@@ -14971,7 +15059,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
     editingTaskId = null;
-    pendingReportTask = null;
+    pendingReportTask = null; prepTaskReturn = false;
     deleteAllPending = false;
     overdueModalOpen = false;
     pendingSeriesDeleteId = null;
@@ -15566,9 +15654,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function guideEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
   // Ross 308 standards (as-hatched, 2022 objectives): daily body weight (g) from the 44 g
-  // day-old chick, and daily feed per bird (g) — the table ProdWise uses. Water ≈ 1.8 × feed at 21 °C.
+  // day-old chick, and daily feed per bird (g) from the same table (2026-11-04; ProdWise forecasts keep their own
+  // table in js/constants.js). Water ≈ 1.8 × feed at 21 °C.
   const GUIDE_ROSS_G = [44,62,81,102,125,151,181,213,249,288,330,376,425,477,533,592,655,720,789,860,935,1012,1092,1174,1258,1345,1434,1524,1616,1710,1805,1901,1999,2097,2196,2296,2396,2496,2597,2697,2798,2898,2998,3097,3197,3295,3393,3490,3586,3681,3776,3869,3961,4052,4142,4230,4318];
-  const GUIDE_ROSS_FEED = [0,11,15,19,24,28,33,37,42,47,51,56,60,65,69,74,78,83,88,92,97,101,106,110,115,119,124,129,133,138,142,147,151,156,160,165,170,174,179,183,188,192,197,201,206,211,215,220,223,225,227,229,230,231,233,233,234,234,234,234,234];
+  const GUIDE_ROSS_FEED = [0,12,16,20,24,27,31,35,39,44,48,52,57,62,67,72,77,83,88,94,100,105,111,117,122,128,134,139,145,150,156,161,166,171,176,180,185,189,193,197,201,204,207,211,213,216,219,221,223,225,227,229,230,231,233,233,234,234,234,234,234];
   const GUIDE_WATER_RATIO = 1.8;
   function guideRossKg(age){
     const a = Math.max(0, Math.min(56, age)), d = Math.floor(a), n = Math.min(56, d + 1);
@@ -16001,6 +16090,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const g = (sel)=> e.target.closest(sel);
     let b;
     if((b = g('[data-ptk-view]'))){ prepTrack = b.dataset.ptkView === 'checklist' ? 'checklist' : 'progress'; try{ localStorage.setItem('cw-prep-track', prepTrack); }catch(err){} renderPrepBoard(); return; }
+    if((b = g('[data-ptk-mt]'))){ const sh = b.dataset.ptkMt; if(prepTrack !== 'progress'){ prepTrack = 'progress'; try{ localStorage.setItem('cw-prep-track', prepTrack); }catch(err){} prepMtOpen.add(sh); } else prepMtOpen.has(sh) ? prepMtOpen.delete(sh) : prepMtOpen.add(sh); renderPrepBoard(); return; }
+    if((b = g('[data-pmt-ign],[data-pmt-ack],[data-pmt-undo]'))){ const v = b.dataset.pmtIgn || b.dataset.pmtAck || b.dataset.pmtUndo, k = v.indexOf('|'), c = prepFind(v.slice(0, k)), rid = v.slice(k + 1); if(!c) return;
+      const r = reports.find(x=> x.id === rid), what = r ? rpTypeName(r) : 'Report';
+      c.mt = Object.assign({}, c.mt || {}); if(b.dataset.pmtUndo) delete c.mt[rid]; else c.mt[rid] = b.dataset.pmtIgn ? 'ign' : 'ack';
+      addHistory('Shed preparation', `Shed ${c.shed} · ${what}: ${b.dataset.pmtUndo ? 'decision undone' : b.dataset.pmtIgn ? 'ignored for this prep' : 'fix before chicks'}`);
+      persist(); renderPrepBoard(); if(!b.dataset.pmtUndo) showToast(b.dataset.pmtIgn ? `${what} ignored for Shed ${c.shed}'s prep — it stays open in Maintenance.` : `${what} goes on Shed ${c.shed}'s list — fix it before the chicks.`); return; }
+    if((b = g('[data-pmt-task]'))){ openAssignTaskFromReport(b.dataset.pmtTask); if(pendingReportTask) prepTaskReturn = true; return; }
+    if((b = g('[data-pmt-opentask]'))){ openTaskDetailModal(b.dataset.pmtOpentask); return; }
+    if((b = g('[data-pmt-report]'))){ openReportsDrawer(b.dataset.pmtReport); return; }
+    if(g('[data-pmt-all]')){ openReportsDrawer(); return; }
+    if(g('.ptk-mt')) return;
     if(!g('[data-prep-ready],[data-prep-unready]') && (b = g('[data-ptk-open]'))){ prepTrack = 'checklist'; prepOnlyShed = b.dataset.ptkOpen; try{ localStorage.setItem('cw-prep-track', prepTrack); }catch(err){} renderPrepBoard(); return; }
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
     if((b = g('[data-prep-fold]'))){ const [cid, sid] = b.dataset.prepFold.split('|'); const c = prepFind(cid), sec = c && (c.sections || []).find(x=> x.id === sid); if(sec){ sec.fold = !sec.fold; persist(); renderAll(); } return; }
@@ -16029,6 +16129,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if((b = g('[data-prep-ready]'))){ const c = prepFind(b.dataset.prepReady); if(!c) return;
       // Ready means ready (2026-10-29): jobs still open are ticked as signed off, Reopen unticks just those
       const left = prepUnits(c).filter(x=> !x.u.done);
+      const mtLeft = (()=>{ const m = prepMt(c); return m.open.length + m.ack.length + m.task.length; })();
+      if(mtLeft && !confirm(`Shed ${c.shed} still has ${mtLeft} maintenance report${mtLeft === 1 ? '' : 's'} not fixed. Mark it ready anyway?`)) return;
       if(left.length && !confirm(`Shed ${c.shed} still has ${left.length} job${left.length === 1 ? '' : 's'} open. Mark it ready anyway? ${left.length === 1 ? 'It' : 'They'} will be ticked as done.`)) return;
       const who = managerName() || 'Manager', at = new Date().toISOString();
       left.forEach(x=>{ x.u.done = true; x.u.doneBy = who; x.u.doneAt = at; x.u.byReady = true; });
@@ -16256,7 +16358,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       if(priority) meta.priority = priority;
       if(cat) meta.cat = cat;
       const newTask = addTask(name, guessIcon(name), dateVal, Object.keys(meta).length ? meta : null);
-      const fromReport = pendingReportTask;
+      const fromReport = pendingReportTask, backToPrep = prepTaskReturn;
       if(fromReport) linkTaskToReport(newTask, fromReport);
       let count = 0;
       if(repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
@@ -16264,6 +16366,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       }
       persist(); renderAll();
       closeOverlays();
+      if(fromReport && backToPrep){ openPrepBoard(); showToast(dateVal ? `Task added for ${formatShort(dateVal)}. Report set to In progress.` : 'Task added to the Backlog. Report set to In progress.'); return; }
       if(fromReport){
         openReportDetailModal(fromReport);
         showToast(dateVal ? `Task added for ${formatShort(dateVal)}. Report set to In progress.` : 'Task added to the Backlog. Report set to In progress.');
