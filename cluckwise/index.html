@@ -3809,6 +3809,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .prep-canvas .kanban-fade{ display:none; }
   @media (min-width:761px){
     #mlogPage.prep-mode #prepMain{ overflow:hidden; }
+    /* Progress table scrolls in its own box, as the Checklist does — the page itself doesn't (c175) */
+    #prepMain .ptk-tab{ flex:0 1 auto !important; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+    #prepMain .ptk-tab > *{ flex-shrink:0; }
+    #prepMain .ptk-head{ position:sticky; top:0; z-index:2; background:var(--surface); }
     .prep-canvas{ flex:1 1 auto !important; min-height:0; display:flex; }
     .prep-canvas .prep-board2{ scroll-snap-type:none; flex:1; min-height:0; height:100%; align-items:start; grid-template-rows:minmax(0,100%); scrollbar-width:none; overflow-y:hidden; }
     .prep-canvas .prep-board2::-webkit-scrollbar{ display:none; }
@@ -6732,6 +6736,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       checkResolvedReports();
       updateReportsBadge();
       renderReportsView();
+      if(mlogIsOpen() && mlogMode === 'prep') renderMlog();   // Shed prep's Maintenance column showed "None open" until the next redraw (c175)
     }catch(e){
       console.error('Reports pull failed', e);
       if(!silent) showToast('Could not refresh reports.', true);
