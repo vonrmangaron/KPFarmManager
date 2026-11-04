@@ -54,7 +54,9 @@ async function refreshRunningBatches(force){
       try{
         const r=await fetch(buildBatchUrl(syncFarmName,k),{cache:'no-store'});if(!r.ok)continue;
         const j=await r.json();const p=j&&j.data;if(!p||!p.farmData||!Array.isArray(p.farmData.sheds))continue;
-        others.push({key:k,newest:k===newest,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null})),
+        let fin=null;try{if(typeof finReadyFor==='function'){const fr=finReadyFor(p.farmData.sheds.filter(s=>s&&s.placementDate&&Number(s.initialPopulation)>0));
+          fin={ready:fr.ready,last:fr.last?fr.last.s.id:null,done:!!(p.predictions&&p.predictions.batchFinal&&p.predictions.batchFinal.at)};}}catch(e){}
+        others.push({key:k,newest:k===newest,fin,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null})),
           starter:(Array.isArray(p.farmLoads)?p.farmLoads:[]).filter(l=>l&&l.date&&l.feedType==='starter').map(l=>({date:l.date,splitKg:l.splitKg||{},siloFor:l.siloFor||null}))});
       }catch(e){}
     }
