@@ -207,7 +207,7 @@ function phRefresh(){
     const st=phSceneTitle();if(h.title!==st)h.title=st;
     const f=document.getElementById('phFace');if(f&&!f.querySelector('.pf-'+D.mood)){f.innerHTML=PlumoFace.html(D.mood);if(PlumoFace.enter)PlumoFace.enter(f);}   // a new mood comes in with its entrance
     const c=document.getElementById('phChip');if(c){const x=phChip(D);if(c.innerHTML!==x)c.innerHTML=x;}
-    const b=document.getElementById('phBub');if(b){const x=phBubbleHtml(D);if(b.innerHTML!==x){b.innerHTML=x;requestAnimationFrame(phAlign);}}
+    const b=document.getElementById('phBub');if(b){const x=phBubbleHtml(D);if(b.innerHTML!==x)b.innerHTML=x;}
     const fw=document.getElementById('phFoWrap');if(fw&&typeof foHeroHtml==='function'){const x=foHeroHtml();if(fw.innerHTML!==x)fw.innerHTML=x;}
     const mb=document.getElementById('phMiniBub');if(mb){const x=phGreet(D);if(mb.textContent!==x)mb.textContent=x;}
     const mh=document.getElementById('phMiniHead');if(mh&&!mh.querySelector('.pf-'+D.mood)){mh.innerHTML=PlumoFace.html(D.mood);if(PlumoFace.enter)PlumoFace.enter(mh);}
@@ -265,19 +265,3 @@ function plumoDodge(){const f=document.querySelector('#rsModal.open #rsFace');if
   phAutoFly();},35000+Math.random()*30000);})();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(phRefresh,4200));
 setInterval(()=>{if(document.visibilityState==='visible')phRefresh();},60000);
-// Plumo level with his bubble (2026-11-04): his head is centred on the bubble and its tail points at him,
-// measured after every redraw, since the bubble's height changes with what he says
-function phAlign(){
-  const h=document.getElementById('plumoHero'),f=document.getElementById('phFace'),b=document.getElementById('phBub');
-  if(!h||!f||!b||h.classList.contains('ph-min')||!f.offsetParent||!b.offsetParent)return;
-  const pf=f.querySelector('.plumoF');if(!pf)return;
-  const hr=h.getBoundingClientRect(),br=b.getBoundingClientRect(),fh=pf.getBoundingClientRect().height,bt=br.top-hr.top;
-  const chip=document.getElementById('phChip'),cb=chip&&chip.offsetParent?chip.getBoundingClientRect().bottom-hr.top+2:6;   // never up behind the mood chip
-  const top=Math.round(Math.max(cb,Math.min(hr.height-fh-4,bt+br.height/2-fh*0.55)));
-  if(f.style.marginTop!==top+'px')f.style.marginTop=top+'px';
-  const tail=Math.round(Math.max(14,Math.min(br.height-30,top+fh*0.55-bt-9)));
-  b.style.setProperty('--ph-tail',tail+'px');
-}
-(function(){const prev=render;render=function(){const out=prev.apply(this,arguments);requestAnimationFrame(phAlign);return out;};})();
-window.addEventListener('resize',()=>requestAnimationFrame(phAlign));
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(phAlign));

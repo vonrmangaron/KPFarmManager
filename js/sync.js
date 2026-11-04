@@ -29,7 +29,6 @@ function buildCloudPayload(){
       farmFeedOverride:predState.farmFeedOverride,
       farmLeftoverKg:predState.farmLeftoverKg,
       pairLeftover:predState.pairLeftover||{},farmLeftoverFromPairs:!!predState.farmLeftoverFromPairs,prevLeftover:predState.prevLeftover||null,
-      batchFinal:predState.batchFinal||null,   // Finish batch (2026-11-04): every device and the next batch see it's finished
       prevBatch:predState.prevBatch||null,carryoverMode:predState.carryoverMode||null,carryoverAuto:predState.carryoverAuto||null,
       carryoverKg:predState.carryoverKg||{1:0,2:0,3:0,4:0},
       carryoverFarmKg:Number(predState.carryoverFarmKg)||0,
@@ -100,7 +99,6 @@ function applyCloudPayload(payload,options){
     else if(p.farmLeftoverKg===null)predState.farmLeftoverKg=null;
     if('pairLeftover' in p)predState.pairLeftover=normPairLeftover(p.pairLeftover);
     if('farmLeftoverFromPairs' in p)predState.farmLeftoverFromPairs=!!p.farmLeftoverFromPairs;
-    predState.batchFinal=p.batchFinal&&p.batchFinal.at?{at:Number(p.batchFinal.at)||Date.now(),updatedAt:Number(p.batchFinal.updatedAt)||null,leftoverKg:Number(p.batchFinal.leftoverKg)||0,next:p.batchFinal.next?String(p.batchFinal.next):null}:null;
     if('prevBatch' in p)predState.prevBatch=p.prevBatch?String(p.prevBatch):null;
     if('carryoverMode' in p)predState.carryoverMode=p.carryoverMode==='manual'||p.carryoverMode==='auto'?p.carryoverMode:null;
     if('carryoverAuto' in p)predState.carryoverAuto=normCarryAuto(p.carryoverAuto);
