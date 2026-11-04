@@ -30,7 +30,7 @@ function pwCurrentSummary(){return farmData?pwBatchSummary(currentBatchKey()||''
 // All running batches, oldest first: the current one plus the others found in the cloud
 function pwRunningList(){
   const cur=pwCurrentSummary();const key=currentBatchKey();
-  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>!o.done&&String(o.key).toLowerCase()!==String(key||'').toLowerCase()).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
+  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>String(o.key).toLowerCase()!==String(key||'').toLowerCase()).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
   if(!others.length)return cur?[cur]:[];
   const list=others.concat(cur?[cur]:[]);
   list.sort((a,b)=>compareBatchKeys(b.key,a.key));   // compareBatchKeys sorts newest first; flip for oldest first
@@ -54,8 +54,7 @@ async function refreshRunningBatches(force){
       try{
         const r=await fetch(buildBatchUrl(syncFarmName,k),{cache:'no-store'});if(!r.ok)continue;
         const j=await r.json();const p=j&&j.data;if(!p||!p.farmData||!Array.isArray(p.farmData.sheds))continue;
-        const done=!!(p.predictions&&p.predictions.batchFinal&&p.predictions.batchFinal.at);   // finished = closed (2026-11-04)
-        others.push({key:k,newest:k===newest,done,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null})),
+        others.push({key:k,newest:k===newest,sheds:p.farmData.sheds.map(s=>({id:s.id,placementDate:s.placementDate||null,cleanoutDate:s.cleanoutDate||null})),
           starter:(Array.isArray(p.farmLoads)?p.farmLoads:[]).filter(l=>l&&l.date&&l.feedType==='starter').map(l=>({date:l.date,splitKg:l.splitKg||{},siloFor:l.siloFor||null}))});
       }catch(e){}
     }
@@ -135,15 +134,14 @@ function pwChangePair(){
   const list=pwRunningList();if(list.length>=2)return {old:list[0],nu:list[list.length-1]};
   const cur=pwCurrentSummary();if(!cur||!cur.planned)return null;const today=dateOnly(new Date());
   const prev=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>compareBatchKeys(o.key,cur.key)>0).sort((a,b)=>compareBatchKeys(a.key,b.key))
-    .map(o=>Object.assign(pwBatchSummary(o.key,o.sheds),{closed:!!o.done})).find(s=>(s.finished||s.closed)&&s.lastOut&&daysBetween(s.lastOut,today)<=45);
-  return prev?{old:prev,nu:cur,closed:prev.closed}:null;
+    .map(o=>pwBatchSummary(o.key,o.sheds)).find(s=>s.finished&&s.lastOut&&daysBetween(s.lastOut,today)<=45);
+  return prev?{old:prev,nu:cur}:null;
 }
 function changeoverHtml(){
   // Timeline lanes (2026-10-17): each shed is a lane across the calendar — its run in the batch
   // that's finishing, the empty days, then the batch that's starting. Today is a red line.
   const P=pwChangePair();if(!P)return '';
   const old=P.old,nu=P.nu,today=dateOnly(new Date());
-  const oldClosed=!!P.closed||(currentBatchKey()===old.key&&typeof finDone==='function'&&finDone());   // finished in Finish batch
   const ids=[...new Set(old.rows.map(r=>r.id).concat(nu.rows.map(r=>r.id)))].sort((a,b)=>Number(a)-Number(b));
   const pairs=ids.map(id=>({id,o:old.rows.find(r=>r.id===id)||{},n:nu.rows.find(r=>r.id===id)||{}}));
   // the window: a few days back, to two weeks after the last date
@@ -172,7 +170,7 @@ function changeoverHtml(){
   const allOpen=!!pwCoOpen;
   const lanes=allOpen?laneHtml.join(''):laneHtml[firstIdx];
   const outDone=pairs.filter(x=>x.o.out&&x.o.out<today).length,placed=pairs.filter(x=>x.n.place).length,total=pairs.length;
-  if(outDone===total||oldClosed)return startingHtml(old,nu,pairs);   // every shed is out: the new batch's Starting card (2026-11-04)
+  if(outDone===total)return startingHtml(old,nu,pairs);   // every shed is out: the new batch's Starting card (2026-11-04)
   const complete=outDone===total&&placed===total;
   if(complete)return '';   // temporary: gone once the old batch is out of every shed and every shed is placed
   const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];
