@@ -30,7 +30,7 @@ function pwCurrentSummary(){return farmData?pwBatchSummary(currentBatchKey()||''
 // All running batches, oldest first: the current one plus the others found in the cloud
 function pwRunningList(){
   const cur=pwCurrentSummary();const key=currentBatchKey();
-  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>String(o.key).toLowerCase()!==String(key||'').toLowerCase()).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
+  const others=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>!pwBatchFiled(o.key)&&String(o.key).toLowerCase()!==String(key||'').toLowerCase()).map(o=>{const s=pwBatchSummary(o.key,o.sheds);if(!s.planned&&o.newest)s.running=true;return s;}).filter(s=>s.running);
   if(!others.length)return cur?[cur]:[];
   const list=others.concat(cur?[cur]:[]);
   list.sort((a,b)=>compareBatchKeys(b.key,a.key));   // compareBatchKeys sorts newest first; flip for oldest first
@@ -128,13 +128,16 @@ function updateRunningUI(){
     <span class="bsw-dot"></span><b>Batch ${escapeHtml(cur)}</b><span class="bsw-to">⇄ ${escapeHtml(other.key)}</span></button>`;
 }
 // Home: each shed's changeover between the two running batches
+// A batch with a finished result in Farm history is closed (2026-11-04): it isn't running, the switcher drops it,
+// and the Change Over card becomes the next batch's Starting card
+function pwBatchFiled(key){const k=String(key||'').trim().toLowerCase();return !!k&&farmHistory().some(r=>String(r.batch||'').trim().toLowerCase()===k&&r.finished);}
 // The two batches of a changeover. Once the old batch has finished it stops counting as running, so the
 // Starting card (2026-11-04) falls back to the batch that finished last (within 45 days) before this one.
 function pwChangePair(){
   const list=pwRunningList();if(list.length>=2)return {old:list[0],nu:list[list.length-1]};
   const cur=pwCurrentSummary();if(!cur||!cur.planned)return null;const today=dateOnly(new Date());
   const prev=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>compareBatchKeys(o.key,cur.key)>0).sort((a,b)=>compareBatchKeys(a.key,b.key))
-    .map(o=>pwBatchSummary(o.key,o.sheds)).find(s=>s.finished&&s.lastOut&&daysBetween(s.lastOut,today)<=45);
+    .map(o=>pwBatchSummary(o.key,o.sheds)).find(s=>(s.finished||pwBatchFiled(s.key))&&s.lastOut&&daysBetween(s.lastOut,today)<=45);
   return prev?{old:prev,nu:cur}:null;
 }
 function changeoverHtml(){
@@ -170,7 +173,7 @@ function changeoverHtml(){
   const allOpen=!!pwCoOpen;
   const lanes=allOpen?laneHtml.join(''):laneHtml[firstIdx];
   const outDone=pairs.filter(x=>x.o.out&&x.o.out<today).length,placed=pairs.filter(x=>x.n.place).length,total=pairs.length;
-  if(outDone===total)return startingHtml(old,nu,pairs);   // every shed is out: the new batch's Starting card (2026-11-04)
+  if(outDone===total||pwBatchFiled(old.key))return startingHtml(old,nu,pairs);   // every shed out, or the old batch is closed   // every shed is out: the new batch's Starting card (2026-11-04)
   const complete=outDone===total&&placed===total;
   if(complete)return '';   // temporary: gone once the old batch is out of every shed and every shed is placed
   const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];

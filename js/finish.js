@@ -17,7 +17,14 @@ function finReady(){
   const weighed=!!(last&&pkWeighed(last.fp));
   return {ready:!stillIn.length&&weighed,sheds,stillIn,last,weighed};
 }
-function finDone(){return !!(predState.batchFinal&&predState.batchFinal.at);}
+// Finished = this batch has a finished result in Farm history (shared by every device and batch), or this device's
+// mark for THIS batch — a mark carried over from the batch before (it named this one as next) doesn't count (2026-11-04)
+const finSame=(a,b)=>String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase();
+function finRecord(){const key=finKey();return farmHistory().find(r=>finSame(r.batch,key)&&r.finished)||null;}
+function finMark(){const f=predState.batchFinal,key=finKey();return f&&f.at&&(f.batch?finSame(f.batch,key):!finSame(f.next,key))?f:null;}
+function finDone(){return !!(finRecord()||finMark());}
+function finInfo(){const f=finMark(),r=finRecord();if(!f&&!r)return null;
+  return {at:f?f.at:(r.savedAt||Date.parse(r.endDate||'')||Date.now()),leftoverKg:f?Number(f.leftoverKg)||0:Number(r.leftoverKg)||0,next:(f&&f.next)||finNextBatch()||null};}
 function finKey(){return String(currentBatchKey()||predState.batchNumber||(farmData&&farmData.batchNumber)||'');}
 // the batch that takes the leftover: the running batch that starts after this one
 function finNextBatch(){
@@ -125,7 +132,7 @@ function finStep3(){
   const table=S.length?`<div class="bev-panel"><div class="bev-ph"><b>Shed by shed</b><em>final · green best, red behind</em></div><div class="bev-tw"><table class="bev-st"><thead><tr><th>Shed</th><th>Birds out</th><th>Avg wt</th><th>vs ${growthStd()==='ross'?'Ross 308':'std'}</th><th>Mort.</th><th>FCR</th><th>cFCR</th><th>Live wt</th></tr></thead><tbody>${S.map(s=>`<tr><td>${s.id}</td><td>${s.out?N(s.out):'—'}</td><td${cl('alw',s.alw)}>${s.alw?s.alw.toFixed(3):'—'}</td><td>${s.std==null?'—':`<span class="bev-tag ${bevStdTone(s.std)}">${bevStdTxt(s.std,true)}</span>`}</td><td>${s.mort!=null?s.mort.toFixed(1)+'%':'—'}</td><td>${s.fcr>0?f2(s.fcr):'—'}</td><td${cl('cfcr',s.cfcr)}>${s.cfcr>0?f2(s.cfcr):'—'}</td><td>${s.kg>0?N(s.kg/1000)+' t':'—'}</td></tr>`).join('')}</tbody></table></div></div>`:'';
   const done=finDone();
   return {body:finSay(V.mood,`<b>${escapeHtml(V.head)}</b> ${escapeHtml(V.text)}`)+`<div class="bev-sh blue"><span class="bev-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><b>Final results</b><span class="bev-ln"></span>${R.prev?`<em>pills compare with batch ${escapeHtml(String(R.prev.batch||''))}</em>`:''}</div><div class="bev-grid fin-grid">${cards}</div>${table}`,
-    foot:`<button type="button" class="fin-btn gh" data-fin-go="1">‹ Back</button><span class="fin-sp"></span><span class="fin-note">${done?`Finished ${escapeHtml(fmtShortNoYear(dateOnly(new Date(predState.batchFinal.at))))} · saving again updates Farm history`:`Saves Batch ${escapeHtml(finKey())} to Farm history · ${escapeHtml(fmtFeed(R.leftover,1))} carries over`}</span><button type="button" class="fin-btn pri" data-fin-finish>${FIN_IC.flag}${done?'Save again':'Finish batch '+escapeHtml(finKey())}</button>`};
+    foot:`<button type="button" class="fin-btn gh" data-fin-go="1">‹ Back</button><span class="fin-sp"></span><span class="fin-note">${done?`Finished ${escapeHtml(fmtShortNoYear(dateOnly(new Date(finInfo().at))))} · saving again updates Farm history`:`Saves Batch ${escapeHtml(finKey())} to Farm history · ${escapeHtml(fmtFeed(R.leftover,1))} carries over`}</span><button type="button" class="fin-btn pri" data-fin-finish>${FIN_IC.flag}${done?'Save again':'Finish batch '+escapeHtml(finKey())}</button>`};
 }
 function finRender(){
   const m=document.getElementById('finModal');if(!m||m.hidden||!finState)return;
@@ -154,7 +161,7 @@ function finFinish(){
   if(i>=0){rec.id=hist[i].id;hist[i]=rec;predState.farmHistory=hist;}else predState.farmHistory=hist.concat([rec]);
   pwPending()[key]='done';
   const first=!finDone();
-  predState.batchFinal={at:first?Date.now():predState.batchFinal.at,updatedAt:Date.now(),leftoverKg:pairsLeftoverKg(),next:finNextBatch()||null};
+  predState.batchFinal={batch:key,at:first?Date.now():finInfo().at,updatedAt:Date.now(),leftoverKg:pairsLeftoverKg(),next:finNextBatch()||null};
   savePredState();schedulePush();if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();
   finClose();render();
   const nx=finNextBatch();
@@ -163,7 +170,7 @@ function finFinish(){
 // Home: Plumo's banner while the batch is ready, a slim line once it's finished
 function finBannerHtml(){
   if(!farmData)return '';
-  if(finDone()){const f=predState.batchFinal;
+  if(finDone()){const f=finInfo();
     return `<div class="fin-done-line"><span class="fin-d ok">${FIN_IC.ok}</span><span><b>Batch ${escapeHtml(finKey())} finished</b> ${escapeHtml(fmtShortNoYear(dateOnly(new Date(f.at))))} · saved to Farm history · ${escapeHtml(fmtFeed(Number(f.leftoverKg)||0,1))} leftover → ${f.next?'Batch '+escapeHtml(f.next):'next batch'}</span><button type="button" class="fin-b" data-fin-open="2">See results</button></div>`;}
   const r=finReady();if(!r.ready)return '';
   return `<section class="fin-banner">${finFace('happy')}<span class="fin-bt"><small>Plumo · Batch ${escapeHtml(finKey())}</small><b>All birds are out — Batch ${escapeHtml(finKey())} is ready to finish</b><span>Shed ${escapeHtml(String(r.last.s.id))}'s last pickup is weighed. Check the leftover feed and save the final results.</span></span>
