@@ -16098,8 +16098,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       persist(); renderPrepBoard(); if(!b.dataset.pmtUndo) showToast(b.dataset.pmtIgn ? `${what} ignored for Shed ${c.shed}'s prep — it stays open in Maintenance.` : `${what} goes on Shed ${c.shed}'s list — fix it before the chicks.`); return; }
     if((b = g('[data-pmt-task]'))){ openAssignTaskFromReport(b.dataset.pmtTask); if(pendingReportTask) prepTaskReturn = true; return; }
     if((b = g('[data-pmt-opentask]'))){ openTaskDetailModal(b.dataset.pmtOpentask); return; }
-    if((b = g('[data-pmt-report]'))){ openReportsDrawer(b.dataset.pmtReport); return; }
-    if(g('[data-pmt-all]')){ openReportsDrawer(); return; }
+    // leave Shed prep first, as the rail does — otherwise Maintenance opens behind it and the app looks stuck (c174)
+    if((b = g('[data-pmt-report]'))){ const id = b.dataset.pmtReport; if(mlogIsOpen()) closeMlog(); openReportsDrawer(id); return; }
+    if(g('[data-pmt-all]')){ if(mlogIsOpen()) closeMlog(); openReportsDrawer(); return; }
     if(g('.ptk-mt')) return;
     if(!g('[data-prep-ready],[data-prep-unready]') && (b = g('[data-ptk-open]'))){ prepTrack = 'checklist'; prepOnlyShed = b.dataset.ptkOpen; try{ localStorage.setItem('cw-prep-track', prepTrack); }catch(err){} renderPrepBoard(); return; }
     if((b = g('[data-prep-tab]'))){ prepPhoneShed = b.dataset.prepTab; renderPrepBoard(); return; }
