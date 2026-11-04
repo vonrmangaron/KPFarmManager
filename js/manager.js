@@ -203,6 +203,7 @@ function renderHomeView(){
   return `<div class="mgr-home">
     ${(typeof plumoHeroWrap==='function'&&window.PlumoFace?plumoHeroWrap:(h=>h))(`<div class="mgr-head">${(()=>{const last=cleans.length?cleans[cleans.length-1]:null,tot=last?daysBetween(first,last):0,pct=tot>0&&first<=today?Math.max(0,Math.min(100,daysBetween(first,today)/tot*100)):0;return tot>0?`<span class="mgr-prog" title="${Math.round(pct)}% of the batch, first placement to last clean-out"><i style="width:${pct.toFixed(1)}%"></i><em>${Math.round(pct)}%</em></span>`:'';})()}<button type="button" class="mgr-batch" data-batch-info title="Batch details"><b>Batch ${escapeHtml(String(predState.batchNumber||farmData.batchNumber||''))} · ${first>today?'starts '+escapeHtml(fmtShortNoYear(first)):'Day '+day}</b><span>${escapeHtml(fmtShortNoYear(today))}${cleans.length?` · first clean-out ${escapeHtml(fmtShortNoYear(cleans[0]))}${cleans.length>1&&iso(cleans[cleans.length-1])!==iso(cleans[0])?`, last ${escapeHtml(fmtShortNoYear(cleans[cleans.length-1]))}`:''}`:''}</span></button></div>`)}
     ${typeof changeoverHtml==='function'?changeoverHtml():''}
+    ${typeof finBannerHtml==='function'?finBannerHtml():''}
     ${kpis}
     <div class="mk-row">${needsHtml}${mgrWeekHtml()}</div>
     ${feed}
