@@ -18,7 +18,7 @@ function bevData(){
   const inSilos=(m.pairs||[]).filter(p=>!p.finished).reduce((s,p)=>s+(Number(p.stock)||0),0);
   const delivered=farmLoads.reduce((s,l)=>s+(l.date&&dateOnly(l.date)<=today?(l.actualKg!=null?Number(l.actualKg)||0:Number(l.plannedKg)||0):0),0);
   const curAlw=ps.todate.birds>0?ps.todate.kg/ps.todate.birds:null;
-  const cur={fcr:k?k.fcr:null,cfcr:k?k.cfcr:null,pif:k?k.pif:null,cage:t.cage||null,alw:curAlw,lwKg:ps.todate.kg,outBirds:ps.all.birds,weighedBirds:ps.todate.birds,
+  const cur={fcr:k?k.fcr:null,cfcr:k?k.cfcr:null,pif:k?k.pif:null,cage:cAgeIntegrator(curAlw,ps.todate.age),alw:curAlw,lwKg:ps.todate.kg,outBirds:ps.all.birds,weighedBirds:ps.todate.birds,
     feed:m.eaten>0?m.eaten:null,ordered:feedOrderedKg(),inSilos:m.missing&&m.missing.length?null:inSilos,mort:t.totalCurrentMortality,mortRate:t.currentMortRate,
     age:ps.all.age,pickups:ps.all.n,wAge:ps.todate.age,missing:(m.missing||[]).slice(),noWeight:(m.noWeight||[]).slice()};
   cur.std=cur.alw&&cur.wAge?bevStdAgeFor(cur.alw)-cur.wAge:null;   // + ahead of the standard, − behind
@@ -99,7 +99,7 @@ function bevHtml(D){
     bevSec('blue',BEV_IC.perf,'Performance',lk?`pills compare the estimate with batch ${escapeHtml(String(D.lr.batch||''))}`:'')+
     bevCard('blue','FCR',lk?bevPill(est.fcr,lk.fcr,f2,true):'',perfCur(cur.fcr)||{v:f2(cur.fcr)},bad(est.fcr)?na:{v:f2(est.fcr)})+
     bevCard('blue','cFCR2.45',lk?bevPill(est.cfcr,lk.cfcr,f2,true):'',perfCur(cur.cfcr)||{v:f2(cur.cfcr)},bad(est.cfcr)?na:{v:f2(est.cfcr)})+
-    bevCard('blue','CAge2.45',`<span class="bev-pill a" title="Your Cage2.45 target">target ${frCageTarget().toFixed(1)}</span>`,bad(cur.cage)?{v:'—',s:'no shed at 2.45 kg yet'}:{v:bevD(cur.cage),s:'from the growth curves'},bad(est.cage)?na:{v:bevD(est.cage)})+
+    bevCard('blue','CAge2.45',`<span class="bev-pill a" title="Your Cage2.45 target">target ${frCageTarget().toFixed(1)}</span>`,bad(cur.cage)?{v:'—',s:'no kill-sheet weights yet'}:{v:bevD(cur.cage),s:`picked up so far · ${cageDaysPerKg()} d/kg`},bad(est.cage)?na:{v:bevD(est.cage)})+
     bevCard('blue','PIF',lk?bevPill(est.pif,lk.pif,v=>Math.round(v),false):'',perfCur(cur.pif)||{v:Math.round(cur.pif)},bad(est.pif)?na:{v:Math.round(est.pif)})+
     bevSec('green',BEV_IC.wt,'Weight','current from kill sheets')+
     bevCard('green','Average weight',lk?bevPill(est.alw,lk.alw,v=>v.toFixed(2)+' kg',false):'',bad(cur.alw)?{v:'—',s:'no kill-sheet weights yet'}:{v:bevKg(cur.alw),s:bevN(cur.weighedBirds)+' birds weighed'},bad(est.alw)?na:{v:bevKg(est.alw),s:'all birds'})+

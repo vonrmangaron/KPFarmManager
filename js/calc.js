@@ -686,6 +686,12 @@ function forecastWeightModeAware(shed,date){
 // Ross 308 from the 44 g chick; after that the Ross shape is slowed so 2.45 kg lands on the target.
 const FR_CAGE_DEFAULT=38,FR_BROOD_DAYS=14,FR_REF_KG=2.45;
 function growthStd(){return predState.growthStd==='ross'?'ross':'freerange';}
+// CAge2.45 the integrator's way (2026-11-04, the user: "follow what the integrator"): the average age at pickup
+// corrected to a 2.45 kg bird — age − (average weight − 2.45) × days per kg. 13.5 d/kg gives 36.9 for 2701
+// (the integrator's 36.86); the farm can set the exact figure in Settings › Growth.
+const CAGE_DPK_DEFAULT=13.5;
+function cageDaysPerKg(){const v=Number(predState.cageDaysPerKg);return Number.isFinite(v)&&v>=5&&v<=30?v:CAGE_DPK_DEFAULT;}
+function cAgeIntegrator(alw,age,dpk){return alw>0&&age>0?age-(alw-CAGE_KG)*(dpk||cageDaysPerKg()):null;}
 function frCageTarget(){const v=Number(predState.frCage);return Number.isFinite(v)&&v>=25&&v<=60?v:FR_CAGE_DEFAULT;}
 function frSlow(){const A=findRossAgeForWeight(FR_REF_KG),X=frCageTarget();return X>FR_BROOD_DAYS?(A-FR_BROOD_DAYS)/(X-FR_BROOD_DAYS):1;}
 function freeRangeWeightKg(age){if(!Number.isFinite(age))return rossWeightKg(age);return rossWeightKg(age<=FR_BROOD_DAYS?age:FR_BROOD_DAYS+(age-FR_BROOD_DAYS)*frSlow());}

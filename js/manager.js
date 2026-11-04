@@ -731,7 +731,11 @@ function settingsGrowthStdHtml(){
       </div>
       <p class="set-muted">${fr?`Ross 308 shape from a 44 g chick: the same as Ross to day 14, then slower so 2.45 kg lands on day ${X} — your Cage2.45 target. Used by the vs std badges, the days-behind alerts, shed colours and the growth chart (Ross 308 is still drawn for reference).`:'Everything compares against the Ross 308 performance objectives.'}</p>
       ${fr?`<div class="co-scroll"><table class="set-table set-std-tbl"><thead><tr><th>Day</th>${days.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody><tr><th>Free range</th>${rows}</tr><tr><th>Ross 308</th>${days.map(d=>`<td>${Math.round(rossWeightKg(d)*1000).toLocaleString()} g</td>`).join('')}</tr></tbody></table></div>`:''}
-    </div></section>`;
+    </div>
+    ${(()=>{const N=sdCageDpk();let ex='';try{const t=computeFarmTotals();if(t&&t.hasData&&t.avgWeight>0&&t.weightedAge>0)ex=`This batch: ${t.weightedAge.toFixed(2)} d − (${t.avgWeight.toFixed(3)} − 2.45) × ${N} = <b>${cAgeIntegrator(t.avgWeight,t.weightedAge,N).toFixed(2)} days</b>`;}catch(e){}
+      return `<div class="set-card set-pad set-std"><div class="set-std-top"><label class="set-mort">Cage2.45 — days per kg above 2.45 kg <input type="number" class="set-num" data-set-cagedpk min="5" max="30" step="0.1" value="${N}" aria-label="Days per kg used to correct the age to 2.45 kg"></label></div>
+      <p class="set-muted">Cage2.45 is worked out the integrator's way: average age at pickup − (average weight − 2.45 kg) × this number. ${CAGE_DPK_DEFAULT} matches the integrator's 36.86 for Batch 2701 (to 0.03); put in their exact figure if their report shows it.${ex?'<br>'+ex:''}</p></div>`;})()}
+    </section>`;
 }
 // Farm-wide pickup tools under Predictions: no-pickup days, last batches' pattern, and the planner actions
 function settingsPickupExtrasHtml(){
@@ -868,6 +872,8 @@ function setShedScale(id,pct){
 document.addEventListener('change',e=>{
   const fc=e.target.closest&&e.target.closest('[data-set-frcage]');
   if(fc){const v=Number(fc.value);if(Number.isFinite(v)&&v>=25&&v<=60)sdSet('frCage',Math.round(v*2)/2);else renderSettingsTabBody(true);return;}
+  const cd=e.target.closest&&e.target.closest('[data-set-cagedpk]');
+  if(cd){const v=Number(cd.value);if(Number.isFinite(v)&&v>=5&&v<=30)sdSet('cageDpk',Math.round(v*100)/100);else renderSettingsTabBody(true);return;}
   const ug=e.target.closest&&e.target.closest('[data-set-useglobal]');
   if(ug){sdSetShed('scale',ug.dataset.setUseglobal,ug.checked?null:Math.round(currentBiasFactor()*1000)/10);return;}
   const sc=e.target.closest&&e.target.closest('[data-set-scale]');
@@ -913,6 +919,7 @@ document.addEventListener('click',e=>{
 // and target pickup numbers still save as you type. The Predictions numbers have their own Save.
 let setDraft=null;   // {std, frCage, npd:[days], scale:{shed:pct|null}, mort:{shed:pct}, notif:{key:bool}, unit}
 function sdStd(){return setDraft&&setDraft.std!=null?setDraft.std:growthStd();}
+function sdCageDpk(){return setDraft&&setDraft.cageDpk!=null?setDraft.cageDpk:cageDaysPerKg();}
 function sdFrCage(){return setDraft&&setDraft.frCage!=null?setDraft.frCage:frCageTarget();}
 function sdScaleNow(sh){return (sh.scaleOverride!=null&&Number(sh.scaleOverride)>0)?Math.round(Number(sh.scaleOverride)*1000)/10:null;}
 function sdScale(sh){const k=String(sh.id);return setDraft&&setDraft.scale&&k in setDraft.scale?setDraft.scale[k]:sdScaleNow(sh);}
@@ -925,6 +932,7 @@ function sdChanges(){
   const d=setDraft;if(!d)return [];const out=[];
   if(d.std!=null&&d.std!==growthStd())out.push(d.std==='ross'?'Growth standard: Ross 308':'Growth standard: free range');
   if(d.frCage!=null&&d.frCage!==frCageTarget())out.push(`Free range 2.45 kg at day ${d.frCage}`);
+  if(d.cageDpk!=null&&d.cageDpk!==cageDaysPerKg())out.push(`Cage2.45 at ${d.cageDpk} days per kg`);
   if(d.npd){const a=[...d.npd].sort().join(),b=[...(predState.noPickupDays||[])].sort().join();if(a!==b)out.push('No-pickup days');}
   if(farmData){
     Object.keys(d.scale||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh&&d.scale[id]!==sdScaleNow(sh))out.push(`Shed ${id} scale ${d.scale[id]==null?'farm-wide':d.scale[id]+'%'}`);});
@@ -945,6 +953,7 @@ function sdApply(){
   const d=setDraft;if(!d)return;const chList=sdChanges(),n=chList.length;
   if(d.std!=null)predState.growthStd=d.std;
   if(d.frCage!=null)predState.frCage=d.frCage;
+  if(d.cageDpk!=null)predState.cageDaysPerKg=d.cageDpk;
   if(d.npd)predState.noPickupDays=[...d.npd].sort((a,b)=>a-b);
   if(farmData){
     Object.keys(d.scale||{}).forEach(id=>{const sh=farmData.sheds.find(s=>String(s.id)===id);if(sh)sh.scaleOverride=d.scale[id]==null?null:Math.max(MIN_BIAS_FACTOR,Math.min(MAX_BIAS_FACTOR,Number(d.scale[id])/100));});

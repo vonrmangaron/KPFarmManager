@@ -47,7 +47,7 @@ function finResults(){
   let t=null;try{t=computeFarmTotals();}catch(e){}
   let sheds=[];try{const D=bevData();sheds=D?D.sheds:[];}catch(e){}
   const dockets=(farmLoads||[]).filter(l=>l.date&&l.actualKg==null&&Number(l.plannedKg)>0).length;
-  return {rec,k,prev,pk,cage:t&&t.cage>0?t.cage:null,std:k.alw>0&&k.avgAge>0?bevStdAgeFor(k.alw)-k.avgAge:null,
+  return {rec,k,prev,pk,cage:cAgeIntegrator(k.alw,k.avgAge),std:k.alw>0&&k.avgAge>0?bevStdAgeFor(k.alw)-k.avgAge:null,
     delivered:feedOrderedKg(),carry:carryoverTotalKg(),leftover:pairsLeftoverKg(),mort:Math.max(0,rec.placed-rec.picked),sheds,dockets};
 }
 // Plumo's verdict: the app's own numbers, no AI call

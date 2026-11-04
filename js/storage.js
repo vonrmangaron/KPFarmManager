@@ -72,6 +72,7 @@ function loadPredState(){
     {const u=Number(v.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     if(v.growthStd==='ross'||v.growthStd==='freerange')predState.growthStd=v.growthStd;
     {const c=Number(v.frCage);if(Number.isFinite(c)&&c>=25&&c<=60)predState.frCage=c;}
+    {const c=Number(v.cageDaysPerKg);if(Number.isFinite(c)&&c>=5&&c<=30)predState.cageDaysPerKg=c;}
     if(Array.isArray(v.projectionLog))predState.projectionLog=v.projectionLog.map(normalizeSnap).filter(Boolean).slice(-120);
     if(Array.isArray(v.farmHistoryDeleted))predState.farmHistoryDeleted=v.farmHistoryDeleted.map(String).slice(-200);
     if(v.farmHistoryPending&&typeof v.farmHistoryPending==='object')predState.farmHistoryPending={...v.farmHistoryPending};

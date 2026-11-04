@@ -36,7 +36,7 @@ function buildCloudPayload(){
       noPickupDays:predState.noPickupDays||[],
       projectionLog:predState.projectionLog||[],
       finalUpliftPct:predState.finalUpliftPct,
-      growthStd:predState.growthStd||'freerange',frCage:predState.frCage,
+      growthStd:predState.growthStd||'freerange',frCage:predState.frCage,cageDaysPerKg:predState.cageDaysPerKg,
       feedQuota:predState.feedQuota,
       truckSplitMode:predState.truckSplitMode,
       siloConfidencePct:predState.siloConfidencePct,
@@ -115,6 +115,7 @@ function applyCloudPayload(payload,options){
     {const u=Number(p.finalUpliftPct);if(Number.isFinite(u)&&u>=0&&u<=20)predState.finalUpliftPct=u;}
     if(p.growthStd==='ross'||p.growthStd==='freerange')predState.growthStd=p.growthStd;
     {const c=Number(p.frCage);if(Number.isFinite(c)&&c>=25&&c<=60)predState.frCage=c;}
+    {const c=Number(p.cageDaysPerKg);if(Number.isFinite(c)&&c>=5&&c<=30)predState.cageDaysPerKg=c;}
     savePredState();
   }
   const prefs=payload.preferences||{};
