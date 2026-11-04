@@ -3700,6 +3700,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   body.theme-dark .pmt-m.pmt-task{ color:#9DBDFF; } body.theme-dark .pmt-m.pmt-ackl{ color:#F5C463; }
   .pmt-pill{ font:800 11.5px Inter,sans-serif; padding:3px 9px; border-radius:99px; white-space:nowrap; }
   .pmt-pill.new{ background:#FDE8E4; color:#B3321F; } .pmt-pill.urg{ background:#C9402D; color:#fff; } .pmt-pill.ack{ background:#FFF3DC; color:#8A5300; } .pmt-pill.task{ background:#E6EEFD; color:#2F5FC0; } .pmt-pill.ok{ background:#DFF4EF; color:#0B6B5B; }
+  @media (min-width:761px){ .pmt-rpm{ width:min(560px, calc(100vw - 24px)); } }
+  .pmt-rpm .form-modal-body{ display:flex; flex-direction:column; gap:12px; }
+  .pmt-rpm-top{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .pmt-rpm .rpd-type{ margin:0; } .pmt-rpm .rpd-sub{ margin:0; }
+  .pmt-rpm .rpd-photo img{ display:block; width:100%; max-height:300px; object-fit:cover; }
+  .pmt-rpm-dec{ display:flex; flex-direction:column; gap:8px; padding:12px 14px; border-radius:10px; background:var(--bg); border:1px dashed var(--line); }
+  .pmt-rpm-ok{ font:700 13px Inter,sans-serif; color:var(--success); } .pmt-rpm-tx{ font-size:13px; color:var(--muted); }
+  .pmt-pill.ig{ background:var(--line); color:var(--muted); }
+  .pmt-rpm .prep-tm-btns{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
   .pmt-acts{ display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; }
   .pmt-b{ all:unset; box-sizing:border-box; cursor:pointer; height:32px; padding:0 11px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,sans-serif; display:inline-flex; align-items:center; white-space:nowrap; }
   .pmt-b:hover{ border-color:var(--muted); } .pmt-b:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
@@ -5185,6 +5194,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   <div class="mlog-main" id="mlogMain"></div>
   <div class="prep-main" id="prepMain" hidden></div>
 </section>
+<div class="form-modal prep-modal pmt-rpm" id="prepRpModal" role="dialog" aria-modal="true" aria-labelledby="prepRpTitle">
+  <div class="form-modal-head"><h2 id="prepRpTitle">Maintenance report</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="prepRpBody"></div>
+</div>
 <div class="form-modal prep-modal" id="prepNoteModal" role="dialog" aria-modal="true" aria-labelledby="prepNoteTitle">
   <div class="form-modal-head"><h2 id="prepNoteTitle">📝 Note</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
   <div class="form-modal-body prep-tm">
@@ -6736,6 +6749,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       checkResolvedReports();
       updateReportsBadge();
       renderReportsView();
+      if($('#prepRpModal').classList.contains('open')) prepRpFill();
       if(mlogIsOpen() && mlogMode === 'prep') renderMlog();   // Shed prep's Maintenance column showed "None open" until the next redraw (c175)
     }catch(e){
       console.error('Reports pull failed', e);
@@ -7962,15 +7976,18 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const who = (task.assignees || []).join(', ');
       pane.querySelector('.rpd-task-meta').textContent = [task.status === 'done' ? 'Done' : task.date ? formatFull(task.date) : 'In the Backlog, no day yet', who || 'no one yet', task.priority === 'high' ? 'high priority' : ''].filter(Boolean).join(' · ');
     }
-    // History: reported → task → fixed
+    pane.querySelector('.rpd-hist').innerHTML = rpdHistHtml(r, task, sc, fmtWhen);
+    pane.querySelector('#rpdManagerNotes').value = r.managerNotes || '';
+    const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
+  }
+  // History: reported → task → fixed (Maintenance and the Shed prep report pop-up)
+  function rpdHistHtml(r, task, sc, fmtWhen){
     const steps = [];
     steps.push({ cls:'rep', text:`<b>Reported</b>${r.createdBy ? ' by ' + escapeHtml(r.createdBy) : ''}`, when: fmtWhen(r.createdAt) });
     if(task) steps.push({ cls:'task', text:`<b>Task made</b> · ${task.date ? escapeHtml(formatShort(task.date)) : 'Backlog'}${(task.assignees || []).length ? ', ' + escapeHtml(task.assignees.join(', ')) : ''}`, when: task.createdAt ? fmtWhen(new Date(task.createdAt).toISOString()) : '' });
     if(sc === 'resolved') steps.push({ cls:'fix', text:`<b>Fixed</b>${r.resolvedBy ? ' by ' + escapeHtml(r.resolvedBy) : r.autoResolved ? ' — task done' : ' — set by you'}`, when: fmtWhen(r.resolvedAt) });
     else steps.push({ cls:'wait', text: task ? `Fixed — when ${(task.assignees || []).length ? escapeHtml(task.assignees.join(' or ')) + ' ticks' : 'someone ticks'} the task` : 'Fixed — not yet', when:'' });
-    pane.querySelector('.rpd-hist').innerHTML = steps.map(x => `<div class="rpd-step ${x.cls}"><span class="rpd-dot"></span><span>${x.text}${x.when ? ` <span class="rpd-when">· ${escapeHtml(x.when)}</span>` : ''}</span></div>`).join('');
-    pane.querySelector('#rpdManagerNotes').value = r.managerNotes || '';
-    const rn = pane.querySelector('#rpdResolutionNotes'); if(rn) rn.value = r.resolutionNotes || '';
+    return steps.map(x => `<div class="rpd-step ${x.cls}"><span class="rpd-dot"></span><span>${x.text}${x.when ? ` <span class="rpd-when">· ${escapeHtml(x.when)}</span>` : ''}</span></div>`).join('');
   }
   // ----- Maintenance board: Open → In progress → Fixed (drag cards between columns) -----
   let rpView = 'board';   // 2026-10-28 (option B, mockup 8SjHbZda5DBe225emGhoCZ): the board is the only view; the List switch is gone
@@ -13775,12 +13792,48 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         : st === 'task' ? `<button type="button" class="pmt-b" data-pmt-opentask="${escapeHtmlAttr(r.linkedTaskId)}">Open task</button><button type="button" class="pmt-b q" data-pmt-ign="${id(r.id)}">Ignore</button>` : '';
       return `<div class="pmt-card ${st}"><span class="pmt-t"><b>${escapeHtml(rpTypeName(r))}</b>${r.urgent && st === 'open' ? '<span class="pmt-pill urg">Urgent</span>' : ''}${pill[st] || ''}</span>
         ${r.notes ? `<p>${escapeHtml(r.notes)}</p>` : ''}<span class="pmt-m">Reported${r.createdBy ? ' by ' + escapeHtml(r.createdBy) : ''} · ${escapeHtml(ago(r.createdAt))}${r.location ? ' · ' + escapeHtml(r.location) : ''}</span>${line}
-        ${acts ? `<span class="pmt-acts">${acts}</span>` : ''}<button type="button" class="pmt-link" data-pmt-report="${escapeHtmlAttr(r.id)}">See the report ›</button></div>`;
+        ${acts ? `<span class="pmt-acts">${acts}</span>` : ''}<button type="button" class="pmt-link" data-pmt-report="${id(r.id)}">See the report ›</button></div>`;
     };
     const shown = m.L.filter(x=> x.st !== 'ign');
     const ign = m.ign.length ? `<div class="pmt-ign"><span>Ignored for this prep:</span>${m.ign.map(({ r })=> `<span class="pmt-ig">${escapeHtml(rpTypeName(r))}<button type="button" data-pmt-undo="${id(r.id)}" title="Bring it back">Undo</button></span>`).join('')}</div>` : '';
     return `<div class="ptk-mt"><div class="pmt-h"><b>Open maintenance in Shed ${escapeHtml(c.shed)}</b><span>${c.nextPlacement ? 'Check these before the chicks come in on ' + escapeHtml(prepFmt(c.nextPlacement)) + '.' : 'Check these before the chicks come in.'}</span>
       <button type="button" class="pmt-link" data-pmt-all>Open Maintenance ›</button></div>${shown.length ? `<div class="pmt-grid">${shown.map(card).join('')}</div>` : '<p class="pmt-none">Nothing left to decide.</p>'}${ign}</div>`;
+  }
+  // "See the report" (c176): the report itself in a pop-up on top of Shed prep — photo, note, task, history — with this
+  // shed's decision buttons; "Open in Maintenance" still goes to the full page
+  let prepRpCur = null;   // { cid, rid }
+  function openPrepReport(cid, rid){ prepRpCur = { cid, rid }; if(!prepRpFill()) return; markReportSeen(rid); $('#prepRpModal').classList.add('open'); }
+  function prepRpFill(){
+    const box = $('#prepRpBody'), c = prepRpCur && prepFind(prepRpCur.cid), r = prepRpCur && reports.find(x=> x.id === prepRpCur.rid);
+    if(!c || !r){ $('#prepRpModal').classList.remove('open'); return false; }
+    const sc = rpStatusClass(r), st = prepMtState(c, r), photo = rpPhoto(r), task = r.linkedTaskId ? tasks.find(t=> t.id === r.linkedTaskId) : null;
+    const fmtWhen = iso=> iso ? fmtDateTime12(new Date(iso), { weekday:'short', month:'short', day:'numeric' }) : '';
+    const id = escapeHtmlAttr(c.id + '|' + r.id);
+    const pill = { open: '<span class="pmt-pill new">Not decided</span>', ack: '<span class="pmt-pill ack">Fix before chicks</span>', task: '<span class="pmt-pill task">Task given</span>', ign: '<span class="pmt-pill ig">Ignored for this prep</span>', fixed: '' }[st] || '';
+    const acts = st === 'open' ? `<button type="button" class="pmt-b q" data-pmt-ign="${id}">✕ Ignore</button><button type="button" class="pmt-b amb" data-pmt-ack="${id}">✓ Acknowledge</button><button type="button" class="pmt-b pri" data-pmt-task="${escapeHtmlAttr(r.id)}">＋ Make a task</button>`
+      : st === 'ack' ? `<button type="button" class="pmt-b pri" data-pmt-task="${escapeHtmlAttr(r.id)}">＋ Make a task</button><button type="button" class="pmt-b q" data-pmt-undo="${id}">Undo</button>`
+      : st === 'task' ? `<button type="button" class="pmt-b" data-pmt-opentask="${escapeHtmlAttr(r.linkedTaskId)}">Open task</button><button type="button" class="pmt-b q" data-pmt-ign="${id}">Ignore</button>`
+      : st === 'ign' ? `<button type="button" class="pmt-b q" data-pmt-undo="${id}">Undo ignore</button>` : '';
+    const blk = (lbl, txt)=> `<div class="rpd-block"><span class="rpd-lbl">${lbl}</span><div class="rpd-note">${escapeHtml(txt)}</div></div>`;
+    box.innerHTML = `<div class="pmt-rpm-top"><span class="rp-st st-${sc}">${sc === 'resolved' ? 'Fixed' : escapeHtml(RP_STATUS_LABEL[r.status] || 'Open')}</span>${r.urgent && sc !== 'resolved' ? '<span class="rp-tag urgent">Urgent</span>' : ''}${pill}</div>
+      <h3 class="rpd-type">${escapeHtml(rpTypeName(r))}</h3>
+      <div class="rpd-sub">${escapeHtml([reportPlace(r), r.createdBy ? 'reported by ' + r.createdBy : '', fmtWhen(r.createdAt)].filter(Boolean).join(' · '))}</div>
+      ${photo ? `<a class="rpd-photo" target="_blank" rel="noopener" title="Open full size"><img alt="Report photo"><span class="rpd-photo-note" hidden>Photo not available yet — it uploads when the worker's phone has signal.</span></a>` : ''}
+      ${r.notes ? blk("Worker's note", r.notes) : ''}
+      ${task ? `<div class="rpd-block"><span class="rpd-lbl">Task</span><div class="rpd-note"><b>${escapeHtml(task.name)}</b><br><span class="rpd-sub">${escapeHtml([task.status === 'done' ? 'Done' : task.date ? formatFull(task.date) : 'In the Backlog, no day yet', (task.assignees || []).join(', ') || 'no one yet'].join(' · '))}</span></div></div>` : ''}
+      ${r.resolutionNotes ? blk('What fixed it', r.resolutionNotes) : ''}
+      ${r.managerNotes ? blk('Manager notes', r.managerNotes) : ''}
+      <div class="rpd-block"><span class="rpd-lbl">History</span><div class="rpd-hist">${rpdHistHtml(r, task, sc, fmtWhen)}</div></div>
+      <div class="pmt-rpm-dec"><span class="rpd-lbl">Shed ${escapeHtml(c.shed)}'s prep</span>${st === 'fixed' ? `<span class="pmt-rpm-ok">✓ Fixed — nothing to decide.</span>` : st === 'ack' ? '<span class="pmt-rpm-tx">On the checklist · counts as done when the report is fixed.</span>' : ''}${acts ? `<span class="pmt-acts">${acts}</span>` : ''}</div>
+      <div class="prep-tm-btns"><button type="button" class="btn-ghost" data-pmt-full="${escapeHtmlAttr(r.id)}">Open in Maintenance ›</button><button type="button" class="btn-app" data-prep-close>Close</button></div>`;
+    box.querySelector('.btn-app[data-prep-close]').addEventListener('click', ()=> $('#prepRpModal').classList.remove('open'));
+    if(photo){
+      const a = box.querySelector('.rpd-photo'), img = a.querySelector('img'), note = a.querySelector('.rpd-photo-note');
+      a.href = photo;
+      img.onerror = ()=>{ if(!(r.photoUrls || []).length){ a.remove(); return; } img.hidden = true; note.hidden = false; a.removeAttribute('href'); };
+      img.src = photo;
+    }
+    return true;
   }
   function prepTrackHtml(sheds){
     const byNum = (a, b)=> String(a).localeCompare(String(b), undefined, { numeric:true });
@@ -16100,11 +16153,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const r = reports.find(x=> x.id === rid), what = r ? rpTypeName(r) : 'Report';
       c.mt = Object.assign({}, c.mt || {}); if(b.dataset.pmtUndo) delete c.mt[rid]; else c.mt[rid] = b.dataset.pmtIgn ? 'ign' : 'ack';
       addHistory('Shed preparation', `Shed ${c.shed} · ${what}: ${b.dataset.pmtUndo ? 'decision undone' : b.dataset.pmtIgn ? 'ignored for this prep' : 'fix before chicks'}`);
-      persist(); renderPrepBoard(); if(!b.dataset.pmtUndo) showToast(b.dataset.pmtIgn ? `${what} ignored for Shed ${c.shed}'s prep — it stays open in Maintenance.` : `${what} goes on Shed ${c.shed}'s list — fix it before the chicks.`); return; }
+      persist(); renderPrepBoard(); if($('#prepRpModal').classList.contains('open')) prepRpFill(); if(!b.dataset.pmtUndo) showToast(b.dataset.pmtIgn ? `${what} ignored for Shed ${c.shed}'s prep — it stays open in Maintenance.` : `${what} goes on Shed ${c.shed}'s list — fix it before the chicks.`); return; }
     if((b = g('[data-pmt-task]'))){ openAssignTaskFromReport(b.dataset.pmtTask); if(pendingReportTask) prepTaskReturn = true; return; }
-    if((b = g('[data-pmt-opentask]'))){ openTaskDetailModal(b.dataset.pmtOpentask); return; }
+    if((b = g('[data-pmt-opentask]'))){ $('#prepRpModal').classList.remove('open'); openTaskDetailModal(b.dataset.pmtOpentask); return; }
     // leave Shed prep first, as the rail does — otherwise Maintenance opens behind it and the app looks stuck (c174)
-    if((b = g('[data-pmt-report]'))){ const id = b.dataset.pmtReport; if(mlogIsOpen()) closeMlog(); openReportsDrawer(id); return; }
+    if((b = g('[data-pmt-report]'))){ const v = b.dataset.pmtReport, k = v.indexOf('|'); openPrepReport(v.slice(0, k), v.slice(k + 1)); return; }
+    if((b = g('[data-pmt-full]'))){ const id = b.dataset.pmtFull; $('#prepRpModal').classList.remove('open'); if(mlogIsOpen()) closeMlog(); openReportsDrawer(id); return; }
     if(g('[data-pmt-all]')){ if(mlogIsOpen()) closeMlog(); openReportsDrawer(); return; }
     if(g('.ptk-mt')) return;
     if(!g('[data-prep-ready],[data-prep-unready]') && (b = g('[data-ptk-open]'))){ prepTrack = 'checklist'; prepOnlyShed = b.dataset.ptkOpen; try{ localStorage.setItem('cw-prep-track', prepTrack); }catch(err){} renderPrepBoard(); return; }
@@ -16154,6 +16208,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       persist(); renderAll(); return; }
   }
   $('#prepMain').addEventListener('click', prepBoardClick);
+  $('#prepRpModal').addEventListener('click', prepBoardClick);
   $('#prepMain').addEventListener('keydown', (e)=>{ if((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.ptk-row[data-ptk-open]')){ e.preventDefault(); e.target.click(); } });
   $('#prepMain').addEventListener('click', (e)=>{
     const f = e.target.closest('[data-prep-f]'); if(f){ prepFilter = f.dataset.prepF; keepScroll(renderPrepBoard); return; }
