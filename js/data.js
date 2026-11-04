@@ -158,6 +158,7 @@ function normalizeHistoryRec(r){
   const rec={id:String(r.id||uid('bh')),batch:String(r.batch||'').slice(0,32),endDate:r.endDate?String(r.endDate).slice(0,10):'',source:r.source==='auto'?'auto':'manual',
     placed:Math.round(num0(r.placed)),picked:Math.round(num0(r.picked)),liveWeightKg:num0(r.liveWeightKg),feedKg:num0(r.feedKg),avgAge:num0(r.avgAge),
     firstThinAge:numOrNull(r.firstThinAge),firstThinShare:numOrNull(r.firstThinShare),finalShare:numOrNull(r.finalShare),finalAge:numOrNull(r.finalAge),finalAvgKg:numOrNull(r.finalAvgKg),densTrigger:numOrNull(r.densTrigger),densTarget:numOrNull(r.densTarget),densMax:numOrNull(r.densMax),pickupsPerShed:numOrNull(r.pickupsPerShed),intakePct:numOrNull(r.intakePct),leftoverKg:numOrNull(r.leftoverKg),savedAt:num0(r.savedAt)||Date.now()};
+  if(r.finished===true)rec.finished=true;   // saved with Finish batch: the running-batch check never takes it back (2026-11-04)
   return rec.placed>0&&rec.picked>0&&rec.picked<=rec.placed?rec:null;
 }
 // Combine Farm history from the cloud with this device's: union by id,

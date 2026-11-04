@@ -72,7 +72,7 @@ function pwMarkPending(batch){if(!batch)return;const p=pwPending();if(p[batch]!=
 // A batch that is still running but was filed as finished by "New batch" goes back to running
 function pwFixPrematureHistory(){
   const running=pwRunningList().filter(s=>s.running).map(s=>s.key);if(!running.length)return;
-  const bad=farmHistory().filter(r=>r.source==='auto'&&running.includes(String(r.batch)));
+  const bad=farmHistory().filter(r=>r.source==='auto'&&!r.finished&&running.includes(String(r.batch)));   // a batch you finished stays filed
   if(!bad.length)return;
   bad.forEach(r=>{deleteFarmHistoryRec(r.id);pwMarkPending(String(r.batch));});
   savePredState();if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();
