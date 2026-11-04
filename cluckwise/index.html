@@ -3709,6 +3709,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .pmt-rpm-ok{ font:700 13px Inter,sans-serif; color:var(--success); } .pmt-rpm-tx{ font-size:13px; color:var(--muted); }
   .pmt-pill.ig{ background:var(--line); color:var(--muted); }
   .pmt-rpm .prep-tm-btns{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+  .prt-box{ margin-top:14px; padding:12px 14px; border:1px dashed var(--line); border-radius:12px; display:flex; flex-direction:column; gap:6px; }
+  .prt-box b{ font:700 13.5px Inter,sans-serif; color:var(--ink); } .prt-box span{ font-size:12.5px; color:var(--muted); } .prt-box button{ all:unset; box-sizing:border-box; cursor:pointer; align-self:flex-start; height:40px; padding:0 16px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 13.5px Inter,sans-serif; display:inline-flex; align-items:center; } .prt-box button:hover{ border-color:var(--ink); } .prt-box button:focus-visible{ outline:2px solid #F0A21A; outline-offset:2px; }
+  @media (min-width:761px){ .prt-modal{ width:min(560px, calc(100vw - 24px)); } }
+  .prt-modal .form-modal-body{ display:flex; flex-direction:column; gap:10px; }
+  .prt-intro, .prt-none{ margin:0; font-size:13.5px; color:var(--ink); line-height:1.45; }
+  .prt-shed{ display:flex; flex-direction:column; gap:4px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .prt-shed > b{ font:800 13px Inter,sans-serif; color:var(--ink); }
+  .prt-row{ display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .prt-row:first-of-type{ border-top:0; } .prt-row input{ width:18px; height:18px; margin-top:2px; accent-color:#0F8A75; flex:none; }
+  .prt-row span{ display:flex; flex-direction:column; gap:2px; } .prt-row b{ font:700 13.5px Inter,sans-serif; color:var(--ink); } .prt-row small{ font-size:12px; color:var(--muted); }
+  .prt-modal .prep-tm-btns{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
   .pmt-acts{ display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; }
   .pmt-b{ all:unset; box-sizing:border-box; cursor:pointer; height:32px; padding:0 11px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:700 12.5px Inter,sans-serif; display:inline-flex; align-items:center; white-space:nowrap; }
   .pmt-b:hover{ border-color:var(--muted); } .pmt-b:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
@@ -6000,7 +6011,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     <div class="restore-list" id="restoreList"></div>
     <p style="font-size:11.5px;color:var(--muted);margin:4px 0 0;">Restoring replaces tasks, batches, events and frequent tasks with the chosen version. History and reports are kept. Your current data is saved as a "Before restore" point first, and you can Undo straight after.</p>
     <button class="btn-danger-outline" id="confirmRestoreBtn" style="margin-top:8px;" disabled>Choose a restore point</button>
+    <div class="prt-box"><b>Only lost shed prep ticks</b><span>Puts back ticks that are in a restore point or in History but missing now. Nothing else changes.</span><button type="button" class="btn-ghost" id="prepRecoverBtn">Find lost ticks</button></div>
   </div>
+</div>
+<div class="form-modal prep-modal prt-modal" id="prepRecoverModal" role="dialog" aria-modal="true" aria-labelledby="prepRecoverTitle">
+  <div class="form-modal-head"><h2 id="prepRecoverTitle">Lost shed prep ticks</h2><button type="button" data-prep-close aria-label="Close">✕</button></div>
+  <div class="form-modal-body" id="prepRecoverBody"></div>
 </div>
 
 <script>
@@ -6361,6 +6377,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(s)]);
     keys.forEach(k=>{
       // a task's steps merge one by one, so a worker's tick and a step added here both survive
+      // a shed prep checklist's sections and jobs merge one by one too (2026-11-04): a tick on one device and a
+      // refreshed task date on another both survive — before, the whole list from one device replaced the other's
+      if((k === 'sections' || k === 'items') && [b[k], l[k], s[k]].every(a=> a === undefined || (Array.isArray(a) && a.every(x=> x && typeof x === 'object' && x.id)))){
+        const m = mergeCollection(Array.isArray(b[k]) ? b[k] : [], Array.isArray(l[k]) ? l[k] : [], Array.isArray(s[k]) ? s[k] : [], x=> x.id);
+        if(m.length || Array.isArray(l[k]) || Array.isArray(s[k])) out[k] = m; return; }
       if(k === 'subs' && (Array.isArray(l.subs) || Array.isArray(s.subs))){ const m = mergeCollection(Array.isArray(b.subs) ? b.subs : [], Array.isArray(l.subs) ? l.subs : [], Array.isArray(s.subs) ? s.subs : [], x=> x.id); if(m.length) out.subs = m; return; }
       const val = stableStr(l[k]) !== stableStr(b[k]) ? l[k] : s[k];
       if(val !== undefined) out[k] = cloneData(val);
@@ -12301,6 +12322,78 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     reconcileReportTaskLinks();
     offerUndo(`Restored to ${label}`, undoSnap);
   }
+
+  // ── Recover lost shed prep ticks (2026-11-04) ──
+  // A job ticked earlier but not ticked now, found in the daily restore points (newest first) or in History
+  // ("Shed 4: "Remove Litter" done", "Step done · <task> · <job>") — unless History shows it was unticked on purpose
+  // later. Only the ticks come back; tasks, batches and everything else stay as they are.
+  let prepRecoverList = [];
+  function prepRecoverFind(snaps){
+    const live = prepLiveLists(), found = new Map(), keyOf = (c, u)=> c.id + '|' + u.id;
+    const secName = (c, u)=> { const S = (c.sections || []).find(sec=> sec === u || (sec.items || []).includes(u)); return S ? S.t : ''; };
+    const jobKey = (c, u)=> prepNorm(secName(c, u)) + '|' + prepNorm(u === (c.sections || []).find(sec=> sec === u) ? '' : u.t);
+    // unticked on purpose after a time?
+    const undone = (c, u, after)=> history.some(h=> h.ts > after && (
+      (h.action === 'Shed preparation' && (h.detail === `Shed ${c.shed}: "${u.t}" reopened` || h.detail === `Shed ${c.shed}: ticks cleared` || h.detail.startsWith(`Shed ${c.shed} reopened`))) ||
+      (h.action === 'Step reopened' && h.detail.endsWith(' · ' + u.t) && h.detail.includes(String(c.shed)))));
+    const add = (c, u, by, at, from)=>{ const k = keyOf(c, u); if(found.has(k)) return; if(undone(c, u, Date.parse(at || '') || 0)) return; found.set(k, { cid: c.id, uid: u.id, shed: c.shed, sec: secName(c, u), job: u.t, by: by || '', at: at || '', from }); };
+    // 1 restore points, newest first
+    (snaps || []).slice().sort((a, b)=> (b.takenAt || 0) - (a.takenAt || 0)).forEach(sn=>{
+      const old = (sn.data && sn.data.shedPrep) || [];
+      live.forEach(c=>{
+        const oc = old.find(x=> x.id === c.id) || old.filter(x=> x.shed === c.shed && !x.isTpl && (x.batch || '') === (c.batch || '')).sort((a, b)=> (b.createdAt || 0) - (a.createdAt || 0))[0];
+        if(!oc) return;
+        const byId = new Map(prepUnits(oc).map(({ u })=> [u.id, u])), byName = new Map(prepUnits(oc).map(({ u })=> [jobKey(oc, u), u]));
+        prepUnits(c).forEach(({ u })=>{ if(u.done) return; const o = byId.get(u.id) || byName.get(jobKey(c, u)); if(o && o.done) add(c, u, o.doneBy, o.doneAt || new Date(sn.takenAt || Date.now()).toISOString(), 'restore point ' + formatShort(sn.date)); });
+      });
+    });
+    // 2 History since then
+    const newest = Math.max(0, ...(snaps || []).map(sn=> sn.takenAt || 0));
+    history.filter(h=> h.ts > newest).slice().reverse().forEach(h=>{
+      live.forEach(c=> prepUnits(c).forEach(({ u })=>{
+        if(u.done) return;
+        const hit = (h.action === 'Shed preparation' && h.detail === `Shed ${c.shed}: "${u.t}" done`) ||
+          (h.action === 'Step done' && h.detail.endsWith(' · ' + u.t) && u.taskId && (()=>{ const t = tasks.find(x=> x.id === u.taskId); return t && h.detail === `${taskLabel(t)} · ${u.t}`; })());
+        if(hit) add(c, u, '', new Date(h.ts).toISOString(), 'History ' + fmt12(new Date(h.ts)));
+      }));
+    });
+    return [...found.values()];
+  }
+  function prepRecoverRender(){
+    const box = $('#prepRecoverBody'), L = prepRecoverList;
+    if(!L.length){ box.innerHTML = `<p class="prt-none">No lost ticks found — every tick in the restore points and History is still there.</p><div class="prep-tm-btns"><button type="button" class="btn-app" data-prep-close>Close</button></div>`; box.querySelector('[data-prep-close]').addEventListener('click', ()=> $('#prepRecoverModal').classList.remove('open')); return; }
+    const by = {}; L.forEach((x, i)=> (by[x.shed] = by[x.shed] || []).push(i));
+    box.innerHTML = `<p class="prt-intro">${L.length} job${L.length === 1 ? ' was' : 's were'} ticked before but ${L.length === 1 ? 'is' : 'are'} not ticked now. Untick any you don't want back.</p>`
+      + Object.keys(by).sort((a, b)=> String(a).localeCompare(String(b), undefined, { numeric:true })).map(sh=> `<div class="prt-shed"><b>Shed ${escapeHtml(sh)}</b>${by[sh].map(i=>{ const x = L[i];
+        return `<label class="prt-row"><input type="checkbox" data-prt="${i}" checked><span><b>${escapeHtml(x.job)}</b><small>${escapeHtml(x.sec)}${x.by ? ' · ' + escapeHtml(x.by) : ''}${x.at ? ' · ' + escapeHtml(fmtDateTime12(new Date(x.at), { month:'short', day:'numeric' })) : ''} · from ${escapeHtml(x.from)}</small></span></label>`; }).join('')}</div>`).join('')
+      + `<div class="prep-tm-btns"><button type="button" class="btn-ghost" data-prep-close>Cancel</button><button type="button" class="btn-app" id="prepRecoverGo">Put back ${L.length} tick${L.length === 1 ? '' : 's'}</button></div>`;
+    box.querySelector('[data-prep-close]').addEventListener('click', ()=> $('#prepRecoverModal').classList.remove('open'));
+    box.addEventListener('change', ()=>{ const n = box.querySelectorAll('[data-prt]:checked').length; const b = $('#prepRecoverGo'); b.textContent = `Put back ${n} tick${n === 1 ? '' : 's'}`; b.disabled = !n; });
+    $('#prepRecoverGo').addEventListener('click', ()=>{
+      const pick = [...box.querySelectorAll('[data-prt]:checked')].map(x=> L[Number(x.dataset.prt)]);
+      let n = 0;
+      pick.forEach(x=>{
+        const c = prepFind(x.cid), u = c && prepUnit(c, x.uid); if(!u || u.done) return;
+        const by = x.by || managerName() || 'Manager', at = x.at || new Date().toISOString();
+        const t = u.taskId ? tasks.find(y=> y.id === u.taskId) : null, sb = t && t.prep && t.prep.bundle ? (t.subs || []).find(y=> y.prepUid === u.id) : null;
+        if(sb){ sb.done = true; sb.doneBy = by; sb.doneAt = at; const p = subProgress(t); if(p.done === p.total && t.status !== 'done'){ t.status = 'done'; t.doneBy = by; t.doneAt = at; } }   // the job follows its step
+        else if(t){ if(t.status !== 'done'){ t.status = 'done'; t.doneBy = by; t.doneAt = at; } }
+        u.done = true; u.doneBy = by; u.doneAt = at; n++;
+      });
+      if(n){ addHistory('Shed preparation', `${n} lost tick${n === 1 ? '' : 's'} put back (${[...new Set(pick.map(x=> 'Shed ' + x.shed))].join(', ')})`); try{ reconcileShedPrep(); }catch(e){} persist(); renderAll(); }
+      $('#prepRecoverModal').classList.remove('open'); closeOverlays();
+      showToast(n ? `${n} tick${n === 1 ? '' : 's'} put back.` : 'Nothing to put back.');
+    });
+  }
+  async function openPrepRecover(){
+    const btn = $('#prepRecoverBtn'); if(btn){ btn.disabled = true; btn.textContent = 'Looking…'; }
+    let snaps = [];
+    try{ const { list } = await fetchSnapshotsFile(); snaps = pruneSnapshots(list).filter(s=> s.kind !== 'before-restore'); }catch(e){ showToast('Could not load the restore points — only History is checked.', true); }
+    prepRecoverList = prepRecoverFind(snaps);
+    if(btn){ btn.disabled = false; btn.textContent = 'Find lost ticks'; }
+    prepRecoverRender(); $('#prepRecoverModal').classList.add('open');
+  }
+  $('#prepRecoverBtn').addEventListener('click', openPrepRecover);
 
   let editingAssignees = [];
   let detailTaskId = null;
