@@ -4116,7 +4116,7 @@
     const box = (k, rows)=> `<textarea class="g-edit" rows="${rows || 3}" data-gkey="${k.replace(/^g_/, '')}" placeholder="${guideEsc(guideT('en', k))}">${guideEsc(c.text[k.replace(/^g_/, '')] || '')}</textarea>`;
     const say = (k, rows)=> E ? box(k, rows) : guideEsc(X(k));
     const stage = age <= 3 ? 0 : age <= 14 ? 1 : 2;
-    const temp = guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
+    const temp = window.CWGuide2 ? CWGuide2.t1(CWGuide2.tempAt(c.temp, age)) : guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
     const card = (cls, title, svg, body)=> `<div class="g-card ${cls}"><div class="g-card-h">${title}</div>${svg || ''}<div class="g-card-b">${body}</div></div>`;
     const check = ([k, icon, sp])=>{
       const hidden = c.hidden.includes(k);

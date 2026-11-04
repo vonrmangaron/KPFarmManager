@@ -20,6 +20,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 <script src="../js/notify.js"></script>
 <script src="../js/plumo-face.js"></script>
 <script src="guide2.js"></script>
+<script src="guide-mgr.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2474,6 +2475,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   #guideModal{ width:640px; }
+  /* Farm guide tabs in the page header (2026-11-04, guide-mgr.js) */
+  #guideModal .g-head-actions{ display:flex; align-items:center; gap:12px; min-width:0; flex:1; justify-content:flex-end; }
+  #guideModal .gm-right:empty{ display:none; }
+  @media (max-width:760px){
+    #guideModal .form-modal-head{ flex-wrap:wrap; row-gap:8px; padding-bottom:10px; }
+    #guideModal .g-head-actions{ order:3; flex:0 0 100%; justify-content:flex-start; flex-wrap:wrap; }
+    #guideModal .gm-crewbtn, #guideModal .gm-uses{ display:none; }
+  }
   #guideModal .form-modal-body{ gap:0; }
   .menu-guide .mm-ic{ background:#3E7CB1 !important; color:#fff !important; }
   .gs-card{ padding:12px 14px; display:flex; flex-direction:column; gap:14px; }
@@ -5915,13 +5924,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 </div>
 
 <div class="form-modal" id="guideModal">
-  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Crew app's Guide — every shed by its own age</div></div><div class="g-head-actions"><button type="button" class="g-edit-btn" id="guideEditBtn">✎ Edit guide</button><button id="closeGuideModal" aria-label="Close">✕</button></div></div>
+  <div class="form-modal-head"><div class="g-head-text"><h2>Farm guide</h2><div class="g-head-sub">What workers see in the Crew app's Guide — every shed by its own age</div></div><div class="g-head-actions gm-head-host" id="guideHeadActions"></div><button id="closeGuideModal" aria-label="Close">✕</button></div>
   <div class="g-page-wrap">
     <div class="form-modal-body" id="guideModalBody"></div>
-    <aside class="g-side" id="guideSide" aria-label="Guide targets">
-      <div class="g-side-head"><b>Guide targets</b><span>Shown to workers in the Crew app's Guide. Starts from Ross 308 — set them to your integrator's numbers. The card text on the left can be edited too.</span></div>
-      <div class="st-card gs-card" id="guideSettings"></div>
-    </aside>
   </div>
 </div>
 
@@ -6227,7 +6232,6 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function normalizeDensity(v){ return v === 'day' ? 'day' : 'month'; }
   function applySettings(){
-    try{ const gs = document.getElementById('guideSettings'); if(gs && !gs.contains(document.activeElement)) renderGuideSettings(); }catch(e){ /* guide code not loaded yet on first run */ }
     settings.batchBadgeStyle = normalizeBatchStyle(settings.batchBadgeStyle);
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
@@ -14946,6 +14950,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#newReportModal').classList.remove('open');
     $('#addTasksSheet').classList.remove('open');
     $('#batchInfoModal').classList.remove('open');
+    // leaving the guide with edits not applied: keep the draft and say so (it reopens on Edit guide)
+    try{ if($('#guideModal').classList.contains('open') && guideDirtyCount()) showToast('Guide changes not applied yet — they wait for you in Farm guide › Edit guide.'); }catch(e){}
     $('#guideModal').classList.remove('open'); document.body.classList.remove('guide-open');
     document.body.classList.remove('settings-open');
     $('#startRepairModal').classList.remove('open');
@@ -15727,7 +15733,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const box = (k, rows)=> `<textarea class="g-edit" rows="${rows || 3}" data-gkey="${k.replace(/^g_/, '')}" placeholder="${guideEsc(guideT('en', k))}">${guideEsc(c.text[k.replace(/^g_/, '')] || '')}</textarea>`;
     const say = (k, rows)=> E ? box(k, rows) : guideEsc(X(k));
     const stage = age <= 3 ? 0 : age <= 14 ? 1 : 2;
-    const temp = guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
+    const temp = window.CWGuide2 ? CWGuide2.t1(CWGuide2.tempAt(c.temp, age)) : guideAt(c.temp, age), rh = guideAt(c.rh, age), dark = guideAt(c.dark, age);
     const card = (cls, title, svg, body)=> `<div class="g-card ${cls}"><div class="g-card-h">${title}</div>${svg || ''}<div class="g-card-b">${body}</div></div>`;
     const check = ([k, icon, sp])=>{
       const hidden = c.hidden.includes(k);
@@ -15767,7 +15773,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }).filter(s=> s.birds > 0).sort((x, y)=> x.name.localeCompare(y.name, undefined, { numeric:true }));
   }
 
-  let mainGuideAge = null, mainGuideEdit = false;
+  // Farm guide page (2026-11-04, guide-mgr.js, mockup version 1): Sheds · Edit guide · Standards.
+  // Edit guide works on a draft; nothing reaches the crew until Apply.
+  let mainGuideAge = null, mainGuideTab = 'sheds', mainGuideShed = null, mainGuideCrew = false, mainGuideSec = 'temp', mainGuideStd = 'ross', guideDraft = null;
+  let mainGuideView = { v: 'home' };   // the crew pages: Crew view, or a quick check opened from Sheds
   function openGuide(){
     closeOverlays();
     const cb = currentOrNextBatch(), td = dateKey(new Date());
@@ -15777,87 +15786,84 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     // A page, not a window: no dimmed backdrop
     document.body.classList.add('guide-open');
     $('#scrim').classList.remove('show');
-    try{ renderGuideSettings(); }catch(e){}
   }
-  // Guide per shed (2026-11-03, guide2.js): a board of every shed on a computer, the crew's phone pages
-  // on a phone; ✎ Edit guide keeps the card editor by age
-  let mainGuideView = { v: 'home' };
+  function guideDirtyCount(){
+    if(!guideDraft) return 0;
+    const a = guideCfg(settings.guide), b = guideCfg(guideDraft), J = JSON.stringify;
+    let n = ['temp', 'rh', 'dark'].filter(k=> J(a[k]) !== J(b[k])).length;
+    new Set(Object.keys(a.text).concat(Object.keys(b.text))).forEach(k=>{ if((a.text[k] || '') !== (b.text[k] || '')) n++; });
+    if(J(a.hidden.slice().sort()) !== J(b.hidden.slice().sort())) n++;
+    if(J(a.custom) !== J(b.custom)) n++;
+    return n;
+  }
+  function editGuideDraft(fn){ if(!guideDraft) guideDraft = JSON.parse(JSON.stringify(settings.guide || {})); fn(guideDraft, guideCfg(guideDraft)); }
+  function renderGuideHead(){
+    const h = $('#guideHeadActions'); if(!h || !window.CWGuideMgr) return;
+    h.innerHTML = CWGuideMgr.headHtml({ tab: mainGuideTab, crew: mainGuideCrew, dirty: guideDirtyCount() });
+  }
   function renderMainGuide(){
-    const cb = currentOrNextBatch(), td = dateKey(new Date());
-    const body = $('#guideModalBody'), useNew = !mainGuideEdit && window.CWGuide2;
-    body.classList.toggle('g2-wide-body', !!useNew);
-    if(useNew){
-      const c = guideCfg(settings.guide), T = (k, v)=> guideT('en', k, v);
-      mainGuideView.age = mainGuideAge;
-      body.innerHTML = CWGuide2.html({ lang: 'en', view: mainGuideView, cfg: c, at: guideAt, kg: guideRossKg, feedG: guideFeedG, waterMl: guideWaterMl, T,
-        X: k=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); },
-        checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: false, board: window.innerWidth >= 900,
-        dateLabel: dk=> toDateObj(dk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }),
-        sheds: CWGuide2.shedList(batches, td) });
-    } else body.innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), edit: mainGuideEdit, sheds: cb && td >= cb.start ? guideSheds(cb, mainGuideAge) : [] });
-    const eb = $('#guideEditBtn'); eb.textContent = mainGuideEdit ? '✓ Done' : '✎ Edit guide'; eb.classList.toggle('on', mainGuideEdit);
-    $('#guideModal').classList.toggle('editing', mainGuideEdit);
+    const cb = currentOrNextBatch(), td = dateKey(new Date()), body = $('#guideModalBody');
+    if(!window.CWGuideMgr){ body.innerHTML = guideHtml(mainGuideAge, settings.guide, 'en', { noBatch: !(cb && td >= cb.start), sheds: cb && td >= cb.start ? guideSheds(cb, mainGuideAge) : [] }); return; }
+    const c = guideCfg(mainGuideTab === 'edit' && guideDraft ? guideDraft : settings.guide), T = (k, v)=> guideT('en', k, v);
+    const sheds = CWGuide2.shedList(batches, td), cur = sheds.find(s=> s.n === mainGuideShed) || sheds.find(s=> s.age != null);
+    const o = { lang: 'en', cfg: c, at: guideAt, kg: guideRossKg, feedG: guideFeedG, waterMl: guideWaterMl, T,
+      X: k=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); },
+      checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: false, sheds, shed: mainGuideShed, sec: mainGuideSec, std: mainGuideStd,
+      age: mainGuideTab === 'std' ? (cur ? cur.age : null) : mainGuideAge,
+      dateLabel: dk=> toDateObj(dk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }) };
+    const crewPage = mainGuideTab === 'sheds' && (mainGuideCrew || mainGuideView.v === 'check');
+    body.classList.toggle('g2-wide-body', !crewPage);
+    // keep the cursor where it was when a change redraws the page
+    const ae = document.activeElement, keep = ae && body.contains(ae) ? ['gmRow', 'gmText', 'gmOwn', 'gmHide'].map(k=> ae.dataset[k] != null ? [k, ae.dataset[k]] : null).find(Boolean) : null;
+    if(crewPage){ mainGuideView.age = mainGuideAge; body.innerHTML = CWGuide2.html(Object.assign(o, { view: mainGuideView })); }
+    else body.innerHTML = mainGuideTab === 'edit' ? CWGuideMgr.editHtml(o) : mainGuideTab === 'std' ? CWGuideMgr.stdHtml(o) : CWGuideMgr.shedsHtml(o);
+    if(keep){ const el = body.querySelector(`[data-${keep[0].replace(/[A-Z]/g, m=> '-' + m.toLowerCase())}="${CSS.escape(keep[1])}"]`); if(el) el.focus(); }
+    renderGuideHead();
   }
-  $('#guideModalBody').addEventListener('click', (e)=>{
-    const g = e.target.closest('[data-g2-shed], [data-g2-check], [data-g2-back]');
-    if(g){
-      mainGuideView = g.dataset.g2Shed != null ? { v: 'shed', shed: Number(g.dataset.g2Shed) } : g.dataset.g2Check != null ? { v: 'check', check: g.dataset.g2Check } : { v: 'home' };
-      renderMainGuide(); const w = $('#guideModal .g-page-wrap'); if(w) w.scrollTop = 0; return;
+  function guideTop(){ const w = $('#guideModal .g-page-wrap'); if(w) w.scrollTop = 0; }
+  $('#guideModal').addEventListener('click', (e)=>{
+    const d = (sel)=> e.target.closest(sel);
+    let el;
+    if((el = d('[data-gm-tab]'))){ mainGuideTab = el.dataset.gmTab; mainGuideView = { v: 'home' }; renderMainGuide(); guideTop(); return; }
+    if(d('[data-gm-crew]')){ mainGuideCrew = !mainGuideCrew; mainGuideView = { v: 'home' }; renderMainGuide(); guideTop(); return; }
+    if((el = d('[data-gm-shed]'))){ mainGuideShed = Number(el.dataset.gmShed); renderMainGuide(); return; }
+    if((el = d('[data-gm-sec]'))){ mainGuideSec = el.dataset.gmSec; renderMainGuide(); guideTop(); return; }
+    if((el = d('[data-gm-std]'))){ mainGuideStd = el.dataset.gmStd; renderMainGuide(); return; }
+    if(d('[data-gm-apply]')){ if(guideDraft){ settings.guide = guideDraft; guideDraft = null; persist(); showToast('Guide applied — workers see it next time they open the Crew app.'); } renderMainGuide(); return; }
+    if(d('[data-gm-discard]')){ guideDraft = null; renderMainGuide(); showToast('Changes discarded.'); return; }
+    if((el = d('[data-gm-reset]'))){ const k = el.dataset.gmReset; editGuideDraft(g=>{ delete g[k]; }); renderMainGuide(); return; }
+    if((el = d('[data-gm-radd]'))){ const k = el.dataset.gmRadd;
+      editGuideDraft((g, c)=>{ const rows = c[k].map(r=> r.slice()).sort((a, b)=> a[0] - b[0]), last = rows[rows.length - 1] || [0, ''];
+        rows.push([Math.min(70, Number(last[0]) + 7), last[1]]); g[k] = rows; });
+      renderMainGuide(); const ins = $('#guideModalBody').querySelectorAll(`[data-gm-row^="${k}:"]`); if(ins.length) ins[ins.length - 2].focus(); return; }
+    if((el = d('[data-gm-rdel]'))){ const [k, i] = el.dataset.gmRdel.split(':');
+      editGuideDraft((g, c)=>{ if(c[k].length > 1) g[k] = c[k].filter((r, j)=> j !== Number(i)).map(r=> r.slice()); }); renderMainGuide(); return; }
+    if(d('[data-gm-own-add]')){ editGuideDraft(g=>{ g.custom = (g.custom || []).concat([{ id: 'gc' + Date.now().toString(36), icon: '📌', title: '', body: '' }]); }); renderMainGuide();
+      const last = [...document.querySelectorAll('#guideModalBody [data-gm-own$=":title"]')].pop(); if(last) last.focus(); return; }
+    if((el = d('[data-gm-own-del]'))){ const id = el.dataset.gmOwnDel; editGuideDraft(g=>{ g.custom = (g.custom || []).filter(o=> o.id !== id); }); renderMainGuide(); return; }
+    if((el = d('[data-g2-shed], [data-g2-check], [data-g2-back]'))){
+      mainGuideView = el.dataset.g2Shed != null ? { v: 'shed', shed: Number(el.dataset.g2Shed) } : el.dataset.g2Check != null ? { v: 'check', check: el.dataset.g2Check } : { v: 'home' };
+      renderMainGuide(); guideTop(); return;
     }
-    const b = e.target.closest('[data-g-age]'); if(!b) return;
-    mainGuideAge = Math.max(0, Math.min(70, mainGuideAge + Number(b.dataset.gAge)));
-    renderMainGuide();
+    if((el = d('[data-g-age]'))){ mainGuideAge = Math.max(0, Math.min(70, mainGuideAge + Number(el.dataset.gAge))); renderMainGuide(); }
+  });
+  // Edit guide: every change goes into the draft
+  $('#guideModalBody').addEventListener('change', (e)=>{
+    const el = e.target, ds = el.dataset;
+    if(ds.gmRow){ const [k, i, f] = ds.gmRow.split(':'), num = k !== 'rh';
+      editGuideDraft((g, c)=>{ const rows = c[k].map(r=> r.slice()), r = rows[Number(i)]; if(!r) return;
+        if(f === 'd'){ const v = Math.round(Number(el.value)); if(isFinite(v) && v >= 0 && v <= 70) r[0] = v; }
+        else { const v = num ? Math.round(Number(el.value) * 10) / 10 : el.value.trim(); if(num ? isFinite(v) && el.value !== '' : v) r[1] = v; }
+        g[k] = rows.sort((a, b)=> a[0] - b[0]); });
+      renderMainGuide(); return; }
+    if(ds.gmText != null){ const k = ds.gmText, v = el.value.trim(); editGuideDraft(g=>{ g.text = Object.assign({}, g.text || {}); if(v) g.text[k] = v; else delete g.text[k]; }); renderGuideHead(); return; }
+    if(ds.gmHide){ const k = ds.gmHide; editGuideDraft(g=>{ const h = new Set(g.hidden || []); el.checked ? h.delete(k) : h.add(k); g.hidden = [...h]; }); renderMainGuide(); return; }
+    if(ds.gmOwn){ const [id, field] = ds.gmOwn.split(':'); editGuideDraft(g=>{ g.custom = (g.custom || []).map(o=> o.id === id ? Object.assign({}, o, { [field]: el.value.trim() }) : o); }); renderGuideHead(); }
   });
   $('#closeGuideModal').addEventListener('click', closeOverlays);
-  $('#guideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; mainGuideView = { v: 'home' }; openGuide(); });
-  $('#guideEditBtn').addEventListener('click', ()=>{ mainGuideEdit = !mainGuideEdit; renderMainGuide(); if(!mainGuideEdit) showToast('Guide saved — workers see it next time they open the Crew app.'); });
-  // Edit mode: card text, show/hide quick checks, your own cards (all saved in settings.guide)
-  function patchGuide(fn){ const g = Object.assign({}, settings.guide || {}); fn(g); settings.guide = g; persist(); }
-  $('#guideModalBody').addEventListener('change', (e)=>{
-    const el = e.target;
-    if(el.dataset.gkey){ const k = el.dataset.gkey, v = el.value.trim(); patchGuide(g=>{ g.text = Object.assign({}, g.text || {}); if(v) g.text[k] = v; else delete g.text[k]; }); return; }
-    if(el.dataset.ghide){ const k = el.dataset.ghide; patchGuide(g=>{ const h = new Set(g.hidden || []); el.checked ? h.delete(k) : h.add(k); g.hidden = [...h]; }); renderMainGuide(); return; }
-    if(el.dataset.gc){ const [id, field] = el.dataset.gc.split(':'); patchGuide(g=>{ g.custom = (g.custom || []).map(o=> o.id === id ? Object.assign({}, o, { [field]: el.value.trim() }) : o); }); }
-  });
-  $('#guideModalBody').addEventListener('click', (e)=>{
-    if(e.target.closest('[data-gc-add]')){ patchGuide(g=>{ g.custom = (g.custom || []).concat([{ id: 'gc' + Date.now().toString(36), icon: '📌', title: '', body: '' }]); }); renderMainGuide(); const last = [...document.querySelectorAll('#guideModalBody .g-own .g-edit-t')].pop(); if(last) last.focus(); return; }
-    const del = e.target.closest('[data-gc-del]');
-    if(del){ const id = del.dataset.gcDel; patchGuide(g=>{ g.custom = (g.custom || []).filter(o=> o.id !== id); }); renderMainGuide(); }
-  });
-  $('#moreGuideBtn').addEventListener('click', ()=>{ mainGuideAge = null; mainGuideEdit = false; mainGuideView = { v: 'home' }; openGuide(); });
-  // Settings: edit the guide's targets (rows of "from day → value")
-  const GUIDE_FIELDS = [['temp', 'Shed temperature', '°C', 'number'], ['rh', 'Humidity', '%', 'text'], ['dark', 'Hours of dark', 'h', 'number']];
-  const guideSetOpen = new Set();
-  function renderGuideSettings(){
-    const box = $('#guideSettings'); if(!box) return;
-    const c = guideCfg(settings.guide);
-    // Each target folds up (tap its name); the summary shows the first and last value
-    box.innerHTML = GUIDE_FIELDS.map(([k, label, unit, type])=>{ const rows = c[k].slice().sort((a,b)=> a[0]-b[0]); const f = rows[0], l = rows[rows.length - 1];
-      const sum = rows.length ? (rows.length > 1 ? `Day ${f[0]}: ${f[1]} ${unit} → day ${l[0]}: ${l[1]} ${unit}` : `${f[1]} ${unit}`) : '';
-      return `<details class="gs-block" data-gs="${k}"${guideSetOpen.has(k) ? ' open' : ''}><summary class="gs-h"><span>${label}</span><span class="gs-sum">${escapeHtml(sum)}</span></summary>
-      ${rows.map((r, i)=> `<div class="gs-row"><span>From day</span><input type="number" min="0" max="70" class="gs-age" value="${escapeHtmlAttr(r[0])}"><span>→</span><input type="${type}" class="gs-val" value="${escapeHtmlAttr(r[1])}"><span class="gs-unit">${unit}</span><button type="button" class="gs-del" aria-label="Remove row">✕</button></div>`).join('')}
-      <button type="button" class="gs-add">+ Add row</button></details>`; }).join('') + `<div class="gs-foot"><button type="button" class="st-btn" id="gsReset">Reset to Ross 308 defaults</button></div>`;
-  }
-  function saveGuideSettings(){
-    const out = {};
-    document.querySelectorAll('#guideSettings .gs-block').forEach(bl=>{
-      const k = bl.dataset.gs, num = k !== 'rh';
-      const rows = [...bl.querySelectorAll('.gs-row')].map(r=> [Number(r.querySelector('.gs-age').value), num ? Number(r.querySelector('.gs-val').value) : r.querySelector('.gs-val').value.trim()])
-        .filter(r=> isFinite(r[0]) && r[0] >= 0 && (num ? isFinite(r[1]) : r[1]));
-      if(rows.length) out[k] = rows.sort((a,b)=> a[0]-b[0]);
-    });
-    settings.guide = Object.assign({}, settings.guide || {}, out);
-    persist();
-  }
-  $('#guideSettings').addEventListener('change', (e)=>{ if(e.target.matches('input')) saveGuideSettings(); });
-  $('#guideSettings').addEventListener('toggle', (e)=>{ const d = e.target; if(d.matches && d.matches('details.gs-block')){ d.open ? guideSetOpen.add(d.dataset.gs) : guideSetOpen.delete(d.dataset.gs); } }, true);
-  $('#guideSettings').addEventListener('click', (e)=>{
-    if(e.target.closest('.gs-del')){ e.target.closest('.gs-row').remove(); saveGuideSettings(); renderGuideSettings(); return; }
-    const add = e.target.closest('.gs-add');
-    if(add){ const bl = add.closest('.gs-block'); const k = bl.dataset.gs; guideSetOpen.add(k); const c = guideCfg(settings.guide); settings.guide = Object.assign({}, settings.guide || {}, { [k]: c[k].concat([[ (c[k][c[k].length-1] || [0])[0] + 7, c[k][c[k].length-1][1] ]]) }); persist(); renderGuideSettings(); return; }
-    if(e.target.closest('#gsReset')){ const g = Object.assign({}, settings.guide || {}); delete g.temp; delete g.rh; delete g.dark; settings.guide = g; persist(); renderGuideSettings(); showToast('Guide targets reset to Ross 308 defaults. Your card text is kept.'); }
-  });
-  renderGuideSettings();
+  const goGuide = ()=>{ mainGuideAge = null; mainGuideCrew = false; mainGuideView = { v: 'home' }; mainGuideTab = guideDirtyCount() ? 'edit' : 'sheds'; openGuide(); };
+  $('#guideBtn').addEventListener('click', goGuide);
+  $('#moreGuideBtn').addEventListener('click', goGuide);
 
   // Floating actions: tap to expand upwards, tap again / anywhere / an action to close
   function setFabDock(open){ const d = $('#fabDock'); d.classList.toggle('open', open); $('#fabToggle').setAttribute('aria-expanded', String(open)); }
