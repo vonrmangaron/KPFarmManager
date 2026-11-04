@@ -156,15 +156,18 @@ function finFinish(){
   const first=!finDone();
   predState.batchFinal={at:first?Date.now():predState.batchFinal.at,updatedAt:Date.now(),leftoverKg:pairsLeftoverKg(),next:finNextBatch()||null};
   savePredState();schedulePush();if(typeof scheduleHistoryPush==='function')scheduleHistoryPush();
+  if(typeof flushBeforeLeavingBatch==='function')flushBeforeLeavingBatch();   // to the cloud now, so a refresh can't bring the button back
   finClose();render();
   const nx=finNextBatch();
   showToast(first?`📚 Batch ${key} finished — saved to Farm history. ${fmtFeed(pairsLeftoverKg(),1)} carries over to ${nx?'Batch '+nx:'the next batch'}.`:`Batch ${key} saved again in Farm history.`);
+  // the batch is closed: move on to the batch that's starting — this one is saved to the cloud first (2026-11-04)
+  if(first&&nx&&typeof switchToBatch==='function')setTimeout(()=>{Promise.resolve(switchToBatch(nx)).then(()=>{if(String(currentBatchKey()).toLowerCase()===String(nx).toLowerCase())showToast(`Now on Batch ${nx}. Batch ${key} is closed and in Farm history.`);});},900);
 }
 // Home: Plumo's banner while the batch is ready, a slim line once it's finished
 function finBannerHtml(){
   if(!farmData)return '';
   if(finDone()){const f=predState.batchFinal;
-    return `<div class="fin-done-line"><span class="fin-d ok">${FIN_IC.ok}</span><span><b>Batch ${escapeHtml(finKey())} finished</b> ${escapeHtml(fmtShortNoYear(dateOnly(new Date(f.at))))} · saved to Farm history · ${escapeHtml(fmtFeed(Number(f.leftoverKg)||0,1))} leftover → ${f.next?'Batch '+escapeHtml(f.next):'next batch'}</span><button type="button" class="fin-b" data-fin-open="2">See results</button></div>`;}
+    return `<div class="fin-done-line"><span class="fin-d ok">${FIN_IC.ok}</span><span><b>Batch ${escapeHtml(finKey())} finished</b> ${escapeHtml(fmtShortNoYear(dateOnly(new Date(f.at))))} · saved to Farm history · ${escapeHtml(fmtFeed(Number(f.leftoverKg)||0,1))} leftover → ${f.next?'Batch '+escapeHtml(f.next):'next batch'}</span><button type="button" class="fin-b" data-fin-open="2">See results</button>${f.next?`<button type="button" class="fin-b pri" data-switch-batch="${escapeAttr(f.next)}">Go to Batch ${escapeHtml(f.next)}</button>`:`<button type="button" class="fin-b pri" data-fin-newbatch>Start the next batch</button>`}</div>`;}
   const r=finReady();if(!r.ready)return '';
   return `<section class="fin-banner">${finFace('happy')}<span class="fin-bt"><small>Plumo · Batch ${escapeHtml(finKey())}</small><b>All birds are out — Batch ${escapeHtml(finKey())} is ready to finish</b><span>Shed ${escapeHtml(String(r.last.s.id))}'s last pickup is weighed. Check the leftover feed and save the final results.</span></span>
     <span class="fin-bb"><button type="button" class="fin-btn pri" data-fin-open="0">${FIN_IC.flag}Finish batch ${escapeHtml(finKey())}</button></span></section>`;
@@ -182,6 +185,7 @@ function finMaybeAsk(){
 (function(){const prev=render;render=function(){const out=prev.apply(this,arguments);try{if(finState)finRender();else finMaybeAsk();}catch(e){console.warn('Finish batch',e);}return out;};})();
 document.addEventListener('click',e=>{
   const t=e.target;if(!t.closest)return;
+  if(t.closest('[data-fin-newbatch]')){if(typeof openNewBatchModal==='function')openNewBatchModal();return;}
   const o=t.closest('[data-fin-open]');if(o){e.preventDefault();finOpen(Number(o.dataset.finOpen)||0);return;}
   const m=document.getElementById('finModal');if(!m||m.hidden)return;
   if(t.closest('[data-fin-x]')){finClose();return;}
