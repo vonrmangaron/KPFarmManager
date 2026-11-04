@@ -128,11 +128,20 @@ function updateRunningUI(){
     <span class="bsw-dot"></span><b>Batch ${escapeHtml(cur)}</b><span class="bsw-to">⇄ ${escapeHtml(other.key)}</span></button>`;
 }
 // Home: each shed's changeover between the two running batches
+// The two batches of a changeover. Once the old batch has finished it stops counting as running, so the
+// Starting card (2026-11-04) falls back to the batch that finished last (within 45 days) before this one.
+function pwChangePair(){
+  const list=pwRunningList();if(list.length>=2)return {old:list[0],nu:list[list.length-1]};
+  const cur=pwCurrentSummary();if(!cur||!cur.planned)return null;const today=dateOnly(new Date());
+  const prev=(pwRunFarm===syncFarmName?pwRunOthers:[]).filter(o=>compareBatchKeys(o.key,cur.key)>0).sort((a,b)=>compareBatchKeys(a.key,b.key))
+    .map(o=>pwBatchSummary(o.key,o.sheds)).find(s=>s.finished&&s.lastOut&&daysBetween(s.lastOut,today)<=45);
+  return prev?{old:prev,nu:cur}:null;
+}
 function changeoverHtml(){
   // Timeline lanes (2026-10-17): each shed is a lane across the calendar — its run in the batch
   // that's finishing, the empty days, then the batch that's starting. Today is a red line.
-  const list=pwRunningList();if(list.length<2)return '';
-  const old=list[0],nu=list[list.length-1],today=dateOnly(new Date());
+  const P=pwChangePair();if(!P)return '';
+  const old=P.old,nu=P.nu,today=dateOnly(new Date());
   const ids=[...new Set(old.rows.map(r=>r.id).concat(nu.rows.map(r=>r.id)))].sort((a,b)=>Number(a)-Number(b));
   const pairs=ids.map(id=>({id,o:old.rows.find(r=>r.id===id)||{},n:nu.rows.find(r=>r.id===id)||{}}));
   // the window: a few days back, to two weeks after the last date
@@ -161,6 +170,7 @@ function changeoverHtml(){
   const allOpen=!!pwCoOpen;
   const lanes=allOpen?laneHtml.join(''):laneHtml[firstIdx];
   const outDone=pairs.filter(x=>x.o.out&&x.o.out<today).length,placed=pairs.filter(x=>x.n.place).length,total=pairs.length;
+  if(outDone===total)return startingHtml(old,nu,pairs);   // every shed is out: the new batch's Starting card (2026-11-04)
   const complete=outDone===total&&placed===total;
   if(complete)return '';   // temporary: gone once the old batch is out of every shed and every shed is placed
   const nextOut=pairs.map(x=>x.o.out).filter(d=>d&&d>=today).sort((a,b)=>a-b)[0];
@@ -199,8 +209,8 @@ const CO_MN=['January','February','March','April','May','June','July','August','
 function coMonthAdd(c,n){const d=new Date(c.y,c.m+n,1);return {y:d.getFullYear(),m:d.getMonth()};}
 function coKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function coCalEvents(){
-  const list=pwRunningList();if(list.length<2)return null;
-  const old=list[0],nu=list[list.length-1],ev={};
+  const P=pwChangePair();if(!P)return null;
+  const old=P.old,nu=P.nu,ev={};
   const ids=[...new Set(old.rows.map(r=>r.id).concat(nu.rows.map(r=>r.id)))].sort((a,b)=>Number(a)-Number(b));
   ids.forEach(id=>{const o=old.rows.find(r=>r.id===id)||{},n=nu.rows.find(r=>r.id===id)||{};
     if(o.out)(ev[coKey(dateOnly(o.out))]=ev[coKey(dateOnly(o.out))]||[]).push({k:'out',id});
@@ -259,3 +269,43 @@ document.addEventListener('click',e=>{
     if(go)coCalGo(dx<0?1:-1);else if(mv){mv.classList.add('anim');mv.style.transform='';mv.style.opacity='';}sx=null;lock=null;};
   document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
 })();
+
+// ── Batch Starting (2026-11-04, mockup YK5qGgMwgGhDFj6yyvJRBM option A) ──
+// Once every shed of the old batch is out, the Change Over card becomes the new batch's Starting card: one row per
+// shed — cleaned out (old batch) → Shed prep from Tasks → chicks in (new batch). Sheds / Calendar; gone when all are placed.
+function startingHtml(old,nu,pairs){
+  const today=dateOnly(new Date()),fmt=d=>dateOnly(d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  const cw=typeof mgrBriefCw==='function'?mgrBriefCw():null,ps=cw&&Array.isArray(cw.prepSheds)?cw.prepSheds:[],rd=cw&&Array.isArray(cw.prepReady)?cw.prepReady:[];
+  const rows=pairs.map(x=>{const id=String(x.id),p=ps.find(q=>String(q.shed)===id)||null,ready=rd.includes(id)||!!(p&&p.ready);
+    const placed=!!(x.n.place&&x.n.place<=today),days=x.n.place?daysBetween(today,x.n.place):null;
+    const st=placed?'p':ready?'r':p&&p.done>0?'w':'n';
+    return {id,o:x.o,n:x.n,p,ready,placed,days,st,warn:!placed&&!ready&&days!=null&&days<=1};});
+  if(rows.every(r=>r.placed))return '';   // every shed has its chicks: the card's job is done
+  const total=rows.length,placedN=rows.filter(r=>r.placed).length;
+  const next=rows.filter(r=>!r.placed&&r.n.place).sort((a,b)=>a.n.place-b.n.place)[0];
+  const nextSheds=next?rows.filter(r=>!r.placed&&r.n.place&&+r.n.place===+next.n.place).map(r=>r.id):[];
+  const when=d=>d===0?'today':d===1?'tomorrow':d<0?Math.abs(d)+' d ago':'in '+d+' days';
+  const sub=`${placedN} of ${total} sheds placed${next?` · next chicks ${when(next.days)}, ${escapeHtml(fmt(next.n.place))} (Shed${nextSheds.length>1?'s':''} ${escapeHtml(nextSheds.join(', '))})`:''}`;
+  const rec=farmHistory().find(r=>String(r.batch||'').trim().toLowerCase()===String(old.key).toLowerCase());
+  const band=rec?`<b>Batch ${escapeHtml(old.key)} finished</b>${rec.endDate?' '+escapeHtml(fmt(rec.endDate)):''} · saved to Farm history${Number(rec.leftoverKg)>0?` · ${escapeHtml(fmtFeed(Number(rec.leftoverKg),1))} leftover carried over to ${escapeHtml(nu.key)}`:''}`
+    :`<b>Every shed of Batch ${escapeHtml(old.key)} is cleaned out</b>${old.lastOut?' · last '+escapeHtml(fmt(old.lastOut)):''}`;
+  const ok='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const segs=`<div class="co3-segs" role="img" aria-label="${placedN} placed, ${rows.filter(r=>r.st==='r').length} ready for chicks, ${rows.filter(r=>r.st==='w').length} being prepared">${rows.map(r=>`<i class="${r.st}" title="Shed ${escapeAttr(r.id)}: ${r.st==='p'?'placed':r.st==='r'?'ready for chicks':r.st==='w'?'being prepared':'prep not started'}"></i>`).join('')}</div>`;
+  const prepCell=r=>{if(r.placed)return '<span class="co3-mu">—</span>';if(r.ready)return `<span class="co3-chip g">${ok}Ready for chicks</span>`;
+    if(!cw)return '<span class="co3-mu">Open Shed prep to see</span>';if(!r.p||!r.p.total)return '<span class="co3-mu">No checklist yet</span>';
+    const pct=Math.round(r.p.done/r.p.total*100);return `<span class="co3-bar"><i style="width:${pct}%"></i></span><span class="co3-mu">${pct}% of jobs · ${r.p.done}/${r.p.total}</span>`;};
+  const chickCell=r=>r.placed?`<span class="co3-chip g">Placed · day ${daysBetween(r.n.place,today)}</span> <span class="co3-mu">${escapeHtml(fmt(r.n.place))}</span>`
+    :r.n.place?`<b>${escapeHtml(fmt(r.n.place))}</b> <span class="co3-chip ${r.days<=1?'a':'n'}">${when(r.days)}</span>`:'<span class="co3-mu">No date yet</span>';
+  const rowsHtml=rows.map(r=>`<tr class="${!r.placed&&r.days!=null&&r.days<=1?'now':''}${r.placed?' pl':''}"><td><b>Shed ${escapeHtml(r.id)}</b></td><td>${r.o.out?`<span class="co3-ok">${ok}</span> ${escapeHtml(fmt(r.o.out))}`:'<span class="co3-mu">—</span>'}</td><td><span class="co3-prep">${prepCell(r)}</span></td><td>${chickCell(r)}</td><td class="co3-w">${r.warn?'<span class="co3-chip r">Prep not done</span>':''}</td></tr>`).join('');
+  const onNew=currentBatchKey()===nu.key;
+  const setup=onNew?`<button type="button" class="mgr-btn primary" data-tab="shedsetup">Set up sheds</button>`:`<button type="button" class="mgr-btn primary" data-switch-batch="${escapeAttr(nu.key)}" data-then-tab="shedsetup" title="Opens ${escapeAttr(nu.key)} and its Set up sheds page">Set up sheds</button>`;
+  const cal=pwCoView==='calendar';
+  return `<section class="mgr-card co3-card" aria-label="Batch ${escapeAttr(nu.key)} starting">
+    <div class="co3-band">${ok}<span>${band}</span><span class="co3-sp"></span><span class="co3-gone">Goes away when all ${total} sheds are placed</span></div>
+    <div class="co3-hd"><div><h3>Batch ${escapeHtml(nu.key)} · Starting <span class="co3-st">In progress</span></h3><div class="co3-sub">${sub}</div></div>
+      <div class="co3-vw" role="group" aria-label="View"><button type="button" data-co-view="timeline" class="${cal?'':'on'}" aria-pressed="${!cal}" title="One row per shed"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Sheds</button><button type="button" data-co-view="calendar" class="${cal?'on':''}" aria-pressed="${cal}" title="Clean-outs and chicks in on a calendar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendar</button></div></div>
+    <div class="co3-prog">${segs}<div class="co3-lg"><span><i class="p"></i>Placed</span><span><i class="r"></i>Ready for chicks</span><span><i class="w"></i>Being prepared</span><span><i class="n"></i>Not started</span></div></div>
+    ${cal?`<div class="co2-cal co3-cal" id="coCal">${coCalInner()}</div>`:`<div class="co3-tw"><table class="co3-t"><thead><tr><th>Shed</th><th>Cleaned out · ${escapeHtml(old.key)}</th><th>Shed prep · Tasks</th><th>Chicks in · ${escapeHtml(nu.key)}</th><th></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`}
+    <div class="co3-foot"><span>Shed prep comes from Tasks › Prep.</span><span class="co3-sp"></span><button type="button" class="mgr-btn" data-brief-cw="prep">Shed prep ›</button>${setup}</div>
+  </section>`;
+}
