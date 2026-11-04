@@ -6361,6 +6361,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(s)]);
     keys.forEach(k=>{
       // a task's steps merge one by one, so a worker's tick and a step added here both survive
+      // a shed prep checklist's sections and jobs merge one by one too (2026-11-04): a tick on one device and a
+      // refreshed task date on another both survive — before, the whole list from one device replaced the other's
+      if((k === 'sections' || k === 'items') && [b[k], l[k], s[k]].every(a=> a === undefined || (Array.isArray(a) && a.every(x=> x && typeof x === 'object' && x.id)))){
+        const m = mergeCollection(Array.isArray(b[k]) ? b[k] : [], Array.isArray(l[k]) ? l[k] : [], Array.isArray(s[k]) ? s[k] : [], x=> x.id);
+        if(m.length || Array.isArray(l[k]) || Array.isArray(s[k])) out[k] = m; return; }
       if(k === 'subs' && (Array.isArray(l.subs) || Array.isArray(s.subs))){ const m = mergeCollection(Array.isArray(b.subs) ? b.subs : [], Array.isArray(l.subs) ? l.subs : [], Array.isArray(s.subs) ? s.subs : [], x=> x.id); if(m.length) out.subs = m; return; }
       const val = stableStr(l[k]) !== stableStr(b[k]) ? l[k] : s[k];
       if(val !== undefined) out[k] = cloneData(val);
