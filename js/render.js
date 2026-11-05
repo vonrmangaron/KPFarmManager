@@ -148,6 +148,7 @@ function renderGrowthChartSvg() {
 // ─────────────────────────────────────────────────────────────
 function navIcon(type) {
   const icons = {
+    print: '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
     pickups: '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M6 11h5"/>',
     grid: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     home: '<path d="M3 10 12 4l9 6v10H3z"/><path d="M9 20v-6h6v6"/>',
@@ -484,7 +485,7 @@ function updatePageHeader() {
   const titleEl = document.getElementById('pageTitle');
   const subEl   = document.getElementById('pageSub');
   if (!titleEl) return;
-  const tabLabels = { home:'Home', shedsetup:'Set up sheds', history:'History', farmsettings:'Settings', account:'Account', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
+  const tabLabels = { home:'Home', shedsetup:'Set up sheds', placement:'Placement report', history:'History', farmsettings:'Settings', account:'Account', dashboard:'Result detail', g1:pairLabel(1), g2:pairLabel(2), g3:pairLabel(3), g4:pairLabel(4), predictions:'Predictions' };
   titleEl.textContent = tabLabels[activeTab] || activeTab;
   // Desktop tool pages use this same header (their own window title bar is hidden)
   const tool = typeof toolPageOpen !== 'undefined' && toolPageOpen && TOOL_PAGES[toolPageOpen] && TOOL_PAGES[toolPageOpen].title;
@@ -1255,6 +1256,7 @@ function render(){
     }
     else if(activeTab==='home'){app.innerHTML=renderHomeView();}
     else if(activeTab==='shedsetup'){app.innerHTML=renderShedSetupPage();}
+    else if(activeTab==='placement'){app.innerHTML=renderPlacementPage();}
     else if(activeTab==='farmsettings'){app.innerHTML=renderSettingsPage();afterSettingsRender();}
     else if(activeTab==='dashboard'){app.innerHTML=renderDashboardView();}
     else if(activeTab==='predictions'){activeTab='g'+(predState.predGroup||1);app.innerHTML=groupViewHtml(predState.predGroup||1);}

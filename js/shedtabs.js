@@ -149,9 +149,10 @@ function suCurrent(s,f){
   if(f==='chickWeightGrams')return String(Math.round(shedChickWeight(s)*10000)/10);
   if(f==='feedAdjustPct')return s.feedAdjustPct!=null?String(s.feedAdjustPct):'';
   if(f==='mort')return shedMortRate(s).toFixed(2);
+  if(f==='docket')return JSON.stringify(dkNorm(s.docket));
   return '';
 }
-const SU_LABEL={placementDate:'placement',initialPopulation:'birds placed',cleanoutDate:'clean-out',mort:'daily morts',chickWeightGrams:'chick weight',feedAdjustPct:'feed intake'};
+const SU_LABEL={placementDate:'placement',initialPopulation:'birds placed',cleanoutDate:'clean-out',mort:'daily morts',chickWeightGrams:'chick weight',feedAdjustPct:'feed intake',docket:'placement docket'};
 function setupTabHtml(g,sheds){
   if(!sheds.length)return '<div class="empty-card">No sheds in this pair.</div>';
   const cell=(s,f,html)=>`<td>${html}</td>`;
@@ -168,6 +169,7 @@ function setupTabHtml(g,sheds){
   return `<section class="planner-card su-card">
     <div class="su-scroll"><table class="su-tbl"><thead><tr><th></th>${sheds.map(s=>`<th scope="col">Shed ${s.id}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
     <details class="su-more"${ch.some(c=>c.f==='chickWeightGrams'||c.f==='feedAdjustPct')?' open':''}><summary>Chick weight and feed intake</summary><div class="su-scroll"><table class="su-tbl"><tbody>${more}</tbody></table></div></details>
+    ${typeof dkSetupHtml==='function'?dkSetupHtml(g,sheds):''}
     <div class="su-apply"><span>${ch.length?`<b>${ch.length} change${ch.length===1?'':'s'} not applied</b> · ${escapeHtml(ch.map(c=>`Shed ${c.id} ${SU_LABEL[c.f]||c.f}`).join(', '))}`:'No changes'}</span><button type="button" class="mgr-btn" data-su-discard="${g}" ${ch.length?'':'disabled'}>Discard</button><button type="button" class="mgr-btn primary" data-su-apply="${g}" ${ch.length?'':'disabled'}>Apply</button></div>
   </section>`;
 }
@@ -177,10 +179,11 @@ function suRefreshBar(g){const card=document.querySelector('.su-card');if(!card)
 function suApply(g){
   const ch=suChanges(g);if(!ch.length)return;
   // placement first (it moves an automatic clean-out), then the rest, then a typed clean-out
-  const order=['placementDate','initialPopulation','chickWeightGrams','feedAdjustPct','cleanoutDate','mort'];
+  const order=['placementDate','initialPopulation','chickWeightGrams','docket','feedAdjustPct','cleanoutDate','mort'];
   ch.sort((a,b)=>order.indexOf(a.f)-order.indexOf(b.f)).forEach(c=>{
     const idx=Number(c.id)-1;
-    if(c.f==='mort')setShedMortRate(Number(c.id),Math.min(MAX_MORT_RATE_PCT,Math.max(0,Number(c.v)||0)));
+    if(c.f==='docket')dkApply(c.id,c.v);
+    else if(c.f==='mort')setShedMortRate(Number(c.id),Math.min(MAX_MORT_RATE_PCT,Math.max(0,Number(c.v)||0)));
     else updateShedField(idx,c.f,c.v);
   });
   delete setupDraft[g];saveState();schedulePush();render();

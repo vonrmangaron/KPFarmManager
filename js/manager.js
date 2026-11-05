@@ -576,7 +576,8 @@ function renderPwBatchPanel(){
   el.innerHTML=card+`<div class="pwb-links">
     <button type="button" class="sb-link${onHome?' active':''}" data-tab="home">${navIcon('home')}<span class="sb-link-label">Home</span></button>
     <button type="button" class="sb-link${on?' active':''}" data-tab="dashboard">${navIcon('grid')}<span class="sb-link-label">Result detail</span></button>
-    <button type="button" class="sb-link${activeTab==='shedsetup'?' active':''}" data-tab="shedsetup">${navIcon('shed')}<span class="sb-link-label">Set up sheds</span></button></div>
+    <button type="button" class="sb-link${activeTab==='shedsetup'?' active':''}" data-tab="shedsetup">${navIcon('shed')}<span class="sb-link-label">Set up sheds</span></button>
+    <button type="button" class="sb-link${activeTab==='placement'?' active':''}" data-tab="placement" title="Printable placement report: donors, DOC weight and birds per shed">${navIcon('print')}<span class="sb-link-label">Placement report</span></button></div>
     <button type="button" class="pwb-new" data-pwb-newbatch>${navIcon('refresh')}<span>New batch</span></button>`;
 }
 function buildPwRail(){

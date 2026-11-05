@@ -1312,7 +1312,7 @@ function finalizeImport(mode){
     const densitySettings=(cur&&cur.densitySettings)?{...cur.densitySettings}:{useGlobal:true,maxDensity:null,triggerDensity:null,targetDensity:null};
     let mortalityUpdatedAt=(cur&&cur.mortalityUpdatedAt)?cur.mortalityUpdatedAt:null;
     if(mortality>0)mortalityUpdatedAt=dateOnly(new Date());
-    return {...inc,closed:cur&&cur.closed?cur.closed:undefined,pickups:finalPickups,predictedPickups:predicted,targetPickups:tp,densitySettings,targetCurve:tc,cleanoutDate,mortality,mortalityUpdatedAt,mortalityRatePercent:rate,chickWeightKg:cw,inYardSamples:samples};
+    return {...inc,closed:cur&&cur.closed?cur.closed:undefined,docket:cur&&cur.docket?cur.docket:undefined,pickups:finalPickups,predictedPickups:predicted,targetPickups:tp,densitySettings,targetCurve:tc,cleanoutDate,mortality,mortalityUpdatedAt,mortalityRatePercent:rate,chickWeightKg:cw,inYardSamples:samples};
   });
   if(!predState.batchNumber&&result.batchNumber){predState.batchNumber=sanitizeBatchNumber(result.batchNumber);savePredState();}
   farmData={batchNumber:predState.batchNumber||result.batchNumber||'',importDate:new Date().toISOString(),fileName:file.name,biasFactor:(farmData&&farmData.biasFactor)?farmData.biasFactor:DEFAULT_BIAS_FACTOR,sheds:finalSheds};
