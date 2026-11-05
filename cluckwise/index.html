@@ -4079,6 +4079,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .prep-tm-k{ font:800 11px Inter,system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
   .prep-tm-hint{ font-size:13px; color:var(--muted); margin:0; }
   .prep-chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .rep-chips button[disabled]{ opacity:.45; cursor:not-allowed; }
+  .rep-age{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .rep-age[hidden]{ display:none; }
+  .rep-age label{ margin:0; }
+  #repAgeRow input{ width:90px !important; flex:0 0 90px; }
+  .rep-sum{ margin:10px 0 0; padding:10px 12px; border-radius:10px; background:var(--primary-soft); color:var(--ink); font:700 13px Inter,system-ui,sans-serif; line-height:1.45; }
+  .rep-sum:empty{ display:none; }
+  .rep-sum.warn{ background:#FDECEC; color:#9B2C2C; }
+  body.theme-dark .rep-sum.warn{ background:#3A2230; color:#F4B4B4; }
   .prep-chips button{ all:unset; cursor:pointer; padding:8px 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface); font:700 13px Inter,system-ui,sans-serif; color:var(--ink); }
   .prep-chips button.on{ background:#16191B; color:#fff; border-color:#16191B; }
   body.theme-dark .prep-chips button.on{ background:#F0A21A; color:#16191B; border-color:#F0A21A; }
@@ -5675,8 +5684,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <option value="monthly">Every month</option>
     </select>
     <div id="editTaskUntilRow" style="display:none;">
-      <label for="editTaskUntilInput">Repeat until</label>
-      <input type="date" id="editTaskUntilInput">
+      <label>Starts</label>
+      <div class="prep-chips rep-chips" id="repStartChips"><button type="button" data-rep-start="date" class="on" title="Start on the date picked above">On the date above</button><button type="button" data-rep-start="age" title="Start when the birds reach this age, counted from the first shed placed">At bird age</button></div>
+      <div class="rep-age" id="repAgeRow" hidden><label for="repAgeInput">Day</label><input type="number" id="repAgeInput" min="0" max="80" value="21" title="Bird age in days (placement day is day 0)"></div>
+      <label>Ends</label>
+      <div class="prep-chips rep-chips" id="repEndChips"><button type="button" data-rep-end="date" class="on" title="Stop on the date you pick">On a date</button><button type="button" data-rep-end="batch" title="Keep going until the batch ends: its last shed cleaned out or closed in Production">When the batch ends</button></div>
+      <div id="repUntilWrap"><label for="editTaskUntilInput">Repeat until</label>
+      <input type="date" id="editTaskUntilInput"></div>
+      <p class="rep-sum" id="repSummary"></p>
     </div>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0;">Repeating creates individual occurrences up to the date above — you can still edit or delete any single one later.</p>
     <div id="editTaskSeriesRow" style="display:none;">
@@ -7420,28 +7435,37 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   const REPEAT_LABELS = { daily:'Every day', weekdays:'Every weekday', every2days:'Every 2 days', weekly:'Every week', biweekly:'Every 2 weeks', monthly:'Every month' };
-  function generateRecurrence(baseTask, rule, untilDate){
-    if(rule==='none' || !baseTask.date) return 0;
-    const seriesId = baseTask.seriesId || uid();
-    baseTask.seriesId = seriesId;
-    let cur = baseTask.date;
-    let count = 0;
-    const SAFETY_CAP = 366;
-    while(count < SAFETY_CAP){
-      if(rule==='monthly'){ cur = addMonthsStr(baseTask.date, count+1); }
+  // The days after `after` up to `until`, stepping from `base` by the rule
+  function repeatDates(rule, base, after, until){
+    const out = []; let cur = base;
+    for(let i = 0; i < 400; i++){
+      if(rule==='monthly'){ cur = addMonthsStr(base, i+1); }
       else if(rule==='daily' || rule==='weekdays'){ cur = addDaysStr(cur, 1); if(rule==='weekdays'){ while(isWeekendKey(cur)) cur = addDaysStr(cur,1); } }
       else if(rule==='every2days'){ cur = addDaysStr(cur, 2); }
       else if(rule==='weekly'){ cur = addDaysStr(cur, 7); }
       else if(rule==='biweekly'){ cur = addDaysStr(cur, 14); }
       else break;
-      if(cur > untilDate) break;
-      addTask(baseTask.name, baseTask.icon, cur, Object.assign({ seriesId, assignees: (baseTask.assignees || []).slice() }, baseTask.cat ? { cat: baseTask.cat } : {}, (baseTask.subs || []).length ? { subs: freshSubs(baseTask.subs) } : {}));
+      if(cur > until) break;
+      if(cur > after) out.push(cur);
+    }
+    return out;
+  }
+  // rep (optional): { batch, age } for a series that ends with the batch — see reconcileBatchRepeats
+  function generateRecurrence(baseTask, rule, untilDate, rep){
+    if(rule==='none' || !baseTask.date) return 0;
+    const seriesId = baseTask.seriesId || uid();
+    baseTask.seriesId = seriesId;
+    const r = rep ? Object.assign({}, rep, { rule, to: untilDate }) : null;
+    if(r) baseTask.rep = r; else delete baseTask.rep;
+    let count = 0;
+    for(const cur of repeatDates(rule, baseTask.date, baseTask.date, untilDate).slice(0, 366)){
+      addTask(baseTask.name, baseTask.icon, cur, Object.assign({ seriesId, assignees: (baseTask.assignees || []).slice() }, r ? { id: seriesId + '_' + cur, rep: Object.assign({}, r) } : {}, baseTask.cat ? { cat: baseTask.cat } : {}, (baseTask.subs || []).length ? { subs: freshSubs(baseTask.subs) } : {}));
       count++;
     }
     if(count>0) addHistory('Recurring task created', `"${baseTask.name}" repeats ${(REPEAT_LABELS[rule]||rule).toLowerCase()} — ${count} occurrence(s) added through ${formatFull(untilDate)}`);
     return count;
   }
-  function editTask(id, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat){
+  function editTask(id, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat, rep){
     const t = tasks.find(x=>x.id===id);
     if(!t) return;
     const oldLabel = taskLabel(t);
@@ -7468,7 +7492,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     addHistory('Edited', `${oldLabel} updated to "${name}"${dateVal ? ' on '+formatFull(dateVal) : ' (Backlog)'}${t.assignees.length ? ' — assigned to '+t.assignees.join(', ') : ''}${seriesCount>0 ? ` (and ${seriesCount} future occurrence(s) in the series)` : ''}`);
     let count = 0;
     if(repeatRule && repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
-      count = generateRecurrence(t, repeatRule, untilDate);
+      count = generateRecurrence(t, repeatRule, untilDate, rep);
     }
     persist(); renderAll();
     return count;
@@ -9836,7 +9860,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const who = (r.next.assignees || []).join(', ') || 'nobody yet';
       return `<div class="rp-row"><button type="button" class="rp-main" data-rp-open="${escapeHtmlAttr(r.next.id)}" title="Open the next one">
         <span class="rp-top"><b>${escapeHtml(r.next.name)}</b>${when}</span>
-        <span class="rp-sub">${escapeHtml(r.rule)} · until ${escapeHtml(formatShort(r.until))} · ${escapeHtml(who)}</span>
+        <span class="rp-sub">${escapeHtml(r.rule)}${r.next.rep && r.next.rep.age != null ? ' from day ' + escapeHtml(String(r.next.rep.age)) : ''} · until ${r.next.rep && r.next.rep.batch ? 'batch ' + escapeHtml(r.next.rep.batch) + ' ends' : escapeHtml(formatShort(r.until))} · ${escapeHtml(who)}</span>
         <span class="rp-meta">${batchChipsHtml(r.next.date)}<span>${r.done} of ${r.total} done</span></span></button>
         <span class="rp-acts"><button type="button" data-rp-edit="${escapeHtmlAttr(r.next.id)}" title="Edit this repeating task (name, people, notes) for every day still to come">Edit</button><button type="button" data-rp-extend="${escapeHtmlAttr(r.next.seriesId)}" title="Add more days to this repeating task">Extend</button></span></div>`; }).join('');
   }
@@ -9869,6 +9893,76 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     addHistory('Recurring task extended', `"${last.name}" — ${n} more day${n === 1 ? '' : 's'}, now until ${formatFull(until)}`);
     offerUndo(`"${last.name}" extended by ${n} day${n === 1 ? '' : 's'} to ${formatShort(until)}`, snap);
     persist(); renderAll();
+  }
+  // ---------- Repeat until the batch ends (2026-11-05, canvas TRArefmApo1FgxG4MMYDyy) ----------
+  // The task's batch: the newest one running today, else the next one coming. Bird age counts from its
+  // first shed placed (placement day = day 0). It ends on the last shed's close, else its clean-out.
+  function repBatch(){
+    const today = dateKey(new Date());
+    const live = batches.filter(b=> b.start && b.end && b.end >= today);
+    const pick = list=> list.sort((a, c)=> String(c.start).localeCompare(String(a.start)))[0] || null;
+    return pick(live.filter(b=> b.start <= today)) || live.sort((a, c)=> String(a.start).localeCompare(String(c.start)))[0] || null;
+  }
+  function repBatchEnd(b){
+    const ends = ((b && b.sheds) || []).map(s=> s.closed || s.cleanout || s.placement).filter(Boolean).sort();
+    return ends.length ? ends[ends.length - 1] : (b && b.end) || null;
+  }
+  let repStart = 'date', repEnd = 'date';
+  function repAgeVal(){ const n = parseInt($('#repAgeInput').value, 10); return Number.isFinite(n) && n >= 0 && n <= 80 ? n : null; }
+  function dateValFromAge(b){ const n = repAgeVal(); return b && b.start && n != null ? addDaysStr(b.start, n) : null; }
+  // The task form's Starts / Ends choices and the line that says what will happen
+  function repRefresh(){
+    const on = $('#editTaskRepeatSelect').value !== 'none', b = repBatch(), sum = $('#repSummary');
+    if(!b){ repStart = 'date'; repEnd = 'date'; }
+    document.querySelectorAll('#repStartChips [data-rep-start]').forEach(x=>{ x.classList.toggle('on', x.dataset.repStart === repStart); x.disabled = x.dataset.repStart === 'age' && !b; });
+    document.querySelectorAll('#repEndChips [data-rep-end]').forEach(x=>{ x.classList.toggle('on', x.dataset.repEnd === repEnd); x.disabled = x.dataset.repEnd === 'batch' && !b; });
+    $('#repAgeRow').hidden = repStart !== 'age';
+    $('#repUntilWrap').hidden = repEnd === 'batch';
+    sum.classList.remove('warn');
+    if(!on){ sum.textContent = ''; return; }
+    if(!b){ sum.textContent = 'Bird age and batch end need a batch with sheds set up in Production.'; return; }
+    if(repStart === 'age'){ const d = dateValFromAge(b); if(d) $('#editTaskDateInput').value = d; }
+    const start = $('#editTaskDateInput').value, until = repEnd === 'batch' ? repBatchEnd(b) : $('#editTaskUntilInput').value;
+    const rule = REPEAT_LABELS[$('#editTaskRepeatSelect').value] || 'Repeats';
+    if(!start){ sum.textContent = 'Pick the first date above.'; return; }
+    const from = repStart === 'age' ? `from day ${repAgeVal()} (${formatShort(start)})` : `from ${formatShort(start)}`;
+    const to = repEnd === 'batch' ? `until batch ${b.number} ends (${formatShort(until)} for now)` : (until ? `until ${formatShort(until)}` : '');
+    sum.textContent = `${rule} ${from} ${to}.`.replace(/\s+\./, '.');
+    if(until && until <= start){ sum.classList.add('warn'); sum.textContent = repEnd === 'batch' ? `Day ${repAgeVal()} (${formatShort(start)}) is after batch ${b.number} ends (${formatShort(until)}).` : 'The end date is before the first date.'; }
+  }
+  // A series that ends with its batch keeps rep:{ batch, rule, to } on every day. When Production moves
+  // the batch's end, the open days after the new end come off (ticked ones stay) or days are added after
+  // `to`. Days someone deleted inside the run stay deleted. Day ids are <series>_<date>, so two devices
+  // adding the same day make one task.
+  function reconcileBatchRepeats(){
+    const groups = new Map();
+    tasks.forEach(t=>{ if(t.seriesId && t.date && t.rep && t.rep.batch){ let g = groups.get(t.seriesId); if(!g) groups.set(t.seriesId, g = []); g.push(t); } });
+    let changed = 0;
+    groups.forEach((g, sid)=>{
+      const b = batches.find(x=> String(x.number) === String(g[0].rep.batch));
+      const end = repBatchEnd(b); if(!end) return;
+      g.sort((a, c)=> a.date.localeCompare(c.date));
+      const to = g.map(t=> t.rep.to || t.date).sort().pop(), rule = g[0].rep.rule;
+      if(end === to) return;
+      const first = g[0], last = g[g.length - 1];
+      let n = 0;
+      if(end < to){
+        const drop = new Set(g.filter(t=> t.date > end && t.status !== 'done').map(t=> t.id));
+        if(drop.size){ tasks = tasks.filter(t=> !drop.has(t.id)); n = -drop.size; }
+      } else {
+        repeatDates(rule, first.date, to, end).forEach(d=>{
+          const id = sid + '_' + d; if(tasks.some(t=> t.id === id)) return;
+          const meta = { id, seriesId: sid, rep: Object.assign({}, first.rep), assignees: (last.assignees || []).slice() };
+          ['cat', 'notes', 'priority', 'shedNum'].forEach(k=>{ if(last[k] != null) meta[k] = last[k]; });
+          if((last.subs || []).length) meta.subs = freshSubs(last.subs);
+          addTask(last.name, last.icon, d, meta); n++;
+        });
+      }
+      tasks.forEach(t=>{ if(t.seriesId === sid && t.rep) t.rep = Object.assign({}, t.rep, { to: end }); });
+      if(n) addHistory('Repeat follows the batch', `"${first.name}" — batch ${b.number} now ends ${formatFull(end)}: ${n > 0 ? n + ' day' + (n === 1 ? '' : 's') + ' added' : (-n) + ' open day' + (n === -1 ? '' : 's') + ' taken off'}`);
+      changed++;
+    });
+    return changed;
   }
   document.addEventListener('click', (e)=>{ const b = e.target.closest && e.target.closest('[data-rp-extend]'); if(!b) return;
     const g = repeatSeriesMap().get(b.dataset.rpExtend); if(!g) return; const last = g[g.length - 1].date, sid = b.dataset.rpExtend;
@@ -11040,7 +11134,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(task.prep) pills.push(prepLabelHtml(task));
     if(isHighPriority) pills.push('<span class="kp kp-hi">High</span>');
     if(typeof isMaintTask === 'function' && isMaintTask(task)) pills.push('<span class="kp">Maintenance</span>');
-    if(task.seriesId) pills.push(`<span class="kp kp-rep" title="Part of a repeating series">Repeats · ${escapeHtml(repeatRuleFor(task).replace(/^Every /, 'every ').replace(/^Repeats$/, 'series'))}</span>`, task.date ? batchChipsHtml(task.date).replace(/class="bchip"/g, 'class="kp bchip"') : '');
+    if(task.seriesId) pills.push(`<span class="kp kp-rep" title="Part of a repeating series">Repeats · ${escapeHtml(repeatRuleFor(task).replace(/^Every /, 'every ').replace(/^Repeats$/, 'series'))}${task.rep && task.rep.batch ? ' until batch ' + escapeHtml(task.rep.batch) + ' ends' : ''}</span>`, task.date ? batchChipsHtml(task.date).replace(/class="bchip"/g, 'class="kp bchip"') : '');
     { const bc = taskBatchChipHtml(task); if(bc) pills.push(bc.replace('class="bchip"', 'class="kp bchip"')); }
     const kPhotos = kReport ? Math.max((kReport.photoUrls || []).length, kPhoto ? 1 : 0) : 0;
     let kSt;
@@ -12405,8 +12499,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#editTaskDateInput').value = t.date || '';
     $('#editTaskRepeatSelect').value = 'none';
     $('#editTaskUntilRow').style.display = 'none';
+    repStart = 'date'; repEnd = 'date'; $('#repAgeInput').value = '21';
     const base = t.date || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    repRefresh();
     $('#editTaskNotesInput').value = t.notes || '';
     editingSubs = (t.subs || []).map(x=> ({ ...x })); renderSubEditor(); $('#editTaskSubInput').value = '';
     $('#editTaskPriorityInput').checked = t.priority === 'high';
@@ -12431,8 +12527,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#editTaskDateInput').value = prefillDate || '';
     $('#editTaskRepeatSelect').value = 'none';
     $('#editTaskUntilRow').style.display = 'none';
+    repStart = 'date'; repEnd = 'date'; $('#repAgeInput').value = '21';
     const base = prefillDate || dateKey(new Date());
     $('#editTaskUntilInput').value = addDaysStr(base, 56);
+    repRefresh();
     $('#editTaskNotesInput').value = '';
     editingSubs = []; renderSubEditor(); $('#editTaskSubInput').value = '';
     $('#editTaskPriorityInput').checked = false;
@@ -15505,6 +15603,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }
     // sheds closed (or cleaned out) since: their open weigh-ins come off, even when Production didn't change
     if(planWeighIns(tasks, batches, { trim:true }).changes){ recheckWeighIns({ trim:true }, 'Sheds closed or cleaned out'); changed++; }
+    if(reconcileBatchRepeats()) changed++;
     if(changed){ reconcileShedPrep(); persist(); renderAll(); }
   }
   // "Set up in Production": inside ProdWise, switch to Production's Set up sheds page; on its own, open ProdWise there
@@ -16351,7 +16450,13 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#closeEditTaskModal').addEventListener('click', closeOverlays);
   $('#editTaskRepeatSelect').addEventListener('change', (e)=>{
     $('#editTaskUntilRow').style.display = e.target.value==='none' ? 'none' : 'block';
+    repRefresh();
   });
+  $('#repStartChips').addEventListener('click', (e)=>{ const b = e.target.closest('[data-rep-start]'); if(!b || b.disabled) return; repStart = b.dataset.repStart; repRefresh(); });
+  $('#repEndChips').addEventListener('click', (e)=>{ const b = e.target.closest('[data-rep-end]'); if(!b || b.disabled) return; repEnd = b.dataset.repEnd; repRefresh(); });
+  $('#repAgeInput').addEventListener('input', repRefresh);
+  $('#editTaskDateInput').addEventListener('input', ()=>{ if(repStart === 'age'){ repStart = 'date'; } repRefresh(); });
+  $('#editTaskUntilInput').addEventListener('input', repRefresh);
   $('#editTaskNameInput').addEventListener('input', ()=> updateCharCount($('#editTaskNameInput'), $('#editTaskNameCharCount')));
   $('#editTaskAssigneeAddBtn').addEventListener('click', ()=> addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips'));
   $('#editTaskAssigneeInput').addEventListener('keydown', (e)=>{
@@ -16396,14 +16501,21 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!name){ showToast('Enter a task name.', true); return; }
     if($('#editTaskAssigneeInput').value.trim()) addAssigneeToPending('#editTaskAssigneeInput', editingAssignees, '#editTaskAssigneeChips');
     const assignees = editingAssignees.slice();
+    if($('#editTaskRepeatSelect').value !== 'none' && repStart === 'age'){ const rb = repBatch(), d = rb && dateValFromAge(rb); if(d) $('#editTaskDateInput').value = d; }
     const dateVal = $('#editTaskDateInput').value || null;
     const repeatRule = $('#editTaskRepeatSelect').value;
-    const untilDate = $('#editTaskUntilInput').value || null;
+    let untilDate = $('#editTaskUntilInput').value || null, rep = null;
+    if(repeatRule !== 'none' && (repStart === 'age' || repEnd === 'batch')){
+      const rb = repBatch(); if(!rb){ showToast('No batch with sheds set up yet — set up sheds in Production first.', true); return; }
+      if(repStart === 'age' && !dateValFromAge(rb)){ showToast('Enter the bird age to start at.', true); return; }
+      if(repEnd === 'batch'){ untilDate = repBatchEnd(rb); rep = { batch: String(rb.number) }; if(repStart === 'age') rep.age = repAgeVal(); }
+    }
     const notes = $('#editTaskNotesInput').value.trim();
     const priority = $('#editTaskPriorityInput').checked ? 'high' : null;
     const cat = $('#editTaskMaintInput').checked ? 'maintenance' : null;
     const applyToSeries = $('#editTaskSeriesRow').style.display!=='none' && $('#editTaskApplySeriesInput').checked;
     if(repeatRule!=='none' && !dateVal){ showToast('Pick a date before setting a repeat rule.', true); return; }
+    if(repeatRule!=='none' && rep && (!untilDate || untilDate<=dateVal)){ showToast(`That start is on or after batch ${rep.batch} ends (${formatShort(untilDate)}).`, true); return; }
     if(repeatRule!=='none' && (!untilDate || untilDate<=dateVal)){ showToast('Pick a valid "Repeat until" date after the task date.', true); return; }
     if(taskModalMode==='create'){
       const saveAsFrequent = $('#editTaskFrequentBox').checked;
@@ -16428,7 +16540,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       if(fromReport) linkTaskToReport(newTask, fromReport);
       let count = 0;
       if(repeatRule!=='none' && dateVal && untilDate && untilDate>dateVal){
-        count = generateRecurrence(newTask, repeatRule, untilDate);
+        count = generateRecurrence(newTask, repeatRule, untilDate, rep);
       }
       persist(); renderAll();
       closeOverlays();
@@ -16446,7 +16558,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     { const et = tasks.find(x=> x.id === editingTaskId); if(et){ const subsNow = editingSubs.map(x=> ({ ...x, t: String(x.t || '').trim() })).filter(x=> x.t).map(x=> ({ ...x, id: x.id || uid() }));
       if(subsNow.length) et.subs = subsNow; else delete et.subs;
       if(applyToSeries && et.seriesId) tasks.forEach(sib=>{ if(sib.id !== et.id && sib.seriesId === et.seriesId && sib.date && et.date && sib.date >= et.date && sib.status !== 'done'){ if(subsNow.length) sib.subs = freshSubs(subsNow); else delete sib.subs; } }); } }
-    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat);
+    const count = editTask(editingTaskId, name, dateVal, repeatRule, untilDate, assignees, notes, priority, applyToSeries, cat, rep);
     closeOverlays();
     showToast(count>0 ? `Task updated — ${count} more occurrence(s) added.` : (applyToSeries ? 'Task updated — applied to future occurrences too.' : 'Task updated.'));
   });
