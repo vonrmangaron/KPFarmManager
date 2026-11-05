@@ -147,10 +147,21 @@ function renderPlacementPage(){
     ${missing?`<p class="pr-miss">${missing} shed${missing===1?' has':'s have'} no docket yet — enter them on each pair's Setup tab.</p>`:''}
     <div class="pr-paper">${prSheetHtml()}</div></div>`;
 }
+// Print keeps everything on one A4 landscape page: laid out at the page's printable size (297 × 210 mm less
+// 7 mm margins), the text steps down from the chosen size only as far as it must (not below 10 px).
+// If even that is too tall it carries on to a second page — nothing is ever cut off.
+function prFitPage(el){
+  const mm=96/25.4,W=283*mm,H=194*mm,sh=el.querySelector('.pr-sheet');if(!sh)return;
+  el.classList.add('pr-measure');el.style.width=W+'px';
+  let f=PR_SIZES[prSize];sh.style.setProperty('--pr-f',f+'px');
+  while(f>10&&sh.scrollHeight>H){f-=0.5;sh.style.setProperty('--pr-f',f+'px');}
+  el.classList.remove('pr-measure');el.style.width='';
+}
 function prPrint(){
   let el=document.getElementById('placementPrint');
   if(!el){el=document.createElement('div');el.id='placementPrint';document.body.appendChild(el);}
   el.innerHTML=prSheetHtml();
+  prFitPage(el);
   let pg=document.getElementById('prPageStyle');
   if(!pg){pg=document.createElement('style');pg.id='prPageStyle';document.head.appendChild(pg);}
   pg.textContent='@media print{@page{size:A4 landscape;margin:7mm;}}';

@@ -7141,10 +7141,16 @@ body.theme-dark .pr-seg button.on{background:#F0A21A;color:#16191B}
 .pr-tb tr.farm td.l{font:800 1.07em Sora,Arial,sans-serif}
 .pr-foot{display:flex;justify-content:space-between;gap:1em;flex-wrap:wrap;font-size:.77em;color:#333}
 #placementPrint{display:none}
+#placementPrint.pr-measure{display:block!important;position:absolute;left:-10000px;top:0;visibility:hidden}
+#placementPrint.pr-measure .pr-sheet{padding:0;min-width:0}
+#placementPrint.pr-measure .pr-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pr-h{flex-wrap:wrap}.pr-h b,.pr-h span{white-space:nowrap}
 @media (max-width:760px){.pr-sheet{min-width:0;padding:16px}.pr-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.pr-sts{flex-wrap:wrap}}
 @media print{
   body.pr-printing > *{display:none!important}
   body.pr-printing #placementPrint{display:block!important}
+  html,body.pr-printing{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
+  #placementPrint .pr-tb tr{break-inside:avoid;page-break-inside:avoid}
   #placementPrint .pr-sheet{min-width:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #placementPrint .pr-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   /* fill the A4 page (210 mm − 2 × 7 mm margin): the cards share the height, taller text still grows them */
