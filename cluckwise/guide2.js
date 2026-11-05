@@ -10,7 +10,7 @@
   const TXT = {
     en: {
       hi:"Tap your shed. I'll show you what's right for its age today.", checks:'Quick checks', every:'every shed',
-      shed:'Shed {n}', day:'Day {n}', empty:'Empty', birds:'{n} birds', back:'Back', chicks:'Chicks {d}',
+      shed:'Shed {n}', day:'Day {n}', today:'Today', todayIs:'today day {n}', empty:'Empty', birds:'{n} birds', back:'Back', chicks:'Chicks {d}',
       tip0:'Chicks first! Warm floor, water and feed close by. Walk slow.',
       tip1:'Still babies. Keep them warm, and lift the drinkers a little every couple of days.',
       tip2:'Growing fast! Lift drinkers and pans to their height.',
@@ -35,7 +35,7 @@
     },
     es: {
       hi:'Toca tu galpón. Te muestro lo correcto para su edad hoy.', checks:'Revisiones rápidas', every:'todos los galpones',
-      shed:'Galpón {n}', day:'Día {n}', empty:'Vacío', birds:'{n} aves', back:'Volver', chicks:'Pollitos {d}',
+      shed:'Galpón {n}', day:'Día {n}', today:'Hoy', todayIs:'hoy día {n}', empty:'Vacío', birds:'{n} aves', back:'Volver', chicks:'Pollitos {d}',
       tip0:'¡Primero los pollitos! Piso tibio, agua y alimento cerca. Camina despacio.',
       tip1:'Todavía son bebés. Mantenlos calientes y sube un poco los bebederos cada par de días.',
       tip2:'¡Crecen rápido! Sube bebederos y platos a su altura.',
@@ -60,7 +60,7 @@
     },
     tl: {
       hi:'I-tap ang kulungan mo. Ipapakita ko kung ano ang tama sa edad nito ngayon.', checks:'Mabilisang tsek', every:'lahat ng kulungan',
-      shed:'Kulungan {n}', day:'Araw {n}', empty:'Walang laman', birds:'{n} ibon', back:'Bumalik', chicks:'Sisiw {d}',
+      shed:'Kulungan {n}', day:'Araw {n}', today:'Ngayon', todayIs:'ngayon araw {n}', empty:'Walang laman', birds:'{n} ibon', back:'Bumalik', chicks:'Sisiw {d}',
       tip0:'Sisiw muna! Mainit na sahig, tubig at pakain na malapit. Maglakad nang dahan-dahan.',
       tip1:'Mga sanggol pa. Panatilihing mainit, at itaas nang kaunti ang inuman kada ilang araw.',
       tip2:'Mabilis lumaki! Itaas ang inuman at pakainan sa taas nila.',
@@ -85,7 +85,7 @@
     },
     id: {
       hi:'Ketuk kandangmu. Aku tunjukkan yang benar untuk umurnya hari ini.', checks:'Cek cepat', every:'semua kandang',
-      shed:'Kandang {n}', day:'Hari {n}', empty:'Kosong', birds:'{n} ekor', back:'Kembali', chicks:'DOC {d}',
+      shed:'Kandang {n}', day:'Hari {n}', today:'Hari ini', todayIs:'hari ini hari {n}', empty:'Kosong', birds:'{n} ekor', back:'Kembali', chicks:'DOC {d}',
       tip0:'Anak ayam dulu! Lantai hangat, air dan pakan dekat. Jalan pelan-pelan.',
       tip1:'Masih bayi. Jaga tetap hangat, dan naikkan tempat minum sedikit tiap dua hari.',
       tip2:'Tumbuh cepat! Naikkan tempat minum dan pakan setinggi mereka.',
@@ -275,21 +275,27 @@
     c.custom.filter(x=> x.title || x.body).forEach(x=> rows.push(`<button type="button" class="g2-row" data-g2-check="own:${esc(x.id)}"><span class="g2-ico g2-grey g2-emo">${esc(x.icon || '📌')}</span><span class="g2-row-t">${esc(x.title || '')}</span>${ic(ICON.chev, 18)}</button>`));
     return `<div class="g2-sec">${esc(tt('checks'))} <span>· ${esc(tt('every'))}</span></div><div class="g2-rows">${rows.join('')}</div>`;
   }
+  // Days ahead or back from a shed's age today, kept inside day 0–70
+  function dayOff(sh, off){ const a = Math.max(0, sh.age || 0), n = Math.round(Number(off) || 0); return Math.max(0, Math.min(70, a + n)) - a; }
   function headHtml(o, tt, sh, sub, title, titleCls){
     const pills = o.sheds.length ? `<div class="g2-pills">${o.sheds.map(s=> `<button type="button" class="g2-pill${s.n === sh.n ? ' on' : ''}" style="--pc:${PAIR[(s.n - 1) % 8]}" data-g2-shed="${s.n}">${s.n}<small>${s.age == null ? esc(tt('empty')) : 'd' + s.age}</small></button>`).join('')}</div>` : '';
-    const step = sh.n == null ? `<div class="g2-step"><button type="button" data-g2-age="-1" aria-label="Previous day">−</button><button type="button" data-g2-age="1" aria-label="Next day">+</button></div>` : '';
+    // no batch: step the age; a shed with birds: step days ahead or back from its age today (Today goes back)
+    const step = sh.n == null ? `<div class="g2-step"><button type="button" data-g2-age="-1" aria-label="Previous day">−</button><button type="button" data-g2-age="1" aria-label="Next day">+</button></div>`
+      : sh.age != null ? `<div class="g2-step"><button type="button" data-g2-day="-1" aria-label="Previous day" title="Previous day">−</button>${sh.off ? `<button type="button" class="g2-today" data-g2-day="0" title="Back to its age today">${esc(tt('today'))}</button>` : ''}<button type="button" data-g2-day="1" aria-label="Next day" title="Next day">+</button></div>` : '';
     const backBtn = o.sheds.length ? `<button type="button" class="g2-back" data-g2-back aria-label="${esc(tt('back'))}">${ic(ICON.back, 22)}</button>` : '';
     return `<div class="g2-head"><div class="g2-head-row">${backBtn}<div class="g2-head-t"><span class="g2-sub">${esc(sub)}</span><span class="g2-title ${titleCls || ''}">${esc(title)}</span></div>${step}</div>${pills}</div>`;
   }
   function shedHtml(o, tt, sh){
-    const c = o.cfg, age = Math.max(0, sh.age || 0), at = rows=> o.at(rows, age);
+    const off = sh.n == null ? 0 : dayOff(sh, o.view && o.view.off);
+    const c = o.cfg, age = Math.max(0, (sh.age || 0) + off), at = rows=> o.at(rows, age);
+    sh = Object.assign({}, sh, { off });
     const temp = t1(tempAt(c.temp, age)), rh = at(c.rh), dark = Number(at(c.dark)) || 0;
     const stage = age <= 2 ? 0 : age <= 10 ? 1 : 2;
     const feedKey = age <= 3 ? 'g_feed_0' : null;
     const tip = tt(age <= 3 ? 'tip0' : age <= 10 ? 'tip1' : age <= 20 ? 'tip2' : 'tip3');
     const kg = o.kg(age), fg = o.feedG(age), wm = o.waterMl(age), circ = 2 * Math.PI * 30;
     const ownLight = String(c.text.light_n || '').trim();   // the manager's own lighting note, if any
-    const sub = sh.n == null ? o.T('g_now') : tt('shed', { n: sh.n }) + (sh.birds ? ' · ' + tt('birds', { n: fmt(sh.birds) }) : '');
+    const sub = sh.n == null ? o.T('g_now') : tt('shed', { n: sh.n }) + (off ? ' · ' + tt('todayIs', { n: sh.age }) : sh.birds ? ' · ' + tt('birds', { n: fmt(sh.birds) }) : '');
     let h = headHtml(o, tt, sh, sub, tt('day', { n: age }));
     if(sh.n == null) h += `<p class="g2-hint">${esc(tt('noBatch', { n: age }))}</p>`;
     h += `<div class="g2-body">${bubble('calm', tip)}
@@ -390,6 +396,7 @@
   .g2-title{ font-family:'Sora',sans-serif; font-weight:800; font-size:28px; line-height:1.1; }
   .g2-step{ display:flex; gap:6px; }
   .g2-step button{ width:46px; height:46px; border-radius:12px; border:1px solid var(--g2-line); background:var(--g2-page); font-size:22px; font-weight:800; }
+  .g2-step button.g2-today{ width:auto; padding:0 12px; font-size:13px; }
   .g2-pills{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
   .g2-pills::-webkit-scrollbar{ display:none; }
   .g2-pill{ flex-shrink:0; min-width:52px; height:48px; border-radius:12px; border:1px solid var(--pc); background:var(--g2-card); display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:15px; font-weight:800; line-height:1.1; }
@@ -441,6 +448,6 @@
   `;
   (function(){ const st = document.createElement('style'); st.id = 'cwGuide2Css'; st.textContent = CSS; (document.head || document.documentElement).appendChild(st); })();
 
-  window.CWGuide2 = { html, scene, shedList, text: t, tempAt, tempRamp, stepAt, spRows, t1,
+  window.CWGuide2 = { html, scene, shedList, dayOff, text: t, tempAt, tempRamp, stepAt, spRows, t1,
     ui: { ic, ICON, CHECK_LOOK, PAIR, esc, fmt, plumo } };
 })();

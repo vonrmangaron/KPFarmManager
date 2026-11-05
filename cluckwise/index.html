@@ -16028,6 +16028,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Edit guide works on a draft; nothing reaches the crew until Apply.
   let mainGuideAge = null, mainGuideTab = 'sheds', mainGuideShed = null, mainGuideCrew = false, mainGuideSec = 'temp', mainGuideStd = 'ross', guideDraft = null;
   let mainGuideView = { v: 'home' };   // the crew pages: Crew view, or a quick check opened from Sheds
+  let mainGuideOff = 0;   // Sheds: days ahead (+) or back (−) from the shed's age today
   function openGuide(){
     closeOverlays();
     const cb = currentOrNextBatch(), td = dateKey(new Date());
@@ -16059,7 +16060,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const sheds = CWGuide2.shedList(batches, td), cur = sheds.find(s=> s.n === mainGuideShed) || sheds.find(s=> s.age != null);
     const o = { lang: 'en', cfg: c, at: guideAt, kg: guideRossKg, feedG: guideFeedG, waterMl: guideWaterMl, T,
       X: k=> { const own = c.text[k.replace(/^g_/, '')]; return (own && String(own).trim()) ? String(own) : T(k); },
-      checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: false, sheds, shed: mainGuideShed, sec: mainGuideSec, std: mainGuideStd,
+      checks: GUIDE_CHECKS, spread: guideSpreadSvg, report: false, sheds, shed: mainGuideShed, sec: mainGuideSec, std: mainGuideStd, dayOff: mainGuideOff,
       age: mainGuideTab === 'std' ? (cur ? cur.age : null) : mainGuideAge,
       dateLabel: dk=> toDateObj(dk).toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }) };
     const crewPage = mainGuideTab === 'sheds' && (mainGuideCrew || mainGuideView.v === 'check');
@@ -16077,7 +16078,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let el;
     if((el = d('[data-gm-tab]'))){ mainGuideTab = el.dataset.gmTab; mainGuideView = { v: 'home' }; renderMainGuide(); guideTop(); return; }
     if(d('[data-gm-crew]')){ mainGuideCrew = !mainGuideCrew; mainGuideView = { v: 'home' }; renderMainGuide(); guideTop(); return; }
-    if((el = d('[data-gm-shed]'))){ mainGuideShed = Number(el.dataset.gmShed); renderMainGuide(); return; }
+    if((el = d('[data-gm-shed]'))){ mainGuideShed = Number(el.dataset.gmShed); mainGuideOff = 0; renderMainGuide(); return; }
+    if((el = d('[data-g2-day]'))){
+      const n = Number(el.dataset.g2Day), list = CWGuide2.shedList(batches, dateKey(new Date())), crew = mainGuideView.v === 'shed';
+      const sh = crew ? list.find(s=> s.n === mainGuideView.shed) : (list.find(s=> s.n === mainGuideShed) || list.find(s=> s.age != null));
+      if(sh){ const off = CWGuide2.dayOff(sh, n ? (crew ? mainGuideView.off || 0 : mainGuideOff) + n : 0); if(crew) mainGuideView.off = off; else mainGuideOff = off; }
+      renderMainGuide(); return; }
     if((el = d('[data-gm-sec]'))){ mainGuideSec = el.dataset.gmSec; renderMainGuide(); guideTop(); return; }
     if((el = d('[data-gm-std]'))){ mainGuideStd = el.dataset.gmStd; renderMainGuide(); return; }
     if(d('[data-gm-apply]')){ if(guideDraft){ settings.guide = guideDraft; guideDraft = null; persist(); showToast('Guide applied — workers see it next time they open the Crew app.'); } renderMainGuide(); return; }
@@ -16112,7 +16118,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(ds.gmOwn){ const [id, field] = ds.gmOwn.split(':'); editGuideDraft(g=>{ g.custom = (g.custom || []).map(o=> o.id === id ? Object.assign({}, o, { [field]: el.value.trim() }) : o); }); renderGuideHead(); }
   });
   $('#closeGuideModal').addEventListener('click', closeOverlays);
-  const goGuide = ()=>{ mainGuideAge = null; mainGuideCrew = false; mainGuideView = { v: 'home' }; mainGuideTab = guideDirtyCount() ? 'edit' : 'sheds'; openGuide(); };
+  const goGuide = ()=>{ mainGuideAge = null; mainGuideOff = 0; mainGuideCrew = false; mainGuideView = { v: 'home' }; mainGuideTab = guideDirtyCount() ? 'edit' : 'sheds'; openGuide(); };
   $('#guideBtn').addEventListener('click', goGuide);
   $('#moreGuideBtn').addEventListener('click', goGuide);
 

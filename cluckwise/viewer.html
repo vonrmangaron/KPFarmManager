@@ -4191,6 +4191,9 @@
   document.addEventListener('click', (e)=>{
     const old = e.target.closest('#guideBody [data-g-age]');
     if(old){ guideAge = Math.max(0, Math.min(70, (guideAge || 0) + Number(old.dataset.gAge))); renderGuidePage(); return; }
+    const dy = e.target.closest('#guideBody [data-g2-day]');
+    if(dy && guideView.v === 'shed' && window.CWGuide2){ const n = Number(dy.dataset.g2Day), sh = CWGuide2.shedList(batches, dateKey(new Date())).find(s=> s.n === guideView.shed);
+      if(sh) guideView.off = CWGuide2.dayOff(sh, n ? (guideView.off || 0) + n : 0); renderGuidePage(); return; }
     const b = e.target.closest('#guideBody [data-g2-shed], #guideBody [data-g2-check], #guideBody [data-g2-back], #guideBody [data-g2-report]'); if(!b) return;
     if(b.dataset.g2Shed != null) guideGo({ v: 'shed', shed: Number(b.dataset.g2Shed) });
     else if(b.dataset.g2Check != null) guideGo({ v: 'check', check: b.dataset.g2Check });

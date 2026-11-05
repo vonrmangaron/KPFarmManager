@@ -35,7 +35,7 @@
   function tempRange(rows){ const v = G.spRows(rows).map(r=> r[1]); return { lo: Math.floor(Math.min(...v) - 1), hi: Math.ceil(Math.max(...v) + 1) }; }
 
   // ---------- Sheds ----------
-  function tempCard(c, a, chart){
+  function tempCard(c, a, chart, ahead){
     const ramp = G.tempRamp(c.temp, a), temp = G.tempAt(c.temp, a);
     let svg = '';
     if(chart){
@@ -46,7 +46,7 @@
         <span class="gm-dot" style="left:${(Math.min(a, 42) / 42 * 100).toFixed(2)}%;top:${(my / 64 * 100).toFixed(2)}%"></span>`;
     }
     return `<div class="gm-card gm-tc"><span class="gm-ch"><span class="g2-ico g2-coral">${ic(ICON.heat)}</span><b>${esc(tt('temp'))}</b><span class="g2-tag g2-coral">${esc(perTxt(ramp))}</span></span>
-      <span class="gm-tbig"><b class="g2-coral-t">${t1(temp)}°</b><span>set point today</span></span>
+      <span class="gm-tbig"><b class="g2-coral-t">${t1(temp)}°</b><span>${ahead ? 'set point on day ' + a : 'set point today'}</span></span>
       <span class="gm-ramp">${esc(rampTxt(c.temp, a))}</span>
       ${chart ? `<span class="gm-sparkw">${svg}</span><span class="gm-axis"><span>day 0</span><span>day 21</span><span>day 42</span></span>` : ''}
       <span class="gm-tf"><span>Humidity <b>${esc(String(G.stepAt(c.rh, a)))} %</b></span><span>Controller set to this</span></span></div>`;
@@ -67,17 +67,20 @@
   function shedsHtml(o){
     const c = o.cfg, list = o.sheds || [];
     const sel = list.find(s=> s.n === o.shed) || list.find(s=> s.age != null) || list[0] || null;
-    const a = sel ? (sel.age == null ? 0 : Math.max(0, sel.age)) : Math.max(0, o.age || 0);
+    // a shed with birds can be stepped days ahead or back from its age today
+    const off = sel && sel.age != null ? G.dayOff(sel, o.dayOff) : 0;
+    const a = sel ? (sel.age == null ? 0 : Math.max(0, sel.age) + off) : Math.max(0, o.age || 0);
     let tb = 0, tf = 0, tw = 0;
     list.forEach(s=>{ if(s.age != null && s.birds){ tb += s.birds; tf += s.birds * o.feedG(s.age) / 1000; tw += s.birds * o.waterMl(s.age) / 1000; } });
     const totals = tb ? [['Birds', fmt(tb), ''], ['Feed today', fmt(tf), 'kg'], ['Water today', fmt(tw), 'L']].map(([k, v, u])=> `<span><small>${k}</small><b>${v}${u ? ' <i>' + u + '</i>' : ''}</b></span>`).join('') : '';
     const bar = list.length ? `<div class="gm-bar"><div class="gm-pills">${list.map(s=> pill(s, s === sel)).join('')}</div><div class="gm-tot">${totals}</div></div>`
       : `<div class="gm-bar"><p class="g2-hint">${esc(tt('noBatch', { n: a }))}</p><div class="g2-step"><button type="button" data-g-age="-1" aria-label="Previous day">−</button><button type="button" data-g-age="1" aria-label="Next day">+</button></div></div>`;
     const empty = sel && sel.age == null;
-    const sub = !sel ? o.T('g_now') : tt('shed', { n: sel.n }) + (empty ? ' · ' + tt('empty') : (sel.birds ? ' · ' + tt('birds', { n: fmt(sel.birds) }) : '') + ' · ' + stageOf(a));
+    const sub = !sel ? o.T('g_now') : tt('shed', { n: sel.n }) + (empty ? ' · ' + tt('empty') : (off ? ' · ' + tt('todayIs', { n: sel.age }) : sel.birds ? ' · ' + tt('birds', { n: fmt(sel.birds) }) : '') + ' · ' + stageOf(a));
     const title = empty ? (sel.chicks ? tt('chicks', { d: o.dateLabel(sel.chicks) }) : tt('empty')) : tt('day', { n: a });
     const tip = empty ? tt('emptyHi', { n: sel.n }) : tt(a <= 3 ? 'tip0' : a <= 10 ? 'tip1' : a <= 20 ? 'tip2' : 'tip3');
-    const head = `<div class="gm-title"><span class="gm-tt"><span class="gm-sub">${esc(sub)}</span><span class="gm-day">${esc(title)}</span></span>
+    const step = sel && !empty ? `<span class="g2-step gm-daystep"><button type="button" data-g2-day="-1" aria-label="Previous day" title="Previous day">−</button>${off ? `<button type="button" class="g2-today" data-g2-day="0" title="Back to its age today">${esc(tt('today'))}</button>` : ''}<button type="button" data-g2-day="1" aria-label="Next day" title="Next day">+</button></span>` : '';
+    const head = `<div class="gm-title"><span class="gm-tt"><span class="gm-sub">${esc(sub)}</span><span class="gm-day">${esc(title)}</span></span>${step}
       <span class="gm-say">${U.plumo(empty ? 'thinking' : 'calm')}<span class="g2-bubble">${esc(tip)}</span></span></div>`;
     let grid;
     if(empty){
@@ -96,7 +99,7 @@
           ${G.scene('drink', a, o.kg)}<p>${esc(o.X('g_drink_' + stage))}</p></div>
         <div class="gm-card gm-pic"><span class="gm-ch"><span class="g2-ico g2-amber">${ic(ICON.pan)}</span><b>${esc(o.T('g_feed_t'))}</b><span class="g2-tag g2-amber">${esc(tt(a <= 7 ? 'ftagF' : 'ftagB'))}</span></span>
           ${G.scene('feed', a, o.kg)}<p>${esc(feedTxt)}</p></div>
-        <div class="gm-col">${tempCard(c, a, true)}${lightCard(c, a)}</div></div>`;
+        <div class="gm-col">${tempCard(c, a, true, !!off)}${lightCard(c, a)}</div></div>`;
       const birds = sel ? sel.birds || 0 : 0, fg = o.feedG(a), wm = o.waterMl(a);
       const stats = [[ICON.weight, 'g2-teal', 'Weight · target', kgTxt(o.kg(a)), '—'], [ICON.feed, 'g2-amber', 'Feed · a day', fg + ' g', birds ? fmt(birds * fg / 1000) + ' kg' : '—'],
         [ICON.water, 'g2-blue', 'Water · a day', wm + ' ml', birds ? fmt(birds * wm / 1000) + ' L' : '—']];
@@ -248,6 +251,7 @@
   .gm-tot b{ font-family:'Sora',sans-serif; font-size:21px; font-weight:700; white-space:nowrap; }
   .gm-tot i{ font-style:normal; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:var(--g2-muted); }
   .gm-title{ display:flex; align-items:flex-end; gap:14px 30px; flex-wrap:wrap; }
+  .gm-daystep{ align-self:center; }
   .gm-tt{ display:flex; flex-direction:column; gap:3px; }
   .gm-sub{ font-size:12.5px; font-weight:600; color:var(--g2-muted); }
   .gm-day{ font-family:'Sora',sans-serif; font-weight:700; font-size:34px; line-height:1.05; letter-spacing:-.02em; }
