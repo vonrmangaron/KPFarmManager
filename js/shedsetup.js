@@ -44,7 +44,7 @@ function renderShedSetupPage(){
   const rows=farmData.sheds.map((s,i)=>{const x=ssState(s);const ch=f=>ssDraftHas(s,f)&&String(setupDraft[SS_G][s.id+'|'+f])!==String(suCurrent(s,f))?' changed':'';
     return `<tr data-ss-row="${s.id}"><td class="ss-sh"><b>Shed ${s.id}</b><small>${escapeHtml(pairLabel(Math.floor(i/2)+1))}</small></td>
       <td data-label="Placement"><input type="date" class="${ch('placementDate')}" value="${escapeAttr(x.place)}" data-su="${SS_G}|${s.id}|placementDate" aria-label="Shed ${s.id} placement date"></td>
-      <td data-label="Birds placed"><input type="number" min="0" step="1" inputmode="numeric" class="${ch('initialPopulation')}" value="${x.birds||''}" placeholder="0" data-su="${SS_G}|${s.id}|initialPopulation" aria-label="Shed ${s.id} birds placed"></td>
+      <td data-label="Birds placed"><input type="number" min="0" step="1" inputmode="numeric" class="${ch('initialPopulation')}" value="${x.birds||''}" placeholder="${DEFAULT_SHED_POPULATION}" data-su="${SS_G}|${s.id}|initialPopulation" aria-label="Shed ${s.id} birds placed"${typeof dkStats==='function'&&dkStats(s.docket).birds>0?' readonly title="From the placement docket (pair Setup tab): the donors\' birds added up"':''}></td>
       <td data-label="DOC weight"><span class="ss-unit"><input type="number" min="30" max="80" step="0.1" inputmode="decimal" class="${ch('chickWeightGrams')}" value="${escapeAttr(x.doc)}" data-su="${SS_G}|${s.id}|chickWeightGrams" aria-label="Shed ${s.id} DOC weight in grams"><span>g</span></span></td>
       <td data-label="Clean-out">${ssCoCell(s,x)}</td>
       <td class="ss-stc">${ssStatus(x)}</td></tr>`;}).join('');
@@ -56,7 +56,7 @@ function renderShedSetupPage(){
     <section class="ss-fill" aria-label="Fill quickly">
       <span class="ss-k">Fill quickly</span>
       <label class="ss-f">First placement<input type="date" value="${escapeAttr(ssFill.first)}" data-ss-fillf="first"></label>
-      <label class="ss-f">Birds per shed<input type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 52000" value="${escapeAttr(ssFill.birds)}" data-ss-fillf="birds"></label>
+      <label class="ss-f">Birds per shed<input type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 52700" value="${escapeAttr(ssFill.birds)}" data-ss-fillf="birds"></label>
       <label class="ss-f">DOC weight (g)<input type="number" min="30" max="80" step="0.1" inputmode="decimal" placeholder="e.g. 42" value="${escapeAttr(ssFill.doc)}" data-ss-fillf="doc"></label>
       <label class="ss-f">Stagger<select data-ss-fillf="stagger">${[['0','Same day'],['1','Each pair +1 day'],['2','Each pair +2 days'],['3','Each pair +3 days']].map(([v,l])=>`<option value="${v}"${ssFill.stagger===v?' selected':''}>${l}</option>`).join('')}</select></label>
       <span class="ss-fbtns"><button type="button" class="mgr-btn primary" data-ss-fill="empty" title="Only sheds that are still empty; nothing you typed is changed">Fill empty sheds</button><button type="button" class="mgr-btn" data-ss-fill="all" title="Every shed, replacing what's there (still waits for Apply)">Fill all</button></span>

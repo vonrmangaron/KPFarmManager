@@ -283,6 +283,8 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     const toggleDel=e.target.closest('[data-toggle-deliveries]');
     if(toggleDel){predState.deliveriesOpen=!(predState.deliveriesOpen!==false);savePredState();schedulePush();render();return;}
 
+    const sameRd=e.target.closest('[data-same-reading]');
+    if(sameRd&&!sameRd.closest('#siloBody')){if(copyLastSiloReading(Number(sameRd.dataset.sameReading)))render();return;}
     const ringBtn=e.target.closest('.ring-btn, .ring-off');
     if(ringBtn){
       const g=Number(ringBtn.dataset.siloGroup);const n=Number(ringBtn.dataset.siloNum);const raw=ringBtn.dataset.siloRing;

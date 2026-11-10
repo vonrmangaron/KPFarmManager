@@ -210,8 +210,21 @@ function renderHomeView(){
     ${mgrFeedUseHtml()}
     ${typeof leftoverCardHtml==='function'?leftoverCardHtml():''}
     <div class="mgr-row2">${shedsHtml}${flock}</div>
+    ${mgrPlacementHtml()}
     ${offHtml}
   </div>`;
+}
+
+// ── Home: placement at a glance, from the dockets (2026-11-10) → the printable Placement report ──
+function mgrPlacementHtml(){
+  if(!farmData||typeof prShedData!=='function')return '';
+  const list=farmData.sheds.filter(s=>s.placementDate).map(prShedData);if(!list.length)return '';
+  const f=prFarm(list),n=list.filter(x=>x.has).length;
+  const st=(k,v,t)=>`<div title="${escapeAttr(t)}"><span class="mgr-k">${k}</span><b>${v}</b></div>`;
+  return `<section class="mgr-card mpl">
+    <div class="mfu-head"><span class="mgr-title">Placement</span><button type="button" class="mgr-link" data-tab="placement" title="Open the printable Placement report (A4)">Placement report ›</button></div>
+    <div class="mpl-nums">${st('Birds placed',prInt(f.birds),'All placed sheds; from the dockets where entered')}${st('Avg DOC',prG(f.doc),'Day-old chick weight, weighted by birds')}${st('Avg flock age',prW(f.age),'Donor flock age, weighted by birds')}${st('Dockets',`${n} of ${list.length}`,'Sheds with the placement docket entered (pair Setup tab)')}</div>
+  </section>`;
 }
 
 // ── Home: feed eaten so far (records) vs expected by the finish (forecast) — v237 ──

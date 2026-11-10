@@ -31,8 +31,13 @@ function dkStats(d){
 function dkView(g,s){const raw=suVal(g,s,'docket',null);if(raw==null)return dkNorm(s.docket);try{return dkNorm(JSON.parse(raw));}catch(e){return dkNorm(s.docket);}}
 function dkSet(g,id,fn){
   const s=farmData&&farmData.sheds.find(x=>String(x.id)===String(id));if(!s)return;
-  const d=dkView(g,s);fn(d);(setupDraft[g]||(setupDraft[g]={}))[s.id+'|docket']=JSON.stringify(dkNorm(d));
+  const d=dkView(g,s);fn(d);const dr=setupDraft[g]||(setupDraft[g]={});dr[s.id+'|docket']=JSON.stringify(dkNorm(d));
+  // Birds placed follows the docket: the donors' birds added up (2026-11-10)
+  const st=dkStats(d);if(st.birds>0){dr[s.id+'|initialPopulation']=String(st.birds);
+    document.querySelectorAll(`[data-su="${g}|${s.id}|initialPopulation"]`).forEach(x=>{x.value=st.birds;x.readOnly=true;x.classList.add('su-auto');});}
 }
+// Setup's Birds placed box: read-only while the docket has donor birds
+function dkBirdsLocked(g,s){return dkStats(dkView(g,s)).birds>0;}
 // Apply: blank donor rows are dropped; the weighted DOC becomes the shed's chick weight
 function dkApply(id,raw){
   const s=farmData&&farmData.sheds.find(x=>String(x.id)===String(id));if(!s)return;
@@ -40,14 +45,14 @@ function dkApply(id,raw){
   d.donors=d.donors.filter(x=>!dkBlank(x));
   s.docket=d;
   const st=dkStats(d);
+  if(st.birds>0&&Number(s.initialPopulation)!==st.birds)updateShedField(Number(s.id)-1,'initialPopulation',String(st.birds));
   if(st.doc!=null){const kg=st.doc/1000;if(kg>=MIN_CHICK_WEIGHT_KG&&kg<=MAX_CHICK_WEIGHT_KG)s.chickWeightKg=Math.round(kg*100000)/100000;}
 }
 function dkTotalsHtml(g,s,d){
   const st=dkStats(d);if(!st.n)return `<p class="dk-sum muted">Add the donor flocks from the docket. The shed's DOC weight is then worked out from them, weighted by birds.</p>`;
-  const placed=Number(suVal(g,s,'initialPopulation',suCurrent(s,'initialPopulation')))||0;
   const plain=st.n>1?d.donors.filter(x=>(x.birds||0)>0&&x.docG>0):[];
   return `<div class="dk-sum"><span><small>Birds</small><b>${prInt(st.birds)}</b></span><span><small>Avg DOC</small><b>${st.doc!=null?st.doc.toFixed(1)+' g':'—'}</b></span><span><small>Avg flock age</small><b>${st.age!=null?st.age.toFixed(1)+' wk':'—'}</b></span></div>
-    <p class="dk-note">${st.doc!=null?`Weighted by birds${plain.length>1?` (a plain average would be ${(plain.reduce((a,x)=>a+x.docG,0)/plain.length).toFixed(1)} g)`:''}. On Apply, Shed ${s.id}'s chick weight becomes ${st.doc.toFixed(1)} g.`:'Enter each donor\'s DOC weight to get the shed average.'}${placed&&placed!==st.birds?` <b>Birds placed in Setup: ${prInt(placed)}.</b>`:''}</p>`;
+    <p class="dk-note">${st.doc!=null?`Weighted by birds${plain.length>1?` (a plain average would be ${(plain.reduce((a,x)=>a+x.docG,0)/plain.length).toFixed(1)} g)`:''}. On Apply, Shed ${s.id}'s chick weight becomes ${st.doc.toFixed(1)} g.`:'Enter each donor\'s DOC weight to get the shed average.'}${st.birds>0?` Birds placed = ${prInt(st.birds)}, the donors added up.`:''}</p>`;
 }
 function dkShedHtml(g,s){
   const d=dkView(g,s),k=`${g}|${s.id}`;

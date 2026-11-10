@@ -516,6 +516,30 @@ function setSiloRingsForToday(group,siloNum,rings){
   logSiloReading(group,reading);
   saveSiloData();schedulePush();render();
 }
+// "Same as yesterday" (2026-11-10): the first 3–4 days the chicks eat the feed on the floor and in the
+// pans, so the silos don't move. One tap copies the last reading before today into today's.
+function lastReadingBefore(group,dateIso){const r=readingsSorted(group).filter(x=>x.date<dateIso);return r.length?r[r.length-1]:null;}
+function sameReadingBtnHtml(group){
+  const todayIso=iso(new Date()),prev=lastReadingBefore(group,todayIso);
+  const yest=iso(addDays(new Date(),-1));
+  const lbl=!prev||prev.date===yest?'Same as yesterday':'Same as '+fmtShortNoYear(dateOnly(prev.date));
+  const ring=v=>v==null?'off':v+'r';
+  const tip=prev?`Copy the ${fmtShortNoYear(dateOnly(prev.date))} reading (${[1,2,3].map(n=>ring(prev[`silo${n}Rings`])).join(' · ')}) as today's — for the first days, when the chicks still eat the feed on the floor and in the pans`:'No earlier reading to copy';
+  return `<button type="button" class="same-reading-btn" data-same-reading="${group}" title="${escapeAttr(tip)}"${prev?'':' disabled'}>↻ ${escapeHtml(lbl)}</button>`;
+}
+function copyLastSiloReading(group){
+  if(!siloData[group])siloData[group]={readings:[],deliveries:[]};
+  const s=siloData[group],todayIso=iso(new Date()),prev=lastReadingBefore(group,todayIso);
+  if(!prev){showToast('No earlier reading to copy.',true);return false;}
+  let reading=s.readings.find(r=>r.date===todayIso);
+  if(!reading){reading={date:todayIso};s.readings.push(reading);s.readings.sort((a,b)=>a.date.localeCompare(b.date));}
+  [1,2,3].forEach(n=>{reading[`silo${n}Rings`]=prev[`silo${n}Rings`]??null;});
+  reading.time=siloReadTime();
+  logSiloReading(group,reading);
+  saveSiloData();schedulePush();
+  showToast(`${pairLabel(group)}: today's reading is the same as ${fmtShortNoYear(dateOnly(prev.date))} (${fmtFeed(readingTotalKg(reading))}).`);
+  return true;
+}
 function deleteSiloReading(group,dateIso){
   const s=siloData[group];if(!s||!Array.isArray(s.readings))return;
   const idx=s.readings.findIndex(r=>r.date===dateIso);if(idx<0)return;
