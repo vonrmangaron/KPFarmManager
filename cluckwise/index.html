@@ -5027,6 +5027,20 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .kpc-cols span{ font:600 12.5px/1.3 Inter,sans-serif; color:var(--ink); overflow-wrap:anywhere; }
   .kpc-cols em{ font:600 11.5px Inter,sans-serif; font-style:normal; color:var(--muted); }
   body #calendarWrap .kcard.kprep .tsubs.k{ padding-left:0; }
+
+  /* Prep card folds: open on hover, or kept open by a click (2026-11-11) */
+  body #calendarWrap .kcard.kprep{ cursor:pointer; }
+  body #calendarWrap .kcard.kprep .kpc-cols, body #calendarWrap .kcard.kprep .kc-foot{ transition:opacity .18s ease; }
+  body #calendarWrap .kcard.kprep:not(.kpc-open):not(:hover):not(:focus-within) .kpc-cols,
+  body #calendarWrap .kcard.kprep:not(.kpc-open):not(:hover):not(:focus-within) .kc-foot,
+  body #calendarWrap .kcard.kprep:not(.kpc-open):not(:hover):not(:focus-within) .tsubs{ display:none; }
+  body #calendarWrap .kcard.kprep.kpc-open{ outline:2px solid var(--kpc-acc); outline-offset:-2px; }
+  @media (hover:none){ body #calendarWrap .kcard.kprep:not(.kpc-open):hover .kpc-cols, body #calendarWrap .kcard.kprep:not(.kpc-open):hover .kc-foot{ display:none; } }
+  /* Weigh-in cards: their own blue */
+  body #calendarWrap .kanban-column .kcard.kweigh:not(.done){ background:#EAF1FE; border:1.5px solid #7EA6EC; box-shadow:0 8px 20px rgba(47,111,219,.14); }
+  body.theme-dark #calendarWrap .kanban-column .kcard.kweigh:not(.done){ background:#17284A; border-color:#3F6CC4; box-shadow:0 8px 20px rgba(0,0,0,.3); }
+  body #calendarWrap .kcard.kweigh:not(.done) .kp-type{ background:#2F6FDB; color:#fff; }
+  body.theme-dark #calendarWrap .kcard.kweigh:not(.done) .kp-type{ background:#5B8DEB; color:#0B1222; }
 </style>
 <script>
 // iPhone home-screen app with a home bar: leave the standard space under the tab bar
@@ -6153,7 +6167,18 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const aDone = a.status==='done' ? 1 : 0;
     const bDone = b.status==='done' ? 1 : 0;
     if(aDone !== bDone) return aDone - bDone;
+    // Shed prep cards first (2026-11-11): the shed with the fewest days to placement on top, then by shed number
+    const pa = prepCardRank(a), pb = prepCardRank(b);
+    if((pa != null) !== (pb != null)) return pa != null ? -1 : 1;
+    if(pa != null && pa !== pb) return pa - pb;
+    if(pa != null){ const sa = Number(a.prep.shed) || 0, sb = Number(b.prep.shed) || 0; if(sa !== sb) return sa - sb; }
     return (a.order||0) - (b.order||0) || (b.createdAt||0) - (a.createdAt||0);
+  }
+  // an open shed prep card's sort key: days to the shed's placement (no date yet = after the dated ones); null = not a prep card
+  function prepCardRank(t){
+    if(!t || t.status === 'done' || !t.prep || !t.prep.bundle || typeof prepFind !== 'function') return null;
+    const c = prepFind(t.prep.cid), n = c && c.nextPlacement ? prepDaysTo(c.nextPlacement) : null;
+    return n == null ? 9999 : n;
   }
   // Daily maintenance check: one built-in frequent task (fixed id, so devices never add it twice).
   // Added once per farm; if the manager deletes it, it stays deleted (settings.mcheckTpl).
@@ -11192,6 +11217,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!sh){ const m = String(task.name || '').match(/\bshed\s*#?\s*(\d{1,2})\b/i); if(m) sh = m[1]; }
     return sh;
   }
+  // Prep cards sit folded (shed, days to chicks, progress); hovering opens them, a click keeps one open (2026-11-11)
+  const kpcOpen = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('cw-kpc-open') || '[]'); }catch(e){ return []; } })());
+  function kpcOpenSave(){ try{ localStorage.setItem('cw-kpc-open', JSON.stringify([...kpcOpen].slice(-50))); }catch(e){} }
+  // Weigh-in cards get their own colour (2026-11-11): the planner's weekly weigh-ins and any "Weigh…" job
+  function isWeighCard(t){ return !!t && (t.source === 'auto-weight' || /^\s*weigh/i.test(t.name || '')); }
   function kPrepParts(task, c){
     const p = subProgress(task), n = prepDaysTo(c.nextPlacement), open = (task.subs || []).filter(x=> !x.done);
     const isA = x=>{ const u = x.prepUid && prepUnit(c, x.prepUid), sec = u && prepNoteSecOf(c, u); return !!(u && sec && prepIsAfter(sec, u)); };
@@ -11201,7 +11231,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const { n } = kPrepParts(task, c), d = c.nextPlacement ? toDateObj(c.nextPlacement).toLocaleDateString('en-GB', { weekday:'short', day:'numeric' }) : '';
     const big = n == null ? '—' : n > 0 ? n + ' d' : n === 0 ? 'Today' : 'In';
     const sub = n == null ? 'no chicks date yet' : n > 0 ? 'to chicks · ' + d : n === 0 ? 'chicks arrive' : 'chicks in ' + (-n) + ' d';
-    return `<div class="kpc-top" title="Shed ${escapeHtmlAttr(c.shed)} preparation — the shed's one prep card"><div class="kpc-id"><span class="kpc-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3l-8.5 8.5"/><path d="M10 12c-3 0-5 2-5 5v4h4c3 0 5-2 5-5z"/></svg>Shed prep</span><b>Shed ${escapeHtml(c.shed)}</b></div><div class="kpc-cd"><b>${escapeHtml(big)}</b><span>${escapeHtml(sub)}</span></div></div>`;
+    return `<div class="kpc-top" data-t="Shed ${escapeHtmlAttr(c.shed)} preparation — the shed's one prep card"><div class="kpc-id"><span class="kpc-k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 3l-8.5 8.5"/><path d="M10 12c-3 0-5 2-5 5v4h4c3 0 5-2 5-5z"/></svg>Shed prep</span><b>Shed ${escapeHtml(c.shed)}</b></div><div class="kpc-cd"><b>${escapeHtml(big)}</b><span>${escapeHtml(sub)}</span></div></div>`;
   }
   function kPrepBodyHtml(task, c){
     const { p, bef, aft } = kPrepParts(task, c), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
@@ -11214,7 +11244,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const todayKey = dateKey(new Date());
     const isOverdue = task.status!=='done' && task.date && task.date < todayKey;
     const isHighPriority = task.priority === 'high' && task.status!=='done';
-    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '') + (isOverdue ? ' late' : '') + (task.prep && task.prep.bundle && task.status !== 'done' ? ' kprep' : '');
+    card.className = 'kcard' + (task.status==='done' ? ' done' : '') + (isHighPriority && !isOverdue ? ' high-priority' : '') + (isOverdue ? ' late' : '') + (task.prep && task.prep.bundle && task.status !== 'done' ? ' kprep' + (kpcOpen.has(task.id) ? ' kpc-open' : '') : '') + (!task.prep && isWeighCard(task) ? ' kweigh' : '');
     card.dataset.id = task.id;
     const activeBatch = taskBatch(task);
     const stripColor = activeBatch ? colorForBatchNumber(activeBatch.number) : 'var(--line)';
@@ -11289,8 +11319,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     card.addEventListener('click', (e)=>{
       if(suppressNextClick) return;
       if(e.target.closest('.task-menu-btn') || e.target.closest('.task-menu-popup') || e.target.closest('.task-complete-btn')) return;
+      if(card.classList.contains('kprep')){   // a click keeps it open (or folds it again); ⋯ › Open card opens it
+        const on = !kpcOpen.has(task.id); if(on) kpcOpen.add(task.id); else kpcOpen.delete(task.id); kpcOpenSave();
+        card.classList.toggle('kpc-open', on); card.setAttribute('aria-expanded', String(on)); return; }
       openTaskDetailModal(task.id);
     });
+    if(card.classList.contains('kprep')){ card.setAttribute('aria-expanded', String(kpcOpen.has(task.id))); card.title = 'Hover to see the jobs · click to keep it open'; }
     return card;
   }
 
