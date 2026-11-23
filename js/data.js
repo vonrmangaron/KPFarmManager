@@ -98,9 +98,15 @@ function readingIsMorning(r){return !!r&&r.time==='am';}
 // Evening readings: yes. Morning readings: the per-reading answer, else the farm
 // setting (deliveries usually arrive early morning, e.g. 5 am, before readings).
 function deliveryTimingEarly(){return predState.deliveryTiming!=='day';}
-function readingIncludesDayDelivery(r){if(!readingIsMorning(r))return true;if(r.deliveryIn===true||r.deliveryIn===false)return r.deliveryIn;return deliveryTimingEarly();}
+// Same rule as the silo window's "Today's delivery already in the silo?" question (2026-11-23): the reading's
+// own answer, else the Received tick on that day's loads for the pair, else the farm's usual timing.
+// (Before, the maths skipped the Received tick: a truck not in yet was taken as already in the reading.)
+function pairLoadsOn(g,D){const t=dateOnly(D).getTime();return farmLoads.filter(l=>l.date&&dateOnly(l.date).getTime()===t&&Number(l.splitKg&&l.splitKg[g])>0);}
+function readingIncludesDayDelivery(r,g){if(!readingIsMorning(r))return true;if(r.deliveryIn===true||r.deliveryIn===false)return r.deliveryIn;
+  if(g){const known=pairLoadsOn(g,r.date).filter(l=>typeof l.received==='boolean'||l.actualKg!=null);if(known.length)return known.some(loadReceived);}
+  return deliveryTimingEarly();}
 // Loads counted into a reading's stock: everything before its day, plus its own day when already in the silo
-function loadBeforeReading(r,ld){const D=dateOnly(r.date);return readingIncludesDayDelivery(r)?ld<=D:ld<D;}
+function loadBeforeReading(r,ld,g){const D=dateOnly(r.date);return readingIncludesDayDelivery(r,g)?ld<=D:ld<D;}
 // How true are my readings (Adjust): plan as if the silos hold this share of
 // what was read. Measured feed (FCR, projection) always uses the raw reading.
 function siloConfidence(){const v=Number(predState.siloConfidencePct);return Number.isFinite(v)&&v>=50&&v<=100?v/100:1;}
@@ -109,7 +115,7 @@ function readingEndOfDayKg(group,reading,kgOn){
   const base=readingTotalKg(reading)*siloConfidence();
   if(!readingIsMorning(reading))return base;
   const d=dateOnly(reading.date);
-  const add=readingIncludesDayDelivery(reading)?0:(kgOn||deliveriesKgOnAll)(group,d);
+  const add=readingIncludesDayDelivery(reading,group)?0:(kgOn||deliveriesKgOnAll)(group,d);
   return base+add-groupDailyFeedOn(shedsForGroup(group),d);
 }
 function balanceOnEndOfDay(group,D,realOnly){
@@ -141,7 +147,7 @@ function feedEatenMeasured(){
     const r=latestReading(g);if(!r){missing.push(g);return;}
     const D=dateOnly(r.date),morning=readingIsMorning(r);
     let delivered=0;
-    farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(!loadBeforeReading(r,ld))return;delivered+=loadKgToPairBefore(l,g);});
+    farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(!loadBeforeReading(r,ld,g))return;delivered+=loadKgToPairBefore(l,g);});
     const stock=readingTotalKg(r);
     pairs.push({g,date:D,morning,delivered,stock,sheds});eaten+=delivered-stock;
   });
@@ -324,7 +330,7 @@ function measuredFeedToDate(){
     const rs=byDate[ds];if(groups.some(g=>!rs[g]))return;
     let eaten=carry,model=0;const cut={};
     groups.forEach(g=>{const r=rs[g],D=dateOnly(r.date),morning=readingIsMorning(r),end=morning?addDays(D,-1):D;cut[g]=end;
-      farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(!loadBeforeReading(r,ld))return;eaten+=loadKgToPairBefore(l,g);});
+      farmLoads.forEach(l=>{if(!l.date)return;const ld=dateOnly(l.date);if(!loadBeforeReading(r,ld,g))return;eaten+=loadKgToPairBefore(l,g);});
       eaten-=readingTotalKg(r);
       shedsForGroup(g).filter(s=>s.placementDate).forEach(s=>{for(let d=dateOnly(s.placementDate);d<=end;d=addDays(d,1))model+=shedFeedOnRaw(s,d);});});
     pts.push({date:dateOnly(ds),x:model,y:eaten,cut});
@@ -351,7 +357,7 @@ function consumptionSinceLatestReading(group){
 function deliveriesSinceLatestReading(group){
   const latest=latestReading(group);if(!latest)return 0;
   const latestDate=dateOnly(latest.date);const today=dateOnly(new Date());
-  const start=readingIncludesDayDelivery(latest)?addDays(latestDate,1):latestDate;if(start>today)return 0;
+  const start=readingIncludesDayDelivery(latest,group)?addDays(latestDate,1):latestDate;if(start>today)return 0;
   let d=0;for(let x=start;x<=today;x=addDays(x,1))d+=deliveriesKgOn(group,x);
   return d;
 }
@@ -682,7 +688,7 @@ function siloLevelPlan(g,opts){
   const starter=starterSiloOf(g);const win=starterWindowStart(g);
   const loads=farmLoads.filter(l=>l.date&&l.id!==o.excludeLoadId&&Number(l.splitKg&&l.splitKg[g])>0);
   const lastFill=[0,0,0];
-  loads.forEach(l=>{const d=dateOnly(l.date);if(loadBeforeReading(r,d))loadSilosFor(l,g).forEach(n=>{lastFill[n-1]=Math.max(lastFill[n-1],d.getTime());});});
+  loads.forEach(l=>{const d=dateOnly(l.date);if(loadBeforeReading(r,d,g))loadSilosFor(l,g).forEach(n=>{lastFill[n-1]=Math.max(lastFill[n-1],d.getTime());});});
   const marked=readingOpenField(r).open;
   let open=marked?marked.map(n=>n-1).filter(i=>kg[i]>0):[];
   if(!open.length){const c=[0,1,2].filter(i=>kg[i]>0).sort((a,b)=>((a===starter-1)-(b===starter-1))||(kg[a]-kg[b]));if(c.length)open=[c[0]];}
@@ -722,7 +728,7 @@ function siloLevelPlan(g,opts){
   const start={date:D0,kg:kg.slice(),open:open.map(i=>i+1),marked:!!marked,next:queue.length?queue[0]+1:null,total:kg[0]+kg[1]+kg[2]};
   if(readingIsMorning(r)){
     // morning reading: today's delivery (if not in yet) and today's feed still to come
-    const inc=readingIncludesDayDelivery(r);const row=step(D0,!inc,true);days.push(row);
+    const inc=readingIncludesDayDelivery(r,g);const row=step(D0,!inc,true);days.push(row);
   }
   const until=dateOnly(o.until||addDays(new Date(),14));
   for(let D=addDays(D0,1);D<=until;D=addDays(D,1))days.push(step(D,true,true));
@@ -751,12 +757,12 @@ function starterSiloStatus(g){
   const plan=siloLevelPlan(g,{until:addDays(co,1)});
   // other feed booked into the starter silo — only loads still to come after the latest reading count;
   // anything delivered before it is already in (or out of) the silo the reading shows
-  const rd=latestReading(g),afterRd=d=>!rd||!loadBeforeReading(rd,d);
+  const rd=latestReading(g),afterRd=d=>!rd||!loadBeforeReading(rd,d,g);
   const wrong=farmLoads.filter(l=>l.date&&loadSilosFor(l,g).includes(n)&&Number(l.splitKg[g])>0&&win&&dateOnly(l.date)>=win&&!isNextBatchStarter(l,g,win)&&dateOnly(l.date)<=co&&afterRd(dateOnly(l.date)));
   if(!plan)return {...base,state:'noreading',wrong};
   const nowRow=siloPlanOn(plan,today)||plan.start;const nowKg=nowRow.kg[n-1];
   // the next batch's Starter already went in (booked in the next batch): what the silo holds is that Starter
-  const nbs=nextBatchStarterLoads(g,n),nbIn=nbs.filter(l=>rd&&loadBeforeReading(rd,l.date));
+  const nbs=nextBatchStarterLoads(g,n),nbIn=nbs.filter(l=>rd&&loadBeforeReading(rd,l.date,g));
   if(nbIn.length&&!wrong.length)return {...base,state:'ready',kg:nowKg,nextStarter:nbIn,wrong};
   if(nowKg<=0.5&&!wrong.length)return {...base,state:'ready',kg:0,emptyOn:today,wrong,isOpen:(nowRow.open||[]).includes(n)};
   // first day it is empty and stays empty until clean-out (ignoring next batch's starter)

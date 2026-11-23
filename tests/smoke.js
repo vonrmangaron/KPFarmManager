@@ -118,20 +118,29 @@ console.log('8. Early-morning delivery vs morning reading');
 const dt=run('delivery timing',`(()=>{
   const g=1,today=dateOnly(new Date()),ti=iso(today);
   farmLoads=farmLoads.filter(l=>iso(l.date)!==ti);
-  saveLoad({date:today,feedType:'finisher',plannedKg:60000,splitKg:{1:30000,2:30000,3:0,4:0},note:'',actualKg:60000});
+  // No Received tick and no docket weight yet: the farm's usual timing decides
+  saveLoad({date:today,feedType:'finisher',plannedKg:60000,splitKg:{1:30000,2:30000,3:0,4:0},note:'',actualKg:null});
   const r={date:ti,silo1Rings:4,silo2Rings:4,silo3Rings:4,time:'am'};
   siloData[g].readings=siloData[g].readings.filter(x=>x.date!==ti).concat([r]);
   const base=readingTotalKg(r)*siloConfidence(),eat=groupDailyFeedOn(shedsForGroup(g),today);
   predState.deliveryTiming='early';const early=readingEndOfDayKg(g,r,deliveriesKgOn);const eatenEarly=feedEatenMeasured().pairs.find(p=>p.g===g).delivered;
   predState.deliveryTiming='day';const day=readingEndOfDayKg(g,r,deliveriesKgOn);const eatenDay=feedEatenMeasured().pairs.find(p=>p.g===g).delivered;
+  // The Received tick on today's load wins over the farm setting (2026-11-23: a truck not in yet was taken as in)
+  const ld=farmLoads.find(l=>iso(l.date)===ti);
+  predState.deliveryTiming='early';ld.received=false;const notIn=readingEndOfDayKg(g,r,deliveriesKgOn);
+  predState.deliveryTiming='day';ld.received=true;const isIn=readingEndOfDayKg(g,r,deliveriesKgOn);
+  delete ld.received;
   r.deliveryIn=true;const override=readingEndOfDayKg(g,r,deliveriesKgOn);
   r.time='pm';delete r.deliveryIn;const evening=readingEndOfDayKg(g,r,deliveriesKgOn);
   predState.deliveryTiming='early';
-  return {early:early-(base-eat),day:day-(base+deliveriesKgOn(g,today)-eat),override:override-(base-eat),evening:evening-base,diffDelivered:eatenEarly-eatenDay,load:deliveriesKgOn(g,today)};
+  return {early:early-(base-eat),day:day-(base+deliveriesKgOn(g,today)-eat),override:override-(base-eat),evening:evening-base,diffDelivered:eatenEarly-eatenDay,load:deliveriesKgOn(g,today),
+    notIn:notIn-(base+deliveriesKgOn(g,today)-eat),isIn:isIn-(base-eat)};
 })()`);
 if(dt){ok(near(dt.early,0,1),'early delivery: morning reading is not topped up again');ok(near(dt.day,0,1),'daytime delivery: morning reading adds that day\'s load');
   ok(near(dt.override,0,1),'per-reading "already in" answer wins over the setting');ok(near(dt.evening,0,1),'evening reading unaffected');
-  ok(near(dt.diffDelivered,dt.load,1),'eaten-so-far counts the early load as delivered before the reading');}
+  ok(near(dt.diffDelivered,dt.load,1),'eaten-so-far counts the early load as delivered before the reading');
+  ok(near(dt.notIn,0,1),'load not ticked Received: morning reading adds it, even with Early AM');
+  ok(near(dt.isIn,0,1),'load ticked Received: already in the reading, even with During day');}
 
 console.log('9. Pickup birds edited inline');
 const pb=run('pickup birds',`(()=>{
