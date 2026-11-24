@@ -6293,6 +6293,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function fmtDateTime12(d, dateOpts){ return d.toLocaleDateString(undefined, dateOpts) + ', ' + fmt12(d); }
   function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  // A shed date from Production (placement, clean-out…) as a calendar day on any device clock. ProdWise used to save
+  // these as local midnight of the device that typed them (east of UTC that's the evening before in UTC), and a device
+  // on another clock read them a day out (batch 2702, 25 Nov 2026). After 12:00 UTC = the next day; ProdWise now saves 12:00 UTC.
+  function prodDay(v){
+    if(!v) return null;
+    const s = String(v);
+    let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if(m) return s;
+    m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]00:?00)$/.exec(s);
+    if(m){ const h = +m[4], mi = +m[5]; return dateKey(new Date(+m[1], +m[2]-1, +m[3] + (h > 12 || (h === 12 && mi > 0) ? 1 : 0))); }
+    const d = new Date(v); return isNaN(d) ? null : dateKey(d);
+  }
   function toDateObj(key){ const [y,m,d] = key.split('-').map(Number); return new Date(y,m-1,d); }
   function sameDay(a,b){ return dateKey(a)===dateKey(b); }
   function formatShort(key){ if(!key) return 'Backlog'; return toDateObj(key).toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
@@ -15733,7 +15744,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     return { placed, mort, picked, now, pct: mort / placed * 100, updated, weekPick, afterWeek: Math.max(0, now - weekPick), weekDays: [...weekDays].sort(), perShed };
   }
   // Dates arrive as 'YYYY-MM-DD' or full ISO times saved in UTC: read them as the local calendar day
-  function biNorm(v){ if(!v) return ''; if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); return isNaN(d) ? '' : biKey(d); }
+  function biNorm(v){ if(!v) return ''; if(v instanceof Date) return isNaN(v) ? '' : biKey(v); return prodDay(v) || ''; }
   function biKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
   function currentOrNextBatch(){
@@ -15763,8 +15774,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }
     if(!keys.length) return;
     keys.sort((a,b)=>{ const na = parseFloat(a), nb = parseFloat(b); return (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) ? nb - na : b.localeCompare(a); });
-    const today = dateKey(new Date()), toKey = v=>{ if(!v) return null; const d = new Date(v); return isNaN(d) ? null : dateKey(d); };
-    let added = [], changed = 0;
+    const today = dateKey(new Date()), toKey = prodDay;
+    let added = [], changed = 0, moved = false;
     for(const no of keys.slice(0, 3)){
       const d = await biLoadFeedData(no); if(!d || !d.farmData || !Array.isArray(d.farmData.sheds)) continue;
       const sheds = d.farmData.sheds.map(x=> ({ shed: String(x.id), placement: toKey(x.placementDate), cleanout: toKey(x.cleanoutDate) })).filter(x=> x.placement);
@@ -15780,12 +15791,18 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         const nb = upsertBatch(number, start, end);
         nb.sheds = sheds; nb.source = 'prodwise'; added.push(number);
       } else if(ex.start !== start || ex.end !== end || shedSig(ex.sheds) !== shedSig(sheds) || ex.source !== 'prodwise'){
-        ex.start = start; ex.end = end; ex.sheds = sheds; ex.source = 'prodwise'; changed++;
+        // keep what only the Production copy knows (closed day), and move open weigh-ins when a placement moved —
+        // before, this path changed the dates without moving them, so the Production check then saw nothing to do
+        const oldSheds = (ex.sheds || []).map(sh=> ({ ...sh }));
+        const merged = sheds.map(x=> { const o = oldSheds.find(sh=> String(sh.shed) === x.shed); return o && o.closed ? { ...x, closed:o.closed } : x; });
+        ex.start = start; ex.end = end; ex.sheds = merged; ex.source = 'prodwise'; changed++;
+        if(shedSig(oldSheds) !== shedSig(merged)){ recheckWeighIns({ full:true, batchNumber: ex.number, oldSheds, fromDate: today }, `Batch #${ex.number} from ProdWise`); moved = true; }
       }
     }
     if(added.length || changed){
       if(added.length) addHistory('Batch from ProdWise', `Batch #${added.join(', #')} picked up from ProdWise`);
       if(changed) addHistory('Batch dates from ProdWise', `${changed} batch${changed === 1 ? '' : 'es'} updated from ProdWise`);
+      if(moved){ reconcileBatchRepeats(); reconcileShedPrep(); }
       persist(); renderAll();
       if(added.length) showToast(`Batch #${added.join(', #')} picked up from ProdWise.`);
     }
@@ -15838,9 +15855,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       biFeedCache.delete(String(key));
       const d = await biLoadFeedData(key); if(!d || !d.farmData) continue;
       const prod = (d.farmData.sheds || []).filter(s=> s.placementDate).map(s=>{
-        const placement = dateKey(new Date(s.placementDate));
-        const o = { shed: String(s.id), placement, cleanout: s.cleanoutDate ? dateKey(new Date(s.cleanoutDate)) : addDaysStr(placement, 52) };
-        if(s.closed && s.closed.date) o.closed = dateKey(new Date(s.closed.date));   // closed in Production: Shed Preparation starts
+        const placement = prodDay(s.placementDate);
+        const o = { shed: String(s.id), placement, cleanout: s.cleanoutDate ? prodDay(s.cleanoutDate) : addDaysStr(placement, 52) };
+        if(s.closed && s.closed.date) o.closed = prodDay(s.closed.date);   // closed in Production: Shed Preparation starts
         return o;
       });
       if(!prod.length) continue;

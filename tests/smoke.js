@@ -389,6 +389,21 @@ pending.push(pending[0].then(async()=>{
   ok(r.starter===3,'cloud change applied');ok(r.safety===2,'unsaved local edit kept');ok(r.pushedBoth,'merged result saved back to the cloud');ok(r.plain,'no local edits: cloud taken, nothing pushed');
 }).catch(e=>{failed++;console.log('  ✗ sync pull:',e.message);}));
 
+// 24. Shed dates are calendar days on every device clock (batch 2702 placements moved a day, 25 Nov 2026)
+{
+  const r=vm.runInContext(`(()=>{
+    const day=d=>iso(d);
+    const read=['2026-10-28T16:00:00.000Z','2026-10-28T13:00:00.000Z','2026-10-29T00:00:00.000Z','2026-10-29T12:00:00.000Z','2026-10-29'].map(v=>day(calDate(v)));
+    const saved=farmData&&farmData.sheds.find(s=>s.placementDate);
+    let out=null;if(saved){const was=saved.placementDate;saved.placementDate=new Date(2026,9,29);out=buildCloudPayload().farmData.sheds.find(s=>s.id===saved.id).placementDate;saved.placementDate=was;}
+    return {read,out,still:saved?saved.placementDate instanceof Date:true};
+  })()`,ctx);
+  console.log('24. Shed dates read and save as the same calendar day on any device clock');
+  ok(r.read.every(x=>x==='2026-10-29'),'UTC+8, UTC+11, UTC, noon and plain dates all read 29 Oct: '+r.read.join(' '));
+  ok(r.out==='2026-10-29T12:00:00.000Z','saved to the cloud as 12:00 UTC: '+r.out);
+  ok(r.still,'the app keeps working with real dates');
+}
+
 Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

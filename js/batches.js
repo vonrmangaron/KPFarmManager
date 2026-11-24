@@ -8,7 +8,7 @@ const PW_RUN_KEY='pw_running_batches_v1',PW_TURNAROUND_DAYS=7;
 let pwRunOthers=[],pwRunAt=0,pwRunBusy=false,pwRunFarm=null;
 try{const c=JSON.parse(localStorage.getItem(PW_RUN_KEY)||'null');if(c&&Array.isArray(c.others)){pwRunOthers=c.others;pwRunAt=c.at||0;pwRunFarm=c.farm||null;}}catch(e){}
 
-function pwDay(d){if(!d)return null;const x=d instanceof Date?d:new Date(d);return isNaN(x)?null:dateOnly(x);}
+function pwDay(d){if(!d)return null;const x=d instanceof Date?dateOnly(d):calDate(d);return x&&!isNaN(x)?x:null;}
 function pwFmt(d){return d?fmtShortNoYear(d):'—';}
 // The picture of one batch from its sheds' dates (today decides finishing / starting)
 function pwBatchSummary(key,sheds){
