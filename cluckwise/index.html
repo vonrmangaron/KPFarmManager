@@ -18,6 +18,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="../js/core.js"></script>
 <script src="../js/farmsync.js"></script>
+<script src="../js/taskstore.js"></script>
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
 <script src="../js/plumo-face.js"></script>
@@ -6460,43 +6461,33 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   // ==================== SYNC: MAIN FILE ====================
-  // lastSyncedSnapshot = the main file as it last existed on the server (after our
-  // last successful pull or push). It's the common ancestor for a 3-way merge, so
-  // viewer edits (e.g. tasks marked done) survive a manager push, and unsynced
-  // manager edits survive a pull.
+  // The Tasks file lives in ProdWise (../js/taskstore.js, merging the apps step 3a): inside ProdWise this screen uses
+  // ProdWise's copy, so every screen sees the same data and there's one sync; opened on its own, Tasks has its own copy.
+  // lastSyncedSnapshot = the cloud copy this device last agreed with (the store's base), for restore points.
   let lastSyncedSnapshot = null;
-  const EMPTY_SNAPSHOT = { tasks:[], history:[], batches:[], events:[], settings:{}, frequentTemplates:[], maintenance:[], shedPrep:[] };
-
-  // Comparing, copying and merging saved data: the shared sync engine (../js/farmsync.js), the same one Production uses.
+  const TS = (()=>{ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && parent.TaskStore) return parent.TaskStore; }catch(e){} return window.TaskStore; })();
   const stableStr = FarmSync.stable, cloneData = FarmSync.clone;
   function snapshotLocal(){ return cloneData({tasks, history, batches, events, settings, frequentTemplates, maintenance, shedPrep}); }
-  function normalizeSnapshot(d){
-    d = d || {};
-    return {
-      tasks: Array.isArray(d.tasks) ? d.tasks : [],
-      history: Array.isArray(d.history) ? d.history : [],
-      batches: Array.isArray(d.batches) ? d.batches : [],
-      events: Array.isArray(d.events) ? d.events : [],
-      settings: (d.settings && typeof d.settings === 'object') ? d.settings : {},
-      frequentTemplates: Array.isArray(d.frequentTemplates) ? d.frequentTemplates : [],
-      maintenance: Array.isArray(d.maintenance) ? d.maintenance : [],
-      shedPrep: Array.isArray(d.shedPrep) ? d.shedPrep : []
-    };
+  const normalizeSnapshot = d=> TaskStore.normalize(d);
+  const mergeCollection = (b, l, s, keyFn)=> TaskStore.mergeList(b, l, s, keyFn);
+  let boundStore = null, storeOffs = [], pullingHere = false;
+  function store(){
+    const st = ghFarmName ? TS.get(ghFarmName) : null;
+    if(st !== boundStore){
+      storeOffs.forEach(off=>{ try{ off(); }catch(e){} }); storeOffs = []; boundStore = st;
+      if(st){
+        // another screen (or a merge while sending) changed the data: show it
+        storeOffs.push(st.on('change', info=>{ if(info.from === 'tasks' || (info.from === 'pull' && pullingHere)) return; applyMergedState(normalizeSnapshot(cloneData(st.data))); saveLocalCache(); }));
+        storeOffs.push(st.on('status', x=>{ pushPending = x.pending; pushInFlight = x.inFlight; syncState = x.state === 'idle' ? 'idle' : x.state === 'error' ? 'error' : 'syncing'; if(x.lastSyncAt) lastSyncAt = x.lastSyncAt; renderSyncStatus(); }));
+        storeOffs.push(st.on('saved', ()=>{ lastSyncedSnapshot = st.base; maybeTakeDailySnapshot(); }));
+        // never write duplicate weigh-ins back to the cloud
+        const trim = merged=>{ const plan = planWeighIns(merged.tasks || [], merged.batches || [], { trim:true }); if(plan.changes) merged.tasks = applyWeighInPlan(merged.tasks, plan); return merged; };
+        st.prepareSave = (st.prepareSave || []).filter(f=> f.cwTrim !== true); trim.cwTrim = true; st.prepareSave.push(trim);
+      }
+    }
+    return st;
   }
-  // One list of records, merged by key (the shared 3-way merge; this device's order first). Undo uses it too.
-  function mergeCollection(baseArr, localArr, serverArr, keyFn){
-    return cloneData(FarmSync.merge3(baseArr, localArr, serverArr, { key: p=> p === '' ? keyFn : null, order:'ours', removeWins:true }));
-  }
-  // The whole file: each list merges record by record, and inside a record field by field (a task's steps, a
-  // checklist's sections and jobs merge one by one, so a worker's tick and a change here both survive).
-  const histKey = h=> h.id || `${h.ts}|${h.action}|${h.detail}`;
-  const SNAP_KEYS = { tasks: x=> x.id, history: histKey, batches: b=> b.number, events: x=> x.id, frequentTemplates: x=> x.id, maintenance: x=> x.id, shedPrep: x=> x.id };
-  function mergeSnapshots(base, local, server){
-    base = normalizeSnapshot(base); local = normalizeSnapshot(local); server = normalizeSnapshot(server);
-    const m = normalizeSnapshot(cloneData(FarmSync.merge3(base, local, server, { key: p=> SNAP_KEYS[p] || null, order:'ours', removeWins:true })));
-    m.history = m.history.sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, HISTORY_MAX);
-    return m;
-  }
+  window.addEventListener('pagehide', ()=>{ storeOffs.forEach(off=>{ try{ off(); }catch(e){} }); storeOffs = []; boundStore = null; });
   function applyMergedState(d){
     tasks = d.tasks; history = d.history; batches = d.batches; events = d.events; notifyBaseline();
     if(window.FarmNotify && ghFarmName) FarmNotify.sendDay(ghFarmName, 'manager', ()=> tasks, t=> !isMaintCheckTask(t));
@@ -6518,13 +6509,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // ── This phone's own copy of the farm (survives the app being closed with no signal) ──
   // data = what's on screen, base = the cloud copy it was last synced with (for a safe merge),
   // pending = changes not yet sent.
-  function localCacheKey(){ return 'cw-local-v1-' + (ghPath || 'none'); }
-  function saveLocalCache(pending){
-    if(!ghPath) return;
-    try{ localStorage.setItem(localCacheKey(), JSON.stringify({ at: Date.now(), pending: !!pending, data: snapshotLocal(), base: lastSyncedSnapshot })); }catch(e){}
-  }
-  function loadLocalCache(){ try{ const v = JSON.parse(localStorage.getItem(localCacheKey()) || 'null'); return v && v.data ? v : null; }catch(e){ return null; } }
-  async function persist(){ saveLocalCache(true); showSyncPending(); schedulePush(); notifyTaskChanges(); }
+  function saveLocalCache(){ const st = store(); if(st) st.saveCache(); }
+  function loadLocalCache(){ const st = store(); if(!st) return null; return st.loaded ? { data: st.data, base: st.base, pending: st.pending } : st.loadCache(); }
+  async function persist(){ const st = store(); if(st) st.commit(snapshotLocal(), 'tasks'); showSyncPending(); notifyTaskChanges(); }
   // Phone notifications (../js/notify.js): new / moved tasks go to the people on them, grouped; plus each
   // person's jobs for the week ("Your day" at 6:00). Only this device's own changes — a sync just updates the copy.
   function notifyTaskChanges(){
@@ -6557,47 +6544,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function showSyncPending(){ syncState = 'syncing'; renderSyncStatus(); }
   function showSyncError(){ syncState = 'error'; renderSyncStatus(); }
 
-  let pushDebounceTimer = null;
-  let pushMaxWaitTimer = null;
+  // Sending waits a moment for more changes and retries with no signal: the store does it (../js/taskstore.js)
   let pushInFlight = false;
   let pushPending = false;
-  function schedulePush(){
-    pushPending = true;
-    clearTimeout(pushDebounceTimer);
-    pushDebounceTimer = setTimeout(runScheduledPush, 2000);
-    if(!pushMaxWaitTimer){ pushMaxWaitTimer = setTimeout(runScheduledPush, 30000); }
-  }
-  async function runScheduledPush(retryCount){
-    retryCount = retryCount || 0;
-    clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
-    clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
-    if(!pushPending && retryCount===0) return;
-    if(pushInFlight){ pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount), 2000); return; }
-    pushPending = false;
-    pushInFlight = true;
-    let ok = false;
-    try{ ok = await pushToGithub(); } finally { pushInFlight = false; }
-    if(!ok){
-      // Keep the changes marked unsynced so refocus / manual refresh retries them
-      // instead of a pull overwriting them.
-      pushPending = true;
-      if(retryCount < 4){ pushDebounceTimer = setTimeout(()=>runScheduledPush(retryCount+1), 4000 * (retryCount+1)); }
-    }
-  }
-  function flushPendingPush(){
-    if(!pushPending) return;
-    clearTimeout(pushDebounceTimer); pushDebounceTimer = null;
-    clearTimeout(pushMaxWaitTimer); pushMaxWaitTimer = null;
-    pushPending = false;
-    pushToGithub().then(ok=>{ if(!ok) pushPending = true; });
-  }
-
-  async function fetchMainFile(){
-    const r = await FarmSync.get(ghFarmName, { fresh:true });
-    if(!r.ok) throw new Error('Sync server: ' + r.reason);
-    if(r.notFound) return { data:null, sha:null };
-    return { data: normalizeSnapshot(r.data), sha: r.sha };
-  }
+  function schedulePush(){ persist(); }
+  function runScheduledPush(){ const st = store(); return st ? st.run() : Promise.resolve(false); }
+  function flushPendingPush(){ const st = store(); if(st) st.flush(); }
 
   async function load(){
     lastSyncedSnapshot = null;
@@ -6696,7 +6648,6 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!name){ showToast('Enter a name for this farm.', true); return; }
     ghFarmName = name;
     ghPath = sanitizeFarmFileName(name);
-    ghSha = null;
     lastSyncedSnapshot = null;
     reportsSha = null;
     try{ localStorage.setItem('prodplan-gh-farmname', ghFarmName); }catch(e){}
@@ -6707,22 +6658,19 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   async function pullFromGithub(silent){
     if(!ghPath) return false;
+    const st = store();
     try{
-      const server = await fetchMainFile();
-      if(!server.data){ await pushToGithub(); await pullReportsFromGithub(silent); reconcileReportTaskLinks(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
-      ghSha = server.sha;
-      const merged = lastSyncedSnapshot
-        ? mergeSnapshots(lastSyncedSnapshot, snapshotLocal(), server.data)
-        : server.data;
-      lastSyncedSnapshot = cloneData(server.data);
+      pullingHere = true;
+      let r; try{ r = await st.pull(); }finally{ pullingHere = false; }
+      if(!r.ok) throw new Error('Sync server: ' + r.reason);
+      if(r.created){ await pullReportsFromGithub(silent); reconcileReportTaskLinks(); if(!silent) showToast('Connected — created a new file for this farm.'); return true; }
+      lastSyncedSnapshot = st.base;
       maybeTakeDailySnapshot();
-      applyImportedData(JSON.stringify(merged));
+      applyImportedData(JSON.stringify(st.data));
       // Another device may have added its own copy of a weigh-in; collapse duplicates.
       const weighFix = recheckWeighIns({}, 'After sync');
-      if(weighFix.changes) renderAll();
-      // Local edits survived the merge -> push them back up.
-      if(weighFix.changes || stableStr(normalizeSnapshot(merged)) !== stableStr(server.data)) persist();
-      saveLocalCache(pushPending);
+      if(weighFix.changes){ renderAll(); persist(); }
+      saveLocalCache();
       setTimeout(()=>{ runArchive(); loadArchives(); refreshWorkerBirdCounts(); syncBatchesFromProduction(); }, 1500);
       await pullReportsFromGithub(silent);
       reconcileReportTaskLinks();
@@ -6741,43 +6689,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       return false;
     }
   }
-  async function pushToGithub(retryCount){
-    retryCount = retryCount || 0;
-    if(!ghPath) return false;
-    try{
-      // Always merge against the latest server copy so the viewer's writes aren't clobbered.
-      const server = await fetchMainFile();
-      const localAtStart = snapshotLocal();
-      const merged = server.data
-        ? mergeSnapshots(lastSyncedSnapshot || EMPTY_SNAPSHOT, localAtStart, server.data)
-        : localAtStart;
-      // Never write duplicate weigh-ins back to the cloud.
-      const weighPlan = planWeighIns(merged.tasks || [], merged.batches || [], { trim:true });
-      if(weighPlan.changes) merged.tasks = applyWeighInPlan(merged.tasks, weighPlan);
-      const res = await FarmSync.put(ghFarmName, server.sha, merged);
-      if(res.conflict){
-        // Someone wrote between our GET and PUT — re-fetch, re-merge, retry.
-        if(retryCount < 4){ await new Promise(r=>setTimeout(r, 400*(retryCount+1))); return pushToGithub(retryCount+1); }
-        throw new Error('Sync conflict persisted after retries');
-      }
-      if(!res.ok) throw new Error('Sync server: ' + res.reason);
-      if(res.sha) ghSha = res.sha;
-      lastSyncedSnapshot = cloneData(merged);
-      maybeTakeDailySnapshot();
-      setTimeout(()=> saveLocalCache(pushPending), 0);
-      // Keep any edits made while the request was in flight, layered on what we just saved.
-      const current = snapshotLocal();
-      const next = stableStr(current) === stableStr(localAtStart) ? merged : mergeSnapshots(localAtStart, current, merged);
-      if(stableStr(next) !== stableStr(current)) applyMergedState(next);
-      if(stableStr(next) !== stableStr(merged)) schedulePush();
-      else flashSaved();
-      return true;
-    }catch(e){
-      console.error('Push failed', e);
-      showSyncError();
-      return false;
-    }
-  }
+  async function pushToGithub(){ const st = store(); if(!st) return false; st.pending = true; return st.run(); }
 
   // ==================== REPORTS FILE SYNC ====================
   let reportsPushDebounceTimer = null;

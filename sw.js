@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v317';
+const CACHE_NAME = 'prodwise-v318';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   './manifest.json',
   './js/core.js',
   './js/farmsync.js',
+  './js/taskstore.js',
   './js/farmkey.js',
   './js/notify.js',
   './js/tasks.js',

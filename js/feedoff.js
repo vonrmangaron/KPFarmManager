@@ -130,6 +130,13 @@ function foCrewShare(now){
     const farm=sanitizeUserFarmName(syncFarmName),days=foCrewDays(),s=JSON.stringify(days),k='pw-fo-crew-'+farm;
     let last=null;try{last=localStorage.getItem(k);}catch(er){}
     if(last===s)return;
+    // The Tasks file is open in ProdWise (js/taskstore.js): change ProdWise's copy, which sends it like any other change
+    const ts=window.TaskStore?TaskStore.get(syncFarmName):null;
+    if(ts&&ts.loaded){
+      const st=ts.data.settings||{};
+      if(JSON.stringify((st.feedOff||{}).days||[])!==s){const d=FarmSync.clone(ts.data);d.settings=Object.assign({},st,{feedOff:{days,at:Date.now()}});ts.commit(d,'prodwise');}
+      try{localStorage.setItem(k,s);}catch(er){}return;
+    }
     const url=`${SYNC_WORKER_URL}/?farm=${encodeURIComponent(farm)}&repo=${encodeURIComponent(SYNC_REPO)}`;
     for(let i=0;i<4;i++){
       try{

@@ -32,6 +32,15 @@ async function loadManagerName(){
 // Writes the name into the farm file (creating it for a new farm). True when saved.
 async function saveManagerName(name,slug){
   slug=slug||accSlug();name=String(name||'').trim().replace(/\s+/g,' ').slice(0,40);
+  // The Tasks file is open in ProdWise (js/taskstore.js): change ProdWise's copy, which sends it like any other change
+  const st=window.TaskStore&&syncFarmName&&slug===accSlug()?TaskStore.get(syncFarmName):null;
+  if(st&&st.loaded){
+    const d=FarmSync.clone(st.data),old=String((d.settings&&d.settings.manager)||'').trim();
+    if(old!==name){d.settings=Object.assign({},d.settings,{manager:name});
+      d.history.unshift({id:'pw-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),ts:Date.now(),action:'Settings',detail:old?`Manager changed from ${old} to ${name} (ProdWise)`:`Manager set to ${name} (ProdWise)`});
+      st.commit(d,'prodwise');}
+    cacheManager(slug,name);return true;
+  }
   for(let i=0;i<4;i++){
     let r;try{r=await fetch(farmFileUrl(slug));}catch(e){return false;}
     let sha=null,d={};
