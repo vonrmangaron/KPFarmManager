@@ -22,7 +22,12 @@
 //           Workers screen, `current` must be that password.
 //   join    { farm, role:'manager'|'worker', password, deviceId, name, device } → { key, role }
 //   leave   (with key) this phone signs itself out
-//   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock' | 'organize', … }
+//   manage  (manager key) { op:'status' | 'passwords' | 'revoke' | 'signoutAll' | 'lock' | 'organize' | 'aiLink', … }
+//           aiLink {} → { on, key, at } · { make:true, tz } new link (the old one stops) · { off:true }
+//
+// AI read-only link (2026-11-25): GET ?export=<farm>&key=<key>[&full=1] → the whole farm as one JSON
+// reply, for an AI assistant to read without opening the apps. It only ever reads. The key is its own
+// (not a phone key, so "sign out all devices" leaves it alone); the manager turns it off in ProdWise.
 //           passwords { managerPassword } other manager devices sign in again;
 //           { farmPassword } workers already signed in stay connected.
 //
@@ -149,6 +154,13 @@ function github(env) {
     }
     return { sha: meta.sha, data: JSON.parse(text) };
   }
+  // The file as text, not parsed (the AI link passes big files straight through)
+  async function rawAt(path) {
+    const res = await fetch(pathUrl(path), { headers: { ...headers, Accept: 'application/vnd.github.raw' } });
+    if (res.status === 404) return { notFound: true };
+    if (!res.ok) return { error: res.status };
+    return { text: await res.text() };
+  }
   async function writeAt(path, sha, data) {
     const body = { message: `ProdPlan.VM update ${new Date().toISOString()}`, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) };
     if (sha) body.sha = sha;
@@ -178,6 +190,13 @@ function github(env) {
     return { branch, commitSha, treeSha: commit.tree.sha, files };
   }
   return {
+    async readRaw(slug) {
+      for (const path of [pathFor(slug), ...oldPaths(slug)]) {
+        const r = await rawAt(path);
+        if (!r.notFound) return r;
+      }
+      return { notFound: true };
+    },
     async read(slug) {
       for (const path of [pathFor(slug), ...oldPaths(slug)]) {
         const r = await readAt(path);
@@ -340,6 +359,127 @@ async function updateAccessFile(gh, farm, mutate) {
 }
 const memberKey = n => String(n || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
+// ── AI read-only link ───────────────────────────────────────
+//   ai:<farm>   { key, at, tz, by }
+const aiKey = farm => `ai:${farm}`;
+const validTz = tz => { try { new Intl.DateTimeFormat('en-CA', { timeZone: String(tz) }); return !!tz; } catch (e) { return false; } };
+// Today's date where the manager made the link (their device's local time)
+function localDay(tz, when = new Date()) {
+  const p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(when).forEach(x => { p[x.type] = x.value; });
+  return `${p.year}-${p.month}-${p.day}`;
+}
+const localToday = tz => localDay(tz);
+// A real moment (a report made, a job ticked) as the day it was where the manager is
+const stampDay = (v, tz) => { if (!v) return null; const d = new Date(v); return isNaN(d) ? null : localDay(tz, d); };
+// A calendar day from the apps: 'YYYY-MM-DD', or a timestamp saved as a device's local midnight
+// (after 12:00 UTC that is the next day, east of UTC) or as 12:00 UTC. Same rule as ProdWise's calDate.
+function day(v) {
+  if (!v) return null;
+  const s = String(v);
+  let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (m) return s;
+  m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s);
+  if (!m) return null;
+  const h = +m[4], mi = +m[5], d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + (/Z$|[+-]00:?00$/.test(s) && (h > 12 || (h === 12 && mi > 0)) ? 1 : 0)));
+  return d.toISOString().slice(0, 10);
+}
+const daysBetween = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 864e5);
+const addDays = (a, n) => new Date(Date.parse(a + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+const num = v => (v == null || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
+const siloKg = r => r == null || r === '' || !Number.isFinite(Number(r)) || Number(r) < 0 ? null : 10000 + 8000 * Math.min(5, Math.floor(Number(r)));   // same as the app: cone 10 t + 8 t a ring
+const ABOUT = 'Read-only copy of the farm from ProdWise (production) and Tasks. Dates are calendar days (YYYY-MM-DD) in the manager\'s local time; "today" is that day. '
+  + 'Weights in kg, feed in kg (1,000 kg = 1 t), birds are counts. Sheds come in pairs (Sheds 1-2 = pair 1, 3-4 = pair 2 …); each pair has 3 silos. '
+  + 'A silo reading counts rings: 0 = cone only (about 10 t), each ring adds about 8 t, 5 rings = full (about 50 t). birdsNow = placed - morts - birds picked up so far. '
+  + 'This link never changes anything. Add &full=1 for every file in full.';
+
+async function handleExport(url, env, gh) {
+  if (!env.KEYS) return json({ error: 'Not available on this sync server' }, 501);
+  const farm = slugify(url.searchParams.get('export'));
+  const key = String(url.searchParams.get('key') || '');
+  const link = farm && key ? await getJson(env, aiKey(farm)) : null;
+  if (!link || !same(link.key, key)) return json({ error: 'This link is turned off or not right. Make a new one in ProdWise › Settings › Sync & cloud.' }, 403);
+  const tz = validTz(link.tz) ? link.tz : 'UTC', today = localToday(tz);
+  const listed = await gh.list(`${farm}-feed`);
+  const pre = `${farm}-feed-`;
+  const batches = (listed.files || []).map(f => f.name.replace(/\.json$/, '')).filter(n => n.startsWith(pre) && !n.endsWith('-file')).map(n => n.slice(pre.length))
+    .sort((a, b) => (parseFloat(b) - parseFloat(a)) || b.localeCompare(a));
+  const current = batches[0] || null;
+  const head = { farm, kind: url.searchParams.get('full') === '1' ? 'full' : 'summary', generatedAt: new Date().toISOString(), today, timeZone: tz, about: ABOUT, currentBatch: current, batches };
+  const noStore = { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
+
+  if (head.kind === 'full') {
+    // Files go out exactly as saved (not parsed here: big files stay cheap)
+    const keep = batches.slice(0, 6);
+    const [hist, tasks, reports, ...bt] = await Promise.all([gh.readRaw(`${farm}-prodwise-history`), gh.readRaw(farm), gh.readRaw(`${farm}-reports`), ...keep.map(b => gh.readRaw(pre + b))]);
+    const raw = r => r && r.text ? r.text : 'null';
+    const body = JSON.stringify(head).slice(0, -1)
+      + `,"batchFiles":{${keep.map((b, i) => `${JSON.stringify(b)}:${raw(bt[i])}`).join(',')}}`
+      + `,"farmHistory":${raw(hist)},"tasks":${raw(tasks)},"reports":${raw(reports)}}`;
+    return new Response(body, { headers: noStore });
+  }
+
+  // raw text + one parse: cheaper than the base64 copy (Cloudflare limits the worker's CPU time)
+  const asData = r => { try { return r && r.text ? { data: JSON.parse(r.text) } : null; } catch (e) { return null; } };
+  const [feedR, histR, tasksR, repR] = (await Promise.all([current ? gh.readRaw(pre + current) : null, gh.readRaw(`${farm}-prodwise-history`), gh.readRaw(farm), gh.readRaw(`${farm}-reports`)])).map(asData);
+  const feed = feedR && feedR.data || {}, fd = feed.farmData || {}, pred = feed.predictions || {};
+  const sheds = (fd.sheds || []).map(s => {
+    const placement = day(s.placementDate), placed = num(s.initialPopulation) || 0, morts = num(s.mortality) || 0;
+    const done = (s.pickups || []).map(p => ({ date: day(p.date), birds: num(p.birds) || 0, final: !!p.isFinal, avgKg: num(p.totalWeightKg) && num(p.birds) ? Math.round(p.totalWeightKg / p.birds * 1000) / 1000 : null })).filter(p => p.date).sort((a, b) => a.date < b.date ? -1 : 1);
+    const picked = done.filter(p => p.date <= today).reduce((a, p) => a + p.birds, 0);
+    const closed = s.closed && s.closed.date ? day(s.closed.date) : null;
+    return {
+      shed: s.id, pair: Math.ceil(Number(s.id) / 2), placement, ageDays: placement && placement <= today ? daysBetween(placement, today) : null,
+      daysToPlacement: placement && placement > today ? daysBetween(today, placement) : null,
+      cleanout: day(s.cleanoutDate), closed, birdsPlaced: placed, morts, mortsUpdated: day(s.mortalityUpdatedAt), birdsPickedUp: picked,
+      birdsNow: placement && !closed ? Math.max(0, placed - morts - picked) : 0,
+      dailyMortPct: num(s.mortalityRatePercent), chickWeightKg: num(s.chickWeightKg), feedIntakePct: num(s.feedAdjustPct),
+      weighIns: (s.inYardSamples || []).map(x => ({ date: day(x.date), avgKg: num(x.avgWeightKg), birds: num(x.birds) || null, official: !!x.isOfficial })).filter(x => x.date).sort((a, b) => a.date < b.date ? -1 : 1).slice(-8),
+      pickups: done, plannedPickups: (s.predictedPickups || []).map(p => ({ date: day(p.date), birds: num(p.birds) || 0, final: !!p.isFinal })).filter(p => p.date && p.date > today),
+    };
+  });
+  const silos = {};
+  Object.entries(feed.siloData || {}).forEach(([pair, v]) => {
+    silos[pair] = (v && v.readings || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).slice(-10).map(x => {
+      const kg = [x.silo1Rings, x.silo2Rings, x.silo3Rings].map(siloKg);
+      return { date: x.date, time: x.time || null, rings: [x.silo1Rings, x.silo2Rings, x.silo3Rings], kg, totalKg: kg.some(k => k != null) ? kg.reduce((a, k) => a + (k || 0), 0) : null, open: x.open || null };
+    });
+  });
+  const loads = (feed.farmLoads || []).map(l => ({ date: l.date, feed: l.feedType || null, plannedKg: num(l.plannedKg), actualKg: num(l.actualKg), received: typeof l.received === 'boolean' ? l.received : null, kgPerPair: l.splitKg || null, docket: l.docket || null }))
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const settings = {};
+  ['safetyDays', 'feedWarnDays', 'deliveryTiming', 'starterSilo', 'carryoverKg', 'carryoverFarmKg', 'feedQuota', 'targetHarvestWeightKg', 'noPickupDays', 'truckSplitMode'].forEach(k => { if (pred[k] !== undefined) settings[k] = pred[k]; });
+
+  const T = tasksR && tasksR.data || {};
+  const tl = Array.isArray(T.tasks) ? T.tasks : [];
+  const brief = t => ({ name: t.name, date: t.date || null, status: t.status || 'open', assignees: t.assignees && t.assignees.length ? t.assignees : undefined, shed: t.shedNum || (t.prep && t.prep.shed) || undefined,
+    steps: Array.isArray(t.subs) && t.subs.length ? `${t.subs.filter(x => x.done).length}/${t.subs.length}` : undefined, doneBy: t.doneBy || undefined, notes: t.notes || undefined });
+  const open = tl.filter(t => t.status !== 'done');
+  const soon = addDays(today, 14), weekAgo = addDays(today, -7);
+  const prep = (Array.isArray(T.shedPrep) ? T.shedPrep : []).filter(c => !c.archived && !c.isTpl && (c.status !== 'ready' || (c.nextPlacement && c.nextPlacement >= weekAgo))).map(c => {
+    let n = 0, d = 0; (c.sections || []).forEach(sec => (sec.items || []).forEach(it => { n++; if (it.done) d++; }));
+    return { shed: c.shed, batch: c.batch || null, status: c.status || null, closedAt: day(c.closedAt), chicksIn: c.nextPlacement || null, jobsDone: d, jobs: n };
+  });
+  const reports = (repR && repR.data && Array.isArray(repR.data.reports) ? repR.data.reports : []);
+  const out = {
+    ...head,
+    batch: current ? { number: current, sheds, birdsNow: sheds.reduce((a, s) => a + s.birdsNow, 0), feed: { loads, siloReadings: silos, settings } } : null,
+    farmHistory: (histR && histR.data && histR.data.farmHistory) || pred.farmHistory || [],
+    tasks: {
+      overdue: open.filter(t => t.date && t.date < today).map(brief),
+      today: open.filter(t => t.date === today).map(brief),
+      next14Days: open.filter(t => t.date && t.date > today && t.date <= soon).map(brief),
+      doneLast7Days: tl.filter(t => t.status === 'done' && t.date && t.date >= weekAgo && t.date <= today).map(brief),
+      openWithoutDate: open.filter(t => !t.date).map(brief),
+    },
+    routines: (Array.isArray(T.maintenance) ? T.maintenance : []).map(m => ({ name: m.name, shed: m.shed || null, category: m.category || null, every: m.every || null, pausedUntil: m.resumeOn && m.resumeOn > today ? m.resumeOn : undefined })),
+    shedPrep: prep,
+    maintenanceReports: {
+      open: reports.filter(x => x.status !== 'Resolved').map(x => ({ code: x.code || null, status: x.status, urgent: !!x.urgent, shed: x.shed || null, location: x.location || null, problem: x.problemType || null, notes: x.notes || null, assignee: x.assignee || null, reported: stampDay(x.createdAt, tz), by: x.createdBy || null })),
+      resolvedLast14Days: reports.filter(x => x.status === 'Resolved' && x.resolvedAt && stampDay(x.resolvedAt, tz) >= addDays(today, -14)).length,
+    },
+  };
+  return new Response(JSON.stringify(out, null, 1), { headers: noStore });
+}
+
 // ── Actions ─────────────────────────────────────────────────
 async function handleAction(action, request, env, ctx, gh) {
   let b;
@@ -491,6 +631,19 @@ async function handleAction(action, request, env, ctx, gh) {
     return json({ ok: true, moved: out.moved.length, skipped: out.skipped });
   }
 
+  if (b.op === 'aiLink') {
+    const k = aiKey(farm);
+    if (b.off) { await env.KEYS.delete(k); return json({ ok: true, on: false }); }
+    if (b.make) {
+      const tz = validTz(b.tz) ? String(b.tz) : 'UTC';
+      const link = { key: randomHex(24), at: Date.now(), tz, by: who.deviceId };
+      await putJson(env, k, link);
+      return json({ ok: true, on: true, key: link.key, at: link.at, tz });
+    }
+    const cur = await getJson(env, k);
+    return json({ ok: true, on: !!cur, key: cur ? cur.key : null, at: cur ? cur.at : null, tz: cur ? cur.tz : null });
+  }
+
   if (b.op === 'lock') {
     await putJson(env, farmKey(farm), { ...rec, locked: !!b.locked });
     return json({ ok: true, locked: !!b.locked });
@@ -506,6 +659,11 @@ export default {
     const gh = github(env);
     const url = new URL(request.url);
     try {
+      const exp = url.searchParams.get('export');
+      if (exp !== null) {
+        if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+        return await handleExport(url, env, gh);
+      }
       const action = url.searchParams.get('action');
       if (action) {
         if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);

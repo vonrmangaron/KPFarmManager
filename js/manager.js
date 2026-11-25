@@ -694,6 +694,7 @@ document.addEventListener('click',e=>{
   const ss=e.target.closest('[data-set-scale-sug]');if(ss){sdSetShed('scale',ss.dataset.setScaleSug,Number(ss.dataset.pct));return;}
   if(e.target.closest('[data-set-use-history]')){const p=historyDensityPrior();if(p){const dg={...(predState.densityGlobal||DEFAULT_DENSITY_GLOBAL)};dg.triggerDensity=p.trig;dg.targetDensity=p.tgt;dg.maxDensity=Math.max(28,p.max);if(p.tp)dg.targetPickups=Math.max(MIN_PICKUPS_PER_SHED,Math.min(MAX_PICKUPS_PER_SHED,p.tp));predState.densityGlobal=dg;savePredState();schedulePush();render();showToast('Pickup planning set from your last batches.');}return;}
   const og=e.target.closest('[data-pw-organize]');if(og){organiseCloudFiles(og);return;}
+  const ai=e.target.closest('[data-pw-ai]');if(ai){aiLinkAct(ai.dataset.pwAi);return;}
   if(e.target.closest('[data-set-profile]')){if(typeof openFarmProfile==='function')openFarmProfile();return;}
   const ap=e.target.closest('[data-adj-pair]');
   if(ap){const g=Number(ap.dataset.adjPair);if(g&&g!==predState.predGroup){if(typeof adjIsDirty==='function'&&adjIsDirty()&&!confirm('Discard your unapplied changes?'))return;predState.predGroup=g;adjDraft=null;adjDraftBase='';const root=document.getElementById('adjModalRoot');if(root)root.dataset.g='';render();}return;}
@@ -782,6 +783,60 @@ function settingsCloudFolderHtml(){
     <p class="settings-section-desc">All of this farm's files live in one cloud folder: <b>${escapeHtml(f)}/prodwise</b> (batches, Excel copies, Farm history) and <b>${escapeHtml(f)}/cluckwise</b> (tasks, reports, workers, restore points). Files saved before the folders existed are moved in with one tap — same content, nothing changes for the apps or phones.</p>
     <button type="button" class="set-btn" data-pw-organize>Organise cloud files</button></div>`;
 }
+// ── AI read-only link (2026-11-25): a private link an AI assistant reads the whole farm from, as JSON,
+// without opening ProdWise (an AI browsing the app saved over the farm's dates on 25 Nov). The sync
+// server makes it and only ever reads with it; Turn off stops it at once. Manager devices only.
+let aiLink={state:'idle',key:null,at:null,err:'',sure:null};
+function aiLinkUrl(full){return aiLink.key?`${SYNC_WORKER_URL}/?export=${encodeURIComponent(sanitizeUserFarmName(syncFarmName))}&key=${aiLink.key}${full?'&full=1':''}`:'';}
+function aiLinkNote(){return `Farm data for ${displayFarmName()||sanitizeUserFarmName(syncFarmName)} is at this link (read-only JSON):\n${aiLinkUrl(false)}\n\n- Fetch it fresh every time I ask about the farm. Don't use an old copy.\n- Never open the ProdWise website or app. Only use this link.\n- Dates are calendar days (YYYY-MM-DD) in my local time; "today" in the reply is today.\n- Weights are kg, feed is kg (1,000 kg = 1 t), birds are counts. The "about" field explains the rest.\n- If you need everything (all tasks, change log, past batches), add &full=1 to the link.`;}
+function settingsAiLinkHtml(){
+  if(!syncFarmName)return '';
+  const a=aiLink,d=a.at?new Date(a.at):null;
+  let body;
+  if(a.state==='idle'||a.state==='loading')body='<p class="settings-section-desc">Checking…</p>';
+  else if(a.state==='error')body=`<p class="settings-section-desc ai-err">${escapeHtml(a.err)}</p><button type="button" class="set-btn" data-pw-ai="load" title="Ask the sync server again">Try again</button>`;
+  else if(!a.key)body=`<button type="button" class="set-btn primary" data-pw-ai="make" title="Make a private read-only link for an AI assistant">Create link</button>`;
+  else body=`<label class="ai-link-l" for="pwAiUrl">Link</label><input id="pwAiUrl" class="ai-link-in" readonly value="${escapeAttr(aiLinkUrl(false))}" title="The private read-only link. Treat it like a password.">
+    <p class="settings-section-desc">Made ${d?d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+fmtClock(d):''}. Gives a summary (about 50 KB). The full link gives every file.</p>
+    <div class="ai-link-btns"><button type="button" class="set-btn primary" data-pw-ai="copy" title="Copy the summary link">Copy link</button>
+    <button type="button" class="set-btn" data-pw-ai="note" title="Copy the link with a short note telling the AI how to use it — paste it into the AI once">Copy note for the AI</button>
+    <button type="button" class="set-btn" data-pw-ai="full" title="Copy the link that gives every file in full (bigger)">Copy full link</button>
+    <button type="button" class="set-btn${a.sure==='make'?' set-btn-warn':''}" data-pw-ai="make" title="Make a new link. The old one stops working at once.">${a.sure==='make'?'Tap again: old link stops':'New link'}</button>
+    <button type="button" class="set-btn set-btn-danger${a.sure==='off'?' on':''}" data-pw-ai="off" title="Stop the link working at once">${a.sure==='off'?'Tap again to turn off':'Turn off'}</button></div>`;
+  return `<div class="settings-section" id="pwAiCard"><div class="settings-section-head"><span class="settings-icon">${settingsIcon('key')}</span><div class="settings-section-title-wrap"><h4 class="settings-section-title">AI read-only link</h4></div></div>
+    <p class="settings-section-desc">A private link an AI assistant (like MUSE) can read the whole farm from as JSON — batch, sheds, feed, tasks, maintenance — without opening ProdWise. It can only read; it never changes anything. Anyone with the link can read your farm, so keep it like a password.</p>
+    <div id="pwAiBody">${body}</div></div>`;
+}
+function aiLinkRefresh(){const c=document.getElementById('pwAiCard');if(c)c.outerHTML=settingsAiLinkHtml();}
+async function aiLinkCall(extra){
+  if(!navigator.onLine){aiLink.state='error';aiLink.err='You are offline — try again when connected.';aiLinkRefresh();return;}
+  let r=null;try{r=window.FarmKey?await FarmKey.action('manage',Object.assign({farm:syncFarmName,op:'aiLink'},extra||{})):null;}catch(e){}
+  const j=r&&r.j;
+  if(j&&j.ok){aiLink={state:'ready',key:j.key||null,at:j.at||null,err:'',sure:null};}
+  else{aiLink.state='error';aiLink.sure=null;
+    aiLink.err=r&&r.status===401?'Sign in to this farm with the manager password first (Settings › Account › Security).'
+      :r&&r.status===403?'Only a manager device can make this link.'
+      :j&&/Unknown op/.test(j.error||'')?'The sync server needs the new code first: paste the updated sync worker into Cloudflare.'
+      :j&&j.error?j.error:'Could not reach the sync server. Check your connection.';}
+  aiLinkRefresh();return !!(j&&j.ok);
+}
+function aiLinkLoad(){if(!syncFarmName)return;aiLink.state='loading';aiLinkCall();}
+async function aiLinkCopy(txt,msg){try{await navigator.clipboard.writeText(txt);showToast(msg);}catch(e){fallbackCopy(txt,()=>showToast(msg));}}
+async function aiLinkAct(what){
+  if(what==='load'){aiLinkLoad();return;}
+  if(what==='copy'){aiLinkCopy(aiLinkUrl(false),'Link copied. Paste it into your AI assistant.');return;}
+  if(what==='full'){aiLinkCopy(aiLinkUrl(true),'Full link copied.');return;}
+  if(what==='note'){aiLinkCopy(aiLinkNote(),'Note copied. Paste it into your AI assistant once.');return;}
+  if(what==='make'){
+    if(aiLink.key&&aiLink.sure!=='make'){aiLink.sure='make';aiLinkRefresh();return;}
+    let tz='UTC';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch(e){}
+    if(await aiLinkCall({make:true,tz}))showToast('Link ready. Copy it into your AI assistant.');return;
+  }
+  if(what==='off'){
+    if(aiLink.sure!=='off'){aiLink.sure='off';aiLinkRefresh();return;}
+    if(await aiLinkCall({off:true}))showToast('Link turned off. It no longer works.');return;
+  }
+}
 async function organiseCloudFiles(btn){
   if(!syncFarmName){showToast('Connect to a farm first.',true);return;}
   if(!navigator.onLine){showToast('You are offline — try again when connected.',true);return;}
@@ -835,7 +890,7 @@ function setPageBody(k){
   if(k==='security')return `<div id="accBody">${accSecurityHtml()}</div>`;
   if(SET_SEC[k])return renderFarmSettingsView(true,SET_SEC[k])+(k==='weights'?settingsGrowthStdHtml():'')+(k==='pickups'?settingsPickupExtrasHtml():'');
   if(k==='pairs')return settingsPairsHtml();
-  if(k==='sync')return `<div class="set-cards">${settingsCloudFolderHtml()}${renderSettingsSyncCard()}</div>`;
+  if(k==='sync'){if(aiLink.state==='idle')setTimeout(aiLinkLoad,0);return `<div class="set-cards">${settingsCloudFolderHtml()}${settingsAiLinkHtml()}${renderSettingsSyncCard()}</div>`;}
   if(k==='batches')return `<div class="set-cards">${setBatchListHtml()}${renderSettingsFarmHistoryCard()}</div>`;
   if(k==='alerts')return `<div class="set-cards">${renderSettingsNotificationsCard()}</div>`;
   if(k==='notify')return pnHtml();
