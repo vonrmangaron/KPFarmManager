@@ -492,6 +492,21 @@ pending.push(Promise.all(pending.slice()).then(()=>{
   ok(r&&r.sameKeys&&r.noBase===1,'key order doesn\'t count as a change; same value changed on both: this device wins');
 }
 
+// 28. Tasks in ProdWise's page: its styles are fenced to #cwRoot, and the ready-made file matches Tasks' current styles
+{
+  console.log('28. Tasks\' styles fenced to #cwRoot (js/cwscope.js) · cluckwise/tasks-inline.css up to date');
+  const S=require(path.join(ROOT,'js','cwscope.js'));
+  const cases=[['.card .x','__W .card .x'],['body.theme-dark .x','div:where(#cwRoot).theme-dark .x'],['body','div:where(#cwRoot)'],[':root','.cw-root:where(#cwRoot)'],
+    ['html.cw-onerail #appRail','html.cw-onerail __W #appRail'],['html.a body.b .c','html.a div:where(#cwRoot).b .c'],['a, b:not(.x, .y)','__W a, __W b:not(.x, .y)']].map(([a,b])=>[a,b.replace(/__W/g,':where(#cwRoot)')]);
+  cases.forEach(([a,b])=>ok(S.scopeSel(a)===b,`${a} → ${S.scopeSel(a)}`));
+  const css=S.scopeCss('/* c */ @media (max-width:760px){ body{font-size:14px} .x{height:100vh;padding-bottom:env(safe-area-inset-bottom,8px)} } .y{-webkit-backdrop-filter:blur(4px)} @keyframes k{from{opacity:0}to{opacity:1}}');
+  ok(css.includes('@container cwroot (max-width:760px){:where(#cwRoot) .x{height:100cqh;padding-bottom:8px}}'),'width rules ask #cwRoot; vh and safe-area insets follow #cwRoot');
+  ok(css.includes('@media (max-width:760px){div:where(#cwRoot){font-size:14px}}'),'rules for #cwRoot itself keep asking the screen');
+  ok(css.includes('-webkit-backdrop-filter')&&css.includes('@keyframes k{from{opacity:0}to{opacity:1}}')&&!css.includes('/* c */'),'Safari-only properties and animations kept, comments dropped');
+  const B=require(path.join(ROOT,'tools','build-tasks-css.js'));
+  ok(B.upToDate(),'cluckwise/tasks-inline.css matches Tasks\' styles (else run: node tools/build-tasks-css.js)');
+}
+
 Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

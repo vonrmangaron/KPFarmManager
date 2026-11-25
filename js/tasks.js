@@ -29,6 +29,12 @@ function pwTasksInline(farm){
   if(cwInline&&cwInline.farm!==farm){location.hash='#tasks';location.reload();return true;}
   cwMountInline(farm);return true;
 }
+// Tasks ready before you tap it (in the page only, not the frame): a few seconds after ProdWise opens, when the
+// browser has nothing else to do, Tasks loads hidden — then opening it is just a switch
+window.addEventListener('load',()=>setTimeout(()=>{
+  const go=()=>{if(!cwFrame&&typeof syncFarmName!=='undefined'&&syncFarmName&&cwInlineWanted())pwEnsureTasksFrame();};
+  if(window.requestIdleCallback)requestIdleCallback(go,{timeout:4000});else go();
+},3000));
 // Tasks loaded in the background (History reads its change log) without switching to it
 function pwEnsureTasksFrame(onReady){
   const farm=syncFarmName||'';
