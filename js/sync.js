@@ -192,9 +192,21 @@ function scheduleHistoryPush(){if(!syncFarmName)return;clearTimeout(historyPushT
 // edit. A stale device can no longer overwrite newer work wholesale.
 const SYNC_BASE_KEY='prodwise_sync_base_v1';
 let syncBase=null;
-function syncNorm(p){if(!p)return null;const c=JSON.parse(JSON.stringify(p));delete c.lastUpdated;return c;}
+// Shed dates are compared as calendar days, not as saved text: the same day saved the old way (local midnight)
+// and the new way (12:00 UTC) must count as unchanged. Before (2026-11-25) a device holding an old copy saw every
+// date as its own edit and pushed its stale, day-early placements over the repaired ones.
+function syncNormDates(c){
+  if(!c||!c.farmData||!Array.isArray(c.farmData.sheds))return c;
+  const day=v=>v?calJson(calDate(v)):v,dd=o=>o&&typeof o==='object'&&o.date?Object.assign({},o,{date:day(o.date)}):o;
+  c.farmData.sheds=c.farmData.sheds.map(s=>{if(!s||typeof s!=='object')return s;const o=Object.assign({},s);
+    ['placementDate','cleanoutDate','mortalityUpdatedAt'].forEach(k=>{if(o[k])o[k]=day(o[k]);});
+    ['pickups','inYardSamples','predictedPickups'].forEach(k=>{if(Array.isArray(o[k]))o[k]=o[k].map(dd);});
+    return o;});
+  return c;
+}
+function syncNorm(p){if(!p)return null;const c=JSON.parse(JSON.stringify(p));delete c.lastUpdated;return syncNormDates(c);}
 function syncEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
-function loadSyncBase(){try{const v=JSON.parse(localStorage.getItem(SYNC_BASE_KEY)||'null');syncBase=v&&v.key===buildFileKey(syncFarmName||'')?v.data:null;}catch(e){syncBase=null;}return syncBase;}
+function loadSyncBase(){try{const v=JSON.parse(localStorage.getItem(SYNC_BASE_KEY)||'null');syncBase=v&&v.key===buildFileKey(syncFarmName||'')?syncNormDates(v.data):null;}catch(e){syncBase=null;}return syncBase;}
 function saveSyncBase(data){syncBase=data;try{localStorage.setItem(SYNC_BASE_KEY,JSON.stringify({key:buildFileKey(syncFarmName||''),data}));}catch(e){}}
 // Current local state as the cloud would store it (the shape every device writes)
 function localSyncPayload(){return syncNorm(buildCloudPayload());}

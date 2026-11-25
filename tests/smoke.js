@@ -404,6 +404,30 @@ pending.push(pending[0].then(async()=>{
   ok(r.still,'the app keeps working with real dates');
 }
 
+// 25. A device holding an old copy (dates saved the old way) must not push its stale dates over newer ones (2702, 25 Nov 2026)
+// (after the other sync tests: they all swap fetch and the farm name)
+pending.push(Promise.all(pending.slice()).then(async()=>{
+  const r=await vm.runInContext(`(async()=>{
+    const realFetch=fetch;syncFarmName='testfarm';syncConnectedAt=1;
+    const sh=farmData.sheds.find(s=>s.placementDate);const was=sh.placementDate,id=sh.id;
+    // this device: placed 28 Oct, saved the old way on a UTC+8 clock (local midnight = 16:00 UTC the day before)
+    sh.placementDate=new Date(2026,9,28);
+    const base=JSON.parse(JSON.stringify(localSyncPayload()));base.farmData.sheds.find(s=>s.id===id).placementDate='2026-10-27T16:00:00.000Z';
+    saveSyncBase(base);
+    // the cloud: put right to 29 Oct, saved the new way
+    const theirs=JSON.parse(JSON.stringify(localSyncPayload()));theirs.farmData.sheds.find(s=>s.id===id).placementDate='2026-10-29T12:00:00.000Z';
+    let pushed=null;
+    fetch=async(url,opt)=>{if(opt&&opt.method==='PUT'){pushed=JSON.parse(opt.body).data;return {status:200,ok:true,json:async()=>({sha:'s2'})};}return {status:200,ok:true,json:async()=>({sha:'s1',data:theirs})};};
+    await pullFromCloud(true);for(let i=0;i<50;i++)await Promise.resolve();
+    const now=farmData.sheds.find(s=>s.id===id).placementDate;
+    const a={day:iso(now),pushed:!!pushed};
+    fetch=realFetch;farmData.sheds.find(s=>s.id===id).placementDate=was;syncFarmName=null;syncConnectedAt=null;
+    return a;
+  })()`,ctx);
+  console.log('25. An old copy with dates saved the old way takes the cloud\'s newer dates, pushes nothing');
+  ok(r.day==='2026-10-29','takes the cloud\'s 29 Oct: '+r.day);ok(!r.pushed,'nothing pushed back');
+}).catch(e=>{failed++;console.log('  ✗ old-copy dates:',e.message);}));
+
 Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);
