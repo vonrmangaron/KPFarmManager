@@ -16554,7 +16554,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     this.dataset.pending = ''; this.textContent = 'Restore the original list';
     delete settings.problemTypes; persist(); renderPtypes(); showToast('Original list restored.');
   });
-  $('#cwSettingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
+  // Settings is a full page like Routine, Prep, Maintenance and the Guide: it takes their place instead of opening under them (2026-11-26)
+  $('#cwSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); $('#mlogPage').classList.remove('open'); renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){
@@ -17261,6 +17262,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   window.addEventListener('message', (e)=>{
     if(e.origin !== location.origin || !e.data || !e.data.cwOpenSettings) return;
     const pg = e.data.cwOpenSettings;
+    $('#mlogPage').classList.remove('open');   // not left on top of Settings
     if(!$('#cwSettingsDrawer').classList.contains('open')){ closeOverlays(); renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); }
     window.__csOnOpen(); csShow(pg, true);
   });
