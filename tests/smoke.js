@@ -13,7 +13,7 @@ const ctx={console,Math,JSON,Intl,Date,localStorage:{getItem:k=>store[k]??null,s
   document:stub,navigator:{onLine:false},setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){},fetch:()=>Promise.reject(new Error('offline')),
   performance:{now:()=>Date.now()},location:{search:'',hash:''},matchMedia:()=>({matches:false,addEventListener(){}}),addEventListener(){},requestAnimationFrame:()=>0,CSS:{escape:s=>s}};
 ctx.window=ctx;vm.createContext(ctx);
-const ORDER=['core','constants','calc','loads','storage','sync','data','ui','history','render','manager'];
+const ORDER=['core','farmsync','constants','calc','loads','storage','sync','data','ui','history','render','manager'];
 console.log('1. Scripts load together');
 for(const f of ORDER){try{vm.runInContext(fs.readFileSync(path.join(ROOT,'js',f+'.js'),'utf8'),ctx,{filename:f+'.js'});passed++;}catch(e){failed++;console.log('  ✗',f+'.js:',e.message);}}
 try{new Function(fs.readFileSync(path.join(ROOT,'js','app.js'),'utf8'));passed++;}catch(e){failed++;console.log('  ✗ app.js syntax:',e.message);}
@@ -467,6 +467,30 @@ pending.push(Promise.all(pending.slice()).then(()=>{
   ok(r.st21===true&&r.stBad===7,'starter days adjustable, bad value falls back to 7');
   ok(r.inCloud,'both settings go in the cloud file');
 }).catch(e=>{failed++;console.log('  ✗ feed alert days:',e.message);}));
+
+// 27. The shared sync engine (js/farmsync.js) keeps each app's merge rules
+{
+  const r=run('shared merge',`(()=>{
+    const M=FarmSync.merge3,C=x=>JSON.parse(JSON.stringify(x));
+    const base={tasks:[{id:'a',st:'open',subs:[{id:'s1',done:false}]},{id:'b',st:'open'},{id:'c',st:'open'}],history:[{ts:1,action:'x',detail:'1'}]};
+    const ours=C(base),theirs=C(base);
+    ours.tasks[1].st='done';ours.tasks[0].subs.push({id:'s2',done:false});ours.tasks.splice(2,1);ours.history.unshift({ts:2,action:'y',detail:'here'});
+    theirs.tasks[0].subs[0].done=true;theirs.tasks[2].st='edited';theirs.history.unshift({ts:3,action:'z',detail:'there'});
+    const hk=h=>h.id||h.ts+'|'+h.action+'|'+h.detail;
+    const tasksOpts={key:p=>p==='history'?hk:null,order:'ours',removeWins:true};
+    const t=M(base,ours,theirs,tasksOpts),pw=M(base,ours,theirs);
+    return {sub:t.tasks[0].subs.map(x=>x.id+':'+x.done).join(),b:t.tasks[1].st,goneT:!t.tasks.some(x=>x.id==='c'),backPw:(pw.tasks.find(x=>x.id==='c')||{}).st,
+      hist:t.history.length,order:t.tasks.map(x=>x.id).join(),sameKeys:FarmSync.same({a:1,b:2},{b:2,a:1}),noBase:M(undefined,{v:1},{v:2}).v};
+  })()`);
+  console.log('27. Shared sync engine: steps and ticks from two devices merge, Tasks deletes stay deleted, Production keeps edited records');
+  ok(r&&r.sub==='s1:true,s2:false','a step ticked there and a step added here both survive: '+(r&&r.sub));
+  ok(r&&r.b==='done','this device\'s tick kept');
+  ok(r&&r.goneT,'Tasks: a task deleted here stays deleted even if edited there');
+  ok(r&&r.backPw==='edited','Production: a record edited on the other device comes back');
+  ok(r&&r.hist===3,'history entries without ids from both devices kept');
+  ok(r&&r.order==='a,b','Tasks keeps this device\'s order');
+  ok(r&&r.sameKeys&&r.noBase===1,'key order doesn\'t count as a change; same value changed on both: this device wins');
+}
 
 Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);

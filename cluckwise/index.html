@@ -17,6 +17,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="../js/core.js"></script>
+<script src="../js/farmsync.js"></script>
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
 <script src="../js/plumo-face.js"></script>
@@ -6134,8 +6135,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
 <script>
 (function(){
-  const WORKER_URL = 'https://prodplan-sync.vonrmangaron.workers.dev';
-  const HARDCODED_REPO = 'vonrmangaron/farmdata';
+  const WORKER_URL = FarmSync.SERVER;
   let ghPath = null, ghSha = null, ghFarmName = null;
   const BATCH_PALETTE = ['#0F8A75','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
   const PREP_CHECKLIST = ['Check Ratbait Station','Footbaths Control Room','Footbaths Back shed','Footbaths Range area','Cut Grass near fences','Mow Range Area','Check pop doors'];
@@ -6467,13 +6467,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   let lastSyncedSnapshot = null;
   const EMPTY_SNAPSHOT = { tasks:[], history:[], batches:[], events:[], settings:{}, frequentTemplates:[], maintenance:[], shedPrep:[] };
 
-  function stableStr(v){
-    if(v === undefined) return 'undefined';
-    if(v === null || typeof v !== 'object') return JSON.stringify(v);
-    if(Array.isArray(v)) return '[' + v.map(stableStr).join(',') + ']';
-    return '{' + Object.keys(v).filter(k=> v[k] !== undefined).sort().map(k=> JSON.stringify(k)+':'+stableStr(v[k])).join(',') + '}';
-  }
-  function cloneData(v){ return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
+  // Comparing, copying and merging saved data: the shared sync engine (../js/farmsync.js), the same one Production uses.
+  const stableStr = FarmSync.stable, cloneData = FarmSync.clone;
   function snapshotLocal(){ return cloneData({tasks, history, batches, events, settings, frequentTemplates, maintenance, shedPrep}); }
   function normalizeSnapshot(d){
     d = d || {};
@@ -6488,61 +6483,19 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       shedPrep: Array.isArray(d.shedPrep) ? d.shedPrep : []
     };
   }
-  // Field-level: a field we changed since base wins; otherwise take the server's value.
-  function mergeRecord(b, l, s){
-    b = b || {}; s = s || {};
-    const out = {};
-    const keys = new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(s)]);
-    keys.forEach(k=>{
-      // a task's steps merge one by one, so a worker's tick and a step added here both survive
-      // a shed prep checklist's sections and jobs merge one by one too (2026-11-04): a tick on one device and a
-      // refreshed task date on another both survive — before, the whole list from one device replaced the other's
-      if((k === 'sections' || k === 'items') && [b[k], l[k], s[k]].every(a=> a === undefined || (Array.isArray(a) && a.every(x=> x && typeof x === 'object' && x.id)))){
-        const m = mergeCollection(Array.isArray(b[k]) ? b[k] : [], Array.isArray(l[k]) ? l[k] : [], Array.isArray(s[k]) ? s[k] : [], x=> x.id);
-        if(m.length || Array.isArray(l[k]) || Array.isArray(s[k])) out[k] = m; return; }
-      if(k === 'subs' && (Array.isArray(l.subs) || Array.isArray(s.subs))){ const m = mergeCollection(Array.isArray(b.subs) ? b.subs : [], Array.isArray(l.subs) ? l.subs : [], Array.isArray(s.subs) ? s.subs : [], x=> x.id); if(m.length) out.subs = m; return; }
-      const val = stableStr(l[k]) !== stableStr(b[k]) ? l[k] : s[k];
-      if(val !== undefined) out[k] = cloneData(val);
-    });
-    return out;
-  }
+  // One list of records, merged by key (the shared 3-way merge; this device's order first). Undo uses it too.
   function mergeCollection(baseArr, localArr, serverArr, keyFn){
-    const bMap = new Map(baseArr.map(x=> [keyFn(x), x]));
-    const lKeys = new Set(localArr.map(keyFn));
-    const sMap = new Map(serverArr.map(x=> [keyFn(x), x]));
-    const out = [];
-    localArr.forEach(l=>{
-      const k = keyFn(l), b = bMap.get(k), s = sMap.get(k);
-      if(s === undefined){
-        // Not on server: new here -> keep. Deleted elsewhere -> keep only if we edited it since.
-        if(b === undefined || stableStr(l) !== stableStr(b)) out.push(cloneData(l));
-        return;
-      }
-      out.push(mergeRecord(b, l, s));
-    });
-    serverArr.forEach(s=>{
-      const k = keyFn(s);
-      if(lKeys.has(k)) return;
-      // On server only: new elsewhere -> take it. Deleted here -> stays deleted.
-      if(!bMap.has(k)) out.push(cloneData(s));
-    });
-    return out;
+    return cloneData(FarmSync.merge3(baseArr, localArr, serverArr, { key: p=> p === '' ? keyFn : null, order:'ours', removeWins:true }));
   }
+  // The whole file: each list merges record by record, and inside a record field by field (a task's steps, a
+  // checklist's sections and jobs merge one by one, so a worker's tick and a change here both survive).
+  const histKey = h=> h.id || `${h.ts}|${h.action}|${h.detail}`;
+  const SNAP_KEYS = { tasks: x=> x.id, history: histKey, batches: b=> b.number, events: x=> x.id, frequentTemplates: x=> x.id, maintenance: x=> x.id, shedPrep: x=> x.id };
   function mergeSnapshots(base, local, server){
     base = normalizeSnapshot(base); local = normalizeSnapshot(local); server = normalizeSnapshot(server);
-    const byId = x=> x.id;
-    const histKey = h=> h.id || `${h.ts}|${h.action}|${h.detail}`;
-    return {
-      tasks: mergeCollection(base.tasks, local.tasks, server.tasks, byId),
-      history: mergeCollection(base.history, local.history, server.history, histKey)
-        .sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, HISTORY_MAX),
-      batches: mergeCollection(base.batches, local.batches, server.batches, b=> b.number),
-      events: mergeCollection(base.events, local.events, server.events, byId),
-      settings: mergeRecord(base.settings, local.settings, server.settings),
-      frequentTemplates: mergeCollection(base.frequentTemplates, local.frequentTemplates, server.frequentTemplates, byId),
-      maintenance: mergeCollection(base.maintenance, local.maintenance, server.maintenance, byId),
-      shedPrep: mergeCollection(base.shedPrep, local.shedPrep, server.shedPrep, byId)
-    };
+    const m = normalizeSnapshot(cloneData(FarmSync.merge3(base, local, server, { key: p=> SNAP_KEYS[p] || null, order:'ours', removeWins:true })));
+    m.history = m.history.sort((a,b)=> (b.ts||0) - (a.ts||0)).slice(0, HISTORY_MAX);
+    return m;
   }
   function applyMergedState(d){
     tasks = d.tasks; history = d.history; batches = d.batches; events = d.events; notifyBaseline();
@@ -6639,14 +6592,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     pushToGithub().then(ok=>{ if(!ok) pushPending = true; });
   }
 
-  function mainFileUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(ghFarmName)}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
   async function fetchMainFile(){
-    const res = await fetch(mainFileUrl(), { cache:'no-store' });
-    if(res.status === 404) return { data:null, sha:null };
-    if(!res.ok) throw new Error('Sync server responded ' + res.status);
-    const result = await res.json();
-    if(result && result.notFound) return { data:null, sha:null };
-    return { data: normalizeSnapshot(result.data), sha: result.sha };
+    const r = await FarmSync.get(ghFarmName, { fresh:true });
+    if(!r.ok) throw new Error('Sync server: ' + r.reason);
+    if(r.notFound) return { data:null, sha:null };
+    return { data: normalizeSnapshot(r.data), sha: r.sha };
   }
 
   async function load(){
@@ -6804,19 +6754,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       // Never write duplicate weigh-ins back to the cloud.
       const weighPlan = planWeighIns(merged.tasks || [], merged.batches || [], { trim:true });
       if(weighPlan.changes) merged.tasks = applyWeighInPlan(merged.tasks, weighPlan);
-      const res = await fetch(mainFileUrl(), {
-        method:'PUT',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ sha: server.sha, data: merged })
-      });
-      if(res.status === 409 || res.status === 422){
+      const res = await FarmSync.put(ghFarmName, server.sha, merged);
+      if(res.conflict){
         // Someone wrote between our GET and PUT — re-fetch, re-merge, retry.
         if(retryCount < 4){ await new Promise(r=>setTimeout(r, 400*(retryCount+1))); return pushToGithub(retryCount+1); }
         throw new Error('Sync conflict persisted after retries');
       }
-      if(!res.ok) throw new Error('Sync server responded '+res.status);
-      const result = await res.json();
-      if(result && result.sha) ghSha = result.sha;
+      if(!res.ok) throw new Error('Sync server: ' + res.reason);
+      if(res.sha) ghSha = res.sha;
       lastSyncedSnapshot = cloneData(merged);
       maybeTakeDailySnapshot();
       setTimeout(()=> saveLocalCache(pushPending), 0);
@@ -6866,14 +6811,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const rn = reportsFarmName();
     if(!rn) return;
     try{
-      const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      if(res.status === 404){
-        if(reports.length > 0) await pushReportsToGithub();
-        return;
-      }
-      if(!res.ok) throw new Error('Reports sync server responded ' + res.status);
-      const result = await res.json();
-      if(result && result.notFound){
+      const result = await FarmSync.get(rn);
+      if(!result.ok) throw new Error('Reports sync server: ' + result.reason);
+      if(result.notFound){
         if(reports.length > 0) await pushReportsToGithub();
         return;
       }
@@ -6902,41 +6842,24 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const rn = reportsFarmName();
     if(!rn) return false;
     try{
-      const getRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
-      let serverReports = [];
-      let freshSha = null;
-      if(getRes.status === 404){
-        serverReports = [];
-      } else if(getRes.ok){
-        const fresh = await getRes.json();
-        if(fresh && fresh.notFound){
-          serverReports = [];
-        } else {
-          const d = fresh.data || {};
-          serverReports = Array.isArray(d) ? d : (d.reports || []);
-          freshSha = fresh.sha;
-        }
-      } else {
-        throw new Error('GET reports failed: ' + getRes.status);
-      }
+      const fresh = await FarmSync.get(rn);
+      if(!fresh.ok) throw new Error('GET reports failed: ' + fresh.reason);
+      const fd = fresh.data || {};
+      const serverReports = fresh.notFound ? [] : (Array.isArray(fd) ? fd : (fd.reports || []));
+      const freshSha = fresh.notFound ? null : fresh.sha;
       const merged = serverReports.filter(r => !deletedReportIds.has(r.id));
       const mergedIdx = new Map(merged.map((r, i) => [r.id, i]));
       reports.forEach(r => {
         if(mergedIdx.has(r.id)) merged[mergedIdx.get(r.id)] = r;
         else { merged.push(r); mergedIdx.set(r.id, merged.length - 1); }
       });
-      const putRes = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(rn)}&repo=${encodeURIComponent(HARDCODED_REPO)}`, {
-        method:'PUT',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ sha: freshSha, data: { reports: merged } })
-      });
-      if(putRes.status === 409){
+      const putRes = await FarmSync.put(rn, freshSha, { reports: merged });
+      if(putRes.conflict){
         if(retryCount < 4){ await new Promise(r=>setTimeout(r, 300*(retryCount+1))); return pushReportsToGithub(retryCount+1); }
         return false;
       }
-      if(!putRes.ok) throw new Error('PUT reports failed: ' + putRes.status);
-      const putData = await putRes.json();
-      if(putData && putData.sha) reportsSha = putData.sha;
+      if(!putRes.ok) throw new Error('PUT reports failed: ' + putRes.reason);
+      if(putRes.sha) reportsSha = putRes.sha;
       reports = merged;
       if(deletedReportIds.size){
         deletedReportIds.clear();
@@ -12306,7 +12229,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   //   <farm>-snap-d0 … d6  daily point for that weekday (overwritten a week later = 7-day retention)
   //   <farm>-snap-before   the latest "before restore" point
   function snapSlotName(slot){ return ghFarmName + '-snap-' + slot; }
-  function snapSlotUrl(slot){ return `${WORKER_URL}/?farm=${encodeURIComponent(snapSlotName(slot))}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  function snapSlotUrl(slot){ return FarmSync.url(snapSlotName(slot)); }
   const SNAP_SLOTS = ['d0','d1','d2','d3','d4','d5','d6','before'];
   function snapSlotFor(entry){ return entry.kind === 'before-restore' ? 'before' : 'd' + toDateObj(entry.date).getDay(); }
   async function fetchSnapSlot(slot){
@@ -12363,7 +12286,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   const ARCHIVE_GRACE_DAYS = 3, ARCHIVE_PART_BYTES = 800000;
   let archivedTasks = [], archiveLoadedKey = '', archiveRunning = false;
   function archiveName(no, part){ return ghFarmName + '-archive-' + String(no).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') + (part ? '-p' + part : ''); }
-  function archiveUrl(no, part){ return `${WORKER_URL}/?farm=${encodeURIComponent(archiveName(no, part))}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  function archiveUrl(no, part){ return FarmSync.url(archiveName(no, part)); }
   async function fetchArchivePart(no, part){
     const res = await fetch(archiveUrl(no, part), { cache:'no-store' });
     if(res.status === 404) return { tasks:[], sha:null };
@@ -15294,7 +15217,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // app version syncing the farm can never drop it.
   let accessData = null, accessBusy = false;
   function accessFarm(){ return ghFarmName ? ghFarmName + '-access' : null; }
-  function accessUrl(){ return `${WORKER_URL}/?farm=${encodeURIComponent(accessFarm())}&repo=${encodeURIComponent(HARDCODED_REPO)}`; }
+  function accessUrl(){ return FarmSync.url(accessFarm()); }
   // One entry per worker (matched by name), each with the phones they joined from.
   // Also folds older one-entry-per-phone records and same-name duplicates together.
   function memberKey(n){ return String(n || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
@@ -15790,7 +15713,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let keys = [], base = null;
     for(const name of [...new Set([farm, farm.toLowerCase()])]){
       try{
-        const res = await fetch(`${WORKER_URL}/?repo=${encodeURIComponent(HARDCODED_REPO)}&prefix=${encodeURIComponent(name + '-feed')}`);
+        const res = await fetch(FarmSync.listUrl(name + '-feed'));
         if(!res.ok) continue;
         const j = await res.json();
         const files = (j && Array.isArray(j.files)) ? j.files : [];
@@ -15843,7 +15766,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let v = null;
     for(const name of [...new Set([farm, farm.toLowerCase()])]){
       try{
-        const res = await fetch(`${WORKER_URL}/?farm=${encodeURIComponent(name + '-feed-' + no)}&repo=${encodeURIComponent(HARDCODED_REPO)}`);
+        const res = await fetch(FarmSync.url(name + '-feed-' + no));
         if(!res.ok) continue;
         const j = await res.json();
         if(j && j.data && j.data.farmData){ v = j.data; break; }
@@ -15870,7 +15793,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!slug || slug === 'farm') return;
     let keys = [];
     try{
-      const res = await fetch(`${WORKER_URL}/?repo=${encodeURIComponent(HARDCODED_REPO)}&prefix=${encodeURIComponent(slug + '-feed')}`, { cache:'no-store' });
+      const res = await fetch(FarmSync.listUrl(slug + '-feed'), { cache:'no-store' });
       if(res.ok){ const j = await res.json(); const re = new RegExp('^' + slug + '-feed-(.+)\\.json$');
         keys = (j.files || []).map(f=> { const m = re.exec(f.name || ''); return m && !/-file$/.test(m[1]) ? m[1] : null; }).filter(Boolean); }
     }catch(e){ return; }

@@ -17,7 +17,7 @@
    forget, but bumping keeps icons/libraries fresh too.
    ============================================================ */
 
-const CACHE_VERSION = 'cluckwise-2026.11.25-c190';
+const CACHE_VERSION = 'cluckwise-2026.11.25-c191';
 const PAGE_CACHE    = CACHE_VERSION + '-pages';
 const STATIC_CACHE  = CACHE_VERSION + '-static';
 const CDN_CACHE     = CACHE_VERSION + '-cdn';
@@ -34,6 +34,7 @@ const APP_SHELL = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   '../js/core.js',
+  '../js/farmsync.js',
   '../js/farmkey.js',
   '../js/notify.js',
   '../js/plumo-face.js',

@@ -150,9 +150,10 @@ function applyCloudPayload(payload,options){
 // (syncGen moves on every reset) is thrown away — before, a late save or check could land on the new batch.
 let syncGen=0,batchSwitching=false,syncChain=Promise.resolve();
 function syncSerial(fn){const p=syncChain.then(fn,fn);syncChain=p.then(()=>{},()=>{});return p;}
+// Reading and saving go through the shared engine (js/farmsync.js), the same one Tasks uses.
 async function fetchFromCloud(url){
   if(!syncFarmName)return {ok:false,reason:'no-farm'};
-  try{const res=await fetch(url||buildSyncUrl(syncFarmName));if(res.status===404)return {ok:true,notFound:true};if(!res.ok)return {ok:false,reason:'http-'+res.status};const result=await res.json();if(result.notFound)return {ok:true,notFound:true};return {ok:true,data:result.data,sha:result.sha};}catch(e){return {ok:false,reason:e.message||'network-error'};}
+  return FarmSync.getUrl(url||buildSyncUrl(syncFarmName));
 }
 // ── Farm history: its own cloud file per farm (not inside a batch file),
 // so New batch, switching batches and other devices can't lose it.
@@ -163,10 +164,8 @@ function historyKey(){return JSON.stringify([(predState.farmHistory||[]).map(r=>
 async function pullFarmHistory(){
   if(!syncFarmName)return;
   try{
-    const res=await fetch(buildHistoryUrl(syncFarmName),{cache:'no-store'});
-    if(res.status===404){historySha=null;if(farmHistory().length)scheduleHistoryPush();return;}
-    if(!res.ok)return;
-    const j=await res.json();
+    const j=await FarmSync.getUrl(buildHistoryUrl(syncFarmName),{fresh:true});
+    if(!j.ok)return;
     if(j.notFound||!j.data){historySha=null;if(farmHistory().length)scheduleHistoryPush();return;}
     historySha=j.sha||null;
     const before=historyKey();mergeCloudFarmHistory(j.data);
@@ -177,12 +176,10 @@ async function pullFarmHistory(){
 }
 async function pushFarmHistory(){
   if(!syncFarmName)return;
-  const put=()=>fetch(buildHistoryUrl(syncFarmName),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha:historySha,data:{app:SYNC_APP_TAG,kind:'farm-history',farmName:syncFarmName,updatedAt:new Date().toISOString(),farmHistory:predState.farmHistory||[],farmHistoryDeleted:predState.farmHistoryDeleted||[],farmHistoryPending:predState.farmHistoryPending||{}}})});
-  try{
-    let res=await put();
-    if(res.status===409){const fresh=await fetch(buildHistoryUrl(syncFarmName),{cache:'no-store'}).then(r=>r.json()).catch(()=>null);if(fresh){historySha=fresh.sha||null;if(fresh.data){mergeCloudFarmHistory(fresh.data);savePredState();}}res=await put();}
-    if(res.ok){const j=await res.json().catch(()=>null);if(j&&j.sha)historySha=j.sha;}
-  }catch(e){console.warn('Farm history push failed',e);}
+  const u=buildHistoryUrl(syncFarmName),put=()=>FarmSync.putUrl(u,historySha,{app:SYNC_APP_TAG,kind:'farm-history',farmName:syncFarmName,updatedAt:new Date().toISOString(),farmHistory:predState.farmHistory||[],farmHistoryDeleted:predState.farmHistoryDeleted||[],farmHistoryPending:predState.farmHistoryPending||{}});
+  let res=await put();
+  if(res.conflict){const fresh=await FarmSync.getUrl(u,{fresh:true});if(fresh.ok){historySha=fresh.sha||null;if(fresh.data){mergeCloudFarmHistory(fresh.data);savePredState();}}res=await put();}
+  if(res.ok){if(res.sha)historySha=res.sha;}else console.warn('Farm history push failed',res.reason);
 }
 function scheduleHistoryPush(){if(!syncFarmName)return;clearTimeout(historyPushTimer);historyPushTimer=setTimeout(pushFarmHistory,800);}
 // ── Three-way sync merge ──
@@ -206,41 +203,13 @@ function syncNormDates(c){
   return c;
 }
 function syncNorm(p){if(!p)return null;const c=JSON.parse(JSON.stringify(p));delete c.lastUpdated;return syncNormDates(c);}
-function syncEq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function syncEq(a,b){return FarmSync.same(a,b);}
 function loadSyncBase(){try{const v=JSON.parse(localStorage.getItem(SYNC_BASE_KEY)||'null');syncBase=v&&v.key===buildFileKey(syncFarmName||'')?syncNormDates(v.data):null;}catch(e){syncBase=null;}return syncBase;}
 function saveSyncBase(data){syncBase=data;try{localStorage.setItem(SYNC_BASE_KEY,JSON.stringify({key:buildFileKey(syncFarmName||''),data}));}catch(e){}}
 // Current local state as the cloud would store it (the shape every device writes)
 function localSyncPayload(){return syncNorm(buildCloudPayload());}
-function syncIsObj(v){return v!==null&&typeof v==='object'&&!Array.isArray(v);}
-function syncArrKey(list){for(const k of ['id','date','d']){if(list.length&&list.every(x=>syncIsObj(x)&&x[k]!=null&&x[k]!==''))return k;}return null;}
-function syncMerge(base,ours,theirs){
-  if(syncEq(ours,theirs))return theirs;
-  if(base!==undefined&&base!==null){if(syncEq(ours,base))return theirs;if(syncEq(theirs,base))return ours;}
-  if(Array.isArray(ours)&&Array.isArray(theirs)){
-    const b=Array.isArray(base)?base:[];const key=syncArrKey([...ours,...theirs,...b]);
-    if(!key)return ours;
-    const kv=x=>String(x[key]);const bm=new Map(b.map(x=>[kv(x),x])),om=new Map(ours.map(x=>[kv(x),x])),tm=new Map(theirs.map(x=>[kv(x),x]));
-    const order=[...theirs.map(kv),...ours.map(kv).filter(k=>!tm.has(k))];const out=[];
-    order.forEach(k=>{const bb=bm.get(k),o=om.get(k),t=tm.get(k);
-      if(o&&t){out.push(syncMerge(bb,o,t));return;}
-      if(o){if(bb&&syncEq(o,bb))return;out.push(o);return;}       // they deleted it (we hadn't changed it)
-      if(t){if(bb&&syncEq(t,bb))return;out.push(t);}               // we deleted it (they hadn't changed it)
-    });
-    if(key!=='id')out.sort((x,y)=>String(x[key]).localeCompare(String(y[key])));
-    return out;
-  }
-  if(syncIsObj(ours)&&syncIsObj(theirs)){
-    const b=syncIsObj(base)?base:{};const out={};
-    new Set([...Object.keys(ours),...Object.keys(theirs)]).forEach(k=>{
-      const inO=k in ours,inT=k in theirs;
-      if(inO&&inT){out[k]=syncMerge(b[k],ours[k],theirs[k]);return;}
-      if(inO){if(k in b&&syncEq(ours[k],b[k]))return;out[k]=ours[k];return;}
-      if(k in b&&syncEq(theirs[k],b[k]))return;out[k]=theirs[k];
-    });
-    return out;
-  }
-  return ours;   // same value changed on both devices: this device's edit wins
-}
+// The 3-way merge is the shared one (js/farmsync.js): a part only one side changed takes that side; records merge by id or day.
+function syncMerge(base,ours,theirs){return FarmSync.merge3(base,ours,theirs);}
 function pullFromCloud(silent){if(batchSwitching)return Promise.resolve(false);return syncSerial(()=>pullFromCloudNow(silent));}
 async function pullFromCloudNow(silent){
   if(!syncFarmName||batchSwitching)return false;
@@ -282,16 +251,16 @@ async function pushToCloudNow(){
   if(!farmData)return false;
   syncState='pushing';renderSettingsDrawerBody();
   try{
-    const put=(sha,data)=>fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sha,data:{...data,lastUpdated:new Date().toISOString()}})});
+    const put=(sha,data)=>FarmSync.putUrl(url,sha,{...data,lastUpdated:new Date().toISOString()});
     let data=localSyncPayload();
     let res=await put(syncSha,data);
     if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}
-    for(let tries=0;res.status===409&&tries<3;tries++){
+    for(let tries=0;res.conflict&&tries<3;tries++){
       // The cloud changed since this device last synced (another device saved):
       // merge both sides' changes, show them here, then save the merge.
-      const fresh=await fetch(url,{cache:'no-store'}).then(r=>r.json()).catch(()=>null);
+      const fresh=await FarmSync.getUrl(url,{fresh:true});
       if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}   // switched batch meanwhile: never merge into the new one
-      if(!fresh||!fresh.sha)throw new Error('Sync conflict: could not read the cloud');
+      if(!fresh.ok||!fresh.sha)throw new Error('Sync conflict: could not read the cloud');
       syncSha=fresh.sha;const theirs=syncNorm(fresh.data);
       const base=loadSyncBase();
       try{await historyAutoSnapshot('auto-sync','Before cloud sync merge');}catch(e){}
@@ -302,8 +271,8 @@ async function pushToCloudNow(){
       res=await put(syncSha,data);
       if(gen!==syncGen){syncState='idle';renderSettingsDrawerBody();return false;}
     }
-    if(!res.ok)throw new Error('Sync server responded '+res.status);
-    const result=await res.json().catch(()=>null);if(result&&result.sha)syncSha=result.sha;
+    if(!res.ok)throw new Error('Sync server: '+res.reason);
+    if(res.sha)syncSha=res.sha;
     saveSyncBase(data);
     syncLastSyncAt=Date.now();saveSyncState();
     syncState='idle';renderSettingsDrawerBody();
