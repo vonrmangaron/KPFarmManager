@@ -4620,6 +4620,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   /* Make a task › Who: the + matches the box (was 38 px beside 46 px), same text size as the window */
   #prepTaskModal .ai-icon-row{ align-items:stretch; }
   #prepTaskModal #prepTaskWho{ font-size:14px; }
+  #mlogTaskModal #mlogWhoAdd{ height:auto; min-height:44px; width:46px; font-size:20px; display:grid; place-items:center; padding:0; }
+  #mlogTaskModal .mlog-who .assignee-chips:empty{ display:none; }
+  .mlog-state .mlog-who-av{ display:inline-flex; margin-left:6px; flex:none; vertical-align:middle; }
+  .mlog-state .mlog-who-av .task-avatar{ width:18px; height:18px; font-size:10px; }
   #prepTaskModal #prepWhoAdd{ height:auto; min-height:44px; width:46px; font-size:20px; display:grid; place-items:center; padding:0; }
   .pl-pickbar{ position:sticky; bottom:0; left:0; z-index:4; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; background:#16191B; color:#fff; }
   body.theme-dark .pl-pickbar{ background:#0A111F; border-top:1px solid var(--line); }
@@ -5981,6 +5985,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     <label for="mlogCatInput">Category <span class="mlog-opt">(optional)</span></label>
     <input type="text" id="mlogCatInput" list="mlogCatList" maxlength="30" placeholder="e.g. Grounds, Pest control, Equipment" autocomplete="off">
     <datalist id="mlogCatList"></datalist>
+    <label for="mlogWhoInput">Assign to <span class="mlog-opt">(optional)</span></label>
+    <div class="mlog-who">
+      <div class="assignee-chips" id="mlogWhoChips"></div>
+      <div class="ai-icon-row"><input type="text" id="mlogWhoInput" list="assigneeList" placeholder="Type a name or tap one below" maxlength="40" autocomplete="off" title="Who does this job"><button class="btn-ghost-ai" id="mlogWhoAdd" title="Add this person (or press Enter)" aria-label="Add this person" type="button">+</button></div>
+      <div class="assignee-picks" id="mlogWhoPicks" aria-label="Tap a name to assign"></div>
+    </div>
+    <p class="mlog-hint">Days you plan in the Routine Tracker go to these people. They see them in the Crew app.</p>
+    <label class="checkbox-row hidden" id="mlogWhoOpenRow" title="Give the days already planned (not done yet) to the same people"><input type="checkbox" id="mlogWhoOpen" checked><span id="mlogWhoOpenLabel"></span></label>
     <label for="mlogEveryInput">Should be done every (days)</label>
     <input type="number" id="mlogEveryInput" min="1" max="365" inputmode="numeric" placeholder="7">
     <p class="mlog-hint">Sets the colours: amber when it's nearly due, red once it's overdue.</p>
@@ -14895,7 +14907,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const pillTip = `Expected every ${every} day${every === 1 ? '' : 's'}`;
       body += `<tr><th scope="row" class="mlog-task-col"><button type="button" class="mlog-open" data-mid="${escapeHtmlAttr(m.id)}" title="Show history">
         <span class="mlog-name">${taskIconHtml(m.name, m.icon)}<span class="mlog-nm">${escapeHtml(m.name)}</span>${meta ? `<span class="mlog-meta">${meta}</span>` : ''}</span>
-        <span class="mlog-state"><span class="mlog-pill st-${st.key}" title="${escapeHtmlAttr(pillTip)}"><span class="mlog-dot"></span>${pill}</span><span class="mlog-last" title="Done ${inRange}× in this range">${lastTxt}</span></span>
+        <span class="mlog-state"><span class="mlog-pill st-${st.key}" title="${escapeHtmlAttr(pillTip)}"><span class="mlog-dot"></span>${pill}</span><span class="mlog-last" title="Done ${inRange}× in this range">${lastTxt}</span>${m.assignees && m.assignees.length ? `<span class="mlog-who-av" title="Assigned to ${escapeHtmlAttr(m.assignees.join(', '))}">${buildAssigneeAvatarsHtml(m.assignees)}</span>` : ''}</span>
       </button></th>`;
       // Walk the range with a pointer into the sorted done dates so each
       // empty day knows how long it had been since the last completion.
@@ -15050,9 +15062,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const same = tasks.filter(t=> t.date === key && mlogNorm(t.name) === n);
     const open = same.filter(t=> t.status !== 'done');
     if(!same.length){
-      tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: [], source: 'maint-log' });
-      addHistory('Added', `"${m.name}" planned for ${formatFull(key)} (Routine Tracker)`);
-      showToast(`${m.name}: planned for ${formatShort(key)}`);
+      const who = Array.isArray(m.assignees) ? m.assignees.slice() : [];
+      tasks.push({ id: uid(), name: m.name, icon: mlogIcon(m), date: key, status: 'open', createdAt: Date.now(), order: nextOrder(), assignees: who, source: 'maint-log' });
+      addHistory('Added', `"${m.name}" planned for ${formatFull(key)} (Routine Tracker)${who.length ? ' — ' + who.join(', ') : ''}`);
+      showToast(`${m.name}: planned for ${formatShort(key)}${who.length ? ' · ' + who.join(', ') : ''}`);
     } else if(open.length){
       // toggleDone keeps any linked report in step.
       open.forEach(t=> toggleDone(t.id));
@@ -15130,6 +15143,21 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#mlogRenameRow').classList.toggle('hidden', !(renamed && oldCount));
     if(renamed && oldCount) $('#mlogRenameLabel').textContent = `Also rename the ${oldCount} calendar task${oldCount === 1 ? '' : 's'} called “${m.name}”`;
   }
+  // Who the job is assigned to (2026-11-25): days planned in the Routine Tracker get these people
+  let mlogWho = [];
+  function mlogOpenPlanned(name){ const n = mlogNorm(name), today = dateKey(new Date()); return n ? tasks.filter(t=> t.status !== 'done' && t.date && t.date >= today && mlogNorm(t.name) === n) : []; }
+  function mlogWhoRender(){
+    renderAssigneeChips('#mlogWhoChips', mlogWho);
+    const taken = new Set(mlogWho.map(n=> n.toLowerCase())), box = $('#mlogWhoPicks');
+    if(box) box.innerHTML = knownPeople().filter(n=> !taken.has(n.toLowerCase())).map(n=> `<button type="button" class="assignee-pick" data-mlog-pick="${escapeHtmlAttr(n)}" title="Assign ${escapeHtmlAttr(n)}"><span class="ap-dot" style="background:${colorForAssignee(n)}"></span>${escapeHtml(n)}</button>`).join('');
+    // editing a job that already has planned days: offer to give them to the same people
+    const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
+    const was = (m && m.assignees || []).map(n=> n.toLowerCase()).sort().join('|'), now = mlogWho.map(n=> n.toLowerCase()).sort().join('|');
+    const open = m ? mlogOpenPlanned(m.name) : [];
+    $('#mlogWhoOpenRow').classList.toggle('hidden', !(m && open.length && was !== now));
+    if(open.length) $('#mlogWhoOpenLabel').textContent = `Also ${mlogWho.length ? 'give' : 'unassign'} the ${open.length} planned day${open.length === 1 ? '' : 's'} not done yet${mlogWho.length ? ' to them' : ''}`;
+  }
+  function mlogWhoAdd(name){ name = String(name || '').trim().replace(/\s+/g, ' '); if(!name) return; if(!mlogWho.some(n=> n.toLowerCase() === name.toLowerCase())) mlogWho.push(name); $('#mlogWhoInput').value = ''; mlogWhoRender(); }
   function openMlogTaskModal(id, prefill){
     closeOverlays();
     mlogEditId = id || null;
@@ -15140,6 +15168,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#mlogShedInput').value = m ? (m.shed || '') : (pre.shed || '');
     $('#mlogCatInput').value = m ? (m.category || '') : '';
     $('#mlogEveryInput').value = m ? mlogEvery(m) : (pre.every || '');
+    mlogWho = m && Array.isArray(m.assignees) ? m.assignees.slice() : []; $('#mlogWhoInput').value = ''; $('#mlogWhoOpen').checked = true;
     $('#mlogRenameTasks').checked = true;
     mlogShedTouched = !!(m && m.shed);
     $('#mlogDeleteBtn').classList.toggle('hidden', !m);
@@ -15153,6 +15182,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#mlogSuggestWrap').classList.toggle('hidden', !sugg.length || !!pre.name);
     $('#mlogSuggestChips').innerHTML = mlogSuggestChipsHtml(sugg);
     mlogUpdateModalHints();
+    refreshAssigneeDatalist(); mlogWhoRender();
     openDrawer('#mlogTaskModal');
     setTimeout(()=> $('#mlogNameInput').focus(), 60);
   }
@@ -15169,18 +15199,25 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(maintenance.some(x=> x.id !== mlogEditId && mlogNorm(x.name) === mlogNorm(name))){ showToast(`“${name}” is already tracked.`, true); return; }
     const every = Math.min(365, Math.max(1, parseInt($('#mlogEveryInput').value, 10) || 7));
     const shed = $('#mlogShedInput').value.trim(), category = $('#mlogCatInput').value.trim();
+    if($('#mlogWhoInput').value.trim()) mlogWhoAdd($('#mlogWhoInput').value);
+    const assignees = mlogWho.slice();
     const m = mlogEditId ? maintenance.find(x=> x.id === mlogEditId) : null;
+    // planned days not done yet follow the new people (when ticked)
+    const reassign = m && !$('#mlogWhoOpenRow').classList.contains('hidden') && $('#mlogWhoOpen').checked ? mlogOpenPlanned(m.name) : [];
     if(m){
       if(mlogNorm(m.name) !== mlogNorm(name) && !$('#mlogRenameRow').classList.contains('hidden') && $('#mlogRenameTasks').checked){
         const old = mlogNorm(m.name);
         tasks.forEach(t=>{ if(mlogNorm(t.name) === old) t.name = name; });
       }
+      const whoWas = (m.assignees || []).join(', ');
       Object.assign(m, { name, shed, category, every });
+      if(assignees.length) m.assignees = assignees; else delete m.assignees;
       delete m.icon;
-      addHistory('Routine Tracker', `Updated tracked task "${name}"`);
+      reassign.forEach(t=>{ t.assignees = assignees.slice(); });
+      addHistory('Routine Tracker', `Updated tracked task "${name}"${whoWas !== assignees.join(', ') ? ` — assigned to ${assignees.length ? assignees.join(', ') : 'nobody'}${reassign.length ? ` (and ${reassign.length} planned day${reassign.length === 1 ? '' : 's'})` : ''}` : ''}`);
     } else {
-      maintenance.push({ id: uid(), name, shed, category, every, createdAt: Date.now() });
-      addHistory('Routine Tracker', `Started tracking "${name}"`);
+      maintenance.push(Object.assign({ id: uid(), name, shed, category, every, createdAt: Date.now() }, assignees.length ? { assignees } : {}));
+      addHistory('Routine Tracker', `Started tracking "${name}"${assignees.length ? ` — assigned to ${assignees.join(', ')}` : ''}`);
     }
     closeOverlays();
     persist(); renderAll();
@@ -15198,6 +15235,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   $('#mlogBtn').addEventListener('click', ()=> openMlog('routine'));
+  $('#mlogWhoAdd').addEventListener('click', ()=> mlogWhoAdd($('#mlogWhoInput').value));
+  $('#mlogWhoInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); mlogWhoAdd($('#mlogWhoInput').value); } });
+  $('#mlogWhoChips').addEventListener('click', (e)=>{ const b = e.target.closest('.chip-remove'); if(!b) return; mlogWho.splice(Number(b.dataset.idx), 1); mlogWhoRender(); });
+  $('#mlogWhoPicks').addEventListener('click', (e)=>{ const b = e.target.closest('[data-mlog-pick]'); if(b) mlogWhoAdd(b.dataset.mlogPick); });
   $('#moreMlogBtn').addEventListener('click', ()=> openMlog('routine'));
   $('#morePrepBtn').addEventListener('click', ()=>{ const o = prepOpenList(); openPrepBoard(o.length ? o[0].shed : null); });
   $('#mlogCloseBtn').addEventListener('click', closeMlog);
@@ -15264,7 +15305,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     mlogUpdateModalHints();
   });
   $('#mlogSaveBtn').addEventListener('click', saveMlogTask);
-  $('#mlogTaskModal').addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox'){ e.preventDefault(); saveMlogTask(); } });
+  $('#mlogTaskModal').addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && e.target.id !== 'mlogWhoInput'){ e.preventDefault(); saveMlogTask(); } });   // Enter in "Assign to" adds the person
   $('#mlogDeleteBtn').addEventListener('click', deleteMlogTask);
 
 
