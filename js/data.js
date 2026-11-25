@@ -744,6 +744,13 @@ function nextBatchStarterLoads(g,n){
   if(!nb||!Array.isArray(nb.starter))return [];
   return nb.starter.filter(l=>Number(l.splitKg&&l.splitKg[g])>0).filter(l=>{const s=loadSilosFor(l,g);return !s.length||s.includes(n);}).map(l=>({date:dateOnly(l.date),kg:Number(l.splitKg[g])||0,batch:nb.key}));
 }
+// Feed alerts (bell, Home, brief, phone) warn this many days before a pair's silos run low (Settings › Alerts)
+function feedWarnDays(){const v=Number(predState.feedWarnDays);return Number.isInteger(v)&&v>=1&&v<=14?v:3;}
+// Starter silo alerts start this many days before the pair's clean-out (Settings › Alerts, default 7)
+function starterAlertDays(){const v=Number(predState.starterAlertDays);return Number.isInteger(v)&&v>=1&&v<=21?v:7;}
+// Should the starter silo be on the alerts today? Inside the alert days before clean-out — or earlier when the silo
+// has to be opened before then to be empty in time (otherwise the alert would come too late to act on).
+function starterAlertDue(st){if(!st)return false;if(st.daysToCo<=starterAlertDays())return true;return st.state==='action'&&!!st.openBy&&dateOnly(new Date())>=dateOnly(st.openBy);}
 function starterSiloStatus(g){
   if(!shedsForGroup(g).some(s=>s.placementDate))return null;
   const co=pairCleanoutDate(g);if(!co)return null;

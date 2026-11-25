@@ -428,6 +428,46 @@ pending.push(Promise.all(pending.slice()).then(async()=>{
   ok(r.day==='2026-10-29','takes the cloud\'s 29 Oct: '+r.day);ok(!r.pushed,'nothing pushed back');
 }).catch(e=>{failed++;console.log('  ✗ old-copy dates:',e.message);}));
 
+// 26. Feed alerts: warn days from Settings › Alerts, none when a booked load covers the pair; starter silo alert window
+pending.push(Promise.all(pending.slice()).then(()=>{
+  const r=vm.runInContext(`(()=>{
+    const keepLoads=farmLoads.slice(),keepSilo=JSON.parse(JSON.stringify(siloData[1])),keepPS={...predState},keepNP={...notifPrefs};notifPrefs.feedBalance=true;
+    const T=dateOnly(new Date()),g=1,out={};
+    try{
+      farmLoads=farmLoads.filter(l=>!(Number(l.splitKg&&l.splitKg[g])>0));
+      siloData[g]={readings:[{date:iso(addDays(T,-1)),silo1Rings:2,silo2Rings:0,silo3Rings:null,time:'pm'}],deliveries:[]};
+      let x=mgrSiloOutlook().find(o=>o.g===g);out.dep=!!x.dep;out.days=x.days;
+      const feedMsgs=()=>computeFarmAlerts().filter(a=>a.feedGroup===g&&/feed load|Order feed|load forward/.test(a.msg)).map(a=>a.msg);
+      predState.feedWarnDays=Math.max(1,x.days);out.dueAtDays=feedAlertDue(mgrSiloOutlook().find(o=>o.g===g));out.bellAtDays=feedMsgs().length;
+      predState.feedWarnDays=Math.max(1,x.days-1);out.notDueEarlier=x.days>=2?!feedAlertDue(mgrSiloOutlook().find(o=>o.g===g))&&feedMsgs().length===0:true;
+      predState.feedWarnDays=14;
+      // booked the day after it runs low: covered, no alerts anywhere
+      farmLoads=farmLoads.concat([{id:'B1',date:addDays(x.dep,1),plannedKg:60000,actualKg:null,feedType:'grower',splitKg:{[g]:60000}}]);
+      x=mgrSiloOutlook().find(o=>o.g===g);out.covered=x.covered;out.bellCovered=feedMsgs().length;out.homeCovered=mgrNeeds(mgrSiloOutlook()).filter(c=>/load/i.test(c.title||'')&&c.title.includes(mgrFeedingLabel(x))).length;
+      // booked long after the silos run empty: bring it forward
+      farmLoads=farmLoads.filter(l=>l.id!=='B1').concat([{id:'B2',date:addDays(x.dep,20),plannedKg:60000,actualKg:null,feedType:'grower',splitKg:{[g]:60000}}]);
+      x=mgrSiloOutlook().find(o=>o.g===g);out.late=!x.covered&&!!x.booked&&!!x.empty;out.bellLate=feedMsgs().some(m=>/Bring the .* load forward/.test(m));
+      out.homeLate=mgrNeeds(mgrSiloOutlook()).some(c=>/Bring the .* load forward/.test(c.title||''));
+      // starter silo window
+      predState.starterAlertDays=7;
+      out.st=[starterAlertDue({daysToCo:20,state:'pick'}),starterAlertDue({daysToCo:7,state:'pick'}),starterAlertDue({daysToCo:20,state:'action',openBy:addDays(T,-1)}),starterAlertDue({daysToCo:20,state:'action',openBy:addDays(T,5)})];
+      predState.starterAlertDays=21;out.st21=starterAlertDue({daysToCo:20,state:'pick'});
+      predState.starterAlertDays=99;out.stBad=starterAlertDays();
+      const pl=buildCloudPayload().predictions;out.inCloud='starterAlertDays' in pl&&'feedWarnDays' in pl;
+    }finally{farmLoads=keepLoads;siloData[1]=keepSilo;Object.assign(predState,keepPS);Object.assign(notifPrefs,keepNP);}
+    return out;
+  })()`,ctx);
+  console.log('26. Feed alerts follow the warn days and stay quiet when a booked load covers the pair; starter silo alert window');
+  ok(r.dep&&r.days>=0,'test pair runs low: in '+r.days+' days');
+  ok(r.dueAtDays&&r.bellAtDays===1,'alert when the warn days reach the run-low day');
+  ok(r.notDueEarlier,'no alert while the run-low day is further off than the warn days');
+  ok(r.covered&&r.bellCovered===0&&r.homeCovered===0,'a load booked after the run-low day covers it: no bell, no Home card');
+  ok(r.late&&r.bellLate&&r.homeLate,'a load booked after the silos run empty: "bring it forward" instead');
+  ok(JSON.stringify(r.st)==='[false,true,true,false]','starter: 7 days before clean-out, or when it must be opened sooner: '+JSON.stringify(r.st));
+  ok(r.st21===true&&r.stBad===7,'starter days adjustable, bad value falls back to 7');
+  ok(r.inCloud,'both settings go in the cloud file');
+}).catch(e=>{failed++;console.log('  ✗ feed alert days:',e.message);}));
+
 Promise.all(pending).then(()=>{
 console.log(`\n${failed?'FAILED':'PASSED'}: ${passed} passed, ${failed} failed`);
 process.exit(failed?1:0);

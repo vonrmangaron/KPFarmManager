@@ -54,6 +54,7 @@ function buildCloudPayload(){
       siloStart:predState.siloStart,
       safetyDays:predState.safetyDays,
       feedWarnDays:predState.feedWarnDays,
+      starterAlertDays:predState.starterAlertDays,
       farmHistory:predState.farmHistory||[],
       farmHistoryDeleted:predState.farmHistoryDeleted||[]
     },
@@ -116,7 +117,7 @@ function applyCloudPayload(payload,options){
     if(Array.isArray(p.noPickupDays))predState.noPickupDays=p.noPickupDays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6);
     // The farm's history travels with every batch file. Merged, never replaced:
     // a device that hadn't synced a new record can't wipe it out.
-    {if(p.deliveryTiming==='early'||p.deliveryTiming==='day')predState.deliveryTiming=p.deliveryTiming;applyStarterPrefs(p);const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;const fw=Number(p.feedWarnDays);if(Number.isInteger(fw)&&fw>=1&&fw<=14)predState.feedWarnDays=fw;}
+    {if(p.deliveryTiming==='early'||p.deliveryTiming==='day')predState.deliveryTiming=p.deliveryTiming;applyStarterPrefs(p);const c=Number(p.siloConfidencePct);if(Number.isFinite(c)&&c>=50&&c<=100)predState.siloConfidencePct=c;const sd=Number(p.safetyDays);if(Number.isFinite(sd)&&sd>=0&&sd<=3)predState.safetyDays=sd;const fw=Number(p.feedWarnDays);if(Number.isInteger(fw)&&fw>=1&&fw<=14)predState.feedWarnDays=fw;const sa=Number(p.starterAlertDays);if(Number.isInteger(sa)&&sa>=1&&sa<=21)predState.starterAlertDays=sa;}
     mergeCloudFarmHistory(p);
     mergeProjectionLog(p.projectionLog);
     if(p.feedQuota&&typeof p.feedQuota==='object'){const q={};Object.keys(DEFAULT_FEED_QUOTA).forEach(k=>{const n=Number(p.feedQuota[k]);q[k]=Number.isFinite(n)&&n>=0&&n<=10?n:DEFAULT_FEED_QUOTA[k];});predState.feedQuota=q;}

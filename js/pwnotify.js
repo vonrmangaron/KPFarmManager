@@ -8,7 +8,7 @@ const PN_SW=[['urgentBreak'],['dayOn'],['remindOn'],['wNew'],['wMoved'],['mRepor
 function pnFarm(){return syncFarmName||'';}
 // Feed and silo warnings: how many days ahead (1–14, default 3). Kept with the farm's silo settings in the
 // cloud file (not on the notify server), so every device warns alike (2026-11-23).
-function feedWarnDays(){const v=Number(predState.feedWarnDays);return Number.isInteger(v)&&v>=1&&v<=14?v:3;}
+// feedWarnDays() lives in js/data.js (the in-app alerts use it too)
 function pnChanges(){if(!pnCfg||!pnDraft)return [];return Object.keys(pnDraft).filter(k=>pnDraft[k]!==pnCfg[k]);}
 async function pnLoad(force){
   const farm=pnFarm();if(!farm||!window.FarmNotify)return;
@@ -85,7 +85,7 @@ function pnInner(){
    +stSec('Manager notifications',
       stRow('Problem reports','Urgent reports are sent immediately.',pnSw('mReports','Problem reports'))
      +stRow('High-priority task completed','When a worker completes a task marked high priority.',pnSw('mDone','High-priority task completed'))
-     +stRow('Feed and silo warnings',`When a pair’s silos will run low within ${pnDraft.feedWarnDays} day${pnDraft.feedWarnDays===1?'':'s'}, so there’s time to book a load. Checked while ProdWise is open.`,`${pnDraft.mFeed?`<span class="pn-days"><input type="number" class="st2-in pn-days-in" min="1" max="14" step="1" inputmode="numeric" value="${pnDraft.feedWarnDays}" aria-label="Days ahead" title="How many days before the silos run low to warn you: 1 to 14" data-pn-days><span>days ahead</span></span>`:''}${pnSw('mFeed','Feed and silo warnings')}`))
+     +stRow('Feed and silo warnings',`When a pair’s silos will run low within ${pnDraft.feedWarnDays} day${pnDraft.feedWarnDays===1?'':'s'}, so there’s time to book a load — not when a load is already booked. Same days as Settings › Alerts. Checked while ProdWise is open.`,`${pnDraft.mFeed?`<span class="pn-days"><input type="number" class="st2-in pn-days-in" min="1" max="14" step="1" inputmode="numeric" value="${pnDraft.feedWarnDays}" aria-label="Days ahead" title="How many days before the silos run low to warn you: 1 to 14" data-pn-days><span>days ahead</span></span>`:''}${pnSw('mFeed','Feed and silo warnings')}`))
    +stSec('Recipients',pnWho())
    +`<p class="set-muted pn-foot">Delivered free through your Cloudflare account. All times use the farm’s time zone (${escapeHtml(pnCfg.tz||'')}).</p>`;
 }
@@ -171,8 +171,10 @@ function pnFeedCheck(){
   let sent={};try{sent=JSON.parse(localStorage.getItem(k)||'{}')||{};}catch(e){}
   if(sent.day!==day)sent={day,ids:[]};
   const ev=[];
-  const ahead=feedWarnDays();silos.filter(x=>x.dep&&x.days<=ahead&&x.feeding.length).forEach(x=>{const id='g'+x.g;if(sent.ids.includes(id))return;sent.ids.push(id);
-    ev.push({type:'feed',id:id+'-'+day,title:`Feed: ${pairLabel(x.g)} run low ${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}`,body:x.days<=1?'Book a load today.':`In ${x.days} days. Book a load.`});});
+  // same rule as the in-app alerts: within the warn days, birds still eating, not covered by a booked load
+  silos.filter(x=>feedAlertDue(x)).forEach(x=>{const id='g'+x.g+(x.booked?'-late':'');if(sent.ids.includes(id))return;sent.ids.push(id);
+    if(x.booked)ev.push({type:'feed',id:id+'-'+day,title:`Feed: ${pairLabel(x.g)} run empty before the ${fmtShortNoYear(x.booked)} load`,body:'Bring the load forward.'});
+    else ev.push({type:'feed',id:id+'-'+day,title:`Feed: ${pairLabel(x.g)} run low ${x.days<=1?mgrWhen(x.dep).toLowerCase():mgrWhen(x.dep)}`,body:x.days<=1?'Book a load today.':`In ${x.days} days. Book a load.`});});
   if(!ev.length)return;
   try{localStorage.setItem(k,JSON.stringify(sent));}catch(e){}
   FarmNotify.send(pnFarm(),'manager',ev,'');

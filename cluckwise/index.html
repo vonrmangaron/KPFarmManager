@@ -1297,6 +1297,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .st-switch input:checked + .st-slider::after{ transform:translateX(18px); }
   .st-switch input:focus-visible + .st-slider{ outline:2px solid var(--primary); outline-offset:2px; }
   .st-select, .st-input, .settings-body input.st-input{ width:100%; border:1px solid var(--line); background:var(--surface-soft); border-radius:10px; padding:10px 12px; font-size:15px; color:var(--ink); font-family:inherit; min-width:0; }
+  .cs-days-row .st-input.cs-days-in{ width:72px; flex:none; text-align:center; padding:8px; }
+  .cs-days-apply{ background:var(--primary-soft); font-size:13px; gap:8px; }
+  .cs-days-apply span{ flex:1; color:var(--ink); }
+  .cs-days-btn{ border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:8px; padding:7px 12px; font:700 13px Inter,system-ui,sans-serif; cursor:pointer; }
+  .cs-days-btn.primary{ background:var(--primary); border-color:var(--primary); color:#241A08; }
   .st-select:focus, .st-input:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
   .st-input-row{ display:flex; gap:6px; }
   .st-btn{ border:1px solid var(--line); background:var(--surface-soft); color:var(--ink); font-family:'Sora',sans-serif; font-weight:700; font-size:13px; padding:10px 14px; border-radius:10px; cursor:pointer; transition:filter .12s ease, background .12s ease; }
@@ -5600,7 +5605,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
     <section class="st-section" id="stAlerts">
       <div class="cs-pw-only"><span class="cs2-seck">Production</span>
-      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair’s silos will drop below the safety stock within 8 days, and when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifEmpty"><div class="st-row-text"><span class="st-label">Empty shed</span><span class="st-hint">When a shed’s clean-out is done but the shed isn’t closed yet</span></div><span class="st-switch"><input type="checkbox" id="csNotifEmpty" checked><span class="st-slider"></span></span></label></div></div>
+      <div class="st-card"><label class="st-row st-row-switch" for="csNotifFeed"><div class="st-row-text"><span class="st-label">Silos running low</span><span class="st-hint">When a pair’s silos will drop below the safety stock, so there’s time to book a load — not when a load is already booked for that pair. Also when a silo reading is 3+ days old</span></div><span class="st-switch"><input type="checkbox" id="csNotifFeed" checked><span class="st-slider"></span></span></label><div class="st-row cs-days-row"><div class="st-row-text"><span class="st-label">Warn days ahead</span><span class="st-hint">Days before the silos run low. Also used by the phone notification</span></div><input type="number" class="st-input cs-days-in" id="csFeedDays" min="1" max="14" step="1" inputmode="numeric" title="How many days before the silos run low to warn you: 1 to 14"></div><div class="st-row cs-days-row"><div class="st-row-text"><span class="st-label">Starter silo</span><span class="st-hint">Days before clean-out to start the starter silo reminders (choose it, have it empty). Earlier only if it has to be opened sooner to be empty in time</span></div><input type="number" class="st-input cs-days-in" id="csStarterDays" min="1" max="21" step="1" inputmode="numeric" title="How many days before the pair’s clean-out the starter silo reminders start: 1 to 21"></div><div class="st-row cs-days-apply" id="csDaysApply" hidden><span id="csDaysTxt"></span><button type="button" class="cs-days-btn" id="csDaysDiscard" title="Put the days back as they were">Discard</button><button type="button" class="cs-days-btn primary" id="csDaysSave" title="Save the new days">Apply</button></div><label class="st-row st-row-switch" for="csNotifShed"><div class="st-row-text"><span class="st-label">Shed behind the growth standard</span><span class="st-hint">When a shed falls well behind the free range or Ross 308 standard</span></div><span class="st-switch"><input type="checkbox" id="csNotifShed" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifEmpty"><div class="st-row-text"><span class="st-label">Empty shed</span><span class="st-hint">When a shed’s clean-out is done but the shed isn’t closed yet</span></div><span class="st-switch"><input type="checkbox" id="csNotifEmpty" checked><span class="st-slider"></span></span></label></div></div>
       <span class="cs2-seck">Tasks</span>
       <div class="st-card"><label class="st-row st-row-switch" for="csNotifOverdue"><div class="st-row-text"><span class="st-label">Past-due tasks</span><span class="st-hint">Tasks still open after their day, counted on the bell</span></div><span class="st-switch"><input type="checkbox" id="csNotifOverdue" checked><span class="st-slider"></span></span></label><label class="st-row st-row-switch" for="csNotifReports"><div class="st-row-text"><span class="st-label">New problem reports</span><span class="st-hint">A pop-up when a worker reports a problem in the Crew app</span></div><span class="st-switch"><input type="checkbox" id="csNotifReports" checked><span class="st-slider"></span></span></label><div class="st-row"><div class="st-row-text"><span class="st-label">Open the alerts list</span><span class="st-hint">Everything overdue, reported and fixed</span></div><button type="button" class="st-btn" id="csOpenNotif2">Open</button></div></div>
     </section>
@@ -17296,6 +17301,18 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     try{ if(CW_EMBED && parent.pwGetNotif){ $('#csNotifFeed').checked = parent.pwGetNotif('feedBalance'); $('#csNotifShed').checked = parent.pwGetNotif('shedPerformance'); $('#csNotifEmpty').checked = parent.pwGetNotif('emptyShed'); } }catch(e){}
     $('#csNotifOverdue').checked = settings.notifOverdue !== false;
     $('#csNotifReports').checked = settings.notifReports !== false;
+    csDaysLoad();
+  }
+  // Production's alert days (feed warn days, starter silo days): typed here, saved in Production on Apply
+  function csDaysSaved(){ try{ return CW_EMBED && parent.pwGetAlertDays ? parent.pwGetAlertDays() : null; }catch(e){ return null; } }
+  function csDaysLoad(){ const d = csDaysSaved(); if(!d) return; $('#csFeedDays').value = d.feed; $('#csStarterDays').value = d.starter; csDaysBar(); }
+  function csDaysBar(){
+    const d = csDaysSaved(); if(!d) return;
+    const clamp = (v, max, was)=>{ const n = Math.round(Number(v)); return Number.isFinite(n) && v !== '' ? Math.max(1, Math.min(max, n)) : was; };
+    const f = clamp($('#csFeedDays').value, 14, d.feed), s = clamp($('#csStarterDays').value, 21, d.starter);
+    const ch = []; if(f !== d.feed) ch.push(`feed ${f} day${f === 1 ? '' : 's'} ahead`); if(s !== d.starter) ch.push(`starter silo ${s} day${s === 1 ? '' : 's'} before clean-out`);
+    $('#csDaysApply').hidden = !ch.length; $('#csDaysTxt').textContent = ch.length ? 'Not applied: ' + ch.join(' · ') : '';
+    return { f, s, changed: ch.length > 0 };
   }
   function csRenderBackup(){
     let bn = ''; try{ bn = CW_EMBED && parent.pwBatchLabel ? parent.pwBatchLabel() : ''; }catch(e){}
@@ -17306,6 +17323,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   window.__csOnOpen = ()=>{ document.body.classList.add('settings-open'); try{ arSync(); }catch(e){} csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
   $('#settingsTabs').addEventListener('click', (e)=>{ const b = e.target.closest('button[data-page]'); if(b) csShow(b.dataset.page, true); });
   [['csNotifFeed','feedBalance'],['csNotifShed','shedPerformance'],['csNotifEmpty','emptyShed']].forEach(([id,k])=> $('#'+id).addEventListener('change', (e)=>{ try{ parent.pwSetNotif(k, e.target.checked); }catch(err){} }));
+  ['csFeedDays','csStarterDays'].forEach(id=> $('#'+id).addEventListener('input', csDaysBar));
+  $('#csDaysDiscard').addEventListener('click', ()=>{ csDaysLoad(); showToast('Changes discarded.'); });
+  $('#csDaysSave').addEventListener('click', ()=>{ const r = csDaysBar(); if(!r || !r.changed) return; try{ parent.pwSetAlertDays({ feed:r.f, starter:r.s }); }catch(e){} csDaysLoad(); showToast('Alert days saved.'); });
   $('#csNotifOverdue').addEventListener('change', (e)=>{ settings.notifOverdue = e.target.checked; persist(); updateOverdueBadge(); });
   $('#csNotifReports').addEventListener('change', (e)=>{ settings.notifReports = e.target.checked; persist(); });
   $('#csOpenNotif2').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });

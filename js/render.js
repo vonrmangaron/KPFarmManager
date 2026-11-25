@@ -690,7 +690,7 @@ function daysBehindSeverity(daysVar) {
 
 // Feed alerts look this far ahead (feed is ordered ~a week out); a reading
 // this old gets a reminder
-const FEED_ALERT_DAYS=8,FEED_READING_STALE_DAYS=3;
+const FEED_READING_STALE_DAYS=3;
 function computeFarmAlerts() {
   if (!farmData) return [];
   const today = new Date();
@@ -700,6 +700,7 @@ function computeFarmAlerts() {
     // Feed is ordered about a week ahead, so warn across that horizon.
     // "Runs out" = drops below the safety stock (Adjust → Silo readings).
     const todayD = dateOnly(today);
+    let outlook = [];try { outlook = typeof mgrSiloOutlook === 'function' ? mgrSiloOutlook() : []; } catch (e) {}
     [1,2,3,4].forEach(g => {
       if (!shedsForGroup(g).some(s => s.placementDate)) return;
       if (typeof pairAllClosed === 'function' && pairAllClosed(g)) return;   // both sheds closed: the leftover step takes over
@@ -708,9 +709,13 @@ function computeFarmAlerts() {
         alerts.push({ kind: 'warn', msg: `<strong>${pairLabel(g)}</strong> — Read the silos. No reading yet this batch.`, tab: 'g'+g, feedGroup: g });
         return;
       }
-      const forecast = computeSiloForecast(g, { start: 0, end: FEED_ALERT_DAYS }, { realOnly: true });
+      // Warn days ahead (Settings › Alerts); a pair a booked load already covers gets no alert (2026-11-25)
+      const ox = outlook.find(x => x.g === g);
+      const forecast = computeSiloForecast(g, { start: 0, end: feedWarnDays() }, { realOnly: true });
       const age = daysBetween(dateOnly(latest.date), todayD);
-      if (forecast.depletedDate) {
+      if (ox && feedAlertDue(ox) && ox.booked) {
+        alerts.push({ kind: 'error', msg: `<strong>${pairLabel(g)}</strong> — Bring the ${fmtShortNoYear(ox.booked)} load forward. Silos run empty ${ox.empty ? fmtShortNoYear(ox.empty) : 'before it'}, before it arrives.`, tab: 'g'+g, feedGroup: g });
+      } else if (ox && feedAlertDue(ox) && forecast.depletedDate) {
         const days = Math.max(0, daysBetween(todayD, forecast.depletedDate));
         const row = forecast.rows.find(r => iso(r.date) === iso(forecast.depletedDate));
         const left = row && row.balance != null ? Math.max(0, row.balance) : null;
@@ -753,7 +758,7 @@ function computeFarmAlerts() {
 }
 
 function starterAlerts(g){
-  const st=starterSiloStatus(g);if(!st||!st.inWin)return [];
+  const st=starterSiloStatus(g);if(!st||!st.inWin||!starterAlertDue(st))return [];
   const out=[];const P=`<strong>${pairLabel(g)}</strong>`;const co=fmtShortNoYear(st.co);
   const sn=st.silo?`Silo ${siloNumber(g,st.silo)}`:'';
   if(st.state==='pick')out.push({kind:'warn',msg:`${P} — Choose the starter silo for the next batch. Clean-out ${co}.`,tab:'g'+g,feedGroup:g,starter:true});

@@ -383,6 +383,8 @@ const lastType=nextFeedTypeDue(g)||(loadsAffectingGroup(g).filter(l=>l.feedType)
     if(t.id==='fpSiloTo'){const v=String(t.value).trim();fpSetStart(v===''?'':Number(v)-11);return;}
     if(t.id==='notifShedPerf'){setNotifPref('shedPerformance',t.checked);return;}
     if(t.id==='notifFeedBalance'){setNotifPref('feedBalance',t.checked);return;}
+    if(t.id==='notifFeedDays'||t.id==='notifStarterDays'){const max=t.id==='notifFeedDays'?14:21,v=Math.round(Number(t.value));if(!Number.isFinite(v))return;const n=Math.max(1,Math.min(max,v));t.value=n;
+      if(t.id==='notifFeedDays')predState.feedWarnDays=n;else predState.starterAlertDays=n;savePredState();schedulePush();if(typeof updateAlertsBell==='function')updateAlertsBell();return;}
     if(t instanceof HTMLInputElement&&t.dataset&&t.dataset.shed!==undefined&&t.dataset.field){updateShedField(Number(t.dataset.shed),t.dataset.field,t.value);}
   });
 

@@ -321,8 +321,11 @@ function renderSettingsNotificationsCard(){
     </label>
     <label class="settings-toggle-row">
       <input type="checkbox" id="notifFeedBalance" ${(typeof sdNotif==='function'?sdNotif('feedBalance'):notifPrefs.feedBalance)?'checked':''} />
-      <span class="settings-toggle-text"><strong>Feed balance</strong><br><span class="settings-toggle-sub">Warns when a pair's silos will drop below the safety stock within the next 8 days (your ordering week), and when a silo reading is 3+ days old.</span></span>
+      <span class="settings-toggle-text"><strong>Feed balance</strong><br><span class="settings-toggle-sub">Warns when a pair's silos will drop below the safety stock, so there's time to book a load — not when a load is already booked for that pair. Also when a silo reading is 3+ days old.</span></span>
     </label>
+    <div class="settings-days-row"><label for="notifFeedDays">Warn</label><input type="number" id="notifFeedDays" class="settings-days-in" min="1" max="14" step="1" inputmode="numeric" value="${sdDays('feed')}" title="How many days before the silos run low to warn you: 1 to 14. Also used by the phone notification."><span>days before the silos run low</span></div>
+    <div class="settings-toggle-row settings-toggle-row-static"><span class="settings-toggle-text"><strong>Starter silo</strong><br><span class="settings-toggle-sub">Reminds you to choose the next batch's starter silo and have it empty by clean-out. Earlier only if the silo has to be opened sooner to be empty in time.</span></span></div>
+    <div class="settings-days-row"><label for="notifStarterDays">Warn</label><input type="number" id="notifStarterDays" class="settings-days-in" min="1" max="21" step="1" inputmode="numeric" value="${sdDays('starter')}" title="How many days before the pair's clean-out the starter silo reminders start: 1 to 21"><span>days before clean-out</span></div>
   </div>`;
 }
 function renderSettingsReportsCard(){
