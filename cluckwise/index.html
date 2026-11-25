@@ -202,8 +202,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   #reportsBtn .notif-badge{ top:-6px; right:-6px; border:2px solid var(--surface); }
   #overdueBtn{ border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
   #overdueBtn:hover{ background:var(--danger); color:#fff; }
-  #settingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
-  #settingsBtn:hover{ background:var(--secondary); color:#fff; }
+  #cwSettingsBtn{ width:36px; height:36px; font-size:20px; border-color:var(--secondary); background:var(--secondary-soft); color:var(--secondary); }
+  #cwSettingsBtn:hover{ background:var(--secondary); color:#fff; }
   .btn-create-wide{ flex:1; border:none; color:#fff; font-weight:700; font-size:12.5px; padding:11px 6px; border-radius:10px; cursor:pointer; font-family:'Sora',sans-serif; box-shadow:var(--shadow-sm); transition:transform .12s ease, filter .12s ease; }
   .btn-create-wide:hover{ filter:brightness(1.08); transform:translateY(-1px); }
   .btn-create-wide.batch{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); }
@@ -1142,7 +1142,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     .kanban-dots{ display:flex; justify-content:center; gap:5px; padding:8px 0 2px; }
     .kanban-dots .kdotpage{ width:6px; height:6px; border-radius:50%; background:var(--line); transition:width .15s ease, border-radius .15s ease; }
     .kanban-dots .kdotpage.active{ background:var(--primary); width:16px; border-radius:3px; }
-    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #mlogBtn, .toolbar #reportsBtn, .toolbar #settingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn, .toolbar #guideBtn{ display:none; }
+    .toolbar .segmented, .toolbar #todayBtn, .toolbar #searchBtn, .toolbar #historyBtn, .toolbar #mlogBtn, .toolbar #reportsBtn, .toolbar #cwSettingsBtn, .toolbar #overdueBtn, .toolbar #themeToggleBtn, .toolbar #guideBtn{ display:none; }
     .shell{ padding-bottom:64px; }
     /* Dark tab bar: line icons + labels, a bar under the active tab */
     .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:36; background:#16191B; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(0,0,0,0.18); }
@@ -1172,7 +1172,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     .sheet-option{ display:flex; align-items:center; gap:12px; padding:13px 10px; border-radius:10px; background:var(--surface-soft); font-size:14px; font-weight:600; border:none; text-align:left; width:100%; cursor:pointer; color:var(--ink); font-family:'Inter',sans-serif; }
     .sheet-option .s-ic{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; color:#fff; flex-shrink:0; }
     .icon-btn{ width:38px; height:38px; font-size:17px; }
-    #settingsBtn{ width:38px; height:38px; font-size:19px; }
+    #cwSettingsBtn{ width:38px; height:38px; font-size:19px; }
     #overdueBtn{ width:38px; height:38px; }
     .day-cell{ cursor:pointer; }
     .form-modal{ top:0; left:0; right:0; bottom:0; width:100%; height:100%; max-width:100%; max-height:100%; transform:none; border-radius:0; }
@@ -2158,8 +2158,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     .topbar .toolbar #reportsBtn .notif-badge{ position:static; margin-left:2px; border:none; min-width:18px; height:18px; font-size:10.5px; }
     .topbar .toolbar .tb-group #reportsBtn.has-new .tb-ic{ color:var(--danger); }
     .tb-divider{ display:block; width:1px; height:22px; background:var(--line); margin:0 4px; }
-    .topbar .toolbar #overdueBtn, .topbar .toolbar #themeToggleBtn, .topbar .toolbar #settingsBtn{ width:34px; height:34px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:16px; }
-    .topbar .toolbar #overdueBtn:hover, .topbar .toolbar #themeToggleBtn:hover, .topbar .toolbar #settingsBtn:hover{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
+    .topbar .toolbar #overdueBtn, .topbar .toolbar #themeToggleBtn, .topbar .toolbar #cwSettingsBtn{ width:34px; height:34px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); font-size:16px; }
+    .topbar .toolbar #overdueBtn:hover, .topbar .toolbar #themeToggleBtn:hover, .topbar .toolbar #cwSettingsBtn:hover{ background:var(--surface-soft); border-color:var(--line); color:var(--ink); }
     .topbar .toolbar #overdueBtn .notif-badge{ top:-3px; right:-3px; }
     .topbar .toolbar #overdueBtn:has(.notif-badge:not(.hidden)){ color:var(--danger); }
     .topbar .toolbar .sync-status{ margin-left:4px; padding-left:12px; border-left:1px solid var(--line); height:22px; font-size:12px; }
@@ -2398,7 +2398,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   .bi-ev-t small{ font-size:12px; color:var(--muted); }
   .bi-when{ flex-shrink:0; padding:3px 9px; border-radius:999px; background:var(--primary-soft); color:var(--primary-dark); font-weight:800; font-size:12px; }
   @media (max-width: 420px){ .bi-stats{ grid-template-columns:1fr 1fr; } }
-  #batchInfoModal{ width:560px; }
+  #cwBatchInfoModal{ width:560px; }
   #sbActiveBatch{ margin-bottom:12px; }
   .cur-batch .batch-swatch{ display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:2px; }
 
@@ -2933,7 +2933,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     body:not(.sbm-batch) .sb-foot .sbf-batch, body.sbm-batch .sb-foot .sbf-tasks{ display:none; }
     .sb-brand .brand-icon{ display:none; }
     /* the tools now live on the rail */
-    .topbar .tb-group, .topbar #themeToggleBtn, .topbar #settingsBtn, .topbar .tb-divider{ display:none !important; }
+    .topbar .tb-group, .topbar #themeToggleBtn, .topbar #cwSettingsBtn, .topbar .tb-divider{ display:none !important; }
     /* Calendar / List / Board as tabs in the header */
     .mode-dock.in-topbar{ position:static; transform:none; animation:none; background:transparent !important; -webkit-backdrop-filter:none; backdrop-filter:none; border:none; box-shadow:none !important; padding:0; gap:2px; margin-right:6px; height:60px; align-items:stretch; }
     .mode-dock.in-topbar .md-btn{ height:auto; border-radius:0; background:transparent !important; box-shadow:none !important; color:var(--muted); padding:0 12px; gap:7px; font:600 14px 'Inter',sans-serif; border-bottom:2.5px solid transparent; }
@@ -3412,7 +3412,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
   /* ===== Settings: one page with a grouped side menu (2026-10-18), same look as Production Settings ===== */
   .settings-drawer.cs2{ }
-  #settingsDrawer .st-head .st-sub{ display:none; }
+  #cwSettingsDrawer .st-head .st-sub{ display:none; }
   .cs2-nav{ display:flex; flex-direction:column; gap:12px; padding:14px 12px; border:0; overflow-y:auto; }
   .cs2-nav button[data-page]{ all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border-radius:9px; font:600 13.5px Inter,system-ui,sans-serif; color:var(--ink); }
   .cs2-nav button[data-page]:hover{ background:rgba(22,25,27,.05); }
@@ -3440,35 +3440,35 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   #settingsBody .st-section.st-collapsed .st-card{ display:block; }
   #settingsBody .st-card + .st-card{ margin-top:12px; }
   @media (min-width:761px){
-    #settingsDrawer.open{ width:min(920px, calc(100vw - 48px)); display:grid; grid-template-columns:240px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); }
-    #settingsDrawer .st-head{ grid-column:1 / -1; }
-    #settingsDrawer .cs2-nav{ grid-column:1; grid-row:2; border-right:1px solid var(--line); background:var(--surface-soft); }
-    #settingsDrawer #settingsBody{ grid-column:2; grid-row:2; overflow-y:auto; padding:18px 22px 28px; }
+    #cwSettingsDrawer.open{ width:min(920px, calc(100vw - 48px)); display:grid; grid-template-columns:240px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); }
+    #cwSettingsDrawer .st-head{ grid-column:1 / -1; }
+    #cwSettingsDrawer .cs2-nav{ grid-column:1; grid-row:2; border-right:1px solid var(--line); background:var(--surface-soft); }
+    #cwSettingsDrawer #settingsBody{ grid-column:2; grid-row:2; overflow-y:auto; padding:18px 22px 28px; }
   }
   @media (max-width:760px){
-    #settingsDrawer .cs2-nav{ display:none; }
-    #settingsDrawer.cs2-list .cs2-nav{ display:flex; flex:1; }
-    #settingsDrawer.cs2-list #settingsBody{ display:none; }
-    #settingsDrawer .cs2-grp{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:4px 0 6px; gap:0; }
-    #settingsDrawer .cs2-k{ padding:10px 14px 4px; }
-    #settingsDrawer .cs2-nav button[data-page]{ border-radius:0; padding:12px 14px; border-top:1px solid var(--line); }
-    #settingsDrawer .cs2-nav button[data-page]::after{ content:'›'; margin-left:auto; color:var(--muted); font-size:18px; }
-    #settingsDrawer .cs2-nav button[data-page].active{ background:none; color:var(--ink); }
-    #settingsDrawer .cs2-back{ display:inline-flex; all:unset; cursor:pointer; font:700 14px Inter,system-ui,sans-serif; color:#2F6BD8; margin:4px 2px 8px; }
+    #cwSettingsDrawer .cs2-nav{ display:none; }
+    #cwSettingsDrawer.cs2-list .cs2-nav{ display:flex; flex:1; }
+    #cwSettingsDrawer.cs2-list #settingsBody{ display:none; }
+    #cwSettingsDrawer .cs2-grp{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:4px 0 6px; gap:0; }
+    #cwSettingsDrawer .cs2-k{ padding:10px 14px 4px; }
+    #cwSettingsDrawer .cs2-nav button[data-page]{ border-radius:0; padding:12px 14px; border-top:1px solid var(--line); }
+    #cwSettingsDrawer .cs2-nav button[data-page]::after{ content:'›'; margin-left:auto; color:var(--muted); font-size:18px; }
+    #cwSettingsDrawer .cs2-nav button[data-page].active{ background:none; color:var(--ink); }
+    #cwSettingsDrawer .cs2-back{ display:inline-flex; all:unset; cursor:pointer; font:700 14px Inter,system-ui,sans-serif; color:#2F6BD8; margin:4px 2px 8px; }
   }
 
   /* Settings is a page next to the rail (2026-10-18), like Guide: no backdrop, no floating window */
   @media (min-width:761px){
     body.settings-open #scrim{ display:none !important; }
-    #settingsDrawer.open{ position:fixed; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; width:auto !important; max-width:none !important; height:auto !important; border-radius:0; transform:none !important; box-shadow:none; z-index:44; background:var(--bg); }
-    #settingsDrawer .st-head{ background:var(--surface); min-height:60px; box-sizing:border-box; padding:0 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; }
-    #settingsDrawer .st-head h2{ font-family:'Sora',sans-serif; font-size:20px; }
-    #settingsDrawer #settingsBody{ padding:22px 32px 40px !important; }
-    #settingsDrawer #settingsBody > *{ max-width:820px; }
+    #cwSettingsDrawer.open{ position:fixed; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important; width:auto !important; max-width:none !important; height:auto !important; border-radius:0; transform:none !important; box-shadow:none; z-index:44; background:var(--bg); }
+    #cwSettingsDrawer .st-head{ background:var(--surface); min-height:60px; box-sizing:border-box; padding:0 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; }
+    #cwSettingsDrawer .st-head h2{ font-family:'Sora',sans-serif; font-size:20px; }
+    #cwSettingsDrawer #settingsBody{ padding:22px 32px 40px !important; }
+    #cwSettingsDrawer #settingsBody > *{ max-width:820px; }
   }
-  @media (min-width:1025px){ #settingsDrawer.open{ left:84px !important; } }
+  @media (min-width:1025px){ #cwSettingsDrawer.open{ left:84px !important; } }
   /* inside ProdWise the rail lives in ProdWise: Settings starts at the edge, no 84 px strip of calendar showing (2026-11-25) */
-  @media (min-width:1025px){ html.cw-onerail #settingsDrawer.open{ left:0 !important; } }
+  @media (min-width:1025px){ html.cw-onerail #cwSettingsDrawer.open{ left:0 !important; } }
 
   /* Settings rows like the mockup: small labels over boxes, search top-right in the header */
   .cs2-seck{ display:block; font:800 11px Inter,system-ui,sans-serif; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:16px 2px 8px; }
@@ -3479,27 +3479,27 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   #settingsBody .access-row{ padding:12px 16px; border-bottom:1px solid var(--line); margin:0; border-radius:0; background:none; }
   #settingsBody .access-row:last-child{ border-bottom:0; }
   #settingsBody .access-list > .st-hint{ padding:14px 16px; margin:0; }
-  #settingsDrawer .st-head{ gap:12px; }
-  #settingsDrawer .st-head .st-head-text{ flex:1; }
+  #cwSettingsDrawer .st-head{ gap:12px; }
+  #cwSettingsDrawer .st-head .st-head-text{ flex:1; }
   .cs2-search-d{ width:280px; }
   .cs2-search-m{ display:none; }
   @media (max-width:760px){
     .cs2-search-d{ display:none; }
-    #settingsDrawer.cs2-list .cs2-search-m{ display:flex; }
+    #cwSettingsDrawer.cs2-list .cs2-search-m{ display:flex; }
   }
 
   /* Settings v3: the mockup's cream page, light side menu; the Production | Tasks pill stays above the Settings page */
-  #settingsDrawer, #settingsDrawer #settingsBody{ background:linear-gradient(180deg,#FFF7EA 0%,#F6F1E4 40%,#F2F2EA 100%); }
-  body.theme-dark #settingsDrawer, body.theme-dark #settingsDrawer #settingsBody{ background:var(--bg); }
+  #cwSettingsDrawer, #cwSettingsDrawer #settingsBody{ background:linear-gradient(180deg,#FFF7EA 0%,#F6F1E4 40%,#F2F2EA 100%); }
+  body.theme-dark #cwSettingsDrawer, body.theme-dark #cwSettingsDrawer #settingsBody{ background:var(--bg); }
 
   /* One Settings (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): the same page as Production's Settings */
   @media (min-width:761px){
-    #settingsDrawer .st-head{ background:rgba(255,255,255,.75); padding:16px 24px; gap:14px; }
-    #settingsDrawer .st-head h2{ font:800 21px Sora,sans-serif; margin:0; }
-    #settingsDrawer #closeSettings{ display:none; }
-    #settingsDrawer .cs2-nav{ background:rgba(255,255,255,.4); padding:16px 12px; gap:14px; }
-    #settingsDrawer #settingsBody{ padding:22px 28px 90px !important; }
-    #settingsDrawer #settingsBody > *{ max-width:900px; }
+    #cwSettingsDrawer .st-head{ background:rgba(255,255,255,.75); padding:16px 24px; gap:14px; }
+    #cwSettingsDrawer .st-head h2{ font:800 21px Sora,sans-serif; margin:0; }
+    #cwSettingsDrawer #closeSettings{ display:none; }
+    #cwSettingsDrawer .cs2-nav{ background:rgba(255,255,255,.4); padding:16px 12px; gap:14px; }
+    #cwSettingsDrawer #settingsBody{ padding:22px 28px 90px !important; }
+    #cwSettingsDrawer #settingsBody > *{ max-width:900px; }
   }
   /* ===== Maintenance v3 (2026-10-19, mockup DFfbVq9eALAobZyoTSYiK2): one header row, filters, docked report, tabs on tablet/phone ===== */
   #reportsDrawer .rp-sub{ display:none; }
@@ -4183,17 +4183,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   #settingsBody .st-switch input:checked + .st-slider{ background:#0F8A75; }
   body.theme-dark #settingsBody .st-card, body.theme-dark #settingsBody .st-btn, body.theme-dark #settingsBody .st-input-row .st-input{ background:var(--surface); border-color:var(--line); color:var(--ink); }
   body.theme-dark #settingsBody .st-row{ border-color:var(--line); }
-  body.theme-dark #settingsDrawer .st-head{ background:var(--surface); }
-  body.theme-dark #settingsDrawer .cs2-nav{ background:transparent; }
+  body.theme-dark #cwSettingsDrawer .st-head{ background:var(--surface); }
+  body.theme-dark #cwSettingsDrawer .cs2-nav{ background:transparent; }
   @media (max-width:760px){
     #settingsBody .st-row-text{ flex-basis:100%; margin-right:0; }
     #settingsBody .st-input-row{ width:100%; }
     #settingsBody .st-input-row .st-input{ min-width:0; flex:1; }
   }
-  #settingsDrawer .cs2-nav{ background:rgba(255,255,255,.5) !important; }
-  body.theme-dark #settingsDrawer .cs2-nav{ background:rgba(255,255,255,.03) !important; }
-  #settingsDrawer .st-head{ background:rgba(255,255,255,.75) !important; }
-  body.theme-dark #settingsDrawer .st-head{ background:var(--surface) !important; }
+  #cwSettingsDrawer .cs2-nav{ background:rgba(255,255,255,.5) !important; }
+  body.theme-dark #cwSettingsDrawer .cs2-nav{ background:rgba(255,255,255,.03) !important; }
+  #cwSettingsDrawer .st-head{ background:rgba(255,255,255,.75) !important; }
+  body.theme-dark #cwSettingsDrawer .st-head{ background:var(--surface) !important; }
   #weatherSearchBtn{ width:auto !important; padding:0 16px !important; white-space:nowrap; }
   .ws-dock{ z-index:60 !important; }
   /* Production | Tasks switch v2 (2026-10-18): two equal halves; an amber highlight slides to the section you pick */
@@ -5140,7 +5140,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <span class="tb-divider" aria-hidden="true"></span>
       <button class="icon-btn notif-btn" id="overdueBtn" title="Past due tasks" aria-label="Past due tasks"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="notif-badge hidden" id="overdueBadge">0</span></button>
       <button class="icon-btn" id="themeToggleBtn" title="Switch to dark mode" aria-label="Toggle dark mode"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
-      <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="icon-btn" id="cwSettingsBtn" title="Settings" aria-label="Settings"><svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <span class="sync-status local" id="saveIndicator" title="Sync status"><span class="sync-dot"></span><span class="sync-label">Local only</span></span>
     </div>
   </div>
@@ -5175,7 +5175,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <div id="auditPrepSidebar"></div>
       <div class="sb-divider"></div>
 
-      <div class="sb-panel-title" id="sbPanelTitle" aria-hidden="true"></div>
+      <div class="sb-panel-title" id="cwSbPanelTitle" aria-hidden="true"></div>
       <label class="sb-find" id="sbFind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="sbFindInput" placeholder="Find a task" autocomplete="off" aria-label="Find a frequent or backlog task"></label>
       <section class="sb-sec" id="repeatSec">
         <div class="sb-sec-h">
@@ -5443,7 +5443,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   </div>
 </div>
 
-<div class="sheet-overlay hidden" id="moreSheet">
+<div class="sheet-overlay hidden" id="cwMoreSheet">
   <div class="sheet-panel menu-panel">
     <div class="sheet-handle"></div>
     <div class="menu-head"><span class="sheet-title">Menu</span><span class="menu-sync" id="menuSyncLine"></span></div>
@@ -5478,7 +5478,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <button id="closeHistory" aria-label="Close">✕</button>
     </div>
   </div>
-  <div class="history-list" id="historyList"></div>
+  <div class="history-list" id="cwHistoryList"></div>
 </div>
 
 <div class="reports-modal mt-page" id="reportsDrawer" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
@@ -5539,7 +5539,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   </div>
 </div>
 
-<div class="history-drawer settings-drawer" id="settingsDrawer" aria-label="Settings">
+<div class="history-drawer settings-drawer" id="cwSettingsDrawer" aria-label="Settings">
   <div class="st-head">
     <div class="st-head-text">
       <h2>Settings</h2>
@@ -6099,7 +6099,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   <div class="at-foot"><button type="button" class="btn-app" id="atAddBtn" disabled>Select tasks to add</button></div>
 </div>
 
-<div class="form-modal" id="batchInfoModal">
+<div class="form-modal" id="cwBatchInfoModal">
   <div class="form-modal-head"><h2 id="biTitle">Current batch</h2><button id="closeBatchInfo" aria-label="Close">✕</button></div>
   <div class="form-modal-body" id="biBody"></div>
 </div>
@@ -6136,6 +6136,28 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
 <script>
 (function(){
+  // ── Inside ProdWise's own page (merging the apps, step 3, 25 Nov 2026) ──
+  // ProdWise puts this page's markup in #cwRoot and runs this script there: no frame. BODY stands in for the page
+  // body (its classes, pop-ups), cwVW / cwVH / cwMQ measure #cwRoot instead of the window (its width is what the frame
+  // used to be), and cwOff says where #cwRoot sits, for menus placed by screen position. On its own or in the old
+  // frame, BODY is the body and they measure the window as before.
+  const CW_INLINE = !!window.__cwInline;
+  const BODY = CW_INLINE ? document.getElementById('cwRoot') : document.body;
+  const CW_BASE = CW_INLINE ? new URL('cluckwise/', location.href).href : location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+  const cwVW = ()=> CW_INLINE ? BODY.clientWidth : window.innerWidth;
+  const cwVH = ()=> CW_INLINE ? BODY.clientHeight : window.innerHeight;
+  // inside ProdWise, keyboard shortcuts only while Tasks is the section on screen
+  const cwAway = ()=> CW_INLINE && !document.body.classList.contains('pw-in-tasks');
+  function cwOff(){ if(!CW_INLINE) return { left:0, top:0 }; const r = BODY.getBoundingClientRect(); return { left:r.left, top:r.top }; }
+  // a width media query answered for #cwRoot (other queries go to the window)
+  function cwMQ(q){
+    if(!CW_INLINE || !/width/.test(q) || /[a-z-]+\s*:\s*(?!\s*\d)/i.test(q.replace(/(min|max)-width\s*:\s*[\d.]+px/g, ''))) return window.matchMedia(q);
+    const test = ()=>{ const w = cwVW(); let ok = true; q.replace(/(min|max)-width\s*:\s*([\d.]+)px/g, (_, k, v)=>{ if(k === 'min' ? w < +v : w > +v) ok = false; return _; }); return ok; };
+    let last = test(); const fns = [];
+    const mql = { get matches(){ return test(); }, media:q, addEventListener(t, fn){ if(t === 'change') fns.push(fn); }, removeEventListener(t, fn){ const i = fns.indexOf(fn); if(i >= 0) fns.splice(i, 1); }, addListener(fn){ fns.push(fn); } };
+    try{ new ResizeObserver(()=>{ const m = test(); if(m !== last){ last = m; fns.forEach(fn=>{ try{ fn({ matches:m, media:q }); }catch(e){} }); } }).observe(BODY); }catch(e){}
+    return mql;
+  }
   const WORKER_URL = FarmSync.SERVER;
   let ghPath = null, ghSha = null, ghFarmName = null;
   const BATCH_PALETTE = ['#0F8A75','#3E7CB1','#7C6FA0','#2E8B8B','#B08D57','#5B7F3B','#3F5E8C','#A65B8C','#5C8A72','#6B4226'];
@@ -6181,7 +6203,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     tasks.push(copy);
     addHistory('Duplicated', `${taskLabel(t)} duplicated on ${t.date ? formatShort(t.date) : 'Backlog'}`);
     persist(); renderAll();
-    requestAnimationFrame(()=>{ document.querySelectorAll(`[data-id="${copy.id}"]`).forEach(el=>{ el.classList.add('just-duplicated'); el.scrollIntoView({ block:'nearest', behavior:'smooth' }); setTimeout(()=> el.classList.remove('just-duplicated'), 2200); }); });
+    requestAnimationFrame(()=>{ BODY.querySelectorAll(`[data-id="${copy.id}"]`).forEach(el=>{ el.classList.add('just-duplicated'); el.scrollIntoView({ block:'nearest', behavior:'smooth' }); setTimeout(()=> el.classList.remove('just-duplicated'), 2200); }); });
     offerUndo(`Duplicated "${t.name}" — drag it anywhere`, undoSnap);
   }
   function taskSortCompare(a, b){
@@ -6304,7 +6326,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     try{ localStorage.setItem('prodplan-deleted-report-ids', JSON.stringify([...deletedReportIds])); }catch(e){}
   }
 
-  const $ = (sel) => document.querySelector(sel);
+  const $ = (sel) => BODY.querySelector(sel);
 
   // fmt12, dateKey, prodDay, escapeHtml: shared, in ../js/core.js
   function fmtDateTime12(d, dateOpts){ return d.toLocaleDateString(undefined, dateOpts) + ', ' + fmt12(d); }
@@ -6367,7 +6389,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     return (live.length > 1 && live[live.length - 1].number === b.number) ? '#5B8DEF' : '#F0A21A';
   }
   // Field Fresh light mode: calendar day tints stay soft on the white base (dark mode unchanged)
-  function lightTint(a){ return document.body.classList.contains('theme-dark') ? a * 0.55 : a * 0.45; }
+  function lightTint(a){ return BODY.classList.contains('theme-dark') ? a * 0.55 : a * 0.45; }
   function hexToRgba(hex, alpha){
     const v = hex.replace('#','');
     const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
@@ -6402,7 +6424,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
   function showToast(msg, isError){
     let t = $('#toast');
-    if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+    if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; BODY.appendChild(t); }
     t.textContent = msg;
     t.classList.toggle('error', !!isError);
     t.classList.add('show');
@@ -6420,23 +6442,23 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     settings.batchBadgeStyle = normalizeBatchStyle(settings.batchBadgeStyle);
     settings.calendarDensity = normalizeDensity(settings.calendarDensity);
     document.documentElement.style.setProperty('--task-font-size', FONT_SIZE_MAP[settings.fontSize] || FONT_SIZE_MAP.medium);
-    const themeChanging = document.body.classList.contains('theme-dark') !== (settings.theme === 'dark');
+    const themeChanging = BODY.classList.contains('theme-dark') !== (settings.theme === 'dark');
     // one text size for Production and Tasks, the same way
     try{ const fz = FONT_SIZE_MAP[settings.fontSize] ? settings.fontSize : 'medium'; if(localStorage.getItem(PW_TEXT_KEY) !== fz) localStorage.setItem(PW_TEXT_KEY, fz); }catch(e){}
     // one theme for Production and Tasks: ProdWise reads the same key (and hears the change)
     try{ const t = settings.theme === 'dark' ? 'dark' : 'light'; if(localStorage.getItem(PW_THEME_KEY) !== t) localStorage.setItem(PW_THEME_KEY, t); }catch(e){}
-    if(themeChanging && document.body.dataset.themeReady){
-      document.body.classList.add('theme-anim');
+    if(themeChanging && BODY.dataset.themeReady){
+      BODY.classList.add('theme-anim');
       clearTimeout(applySettings._themeT);
-      applySettings._themeT = setTimeout(()=> document.body.classList.remove('theme-anim'), 420);
+      applySettings._themeT = setTimeout(()=> BODY.classList.remove('theme-anim'), 420);
     }
-    document.body.dataset.themeReady = '1';
-    document.body.classList.remove(...THEME_CLASSES);
-    if(settings.theme && settings.theme!=='light') document.body.classList.add('theme-'+settings.theme);
-    { const tc=document.querySelector('meta[name="theme-color"]'); const wcoDesk=window.matchMedia && window.matchMedia('(display-mode: window-controls-overlay) and (min-width: 1025px)').matches;
+    BODY.dataset.themeReady = '1';
+    BODY.classList.remove(...THEME_CLASSES);
+    if(settings.theme && settings.theme!=='light') BODY.classList.add('theme-'+settings.theme);
+    { const tc=(CW_INLINE ? null : document.querySelector('meta[name="theme-color"]')); const wcoDesk=window.matchMedia && window.matchMedia('(display-mode: window-controls-overlay) and (min-width: 1025px)').matches;
       // desktop app with the title bar hidden: the corner behind the window buttons sits above the dark rail
-      if(tc) tc.content = wcoDesk ? (document.body.classList.contains('theme-dark') ? '#0A101C' : '#16191B') : (getComputedStyle(document.body).getPropertyValue('--surface').trim()||'#FFFFFF'); }
-    document.body.classList.toggle('hide-icons', !settings.showIcons);
+      if(tc) tc.content = wcoDesk ? (BODY.classList.contains('theme-dark') ? '#0A101C' : '#16191B') : (getComputedStyle(BODY).getPropertyValue('--surface').trim()||'#FFFFFF'); }
+    BODY.classList.toggle('hide-icons', !settings.showIcons);
     const TB_SUN_ICON = '<svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>', TB_MOON_ICON = '<svg class="tb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
     const fs=$('#setFontSize'), si=$('#setShowIcons'), bs=$('#setBatchStyle'), dv=$('#setDefaultView'), tb=$('#themeToggleBtn');
     if(fs) fs.value = settings.fontSize;
@@ -7023,7 +7045,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // ----- Batch modal (add + edit) -----
   let batchModalEditing = null;
   function readShedRows(){
-    return [...document.querySelectorAll('#shedInputsContainer .bm-shed-row')].map(r=> ({
+    return [...BODY.querySelectorAll('#shedInputsContainer .bm-shed-row')].map(r=> ({
       shed: r.dataset.shed,
       placement: r.querySelector('.shed-date-input').value,
       cleanout: r.querySelector('.shed-cleanout-input').value,
@@ -7078,7 +7100,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function refreshBatchForm(){
     const st = batchFormState();
-    document.querySelectorAll('#shedInputsContainer .bm-shed-row').forEach(r=>{
+    BODY.querySelectorAll('#shedInputsContainer .bm-shed-row').forEach(r=>{
       const a = r.querySelector('.shed-date-input').value, c = r.querySelector('.shed-cleanout-input').value, o = r.querySelector('.bm-shed-days');
       if(o) o.textContent = a && c && c >= a ? `${Math.round((toDateObj(c) - toDateObj(a)) / 86400000)} days` : '';
     });
@@ -7137,7 +7159,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       $('#shedInputsContainer').before(note); note.querySelector('.bm-prod-go').addEventListener('click', ()=>{ closeOverlays(); openProductionSetup(); }); }
     note.hidden = !locked;
     ['#batchStartInput','#batchEndInput','#shedCountInput','#shedMinusBtn','#shedPlusBtn'].forEach(sel=>{ const el = $(sel); if(el) el.disabled = locked; });
-    document.querySelectorAll('#shedInputsContainer input, #shedInputsContainer button').forEach(el=> el.disabled = locked);
+    BODY.querySelectorAll('#shedInputsContainer input, #shedInputsContainer button').forEach(el=> el.disabled = locked);
     $('#batchModal').classList.toggle('bm-locked', locked);
     openDrawer('#batchModal');
   }
@@ -7170,8 +7192,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     return `<svg class="sr-svg" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="${r}" fill="none" class="sr-tr" stroke-width="4"/><circle cx="20" cy="20" r="${r}" fill="none" stroke="#0F8A75" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 20 20)"/><text x="20" y="24" text-anchor="middle" class="sr-tx">${d}/${n}</text></svg>`;
   }
   function applySubRings(){
-    document.querySelectorAll('.task-complete-btn').forEach(b=>{ const c = b.closest('[data-id]'), t = c && tasks.find(x=> x.id === c.dataset.id); b.classList.toggle('sr-hide', !!(t && (t.subs || []).length)); });
-    document.querySelectorAll('.dm-tick[data-dm-tick]').forEach(b=>{
+    BODY.querySelectorAll('.task-complete-btn').forEach(b=>{ const c = b.closest('[data-id]'), t = c && tasks.find(x=> x.id === c.dataset.id); b.classList.toggle('sr-hide', !!(t && (t.subs || []).length)); });
+    BODY.querySelectorAll('.dm-tick[data-dm-tick]').forEach(b=>{
       const t = tasks.find(x=> x.id === b.dataset.dmTick); if(!t || !(t.subs || []).length) return;
       const p = subProgress(t), all = t.status === 'done', key = p.done + '/' + p.total + (all ? 'd' : '');
       if(b.dataset.sr === key) return; b.dataset.sr = key;
@@ -7668,7 +7690,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(!el){
       el = document.createElement('div'); el.id = 'reportAlert'; el.className = 'report-alert'; el.setAttribute('role', 'status');
       el.innerHTML = '<span class="ra-msg"></span><button type="button" class="ra-view">View</button><button type="button" class="ra-x" aria-label="Dismiss">✕</button>';
-      document.body.appendChild(el);
+      BODY.appendChild(el);
       el.querySelector('.ra-x').addEventListener('click', ()=> el.classList.remove('show'));
       el.querySelector('.ra-view').addEventListener('click', ()=>{ el.classList.remove('show'); openReportsDrawer(el.dataset.id || null); });
     }
@@ -7701,7 +7723,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Maintenance v3 (2026-10-19, mockup DFfbVq9eALAobZyoTSYiK2): filters for Board and List, stage tabs on tablet and phone
   let mtFilter = (()=>{ try{ const v = localStorage.getItem('cw-mt-filter'); return v === 'urgent' || v === 'mine' ? v : 'all'; }catch(e){ return 'all'; } })();
   let mtStage = (()=>{ try{ const v = localStorage.getItem('cw-mt-stage'); return v === 'prog' || v === 'fixed' ? v : 'open'; }catch(e){ return 'open'; } })();
-  const mtWide = ()=> window.matchMedia('(min-width:1025px)').matches;
+  const mtWide = ()=> cwMQ('(min-width:1025px)').matches;
   function mtIsMine(r){
     const m = (managerName() || '').trim().toLowerCase(); if(!m) return false;
     const t = r.linkedTaskId && tasks.find(x=> x.id === r.linkedTaskId);
@@ -7781,7 +7803,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
     const counts = { active: reports.filter(r => r.status !== 'Resolved').length, Open: reports.filter(r => r.status === 'Open').length, 'In Progress': reports.filter(r => r.status === 'In Progress').length, Resolved: reports.filter(r => r.status === 'Resolved').length, all: reports.length };
     const names = { active:'Active', Open:'Open', 'In Progress':'In progress', Resolved:'Fixed', all:'All' };
-    document.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
+    BODY.querySelectorAll('#reportsFilterRow button').forEach(b => { b.innerHTML = `${names[b.dataset.status]} <span class="rp-cnt">${counts[b.dataset.status] || 0}</span>`; });
     let filtered = reports.slice();
     if(reportsFilterStatus !== 'all' && reportsFilterStatus !== 'active') filtered = filtered.filter(r => r.status === reportsFilterStatus);
     filtered = filtered.filter(r => mtFilter === 'all' || (mtFilter === 'urgent' ? r.urgent && r.status !== 'Resolved' : mtIsMine(r)));
@@ -8002,7 +8024,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const box = $('#mtBoard'); if(!box) return;
     $('#reportsDrawer').classList.toggle('view-board', rpView === 'board' || !mtWide());
     $('#reportsDrawer').classList.toggle('rp-nosel', !reports.some(r=> r.id === currentReportId));
-    document.querySelectorAll('#rpViewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.rpv === rpView));
+    BODY.querySelectorAll('#rpViewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.rpv === rpView));
     const wide = mtWide();
     $('#reportsDrawer').classList.toggle('mt-narrow', !wide);
     if(rpView !== 'board' && wide){ box.innerHTML = ''; $('#rpStages').innerHTML = ''; return; }
@@ -8084,7 +8106,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function closeMtSummary(){ $('#mtSumModal').classList.remove('open'); }
   function renderMtSummary(){
     const D = mtSummaryData(mtsPeriod);
-    document.querySelectorAll('#mtsPeriod [data-p]').forEach(b=> b.classList.toggle('on', b.dataset.p === mtsPeriod));
+    BODY.querySelectorAll('#mtsPeriod [data-p]').forEach(b=> b.classList.toggle('on', b.dataset.p === mtsPeriod));
     $('#mtsSub').textContent = [ghFarmName, D.label].filter(Boolean).join(' · ');
     const tile = (v, l, cls)=> `<div class="mts-tile${cls ? ' ' + cls : ''}"><b>${v}</b><span>${l}</span></div>`;
     const bars = (title, list, max)=>{ if(!list.length) return ''; const top = list[0].n || 1;
@@ -8190,7 +8212,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(selectId) markReportSeen(selectId);
     openDrawer('#reportsDrawer');
     $('#scrim').classList.remove('show');   // a page, not a pop-up
-    document.body.classList.add('mt-open');
+    BODY.classList.add('mt-open');
     renderReportsView();
   }
   function openReportDetailModal(id){
@@ -8624,9 +8646,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const suffix = scopedBatch ? `-Batch-${scopedBatch.number}` : (rangeStart ? `-${rangeStart}_to_${rangeEnd}` : '');
     a.href = url;
     a.download = `ProdWise-Tasks${suffix}-${dateKey(new Date())}.csv`;
-    document.body.appendChild(a);
+    BODY.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    BODY.removeChild(a);
     URL.revokeObjectURL(url);
     showToast(`CSV exported — ${scopedTasks.length} task(s).`);
   }
@@ -8784,7 +8806,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     activeMenuHome = popup.parentNode;
     activeMenuPopup = popup;
     activeMenuCard = card;
-    document.body.appendChild(popup);
+    BODY.appendChild(popup);
     popup.style.display = 'block';
     positionTaskMenuPopup(menuBtn, popup);
     card.classList.add('menu-open');
@@ -8805,24 +8827,25 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     pop.addEventListener('click', (e)=>{ e.stopPropagation(); const b = e.target.closest('[data-mv]'); if(b && !b.disabled) go(b.dataset.mv); });
     pop.querySelector('.mv-pick input').addEventListener('change', (e)=>{ if(e.target.value && e.target.value !== t.date) go(e.target.value); });
     closeAllTaskMenus();
-    document.body.appendChild(pop); pop.style.display = 'block';
+    BODY.appendChild(pop); pop.style.display = 'block';
     activeMenuPopup = pop; activeMenuHome = null; activeMenuCard = null; lastMenuOpenAt = Date.now();
     const w = pop.offsetWidth, h = pop.offsetHeight;
-    pop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
-    pop.style.top = Math.max(8, Math.min(r.top, innerHeight - h - 8)) + 'px';
+    pop.style.left = Math.max(8, Math.min(r.left - cwOff().left, cwVW() - w - 8)) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.top - cwOff().top, cwVH() - h - 8)) + 'px';
     const first = pop.querySelector('.mv-day:not([disabled])'); if(first) first.focus({ preventScroll:true });
   }
   function positionTaskMenuPopup(btn, popup){
     const btnRect = btn.getBoundingClientRect();
     const popupW = 190, popupH = popup.offsetHeight || 180;
     let left = btnRect.right + 8;
-    if(left + popupW > window.innerWidth - 8) left = btnRect.left - popupW - 8;
-    if(left < 8) left = Math.min(btnRect.right - popupW, window.innerWidth - popupW - 8);
+    if(left + popupW > cwVW() - 8) left = btnRect.left - popupW - 8;
+    if(left < 8) left = Math.min(btnRect.right - popupW, cwVW() - popupW - 8);
     let top = btnRect.top;
-    if(top + popupH > window.innerHeight - 8) top = window.innerHeight - popupH - 8;
+    if(top + popupH > cwVH() + cwOff().top - 8) top = cwVH() + cwOff().top - popupH - 8;
     if(top < 8) top = 8;
-    popup.style.left = left + 'px';
-    popup.style.top = top + 'px';
+    const off = cwOff();
+    popup.style.left = (left - off.left) + 'px';
+    popup.style.top = (top - off.top) + 'px';
   }
   document.addEventListener('click', (e)=>{
     if(!e.target.closest('.task-menu-btn') && !e.target.closest('.task-menu-popup')) closeAllTaskMenus();
@@ -9065,7 +9088,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   let weatherLastError = null;
   function wxNeedsSetup(){ return settings.showWeather !== false && !(settings.weatherLocation && isFinite(settings.weatherLocation.lat)); }
   function openWeatherSettings(){
-    openDrawer('#settingsDrawer');
+    openDrawer('#cwSettingsDrawer');
     if(window.__csOnOpen){ window.__csOnOpen(); window.__csShow('weather', true); }
     setStSection(document.getElementById('stWeather'), true);
     setTimeout(()=>{
@@ -9321,7 +9344,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   setInterval(()=>{
     if(document.hidden || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     const t = Date.now();
-    document.querySelectorAll('.col-wxb').forEach((el, i)=>{
+    BODY.querySelectorAll('.col-wxb').forEach((el, i)=>{
       if(!el.offsetParent) return;
       const due = cpDue[el.dataset.key];
       if(due == null){ cpDue[el.dataset.key] = 0; setTimeout(()=> cpPop(el), i * 140); }
@@ -9560,7 +9583,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     // x labels every 3 h
     hours.forEach((x, i)=>{
       if(x.hour % 3 !== 0) return;
-      if(n > 12 && x.hour % 6 !== 0 && window.innerWidth < 480) return;   // fewer labels on phones
+      if(n > 12 && x.hour % 6 !== 0 && cwVW() < 480) return;   // fewer labels on phones
       svg += `<text x="${xAt(i).toFixed(1)}" y="${H - 9}" text-anchor="middle" class="wxh-axis">${wxHourLabel(x.hour)}</text>`;
     });
     svg += `</svg>`;
@@ -9691,7 +9714,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     sel._seg = wrap;
   }
   function syncSegmented(){
-    document.querySelectorAll('#settingsDrawer select[data-seg]').forEach(sel=>{
+    BODY.querySelectorAll('#cwSettingsDrawer select[data-seg]').forEach(sel=>{
       if(!sel._seg) return;
       sel._seg.querySelectorAll('button').forEach(b=>{
         const on = b.dataset.value === sel.value;
@@ -9863,8 +9886,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function repRefresh(){
     const on = $('#editTaskRepeatSelect').value !== 'none', b = repBatch(), sum = $('#repSummary');
     if(!b){ repStart = 'date'; repEnd = 'date'; }
-    document.querySelectorAll('#repStartChips [data-rep-start]').forEach(x=>{ x.classList.toggle('on', x.dataset.repStart === repStart); x.disabled = x.dataset.repStart === 'age' && !b; });
-    document.querySelectorAll('#repEndChips [data-rep-end]').forEach(x=>{ x.classList.toggle('on', x.dataset.repEnd === repEnd); x.disabled = x.dataset.repEnd === 'batch' && !b; });
+    BODY.querySelectorAll('#repStartChips [data-rep-start]').forEach(x=>{ x.classList.toggle('on', x.dataset.repStart === repStart); x.disabled = x.dataset.repStart === 'age' && !b; });
+    BODY.querySelectorAll('#repEndChips [data-rep-end]').forEach(x=>{ x.classList.toggle('on', x.dataset.repEnd === repEnd); x.disabled = x.dataset.repEnd === 'batch' && !b; });
     $('#repAgeRow').hidden = repStart !== 'age';
     $('#repUntilWrap').hidden = repEnd === 'batch';
     sum.classList.remove('warn');
@@ -10261,8 +10284,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const days = monthMatrix(currentDate);
     const today = new Date();
     const todayKey = dateKey(today);
-    const isPhone = window.innerWidth < 480;
-    const maxCards = window.innerWidth < 760 ? 1 : 2;
+    const isPhone = cwVW() < 480;
+    const maxCards = cwVW() < 760 ? 1 : 2;
 
     days.forEach(d=>{
       const key = dateKey(d);
@@ -10293,7 +10316,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       } else if(activeBatches.length){
         const c = colorForBatchNumber(activeBatches[0].number);
         cell.style.background = hexToRgba(c, lightTint(0.14));
-        cell.style.border = document.body.classList.contains('theme-dark') ? `1px solid ${hexToRgba(c, 0.38)}` : `1.5px solid ${c}`;
+        cell.style.border = BODY.classList.contains('theme-dark') ? `1px solid ${hexToRgba(c, 0.38)}` : `1.5px solid ${c}`;
       }
 
       if(activeBatches.length && settings.batchBadgeStyle === 'watermark'){
@@ -10538,7 +10561,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const wrap = $('#calendarWrap');
     wrap.innerHTML = '';
 
-    const isPhone = window.innerWidth < 760;
+    const isPhone = cwVW() < 760;
     const selectedKey = dateKey(currentDate);
     const selectedDate = toDateObj(selectedKey);
 
@@ -10883,7 +10906,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       bar = document.createElement('div');
       bar.id = 'bulkActionBar';
       bar.className = 'bulk-action-bar';
-      document.body.appendChild(bar);
+      BODY.appendChild(bar);
     }
     bar.innerHTML = `
       <span class="bulk-count">${bulkSelectedIds.size} selected</span>
@@ -10997,7 +11020,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       bar = document.createElement('div');
       bar.id = 'backlogBulkActionBar';
       bar.className = 'bulk-action-bar';
-      document.body.appendChild(bar);
+      BODY.appendChild(bar);
     }
     bar.innerHTML = `
       <span class="bulk-count">${backlogSelectedIds.size} selected</span>
@@ -11183,7 +11206,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const board = document.createElement('div');
     board.className = 'kanban-board';
     const monday = getMonday(currentDate);
-    const kbPhone = window.matchMedia('(max-width: 760px)').matches;
+    const kbPhone = cwMQ('(max-width: 760px)').matches;
     const kbChips = [];
     const todayKey = dateKey(new Date());
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -11406,12 +11429,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     kanbanEdgeFadeUpdater = updateEdgeFades;
     if(currentDate.toDateString ? dateKey(currentDate)===todayKey : false){
       const todayCol = board.querySelector('.kanban-column.today');
-      if(todayCol && window.innerWidth<=760) todayCol.scrollIntoView({behavior:'auto', inline:'start'});
+      if(todayCol && cwVW()<=760) todayCol.scrollIntoView({behavior:'auto', inline:'start'});
     }
   }
 
   function renderHistory(){
-    const list = $('#historyList');
+    const list = $('#cwHistoryList');
     list.innerHTML = '';
     if(history.length===0){ list.innerHTML = '<div class="empty-note">Nothing recorded yet — actions you take will show up here.</div>'; return; }
     history.forEach(h=>{
@@ -11430,7 +11453,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const label = $('#periodLabel');
     if(viewMode==='list'){
       label.textContent = agendaFilter==='today'
-        ? toDateObj(agendaDayKey()).toLocaleDateString(undefined, window.innerWidth <= 1024 ? { day:'numeric', month:'short' } : { weekday:'short', day:'numeric', month:'short', year:'numeric' })
+        ? toDateObj(agendaDayKey()).toLocaleDateString(undefined, cwVW() <= 1024 ? { day:'numeric', month:'short' } : { weekday:'short', day:'numeric', month:'short', year:'numeric' })
         : agendaFilter==='week' ? 'This week' : 'Upcoming tasks';
       return;
     }
@@ -11445,7 +11468,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const sun = new Date(mon); sun.setDate(mon.getDate()+6);
       const startStr = mon.toLocaleDateString(undefined,{month:'short',day:'numeric'});
       const endStr = sun.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-      if(window.innerWidth <= 760){
+      if(cwVW() <= 760){
         // Phones: compact "28 Sep–4 Oct" / "5–11 Oct" so the arrows stay on screen
         const m = d => d.toLocaleDateString(undefined, { month:'short' });
         label.textContent = mon.getMonth() === sun.getMonth() ? `${mon.getDate()}–${sun.getDate()} ${m(sun)}` : `${mon.getDate()} ${m(mon)}–${sun.getDate()} ${m(sun)}`;
@@ -11456,11 +11479,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       return;
     }
     if(viewMode==='day'){
-      const isNarrow = window.innerWidth <= 1024;
+      const isNarrow = cwVW() <= 1024;
       label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', day:'numeric'} : {weekday:'short', month:'short', day:'numeric', year:'numeric'});
       return;
     }
-    const isNarrow = window.innerWidth <= 1024;
+    const isNarrow = cwVW() <= 1024;
     label.textContent = currentDate.toLocaleDateString(undefined, isNarrow ? {month:'short', year:'numeric'} : {month:'long', year:'numeric'});
   }
   function updateViewDropdown(){
@@ -11472,7 +11495,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     // Year / Month / Day only means something in the Calendar
     const wrap = $('#calendarDensityWrap');
     if(wrap) wrap.style.display = isCal ? '' : 'none';
-    document.querySelectorAll('#calendarDensityPop button').forEach(b=>{
+    BODY.querySelectorAll('#calendarDensityPop button').forEach(b=>{
       b.classList.toggle('active', isCal && b.dataset.density === viewMode);
     });
   }
@@ -11497,11 +11520,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
 
   function beginDragNoSelect(){
-    document.body.classList.add('is-dragging');
+    BODY.classList.add('is-dragging');
     try{ const sel = window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
   }
   function endDragNoSelect(){
-    document.body.classList.remove('is-dragging');
+    BODY.classList.remove('is-dragging');
     try{ const sel = window.getSelection(); if(sel) sel.removeAllRanges(); }catch(e){}
   }
   function taskListSortOpts(list, isSelectModeList){
@@ -11559,7 +11582,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
             cwDropFx(evt && evt.item);
             kbEdgeStop();
             if(kbFlipped){ kbFlipped = false; requestAnimationFrame(renderAll); }
-            document.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
+            BODY.querySelectorAll('.day-tasks.drop-target, .backlog-list.drop-target').forEach(el=> el.classList.remove('drop-target'));
             if(typeof window.__cwTasksPanelAfterDrag === 'function') window.__cwTasksPanelAfterDrag();
           }
         };
@@ -11610,7 +11633,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         }
       }));
     }
-    document.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
+    BODY.querySelectorAll('.backlog-list, .day-tasks').forEach(list=>{
       const isSelectModeList = list.dataset.selectMode === 'true';
       const s = Sortable.create(list, taskListSortOpts(list, isSelectModeList));
       sortables.push(s);
@@ -11624,8 +11647,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function applyTickFx(){
     if(!tickFxId || Date.now() - tickFxAt > 900) return;
     const id = CSS.escape(tickFxId);
-    document.querySelectorAll(`[data-id="${id}"] .task-complete-btn, [data-dm-tick="${id}"], [data-id="${id}"] .kcheck, [data-id="${id}"] .k-tick`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); });
-    document.querySelectorAll(`.task-card[data-id="${id}"], .kcard[data-id="${id}"], [data-dm-task="${id}"]`).forEach(el=>{ const c = tickFxDone ? 'done-flash' : 'open-flash'; el.classList.remove('done-flash', 'open-flash'); void el.offsetWidth; el.classList.add(c); setTimeout(()=> el.classList.remove(c), 900); });
+    BODY.querySelectorAll(`[data-id="${id}"] .task-complete-btn, [data-dm-tick="${id}"], [data-id="${id}"] .kcheck, [data-id="${id}"] .k-tick`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); });
+    BODY.querySelectorAll(`.task-card[data-id="${id}"], .kcard[data-id="${id}"], [data-dm-task="${id}"]`).forEach(el=>{ const c = tickFxDone ? 'done-flash' : 'open-flash'; el.classList.remove('done-flash', 'open-flash'); void el.offsetWidth; el.classList.add(c); setTimeout(()=> el.classList.remove(c), 900); });
   }
   function cwDropFx(el){
     const id = el && el.dataset ? el.dataset.id : null; if(!id) return;
@@ -11633,17 +11656,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function applyDropFx(){
     if(!dropFxId || Date.now() - dropFxAt > 900) return;
-    document.querySelectorAll(`.day-tasks [data-id="${CSS.escape(dropFxId)}"], .backlog-list [data-id="${CSS.escape(dropFxId)}"]`).forEach(el=>{
+    BODY.querySelectorAll(`.day-tasks [data-id="${CSS.escape(dropFxId)}"], .backlog-list [data-id="${CSS.escape(dropFxId)}"]`).forEach(el=>{
       el.classList.remove('drop-settle'); void el.offsetWidth; el.classList.add('drop-settle');
       setTimeout(()=> el.classList.remove('drop-settle'), 450); });
   }
   // Board: hold a dragged card at the left / right edge (with the board scrolled to that end) and it turns to the
   // week before / after — the same columns get the new days, so the drag carries on and you drop on any day.
   let kbEdge = { dir:0, t:null }, kbFlipped = false;
-  function kbEdgeStop(){ clearTimeout(kbEdge.t); kbEdge.dir = 0; document.querySelectorAll('.kanban-canvas.kb-edge-l, .kanban-canvas.kb-edge-r').forEach(c=> c.classList.remove('kb-edge-l', 'kb-edge-r')); }
+  function kbEdgeStop(){ clearTimeout(kbEdge.t); kbEdge.dir = 0; BODY.querySelectorAll('.kanban-canvas.kb-edge-l, .kanban-canvas.kb-edge-r').forEach(c=> c.classList.remove('kb-edge-l', 'kb-edge-r')); }
   function kbEdgeWatch(x){
-    if(viewMode !== 'kanban' || !document.body.classList.contains('is-dragging')) return;
-    const canvas = document.querySelector('#calendarWrap .kanban-canvas'), board = canvas && canvas.querySelector('.kanban-board'); if(!board) return;
+    if(viewMode !== 'kanban' || !BODY.classList.contains('is-dragging')) return;
+    const canvas = BODY.querySelector('#calendarWrap .kanban-canvas'), board = canvas && canvas.querySelector('.kanban-board'); if(!board) return;
     const r = canvas.getBoundingClientRect(), E = 60;
     let dir = x < r.left + E ? -1 : x > r.right - E ? 1 : 0;
     if(dir < 0 && board.scrollLeft > 4) dir = 0;
@@ -11712,7 +11735,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   let keepScrollDepth = 0;
   function scrollKeyOf(el){
     const parts = [];
-    for(let e = el; e && e !== document.body && e !== document.documentElement; e = e.parentElement){
+    for(let e = el; e && e !== document.body && e !== BODY && e !== document.documentElement; e = e.parentElement){
       if(e.id){ parts.unshift('#' + e.id); break; }
       const cls = typeof e.className === 'string' ? e.className.trim().split(/\s+/)[0] : '';
       const par = e.parentElement; let i = 0;
@@ -11723,7 +11746,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function scrollFindByKey(key){
     const parts = key.split('>'); let el = null, i = 0;
-    if(parts[0][0] === '#'){ el = document.getElementById(parts[0].slice(1)); i = 1; if(!el) return null; } else el = document.body;
+    if(parts[0][0] === '#'){ el = document.getElementById(parts[0].slice(1)); i = 1; if(!el) return null; } else el = BODY;
     for(; i < parts.length && el; i++){
       const m = parts[i].match(/^([A-Z0-9]+)\.([^:]*):(\d+)$/); if(!m) return null;
       let n = +m[3], hit = null;
@@ -11738,7 +11761,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     try{
       const se = document.scrollingElement;
       if(se && (se.scrollTop || se.scrollLeft)) saved.push({ el: se, top: se.scrollTop, left: se.scrollLeft });
-      document.querySelectorAll('body *').forEach(e=>{
+      (CW_INLINE ? BODY : document.body).querySelectorAll('*').forEach(e=>{
         if((e.scrollTop || e.scrollLeft) && e.getClientRects().length) saved.push({ key: scrollKeyOf(e), top: e.scrollTop, left: e.scrollLeft });
       });
     }catch(e){}
@@ -11864,7 +11887,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     });
     m.addEventListener('keydown', (e)=>{ const c = e.target.closest && e.target.closest('[data-dm-task]'); if(c && e.target === c && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openTaskDetailModal(c.dataset.dmTask); } });
     document.addEventListener('keydown', (e)=>{
-      if(!dayViewKey || document.querySelector('.form-modal.open, .modal.open, #plMenu')) return;
+      if(cwAway() || !dayViewKey || BODY.querySelector('.form-modal.open, .modal.open, #plMenu')) return;
       if(e.target.closest && e.target.closest('input, textarea, select')) return;
       if(e.key === 'Escape'){ e.preventDefault(); closeDayView(); }
       else if(e.key === 'ArrowLeft'){ dayViewStep(-1); } else if(e.key === 'ArrowRight'){ dayViewStep(1); }
@@ -11888,7 +11911,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     else if(viewMode==='year') renderYear();
     else if(viewMode==='kanban') renderKanban();
     else renderList();
-    if(viewMode !== 'kanban' || window.matchMedia('(max-width: 760px)').matches){ const fb = $('#kbFoldTop'); if(fb) fb.hidden = true; }
+    if(viewMode !== 'kanban' || cwMQ('(max-width: 760px)').matches){ const fb = $('#kbFoldTop'); if(fb) fb.hidden = true; }
     renderHistory();
     updatePeriodLabel();
     syncViewButtons();
@@ -11931,7 +11954,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       el.id = 'undoToast';
       el.className = 'undo-toast';
       el.innerHTML = '<span class="undo-msg"></span><span class="undo-key" title="Keyboard: Ctrl+Z (⌘Z on a Mac)">Ctrl+Z</span><button type="button">Undo</button>';
-      document.body.appendChild(el);
+      BODY.appendChild(el);
       el.querySelector('button').addEventListener('click', performUndo);
     }
     el.querySelector('.undo-msg').textContent = label;
@@ -12056,7 +12079,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     closeOverlays();
     currentDate = toDateObj(key);
     if(viewMode==='list' || viewMode==='year'){
-      viewMode = window.innerWidth < 760 ? 'day' : (settings.calendarDensity==='day' ? 'day' : 'month');
+      viewMode = cwVW() < 760 ? 'day' : (settings.calendarDensity==='day' ? 'day' : 'month');
     }
     syncViewButtons(); renderAll();
   }
@@ -12798,9 +12821,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#batchModal').addEventListener('change', (e)=>{ if(e.target.id !== 'shedCountInput') refreshBatchForm(); });
   $('#shedInputsContainer').addEventListener('click', (e)=>{
     if(!e.target.closest('.bm-copy-cleanout')) return;
-    const first = document.querySelector('#shedInputsContainer .shed-cleanout-input');
+    const first = BODY.querySelector('#shedInputsContainer .shed-cleanout-input');
     if(!first || !first.value){ showToast("Set Shed 1's cleanout date first.", true); return; }
-    document.querySelectorAll('#shedInputsContainer .shed-cleanout-input').forEach(inp=> inp.value = first.value);
+    BODY.querySelectorAll('#shedInputsContainer .shed-cleanout-input').forEach(inp=> inp.value = first.value);
     refreshBatchForm();
   });
   $('#batchNumberInput').addEventListener('input', (e)=>{
@@ -12975,7 +12998,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
   $('#viewCalendarBtn').addEventListener('click', ()=>{
     if(viewMode === 'month' || viewMode === 'day' || viewMode === 'year') return;
-    const isPhone = window.innerWidth < 760;
+    const isPhone = cwVW() < 760;
     viewMode = isPhone ? 'day' : (settings.calendarDensity === 'day' ? 'day' : 'month');
     syncViewButtons(); renderAll();
   });
@@ -13000,7 +13023,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     wrap.classList.toggle('open', willOpen);
     $('#calendarDensityBtn').setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   });
-  document.querySelectorAll('#calendarDensityPop button').forEach(btn => {
+  BODY.querySelectorAll('#calendarDensityPop button').forEach(btn => {
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
       const density = btn.dataset.density;
@@ -13264,17 +13287,17 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function syncPrepChrome(){
     const open = prepOpenList().length;
     const ct = $('#prepSegCt'); if(ct){ ct.hidden = !open; ct.textContent = open; }
-    document.querySelectorAll('#prepSeg [data-mlogmode]').forEach(b=>{ const on = b.dataset.mlogmode === mlogMode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+    BODY.querySelectorAll('#prepSeg [data-mlogmode]').forEach(b=>{ const on = b.dataset.mlogmode === mlogMode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     $('#mlogPage').classList.toggle('prep-mode', mlogMode === 'prep');
     $('#prepMain').hidden = mlogMode !== 'prep'; $('#mlogMain').hidden = mlogMode === 'prep';
     $('#prepStdBtn').hidden = true; $('#mlogAddBtn').hidden = mlogMode === 'prep';
-    const h = document.querySelector('#mlogPage .mlog-title h2'); if(h) h.textContent = mlogMode === 'prep' ? 'Shed preparation' : 'Routine Tracker';
+    const h = BODY.querySelector('#mlogPage .mlog-title h2'); if(h) h.textContent = mlogMode === 'prep' ? 'Shed preparation' : 'Routine Tracker';
   }
   function openPrepBoard(shed){
     mlogMode = 'prep'; if(shed) prepPhoneShed = String(shed);
     if(!mlogIsOpen()){ if(typeof openMlog === 'function') openMlog('prep'); }
     renderMlog();
-    if(shed) setTimeout(()=>{ const col = document.querySelector(`#prepMain [data-prep-col="${CSS.escape(String(shed))}"]`); if(col && col.parentElement){ const bd = col.parentElement; bd.scrollTo({ left: Math.max(0, col.offsetLeft - (bd.clientWidth - col.offsetWidth) / 2), behavior:'smooth' }); } }, 60);
+    if(shed) setTimeout(()=>{ const col = BODY.querySelector(`#prepMain [data-prep-col="${CSS.escape(String(shed))}"]`); if(col && col.parentElement){ const bd = col.parentElement; bd.scrollTo({ left: Math.max(0, col.offsetLeft - (bd.clientWidth - col.offsetWidth) / 2), behavior:'smooth' }); } }, 60);
   }
   // flags the board filters use: late (past its date or task day, still open), this week, has a task
   function prepUnitFlags(c, u){
@@ -13430,7 +13453,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const c = prepSecFor === '__list' ? {} : prepFind(prepSecFor); if(!c) return;
     const name = $('#prepSecName').value.trim().replace(/\s+/g, ' ');
     if(!name){ showToast('Give the section a name.', true); $('#prepSecName').focus(); return; }
-    const items = [...document.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
+    const items = [...BODY.querySelectorAll('#prepSecItems input')].map(i=> i.value.trim().replace(/\s+/g, ' ')).filter(Boolean);
     if(prepSecFor === '__list'){ if(prepAddSection(name, items)){ $('#prepSecModal').classList.remove('open'); prepSecFor = null; showToast(`Section "${name}" added for every shed.`); } return; }
     c.sections.push({ id: uid(), t: name, items: items.map(t=> prepMarkNew({ id: uid(), t, added: true })), added: true });
     prepHist(c, `Shed ${c.shed}: added section "${name}"${items.length ? ' with ' + items.length + ' item' + (items.length === 1 ? '' : 's') : ''}`); prepReopenOne(c, `the "${name}" section`);
@@ -13460,7 +13483,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }).join('') + `<button type="button" class="prep-cs-all" data-copy-all>Select all</button>`;
     const anyHas = [...prepCopyTo].some(sh=> prepActiveFor(sh));
     $('#prepCopyModeWrap').hidden = !anyHas;
-    document.querySelectorAll('#prepCopyModes [data-copy-mode]').forEach(b=> b.classList.toggle('on', b.dataset.copyMode === prepCopyMode));
+    BODY.querySelectorAll('#prepCopyModes [data-copy-mode]').forEach(b=> b.classList.toggle('on', b.dataset.copyMode === prepCopyMode));
     const btn = $('#prepCopySave'); btn.disabled = !prepCopyTo.size;
     btn.textContent = prepCopyTo.size ? `Copy to ${prepCopyTo.size} shed${prepCopyTo.size === 1 ? '' : 's'}` : 'Copy';
   }
@@ -13515,7 +13538,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Read the new order back from the board
   function prepApplyOrder(cid){
     const c = prepFind(cid); if(!c) return;
-    const col = document.querySelector(`.prep-secs[data-cid="${CSS.escape(cid)}"]`); if(!col) return;
+    const col = BODY.querySelector(`.prep-secs[data-cid="${CSS.escape(cid)}"]`); if(!col) return;
     const secById = new Map(c.sections.map(x=> [x.id, x]));
     const itemById = new Map(); c.sections.forEach(x=> (x.items || []).forEach(it=> itemById.set(it.id, it)));
     const before = JSON.stringify(c.sections.map(x=> [x.id, (x.items || []).map(i=> i.id)]));
@@ -13855,7 +13878,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       <div class="pl-legend"><span><i class="done"></i>Done</span><span><i class="late"></i>Overdue</span><span><i class="task"></i>Task (its day under it)</span><span><i class="today"></i>Due today</span><span><i class="noday"></i>Chicks in, no day yet</span><span><i class="skip"></i>N/A · not needed</span><span><i></i>Not started</span><span>Tap a cell to tick · tap a shed number for its menu · ≡ several jobs in one task</span></div>`;
   }
   let prepTickFx = null, prepTickAt = 0;
-  function applyPrepTickFx(){ if(!prepTickFx || Date.now() - prepTickAt > 900) return; document.querySelectorAll(`[data-prep-tick="${CSS.escape(prepTickFx)}"]`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); }); }
+  function applyPrepTickFx(){ if(!prepTickFx || Date.now() - prepTickAt > 900) return; BODY.querySelectorAll(`[data-prep-tick="${CSS.escape(prepTickFx)}"]`).forEach(el=>{ el.classList.remove('tick-pop'); void el.offsetWidth; el.classList.add('tick-pop'); setTimeout(()=> el.classList.remove('tick-pop'), 700); }); }
   // Progress view (2026-10-28, mockup 2DLybZFzdYT8WAkR1zRvT8 option A — replaced option D the same day): one row per
   // shed, a bar per checklist section, % done, placement and a status. Checklist = the List table.
   let prepTrack = 'progress';
@@ -14065,7 +14088,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     inp.addEventListener('blur', ()=> finish(true));
   }
   // small menus (shed, job, cell, section)
-  function plCloseMenu(){ const m = document.getElementById('plMenu'); if(m) m.remove(); document.querySelectorAll('.pl-menu-on').forEach(x=> x.classList.remove('pl-menu-on')); }
+  function plCloseMenu(){ const m = document.getElementById('plMenu'); if(m) m.remove(); BODY.querySelectorAll('.pl-menu-on').forEach(x=> x.classList.remove('pl-menu-on')); }
   // One line-icon set for the Shed prep / Routine menus (was ✓ ☑ 📝 glyphs and emoji of different sizes, 2026-10-26)
   const PL_IC = { '✓':'<path d="M5 12.5l4.5 4.5L19 7"/>', '☑':'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
     '📝':'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>', '✎':'<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
@@ -14078,9 +14101,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     plCloseMenu();
     const m = document.createElement('div'); m.id = 'plMenu'; m.className = 'pl-menu'; m.setAttribute('role', 'menu');
     m.innerHTML = `<div class="pl-mh"><b>${escapeHtml(title)}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ''}</div>` + items.map((it, i)=> it === '-' ? '<hr>' : it.info ? `<div class="pl-mi info"><span class="pl-mic">${plIc(it.ic)}</span>${escapeHtml(it.label)}</div>` : `<button type="button" role="menuitem" class="pl-mi${it.danger ? ' dan' : ''}" data-i="${i}"${it.disabled ? ' disabled' : ''}><span class="pl-mic">${plIc(it.ic)}</span><span>${escapeHtml(it.label)}</span>${it.note ? `<em>${escapeHtml(it.note)}</em>` : ''}</button>`).join('');
-    document.body.appendChild(m); anchor.classList.add('pl-menu-on');
+    BODY.appendChild(m); anchor.classList.add('pl-menu-on');
     const r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
-    let x = Math.min(Math.max(8, r.left), innerWidth - w - 8), y = r.bottom + 6; if(y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    const o = cwOff(); let x = Math.min(Math.max(8, r.left - o.left), cwVW() - w - 8), y = r.bottom - o.top + 6; if(y + h > cwVH() - 8) y = Math.max(8, r.top - o.top - h - 6);
     m.style.left = x + 'px'; m.style.top = y + 'px';
     m.addEventListener('click', (e)=>{ const b = e.target.closest('[data-i]'); if(!b || b.disabled) return; const it = items[+b.dataset.i]; plCloseMenu(); it.act(); });
     const first = m.querySelector('button.pl-mi:not([disabled])'); if(first) first.focus({ preventScroll:true });
@@ -14154,7 +14177,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const m = prepMaster(), S = prepMasterSec(m, s), i = S && !own ? S.items.findIndex(x=> prepNorm(x) === prepNorm(j)) : -1;
       const open = prepJobTargets(s, jobT, false);
       plMenu(b, own ? s : j, 'Same job in every shed', [
-        own ? null : { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-renjob="${CSS.escape(s + '|' + j)}"]`); if(el) plStartRename(el, v=> prepRenameJob(s, j, v)); } },
+        own ? null : { ic:'✎', label:'Rename', act: ()=>{ const el = BODY.querySelector(`[data-pl-renjob="${CSS.escape(s + '|' + j)}"]`); if(el) plStartRename(el, v=> prepRenameJob(s, j, v)); } },
         { ic:'⏱', label: prepIsAfterName(s, jobT) ? 'Move to Before placement' : 'Do after placement', note: prepIsAfterName(s, jobT) ? 'now after placement' : 'every shed', act: ()=>{ const on = !prepIsAfterName(s, jobT); prepSetAfter(s, jobT, on);
           addHistory('Shed preparation', `"${own ? s : j}" moved to ${on ? 'After' : 'Before'} placement`); persist(); renderAll();
           showToast(on ? `"${own ? s : j}" is done after placement — it stays open when a shed is signed off.` : `"${own ? s : j}" is done before placement again.`); } },
@@ -14173,7 +14196,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       return true; }
     if((b = g('[data-pl-secmenu]'))){ const s = b.dataset.plSecmenu, m = prepMaster(), i = m.findIndex(x=> prepNorm(x.t) === prepNorm(s));
       plMenu(b, s, 'Section · same in every shed', [
-        { ic:'✎', label:'Rename', act: ()=>{ const el = document.querySelector(`[data-pl-rensec="${CSS.escape(s)}"]`); if(el) plStartRename(el, v=> prepRenameSection(s, v)); } },
+        { ic:'✎', label:'Rename', act: ()=>{ const el = BODY.querySelector(`[data-pl-rensec="${CSS.escape(s)}"]`); if(el) plStartRename(el, v=> prepRenameSection(s, v)); } },
         { ic:'＋', label:'Add a job', act: ()=>{ prepSecFold.delete(prepNorm(s)); prepSecFoldSave(); prepAddAgain = s; keepScroll(renderPrepBoard); } },
         '-',
         { ic:'↑', label:'Move up', disabled: i <= 0, act: ()=> prepMoveSection(s, -1) },
@@ -14267,7 +14290,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const T = prepNoteTargets(), u = T.one ? T.one.u : (T.all.find(x=> x.jnote) || T.all[0]);
     const n = prepNoteScope === 'one' ? u.note : u.jnote, last = prepNoteScope === 'one' ? u.lastNote : (T.all.map(x=> x.lastJNote).find(Boolean));
     $('#prepNoteSub').textContent = prepNoteScope === 'one' ? `Shed ${T.one.c.shed}${T.one.c.batch ? ' · after batch ' + T.one.c.batch : ''}` : `Every shed being prepared (${T.all.length})`;
-    document.querySelectorAll('#prepNoteSeg [data-pn-scope]').forEach(b=>{ const on = b.dataset.pnScope === prepNoteScope; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    BODY.querySelectorAll('#prepNoteSeg [data-pn-scope]').forEach(b=>{ const on = b.dataset.pnScope === prepNoteScope; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     $('#prepNoteText').value = n ? n.t : '';
     $('#prepNoteKeep').checked = n ? !!n.keep : false;
     $('#prepNoteDel').hidden = !n;
@@ -14362,7 +14385,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function prepActToast(html, taskId, lead){
     let el = $('#prepActToast');
-    if(!el){ el = document.createElement('div'); el.id = 'prepActToast'; el.className = 'prep-act-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el);
+    if(!el){ el = document.createElement('div'); el.id = 'prepActToast'; el.className = 'prep-act-toast'; el.setAttribute('role', 'status'); BODY.appendChild(el);
       el.addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; el.classList.remove('show');
         if(b.dataset.act === 'edit') openEditTaskModal(b.dataset.task); else if(b.dataset.act === 'undo') performUndo(); }); }
     el.innerHTML = `<span class="pat-msg">✓ ${lead || 'Task made'}: ${html}</span><button type="button" data-act="edit" data-task="${escapeHtmlAttr(taskId)}">Set day &amp; people</button><button type="button" data-act="undo" class="pat-undo">Undo</button>`;
@@ -14404,15 +14427,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function prepSyncTaskModal(){
     const v = $('#prepTaskDate').value, t0 = dateKey(new Date());
-    document.querySelectorAll('#prepTaskDays [data-pday]').forEach(b=> b.classList.toggle('on', addDaysStr(t0, +b.dataset.pday) === v));
-    document.querySelectorAll('#prepTaskRepeat [data-prep-rep]').forEach(b=> b.classList.toggle('on', (b.dataset.prepRep === '1') === prepTaskRep));
+    BODY.querySelectorAll('#prepTaskDays [data-pday]').forEach(b=> b.classList.toggle('on', addDaysStr(t0, +b.dataset.pday) === v));
+    BODY.querySelectorAll('#prepTaskRepeat [data-prep-rep]').forEach(b=> b.classList.toggle('on', (b.dataset.prepRep === '1') === prepTaskRep));
     const isTask = prepTaskKind === 'task';
-    document.querySelectorAll('#prepTaskKind [data-prep-kind]').forEach(b=>{ const on = b.dataset.prepKind === prepTaskKind; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
-    document.querySelectorAll('#prepTaskModal .prep-only-task').forEach(x=> x.hidden = !isTask);
+    BODY.querySelectorAll('#prepTaskKind [data-prep-kind]').forEach(b=>{ const on = b.dataset.prepKind === prepTaskKind; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    BODY.querySelectorAll('#prepTaskModal .prep-only-task').forEach(x=> x.hidden = !isTask);
     const forSec = !!(prepTaskFor && prepTaskFor.sec);
-    document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
+    BODY.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = forSec);
     if(!forSec){ $('#prepSecApplyRow').hidden = true; $('#prepTaskTitle').textContent = 'Make a task'; }
-    document.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
+    BODY.querySelectorAll('#prepTaskModal .prep-not-sec').forEach(x=> x.hidden = true);   // no "How" any more: it's always a task
     $('#prepTaskWho').placeholder = 'Type a name or tap one below';
     $('#prepTaskSave').textContent = prepTaskFor && prepTaskFor.list && !prepTaskFor.separate ? 'Update task list' : 'Make task'; $('#prepTaskUndate').hidden = true;
     if(!(prepTaskFor && prepTaskFor.list)){ const b = $('#prepTaskListBox'); if(b) b.hidden = true; const sp = $('#prepTaskSep'); if(sp) sp.hidden = true; }
@@ -15309,14 +15332,14 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function closeOverlays(){
     $('#historyDrawer').classList.remove('open');
-    document.querySelectorAll('.prep-modal.open').forEach(x=> x.classList.remove('open'));
+    BODY.querySelectorAll('.prep-modal.open').forEach(x=> x.classList.remove('open'));
     $('#reportsDrawer').classList.remove('open');
     $('#ptypesModal').classList.remove('open');
     $('#mtSumModal').classList.remove('open');
-    document.body.classList.remove('mt-open');
+    BODY.classList.remove('mt-open');
     $('#mlogHistDrawer').classList.remove('open');
     $('#mlogTaskModal').classList.remove('open');
-    $('#settingsDrawer').classList.remove('open');
+    $('#cwSettingsDrawer').classList.remove('open');
     $('#dayModal').classList.remove('open');
     $('#taskDetailModal').classList.remove('open');
     $('#editTaskModal').classList.remove('open');
@@ -15325,11 +15348,11 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#reportModal').classList.remove('open');
     $('#newReportModal').classList.remove('open');
     $('#addTasksSheet').classList.remove('open');
-    $('#batchInfoModal').classList.remove('open');
+    $('#cwBatchInfoModal').classList.remove('open');
     // leaving the guide with edits not applied: keep the draft and say so (it reopens on Edit guide)
     try{ if($('#guideModal').classList.contains('open') && guideDirtyCount()) showToast('Guide changes not applied yet — they wait for you in Farm guide › Edit guide.'); }catch(e){}
-    $('#guideModal').classList.remove('open'); document.body.classList.remove('guide-open');
-    document.body.classList.remove('settings-open');
+    $('#guideModal').classList.remove('open'); BODY.classList.remove('guide-open');
+    BODY.classList.remove('settings-open');
     $('#startRepairModal').classList.remove('open');
     $('#overdueModal').classList.remove('open');
     $('#bulkDeleteModal').classList.remove('open');
@@ -15341,9 +15364,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     wxDetailKey = null;
     $('#searchModal').classList.remove('open');
     $('#restoreModal').classList.remove('open');
-    document.querySelector('.sidebar').classList.remove('open');
+    BODY.querySelector('.sidebar').classList.remove('open');
     $('#quickAddSheet').classList.add('hidden');
-    $('#moreSheet').classList.add('hidden');
+    $('#cwMoreSheet').classList.add('hidden');
     $('#scrim').classList.remove('show');
     dayModalOpenKey = null;
     editingTaskId = null;
@@ -15359,7 +15382,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     mlogEditId = null;
   }
   function toggleSidebar(){
-    const sb = document.querySelector('.sidebar');
+    const sb = BODY.querySelector('.sidebar');
     const willOpen = !sb.classList.contains('open');
     closeOverlays();
     if(willOpen){ sb.classList.add('open'); $('#scrim').classList.add('show'); }
@@ -15368,20 +15391,20 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // Desktop: the full-height sidebar can be hidden; remembered on this device
   function setSidebarCollapsed(on){
     // slide, only when the button is pressed (not on page load)
-    document.body.classList.add('sb-anim');
+    BODY.classList.add('sb-anim');
     clearTimeout(setSidebarCollapsed.t);
-    setSidebarCollapsed.t = setTimeout(()=>{ document.body.classList.remove('sb-anim'); if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater(); }, 360);
-    document.body.classList.toggle('sb-collapsed', !!on);
+    setSidebarCollapsed.t = setTimeout(()=>{ BODY.classList.remove('sb-anim'); if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater(); }, 360);
+    BODY.classList.toggle('sb-collapsed', !!on);
     try{ localStorage.setItem('cluckwise-sb-collapsed', on ? '1' : ''); }catch(e){}
     if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();
   }
-  try{ if(localStorage.getItem('cluckwise-sb-collapsed') === '1') document.body.classList.add('sb-collapsed'); }catch(e){}
+  try{ if(localStorage.getItem('cluckwise-sb-collapsed') === '1') BODY.classList.add('sb-collapsed'); }catch(e){}
   $('#sbCollapseBtn').addEventListener('click', ()=> setSidebarCollapsed(true));
   $('#sbMobileClose').addEventListener('click', closeOverlays);
   $('#sbExpandBtn').addEventListener('click', ()=> setSidebarCollapsed(false));
   $('#srExpandBtn').addEventListener('click', ()=> setSidebarCollapsed(false));
   $('#srBatchBtn').addEventListener('click', e=>{ const n = e.currentTarget.dataset.cb; if(n) openBatchInfo(n); });
-  document.querySelectorAll('#sbRail [data-rail]').forEach(el=> el.addEventListener('click', ()=>{
+  BODY.querySelectorAll('#sbRail [data-rail]').forEach(el=> el.addEventListener('click', ()=>{
     const k = el.dataset.rail;
     if(k==='newbatch'){ $('#openBatchModalBtn').click(); return; }
     if(k==='newaudit'){ $('#openEventModalBtn').click(); return; }
@@ -15401,7 +15424,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#navMonthBtn').addEventListener('click', ()=>{
     if(viewMode!=='month' && viewMode!=='year' && viewMode!=='day'){
       // Phones open the Calendar on the Year view (tap a month to go into it)
-      viewMode = window.innerWidth < 760 ? 'year' : (settings.calendarDensity === 'day' ? 'day' : 'month');
+      viewMode = cwVW() < 760 ? 'year' : (settings.calendarDensity === 'day' ? 'day' : 'month');
     }
     syncViewButtons(); renderAll();
   });
@@ -15410,7 +15433,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     closeOverlays();
     const sl = $('#menuSyncLine'), si = $('#saveIndicator');
     if(sl && si){ sl.textContent = (si.querySelector('.sync-label') || si).textContent.trim(); sl.className = 'menu-sync ' + si.className.replace('sync-status', '').trim(); }
-    $('#moreSheet').classList.remove('hidden');
+    $('#cwMoreSheet').classList.remove('hidden');
     $('#scrim').classList.add('show');
   });
 
@@ -15427,7 +15450,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }
     return today;
   }
-  function useAddTasksSheet(){ return window.innerWidth <= 1024 || window.matchMedia('(hover: none)').matches; }
+  function useAddTasksSheet(){ return cwVW() <= 1024 || window.matchMedia('(hover: none)').matches; }
   function openAddTasks(day, preselect){
     closeOverlays();
     atDay = day || viewingDayKey();
@@ -15819,9 +15842,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#biTitle').textContent = b.end < today ? `Batch #${b.number}` : today >= b.start ? 'Current batch' : 'Next batch';
     const paint = ()=>{ $('#biBody').innerHTML = cwChangeoverHtml() + batchInfoHtml(info) + biExtraHtml(b, biShowArchive); };
     paint();
-    openDrawer('#batchInfoModal');
-    if(showArchive) loadArchives().then(()=>{ if(biShowing && biShowing.b === b && $('#batchInfoModal').classList.contains('open')) paint(); });
-    biLoadBirds(b.number).then(v=>{ info.birds = v; if(biShowing && biShowing.b === b && $('#batchInfoModal').classList.contains('open')) paint(); });
+    openDrawer('#cwBatchInfoModal');
+    if(showArchive) loadArchives().then(()=>{ if(biShowing && biShowing.b === b && $('#cwBatchInfoModal').classList.contains('open')) paint(); });
+    biLoadBirds(b.number).then(v=>{ info.birds = v; if(biShowing && biShowing.b === b && $('#cwBatchInfoModal').classList.contains('open')) paint(); });
   }
   $('#closeBatchInfo').addEventListener('click', closeOverlays);
   $('#biBody').addEventListener('click', (e)=>{
@@ -16169,7 +16192,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     renderMainGuide();
     openDrawer('#guideModal');
     // A page, not a window: no dimmed backdrop
-    document.body.classList.add('guide-open');
+    BODY.classList.add('guide-open');
     $('#scrim').classList.remove('show');
   }
   function guideDirtyCount(){
@@ -16229,7 +16252,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if((el = d('[data-gm-rdel]'))){ const [k, i] = el.dataset.gmRdel.split(':');
       editGuideDraft((g, c)=>{ if(c[k].length > 1) g[k] = c[k].filter((r, j)=> j !== Number(i)).map(r=> r.slice()); }); renderMainGuide(); return; }
     if(d('[data-gm-own-add]')){ editGuideDraft(g=>{ g.custom = (g.custom || []).concat([{ id: 'gc' + Date.now().toString(36), icon: '📌', title: '', body: '' }]); }); renderMainGuide();
-      const last = [...document.querySelectorAll('#guideModalBody [data-gm-own$=":title"]')].pop(); if(last) last.focus(); return; }
+      const last = [...BODY.querySelectorAll('#guideModalBody [data-gm-own$=":title"]')].pop(); if(last) last.focus(); return; }
     if((el = d('[data-gm-own-del]'))){ const id = el.dataset.gmOwnDel; editGuideDraft(g=>{ g.custom = (g.custom || []).filter(o=> o.id !== id); }); renderMainGuide(); return; }
     if((el = d('[data-g2-shed], [data-g2-check], [data-g2-back]'))){
       mainGuideView = el.dataset.g2Shed != null ? { v: 'shed', shed: Number(el.dataset.g2Shed) } : el.dataset.g2Check != null ? { v: 'check', check: el.dataset.g2Check } : { v: 'home' };
@@ -16260,7 +16283,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#fabToggle').addEventListener('click', (e)=>{ e.stopPropagation(); setFabDock(!$('#fabDock').classList.contains('open')); });
   $('#fabItems').addEventListener('click', ()=> setTimeout(()=> setFabDock(false), 0));
   document.addEventListener('click', (e)=>{ if(!e.target.closest('#fabDock')) setFabDock(false); });
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') setFabDock(false); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !cwAway()) setFabDock(false); });
   $('#quickAddFabBtn').addEventListener('click', ()=> openAddTasks(viewingDayKey()));
   $('#quickAddTaskBtn').addEventListener('click', ()=>{ closeOverlays(); openCreateTaskModal(null); });
   $('#quickAddBatchBtn').addEventListener('click', ()=> openBatchModal());
@@ -16294,9 +16317,9 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
         .map(t=> ({ shed: String(t.shedNum || ''), day: weighDayAge(t), date: t.date, batch: t.batchNumber || '' })) };
   };
   // Plumo (2026-10-25): the morning report lives in ProdWise; this button opens it, and __cwRoss hands over Tasks' part
-  (function(){ let ok = false; try{ ok = window.parent !== window && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
+  (function(){ let ok = false; try{ ok = (CW_INLINE || window.parent !== window) && typeof window.parent.pwOpenRoss === 'function'; }catch(e){}
     const b = $('#cwRossBtn'); if(!b || !ok) return; b.hidden = false;
-    b.classList.add('cw-ross-float'); document.body.appendChild(b);   // out of the top bar: a floating head, bottom right (2026-11-01)
+    b.classList.add('cw-ross-float'); BODY.appendChild(b);   // out of the top bar: a floating head, bottom right (2026-11-01)
     b.addEventListener('click', ()=>{ try{ if(window.PlumoFace) PlumoFace.fly(b.querySelector('.plumoF')); }catch(e){} setTimeout(()=>{ try{ window.parent.pwOpenRoss(); }catch(e){} }, 450); });
     window.__cwRossDot = on=>{ const d = $('#cwRossDot'); if(d) d.hidden = !on; };
     // the new face (2026-11-01, ../js/plumo-face.js), in the mood Plumo has in Production
@@ -16333,7 +16356,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#moreHistoryBtn').addEventListener('click', ()=>{ if(openHistoryPage()) return; closeOverlays(); openDrawer('#historyDrawer'); });
   $('#moreReportsBtn').addEventListener('click', ()=>{ closeOverlays(); openReportsDrawer(); });
   $('#moreBulkDeleteBtn').addEventListener('click', ()=>{ closeOverlays(); $('#bulkDeleteModalBtn').click(); });
-  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
+  $('#moreSettingsBtn').addEventListener('click', ()=>{ closeOverlays(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
   $('#moreThemeToggleBtn').addEventListener('click', ()=>{ closeOverlays(); settings.theme = settings.theme==='dark' ? 'light' : 'dark'; applySettings(); persist(); });
   $('#overdueBtn').addEventListener('click', openOverdueModal);
   $('#fabNotifBtn').addEventListener('click', openOverdueModal);
@@ -16448,7 +16471,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   });
   $('#prepTplEdBoard').addEventListener('click', prepBoardClick);
   document.addEventListener('click', (e)=>{ const l = e.target.closest && e.target.closest('.prep-lab[data-prep-shed]'); if(!l) return; e.preventDefault(); e.stopPropagation(); closeOverlays(); openPrepBoard(l.dataset.prepShed); }, true);
-  document.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
+  BODY.querySelectorAll('.prep-modal [data-prep-close]').forEach(b=> b.addEventListener('click', ()=> b.closest('.prep-modal').classList.remove('open')));
   $('#prepWhoAdd').addEventListener('click', ()=> prepWhoAdd($('#prepTaskWho').value));
   $('#prepTaskWho').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); prepWhoAdd($('#prepTaskWho').value); } });
   $('#prepWhoChips').addEventListener('click', (e)=>{ const b = e.target.closest('.chip-remove'); if(!b) return; prepWho.splice(Number(b.dataset.idx), 1); prepWhoRender(); });
@@ -16470,7 +16493,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#prepCopyModes').addEventListener('click', (e)=>{ const b = e.target.closest('[data-copy-mode]'); if(!b) return; prepCopyMode = b.dataset.copyMode; renderPrepCopy(); });
   $('#prepCopySave').addEventListener('click', savePrepCopy);
   $('#prepSecAddRow').addEventListener('click', ()=>{ const r = prepSecRow(''); $('#prepSecItems').appendChild(r); r.querySelector('input').focus(); });
-  $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = document.querySelector('#prepSecItems input'); if(f) f.focus(); } });
+  $('#prepSecName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); const f = BODY.querySelector('#prepSecItems input'); if(f) f.focus(); } });
   $('#prepTplSave').addEventListener('click', savePrepTpl);
   $('#prepStdBtn').addEventListener('click', openPrepTpls);
   $('#prepTplsNew').addEventListener('click', ()=> openPrepTplEditor(null));
@@ -16484,7 +16507,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       prepSaveTemplates(list); prepTplDel = null; addHistory('Settings', `Shed preparation template "${gone ? gone.name : ''}" deleted`); persist(); renderPrepTpls(); return; }
   });
   $('#prepTplEdOrig').addEventListener('click', ()=>{ if(prepTplDraft){ prepTplDraft.sections = prepDraftFromText(PREP_DEFAULT_TEXT); renderPrepTplEd(); } });
-  $('#prepTplEdName').addEventListener('input', ()=>{ const b = document.querySelector('#prepTplEdBoard .prep-ctitle b'); if(b) b.textContent = $('#prepTplEdName').value.trim() || 'New template'; });
+  $('#prepTplEdName').addEventListener('input', ()=>{ const b = BODY.querySelector('#prepTplEdBoard .prep-ctitle b'); if(b) b.textContent = $('#prepTplEdName').value.trim() || 'New template'; });
   $('#prepTplEdModal').querySelectorAll('[data-prep-close]').forEach(b=> b.addEventListener('click', ()=>{ prepTplDraft = null; prepTplEdId = null; }));
   $('#prepTplEdSave').addEventListener('click', savePrepTplEditor);
   $('#prepTplName').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); savePrepTpl(); } });
@@ -16495,7 +16518,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#rpMoreBtn').addEventListener('click', (e)=>{ e.stopPropagation(); mtMenu($('#rpMoreMenu').hidden); });
   document.addEventListener('click', (e)=>{
     if(!e.target.closest('.rp-more')) mtMenu(false);
-    if(!e.target.closest('.rpd-more')) document.querySelectorAll('.rpd-more-menu').forEach(m=>{ m.hidden = true; });
+    if(!e.target.closest('.rpd-more')) BODY.querySelectorAll('.rpd-more-menu').forEach(m=>{ m.hidden = true; });
   });
   $('#rpChips').addEventListener('click', (e)=>{ const b = e.target.closest('[data-mtf]'); if(!b) return; mtFilter = b.dataset.mtf; try{ localStorage.setItem('cw-mt-filter', mtFilter); }catch(err){} renderReportsView(); });
   $('#rpPlaceSel').addEventListener('change', (e)=>{ reportsShedFilter = e.target.value; const s2 = $('#reportsShedFilter'); if(s2) s2.value = reportsShedFilter; renderReportsView(); });
@@ -16531,7 +16554,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     this.dataset.pending = ''; this.textContent = 'Restore the original list';
     delete settings.problemTypes; persist(); renderPtypes(); showToast('Original list restored.');
   });
-  $('#settingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
+  $('#cwSettingsBtn').addEventListener('click', ()=>{ renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); if(window.__csOnOpen) window.__csOnOpen(); });
   $('#closeBulkDeleteModal').addEventListener('click', closeOverlays);
   $('#closeHistory').addEventListener('click', closeOverlays);
   $('#clearHistoryBtn').addEventListener('click', function(){
@@ -16736,7 +16759,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   });
   $('#closeOverdueBtn').addEventListener('click', closeOverlays);
   $('#scrim').addEventListener('click', closeOverlays);
-  document.querySelectorAll('.sheet-overlay').forEach(overlay=>{
+  BODY.querySelectorAll('.sheet-overlay').forEach(overlay=>{
     overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlays(); });
   });
 
@@ -16745,7 +16768,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const btn = e.target.closest('button');
     if(!btn) return;
     reportsFilterStatus = btn.dataset.status;
-    document.querySelectorAll('#reportsFilterRow button').forEach(b => b.classList.toggle('active', b === btn));
+    BODY.querySelectorAll('#reportsFilterRow button').forEach(b => b.classList.toggle('active', b === btn));
     renderReportsList();
   });
   $('#reportsSearchInput').addEventListener('input', (e)=>{
@@ -16811,8 +16834,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function nrFarmSlug(){ return ghFarmName ? sanitizeFarmFileName(ghFarmName).replace('.json','') : 'farm'; }
   function nrSyncRoute(){
-    document.querySelectorAll('#nrRoute button').forEach(b=> b.classList.toggle('active', b.dataset.route === nr.route));
-    document.querySelectorAll('#nrDays button').forEach(b=> b.classList.toggle('active', b.dataset.day === nr.day));
+    BODY.querySelectorAll('#nrRoute button').forEach(b=> b.classList.toggle('active', b.dataset.route === nr.route));
+    BODY.querySelectorAll('#nrDays button').forEach(b=> b.classList.toggle('active', b.dataset.day === nr.day));
     $('#nrTaskOpts').hidden = nr.route !== 'task';
     $('#nrWhoRow').hidden = nr.route === 'log';
     $('#nrDayInput').hidden = !(nr.route === 'task' && nr.day === 'pick');
@@ -16842,8 +16865,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     problemTypes().forEach(p=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'nr-type'; b.dataset.type = p.name; b.textContent = p.name; box.appendChild(b); });
     const ob = document.createElement('button'); ob.type = 'button'; ob.className = 'nr-type nr-other'; ob.dataset.type = 'Other'; ob.textContent = 'Other'; box.appendChild(ob);
     $('#nrOtherInput').value = ''; $('#nrOtherInput').hidden = true;
-    document.querySelectorAll('#nrUrgSeg button').forEach(b=> b.classList.toggle('active', b.dataset.urgent === '0'));
-    document.querySelectorAll('#nrLocSeg button').forEach(b=> b.classList.toggle('active', b.dataset.loc === 'shed'));
+    BODY.querySelectorAll('#nrUrgSeg button').forEach(b=> b.classList.toggle('active', b.dataset.urgent === '0'));
+    BODY.querySelectorAll('#nrLocSeg button').forEach(b=> b.classList.toggle('active', b.dataset.loc === 'shed'));
     $('#nrShedInput').hidden = false; $('#nrPlaceInput').hidden = true; $('#nrShedInput').value = ''; $('#nrPlaceInput').value = '';
     $('#nrNotesInput').value = '';
     let by = ''; try{ by = localStorage.getItem('cluckwise-report-by') || ''; }catch(e){}
@@ -16944,16 +16967,16 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   // ===== Desktop icon rail + Calendar/List/Board tabs in the header (2026-10-10, board redesign) =====
   (function(){
     const rail = $('#appRail'); if(!rail) return;
-    const desk = window.matchMedia('(min-width: 1025px)');
+    const desk = cwMQ('(min-width: 1025px)');
     const isOpen = sel=>{ const el = $(sel); return !!el && el.classList.contains('open'); };
     // The side panel shows one thing at a time: Tasks (frequent tasks, backlog) or Batch (batches, audits)
     let sbMode = 'tasks'; try{ if(localStorage.getItem('cluckwise-sb-mode') === 'batch') sbMode = 'batch'; }catch(e){}
     function setSbMode(m){
       sbMode = m === 'batch' ? 'batch' : 'tasks';
-      document.body.classList.toggle('sbm-batch', sbMode === 'batch');
-      document.body.classList.toggle('sbm-tasks', sbMode === 'tasks');
-      const t = $('#sbPanelTitle'); if(t) t.textContent = sbMode === 'batch' ? 'Batches & audits' : 'Planner';
-      const hb = document.querySelector('.sb-brand .sb-panel-head'); if(hb) hb.textContent = t ? t.textContent : '';
+      BODY.classList.toggle('sbm-batch', sbMode === 'batch');
+      BODY.classList.toggle('sbm-tasks', sbMode === 'tasks');
+      const t = $('#cwSbPanelTitle'); if(t) t.textContent = sbMode === 'batch' ? 'Batches & audits' : 'Planner';
+      const hb = BODY.querySelector('.sb-brand .sb-panel-head'); if(hb) hb.textContent = t ? t.textContent : '';
       try{ localStorage.setItem('cluckwise-sb-mode', sbMode); }catch(e){}
     }
     setSbMode(sbMode);
@@ -16961,8 +16984,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     // opened for the drag if it was closed, and closed again after the drop
     let panelOpenedForDrag = false;
     window.__cwTasksPanelForDrag = ()=>{
-      const bd = document.body;
-      if(bd.classList.contains('rail-page') || !window.matchMedia('(min-width:1025px)').matches) return;
+      const bd = BODY;
+      if(bd.classList.contains('rail-page') || !cwMQ('(min-width:1025px)').matches) return;
       if(bd.classList.contains('sb-collapsed')){ setSidebarCollapsed(false); panelOpenedForDrag = true; }
       if(sbMode !== 'tasks'){ setSbMode('tasks'); try{ arSync(); }catch(e){} }
     };
@@ -16977,7 +17000,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     let downAt = null;
     document.addEventListener('pointerdown', e=>{ downAt = { x:e.clientX, y:e.clientY, t:e.target }; }, true);
     document.addEventListener('click', e=>{
-      const bd = document.body, d = downAt; downAt = null;
+      const bd = BODY, d = downAt; downAt = null;
       if(bd.classList.contains('sb-collapsed') || bd.classList.contains('rail-page') || !desk.matches) return;
       if(d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
       // where the press started (a click that redraws the page can leave e.target detached)
@@ -16985,15 +17008,15 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       if(!t.closest('.shell') || t.closest('.sidebar') || t.closest('#appRail')) return;
       setSidebarCollapsed(true);
     }, true);   // capture: calendar days and cards stop their clicks from bubbling
-    const openPanel = ()=>{ if(document.body.classList.contains('sb-collapsed')) setSidebarCollapsed(false); };
+    const openPanel = ()=>{ if(BODY.classList.contains('sb-collapsed')) setSidebarCollapsed(false); };
     $('#sbfAddTask').addEventListener('click', ()=> openCreateTaskModal(null));
     $('#sbfNewAudit').addEventListener('click', ()=> $('#openEventModalBtn').click());
     function arSync(){
-      const which = isOpen('#settingsDrawer') ? 'settings' : isOpen('#mlogPage') ? (mlogMode === 'prep' ? 'prep' : 'routine') : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
+      const which = isOpen('#cwSettingsDrawer') ? 'settings' : isOpen('#mlogPage') ? (mlogMode === 'prep' ? 'prep' : 'routine') : isOpen('#reportsDrawer') ? 'maint' : isOpen('#guideModal') ? 'guide' : sbMode;
       rail.querySelectorAll('.ar-btn[data-ar="tasks"],.ar-btn[data-ar="batch"],.ar-btn[data-ar="maint"],.ar-btn[data-ar="routine"],.ar-btn[data-ar="prep"],.ar-btn[data-ar="guide"],.ar-btn[data-ar="settings"]').forEach(b=> b.classList.toggle('active', b.dataset.ar === which));
       // Maintenance, Routine, Guide and Settings are full pages: the side panel steps aside while one is open
-      document.body.classList.toggle('rail-page', which === 'routine' || which === 'prep' || which === 'maint' || which === 'guide' || which === 'settings');
-      document.body.classList.toggle('settings-open', which === 'settings');
+      BODY.classList.toggle('rail-page', which === 'routine' || which === 'prep' || which === 'maint' || which === 'guide' || which === 'settings');
+      BODY.classList.toggle('settings-open', which === 'settings');
       const src = $('#reportsBadge'), dst = $('#arMaintBadge');
       if(src && dst){ const n = src.classList.contains('hidden') ? '' : src.textContent.trim(); dst.hidden = !n || n === '0'; dst.textContent = n; }
     }
@@ -17002,26 +17025,26 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
       const a = b.dataset.ar;
       if(a === 'tasks' || a === 'batch'){
         const onPage = isOpen('#mlogPage') || isOpen('#reportsDrawer');
-        const collapsed = document.body.classList.contains('sb-collapsed');
+        const collapsed = BODY.classList.contains('sb-collapsed');
         if(isOpen('#mlogPage')) closeMlog(); else closeOverlays();
         // The section that's already showing: a second click hides the panel (and the next shows it again)
         if(!onPage && sbMode === a && !collapsed) setSidebarCollapsed(true);
         else { setSbMode(a); openPanel(); }
       }
-      else if(a === 'maint'){ if(isOpen('#mlogPage')) closeMlog(); if(isOpen('#settingsDrawer')) closeOverlays(); if(!isOpen('#reportsDrawer')) $('#reportsBtn').click(); }   // Settings stayed on top of Maintenance (2026-10-26)
+      else if(a === 'maint'){ if(isOpen('#mlogPage')) closeMlog(); if(isOpen('#cwSettingsDrawer')) closeOverlays(); if(!isOpen('#reportsDrawer')) $('#reportsBtn').click(); }   // Settings stayed on top of Maintenance (2026-10-26)
       else if(a === 'routine'){ if(!isOpen('#mlogPage')) openMlog('routine'); else if(mlogMode !== 'routine'){ mlogMode = 'routine'; renderMlog(); } }
       else if(a === 'prep'){ const o = prepOpenList(); if(!isOpen('#mlogPage') || mlogMode !== 'prep') openPrepBoard(o.length ? o[0].shed : null); }
       else if(a === 'guide'){ if(isOpen('#mlogPage')) closeMlog(); if(!isOpen('#guideModal')) $('#guideBtn').click(); }
       else if(a === 'history') $('#historyBtn').click();
       else if(a === 'theme') $('#themeToggleBtn').click();
-      else if(a === 'settings') $('#settingsBtn').click();
+      else if(a === 'settings') $('#cwSettingsBtn').click();
       setTimeout(arSync, 30);
     });
     const mo = new MutationObserver(arSync);
-    ['#mlogPage','#reportsDrawer','#reportsBadge','#guideModal','#settingsDrawer'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
+    ['#mlogPage','#reportsDrawer','#reportsBadge','#guideModal','#cwSettingsDrawer'].forEach(sel=>{ const el = $(sel); if(el) mo.observe(el, { attributes:true, attributeFilter:['class'], childList:true, characterData:true, subtree:sel==='#reportsBadge' }); });
     arSync();
     // Calendar / List / Board: tabs under the header on a computer, the floating switcher elsewhere
-    const dock = $('#modeDock'), left = document.querySelector('.topbar .topbar-left'), home = dock ? dock.parentNode : null, next = dock ? dock.nextSibling : null;
+    const dock = $('#modeDock'), left = BODY.querySelector('.topbar .topbar-left'), home = dock ? dock.parentNode : null, next = dock ? dock.nextSibling : null;
     const TAB_IC = { viewCalendarBtn:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>', viewListBtn:'<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>', viewKanbanBtn:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>' };
     if(dock) dock.querySelectorAll('.md-btn').forEach(b=>{ const d = TAB_IC[b.id]; if(d && !b.querySelector('.md-svg')) b.insertAdjacentHTML('afterbegin', `<svg class="md-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`); });
     function placeDock(){
@@ -17041,12 +17064,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     nr.type = nr.type === b.dataset.type ? null : b.dataset.type;
     if(nr.type && !nr.routeSet){ nr.route = nr.type === 'Other' ? 'task' : typeRoute(nr.type); }
     nrSyncRoute();
-    document.querySelectorAll('#nrTypes .nr-type').forEach(x=> x.classList.toggle('selected', x.dataset.type === nr.type));
+    BODY.querySelectorAll('#nrTypes .nr-type').forEach(x=> x.classList.toggle('selected', x.dataset.type === nr.type));
     $('#nrOtherInput').hidden = nr.type !== 'Other'; if(nr.type === 'Other') $('#nrOtherInput').focus();
     nrUpdate();
   });
-  $('#nrUrgSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.urgent = b.dataset.urgent === '1'; document.querySelectorAll('#nrUrgSeg button').forEach(x=> x.classList.toggle('active', x === b)); });
-  $('#nrLocSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.loc = b.dataset.loc; document.querySelectorAll('#nrLocSeg button').forEach(x=> x.classList.toggle('active', x === b)); $('#nrShedInput').hidden = nr.loc !== 'shed'; $('#nrPlaceInput').hidden = nr.loc !== 'farm'; nrUpdate(); });
+  $('#nrUrgSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.urgent = b.dataset.urgent === '1'; BODY.querySelectorAll('#nrUrgSeg button').forEach(x=> x.classList.toggle('active', x === b)); });
+  $('#nrLocSeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if(!b) return; nr.loc = b.dataset.loc; BODY.querySelectorAll('#nrLocSeg button').forEach(x=> x.classList.toggle('active', x === b)); $('#nrShedInput').hidden = nr.loc !== 'shed'; $('#nrPlaceInput').hidden = nr.loc !== 'farm'; nrUpdate(); });
   ['#nrOtherInput','#nrShedInput','#nrPlaceInput','#nrByInput'].forEach(sel=> $(sel).addEventListener('input', nrUpdate));
   $('#nrPhotoInput').addEventListener('change', (e)=>{
     const f = e.target.files && e.target.files[0]; if(!f) return;
@@ -17064,7 +17087,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
 
   $('#setFontSize').addEventListener('change', (e)=>{ settings.fontSize = e.target.value; applySettings(); persist(); });
   $('#setTheme').addEventListener('change', (e)=>{ settings.theme = e.target.value === 'dark' ? 'dark' : 'light'; applySettings(); persist(); });
-  document.querySelectorAll('#settingsDrawer select[data-seg]').forEach(enhanceSegmented);
+  BODY.querySelectorAll('#cwSettingsDrawer select[data-seg]').forEach(enhanceSegmented);
   syncSegmented();
   // Settings sections fold like the guide targets: tap a heading; open ones are remembered
   const ST_OPEN_KEY = 'cw-settings-open';
@@ -17077,7 +17100,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(open) stOpen.add(sec.id); else stOpen.delete(sec.id);
     try{ localStorage.setItem(ST_OPEN_KEY, JSON.stringify([...stOpen])); }catch(e){}
   }
-  document.querySelectorAll('#settingsBody > .st-section[id]').forEach(sec=>{
+  BODY.querySelectorAll('#settingsBody > .st-section[id]').forEach(sec=>{
     const h = sec.querySelector(':scope > .st-section-head'); if(!h) return;
     h.setAttribute('role', 'button'); h.tabIndex = 0;
     sec.classList.toggle('st-collapsed', !stOpen.has(sec.id)); h.setAttribute('aria-expanded', String(stOpen.has(sec.id)));
@@ -17120,13 +17143,13 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if(csIsPw(page)){ csOpenPw(page); return; }
     if(!CS_PAGES[page]) page = 'appearance';
     csPage = page; try{ localStorage.setItem(CS_KEY, page); }catch(e){}
-    const p = CS_PAGES[page], drawer = $('#settingsDrawer');
-    document.querySelectorAll('#settingsBody > .st-section').forEach(sec=>{
+    const p = CS_PAGES[page], drawer = $('#cwSettingsDrawer');
+    BODY.querySelectorAll('#settingsBody > .st-section').forEach(sec=>{
       const show = p.ids.includes(sec.id);
       sec.hidden = !show; if(show) sec.classList.remove('st-collapsed');
     });
     $('#csCrumb').textContent = p.g; $('#csTitle').textContent = p.t; $('#csSub').textContent = p.d;
-    document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const on = b.dataset.page === page; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+    BODY.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const on = b.dataset.page === page; b.classList.toggle('active', on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
     if(fromList) drawer.classList.remove('cs2-list');
     if(page === 'appearance' && CW_EMBED) csRenderUnit();
     if(page === 'alerts') csRenderAlerts();
@@ -17149,7 +17172,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     $('#csSecDot').hidden = !(pb && pb.security);
     const wn = (typeof accessMembersCount === 'function') ? accessMembersCount() : 0;
     $('#csWorkersBd').hidden = !wn; $('#csWorkersBd').textContent = wn;
-    document.querySelectorAll('#settingsDrawer .cs-pw-only').forEach(x=> x.hidden = !CW_EMBED);
+    BODY.querySelectorAll('#cwSettingsDrawer .cs-pw-only').forEach(x=> x.hidden = !CW_EMBED);
   }
   // Alerts: Production's two (saved in Production) and Tasks' own two
   function csRenderAlerts(){
@@ -17172,10 +17195,10 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   function csRenderBackup(){
     let bn = ''; try{ bn = CW_EMBED && parent.pwBatchLabel ? parent.pwBatchLabel() : ''; }catch(e){}
     $('#csBatchName').textContent = bn || 'The open batch';
-    document.querySelectorAll('#stBackup [data-pwact]').forEach(b=> b.disabled = !bn);
+    BODY.querySelectorAll('#stBackup [data-pwact]').forEach(b=> b.disabled = !bn);
   }
   // opening Settings: the last page on a computer, the list of pages on a phone
-  window.__csOnOpen = ()=>{ document.body.classList.add('settings-open'); try{ arSync(); }catch(e){} csRenderWho(); const phone = window.matchMedia('(max-width:760px)').matches; $('#settingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
+  window.__csOnOpen = ()=>{ BODY.classList.add('settings-open'); try{ arSync(); }catch(e){} csRenderWho(); const phone = cwMQ('(max-width:760px)').matches; $('#cwSettingsDrawer').classList.toggle('cs2-list', phone); csShow(csPage); };
   $('#settingsTabs').addEventListener('click', (e)=>{ const b = e.target.closest('button[data-page]'); if(b) csShow(b.dataset.page, true); });
   [['csNotifFeed','feedBalance'],['csNotifShed','shedPerformance'],['csNotifEmpty','emptyShed']].forEach(([id,k])=> $('#'+id).addEventListener('change', (e)=>{ try{ parent.pwSetNotif(k, e.target.checked); }catch(err){} }));
   ['csFeedDays','csStarterDays'].forEach(id=> $('#'+id).addEventListener('input', csDaysBar));
@@ -17185,8 +17208,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#csNotifReports').addEventListener('change', (e)=>{ settings.notifReports = e.target.checked; persist(); });
   $('#csOpenNotif2').addEventListener('click', ()=>{ closeOverlays(); openOverdueModal(); });
   $('#csResetDisplay').addEventListener('click', ()=> $('#resetSettingsBtn').click());
-  function csRenderUnit(){ let u = 'kg'; try{ u = parent.feedUnit ? parent.feedUnit() : 'kg'; }catch(e){} document.querySelectorAll('[data-cs-unit]').forEach(b=>{ const on = b.dataset.csUnit === u; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); }
-  document.querySelectorAll('[data-cs-unit]').forEach(b=> b.addEventListener('click', ()=>{ try{ parent.setFeedUnit(b.dataset.csUnit); if(parent.pwSection === 'production' && parent.render) parent.render(); }catch(e){} csRenderUnit(); showToast('Feed amounts in ' + (b.dataset.csUnit === 't' ? 'tonnes' : 'kg') + '.'); }));
+  function csRenderUnit(){ let u = 'kg'; try{ u = parent.feedUnit ? parent.feedUnit() : 'kg'; }catch(e){} BODY.querySelectorAll('[data-cs-unit]').forEach(b=>{ const on = b.dataset.csUnit === u; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); }
+  BODY.querySelectorAll('[data-cs-unit]').forEach(b=> b.addEventListener('click', ()=>{ try{ parent.setFeedUnit(b.dataset.csUnit); if(parent.pwSection === 'production' && parent.render) parent.render(); }catch(e){} csRenderUnit(); showToast('Feed amounts in ' + (b.dataset.csUnit === 't' ? 'tonnes' : 'kg') + '.'); }));
   // Backup & reports: the rows press the Tasks buttons that were already there, or Production's
   // One backup (2026-10-19): Production's open batch + everything in Tasks, in one file
   function csTasksBackupData(){ return { tasks, history, batches, events, settings, frequentTemplates, maintenance, shedPrep, reports }; }
@@ -17196,7 +17219,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const blob = new Blob([JSON.stringify(file, null, 2)], { type:'application/json' });
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = `${(ghFarmName || 'farm').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-backup-${dateKey(new Date())}.json`;
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    BODY.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     showToast(prod ? 'Backup downloaded — Production and Tasks in one file.' : 'Backup downloaded.');
   });
   $('#csBackupRestore').addEventListener('click', ()=> $('#csBackupFile').click());
@@ -17226,8 +17249,8 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     };
     reader.readAsText(file);
   });
-  document.querySelectorAll('#stBackup [data-cwact]').forEach(b=> b.addEventListener('click', ()=> document.getElementById(b.dataset.cwact).click()));
-  document.querySelectorAll('#stBackup [data-pwact]').forEach(b=> b.addEventListener('click', ()=>{
+  BODY.querySelectorAll('#stBackup [data-cwact]').forEach(b=> b.addEventListener('click', ()=> document.getElementById(b.dataset.cwact).click()));
+  BODY.querySelectorAll('#stBackup [data-pwact]').forEach(b=> b.addEventListener('click', ()=>{
     try{
       if(b.dataset.pwact === 'download') parent.downloadCurrentBatchAsJson();
       else if(b.dataset.pwact === 'report') parent.generateBatchReport();
@@ -17238,22 +17261,22 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   window.addEventListener('message', (e)=>{
     if(e.origin !== location.origin || !e.data || !e.data.cwOpenSettings) return;
     const pg = e.data.cwOpenSettings;
-    if(!$('#settingsDrawer').classList.contains('open')){ closeOverlays(); renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#settingsDrawer'); }
+    if(!$('#cwSettingsDrawer').classList.contains('open')){ closeOverlays(); renderWeatherDiag(); renderSettingsHeader(); syncSegmented(); renderAccess(); loadAccess(true); openDrawer('#cwSettingsDrawer'); }
     window.__csOnOpen(); csShow(pg, true);
   });
   window.__csShow = csShow;
-  $('#csBack').addEventListener('click', ()=> $('#settingsDrawer').classList.add('cs2-list'));
-  document.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('input', (e)=>{
+  $('#csBack').addEventListener('click', ()=> $('#cwSettingsDrawer').classList.add('cs2-list'));
+  BODY.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('input', (e)=>{
     const q = e.target.value.trim().toLowerCase();
-    document.querySelectorAll('.cs-search-in').forEach(o=>{ if(o !== e.target) o.value = e.target.value; });
-    document.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const p = csIsPw(b.dataset.page) ? CS_PW_PAGES[b.dataset.page] : CS_PAGES[b.dataset.page]; b.hidden = !!q && !(p.t + ' ' + p.g + ' ' + p.k).toLowerCase().includes(q); });
-    document.querySelectorAll('#settingsTabs .cs2-grp').forEach(g=> g.hidden = ![...g.querySelectorAll('[data-page]')].some(b=> !b.hidden));
+    BODY.querySelectorAll('.cs-search-in').forEach(o=>{ if(o !== e.target) o.value = e.target.value; });
+    BODY.querySelectorAll('#settingsTabs [data-page]').forEach(b=>{ const p = csIsPw(b.dataset.page) ? CS_PW_PAGES[b.dataset.page] : CS_PAGES[b.dataset.page]; b.hidden = !!q && !(p.t + ' ' + p.g + ' ' + p.k).toLowerCase().includes(q); });
+    BODY.querySelectorAll('#settingsTabs .cs2-grp').forEach(g=> g.hidden = ![...g.querySelectorAll('[data-page]')].some(b=> !b.hidden));
   }));
-  document.addEventListener('keydown', (e)=>{ if(e.key !== '/' || !$('#settingsDrawer').classList.contains('open') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; const s = [...document.querySelectorAll('.cs-search-in')].find(x=> x.offsetParent); if(s){ e.preventDefault(); s.focus(); } });
-  document.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ const b = [...document.querySelectorAll('#settingsTabs [data-page]')].find(x=> !x.hidden); if(b) b.click(); } }));
+  document.addEventListener('keydown', (e)=>{ if(e.key !== '/' || !$('#cwSettingsDrawer').classList.contains('open') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; const s = [...BODY.querySelectorAll('.cs-search-in')].find(x=> x.offsetParent); if(s){ e.preventDefault(); s.focus(); } });
+  BODY.querySelectorAll('.cs-search-in').forEach(inp=> inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ const b = [...BODY.querySelectorAll('#settingsTabs [data-page]')].find(x=> !x.hidden); if(b) b.click(); } }));
   $('#csInvite').addEventListener('click', async ()=>{
     if(!ghFarmName){ showToast('Connect to a farm first.', true); return; }
-    const txt = `Join ${ghFarmName} on ProdWise Crew:\n${new URL('viewer.html', location.href.replace(/[?#].*$/, '')).href}\nFarm name: ${ghFarmName}\nAsk the manager for the farm password.`;
+    const txt = `Join ${ghFarmName} on ProdWise Crew:\n${new URL('viewer.html', CW_BASE).href}\nFarm name: ${ghFarmName}\nAsk the manager for the farm password.`;
     try{ await navigator.clipboard.writeText(txt); showToast('Invite copied — paste it in a message to your worker.'); }catch(err){ prompt('Copy this invite:', txt); }
   });
   $('#csOpenAccount').addEventListener('click', ()=>{ closeOverlays(); if(CW_EMBED) parent.postMessage({ pwSection:'production', tab:'account' }, location.origin); else location.href = '../#account'; });
@@ -17366,7 +17389,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   }
   function setBulkDeleteMode(mode){
     bulkDeleteMode = mode;
-    document.querySelectorAll('#bulkModeTabs button').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
+    BODY.querySelectorAll('#bulkModeTabs button').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
     $('#bulkRangeFields').style.display = mode==='range' ? 'block' : 'none';
     $('#bulkNameFields').style.display = mode==='name' ? 'block' : 'none';
     const btn = $('#confirmBulkDeleteBtn');
@@ -17435,7 +17458,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   $('#retryLoadBtn').addEventListener('click', ()=>{ hideLoadErrorOverlay(); load(); });
   $('#openSettingsFromErrorBtn').addEventListener('click', ()=>{
     hideLoadErrorOverlay();
-    openDrawer('#settingsDrawer');
+    openDrawer('#cwSettingsDrawer');
     if(window.__csOnOpen){ window.__csOnOpen(); window.__csShow('sync', true); }
   });
   $('#syncGithubBtn').addEventListener('click', async ()=>{
@@ -17456,7 +17479,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     const a = document.createElement('a');
     a.href = url;
     a.download = `ProdWise-Tasks-backup-${dateKey(new Date())}.json`;
-    document.body.appendChild(a);
+    BODY.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
@@ -17495,28 +17518,29 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   });
 
   document.addEventListener('keydown', (e)=>{
+    if(cwAway()) return;
     if(e.key==='Escape'){
       // In the Reports window on a phone, Esc goes back from a report to the list
-      if($('#reportsDrawer').classList.contains('open') && currentReportId && (window.innerWidth <= 760 || rpView === 'board')){
+      if($('#reportsDrawer').classList.contains('open') && currentReportId && (cwVW() <= 760 || rpView === 'board')){
         closeReportDetailOnly();
         return;
       }
       // Esc steps back out of the Routine Tracker one layer at a time.
-      if(mlogIsOpen() && !document.querySelector('.form-modal.open, .history-drawer.open')){ closeMlog(); return; }
+      if(mlogIsOpen() && !BODY.querySelector('.form-modal.open, .history-drawer.open')){ closeMlog(); return; }
       closeAllTaskMenus();
       $('#calendarDensityWrap').classList.remove('open');
       closeOverlays();
     }
   });
-  let cwLastW = window.innerWidth;
+  let cwLastW = cwVW();
   window.addEventListener('resize', ()=>{
     // first real size after loading hidden inside ProdWise: draw everything again at the right size
-    const was = cwLastW; cwLastW = window.innerWidth;
-    if(was < 50 && cwLastW >= 50 && !document.body.classList.contains('is-dragging')){ renderAll(); return; }
+    const was = cwLastW; cwLastW = cwVW();
+    if(was < 50 && cwLastW >= 50 && !BODY.classList.contains('is-dragging')){ renderAll(); return; }
     closeAllTaskMenus();
     if(viewMode==='kanban' && kanbanEdgeFadeUpdater) kanbanEdgeFadeUpdater();
     updatePeriodLabel();
-    if(document.body.classList.contains('is-dragging')) return;   // don't redraw under a task being dragged
+    if(BODY.classList.contains('is-dragging')) return;   // don't redraw under a task being dragged
     if(viewMode==='month') renderMonth();
     else if(viewMode==='day') renderDay();
     if(viewMode==='month' || viewMode==='day') initSortables();
@@ -17553,7 +17577,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     }, {passive:true});
     containerEl.addEventListener('touchmove', (e)=>{
       if(!pulling || refreshing) return;
-      if(document.body.classList.contains('is-dragging')){ pulling = false; currentDist = 0; indicatorEl.style.transform = 'translateY(-60px)'; return; }
+      if(BODY.classList.contains('is-dragging')){ pulling = false; currentDist = 0; indicatorEl.style.transform = 'translateY(-60px)'; return; }
       const dy = e.touches[0].clientY - startY;
       if(dy <= 0){ currentDist = 0; indicatorEl.style.transform = 'translateY(-60px)'; return; }
       e.preventDefault();
@@ -17635,7 +17659,7 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
   });
   $('#saveIndicator').addEventListener('click', ()=>{
     const label = $('#saveIndicator .sync-label');
-    if(window.innerWidth <= 760 && label) showToast(label.textContent);
+    if(cwVW() <= 760 && label) showToast(label.textContent);
   });
   window.addEventListener('online', ()=>{
     renderSyncStatus();
@@ -17657,11 +17681,12 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     // Visible and idle: full sync, so a task a worker ticked shows here and its
     // linked report turns Resolved without leaving and coming back to the app.
     const ae = document.activeElement, typing = ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable);
-    const busy = typing || pushPending || pushInFlight || document.querySelector('.form-modal.open, .sheet-overlay:not(.hidden), .history-drawer.open');
+    const busy = typing || pushPending || pushInFlight || BODY.querySelector('.form-modal.open, .sheet-overlay:not(.hidden), .history-drawer.open');
     if(!document.hidden && !busy){ pullFromGithub(true); return; }
     pullReportsFromGithub(true);
   }, 60000);
   document.addEventListener('keydown', (e)=>{
+    if(cwAway()) return;
     const tag = (e.target && e.target.tagName) || '';
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable);
     if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openSearch(); return; }
@@ -17669,20 +17694,20 @@ try{ if(window.parent !== window && /[?&]embed=1\b/.test(location.search) && win
     if((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && undoFresh()){ e.preventDefault(); performUndo(); return; }
     if(e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); openSearch(); }
     if((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && viewMode === 'list' && agendaFilter === 'today'
-       && !e.metaKey && !e.ctrlKey && !e.altKey && !document.querySelector('.form-modal.open, .history-drawer.open')){
+       && !e.metaKey && !e.ctrlKey && !e.altKey && !BODY.querySelector('.form-modal.open, .history-drawer.open')){
       e.preventDefault(); shiftAgendaDay(e.key === 'ArrowRight' ? 1 : -1);
     }
   });
 
-  if(window.FarmKey) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL, window.FarmNotify ? FarmNotify.URL : ''], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
+  if(window.FarmKey && !CW_INLINE) FarmKey.install({ server: WORKER_URL, urls: ()=> [WORKER_URL, PHOTO_WORKER_URL, window.FarmNotify ? FarmNotify.URL : ''], farm: ()=> ghFarmName, role:'manager', text: k=> FK_TEXT[k], onRefused: j=> fkPromptSignIn(j) });
   // One app (2026-10-17): this is the Tasks section of ProdWise. Inside ProdWise (?embed=1) the
   // Production switch hands back to ProdWise's page; opened on its own it goes to ProdWise.
-  const CW_EMBED = window.parent !== window && /[?&]embed=1\b/.test(location.search);
-  if(CW_EMBED) document.body.classList.add('cw-embed');
+  const CW_EMBED = CW_INLINE || (window.parent !== window && /[?&]embed=1\b/.test(location.search));
+  if(CW_EMBED) BODY.classList.add('cw-embed');
   // Inside ProdWise on a device where Tasks was never connected: use ProdWise's farm (same farm
   // folder in the cloud), so Tasks opens on the farm you're already in.
   if(CW_EMBED){ try{
-    const pf = new URLSearchParams(location.search).get('farm'), cur = localStorage.getItem('prodplan-gh-farmname');
+    const pf = CW_INLINE ? (window.__cwInline.farm || '') : new URLSearchParams(location.search).get('farm'), cur = localStorage.getItem('prodplan-gh-farmname');
     if(pf && (!cur || sanitizeFarmFileName(cur) !== sanitizeFarmFileName(pf))) localStorage.setItem('prodplan-gh-farmname', pf);
   }catch(e){} }
   document.addEventListener('click', e=>{

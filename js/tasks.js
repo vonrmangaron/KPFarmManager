@@ -21,9 +21,18 @@ function pwPlaceSwitches(){
   if(hl&&!hl.querySelector('.ws-pill'))hl.insertAdjacentHTML('afterbegin',pwSwitchHtml('pill'));
   pwSyncSwitch();
 }
+// Tasks in ProdWise's own page (js/tasksinline.js) when this browser can: true once it's on its way in.
+// It opens on one farm; another farm needs the page loaded again (Tasks' scripts run once).
+function pwTasksInline(farm){
+  if(cwFrame&&!cwFrame.inline)return false;          // already open in the frame this time
+  if(!cwInline&&!cwInlineWanted())return false;
+  if(cwInline&&cwInline.farm!==farm){location.hash='#tasks';location.reload();return true;}
+  cwMountInline(farm);return true;
+}
 // Tasks loaded in the background (History reads its change log) without switching to it
 function pwEnsureTasksFrame(onReady){
   const farm=syncFarmName||'';
+  if(pwTasksInline(farm)){if(onReady)cwFrame.addEventListener('load',()=>setTimeout(onReady,400));return;}
   if(!cwFrame){cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';document.body.appendChild(cwFrame);}
   if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');cwFrame.addEventListener('load',()=>{if(typeof pwOneRailApply==='function')pwOneRailApply();},{once:true});}
   let ready=false;try{ready=!!(cwFrame.contentWindow&&cwFrame.contentWindow.__cwHistory);}catch(e){}
@@ -33,12 +42,16 @@ function openTasksSection(opts){
   opts=opts||{};
   // Tasks opens on ProdWise's farm (sent in the address); connecting or changing farm here reloads it
   const farm=syncFarmName||'';
-  if(!cwFrame){
-    cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';
-    document.body.appendChild(cwFrame);
+  if(!pwTasksInline(farm)){
+    if(!cwFrame){
+      cwFrame=document.createElement('iframe');cwFrame.id='cwFrame';cwFrame.title='Tasks';
+      document.body.appendChild(cwFrame);
+    }
+    if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
   }
-  if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
   pwSection='tasks';document.body.classList.add('pw-in-tasks');
+  // inline Tasks was hidden (laid out with nothing inside): let it fit itself again, as the frame did when it appeared
+  if(cwFrame&&cwFrame.inline)requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
   if(opts.push!==false&&location.hash!=='#tasks'){history.pushState({pwSection:'tasks'},'','#tasks');pwTasksPushed=true;}
   pwSyncSwitch();
   try{cwFrame.contentWindow.__wsSlide&&cwFrame.contentWindow.__wsSlide('tasks');}catch(e){}

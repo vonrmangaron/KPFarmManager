@@ -5,7 +5,7 @@
    - On new install, wipes all older caches so no stale assets linger.
 */
 
-const CACHE_NAME = 'prodwise-v318';
+const CACHE_NAME = 'prodwise-v319';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -16,7 +16,11 @@ const CORE_ASSETS = [
   './js/taskstore.js',
   './js/farmkey.js',
   './js/notify.js',
+  './js/tasksinline.js',
   './js/tasks.js',
+  './cluckwise/index.html',
+  './cluckwise/guide2.js',
+  './cluckwise/guide-mgr.js',
   './js/shedsetup.js',
   './js/newfarm.js',
   './js/constants.js',
@@ -67,6 +71,14 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+  // Tasks' libraries (Bootstrap's styles, Sortable, jsPDF) from cdnjs: kept here so Tasks opens with no signal
+  if (url.hostname === 'cdnjs.cloudflare.com') {
+    event.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => {
+      if (res && res.ok) { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, clone)).catch(() => {}); }
+      return res;
+    })));
+    return;
+  }
   if (url.origin !== self.location.origin) return;
 
   const path = url.pathname.toLowerCase();
@@ -85,7 +97,7 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
+        .catch(() => caches.match(req).then(hit => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
     );
     return;
   }
