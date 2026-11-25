@@ -1091,6 +1091,7 @@
   }catch(e){}
 })();
 </script>
+<script src="../js/core.js"></script>
 <script src="../js/farmkey.js"></script>
 <script src="../js/notify.js"></script>
 <script src="../js/plumo-face.js"></script>
@@ -1637,7 +1638,7 @@
 
   const $ = (sel)=> document.querySelector(sel);
 
-  function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  // dateKey, escapeHtml, fmt12: shared, in ../js/core.js
   function toDateObj(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d); }
   function formatShort(key){ if(!key) return 'Backlog'; return toDateObj(key).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
   function formatFull(key){ return toDateObj(key).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
@@ -3314,11 +3315,6 @@
     return ASSIGNEE_PALETTE[Math.abs(hash) % ASSIGNEE_PALETTE.length];
   }
   function initialsForAssignee(name){ return name.trim().charAt(0).toUpperCase(); }
-  function escapeHtml(s){
-    return String(s == null ? '' : s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
   // Full names under the task (phones have no hover to reveal initials); the worker's own name is highlighted.
   function buildAssigneeNamesHtml(assignees){
     if(!assignees || !assignees.length) return '';
