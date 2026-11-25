@@ -1281,7 +1281,7 @@ function render(){
       const sel=inlinePickupState?'.tp-input':'.inline-del-input';
       requestAnimationFrame(()=>{const input=scope&&scope.querySelector(sel);if(input){input.focus({preventScroll:true});if(input.select)input.select();}});
     }
-  }finally{requestAnimationFrame(updateStickyHeaderHeight);requestAnimationFrame(setupStickyTabObservers);}
+  }finally{requestAnimationFrame(updateStickyHeaderHeight);requestAnimationFrame(setupStickyTabObservers);if(typeof pwTasksSlotSync==='function')requestAnimationFrame(pwTasksSlotSync);}
 }
 let _stickyTabObserver=null;
 function setupStickyTabObservers(){

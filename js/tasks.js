@@ -56,6 +56,7 @@ function openTasksSection(opts){
     if(cwFrame.dataset.farm!==farm||!cwFrame.src){cwFrame.dataset.farm=farm;cwFrame.src=CLUCKWISE_URL+'index.html?embed=1'+(farm?'&farm='+encodeURIComponent(farm):'');}
   }
   pwSection='tasks';document.body.classList.add('pw-in-tasks');
+  if(typeof pwTasksSlotSync==='function')pwTasksSlotSync();   // Tasks' Settings page was showing inside Production's Settings
   // inline Tasks was hidden (laid out with nothing inside): let it fit itself again, as the frame did when it appeared
   if(cwFrame&&cwFrame.inline)requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
   if(opts.push!==false&&location.hash!=='#tasks'){history.pushState({pwSection:'tasks'},'','#tasks');pwTasksPushed=true;}

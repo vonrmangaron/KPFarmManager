@@ -103,11 +103,60 @@ function cwMountInline(farm){
   });
   return cwInline.p;
 }
+// ── Theme and text size: in the frame each app heard the other's change as a 'storage' event; on one page the browser
+// doesn't send it to the page that made the change, so it is sent here (only these keys, only when the value changes) ──
+const CW_SHARED_KEYS=new Set(['prodwise_vm_theme_v1','prodwise_text_size_v1']);
+(function(){
+  try{const S=Storage.prototype,set=S.setItem;
+    S.setItem=function(k,v){
+      const echo=cwInline&&this===window.localStorage&&CW_SHARED_KEYS.has(k),old=echo?this.getItem(k):null;
+      set.call(this,k,v);
+      if(echo&&old!==String(v))setTimeout(()=>{try{window.dispatchEvent(new StorageEvent('storage',{key:k,oldValue:old,newValue:String(v),url:location.href}));}catch(e){}},0);
+    };}catch(e){}
+})();
+// ── One Settings (2026-11-26): ProdWise draws the Settings page for both sections — header, menu, background, bottom
+// bar. A Tasks page (Alerts, Display, Calendar…) fills only ProdWise's content area: #cwRoot sits over #stTasksSlot and
+// Tasks shows just that page (window.__cwSlot in Tasks). A Tasks button there that opens more of Tasks shows all of Tasks.
+let cwSlotOn=null;
+function cwSlotPlace(){
+  const slot=document.getElementById('stTasksSlot'),R=cwInline&&cwInline.root;if(!slot||!R)return;
+  const r=slot.getBoundingClientRect();let bottom=window.innerHeight;
+  const nav=document.querySelector('.mobile-bottom-nav');if(nav&&nav.offsetParent){const n=nav.getBoundingClientRect();if(n.height&&n.top>r.top)bottom=Math.min(bottom,n.top);}
+  const h=Math.max(160,Math.floor(bottom-r.top));
+  if(Math.abs(slot.offsetHeight-h)>1)slot.style.height=h+'px';
+  const s=R.style;s.top=r.top+'px';s.left=r.left+'px';s.width=r.width+'px';s.height=h+'px';
+}
+function cwSlotClear(){
+  cwSlotOn=null;document.body.classList.remove('pw-tasks-slot');
+  if(cwInline){const s=cwInline.root.style;s.top=s.left=s.width=s.height='';if(cwInline.ready&&window.__cwSlot)window.__cwSlot(null);}
+}
+function pwTasksSlotSync(){
+  const slot=document.getElementById('stTasksSlot');
+  const want=slot&&pwSection==='production'&&typeof activeTab!=='undefined'&&activeTab==='farmsettings'&&SET_TASKS_PAGES.includes(setTab)?setTab:null;
+  if(!want){if(cwSlotOn)cwSlotClear();return;}
+  if(cwSlotOn===want&&document.body.classList.contains('pw-tasks-slot')){cwSlotPlace();return;}
+  cwSlotOn=want;
+  const go=()=>{
+    if(cwSlotOn!==want||!document.getElementById('stTasksSlot'))return;
+    if(!(cwInline&&cwInline.ready&&window.__cwSlot)){cwSlotOn=null;if(typeof setOpenInTasks==='function')setOpenInTasks(want);return;}   // Tasks is in the frame after all
+    window.__cwSlot(want);cwSlotPlace();document.body.classList.add('pw-tasks-slot');
+  };
+  if(cwInline&&cwInline.ready)go();
+  else{if(typeof pwEnsureTasksFrame==='function')pwEnsureTasksFrame();if(cwFrame)cwFrame.addEventListener('load',go,{once:true});}
+}
+// Tasks closed its Settings page to open something else: show all of Tasks
+function pwTasksSlotLeave(){if(!cwSlotOn)return;cwSlotClear();if(typeof openTasksSection==='function')openTasksSection();}
+window.addEventListener('resize',()=>{if(cwSlotOn)cwSlotPlace();});
+document.addEventListener('scroll',()=>{if(cwSlotOn)cwSlotPlace();},true);
 // where #cwRoot sits: where the frame sat. Hidden, it keeps its own size (Tasks measures it) but draws nothing inside.
 (function(){
   const st=document.createElement('style');st.id='cwHostCss';
   st.textContent=`#cwRoot{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);z-index:5000;visibility:hidden;content-visibility:hidden;pointer-events:none;container:cwroot/size;contain:size layout style;overflow:auto;isolation:isolate;outline:none}
 body.pw-in-tasks #cwRoot{visibility:visible;content-visibility:visible;pointer-events:auto}
-@media (min-width:1109px){body.pw-in-tasks #cwRoot{left:84px}}`;
+@media (min-width:1109px){body.pw-in-tasks #cwRoot{left:84px}}
+body.pw-tasks-slot:not(.pw-in-tasks) #cwRoot{visibility:visible;content-visibility:visible;pointer-events:auto;right:auto;bottom:auto;z-index:40}
+.st2-slot{display:block;position:relative;min-height:160px}
+.st2-slot-wait{display:block;padding:24px 4px;color:var(--muted,#888);font-size:13px}
+body.pw-tasks-slot .st2-slot-wait{visibility:hidden}`;
   document.head.appendChild(st);
 })();

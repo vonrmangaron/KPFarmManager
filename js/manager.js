@@ -697,7 +697,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-pwb-newbatch]')){if(typeof openNewBatchModal==='function')openNewBatchModal();return;}
   if(e.target.closest('[data-pwr-sync]')){(document.getElementById('sbSyncNowBtn')||document.getElementById('sbConnectBtn'))?.click();return;}
   if(e.target.closest('[data-pwr-farm]')){pwMenuToggle();return;}
-  const st=e.target.closest('[data-set-tab]');if(st&&SET_TASKS_PAGES.includes(st.dataset.setTab)&&st.closest('.st2')){setOpenInTasks(st.dataset.setTab);return;}
+  const st=e.target.closest('[data-set-tab]');if(st&&SET_TASKS_PAGES.includes(st.dataset.setTab)&&st.closest('.st2')&&!setTasksInPage()){setOpenInTasks(st.dataset.setTab);return;}
   if(st){setTab=st.dataset.setTab;setListOpen=false;render();window.scrollTo(0,0);if((setTab==='profile'||setTab==='security')&&typeof accLoad==='function')accLoad();return;}
   if(e.target.closest('[data-set-back]')){setListOpen=true;render();window.scrollTo(0,0);return;}
   const sp=e.target.closest('[data-set-pair]');if(sp){setPair=Number(sp.dataset.setPair)||1;renderSettingsTabBody(true);return;}
@@ -717,7 +717,9 @@ let setTab='predictions',setPair=1;
 const SET_TABS=[['predictions','Predictions'],['pairs','Per pair & shed'],['farm','Farm & sync'],['alerts','Alerts'],['app','App & data']];
 function goSettings(tab){
   if(tab&&SET_ALIAS[tab])tab=SET_ALIAS[tab];
-  if(tab&&SET_TASKS_PAGES.includes(tab)){setOpenInTasks(tab);return;}
+  // Settings is a Production page: coming from Tasks, switch back first
+  if(typeof pwSection!=='undefined'&&pwSection==='tasks'&&typeof openProductionSection==='function')openProductionSection();
+  if(tab&&SET_TASKS_PAGES.includes(tab)&&!setTasksInPage()){setOpenInTasks(tab);return;}
   if(tab)setTab=tab;
   // phone: a named page opens straight away; plain Settings opens on the list of pages
   setListOpen=!tab&&window.matchMedia('(max-width:768px)').matches;
@@ -872,6 +874,8 @@ const SET_GROUPS=[
 // One Settings for Production and Tasks (2026-10-18, mockup 92VKxtw5Nx3ATsHzDrygn5): Tasks has the same menu.
 // These pages belong to Tasks: picking one opens the Tasks section on that page.
 const SET_TASKS_PAGES=['appearance','calendar','weather','workers','alerts','backup'];
+// Tasks inside ProdWise's page (no frame): ProdWise's Settings page shows those pages in its own content area (2026-11-26)
+function setTasksInPage(){try{return typeof cwInlineWanted==='function'&&(!!cwInline||cwInlineWanted());}catch(e){return false;}}
 const SET_ALIAS={predictions:'feed',farm:'sync',app:'appearance',data:'backup',display:'appearance'};
 function setOpenInTasks(k){
   if(typeof openTasksSection!=='function')return;
@@ -907,6 +911,8 @@ function setKeywords(k){const p=setPageInfo(k);let w=[p.label,p.group,p.sub];if(
   return (w.join(' ')+' '+extra).toLowerCase();}
 function setPageBody(k){
   if(!farmData&&SET_NEEDS_BATCH.includes(k))return `<div class="st2-empty">Load or start a batch to see these settings.</div>`;
+  // Tasks' page: Tasks fills this space (js/tasksinline.js › pwTasksSlotSync)
+  if(SET_TASKS_PAGES.includes(k)&&setTasksInPage())return `<div class="st2-slot" id="stTasksSlot"><span class="st2-slot-wait">Loading…</span></div>`;
   if(k==='profile')return `<div id="accBody">${accProfileHtml()}</div>`;
   if(k==='security')return `<div id="accBody">${accSecurityHtml()}</div>`;
   if(SET_SEC[k])return renderFarmSettingsView(true,SET_SEC[k])+(k==='weights'?settingsGrowthStdHtml():'')+(k==='pickups'?settingsPickupExtrasHtml():'');
@@ -932,7 +938,7 @@ function setNavHtml(){
 }
 function renderSettingsPage(){
   if(SET_ALIAS[setTab])setTab=SET_ALIAS[setTab];
-  if(!setPageInfo(setTab)||SET_TASKS_PAGES.includes(setTab))setTab='profile';
+  if(!setPageInfo(setTab)||(SET_TASKS_PAGES.includes(setTab)&&!setTasksInPage()))setTab='profile';
   const p=setPageInfo(setTab),off=setOffCount(setTab);
   const search=cls=>`<label class="st2-search ${cls}"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search settings" value="${escapeAttr(setSearch)}" data-set-search aria-label="Search settings"><kbd>/</kbd></label>`;
   return `<div class="st2${setListOpen?' st2-list':''}">
@@ -973,6 +979,7 @@ document.addEventListener('change',e=>{
   sdSetShed('mort',m.dataset.setMortrate,Math.min(MAX_MORT_RATE_PCT,v));
 });
 function afterSettingsRender(){
+  if(typeof pwTasksSlotSync==='function')requestAnimationFrame(pwTasksSlotSync);
   const v=document.getElementById('st2Ver');
   if(v&&!v.dataset.done&&'caches' in window)caches.keys().then(k=>{const n=k.find(x=>/^prodwise-v/.test(x));if(n){v.textContent='App version '+n.replace('prodwise-','');v.dataset.done='1';}}).catch(()=>{});
 }
