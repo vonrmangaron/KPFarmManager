@@ -389,7 +389,27 @@ const siloKg = r => r == null || r === '' || !Number.isFinite(Number(r)) || Numb
 const ABOUT = 'Read-only copy of the farm from ProdWise (production) and Tasks. Dates are calendar days (YYYY-MM-DD) in the manager\'s local time; "today" is that day. '
   + 'Weights in kg, feed in kg (1,000 kg = 1 t), birds are counts. Sheds come in pairs (Sheds 1-2 = pair 1, 3-4 = pair 2 …); each pair has 3 silos. '
   + 'A silo reading counts rings: 0 = cone only (about 10 t), each ring adds about 8 t, 5 rings = full (about 50 t). birdsNow = placed - morts - birds picked up so far. '
+  + 'Past batch results are in "batchResults" (same names and formulas as ProdWise: ALW = total live weight ÷ birds out, FCR = feed ÷ live weight). '
+  + 'In the raw farm history (full link), finalAvgKg is ONLY the final pickup\'s average weight (the last, heaviest birds), not the batch ALW. '
   + 'This link never changes anything. Add &full=1 for every file in full.';
+// One past batch's result, worked out like ProdWise's Farm history (batchKpis in js/calc.js)
+const CFCR_REF_KG = 2.45, CFCR_BETA = 0.27;
+const r2 = (v, d) => v == null || !Number.isFinite(v) ? null : Math.round(v * 10 ** d) / 10 ** d;
+function batchResult(h) {
+  const placed = num(h.placed) || 0, out = num(h.picked) || 0, lw = num(h.liveWeightKg) || 0, feed = num(h.feedKg) || 0, age = num(h.avgAge) || 0;
+  const alw = out > 0 && lw > 0 ? lw / out : null, fcr = lw > 0 && feed > 0 ? feed / lw : null;
+  const liv = placed > 0 ? out / placed * 100 : null;
+  return {
+    batch: h.batch, endDate: h.endDate || null, finished: !!h.finished || undefined,
+    birdsPlaced: placed, birdsOut: out, livabilityPct: r2(liv, 2), mortalityPct: liv == null ? null : r2(100 - liv, 2),
+    totalLiveWeightKg: r2(lw, 0), ALW_kg: r2(alw, 3), feedEatenKg: r2(feed, 0), FCR: r2(fcr, 3),
+    cFCR_2_45: fcr && alw ? r2(fcr - (alw - CFCR_REF_KG) * CFCR_BETA, 3) : null,
+    avgAgeAtPickupDays: r2(age, 1), PIF: liv && alw && age && fcr ? r2(liv * alw / (age * fcr) * 100, 0) : null,
+    firstThinAgeDays: num(h.firstThinAge), firstThinSharePct: h.firstThinShare != null ? r2(h.firstThinShare * 100, 1) : null,
+    finalPickupAgeDays: num(h.finalAge), finalPickupAvgKg: r2(num(h.finalAvgKg), 3), finalPickupSharePct: h.finalShare != null ? r2(h.finalShare * 100, 1) : null,
+    pickupsPerShed: num(h.pickupsPerShed), feedLeftoverKg: num(h.leftoverKg), feedIntakePctOfRoss: num(h.intakePct),
+  };
+}
 
 async function handleExport(url, env, gh) {
   if (!env.KEYS) return json({ error: 'Not available on this sync server' }, 501);
@@ -462,7 +482,7 @@ async function handleExport(url, env, gh) {
   const out = {
     ...head,
     batch: current ? { number: current, sheds, birdsNow: sheds.reduce((a, s) => a + s.birdsNow, 0), feed: { loads, siloReadings: silos, settings } } : null,
-    farmHistory: (histR && histR.data && histR.data.farmHistory) || pred.farmHistory || [],
+    batchResults: ((histR && histR.data && histR.data.farmHistory) || pred.farmHistory || []).map(batchResult).sort((a, b) => String(b.endDate || '').localeCompare(String(a.endDate || ''))),
     tasks: {
       overdue: open.filter(t => t.date && t.date < today).map(brief),
       today: open.filter(t => t.date === today).map(brief),
