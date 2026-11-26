@@ -151,7 +151,7 @@ document.addEventListener('scroll',()=>{if(cwSlotOn)cwSlotPlace();},true);
 // where #cwRoot sits: where the frame sat. Hidden, it keeps its own size (Tasks measures it) but draws nothing inside.
 (function(){
   const st=document.createElement('style');st.id='cwHostCss';
-  st.textContent=`#cwRoot{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);z-index:5000;visibility:hidden;content-visibility:hidden;pointer-events:none;container:cwroot/size;contain:size layout style;overflow:auto;isolation:isolate;outline:none}
+  st.textContent=`#cwRoot{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));z-index:5000;visibility:hidden;content-visibility:hidden;pointer-events:none;container:cwroot/size;contain:size layout style;overflow:auto;isolation:isolate;outline:none}
 body.pw-in-tasks #cwRoot{visibility:visible;content-visibility:visible;pointer-events:auto}
 @media (min-width:1109px){body.pw-in-tasks #cwRoot{left:84px}}
 body.pw-tasks-slot:not(.pw-in-tasks) #cwRoot{visibility:visible;content-visibility:visible;pointer-events:auto;right:auto;bottom:auto;z-index:40}
